@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# Cloudflare Workers / wrangler (local state and secrets)
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Local HTTPS certificates (mkcert, see docs/decisions D-002)
+.certs/
+*.pem
+*-key.pem
+
+# Environment and secrets (VAPID keys etc.)
+.env
+.env.*
+!.env.example
+
+# Test output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Scratch and working captures (durable docs live elsewhere, see AgentWorkingConventions §7)
+scratch/
+captures/
+.tmp/
+tmp/
+temp/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code local settings
+.claude/settings.local.json
