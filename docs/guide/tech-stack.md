@@ -4,9 +4,11 @@ The owner's minimum stack; it is required. No new dependency beyond this list wi
 
 | concern | choice |
 |---|---|
-| UI | **React** + **TypeScript** (`strict` and `noUncheckedIndexedAccess` on) |
+| UI | **React** (latest stable, [D-006](../decisions/README.md)) + **TypeScript** (`strict` and `noUncheckedIndexedAccess` on) |
+| Styling | **styled-components** (latest stable) with a typed `ThemeProvider` theme, light and dark ([D-006](../decisions/README.md)) |
 | State | **Redux Toolkit** + **redux-saga** for side effects (API calls, live updates, push) |
 | i18n | **react-i18next** (EN / ID) |
+| Sign-in | **Passkeys** via `@simplewebauthn/server` + `@simplewebauthn/browser`; password fallback for seller and chefs with WebCrypto PBKDF2 ([D-011](../decisions/README.md), [D-014](../decisions/README.md)) |
 | Dev server and build | **Vite**, with `@cloudflare/vite-plugin` so the Worker runs in the same dev server |
 | Hosting | Cloudflare free plan: Workers, D1, Durable Objects, R2 |
 | Lint | **ESLint** (flat config) with `typescript-eslint`, React Hooks rules and `eslint-config-prettier` |
@@ -28,10 +30,10 @@ The full Playwright suite runs only when the owner asks.
 
 **Dev always runs on HTTPS** with an mkcert certificate ([D-002](../decisions/README.md)), so Web Push, Home Screen install and camera QR scanning work on phones every day, the same as in production.
 
-- The dev server listens on the local network (`server.host: true`), so a phone on the same Wi-Fi opens `https://192.168.178.97:<port>`. The first time, Windows Firewall asks to allow Node on **private** networks; the owner allows it.
-- The certificate covers `localhost`, `127.0.0.1` and `192.168.178.97`. It's created with `mkcert` (already installed via scoop, CA in `%LOCALAPPDATA%\mkcert`) into the git-ignored `.certs/` folder. Vite reads it through `server.https`, so no npm plugin is needed. Playwright uses the same HTTPS address.
+- The dev server listens on the local network (`server.host: true`), so a phone on the same Wi-Fi opens `https://192.168.178.177:<port>`. The first time, Windows Firewall asks to allow Node on **private** networks; the owner allows it.
+- The certificate covers `localhost`, `127.0.0.1` and `192.168.178.177`. It's created with `mkcert` (installed with winget on ANDRAPC, [D-015](../decisions/README.md)) into the git-ignored `.certs/` folder. Vite reads it through `server.https`, so no npm plugin is needed. Playwright uses the same HTTPS address.
 - **One-time per phone:** install `rootCA.pem` (never `rootCA-key.pem`) and trust it. iPhone: AirDrop or email it, install the profile, then Settings → General → About → Certificate Trust Settings → full trust. Android: Settings → Security → Install certificate → CA certificate.
-- `192.168.178.97` is **reserved for this PC (COVID-PC) in the router**, so the certificate stays valid. If the reservation ever changes, regenerate the certificate.
+- `192.168.178.177` is **reserved for the dev PC (ANDRAPC) in the router** ([D-015](../decisions/README.md)), so the certificate stays valid. If the reservation ever changes, regenerate the certificate.
 - **Never commit or share** the certificate keys or `rootCA-key.pem`.
 
 **Later, optional:** once Cloudflare is configured, a Cloudflare tunnel or a `workers.dev` preview deploy can replace this for testing away from home. A deploy is always the owner's step.

@@ -16,8 +16,9 @@ Wednesday publish (up to 10 items, up to 5 images) → Wednesday to Friday custo
 - Reuse menus by keeping a rotation of **4–5 saved menu sets**, or editing last week's.
 - **Share to WhatsApp:** one tap builds the group post: images, the item list in the familiar friendly style (ID, EN or both) and the order link.
 - Set the cut-off time and the Saturday pickup and delivery details.
-- See all orders, statuses and the **total of each item to cook**. Live updates as orders arrive.
+- See all orders, statuses and the **total of each item to cook**. Items can have a **chef**, and totals group by chef ([D-012](../decisions/README.md)). Live updates as orders arrive.
 - Match a WhatsApp message to an order by its number. Keep customer phone numbers **on the seller's device only**, with export and import to a file.
+- **Enter an order for a customer who ordered by WhatsApp**, then send them the private order link so they get the updates too ([D-010](../decisions/README.md)).
 - Update status with one tap. An optional **Paid** tick for the seller's own reference.
 - **Print labels** (A4 sheet or label printer) showing the order number, QR, first name, items and quantities, and pickup or delivery, with item names in both languages.
 
@@ -55,6 +56,5 @@ The customer scans the QR on their container. If it's in their "My orders", they
 
 Ask one at a time, A / B / C with a recommendation. Record each answer in [decisions](../decisions/README.md) and remove it from this list.
 
-1. Delivery address: collected in the app, or only by WhatsApp (keeping it off the cloud)?
-2. Pickup time slots, or one pickup window?
-3. What happens to orders the seller never confirms by the cut-off?
+
+None open (answered in D-007 to D-009). Seller sign-in is being designed in [seller-auth.md](../architecture/seller-auth.md).

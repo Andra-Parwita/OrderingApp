@@ -3,6 +3,7 @@
 | folder | what's in it |
 |---|---|
 | [product/](product/overview.md) | what we're building: a summary of the concept brief, design rules, open questions |
+| [plan/](plan/roadmap.md) | the [roadmap](plan/roadmap.md) (phases, stage tables, folder structure) and the live [board](plan/board.md) (status of the current round) |
 | [guide/](guide/) | how we work: [tech stack and quality gate](guide/tech-stack.md), [token efficiency](guide/token-efficiency.md), [agent working conventions](guide/agent-working-conventions.md) |
 | [architecture/](architecture/README.md) | the system, data model, API and frontend structure (written during planning) |
 | [design/](design/README.md) | screens, flows, mock-ups, tokens (written during planning) |

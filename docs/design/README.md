@@ -25,3 +25,7 @@ Not written yet. Holds the UI design once planning starts:
 All colours, spacing and type come from design tokens, with no literal values in components (see [the planning skill](../../.claude/skills/react-ts-app-plan/SKILL.md), "Styling principles").
 
 Mock-ups come before any UI build. The images in [briefs/mock](../../briefs/mock/) are for the owner's eye only, never a build source.
+
+## Flows
+
+- [workflow.html](workflow.html): the weekly cycle as a sequence diagram (customer, server, seller), with the WhatsApp hand-offs marked. Draft, 2026-10-07.

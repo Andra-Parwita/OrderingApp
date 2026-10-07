@@ -7,5 +7,6 @@ Expected pages:
 - **data-model.md**: menus, menu sets, orders, order items, push subscriptions, retention
 - **api.md**: endpoints and their typed contracts
 - **frontend.md**: layers, folders, the Redux store and sagas
+- [seller-auth.md](seller-auth.md): seller sign-in (draft, options and recommendation)
 
 Follow the architecture principles in [the planning skill](../../.claude/skills/react-ts-app-plan/SKILL.md).

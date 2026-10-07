@@ -1,0 +1,13 @@
+node_modules
+dist
+.wrangler
+.certs
+scratch
+captures
+test-results
+playwright-report
+pnpm-lock.yaml
+docs
+briefs
+.claude
+CLAUDE.md

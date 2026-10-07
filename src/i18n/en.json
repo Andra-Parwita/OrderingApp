@@ -1,0 +1,13 @@
+{
+  "app": { "name": "Weekly Menu" },
+  "language": { "label": "Language" },
+  "hello": {
+    "title": "Hello",
+    "health": {
+      "label": "Server status",
+      "loading": "Checking…",
+      "ok": "ok",
+      "error": "Unreachable"
+    }
+  }
+}
