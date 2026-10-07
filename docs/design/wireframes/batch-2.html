@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframes · batch 2 · after ordering</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ececec; color: #333; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+  main { max-width: 1700px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .legend { color: #555; margin: 0 0 18px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
+  .frame { width: 375px; max-width: 100%; }
+  .frame.wide { width: 780px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .phone { background: #fff; border: 2px solid #777; border-radius: 22px; overflow: hidden; }
+  .wide .pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  .wide .pair .phone { width: 375px; max-width: 100%; }
+  .wide .pair .wa { flex: 1 1 260px; }
+  ul.notes { margin: 8px 0 0; padding-left: 18px; color: #444; font-size: 12px; }
+  ul.notes li { margin-bottom: 3px; }
+
+  .pad { padding: 10px 12px; }
+  .hair { border-top: 1px solid #bbb; }
+  .muted { color: #666; }
+  .small { font-size: 12px; }
+  .b { font-weight: 600; }
+  .img { position: relative; background: #e2e2e2; border: 1px solid #aaa; display: flex; align-items: center; justify-content: center; color: #555; font-size: 12px; overflow: hidden;
+    background-image: linear-gradient(to top right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)), linear-gradient(to bottom right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)); }
+  .img span { background: #e2e2e2; padding: 1px 6px; position: relative; }
+  .btn { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border: 1.5px solid #555; border-radius: 6px; background: #fff; color: #333; font-weight: 600; text-align: center; width: 100%; }
+  .btn.pri { background: #444; color: #fff; border-color: #444; }
+  .btn.dis { border-style: dashed; border-color: #bbb; color: #999; }
+  .link { display: flex; align-items: center; min-height: 44px; text-decoration: underline; color: #444; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; background: #e4e4e4; border: 1px solid #bbb; font-size: 12px; white-space: nowrap; }
+  .tag { display: inline-block; padding: 0 6px; border: 1px solid #999; border-radius: 3px; font-size: 11px; color: #555; }
+  .field { border: 1px solid #888; border-radius: 6px; min-height: 44px; padding: 0 10px; display: flex; align-items: center; color: #777; background: #fff; }
+  .lang { display: inline-flex; border: 1px solid #777; border-radius: 6px; overflow: hidden; }
+  .lang span { padding: 0 10px; min-height: 36px; display: flex; align-items: center; }
+  .lang .on { background: #444; color: #fff; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  .item { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .item .t { flex: 1; min-width: 0; }
+  .item.out { background: #f3f3f3; color: #777; }
+  .step { display: inline-flex; align-items: center; flex: none; }
+  .step i { font-style: normal; width: 40px; height: 44px; border: 1.5px solid #666; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .step b { width: 26px; text-align: center; font-weight: 600; }
+  .step.off i { border-color: #bbb; color: #bbb; border-style: dashed; }
+  .step.off b { color: #aaa; }
+  .week { background: #f3f3f3; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .week div { display: flex; justify-content: space-between; gap: 8px; }
+  .sticky { background: #444; color: #fff; display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 14px; font-weight: 600; }
+
+  .line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .line:first-child { border-top: 0; }
+  .line .step { margin-left: auto; }
+  .radio { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .radio u { width: 18px; height: 18px; border: 1.5px solid #555; border-radius: 50%; flex: none; display: inline-block; }
+  .radio u.on { background: radial-gradient(#444 45%, #fff 50%); }
+  .note { background: #f3f3f3; border: 1px solid #ccc; border-radius: 6px; padding: 6px 8px; font-size: 12px; color: #555; }
+  .code { font-size: 38px; font-weight: 700; letter-spacing: .08em; text-align: center; font-family: ui-monospace, Consolas, monospace; }
+  .qr { width: 120px; height: 120px; margin: 8px auto; }
+  .wa { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 10px; padding: 12px; }
+  .wa p { margin: 6px 0; background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+
+  .tabs { display: flex; border-bottom: 1px solid #bbb; }
+  .tabs span { flex: 1 1 0; text-align: center; padding: 0 1px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; font-size: 11px; line-height: 1.2; border-right: 1px solid #ddd; }
+  .tabs span:last-child { border-right: 0; }
+  .tabs .on { background: #e4e4e4; font-weight: 700; box-shadow: inset 0 -3px 0 #444; }
+  .o { display: grid; grid-template-columns: auto 1fr auto; gap: 0 8px; align-items: center; padding: 6px 12px; min-height: 48px; border-top: 1px solid #ddd; }
+  .o .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .o .n { font-weight: 600; }
+  .o .s { grid-column: 1 / 3; color: #555; font-size: 12px; }
+  .o .m { text-align: right; white-space: nowrap; font-weight: 600; }
+  .bar { display: flex; border-top: 1px solid #999; background: #f3f3f3; }
+  .bar span { flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; font-size: 12px; border-right: 1px solid #ccc; }
+  .bar span:last-child { border-right: 0; }
+  .bar .on { font-weight: 700; background: #e4e4e4; }
+  .toggle { display: inline-block; width: 44px; height: 24px; border: 1.5px solid #555; border-radius: 12px; position: relative; flex: none; background: #ccc; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 22px; width: 17px; height: 17px; border-radius: 50%; background: #444; }
+
+  /* batch 2 additions, same palette */
+  .seg { display: flex; border: 1px solid #777; border-radius: 6px; overflow: hidden; }
+  .seg span { flex: 1 1 0; min-height: 40px; padding: 0 4px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; border-right: 1px solid #bbb; }
+  .seg span:last-child { border-right: 0; }
+  .seg .on { background: #444; color: #fff; font-weight: 600; }
+  .stepper { display: flex; margin: 6px 0; }
+  .stepper div { flex: 1 1 0; text-align: center; font-size: 11px; line-height: 1.25; padding: 0 2px; }
+  .stepper u { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: 0 auto 3px; border: 1.5px solid #888; border-radius: 50%; text-decoration: none; font-size: 12px; background: #fff; color: #777; }
+  .stepper .done u { background: #bbb; border-color: #888; color: #333; }
+  .stepper .cur u { background: #444; border-color: #444; color: #fff; }
+  .stepper .cur { font-weight: 700; }
+  .banner { background: #e4e4e4; border: 1px solid #999; border-radius: 6px; padding: 8px 10px; font-weight: 600; }
+  .ev { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .ev:first-child { border-top: 0; }
+  .ev span:first-child { color: #666; white-space: nowrap; }
+  .grp { background: #e4e4e4; padding: 6px 12px; border-top: 1px solid #bbb; font-weight: 700; display: flex; justify-content: space-between; }
+  .ck { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 12px; min-height: 48px; border-top: 1px solid #ddd; }
+  .ck .t { flex: 1; min-width: 0; }
+  .ck .q { text-align: right; white-space: nowrap; font-weight: 700; font-size: 15px; min-width: 56px; }
+  .ck.out { background: #f3f3f3; color: #777; }
+  .thumbs { display: flex; gap: 8px; }
+  .thumbs .img { width: 64px; height: 64px; flex: none; }
+  .thumbs .add { width: 64px; height: 64px; flex: none; border: 1.5px dashed #888; border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; color: #555; }
+  .pv { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; }
+  .pv p { margin: 0 0 8px; }
+  .pv p:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframes · batch 2 · after ordering</h1>
+<p class="legend">Low fidelity, greys only. Grey box with a cross = image. Dark fill = primary, outline = secondary, dashed = disabled. Annotations name each action as <b>Server</b> (HTTPS to the app server) or <b>WhatsApp</b> (opens WhatsApp, never touches the server). Draft 2 (approved, 2 data fixes), 2026-10-07.</p>
+<div class="row">
+
+<!-- C4 -->
+<section class="frame">
+<h2>C4 · My orders</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ My orders</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad hair" style="padding-bottom:6px">
+    <div class="small b">Have an order code? Open it</div>
+    <div class="field" style="margin-top:4px">Order code</div>
+    <div class="small muted" style="margin-top:3px">k7f2qx, K7F 2QX and K7F-2QX all work; opens on the 6th character</div>
+  </div>
+  <div class="pad hair small head" style="background:#f3f3f3"><span>Updates on</span><span class="muted">or: <span class="pill">Turn on updates</span></span></div>
+  <div class="week b">This week</div>
+  <div class="o"><span class="c">K7F-2QX</span><span class="n">Dapur Bu Ani</span><span class="pill">Confirmed</span><span class="s">Sat 11 Oct · Pickup</span><span class="m">$30.00</span></div>
+  <div class="week b">Earlier</div>
+  <div class="o"><span class="c">G3W-8RT</span><span class="n">Dapur Bu Ani</span><span class="pill">Collected</span><span class="s">Sat 4 Oct · Pickup</span><span class="m">$25.00</span></div>
+  <div class="pad hair small muted" style="text-align:center">Saved on this phone only. No account.</div>
+</div>
+<ul class="notes">
+  <li>The list is stored on this phone only; there is no account and nothing links it to a person.</li>
+  <li>An order link sent by the seller on WhatsApp also lands here and is added to the list (D-010).</li>
+  <li>Old orders disappear when the server deletes them after a few weeks.</li>
+  <li><b>Server</b>: opening a row or an order code loads that order page (C5). Status shown here is fetched live.</li>
+  <li>"Turn on updates" asks for notification permission and registers this phone (<b>Server</b>); once on, the line reads "Updates on". Nothing here opens WhatsApp.</li>
+</ul>
+</section>
+
+<!-- C5 -->
+<section class="frame">
+<h2>C5 · Order page, before cut-off (Confirmed)</h2>
+<div class="phone">
+  <div class="pad head small"><b>‹ My orders</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad" style="padding-top:0;text-align:center"><div class="small muted">Dapur Bu Ani · Your order number</div></div>
+  <div class="code" style="font-size:32px">K7F-2QX</div>
+  <div class="img qr" style="width:100px;height:100px"><span>QR code</span></div>
+  <div class="pad hair">
+    <div class="stepper">
+      <div class="done"><u>✓</u>Ordered ✓</div>
+      <div class="cur"><u>●</u>Confirmed (now)</div>
+      <div><u>○</u>Ready for pickup</div>
+      <div><u>○</u>Collected</div>
+    </div>
+  </div>
+  <div class="pad hair">
+    <div class="line"><span>2× Lemper ayam</span><b>$20.00</b></div>
+    <div class="line"><span>1× Tempe mendoan</span><b>$10.00</b></div>
+    <div class="line" style="border-top:1.5px solid #666"><b>Total</b><b>$30.00</b></div>
+    <div class="small"><b>Pickup</b> · Sat 11 Oct, 2–5 pm · Glen Waverley</div>
+    <div class="note" style="margin-top:6px">Note: No chilli on the tempeh please</div>
+  </div>
+  <div class="pad hair">
+    <div class="btn">Change order</div>
+    <div class="btn" style="margin-top:8px">Cancel order</div>
+    <div class="small muted" style="margin-top:6px;text-align:center">Until Fri 10 Oct, 8 pm. Cancel asks for a second tap.</div>
+    <div class="btn" style="margin-top:10px">Send to seller on WhatsApp</div>
+  </div>
+  <div class="pad hair">
+    <div class="b small">Updates</div>
+    <div class="ev small"><span>Thu 9 Oct 10:02</span><span>Your order is confirmed</span></div>
+    <div class="ev small"><span>Wed 8 Oct 7:12 pm</span><span>Order placed</span></div>
+  </div>
+  <div class="pad hair small muted">On iPhone, add this app to your Home Screen to get notifications. <span class="link" style="display:inline-flex;min-height:44px">How?</span></div>
+</div>
+<ul class="notes">
+  <li>Status uses text labels and a tick, never colour alone. Chef names are not shown to customers (D-012).</li>
+  <li><b>Server</b>: "Change order" opens the basket for editing; "Cancel order" needs a second tap. Both allowed only until the cut-off.</li>
+  <li><b>WhatsApp</b>: "Send to seller" opens WhatsApp with the pre-filled order text (as in C3); nothing goes to the server.</li>
+  <li><b>Server</b>: the Updates list is the in-app inbox of status messages for this order; it also arrives as a push if updates are on.</li>
+  <li>The iPhone hint shows only on iPhone in a browser tab; "How?" opens a short help.</li>
+</ul>
+</section>
+
+<!-- C5b -->
+<section class="frame">
+<h2>C5b · Order page, Saturday (Ready for pickup)</h2>
+<div class="phone">
+  <div class="pad head small"><b>‹ My orders</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad" style="padding-top:0"><div class="banner">Ready! Pick up today 2–5 pm, Glen Waverley</div></div>
+  <div class="pad" style="padding-top:0;text-align:center"><div class="small muted">Dapur Bu Ani · Your order number</div></div>
+  <div class="code" style="font-size:32px">K7F-2QX</div>
+  <div class="img qr" style="width:100px;height:100px"><span>QR code</span></div>
+  <div class="pad hair">
+    <div class="stepper">
+      <div class="done"><u>✓</u>Ordered ✓</div>
+      <div class="done"><u>✓</u>Confirmed ✓</div>
+      <div class="cur"><u>●</u>Ready for pickup (now)</div>
+      <div><u>○</u>Collected</div>
+    </div>
+  </div>
+  <div class="pad hair">
+    <div class="line"><span>2× Lemper ayam</span><b>$20.00</b></div>
+    <div class="line"><span>1× Tempe mendoan</span><b>$10.00</b></div>
+    <div class="line" style="border-top:1.5px solid #666"><b>Total</b><b>$30.00</b></div>
+    <div class="small"><b>Pickup</b> · Sat 11 Oct, 2–5 pm · Glen Waverley</div>
+    <div class="note" style="margin-top:6px">Note: No chilli on the tempeh please</div>
+  </div>
+  <div class="pad hair">
+    <div class="btn pri">I've collected it — scan the label</div>
+    <div class="btn dis" style="margin-top:8px">Changes closed at the cut-off</div>
+    <div class="btn" style="margin-top:8px">Send to seller on WhatsApp</div>
+  </div>
+  <div class="pad hair">
+    <div class="b small">Updates</div>
+    <div class="ev small"><span>Sat 11 Oct 1:45 pm</span><span>Ready for pickup</span></div>
+    <div class="ev small"><span>Thu 9 Oct 10:02</span><span>Your order is confirmed</span></div>
+    <div class="ev small"><span>Wed 8 Oct 7:12 pm</span><span>Order placed</span></div>
+  </div>
+</div>
+<ul class="notes">
+  <li>Same page as C5 after the seller or chef taps Ready for pickup (<b>Server</b>); the banner and stepper update live.</li>
+  <li>Change and cancel are replaced by a disabled line, "Changes closed at the cut-off".</li>
+  <li>"I've collected it — scan the label" opens the scanner; scanning is in batch 4.</li>
+  <li><b>WhatsApp</b>: "Send to seller" is unchanged. The newest update sits on top of the inbox.</li>
+</ul>
+</section>
+
+<!-- S3 -->
+<section class="frame">
+<h2>S3 · Add order (WhatsApp customer)</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Add order</b><span class="pill">Bu Ani</span></div>
+  <div class="pad hair">
+    <div class="b">Customer first name</div>
+    <div class="field" style="color:#333">Lisa</div>
+  </div>
+  <div class="pad hair" style="padding-bottom:4px"><div class="b">Items</div></div>
+  <div class="item" style="padding:4px 12px"><div class="t"><div class="b">Nasi campur daun jeruk</div><div class="small muted">$15.00</div></div><div class="step"><i>−</i><b>2</b><i>+</i></div></div>
+  <div class="item" style="padding:4px 12px"><div class="t"><div class="b">Pesmol ikan nila</div><div class="small muted">$15.00</div></div><div class="step"><i>−</i><b>1</b><i>+</i></div></div>
+  <div class="item" style="padding:4px 12px"><div class="t"><div class="b">Lemper ayam</div><div class="small muted">$10.00</div></div><div class="step"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item" style="padding:4px 12px"><div class="t muted small">… 3 more items (Empek-empek, Ayam goreng, Tempe)</div></div>
+  <div class="item"><b>Total</b><b style="font-size:16px">$45.00</b></div>
+  <div class="pad hair">
+    <div class="seg"><span class="on">Pickup</span><span>Delivery</span></div>
+  </div>
+  <div class="pad hair">
+    <div class="b">Note (optional)</div>
+    <div class="field" style="min-height:64px;align-items:flex-start;padding-top:10px">e.g. no chilli, peanut allergy</div>
+    <div class="small muted head" style="margin-top:3px;align-items:flex-start"><span>Allergies or requests. Don't add your address, phone or other sensitive details — send those on WhatsApp.</span><span>0/200</span></div>
+  </div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Language for the customer's link</div>
+    <div class="seg" style="width:140px"><span class="on">EN</span><span>ID</span></div>
+  </div>
+  <div class="pad hair">
+    <div class="small muted" style="margin-bottom:6px">Starts as Confirmed · entered by Bu Ani</div>
+    <div class="btn pri">Save order</div>
+  </div>
+</div>
+<ul class="notes">
+  <li>The order starts as Confirmed, because the seller is typing what the customer already agreed on WhatsApp (D-010).</li>
+  <li>"Entered by" records who typed it; it shows in the Orders list and the order detail.</li>
+  <li>The same screen works for chefs, who see their own name there (D-013).</li>
+  <li><b>Server</b>: "Save order" creates the order, checks stock and returns the code (S3b). Nothing opens WhatsApp yet.</li>
+  <li>For Delivery, the address is never typed here; the customer sends it on WhatsApp.</li>
+</ul>
+</section>
+
+<!-- S3b -->
+<section class="frame wide">
+<h2>S3b · Order saved → send link</h2>
+<div class="pair">
+<div class="phone">
+  <div class="pad" style="text-align:center"><div class="b">Order saved</div><div class="small muted">Lisa · Pickup · Sat 11 Oct, 2–5 pm</div></div>
+  <div class="code" style="font-size:34px">P4K-7WS</div>
+  <div class="pad hair">
+    <div class="line"><span>2× Nasi campur daun jeruk</span><b>$30.00</b></div>
+    <div class="line"><span>1× Pesmol ikan nila</span><b>$15.00</b></div>
+    <div class="line" style="border-top:1.5px solid #666"><b>Total</b><b>$45.00</b></div>
+    <div class="small muted">Confirmed · entered by Bu Ani</div>
+  </div>
+  <div class="pad hair">
+    <div class="btn pri">Send link on WhatsApp</div>
+    <div class="btn" style="margin-top:8px">Copy link</div>
+    <div class="btn" style="margin-top:8px">Done</div>
+  </div>
+</div>
+<div class="wa">
+  <div class="b">WhatsApp message preview</div>
+  <div class="small muted">Pre-filled; the seller picks the chat and taps Send in WhatsApp.</div>
+  <p>Hi Lisa, here's your order P4K-7WS from Dapur Bu Ani: 2× Nasi campur, 1× Pesmol ikan nila. Total $45.00. Pickup Sat 11 Oct 2–5 pm. Track it and get updates here: https://… /o/&lt;long-private-token&gt;</p>
+  <div class="small muted">(The note is not included.)</div>
+</div>
+</div>
+<ul class="notes">
+  <li>The link carries the long private token, not the 6-character code; the code is for reading out and for the seller's search.</li>
+  <li><b>WhatsApp</b>: "Send link on WhatsApp" opens WhatsApp with the text on the right; nothing goes to the server.</li>
+  <li>"Copy link" copies the same link to the clipboard (local). "Done" returns to the Orders list.</li>
+  <li>Opening the link on Lisa's phone adds the order to her My orders (C4) and loads it from the <b>Server</b>.</li>
+</ul>
+</section>
+
+<!-- S4 -->
+<section class="frame">
+<h2>S4 · Cook list</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Cook list · Sat 11 Oct</b><span class="pill">● Live</span></div>
+  <div class="pad hair" style="padding-bottom:6px">
+    <div class="small muted" style="margin-bottom:3px">Count</div>
+    <div class="seg"><span class="on">Confirmed + Ordered</span><span>Confirmed only</span></div>
+  </div>
+  <div class="tabs"><span class="on">All</span><span>Bu Ani</span><span>Chef Wati</span></div>
+  <div class="grp"><span>Bu Ani</span><span class="small muted" style="font-weight:400">3 items</span></div>
+  <div class="ck"><div class="t"><div class="b">Nasi campur daun jeruk</div><div class="small muted">Lime-leaf mixed rice</div></div><div class="q">9 box</div></div>
+  <div class="ck"><div class="t"><div class="b">Pesmol ikan nila</div><div class="small muted">Tilapia pesmol</div></div><div class="q">7 portion</div></div>
+  <div class="ck"><div class="t"><div class="b">Ayam goreng tepung 250 g</div><div class="small muted">Salt-and-chilli fried chicken</div></div><div class="q">6 pack</div></div>
+  <div class="grp"><span>Chef Wati</span><span class="small muted" style="font-weight:400">3 items</span></div>
+  <div class="ck"><div class="t"><div class="b">Lemper ayam</div><div class="small muted">Chicken lemper · 17 pack = 68 pieces</div></div><div class="q">17 pack<div class="small muted" style="font-weight:400">17 of 20</div></div></div>
+  <div class="ck"><div class="t"><div class="b">Tempe mendoan</div><div class="small muted">Tempeh mendoan · 12 pack = 48 pieces</div></div><div class="q">12 pack</div></div>
+  <div class="ck out"><div class="t"><div class="b">Empek-empek kapal selam</div><div class="small">Empek-empek "submarine" · <span class="pill">Sold out: limit reached</span></div></div><div class="q">10 portion<div class="small muted" style="font-weight:400">10 of 10</div></div></div>
+  <div class="grp"><span>Notes (3)</span><span class="small muted" style="font-weight:400">not on labels</span></div>
+  <div class="ck"><div class="t small"><b style="font-family:ui-monospace,Consolas,monospace">K7F-2QX</b> Rina<div>“No chilli on the tempeh please”</div></div></div>
+  <div class="ck"><div class="t small"><b style="font-family:ui-monospace,Consolas,monospace">M3H-9TD</b> Tom<div>“Peanut allergy”</div></div></div>
+  <div class="ck"><div class="t small"><b style="font-family:ui-monospace,Consolas,monospace">H9D-7RV</b> Dewi<div>“Extra sambal on the side”</div></div></div>
+  <div class="bar"><span>Orders</span><span class="on">Cook list</span><span>Menu</span><span>More</span></div>
+</div>
+<ul class="notes">
+  <li>Tapping a quantity opens the Orders list filtered to the orders containing that item, using the same Count setting, so the number and the list agree.</li>
+  <li>"Confirmed + Ordered" counts everything not cancelled; "Confirmed only" counts what the seller has accepted.</li>
+  <li>Grouping by chef is seller-side only; customers and the group post never show chef names (D-012). The Chef Wati tab shows just her section, which is also a chef's own view.</li>
+  <li>"of limit" appears only for items with a limit; at the limit the item shows Sold out on the customer menu.</li>
+  <li><b>Server</b>: live updates as orders change. Nothing here opens WhatsApp.</li>
+</ul>
+</section>
+
+<!-- S5 -->
+<section class="frame">
+<h2>S5 · Share menu to WhatsApp</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Share menu</b></div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Language of the post</div>
+    <div class="seg"><span class="on">Indonesian</span><span>English</span><span>Both</span></div>
+  </div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Images (up to 5)</div>
+    <div class="thumbs"><div class="img"><span>Photo</span></div><div class="img"><span>Photo</span></div><div class="add">+ Add</div></div>
+  </div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Text preview</div>
+    <div class="pv small">
+      <p><b>Menu Sabtu, 11 Oktober 🍱</b></p>
+      <p>1. Nasi campur daun jeruk (lauk: ayam goreng tepung tumis cabe garam, tempe mendoan, tumis kubis) – $15<br>
+      2. Pesmol ikan nila, 1 porsi – $15<br>
+      3. Lemper ayam, 4 biji – $10<br>
+      4. Empek-empek kapal selam, 1 porsi – $10<br>
+      5. Ayam goreng tepung tumis cabe garam, 250 g – $12.50<br>
+      6. Tempe mendoan, 4 biji – $10</p>
+      <p>Pesan sebelum Jumat 10 Oktober jam 20.00<br>
+      Ambil Sabtu 14.00–17.00 di Glen Waverley, bisa diantar</p>
+      <p>Pesan di sini: https://…</p>
+      <p>Ada pertanyaan? DM saya ya 🙏</p>
+    </div>
+  </div>
+  <div class="pad hair">
+    <div class="btn pri">Share to WhatsApp</div>
+    <div class="btn" style="margin-top:8px">Copy text</div>
+  </div>
+</div>
+<ul class="notes">
+  <li>The text follows the seller's existing friendly style and is built from the published menu; no chef names (D-012).</li>
+  <li><b>WhatsApp</b>: "Share to WhatsApp" opens the phone's share sheet with the text and, where the phone supports it, the images together. Otherwise it shares text only and the seller attaches the collage herself.</li>
+  <li>"Copy text" copies the preview (local); nothing goes to the server.</li>
+  <li>"Both" stacks the Indonesian text, then the English text, in one post.</li>
+  <li>Indonesian wording to be checked by a native speaker.</li>
+</ul>
+</section>
+
+</div>
+</main>
+</body>
+</html>

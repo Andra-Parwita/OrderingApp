@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframes · batch 3 · seller setup</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ececec; color: #333; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+  main { max-width: 1700px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .legend { color: #555; margin: 0 0 18px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
+  .frame { width: 375px; max-width: 100%; }
+  .frame.wide { width: 780px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .phone { background: #fff; border: 2px solid #777; border-radius: 22px; overflow: hidden; }
+  .wide .pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  .wide .pair .phone { width: 375px; max-width: 100%; }
+  .wide .pair .wa { flex: 1 1 260px; }
+  ul.notes { margin: 8px 0 0; padding-left: 18px; color: #444; font-size: 12px; }
+  ul.notes li { margin-bottom: 3px; }
+
+  .pad { padding: 10px 12px; }
+  .hair { border-top: 1px solid #bbb; }
+  .muted { color: #666; }
+  .small { font-size: 12px; }
+  .b { font-weight: 600; }
+  .img { position: relative; background: #e2e2e2; border: 1px solid #aaa; display: flex; align-items: center; justify-content: center; color: #555; font-size: 12px; overflow: hidden;
+    background-image: linear-gradient(to top right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)), linear-gradient(to bottom right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)); }
+  .img span { background: #e2e2e2; padding: 1px 6px; position: relative; }
+  .btn { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border: 1.5px solid #555; border-radius: 6px; background: #fff; color: #333; font-weight: 600; text-align: center; width: 100%; }
+  .btn.pri { background: #444; color: #fff; border-color: #444; }
+  .btn.dis { border-style: dashed; border-color: #bbb; color: #999; }
+  .link { display: flex; align-items: center; min-height: 44px; text-decoration: underline; color: #444; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; background: #e4e4e4; border: 1px solid #bbb; font-size: 12px; white-space: nowrap; }
+  .tag { display: inline-block; padding: 0 6px; border: 1px solid #999; border-radius: 3px; font-size: 11px; color: #555; }
+  .field { border: 1px solid #888; border-radius: 6px; min-height: 44px; padding: 0 10px; display: flex; align-items: center; color: #777; background: #fff; }
+  .lang { display: inline-flex; border: 1px solid #777; border-radius: 6px; overflow: hidden; }
+  .lang span { padding: 0 10px; min-height: 36px; display: flex; align-items: center; }
+  .lang .on { background: #444; color: #fff; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  .item { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .item .t { flex: 1; min-width: 0; }
+  .item.out { background: #f3f3f3; color: #777; }
+  .step { display: inline-flex; align-items: center; flex: none; }
+  .step i { font-style: normal; width: 40px; height: 44px; border: 1.5px solid #666; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .step b { width: 26px; text-align: center; font-weight: 600; }
+  .step.off i { border-color: #bbb; color: #bbb; border-style: dashed; }
+  .step.off b { color: #aaa; }
+  .week { background: #f3f3f3; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .week div { display: flex; justify-content: space-between; gap: 8px; }
+  .sticky { background: #444; color: #fff; display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 14px; font-weight: 600; }
+
+  .line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .line:first-child { border-top: 0; }
+  .line .step { margin-left: auto; }
+  .radio { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .radio u { width: 18px; height: 18px; border: 1.5px solid #555; border-radius: 50%; flex: none; display: inline-block; }
+  .radio u.on { background: radial-gradient(#444 45%, #fff 50%); }
+  .note { background: #f3f3f3; border: 1px solid #ccc; border-radius: 6px; padding: 6px 8px; font-size: 12px; color: #555; }
+  .code { font-size: 38px; font-weight: 700; letter-spacing: .08em; text-align: center; font-family: ui-monospace, Consolas, monospace; }
+  .qr { width: 120px; height: 120px; margin: 8px auto; }
+  .wa { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 10px; padding: 12px; }
+  .wa p { margin: 6px 0; background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+
+  .tabs { display: flex; border-bottom: 1px solid #bbb; }
+  .tabs span { flex: 1 1 0; text-align: center; padding: 0 1px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; font-size: 11px; line-height: 1.2; border-right: 1px solid #ddd; }
+  .tabs span:last-child { border-right: 0; }
+  .tabs .on { background: #e4e4e4; font-weight: 700; box-shadow: inset 0 -3px 0 #444; }
+  .o { display: grid; grid-template-columns: auto 1fr auto; gap: 0 8px; align-items: center; padding: 6px 12px; min-height: 48px; border-top: 1px solid #ddd; }
+  .o .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .o .n { font-weight: 600; }
+  .o .s { grid-column: 1 / 3; color: #555; font-size: 12px; }
+  .o .m { text-align: right; white-space: nowrap; font-weight: 600; }
+  .bar { display: flex; border-top: 1px solid #999; background: #f3f3f3; }
+  .bar span { flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; font-size: 12px; border-right: 1px solid #ccc; }
+  .bar span:last-child { border-right: 0; }
+  .bar .on { font-weight: 700; background: #e4e4e4; }
+  .toggle { display: inline-block; width: 44px; height: 24px; border: 1.5px solid #555; border-radius: 12px; position: relative; flex: none; background: #ccc; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 22px; width: 17px; height: 17px; border-radius: 50%; background: #444; }
+
+  /* batch 2 additions, same palette */
+  .seg { display: flex; border: 1px solid #777; border-radius: 6px; overflow: hidden; }
+  .seg span { flex: 1 1 0; min-height: 40px; padding: 0 4px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; border-right: 1px solid #bbb; }
+  .seg span:last-child { border-right: 0; }
+  .seg .on { background: #444; color: #fff; font-weight: 600; }
+  .stepper { display: flex; margin: 6px 0; }
+  .stepper div { flex: 1 1 0; text-align: center; font-size: 11px; line-height: 1.25; padding: 0 2px; }
+  .stepper u { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: 0 auto 3px; border: 1.5px solid #888; border-radius: 50%; text-decoration: none; font-size: 12px; background: #fff; color: #777; }
+  .stepper .done u { background: #bbb; border-color: #888; color: #333; }
+  .stepper .cur u { background: #444; border-color: #444; color: #fff; }
+  .stepper .cur { font-weight: 700; }
+  .banner { background: #e4e4e4; border: 1px solid #999; border-radius: 6px; padding: 8px 10px; font-weight: 600; }
+  .ev { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .ev:first-child { border-top: 0; }
+  .ev span:first-child { color: #666; white-space: nowrap; }
+  .grp { background: #e4e4e4; padding: 6px 12px; border-top: 1px solid #bbb; font-weight: 700; display: flex; justify-content: space-between; }
+  .ck { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 12px; min-height: 48px; border-top: 1px solid #ddd; }
+  .ck .t { flex: 1; min-width: 0; }
+  .ck .q { text-align: right; white-space: nowrap; font-weight: 700; font-size: 15px; min-width: 56px; }
+  .ck.out { background: #f3f3f3; color: #777; }
+  .thumbs { display: flex; gap: 8px; }
+  .thumbs .img { width: 64px; height: 64px; flex: none; }
+  .thumbs .add { width: 64px; height: 64px; flex: none; border: 1.5px dashed #888; border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; color: #555; }
+  .pv { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; }
+  .pv p { margin: 0 0 8px; }
+  .pv p:last-child { margin-bottom: 0; }
+
+  /* batch 3 additions, same palette */
+  .sec { background: #e4e4e4; padding: 6px 12px; border-top: 1px solid #bbb; font-weight: 700; }
+  .lbl { font-weight: 600; margin-bottom: 3px; }
+  .help { font-size: 12px; color: #666; margin-top: 3px; }
+  .two { display: flex; gap: 8px; }
+  .two > div { flex: 1 1 0; min-width: 0; }
+  .field.area { min-height: 64px; align-items: flex-start; padding-top: 10px; }
+  .field.val { color: #333; }
+  .sel { justify-content: space-between; }
+  .btn.sm { min-height: 44px; width: auto; flex: 1 1 0; }
+  .btns { display: flex; gap: 8px; }
+  .row2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; }
+  .mi { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #ccc; min-height: 56px; }
+  .mi .t { flex: 1; min-width: 0; }
+  .mi .r { text-align: right; white-space: nowrap; font-weight: 600; }
+  .dots { width: 44px; height: 44px; flex: none; border: 1.5px solid #666; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .key { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 6px; padding: 10px; text-align: center; font: 700 22px ui-monospace, Consolas, monospace; letter-spacing: .06em; }
+  .ban { height: 90px; width: 100%; }
+  .hdr { padding: 8px 12px; background: #f3f3f3; border: 1px dashed #999; border-radius: 6px; }
+  .frame.wide2 { width: 780px; }
+  .opts .seg { margin-top: 4px; }
+  .sheet { background: #f3f3f3; border: 1px solid #aaa; padding: 10px; }
+  .labels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .lab { background: #fff; border: 1px dashed #777; padding: 8px; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: start; min-width: 0; }
+  .lab .code { font-size: 22px; text-align: left; letter-spacing: .04em; }
+  .lab .qr { width: 52px; height: 52px; margin: 0; }
+  .lab .nm { font-weight: 600; }
+  .lab .its { grid-column: 1 / 3; font-size: 12px; overflow-wrap: anywhere; }
+  .lab .its div { margin-top: 2px; }
+  .lab .pk { grid-column: 1 / 3; border-top: 1px solid #ccc; padding-top: 4px; font-weight: 600; font-size: 12px; }
+
+  /* draft 2: preview as customer */
+  .selbar { background: #444; color: #fff; padding: 8px 12px; }
+  .selbar .b { margin-bottom: 6px; }
+  .selbar .btn.sm { min-height: 40px; }
+  .selbar .btn:not(.pri) { background: #444; color: #fff; border-color: #fff; }
+  .selbar .btn.pri { background: #fff; color: #333; border-color: #fff; }
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframes · batch 3 · seller setup</h1>
+<p class="legend">Low fidelity, greys only. Grey box with a cross = image. Dark fill = primary, outline = secondary, dashed = disabled. Annotations name each action as <b>Server</b> (HTTPS to the app server) or <b>WhatsApp</b> (opens WhatsApp, never touches the server). Seller screens drawn in EN. Draft 2: preview as customer (D-019), 2026-10-07.</p>
+<div class="row">
+
+<!-- S6 -->
+<section class="frame">
+<h2>S6 · Menu (this week)</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Menu · Sat 11 Oct</b><span class="pill">Draft</span></div>
+  <div class="pad hair">
+    <div class="btns"><div class="btn sm">Preview as customer</div><div class="btn sm pri">Publish</div></div>
+  </div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Images (up to 5)</div>
+    <div class="thumbs"><div class="img"><span>Photo</span></div><div class="img"><span>Photo</span></div><div class="add">+ Add</div></div>
+  </div>
+  <div class="mi"><div class="t"><div class="b">Nasi campur daun jeruk</div><div class="small muted">Lime-leaf mixed rice · 1 box</div></div><div class="r">$15.00</div></div>
+  <div class="mi"><div class="t"><div class="b">Pesmol ikan nila</div><div class="small muted">Tilapia pesmol · 1 portion</div></div><div class="r">$15.00</div></div>
+  <div class="mi"><div class="t"><div class="b">Lemper ayam</div><div class="small muted">Chicken lemper · 4 pieces</div><div class="small"><span class="tag">limit 20</span> <span class="tag">Chef Wati</span></div></div><div class="r">$10.00</div></div>
+  <div class="mi"><div class="t"><div class="b">Empek-empek kapal selam</div><div class="small muted">Empek-empek "submarine" · 1 portion</div><div class="small"><span class="tag">limit 10</span> <span class="tag">Chef Wati</span></div></div><div class="r">$10.00</div></div>
+  <div class="mi"><div class="t"><div class="b">Ayam goreng tepung 250 g</div><div class="small muted">Salt-and-chilli fried chicken · 250 g</div></div><div class="r">$12.50</div></div>
+  <div class="mi"><div class="t"><div class="b">Tempe mendoan</div><div class="small muted">Tempeh mendoan · 4 pieces</div><div class="small"><span class="tag">Chef Wati</span></div></div><div class="r">$10.00</div></div>
+  <div class="pad hair">
+    <div class="btn">+ Add item</div>
+    <div class="small muted" style="margin-top:3px;text-align:center">At 10 items it turns off: "Max 10 items"</div>
+    <div class="btn dis" style="margin-top:6px">+ Add item · Max 10 items (shown at 10)</div>
+  </div>
+  <div class="pad hair">
+    <div class="btn">Start from a saved set</div>
+    <div class="btn" style="margin-top:8px">Copy last week</div>
+    <div class="btn" style="margin-top:8px">Save as set</div>
+  </div>
+  <div class="pad hair">
+    <div class="link">Week settings ›</div>
+    <div class="link">Share to WhatsApp ›</div>
+  </div>
+  <div class="bar"><span>Orders</span><span>Cook list</span><span class="on">Menu</span><span>More</span></div>
+</div>
+<ul class="notes">
+  <li>Tapping a row opens Edit item (S7). Chef tags are seller-side only; customers and the group post never show them (D-012).</li>
+  <li><b>Server</b>: adding, editing and removing items; adding or removing an image (resized and compressed on upload); "Copy last week"; "Save as set". Each saves straight away.</li>
+  <li>State: a week starts as Draft (customers see nothing yet) and becomes Published when the seller taps "Publish" (<b>Server</b>); the pill shows which one. Shown here as Draft.</li>
+  <li>"Preview as customer" opens S6b (local, uses the draft); "Publish" makes the menu visible to customers (<b>Server</b>).</li>
+  <li><b>Local / WhatsApp</b>: "Share to WhatsApp" opens S5 and then the phone's share sheet; "Week settings" opens S9.</li>
+  <li>Edits after orders exist apply to new orders only; existing orders keep the name and price they were placed with. An item with orders can't be deleted, only marked Sold out (D-020).</li>
+</ul>
+</section>
+
+<!-- S6b -->
+<section class="frame">
+<h2>S6b · Preview as customer</h2>
+<div class="phone">
+  <div class="selbar">
+    <div class="b">Preview · not published yet</div>
+    <div class="btns"><div class="btn sm">Back to editing</div><div class="btn sm pri">Publish</div></div>
+  </div>
+  <div class="pad head small"><span class="muted" style="text-decoration:underline;min-height:36px;display:flex;align-items:center">My orders</span><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="img" style="height:90px"><span>Seller banner image</span></div>
+  <div class="pad"><div class="b" style="font-size:18px">Dapur Bu Ani</div><div class="muted">Home cooking, made fresh every Saturday</div></div>
+  <div class="week small">
+    <div><span>Cooking</span><b>Sat 11 Oct</b></div>
+    <div><span>Order by</span><b>Fri 10 Oct, 8 pm</b></div>
+    <div><span>Pickup</span><b>Sat 2–5 pm, Glen Waverley</b></div>
+    <div><span>Delivery available</span><span class="tag">address sent on WhatsApp</span></div>
+  </div>
+  <div class="item"><div class="t"><div class="b">Lime-leaf mixed rice</div><div class="small muted">Salt-and-chilli fried chicken, crispy tempeh, stir-fried cabbage</div><div class="small">1 box · <b>$15.00</b></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Tilapia pesmol</div><div class="small muted">Tilapia in turmeric pesmol sauce</div><div class="small">1 portion · <b>$15.00</b></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Chicken lemper</div><div class="small muted">Sticky rice rolls in banana leaf</div><div class="small">4 pieces · <b>$10.00</b> · <span class="pill">3 left</span></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item out"><div class="t"><div class="b">Empek-empek "submarine"</div><div class="small">Palembang fish cake with egg</div><div class="small">1 portion · <b>$10.00</b> · <span class="pill">Sold out</span></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Salt-and-chilli fried chicken</div><div class="small muted">Battered fried chicken</div><div class="small">250 g · <b>$12.50</b></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Tempeh mendoan</div><div class="small muted">Thin battered tempeh</div><div class="small">4 pieces · <b>$10.00</b></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+</div>
+<ul class="notes">
+  <li>Shows exactly what customers will see, built from the draft menu (S6) and week settings (S9).</li>
+  <li>The EN/ID switch works, so the seller can check both languages.</li>
+  <li>Nothing can be ordered from the preview: steppers are disabled and there is no basket bar.</li>
+  <li>Chef tags are not shown (D-012).</li>
+  <li><b>Server</b>: "Publish". Local: "Back to editing" (returns to S6), the EN/ID switch and scrolling.</li>
+</ul>
+</section>
+
+<!-- S7 -->
+<section class="frame">
+<h2>S7 · Edit item</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Edit item</b><span class="pill">Lemper ayam</span></div>
+  <div class="pad hair">
+    <div class="lbl">Name (EN)</div><div class="field val">Chicken lemper</div>
+    <div class="lbl" style="margin-top:8px">Name (ID)</div><div class="field val">Lemper ayam</div>
+  </div>
+  <div class="pad hair">
+    <div class="lbl">Short description (EN)</div><div class="field area">Sticky rice rolls with spiced shredded chicken</div>
+    <div class="lbl" style="margin-top:8px">Short description (ID)</div><div class="field area">Lemper isi ayam bumbu, dibungkus daun pisang</div>
+    <div class="help">If one is empty, the other is shown</div>
+  </div>
+  <div class="pad hair">
+    <div class="two">
+      <div><div class="lbl">Size or quantity</div><div class="field val">4 pieces</div><div class="help">ID: "4 biji"</div></div>
+      <div><div class="lbl">Price (AUD)</div><div class="field val">10.00</div><div class="help">Cents allowed</div></div>
+    </div>
+  </div>
+  <div class="pad hair">
+    <div class="lbl">Portion limit (optional)</div>
+    <div class="field val">20</div>
+    <div class="help">Empty = no limit. At the limit the item shows Sold out.</div>
+  </div>
+  <div class="pad hair">
+    <div class="lbl">Chef</div>
+    <div class="field val sel"><span>Chef Wati</span><span>▾</span></div>
+    <div class="help">Options: None — Bu Ani · Chef Wati. Only you and your chefs see this.</div>
+  </div>
+  <div class="pad hair">
+    <div class="btn pri">Save item</div>
+    <div class="btn" style="margin-top:8px">Delete item</div>
+    <div class="small muted" style="margin-top:4px;text-align:center">Delete asks for a second tap.</div>
+  </div>
+</div>
+<ul class="notes">
+  <li>Bilingual fields: if only one language is filled, customers in the other language see it as is.</li>
+  <li><b>Server</b>: "Save item" and "Delete item" (second tap). Nothing opens WhatsApp.</li>
+  <li>The chef decides which section of the cook list (S4) the item sits in; "None — Bu Ani" is the default.</li>
+  <li>Price is stored in cents; the field accepts 10 or 10.00.</li>
+</ul>
+</section>
+
+<!-- S8 -->
+<section class="frame">
+<h2>S8 · Saved sets</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Saved sets</b><span class="pill">3 of 5</span></div>
+  <div class="mi" style="display:block">
+    <div class="b">Set A · Nasi campur week</div>
+    <div class="small muted">6 items · 3 images · last used 4 Oct</div>
+    <div class="btns" style="margin-top:6px"><div class="btn sm pri">Use this set</div><div class="dots">…</div></div>
+  </div>
+  <div class="mi" style="display:block">
+    <div class="b">Set B · Soto week</div>
+    <div class="small muted">5 items · 2 images · last used 20 Sep</div>
+    <div class="btns" style="margin-top:6px"><div class="btn sm pri">Use this set</div><div class="dots">…</div></div>
+  </div>
+  <div class="mi" style="display:block">
+    <div class="b">Set C · Rendang week</div>
+    <div class="small muted">7 items · 4 images · last used 30 Aug</div>
+    <div class="btns" style="margin-top:6px"><div class="btn sm pri">Use this set</div><div class="dots">…</div></div>
+  </div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Menu of a row: "…"</div>
+    <div class="note">Rename<br>Delete (asks for a second tap)</div>
+  </div>
+  <div class="pad hair"><div class="note">5 sets max; saving a 6th asks which to replace.</div></div>
+</div>
+<ul class="notes">
+  <li>A set holds the items and the images of a menu, not the dates, orders or customers.</li>
+  <li><b>Server</b>: "Use this set" copies it into this week's menu (asks before replacing a menu that already has items); rename, delete and replace are saved straight away.</li>
+  <li>Sets are the seller's own; chefs do not see this screen (D-013).</li>
+  <li>The set name is free text; "Set A / B / C" are only examples.</li>
+</ul>
+</section>
+
+<!-- S9 -->
+<section class="frame">
+<h2>S9 · Week settings</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Week settings</b><span class="pill">Draft</span></div>
+  <div class="pad hair">
+    <div class="lbl">Cooking date</div><div class="field val">Sat 11 Oct</div>
+    <div class="lbl" style="margin-top:8px">Order cut-off</div><div class="field val">Fri 10 Oct, 8:00 pm</div>
+  </div>
+  <div class="sec">Pickup</div>
+  <div class="pad">
+    <div class="lbl">Place</div><div class="field val">Glen Waverley</div>
+    <div class="lbl" style="margin-top:8px">Directions (free text)</div><div class="field area">Park on the street, ring the bell at the side gate</div>
+    <div class="help">Shown to customers; your exact address can go on WhatsApp</div>
+    <div class="lbl" style="margin-top:8px">Time window</div>
+    <div class="two"><div class="field val">2:00 pm</div><div class="field val">5:00 pm</div></div>
+  </div>
+  <div class="sec">Delivery</div>
+  <div class="pad">
+    <div class="row2"><b>Delivery available</b><span class="toggle"></span></div>
+    <div class="lbl">Delivery note</div><div class="field val area">Delivery around Glen Waverley, Sat 3–6 pm</div>
+  </div>
+  <div class="pad hair">
+    <div class="row2"><div><b>Ordering open</b><div class="small muted">On = customers can order</div></div><span class="toggle"></span></div>
+  </div>
+  <div class="pad hair"><div class="btn pri">Save</div></div>
+</div>
+<ul class="notes">
+  <li>One pickup point for now; up to 5 later (D-008). The screen then lists them as rows.</li>
+  <li><b>Server</b>: "Save" stores the settings. The cut-off and the Ordering toggle decide what customers can do (C5 Change and Cancel close at the cut-off).</li>
+  <li>The exact address and phone never go in these fields; they travel on WhatsApp (D-007).</li>
+  <li>Toggles shown on; turning Ordering off closes the menu to new orders straight away, existing orders stay.</li>
+</ul>
+</section>
+
+<!-- S10 -->
+<section class="frame">
+<h2>S10 · Banner</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Banner</b></div>
+  <div class="pad hair">
+    <div class="lbl">Banner image</div>
+    <div class="img ban"><span>Banner image</span></div>
+    <div class="btns" style="margin-top:8px"><div class="btn sm">Change image</div><div class="btn sm">Remove</div></div>
+  </div>
+  <div class="pad hair">
+    <div class="lbl">Kitchen name</div><div class="field val">Dapur Bu Ani</div>
+    <div class="lbl" style="margin-top:8px">Tagline (EN), optional</div><div class="field val">Home cooking, made fresh every Saturday</div>
+    <div class="lbl" style="margin-top:8px">Tagline (ID), optional</div><div class="field val">Masakan rumahan, segar tiap Sabtu</div>
+  </div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Preview (customer header)</div>
+    <div class="hdr">
+      <div class="head"><b style="font-size:16px">Dapur Bu Ani</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+      <div class="small muted">Home cooking, made fresh every Saturday</div>
+      <div class="img" style="height:50px;margin-top:6px"><span>Banner</span></div>
+    </div>
+  </div>
+  <div class="pad hair"><div class="btn pri">Save</div></div>
+</div>
+<ul class="notes">
+  <li>One banner is kept week to week (D-017); it is not part of a saved set.</li>
+  <li><b>Server</b>: "Change image" uploads the picture (resized and compressed on upload), "Remove" deletes it, and "Save" stores the name and taglines.</li>
+  <li>With no image, the customer header is plain: the kitchen name, then the tagline if there is one.</li>
+  <li>The preview updates as the seller types (local); the tagline is shown in the customer's language.</li>
+</ul>
+</section>
+
+<!-- S11 -->
+<section class="frame">
+<h2>S11 · Chefs and people</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Chefs and people</b><span class="pill">Seller only</span></div>
+  <div class="sec">Chefs</div>
+  <div class="mi"><div class="t"><div class="b">Chef Wati</div><div class="small muted">3 items this week · 2 devices signed in</div></div><div class="dots">…</div></div>
+  <div class="pad"><div class="small muted" style="margin-bottom:6px">"…": Rename · Remove (asks for a second tap)</div><div class="btn">+ Add chef</div><div class="help">Name only</div></div>
+  <div class="sec">Invite</div>
+  <div class="pad">
+    <div class="btn pri">Invite Chef Wati to sign in</div>
+    <div class="key" style="margin-top:8px">7QK4-M2XD-9PTR</div>
+    <div class="img qr" style="width:96px;height:96px"><span>QR code</span></div>
+    <div class="small muted" style="text-align:center">Valid for 24 hours, works once</div>
+    <div class="btns" style="margin-top:8px"><div class="btn sm">Send on WhatsApp</div><div class="btn sm">Copy</div></div>
+  </div>
+  <div class="sec">Your devices</div>
+  <div class="mi"><div class="t"><div class="b">iPhone (this device)</div><div class="small muted">last used now</div></div></div>
+  <div class="mi"><div class="t"><div class="b">iPad</div><div class="small muted">last used Wed</div></div><div class="btn sm" style="width:auto;flex:none">Sign out</div></div>
+  <div class="pad"><div class="small muted" style="margin-bottom:6px">Sign out asks for a second tap.</div><div class="btn">+ Add a device</div><div class="help">10-minute key or QR</div></div>
+</div>
+<ul class="notes">
+  <li>Chefs can do everything except the menu, the chefs list and invites (D-013), so chefs never see this screen.</li>
+  <li>Every order change is recorded in the order's last-4 audit with who made it.</li>
+  <li>Sign-in is by passkey, with a password fallback (D-011); the key or QR sets that up on the new device.</li>
+  <li><b>Server</b>: add, rename and remove chef; create invite and device keys; sign out. A key is shown once and works once.</li>
+  <li><b>WhatsApp</b>: "Send on WhatsApp" opens WhatsApp with the key text; "Copy" copies it (local). Nothing else here opens WhatsApp.</li>
+</ul>
+</section>
+
+<!-- S12 -->
+<section class="frame wide2">
+<h2>S12 · Print labels</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">‹ Print labels</b><span class="pill">Sat 11 Oct</span></div>
+  <div class="pad hair opts">
+    <div class="small b">Paper</div>
+    <div class="seg"><span class="on">A4 sheet (2 × 7 labels)</span><span>Label printer (62 mm roll)</span></div>
+    <div class="small b" style="margin-top:10px">Which orders</div>
+    <div class="seg"><span class="on">Confirmed (12)</span><span>All not cancelled (14)</span><span>Selected</span></div>
+  </div>
+  <div class="pad hair"><div class="btn pri">Print</div></div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:6px">Preview · A4 sheet (first 4 of 7 rows)</div>
+    <div class="sheet">
+      <div class="labels">
+        <div class="lab"><div class="code">K7F-2QX</div><div class="img qr"><span>QR</span></div><div class="nm">Rina</div><span></span><div class="its"><div>2× Lemper ayam / Chicken lemper</div><div>1× Tempe mendoan / Tempeh mendoan</div></div><div class="pk">Pickup · Sat 2–5 pm</div></div>
+        <div class="lab"><div class="code">R8P-4WB</div><div class="img qr"><span>QR</span></div><div class="nm">Sari</div><span></span><div class="its"><div>2× Nasi campur daun jeruk / Lime-leaf mixed rice</div><div>1× Pesmol ikan nila / Tilapia pesmol</div></div><div class="pk">Pickup · Sat 2–5 pm</div></div>
+        <div class="lab"><div class="code">T2N-6KC</div><div class="img qr"><span>QR</span></div><div class="nm">Budi</div><span></span><div class="its"><div>1× Ayam goreng tepung 250 g / Salt-and-chilli fried chicken 250 g</div></div><div class="pk">Delivery</div></div>
+        <div class="lab"><div class="code">H9D-7RV</div><div class="img qr"><span>QR</span></div><div class="nm">Dewi</div><span></span><div class="its"><div>3× Tempe mendoan / Tempeh mendoan</div></div><div class="pk">Pickup · Sat 2–5 pm</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<ul class="notes">
+  <li>Labels carry no notes and no chef names (D-012, D-018); the notes stay on the cook list (S4).</li>
+  <li>No address and no phone number on a label (D-007); for deliveries the seller has them on WhatsApp.</li>
+  <li>The QR opens the order for scan-to-collect (batch 4).</li>
+  <li>Local: Print opens the browser's print dialog with this layout; the page uses the full width on a tablet or desktop and shrinks on a phone. <b>Server</b>: the order list is loaded when the screen opens.</li>
+</ul>
+</section>
+
+</div>
+</main>
+</body>
+</html>

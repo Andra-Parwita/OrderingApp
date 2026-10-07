@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframes · batch 1 · core loop</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ececec; color: #333; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+  main { max-width: 1700px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .legend { color: #555; margin: 0 0 18px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
+  .frame { width: 375px; max-width: 100%; }
+  .frame.wide { width: 780px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .phone { background: #fff; border: 2px solid #777; border-radius: 22px; overflow: hidden; }
+  .wide .pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  .wide .pair .phone { width: 375px; max-width: 100%; }
+  .wide .pair .wa { flex: 1 1 260px; }
+  ul.notes { margin: 8px 0 0; padding-left: 18px; color: #444; font-size: 12px; }
+  ul.notes li { margin-bottom: 3px; }
+
+  .pad { padding: 10px 12px; }
+  .hair { border-top: 1px solid #bbb; }
+  .muted { color: #666; }
+  .small { font-size: 12px; }
+  .b { font-weight: 600; }
+  .img { position: relative; background: #e2e2e2; border: 1px solid #aaa; display: flex; align-items: center; justify-content: center; color: #555; font-size: 12px; overflow: hidden;
+    background-image: linear-gradient(to top right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)), linear-gradient(to bottom right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)); }
+  .img span { background: #e2e2e2; padding: 1px 6px; position: relative; }
+  .btn { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border: 1.5px solid #555; border-radius: 6px; background: #fff; color: #333; font-weight: 600; text-align: center; width: 100%; }
+  .btn.pri { background: #444; color: #fff; border-color: #444; }
+  .link { display: flex; align-items: center; min-height: 44px; text-decoration: underline; color: #444; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; background: #e4e4e4; border: 1px solid #bbb; font-size: 12px; white-space: nowrap; }
+  .tag { display: inline-block; padding: 0 6px; border: 1px solid #999; border-radius: 3px; font-size: 11px; color: #555; }
+  .field { border: 1px solid #888; border-radius: 6px; min-height: 44px; padding: 0 10px; display: flex; align-items: center; color: #777; background: #fff; }
+  .lang { display: inline-flex; border: 1px solid #777; border-radius: 6px; overflow: hidden; }
+  .lang span { padding: 0 10px; min-height: 36px; display: flex; align-items: center; }
+  .lang .on { background: #444; color: #fff; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  .item { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .item .t { flex: 1; min-width: 0; }
+  .item.out { background: #f3f3f3; color: #777; }
+  .step { display: inline-flex; align-items: center; flex: none; }
+  .step i { font-style: normal; width: 40px; height: 44px; border: 1.5px solid #666; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .step b { width: 26px; text-align: center; font-weight: 600; }
+  .step.off i { border-color: #bbb; color: #bbb; border-style: dashed; }
+  .step.off b { color: #aaa; }
+  .week { background: #f3f3f3; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .week div { display: flex; justify-content: space-between; gap: 8px; }
+  .sticky { background: #444; color: #fff; display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 14px; font-weight: 600; }
+
+  .line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .line:first-child { border-top: 0; }
+  .line .step { margin-left: auto; }
+  .radio { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .radio u { width: 18px; height: 18px; border: 1.5px solid #555; border-radius: 50%; flex: none; display: inline-block; }
+  .radio u.on { background: radial-gradient(#444 45%, #fff 50%); }
+  .note { background: #f3f3f3; border: 1px solid #ccc; border-radius: 6px; padding: 6px 8px; font-size: 12px; color: #555; }
+  .code { font-size: 38px; font-weight: 700; letter-spacing: .08em; text-align: center; font-family: ui-monospace, Consolas, monospace; }
+  .qr { width: 120px; height: 120px; margin: 8px auto; }
+  .wa { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 10px; padding: 12px; }
+  .wa p { margin: 6px 0; background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 8px 10px; }
+
+  .tabs { display: flex; border-bottom: 1px solid #bbb; }
+  .tabs span { flex: 1 1 0; text-align: center; padding: 0 1px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; font-size: 11px; line-height: 1.2; border-right: 1px solid #ddd; }
+  .tabs span:last-child { border-right: 0; }
+  .tabs .on { background: #e4e4e4; font-weight: 700; box-shadow: inset 0 -3px 0 #444; }
+  .o { display: grid; grid-template-columns: auto 1fr auto; gap: 0 8px; align-items: center; padding: 6px 12px; min-height: 48px; border-top: 1px solid #ddd; }
+  .o .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .o .n { font-weight: 600; }
+  .o .s { grid-column: 1 / 3; color: #555; font-size: 12px; }
+  .o .m { text-align: right; white-space: nowrap; font-weight: 600; }
+  .bar { display: flex; border-top: 1px solid #999; background: #f3f3f3; }
+  .bar span { flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; font-size: 12px; border-right: 1px solid #ccc; }
+  .bar span:last-child { border-right: 0; }
+  .bar .on { font-weight: 700; background: #e4e4e4; }
+  .toggle { display: inline-block; width: 44px; height: 24px; border: 1.5px solid #555; border-radius: 12px; position: relative; flex: none; background: #ccc; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 22px; width: 17px; height: 17px; border-radius: 50%; background: #444; }
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframes · batch 1 · core loop</h1>
+<p class="legend">Low fidelity, greys only. Grey box with a cross = image. Dark fill = primary, outline = secondary, dashed = disabled. Annotations name each action as <b>Server</b> (HTTPS to the app server) or <b>WhatsApp</b> (opens WhatsApp, never touches the server). Draft 2, 2026-10-07: review fixes and order notes (D-018).</p>
+<div class="row">
+
+<!-- C1 EN -->
+<section class="frame">
+<h2>C1 · Menu (EN)</h2>
+<div class="phone">
+  <div class="pad head small"><a class="muted" style="text-decoration:underline;min-height:36px;display:flex;align-items:center">My orders</a><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="img" style="height:90px"><span>Seller banner image (seller can change it)</span></div>
+  <div class="pad"><div class="b" style="font-size:18px">Dapur Bu Ani</div><div class="muted">Home cooking, made fresh every Saturday</div></div>
+  <div class="week small">
+    <div><span>Cooking</span><b>Sat 11 Oct</b></div>
+    <div><span>Order by</span><b>Fri 10 Oct, 8 pm</b></div>
+    <div><span>Pickup</span><b>Sat 2–5 pm, Glen Waverley</b></div>
+    <div><span>Delivery available</span><span class="tag">address sent on WhatsApp</span></div>
+  </div>
+  <div class="item"><div class="t"><div class="b">Lime-leaf mixed rice</div><div class="small muted">Salt-and-chilli fried chicken, crispy tempeh, stir-fried cabbage</div><div class="small">1 box · <b>$15.00</b></div></div><div class="step"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Tilapia pesmol</div><div class="small muted">Tilapia in turmeric pesmol sauce</div><div class="small">1 portion · <b>$15.00</b></div></div><div class="step"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Chicken lemper</div><div class="small muted">Sticky rice rolls in banana leaf</div><div class="small">4 pieces · <b>$10.00</b> · <span class="pill">3 left</span></div></div><div class="step"><i>−</i><b>2</b><i>+</i></div></div>
+  <div class="item out"><div class="t"><div class="b">Empek-empek "submarine"</div><div class="small">Palembang fish cake with egg</div><div class="small">1 portion · <b>$10.00</b> · <span class="pill">Sold out</span></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Salt-and-chilli fried chicken</div><div class="small muted">Battered fried chicken</div><div class="small">250 g · <b>$12.50</b></div></div><div class="step"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Tempeh mendoan</div><div class="small muted">Thin battered tempeh</div><div class="small">4 pieces · <b>$10.00</b></div></div><div class="step"><i>−</i><b>1</b><i>+</i></div></div>
+  <div class="sticky"><span>3 items · $30.00</span><span>View basket ›</span></div>
+</div>
+<ul class="notes">
+  <li>Banner (image, kitchen name, optional tagline) is set by the seller (D-017).</li>
+  <li>EN/ID switch changes every string and item name; the choice is remembered on this phone.</li>
+  <li>"3 left" is a portion limit; the stepper stops at 3. Sold out: stepper disabled.</li>
+  <li>Stepper changes are local only. <b>Server</b>: menu load only. "My orders" opens the saved list on this phone.</li>
+  <li>Sticky bar appears once the basket has items and opens C2.</li>
+</ul>
+</section>
+
+<!-- C1 ID -->
+<section class="frame">
+<h2>C1 · Menu (ID)</h2>
+<div class="phone">
+  <div class="pad head small"><a class="muted" style="text-decoration:underline;min-height:36px;display:flex;align-items:center">Pesanan saya</a><span class="lang"><span>EN</span><span class="on">ID</span></span></div>
+  <div class="img" style="height:90px"><span>Seller banner image (seller can change it)</span></div>
+  <div class="pad"><div class="b" style="font-size:18px">Dapur Bu Ani</div><div class="muted">Masakan rumahan, segar tiap Sabtu</div></div>
+  <div class="week small">
+    <div><span>Masak</span><b>Sabtu 11 Oktober</b></div>
+    <div><span>Pesan sebelum</span><b>Jumat 10 Oktober, 20.00</b></div>
+    <div><span>Ambil</span><b>Sabtu 14.00–17.00, Glen Waverley</b></div>
+    <div><span>Bisa diantar</span><span class="tag">alamat via WhatsApp</span></div>
+  </div>
+  <div class="item"><div class="t"><div class="b">Nasi campur daun jeruk</div><div class="small muted">Ayam goreng tepung tumis cabe garam, tempe mendoan, tumis kubis</div><div class="small">1 box · <b>$15.00</b></div></div><div class="step"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Pesmol ikan nila</div><div class="small muted">Ikan nila bumbu pesmol kunyit</div><div class="small">1 porsi · <b>$15.00</b></div></div><div class="step"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Lemper ayam</div><div class="small muted">Lemper isi ayam dibungkus daun pisang</div><div class="small">4 biji · <b>$10.00</b> · <span class="pill">Sisa 3</span></div></div><div class="step"><i>−</i><b>2</b><i>+</i></div></div>
+  <div class="item out"><div class="t"><div class="b">Empek-empek kapal selam</div><div class="small">Empek-empek Palembang isi telur</div><div class="small">1 porsi · <b>$10.00</b> · <span class="pill">Habis</span></div></div><div class="step off"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Ayam goreng tepung tumis cabe garam</div><div class="small muted">Ayam goreng tepung, tumis cabe garam</div><div class="small">250 g · <b>$12.50</b></div></div><div class="step"><i>−</i><b>0</b><i>+</i></div></div>
+  <div class="item"><div class="t"><div class="b">Tempe mendoan</div><div class="small muted">Tempe tipis berbalut tepung</div><div class="small">4 biji · <b>$10.00</b></div></div><div class="step"><i>−</i><b>1</b><i>+</i></div></div>
+  <div class="sticky"><span>3 item · $30.00</span><span>Lihat keranjang ›</span></div>
+</div>
+<ul class="notes">
+  <li>Same screen and behaviour as the EN frame; only the strings change.</li>
+  <li>Indonesian wording to be checked by a native speaker.</li>
+  <li>Item names use the ID name from the menu; the seller writes both languages when publishing.</li>
+  <li>Dates and times follow Indonesian style (Sabtu 14.00–17.00).</li>
+</ul>
+</section>
+
+<!-- C2 -->
+<section class="frame">
+<h2>C2 · Basket and checkout</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Your basket</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad hair">
+    <div class="line"><div><div class="b">Chicken lemper</div><div class="small muted">$10.00 each · 3 left</div></div><div class="step"><i>−</i><b>2</b><i>+</i></div><b style="width:52px;text-align:right">$20.00</b></div>
+    <div class="line"><div><div class="b">Tempeh mendoan</div><div class="small muted">$10.00 each</div></div><div class="step"><i>−</i><b>1</b><i>+</i></div><b style="width:52px;text-align:right">$10.00</b></div>
+    <div class="line" style="border-top:1.5px solid #666"><b>Total</b><b style="font-size:16px">$30.00</b></div>
+  </div>
+  <div class="pad hair">
+    <div class="b">How do you want it?</div>
+    <div class="radio"><u class="on"></u><div><b>Pickup</b><div class="small muted">Sat 11 Oct, 2–5 pm · Glen Waverley (address sent on WhatsApp)</div></div></div>
+    <div class="radio"><u></u><div><b>Delivery</b></div></div>
+    <div class="note">Shown when Delivery is chosen: You'll send your address to the seller on WhatsApp after ordering — it's never stored in the app.</div>
+  </div>
+  <div class="pad hair">
+    <div class="b">Your first name</div>
+    <div class="field">Rina</div>
+    <div class="small muted" style="margin-top:3px">Only your first name or a nickname</div>
+  </div>
+  <div class="pad hair">
+    <div class="b">Note for the seller (optional)</div>
+    <div class="field" style="min-height:76px;align-items:flex-start;padding-top:10px">e.g. no chilli, peanut allergy</div>
+    <div class="small muted head" style="margin-top:3px;align-items:flex-start"><span>Allergies or requests. Don't add your address or phone — send those on WhatsApp.</span><span>0/200</span></div>
+  </div>
+  <div class="pad hair">
+    <div class="btn pri">Place order · $30.00</div>
+    <div class="small muted" style="margin-top:6px;text-align:center">You can change or cancel until Fri 10 Oct, 8 pm</div>
+  </div>
+</div>
+<ul class="notes">
+  <li>Steppers here edit the basket locally; removing the last item returns to the menu.</li>
+  <li>Pickup is preselected; choosing Delivery reveals the address note (drawn here for review).</li>
+  <li>Name is required; no other personal data is asked.</li>
+  <li>Note is optional, max 200 characters, editable until the cut-off, and sent to the server with the order (D-018).</li>
+  <li><b>Server</b>: "Place order" sends name, items, pickup/delivery, note; stock is re-checked and the customer is told if an item just sold out.</li>
+  <li>Nothing here opens WhatsApp.</li>
+</ul>
+</section>
+
+<!-- C3 -->
+<section class="frame wide">
+<h2>C3 · Order placed</h2>
+<div class="pair">
+<div class="phone">
+  <div class="pad" style="text-align:center"><div class="b">Order placed</div><div class="small muted">Your order number</div></div>
+  <div class="code">K7F-2QX</div>
+  <div class="img qr"><span>QR code</span></div>
+  <div class="pad hair">
+    <div class="line"><span>2× Chicken lemper</span><b>$20.00</b></div>
+    <div class="line"><span>1× Tempeh mendoan</span><b>$10.00</b></div>
+    <div class="line" style="border-top:1.5px solid #666"><b>Total</b><b>$30.00</b></div>
+    <div class="small">Pickup · Sat 11 Oct, 2–5 pm · <span class="pill">Ordered</span></div>
+    <div class="note" style="margin-top:6px">Note: No chilli on the tempeh please</div>
+  </div>
+  <div class="pad hair">
+    <div class="btn pri">Send to seller on WhatsApp</div>
+    <div class="btn" style="margin-top:8px">Turn on updates</div>
+    <div class="small muted" style="margin:8px 0 0;text-align:center">Saved in My orders on this phone</div>
+    <div class="link" style="justify-content:center">Change or cancel order</div>
+  </div>
+</div>
+<div class="wa">
+  <div class="b">WhatsApp message preview</div>
+  <div class="small muted">Pre-filled; the customer taps Send in WhatsApp.</div>
+  <p>Hi Bu Ani, my order is K7F-2QX: 2× Lemper ayam, 1× Tempe mendoan. Total $30.00. Pickup Sat 2–5 pm. Name: Rina.</p>
+  <div class="small muted">(For delivery, the message asks you to add your address. The note is not included; the seller sees it in the app.)</div>
+</div>
+</div>
+<ul class="notes">
+  <li>The order code is the key identifier; the QR holds the order link and is shown again in My orders.</li>
+  <li><b>WhatsApp</b>: "Send to seller" opens WhatsApp with the text on the right; nothing is sent to the server.</li>
+  <li><b>Server</b>: "Turn on updates" asks for notification permission and registers this phone for push for this order.</li>
+  <li><b>Server</b>: "Change or cancel order" opens the order page (allowed until the cut-off); cancelling asks for a second tap.</li>
+</ul>
+</section>
+
+<!-- S1 -->
+<section class="frame">
+<h2>S1 · Seller · Orders</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Orders · Sat 11 Oct</b><span class="pill">● Live</span></div>
+  <div class="pad hair" style="padding-top:6px;padding-bottom:6px"><div class="note" style="min-height:44px;display:flex;align-items:center;justify-content:space-between"><b>2 not confirmed</b><span>Show ›</span></div></div>
+  <div class="tabs"><span class="on">All<b>14</b></span><span>Ordered<b>2</b></span><span>Confirmed<b>10</b></span><span>Ready<b>1</b></span><span>Done<b>1</b></span><span>Cancelled<b>0</b></span></div>
+  <div class="pad" style="padding-bottom:4px"><div class="field">Order code or name</div><div class="small muted" style="margin-top:3px">k7f2qx, K7F 2QX and K7F-2QX all work; opens on the 6th character</div></div>
+  <div class="o"><span class="c">K7F-2QX</span><span class="n">Rina</span><span class="pill">Confirmed</span><span class="s">2 Lemper, 1 Tempe · Pickup <span class="tag">✎ Note</span></span><span class="m">$30.00</span></div>
+  <div class="o"><span class="c">M3H-9TD</span><span class="n">Tom</span><span class="pill">Ordered</span><span class="s">1 Nasi campur · Delivery <span class="tag">✎ Note</span></span><span class="m">$15.00</span></div>
+  <div class="o"><span class="c">R8P-4WB</span><span class="n">Sari ✓ Paid</span><span class="pill">Confirmed</span><span class="s">2 Nasi, 1 Pesmol · Pickup</span><span class="m">$45.00</span></div>
+  <div class="o"><span class="c">T2N-6KC</span><span class="n">Budi</span><span class="pill">Confirmed</span><span class="s">1 Ayam 250 g · Delivery</span><span class="m">$12.50</span></div>
+  <div class="o"><span class="c">W5J-3MZ</span><span class="n">Mei ✓ Paid</span><span class="pill">Confirmed</span><span class="s">1 Pesmol, 1 Lemper · Pickup <span class="tag">entered by seller</span></span><span class="m">$25.00</span></div>
+  <div class="o"><span class="c">H9D-7RV</span><span class="n">Dewi</span><span class="pill">Confirmed</span><span class="s">3 Tempe · Pickup <span class="tag">entered by Chef Wati</span> <span class="tag">✎ Note</span></span><span class="m">$30.00</span></div>
+  <div class="o"><span class="c">B4X-8GA</span><span class="n">Arif ✓ Paid</span><span class="pill">Ready</span><span class="s">1 Nasi, 1 Tempe · Delivery</span><span class="m">$25.00</span></div>
+  <div class="o"><span class="c">F6S-2LN</span><span class="n">Lisa ✓ Paid</span><span class="pill">Done</span><span class="s">2 Lemper · Pickup</span><span class="m">$20.00</span></div>
+  <div class="o"><span class="c">D7Q-5YE</span><span class="n">Rina</span><span class="pill">Confirmed</span><span class="s">1 Nasi campur · Pickup</span><span class="m">$15.00</span></div>
+  <div class="o"><span class="c">N2V-9HP</span><span class="n">Tom</span><span class="pill">Confirmed</span><span class="s">2 Ayam 250 g · Delivery</span><span class="m">$25.00</span></div>
+  <div class="pad hair"><div class="btn">+ Add order</div></div>
+  <div class="bar"><span class="on">Orders</span><span>Cook list</span><span>Menu</span><span>More</span></div>
+</div>
+<ul class="notes">
+  <li>"Live" = the list updates by itself when a customer orders or changes (<b>Server</b>, live connection).</li>
+  <li>"✎ Note" on a row means the order has a customer note; open the row to read it (D-018). Icon plus text, never colour alone.</li>
+  <li>"2 not confirmed" is a tap-to-filter shortcut to Ordered; nothing changes automatically at cut-off (D-009).</li>
+  <li>About 10 rows fit; code, name and total are never cut. "✓ Paid" is the seller's own note.</li>
+  <li>"+ Add order" is for WhatsApp customers (D-010); the marker shows who entered the order.</li>
+  <li>Tapping a row opens S2. Everything here is <b>Server</b>; no WhatsApp from this screen.</li>
+</ul>
+</section>
+
+<!-- S2 -->
+<section class="frame">
+<h2>S2 · Seller · Order detail</h2>
+<div class="phone">
+  <div class="pad head"><b>‹ Orders</b><span class="pill">Customer: EN</span></div>
+  <div class="pad hair">
+    <div class="head"><span class="code" style="font-size:26px">K7F-2QX</span><b style="font-size:16px">Rina</b></div>
+    <div class="small muted">Placed Wed 8 Oct, 7:12 pm</div>
+  </div>
+  <div class="pad hair">
+    <div class="line"><span>2× Lemper ayam</span><b>$20.00</b></div>
+    <div class="line"><span>1× Tempe mendoan</span><b>$10.00</b></div>
+    <div class="line" style="border-top:1.5px solid #666"><b>Total</b><b style="font-size:16px">$30.00</b></div>
+    <div class="small"><b>Pickup</b> · Sat 11 Oct, 2–5 pm</div>
+  </div>
+  <div class="pad hair">
+    <div class="small b">Note from customer</div>
+    <div class="note" style="margin-top:4px;font-size:13px;color:#333">No chilli on the tempeh please</div>
+  </div>
+  <div class="pad hair">
+    <div class="small muted">Status</div>
+    <div style="margin:4px 0 8px"><span class="pill">Confirmed</span></div>
+    <div class="btn pri">Ready for pickup</div>
+    <div class="btn" style="margin-top:8px">Collected</div>
+  </div>
+  <div class="pad hair">
+    <div class="line"><span>Paid <span class="small muted">(your own reference)</span></span><span class="toggle"></span></div>
+    <div class="btn" style="margin-top:6px">Send order link on WhatsApp</div>
+    <div class="btn" style="margin-top:8px">Cancel order</div>
+  </div>
+  <div class="pad hair">
+    <div class="b small">Last changes</div>
+    <div class="small line"><span>Chef Wati · Ordered → Confirmed</span><span class="muted">Thu 9 Oct 10:02</span></div>
+    <div class="small line"><span>Chef Wati · Qty edited</span><span class="muted">Thu 9 Oct 09:40</span></div>
+    <div class="small line"><span>Rina · Placed</span><span class="muted">Wed 8 Oct 7:12 pm</span></div>
+  </div>
+</div>
+<ul class="notes">
+  <li>One primary next step at a time (here Ready for pickup, since the order is already Confirmed); later steps stay as secondary buttons. Each is <b>Server</b> and notifies the customer.</li>
+  <li>"Cancel order" needs a second tap to confirm; <b>Server</b>.</li>
+  <li>"Paid" toggle is for the seller's reference only; <b>Server</b>, never shown to customers as a payment.</li>
+  <li>"Send order link on WhatsApp" opens WhatsApp with the private order link (D-010); <b>WhatsApp</b>, not the server.</li>
+  <li>"Note from customer" is written by the customer at checkout, or by the seller/chef when entering an order. Never printed on labels or the group post; deleted with the order (D-018).</li>
+  <li>"Last changes" shows the last 4 changes; last save wins if two people edit.</li>
+</ul>
+</section>
+
+</div>
+</main>
+</body>
+</html>

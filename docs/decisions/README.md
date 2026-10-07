@@ -94,3 +94,24 @@ Format for each entry:
 **Ruling:** "B" (approve `@vitejs/plugin-react`, `@testing-library/dom`, `@eslint/js`, `globals`, `@types/react`, `@types/react-dom`, `@types/node`, and ask before every future helper package too).
 **Trade-off:** phase 1 stands as built. No package is ever added silently, not even a type or peer package; every builder brief says so, and a builder that needs one stops and reports. Costs an extra question when tooling needs a companion package.
 **Revisit when:** the questions become noise (then pre-approve a class such as `@types/*`).
+
+## D-017 · Wireframe batches; the seller can customise the header banner (2026-10-07)
+**Ruling:** "A" (wireframe batch 1 = the core loop: customer menu → basket and checkout → order placed; seller order list → order detail), plus "one thing to add is the ability to customise the image headers/banners for the seller".
+**Trade-off:** the customer pages open with the seller's own banner: an image (stored in R2, resized and compressed on upload like menu images) and the kitchen name, with an optional short tagline in EN / ID. Defaults (overrule if wrong): one banner for the seller, kept week to week and changeable any time in the seller's settings; if none is set, a plain header with the kitchen name. The banner slot appears in batch 1 wireframes; the banner editor is in batch 3 (seller setup). Cost: one more image in storage and one more settings screen.
+**Revisit when:** the seller wants a different banner each week or per menu set.
+
+## D-018 · Order notes (dietary requirements) (2026-10-07)
+**Ruling:** "B, but there should be a way to view notes or dietary requirements. E.g. the customer can add a note during checkout and the seller can view the note in the order detail. On the order screen, maybe add an asterisk or notifier if there is a note on an order."
+**Trade-off:** an optional **note** on each order (max 200 characters), written by the customer at checkout (editable until the cut-off) or by the seller/chef when entering an order; shown in the order detail, and flagged in the seller's order list with a "Note" marker (icon + text, not an asterisk alone, so it isn't colour- or symbol-only). **Tension with D-007** (no private information in the cloud): a dietary note can be health-related and people may type an address or phone into any free-text box. Mitigation: helper text "Allergies or requests. Don't add your address or phone — send those on WhatsApp"; the note is deleted with the order; it never appears on labels or the WhatsApp group post.
+**Tension settled (owner, same day):** "The cloud should be fine as long as it prompts them to not put any sensitive data." Notes stay in the cloud; the helper text prompting not to add sensitive data is required wherever a note is written (customer checkout, seller/chef order entry).
+**Revisit when:** notes start carrying private details regularly (then move notes to WhatsApp only).
+
+## D-019 · Seller can preview the menu as customers see it before publishing (2026-10-07)
+**Ruling:** "B, a menu to preview the menu in customer view before publishing it as a seller" (batch 3 approved with this change).
+**Trade-off:** a "Preview as customer" action on the seller's menu (S6) opens the real customer menu screen (banner, week, items, EN/ID switch) filled with the draft, under a fixed seller bar "Preview · not published yet" with "Back to editing" and "Publish". Nothing can be ordered from the preview. Reuses the customer screen, so the cost is small.
+**Revisit when:** the seller wants to share a preview link with someone else before publishing.
+
+## D-020 · Editing items after orders exist: orders keep a snapshot (2026-10-07)
+**Ruling:** "A" (existing orders keep what was ordered).
+**Trade-off:** each order line stores a copy of the item's names (EN/ID), size and price at the time it was placed; edits to the menu only affect new orders. An item that has orders can't be deleted: the seller marks it Sold out, which stops new orders. Totals never change behind a customer's back and the cook list stays correct. Cost: order lines duplicate a few item fields.
+**Revisit when:** the seller needs to correct a price on existing orders (then add an explicit "apply to existing orders" action that notifies customers).
