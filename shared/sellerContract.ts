@@ -12,8 +12,8 @@ export type SetPaidRequest = { paid: boolean };
 export type SetLockedRequest = { locked: boolean };
 /** POST /api/seller/orders/:code/wa-received */
 export type SetWaReceivedRequest = { received: boolean };
-/** GET and PUT /api/seller/settings (PUT replaces all; an empty number removes it). */
-export type SettingsResponse = { settings: KitchenSettings };
+/** GET and PUT /api/seller/settings (of the X-Seller seller; PUT replaces all; an empty number removes it). */
+export type SettingsResponse = { sellerId: string; settings: KitchenSettings };
 
 export function parseSetStatusRequest(input: unknown): SetStatusRequest | null {
   if (!isRecord(input) || !isOneOf(ORDER_STATUSES, input['to'])) return null;
@@ -68,5 +68,8 @@ export function parseSettingsRequest(input: unknown): KitchenSettings | null {
 export function parseSettingsResponse(input: unknown): SettingsResponse | null {
   if (!isRecord(input)) return null;
   const settings = parseSettingsRequest(input['settings']);
-  return settings ? { settings } : null;
+  const { sellerId } = input;
+  return settings && typeof sellerId === 'string' && sellerId !== ''
+    ? { sellerId, settings }
+    : null;
 }

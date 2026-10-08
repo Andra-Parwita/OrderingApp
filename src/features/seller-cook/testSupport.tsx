@@ -36,7 +36,7 @@ function item(
 export const MENU: CookMenu = {
   kitchenName: 'Delave',
   cookingDate: '2026-10-10',
-  chefs: [{ id: 'wati', name: 'Chef Wati' }],
+  chefs: [{ id: 'wati', sellerId: 's1', name: 'Chef Wati' }],
   items: [
     item('nasi', 'Mixed rice', 'Nasi campur', { priceCents: 1500 }),
     item('lemper', 'Chicken lemper', 'Lemper ayam', { chefId: 'wati', limit: 20 }),
@@ -60,6 +60,7 @@ export function line(itemId: string, qty: number): OrderLine {
 export function makeOrder(overrides: Partial<Order> = {}): Order {
   return {
     id: 'o1',
+    sellerId: 's1',
     code: 'K7F2QX',
     token: 'tok-k7f2qx',
     firstName: 'Rina',

@@ -17,7 +17,7 @@ test('seller handles a new customer, then adds a WhatsApp order', async ({
   const desktop = isDesktopProject(project);
   const stamp = Date.now();
   const customer = `Dewi-${project}-${stamp}`;
-  const created = await request.post('/api/orders', {
+  const created = await request.post('/api/s/onde-onde/orders', {
     data: {
       firstName: customer,
       language: 'id',

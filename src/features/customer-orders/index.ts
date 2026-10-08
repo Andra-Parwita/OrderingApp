@@ -7,3 +7,4 @@ export {
   type CustomerOrdersRootState,
   type CustomerOrdersState,
 } from './slice';
+export { useUnseenUpdate } from './useUnseenUpdate';

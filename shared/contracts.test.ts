@@ -20,7 +20,8 @@ type Obj = Record<string, unknown>;
 const text = { en: 'Rice', id: 'Nasi' };
 
 const menu = {
-  kitchen: { name: 'Delave', tagline: text },
+  seller: { id: 's1', slug: 'onde-onde', name: 'Onde Onde' },
+  kitchen: { sellerId: 's1', name: 'Delave', tagline: text },
   week: {
     cookingDate: '2026-10-10',
     cutoffAt: '2026-10-09T21:00:00+11:00',
@@ -61,6 +62,7 @@ const menu = {
 
 const order = {
   id: 'o1',
+  sellerId: 's1',
   code: 'K7F2QX',
   token: 'abc',
   firstName: 'Rina',
@@ -92,7 +94,7 @@ const week = (d: Obj) => d['week'] as Obj;
 const items = (d: Obj) => d['items'] as Array<Obj>;
 
 const sellerMenu = mutate(menu, (d) => {
-  d['chefs'] = [{ id: 'wati', name: 'Chef Wati' }];
+  d['chefs'] = [{ id: 'wati', sellerId: 'seller-onde-onde', name: 'Chef Wati' }];
   items(d)[0]!['chefId'] = 'wati';
 });
 

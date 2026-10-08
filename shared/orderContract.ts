@@ -8,6 +8,7 @@ import type {
   Language,
   OrderLine,
   SellerOrder,
+  SellerRef,
   StaffActor,
 } from './domain';
 import { AUDIT_MAX, FIRST_NAME_MAX, INBOX_MAX, MAX_MENU_ITEMS, MAX_QTY, NOTE_MAX } from './limits';
@@ -20,6 +21,7 @@ import {
   parseArray,
   parseLocalText,
 } from './parse';
+import { isValidSlug } from './seller';
 import { ORDER_STATUSES } from './status';
 
 const FULFILMENTS: ReadonlyArray<Fulfilment> = ['pickup', 'delivery'];
@@ -28,7 +30,7 @@ const INBOX_KINDS: ReadonlyArray<InboxEntry['kind']> = ['status', 'nudge', 'mess
 /** One requested line; the server snapshots the item's names, size and price. */
 export type RequestedLine = { itemId: string; qty: number };
 
-/** POST /api/orders (customer). */
+/** POST /api/s/:slug/orders (customer; the seller comes from the slug). */
 export type CreateOrderRequest = {
   firstName: string;
   language: Language;
@@ -39,7 +41,7 @@ export type CreateOrderRequest = {
   returning?: boolean;
 };
 
-/** POST /api/seller/orders (seller or chef; D-027 row 8). Defaults: confirmNow true, paid false. */
+/** POST /api/seller/orders (seller or chef, in the X-Seller seller; D-027 row 8). Defaults: confirmNow true, paid false. */
 export type CreateSellerOrderRequest = Omit<CreateOrderRequest, 'returning'> & {
   confirmNow?: boolean;
   paid?: boolean;
@@ -62,9 +64,10 @@ export type SellerOrderResponse = { order: SellerOrder };
 export type SellerOrdersResponse = { orders: Array<SellerOrder> };
 
 /** Narrows a full order to what the customer may see (copies fields, so nothing else leaks). */
-export function toCustomerOrder(order: SellerOrder): CustomerOrder {
+export function toCustomerOrder(order: SellerOrder, seller: SellerRef): CustomerOrder {
   return {
     id: order.id,
+    seller: { slug: seller.slug, name: seller.name },
     code: order.code,
     token: order.token,
     firstName: order.firstName,
@@ -255,7 +258,9 @@ function parseInboxEntry(input: unknown): InboxEntry | null {
   };
 }
 
-function parseCustomerFields(input: Record<string, unknown>): CustomerOrder | null {
+type CoreOrder = Omit<CustomerOrder, 'seller'>;
+
+function parseCoreFields(input: Record<string, unknown>): CoreOrder | null {
   const { id, code, token, firstName, language, fulfilment, note, status, locked } = input;
   const { createdAt, updatedAt } = input;
   const lines = parseArray(input['lines'], parseOrderLine);
@@ -283,16 +288,26 @@ function parseCustomerFields(input: Record<string, unknown>): CustomerOrder | nu
   };
 }
 
+function parseSellerRef(input: unknown): SellerRef | null {
+  if (!isRecord(input)) return null;
+  const { slug, name } = input;
+  return isValidSlug(slug) && typeof name === 'string' ? { slug, name } : null;
+}
+
 export function parseCustomerOrder(input: unknown): CustomerOrder | null {
-  return isRecord(input) ? parseCustomerFields(input) : null;
+  if (!isRecord(input)) return null;
+  const core = parseCoreFields(input);
+  const seller = parseSellerRef(input['seller']);
+  return core && seller ? { ...core, seller } : null;
 }
 
 export function parseOrder(input: unknown): SellerOrder | null {
   if (!isRecord(input)) return null;
-  const base = parseCustomerFields(input);
-  const { paid, waReceived, returning, changed } = input;
+  const base = parseCoreFields(input);
+  const { sellerId, paid, waReceived, returning, changed } = input;
   const audit = parseArray(input['audit'], parseAuditEntry);
   if (!base || !audit || audit.length > AUDIT_MAX) return null;
+  if (typeof sellerId !== 'string' || sellerId === '') return null;
   if (typeof paid !== 'boolean' || typeof waReceived !== 'boolean') return null;
   if (typeof returning !== 'boolean' || typeof changed !== 'boolean') return null;
   let enteredBy: StaffActor | undefined;
@@ -303,6 +318,7 @@ export function parseOrder(input: unknown): SellerOrder | null {
   }
   return {
     ...base,
+    sellerId,
     paid,
     waReceived,
     returning,

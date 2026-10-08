@@ -1,4 +1,4 @@
-import { call, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import { TOKENS_MAX } from '../../../shared/limits';
 import { cancelOrder, fetchMenu, fetchMyOrders, fetchOrder } from '../../api/client';
 import { readMyOrders, rememberStatus } from '../../api/device/myOrders';
@@ -8,7 +8,6 @@ import {
   listFailed,
   listLoaded,
   listRequested,
-  menuFailed,
   menuLoaded,
   menuRequested,
   orderFailed,
@@ -36,12 +35,15 @@ export function* loadList() {
     (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
   );
   yield put(listLoaded({ orders, saved: readMyOrders() }));
+  // Each seller's week (cooking date) sorts their orders into "this week" and "earlier".
+  const slugs = [...new Set(orders.map((order) => order.seller.slug))];
+  yield all(slugs.map((slug) => call(loadMenu, menuRequested(slug))));
 }
 
-export function* loadMenu() {
-  const result = (yield call(fetchMenu)) as Awaited<ReturnType<typeof fetchMenu>>;
+export function* loadMenu(action: ReturnType<typeof menuRequested>) {
+  const result = (yield call(fetchMenu, action.payload)) as Awaited<ReturnType<typeof fetchMenu>>;
+  // A seller that cannot be reached just has no week: the order page works without it.
   if (result.ok) yield put(menuLoaded(result.data));
-  else yield put(menuFailed(result.error));
 }
 
 export function* loadOrder(action: ReturnType<typeof orderRequested>) {
@@ -49,6 +51,7 @@ export function* loadOrder(action: ReturnType<typeof orderRequested>) {
   if (result.ok) {
     yield call(rememberStatus, result.data.order);
     yield put(orderLoaded(result.data.order));
+    yield call(loadMenu, menuRequested(result.data.order.seller.slug));
   } else {
     yield put(orderFailed(result.error));
   }
@@ -59,6 +62,7 @@ export function* refreshOrder(action: ReturnType<typeof orderRefreshRequested>) 
   if (result.ok) {
     yield call(rememberStatus, result.data.order);
     yield put(orderLoaded(result.data.order));
+    yield call(loadMenu, menuRequested(result.data.order.seller.slug));
   }
 }
 
@@ -76,7 +80,7 @@ export function* cancel(action: ReturnType<typeof cancelRequested>) {
 
 export function* customerOrdersSaga() {
   yield takeLatest(listRequested.type, loadList);
-  yield takeLatest(menuRequested.type, loadMenu);
+  yield takeEvery(menuRequested.type, loadMenu);
   yield takeLatest(orderRequested.type, loadOrder);
   yield takeLatest(orderRefreshRequested.type, refreshOrder);
   yield takeEvery(cancelRequested.type, cancel);

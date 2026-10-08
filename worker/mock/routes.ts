@@ -1,7 +1,7 @@
 // Mock API routes on standard Request/Response; shared by the dev Worker and the MSW handlers.
-import { parseSampleOrdersRequest } from '../../shared/devContract';
+import { parseSampleOrdersRequest, type DevSellersResponse } from '../../shared/devContract';
 import type { ApiErrorBody, ApiErrorCode } from '../../shared/apiError';
-import type { SellerOrder, StaffActor } from '../../shared/domain';
+import type { SellerOrder, SellerRef, StaffActor } from '../../shared/domain';
 import { TOKENS_MAX } from '../../shared/limits';
 import {
   parseCreateOrderRequest,
@@ -14,6 +14,7 @@ import {
   type SellerOrdersResponse,
 } from '../../shared/orderContract';
 import { parseOrderCode } from '../../shared/orderCode';
+import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
 import {
   parseSetLockedRequest,
   parseSetPaidRequest,
@@ -22,12 +23,13 @@ import {
   parseSettingsRequest,
   type SettingsResponse,
 } from '../../shared/sellerContract';
-import type { MockStore, StoreResult } from './store';
+import type { MockStore, SellerStore, StoreResult } from './store';
 
 const STATUS: Record<ApiErrorCode, number> = {
   invalid_request: 400,
   unknown_item: 400,
   not_found: 404,
+  seller_not_found: 404,
   cutoff_passed: 409,
   week_not_published: 409,
   sold_out: 409,
@@ -41,6 +43,8 @@ function error(code: ApiErrorCode, message: string): Response {
   const body: ApiErrorBody = { error: code, message };
   return Response.json(body, { status: STATUS[code] });
 }
+
+const noSeller = () => error('seller_not_found', 'Seller not found');
 
 /** Header `X-Actor: seller:Bu Ani` or `chef:Wati`. */
 const DEFAULT_ACTOR: StaffActor = { role: 'seller', name: 'Bu Ani' };
@@ -59,6 +63,17 @@ function actorOf(request: Request): StaffActor {
   return { role, name };
 }
 
+/**
+ * Which seller a seller-side request is for: the `X-Seller` slug header. No auth yet: phase 4
+ * replaces this with the signed-in session (the seller then comes from the session, never from a
+ * header). Without the header the dev default is used, so the single-seller app keeps working
+ * until stage 5.2 adds the dev seller picker.
+ */
+function sellerSlugOf(request: Request): string {
+  const raw = request.headers.get('X-Seller')?.trim();
+  return raw ? raw : DEFAULT_SELLER_SLUG;
+}
+
 async function readJson(request: Request): Promise<unknown> {
   try {
     const body: unknown = await request.json();
@@ -75,10 +90,14 @@ function sellerResult(result: StoreResult<SellerOrder>, status = 200): Response 
   return Response.json(body, { status });
 }
 
-/** Customer endpoints return the narrowed view, never the seller-only fields. */
-function customerResult(result: StoreResult<SellerOrder>, status = 200): Response {
+/** Customer endpoints return the narrowed view (with the seller), never the seller-only fields. */
+function customerResult(
+  result: StoreResult<SellerOrder>,
+  seller: SellerRef,
+  status = 200,
+): Response {
   if (!result.ok) return error(result.error, result.message);
-  const body: CustomerOrderResponse = { order: toCustomerOrder(result.value) };
+  const body: CustomerOrderResponse = { order: toCustomerOrder(result.value, seller) };
   return Response.json(body, { status });
 }
 
@@ -94,57 +113,109 @@ export async function handleMockRequest(
   const [, area, a, b, c] = segments;
   const bad = () => error('invalid_request', 'Invalid request');
 
-  if (area === 'menu' && !a && method === 'GET') return Response.json(store.getMenu());
-
-  if (area === 'seller' && a === 'menu' && !b && method === 'GET') {
-    return Response.json(store.getSellerMenu());
-  }
-
-  if (area === 'orders') {
-    if (!a && method === 'POST') {
+  // Public, per seller (D-037). The old unscoped GET /api/menu and POST /api/orders are gone:
+  // they fall through (404).
+  if (area === 's' && a) {
+    const sellerStore = store.seller(a);
+    if (!sellerStore) return noSeller();
+    if (b === 'menu' && !c && method === 'GET') return Response.json(sellerStore.getMenu());
+    if (b === 'orders' && !c && method === 'POST') {
       const input = parseCreateOrderRequest(await readJson(request));
-      return input ? customerResult(store.createOrder(input), 201) : bad();
-    }
-    if (!a && method === 'GET') {
-      // My orders: GET /api/orders?tokens=a,b,c (unknown tokens are omitted).
-      const raw = searchParams.get('tokens');
-      if (raw === null) return bad();
-      const tokens = [...new Set(raw.split(',').filter((token) => token !== ''))];
-      if (tokens.length > TOKENS_MAX) return bad();
-      const found = tokens.flatMap((token) => store.getByToken(token) ?? []);
-      const body: CustomerOrdersResponse = { orders: found.map(toCustomerOrder) };
-      return Response.json(body);
-    }
-    if (a && !b) {
-      if (method === 'GET') {
-        const order = store.getByToken(a);
-        return order
-          ? Response.json({ order: toCustomerOrder(order) } satisfies CustomerOrderResponse)
-          : error('not_found', 'Order not found');
-      }
-      if (method === 'PATCH') {
-        const patch = parseUpdateOrderRequest(await readJson(request));
-        return patch ? customerResult(store.updateOrder(a, patch)) : bad();
-      }
-    }
-    if (a && b === 'cancel' && !c && method === 'POST') return customerResult(store.cancelOrder(a));
-    return null;
-  }
-
-  if (area === 'seller' && a === 'settings' && !b) {
-    if (method === 'GET') {
-      return Response.json({ settings: store.getSettings() } satisfies SettingsResponse);
-    }
-    if (method === 'PUT') {
-      const input = parseSettingsRequest(await readJson(request));
       return input
-        ? Response.json({ settings: store.setSettings(input) } satisfies SettingsResponse)
+        ? customerResult(sellerStore.createOrder(input), sellerStore.seller, 201)
         : bad();
     }
     return null;
   }
 
-  if (area === 'seller' && a === 'orders') {
+  // Customer endpoints by private token are global: the order knows its seller.
+  if (area === 'orders') {
+    if (!a && method === 'GET') {
+      // My orders: GET /api/orders?tokens=a,b,c (unknown tokens are omitted; spans sellers).
+      const raw = searchParams.get('tokens');
+      if (raw === null) return bad();
+      const tokens = [...new Set(raw.split(',').filter((token) => token !== ''))];
+      if (tokens.length > TOKENS_MAX) return bad();
+      const found = tokens.flatMap((token) => {
+        const hit = store.findByToken(token);
+        return hit ? [toCustomerOrder(hit.order, hit.store.seller)] : [];
+      });
+      const body: CustomerOrdersResponse = { orders: found };
+      return Response.json(body);
+    }
+    if (a && !b) {
+      const hit = store.findByToken(a);
+      if (method === 'GET') {
+        return hit
+          ? customerResult({ ok: true, value: hit.order }, hit.store.seller)
+          : error('not_found', 'Order not found');
+      }
+      if (method === 'PATCH') {
+        const patch = parseUpdateOrderRequest(await readJson(request));
+        if (!patch) return bad();
+        return hit
+          ? customerResult(hit.store.updateOrder(a, patch), hit.store.seller)
+          : error('not_found', 'Order not found');
+      }
+    }
+    if (a && b === 'cancel' && !c && method === 'POST') {
+      const hit = store.findByToken(a);
+      return hit
+        ? customerResult(hit.store.cancelOrder(a), hit.store.seller)
+        : error('not_found', 'Order not found');
+    }
+    return null;
+  }
+
+  if (area === 'seller') {
+    const sellerStore = store.seller(sellerSlugOf(request));
+    if (!sellerStore) return noSeller();
+    return handleSeller(sellerStore, request, [a, b, c], bad);
+  }
+
+  if (area === 'dev') {
+    if (a === 'sellers' && !b && method === 'GET') {
+      return Response.json({ sellers: store.sellers() } satisfies DevSellersResponse);
+    }
+    if (method === 'POST' && a === 'sample-orders') {
+      const sellerStore = store.seller(sellerSlugOf(request));
+      if (!sellerStore) return noSeller();
+      const input = parseSampleOrdersRequest(await readJson(request));
+      return input ? Response.json({ added: sellerStore.addSampleOrders(input.count) }) : bad();
+    }
+    if (method === 'POST' && a === 'reset') {
+      store.reset();
+      return Response.json({ ok: true });
+    }
+  }
+  return null;
+}
+
+/** Everything under /api/seller/*, for the one seller the request is scoped to. */
+async function handleSeller(
+  store: SellerStore,
+  request: Request,
+  [a, b, c]: [string | undefined, string | undefined, string | undefined],
+  bad: () => Response,
+): Promise<Response | null> {
+  const method = request.method;
+  if (a === 'menu' && !b && method === 'GET') return Response.json(store.getSellerMenu());
+
+  if (a === 'settings' && !b) {
+    const sellerId = store.seller.id;
+    if (method === 'GET') {
+      return Response.json({ sellerId, settings: store.getSettings() } satisfies SettingsResponse);
+    }
+    if (method === 'PUT') {
+      const input = parseSettingsRequest(await readJson(request));
+      return input
+        ? Response.json({ sellerId, settings: store.setSettings(input) } satisfies SettingsResponse)
+        : bad();
+    }
+    return null;
+  }
+
+  if (a === 'orders') {
     const actor = actorOf(request);
     if (!b && method === 'GET') {
       return Response.json({ orders: store.listOrders() } satisfies SellerOrdersResponse);
@@ -191,18 +262,6 @@ export async function handleMockRequest(
     if (b && (c === 'nudge' || c === 'seen') && method === 'POST') {
       if (!code) return error('not_found', 'Order not found');
       return sellerResult(c === 'nudge' ? store.nudge(code) : store.markSeen(code));
-    }
-    return null;
-  }
-
-  if (area === 'dev' && method === 'POST') {
-    if (a === 'sample-orders') {
-      const input = parseSampleOrdersRequest(await readJson(request));
-      return input ? Response.json({ added: store.addSampleOrders(input.count) }) : bad();
-    }
-    if (a === 'reset') {
-      store.reset();
-      return Response.json({ ok: true });
     }
   }
   return null;

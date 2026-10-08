@@ -10,7 +10,7 @@ test('a limited item shows "1 left", then Sold out, and refuses more orders', as
   request,
 }, testInfo) => {
   const menu = async (): Promise<MenuItem> => {
-    const response = await request.get('/api/menu');
+    const response = await request.get('/api/s/onde-onde/menu');
     expect(response.ok()).toBe(true);
     const body = (await response.json()) as { items: Array<MenuItem> };
     const item = body.items.find((entry) => entry.id === 'empek-empek');
@@ -18,7 +18,7 @@ test('a limited item shows "1 left", then Sold out, and refuses more orders', as
     return item;
   };
   const order = (qty: number, name: string) =>
-    request.post('/api/orders', {
+    request.post('/api/s/onde-onde/orders', {
       data: {
         firstName: `${name}-${testInfo.project.name}-${Date.now()}`,
         language: 'en',
@@ -36,7 +36,7 @@ test('a limited item shows "1 left", then Sold out, and refuses more orders', as
   expect((await order(remaining - 1, 'Limit')).ok()).toBe(true);
   expect((await menu()).remaining).toBe(1);
 
-  await page.goto('/');
+  await page.goto('/onde-onde');
   const row = page.getByRole('listitem').filter({ hasText: 'Palembang fish cake with egg' });
   await expect(row.getByText('1 left')).toBeVisible();
 

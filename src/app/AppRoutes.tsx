@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Link,
   Route,
@@ -11,10 +11,19 @@ import {
   useSearchParams,
 } from 'react-router';
 import { styled } from 'styled-components';
+import { SellerPicker } from '../components/SellerPicker';
 import { ThemeSwitch } from '../components/ThemeSwitch';
 import { useMediaQuery } from '../components/useMediaQuery';
-import { BasketScreen, MenuScreen, OrderPlacedScreen, placeReset } from '../features/customer-menu';
+import {
+  BasketScreen,
+  MenuScreen,
+  OrderPlacedScreen,
+  placeReset,
+  selectKitchenMissing,
+  type CustomerRootState,
+} from '../features/customer-menu';
 import { MyOrdersScreen, OrderScreen } from '../features/customer-orders';
+import { CustomerSettingsScreen } from '../features/customer-settings';
 import { CookScreen } from '../features/seller-cook';
 import {
   NewOrderScreen,
@@ -27,27 +36,38 @@ import {
 } from '../features/seller-orders';
 import { SettingsScreen } from '../features/seller-settings';
 import { ShareScreen } from '../features/seller-share';
+import { CustomerShell } from './CustomerShell';
 import { DESKTOP_QUERY } from './layout';
-import { NotFoundPage } from './pages';
+import { isValidSlug } from '../../shared/seller';
+import { HomePage, KitchenNotFoundPage, NotFoundPage } from './pages';
 import { SellerLayout } from './SellerLayout';
 
 // Route wrappers: the screens only get callbacks; where they lead is decided here.
 
+/** True when the server said this kitchen does not exist. */
+function useKitchenMissing(slug: string): boolean {
+  return useSelector((state: CustomerRootState) => selectKitchenMissing(state, slug));
+}
+
 function MenuRoute() {
+  const { slug = '' } = useParams();
   const navigate = useNavigate();
-  const toBasket = useCallback(() => void navigate('/basket'), [navigate]);
-  const toMyOrders = useCallback(() => void navigate('/my-orders'), [navigate]);
-  return <MenuScreen onViewBasket={toBasket} onMyOrders={toMyOrders} />;
+  const toBasket = useCallback(() => void navigate(`/${slug}/basket`), [navigate, slug]);
+  const missing = useKitchenMissing(slug);
+  if (!isValidSlug(slug) || missing) return <KitchenNotFoundPage />;
+  return <MenuScreen slug={slug} onViewBasket={toBasket} />;
 }
 
 function BasketRoute() {
+  const { slug = '' } = useParams();
+  const missing = useKitchenMissing(slug);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   // Back goes to where the customer came from; opened directly, it goes to the menu.
   const back = useCallback(() => {
-    void (location.key === 'default' ? navigate('/', { replace: true }) : navigate(-1));
-  }, [navigate, location.key]);
+    void (location.key === 'default' ? navigate(`/${slug}`, { replace: true }) : navigate(-1));
+  }, [navigate, location.key, slug]);
   const placed = useCallback(
     (token: string) => {
       // Replace, so Back from the confirmation does not return to a basket that is now empty.
@@ -57,7 +77,8 @@ function BasketRoute() {
     },
     [navigate, dispatch],
   );
-  return <BasketScreen onBack={back} onPlaced={placed} />;
+  if (!isValidSlug(slug) || missing) return <KitchenNotFoundPage />;
+  return <BasketScreen slug={slug} onBack={back} onPlaced={placed} />;
 }
 
 /** "Order placed": the confirmation straight after ordering. Its only exit is the order page. */
@@ -66,7 +87,7 @@ function PlacedRoute() {
   const navigate = useNavigate();
   const toOrder = useCallback(() => void navigate(`/o/${token ?? ''}`), [navigate, token]);
   if (!token) return <NotFoundPage />;
-  return <OrderPlacedScreen key={token} token={token} onChange={toOrder} />;
+  return <OrderPlacedScreen key={token} token={token} onChange={toOrder} onBack={toOrder} />;
 }
 
 /** The order page: status, updates, change or cancel. Opening the link adds it to My orders. */
@@ -95,34 +116,11 @@ function EditOrderRoute() {
   );
 }
 
-const FooterBar = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-const FooterLabel = styled.span`
-  color: ${({ theme }) => theme.colour.textMuted};
-  font-size: ${({ theme }) => theme.type.size.sm};
-`;
-
 function MyOrdersRoute() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const back = useCallback(() => void navigate('/'), [navigate]);
   const open = useCallback((token: string) => void navigate(`/o/${token}`), [navigate]);
-  return (
-    <MyOrdersScreen
-      onBack={back}
-      onOpenOrder={open}
-      footer={
-        <FooterBar>
-          <FooterLabel>{t('theme.label')}</FooterLabel>
-          <ThemeSwitch />
-        </FooterBar>
-      }
-    />
-  );
+  return <MyOrdersScreen onBack={back} onOpenOrder={open} />;
 }
 
 // The seller list's filter and search live in the URL (?status=ready&q=rina): they survive a
@@ -223,6 +221,11 @@ function NewOrderRoute() {
   return <NewOrderScreen onBack={toOrders} onDone={toOrders} hideLanguage={desktop} />;
 }
 
+const FooterLabel = styled.span`
+  color: ${({ theme }) => theme.colour.textMuted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+`;
+
 const MoreBlock = styled.div`
   display: flex;
   flex-direction: column;
@@ -246,6 +249,7 @@ function SettingsRoute() {
       <MoreBlock>
         <FooterLabel>{t('theme.label')}</FooterLabel>
         <ThemeSwitch />
+        <SellerPicker />
         <ShareLink to="/seller/share">{t('sellerNav.shareMenu')}</ShareLink>
       </MoreBlock>
     </SettingsScreen>
@@ -255,12 +259,17 @@ function SettingsRoute() {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<MenuRoute />} />
-      <Route path="/basket" element={<BasketRoute />} />
-      <Route path="/o/:token" element={<OrderRoute />} />
-      <Route path="/o/:token/placed" element={<PlacedRoute />} />
-      <Route path="/o/:token/edit" element={<EditOrderRoute />} />
-      <Route path="/my-orders" element={<MyOrdersRoute />} />
+      {/* Customer pages share the bottom tab bar (D-039). */}
+      <Route element={<CustomerShell />}>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/:slug" element={<MenuRoute />} />
+        <Route path="/:slug/basket" element={<BasketRoute />} />
+        <Route path="/o/:token" element={<OrderRoute />} />
+        <Route path="/o/:token/placed" element={<PlacedRoute />} />
+        <Route path="/o/:token/edit" element={<EditOrderRoute />} />
+        <Route path="/my-orders" element={<MyOrdersRoute />} />
+        <Route path="/settings" element={<CustomerSettingsScreen />} />
+      </Route>
       {/* Seller routes have no sign-in until phase 4 (D-011); anyone with the link can open them. */}
       <Route path="/seller" element={<SellerLayout />}>
         <Route index element={<OrdersWorkspace />} />

@@ -3,6 +3,7 @@ import { isOneOf, isRecord } from './parse';
 export const API_ERROR_CODES = [
   'invalid_request',
   'not_found',
+  'seller_not_found',
   'cutoff_passed',
   'week_not_published',
   'unknown_item',

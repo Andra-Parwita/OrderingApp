@@ -9,6 +9,8 @@ export type SegmentedProps<T extends string> = Readonly<{
   onChange: (next: T) => void;
   /** Accessible name of the radio group. */
   label: string;
+  /** Tighter horizontal padding, for toolbars. The tap target stays full height. */
+  compact?: boolean;
 }>;
 
 const Group = styled.div`
@@ -18,10 +20,10 @@ const Group = styled.div`
   overflow: hidden;
 `;
 
-const Option = styled.button<{ $selected: boolean }>`
+const Option = styled.button<{ $selected: boolean; $compact: boolean }>`
   min-height: ${({ theme }) => theme.minTapTarget};
   min-width: ${({ theme }) => theme.minTapTarget};
-  padding: 0 ${({ theme }) => theme.spacing.lg};
+  padding: 0 ${({ theme, $compact }) => ($compact ? theme.spacing.md : theme.spacing.lg)};
   border: 0;
   background: ${({ theme, $selected }) => ($selected ? theme.colour.accent : 'transparent')};
   color: ${({ theme, $selected }) => ($selected ? theme.colour.onAccent : theme.colour.text)};
@@ -38,6 +40,7 @@ type OptionButtonProps = Readonly<{
   value: string;
   label: string;
   selected: boolean;
+  compact: boolean;
   onSelect: (value: string) => void;
   register: (value: string, node: HTMLButtonElement | null) => void;
 }>;
@@ -46,6 +49,7 @@ const OptionButton = memo(function OptionButton({
   value,
   label,
   selected,
+  compact,
   onSelect,
   register,
 }: OptionButtonProps) {
@@ -62,6 +66,7 @@ const OptionButton = memo(function OptionButton({
       aria-checked={selected}
       tabIndex={selected ? 0 : -1}
       $selected={selected}
+      $compact={compact}
       onClick={onClick}
     >
       {label}
@@ -74,6 +79,7 @@ export function Segmented<T extends string>({
   value,
   onChange,
   label,
+  compact = false,
 }: SegmentedProps<T>) {
   const refs = useRef(new Map<string, HTMLButtonElement>());
 
@@ -117,6 +123,7 @@ export function Segmented<T extends string>({
           value={option.value}
           label={option.label}
           selected={option.value === value}
+          compact={compact}
           onSelect={select}
           register={register}
         />

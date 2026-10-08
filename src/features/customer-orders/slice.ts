@@ -18,11 +18,11 @@ export type OrderPageState =
   | { status: 'ready'; order: CustomerOrder }
   | { status: 'error'; code: FailureCode };
 
-/** The week and kitchen: pickup details, the seller's WhatsApp number and whether ordering is open. */
-export type MenuState =
-  | { status: 'idle' }
-  | { status: 'ready'; data: MenuResponse }
-  | { status: 'error'; code: FailureCode };
+/**
+ * The week and kitchen of each seller the phone has orders with, by slug: pickup details, the
+ * seller's WhatsApp number and whether ordering is open. A seller that failed to load is absent.
+ */
+export type MenusState = Record<string, MenuResponse>;
 
 export type CancelState =
   { status: 'idle' } | { status: 'submitting' } | { status: 'failed'; code: FailureCode };
@@ -30,7 +30,7 @@ export type CancelState =
 export type CustomerOrdersState = {
   list: ListState;
   order: OrderPageState;
-  menu: MenuState;
+  menus: MenusState;
   cancel: CancelState;
 };
 export type CustomerOrdersRootState = { customerOrders: CustomerOrdersState };
@@ -38,7 +38,7 @@ export type CustomerOrdersRootState = { customerOrders: CustomerOrdersState };
 const initialState: CustomerOrdersState = {
   list: { status: 'idle' },
   order: { status: 'idle' },
-  menu: { status: 'idle' },
+  menus: {},
   cancel: { status: 'idle' },
 };
 
@@ -59,14 +59,14 @@ const slice = createSlice({
     listFailed(state, action: PayloadAction<FailureCode>) {
       state.list = { status: 'error', code: action.payload };
     },
-    menuRequested() {
-      // The saga loads it; the screen keeps showing the last good copy.
+    menuRequested: {
+      reducer() {
+        // The saga loads it; the screen keeps showing the last good copy.
+      },
+      prepare: (slug: string) => ({ payload: slug }),
     },
     menuLoaded(state, action: PayloadAction<MenuResponse>) {
-      state.menu = { status: 'ready', data: action.payload };
-    },
-    menuFailed(state, action: PayloadAction<FailureCode>) {
-      if (state.menu.status !== 'ready') state.menu = { status: 'error', code: action.payload };
+      state.menus[action.payload.seller.slug] = action.payload;
     },
     orderRequested: {
       reducer(state) {
@@ -107,7 +107,6 @@ export const {
   listFailed,
   menuRequested,
   menuLoaded,
-  menuFailed,
   orderRequested,
   orderRefreshRequested,
   orderLoaded,

@@ -23,8 +23,8 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   const firstName = `Rina-${Date.now()}-${testInfo.project.name}`.slice(0, 40);
 
   // C1 menu
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Delave' })).toBeVisible();
+  await page.goto('/onde-onde');
+  await expect(page.getByRole('heading', { name: 'Onde Onde' })).toBeVisible();
   const addPesmol = page.getByRole('button', { name: 'Add one Tilapia pesmol' });
   await addPesmol.click();
   await addPesmol.click();
@@ -76,15 +76,15 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
 });
 
 test('customer menu in Indonesian shows Indonesian item names and dates', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/onde-onde');
   await page.getByRole('radio', { name: 'ID' }).click();
   await expect(page.getByText('Pesmol ikan nila')).toBeVisible();
   await expect(page.getByText('Sabtu, 10 Okt')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Pesanan saya' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Pesanan saya' })).toBeVisible();
 });
 
 test('Back from the basket returns to the menu with the basket intact', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/onde-onde');
   await page.getByRole('button', { name: 'Add one Tilapia pesmol' }).click();
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
   await expect(page.getByText('2 items · $25.00')).toBeVisible();
@@ -92,7 +92,7 @@ test('Back from the basket returns to the menu with the basket intact', async ({
   await expect(page).toHaveURL(/\/basket$/);
 
   await page.goBack();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/onde-onde$/);
   await expect(page.getByText('2 items · $25.00')).toBeVisible();
   // Forward again: the basket page still has both lines.
   await page.goForward();

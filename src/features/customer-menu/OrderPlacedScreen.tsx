@@ -9,14 +9,14 @@ import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
 import type { StatusTone } from '../../theme/tokens';
-import { Button, Pill } from '../../ui';
+import { Button, PageHeader, Pill } from '../../ui';
 import { menuRequested, orderRequested } from './customerSlice';
 import { formatCookingDate, formatWindow } from '../../../shared/dates';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { CUSTOMER_NS } from './i18n/register';
-import { Block, Muted, Page, StateMessage, Strong, Title, TopBar, useLang } from './layout';
+import { Block, Muted, Page, StateMessage, Strong, useLang } from './layout';
 import { ScreenBoundary } from './ScreenBoundary';
-import { selectMenu, selectOrder } from './selectors';
+import { selectMenu, selectMenuSlug, selectOrder } from './selectors';
 
 const Code = styled.p`
   margin: 0;
@@ -90,12 +90,19 @@ type Props = Readonly<{
   token: string;
   /** Opens "Change or cancel" (batch 2); a no-op until then. */
   onChange: () => void;
+  /** Back to the order page. Without it (the dev harness) the header has no back arrow. */
+  onBack?: () => void;
 }>;
 
 function PlacedBody({ order, onChange }: Readonly<{ order: CustomerOrder; onChange: () => void }>) {
   const { t, i18n } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
-  const menu = useSelector(selectMenu);
+  const loadedMenu = useSelector(selectMenu);
+  // Another seller's menu (still on screen from before) must not give this order its pickup.
+  const menu =
+    loadedMenu.status === 'ready' && loadedMenu.data.seller.slug !== order.seller.slug
+      ? ({ status: 'idle' } as const)
+      : loadedMenu;
 
   const whatsappNumber = menu.status === 'ready' ? menu.data.kitchen.whatsappNumber : undefined;
   const pickup = menu.status === 'ready' ? menu.data.week.pickupPoints[0] : undefined;
@@ -111,7 +118,7 @@ function PlacedBody({ order, onChange }: Readonly<{ order: CustomerOrder; onChan
     window.open(whatsAppUrl(waText, whatsappNumber), '_blank', 'noopener,noreferrer');
   }, [waText, whatsappNumber]);
   // A customer who has collected before can skip the WhatsApp message (D-027).
-  const [returning] = useState(isReturningCustomer);
+  const [returning] = useState(() => isReturningCustomer(order.seller.slug));
 
   const totalCents = order.lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0);
   const how = order.fulfilment === 'delivery' ? t('placed.delivery') : t('placed.pickup');
@@ -161,11 +168,10 @@ function PlacedBody({ order, onChange }: Readonly<{ order: CustomerOrder; onChan
   );
 }
 
-function PlacedContent({ token, onChange }: Props) {
+function PlacedContent({ token, onChange, onBack }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const dispatch = useDispatch();
   const order = useSelector(selectOrder);
-  const menu = useSelector(selectMenu);
 
   const loaded = order.status === 'ready' && order.order.token === token;
   const load = useCallback(() => {
@@ -176,17 +182,20 @@ function PlacedContent({ token, onChange }: Props) {
   }, [loaded, load]);
 
   // The pickup date and time come from the menu; it is only needed when it is not loaded yet.
-  const menuIdle = menu.status === 'idle';
+  const menuSlug = useSelector(selectMenuSlug);
+  const orderSlug = loaded ? order.order.seller.slug : undefined;
   useEffect(() => {
-    if (menuIdle) dispatch(menuRequested());
-  }, [dispatch, menuIdle]);
+    if (orderSlug !== undefined && orderSlug !== menuSlug) dispatch(menuRequested(orderSlug));
+  }, [dispatch, orderSlug, menuSlug]);
 
   return (
     <Page>
-      <TopBar>
-        <Title>{t('placed.title')}</Title>
-        <LanguageSwitch />
-      </TopBar>
+      <PageHeader
+        title={t('placed.title')}
+        backLabel={t('common.back')}
+        onBack={onBack}
+        trailing={<LanguageSwitch compact />}
+      />
       {order.status === 'ready' && loaded ? (
         <PlacedBody order={order.order} onChange={onChange} />
       ) : order.status === 'error' ? (

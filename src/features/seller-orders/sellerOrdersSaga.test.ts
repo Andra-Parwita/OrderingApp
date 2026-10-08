@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mockStore } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 import {
+  refreshRequested,
   paidChangeRequested,
   pollingStarted,
   pollingStopped,
   statusChangeRequested,
 } from './sellerOrdersSlice';
+import { chooseSeller, SELLER_KEY } from '../../api/device/sellerContext';
 import { createTestStore } from './testSupport';
 
 function newOrder(firstName: string) {
@@ -110,5 +112,23 @@ describe('sellerOrdersSaga', () => {
     store.dispatch(paidChangeRequested({ code: created.code, paid: true }));
     await waitFor(() => store.getState().sellerOrders.change.status === 'idle');
     expect(store.getState().sellerOrders.orders[0]?.paid).toBe(true);
+  });
+
+  it('sends the chosen seller as X-Seller on seller calls, and lists only their orders', async () => {
+    newOrder('Rina');
+    const seen: Array<string | null> = [];
+    server.events.on('request:start', ({ request }) => {
+      if (new URL(request.url).pathname === '/api/seller/orders') {
+        seen.push(request.headers.get('X-Seller'));
+      }
+    });
+    chooseSeller('dapur-demo');
+    const store = createTestStore({ saga: true, pollMs: 1000 });
+    store.dispatch(refreshRequested());
+    await waitFor(() => store.getState().sellerOrders.list.status === 'ready');
+    expect(seen).toContain('dapur-demo');
+    expect(store.getState().sellerOrders.orders.map((o) => o.firstName)).not.toContain('Rina');
+    localStorage.removeItem(SELLER_KEY);
+    server.events.removeAllListeners();
   });
 });

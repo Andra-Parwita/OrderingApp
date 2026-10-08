@@ -5,11 +5,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { server } from '../../../mocks/server';
 import type { CustomerOrder } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
-import { createOrder, nudgeOrder, setOrderLocked, setOrderStatus } from '../../api/client';
+import { placeOrder, nudgeOrder, setOrderLocked, setOrderStatus } from '../../api/client';
 import { MY_ORDERS_KEY, readMyOrders, saveMyOrder } from '../../api/device/myOrders';
 import { MyOrdersScreen } from './MyOrdersScreen';
 import { OrderScreen } from './OrderScreen';
 import { renderWithStore, setupI18n } from './testSupport';
+import { DEFAULT_SELLER_SLUG } from '../../../shared/seller';
 
 const noop = () => undefined;
 const NUMBER = '61412345678';
@@ -25,7 +26,7 @@ async function useMenu(patch: {
   whatsappNumber?: string;
   ordering?: MenuResponse['ordering'];
 }): Promise<void> {
-  const body = (await (await fetch('/api/menu')).json()) as MenuResponse;
+  const body = (await (await fetch('/api/s/onde-onde/menu')).json()) as MenuResponse;
   const next: MenuResponse = {
     ...body,
     kitchen: {
@@ -34,11 +35,11 @@ async function useMenu(patch: {
     },
     ordering: patch.ordering ?? body.ordering,
   };
-  server.use(http.get('*/api/menu', () => HttpResponse.json(next)));
+  server.use(http.get('*/api/s/onde-onde/menu', () => HttpResponse.json(next)));
 }
 
 async function place(language: 'en' | 'id' = 'en'): Promise<CustomerOrder> {
-  const result = await createOrder({
+  const result = await placeOrder(DEFAULT_SELLER_SLUG, {
     firstName: 'Rina',
     language,
     fulfilment: 'pickup',
@@ -78,6 +79,28 @@ describe('MyOrdersScreen', () => {
     expect(row).toHaveTextContent('$30.00');
     expect(screen.getByText('Saved on this phone only. No account.')).toBeVisible();
     expect(screen.queryByText('Earlier orders')).not.toBeInTheDocument();
+  });
+
+  it('shows the seller name on each order across sellers', async () => {
+    const onde = await place();
+    const demo = await placeOrder('dapur-demo', {
+      firstName: 'Rina',
+      language: 'en',
+      fulfilment: 'pickup',
+      lines: [{ itemId: 'es-teh', qty: 1 }],
+    });
+    if (!demo.ok) throw new Error('could not place the sample order');
+    saveMyOrder(demo.data.order);
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    await screen.findByText('This week');
+    expect(
+      screen.getByRole('button', { name: new RegExp(`${onde.code.slice(0, 3)}.*Onde Onde`) }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', {
+        name: new RegExp(`${demo.data.order.code.slice(0, 3)}.*Dapur Demo`),
+      }),
+    ).toBeVisible();
   });
 
   it('opens an order from its tapped row', async () => {

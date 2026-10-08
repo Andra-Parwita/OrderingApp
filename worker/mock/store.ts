@@ -8,6 +8,7 @@ import type {
   InboxEntry,
   Kitchen,
   KitchenSettings,
+  Seller,
   MenuItem,
   MenuItemView,
   SellerMenuItemView,
@@ -28,13 +29,7 @@ import type {
 } from '../../shared/orderContract';
 import { generateOrderCode, generateToken, type FillRandom } from '../../shared/orderCode';
 import { isFinalStatus, nextStatuses } from '../../shared/status';
-import {
-  fixtureChefs,
-  fixtureItems,
-  fixtureKitchen,
-  fixtureSettings,
-  fixtureWeek,
-} from './fixture';
+import { fixtureSellers, type SellerFixture } from './fixture';
 
 type Order = SellerOrder;
 
@@ -82,8 +77,17 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-export function createStore(options: StoreOptions) {
-  const seed = options.seed ?? 20261011;
+/**
+ * One seller's data: kitchen, settings, menu, chefs and orders. Nothing here can see another
+ * seller (D-036); the multi-seller `createStore` below holds one of these per seller.
+ */
+export function createSellerStore(
+  options: StoreOptions,
+  fixture: SellerFixture = fixtureSellers[0] as SellerFixture,
+  seedOffset = 0,
+) {
+  const seller: Seller = { ...fixture.seller };
+  const seed = (options.seed ?? 20261011) + seedOffset;
   let random = seededRandom(seed);
   const seededFill: FillRandom = (bytes) => {
     for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(random() * 256);
@@ -94,11 +98,11 @@ export function createStore(options: StoreOptions) {
   const newCode = options.newCode ?? (() => generateOrderCode());
   const newToken = options.newToken ?? (() => generateToken());
 
-  let kitchen: Kitchen = structuredClone(fixtureKitchen);
-  let week: Week = structuredClone(fixtureWeek);
-  let chefs: Array<Chef> = structuredClone(fixtureChefs);
-  let items: Array<MenuItem> = structuredClone(fixtureItems);
-  let settings: KitchenSettings = structuredClone(fixtureSettings);
+  let kitchen: Kitchen = structuredClone(fixture.kitchen);
+  let week: Week = structuredClone(fixture.week);
+  let chefs: Array<Chef> = structuredClone(fixture.chefs);
+  let items: Array<MenuItem> = structuredClone(fixture.items);
+  let settings: KitchenSettings = structuredClone(fixture.settings);
   let orders: Array<Order> = [];
 
   const nowIso = () => options.now().toISOString();
@@ -142,6 +146,7 @@ export function createStore(options: StoreOptions) {
 
   function publicMenu(): MenuResponse {
     return {
+      seller: { ...seller },
       kitchen: {
         ...kitchen,
         ...(settings.whatsappNumber ? { whatsappNumber: settings.whatsappNumber } : {}),
@@ -222,6 +227,7 @@ export function createStore(options: StoreOptions) {
     const status: OrderStatus = extra.status ?? (enteredBy ? 'confirmed' : 'ordered');
     const order: Order = {
       id: make.id,
+      sellerId: seller.id,
       code: make.code,
       token: make.token,
       firstName: input.firstName,
@@ -309,6 +315,8 @@ export function createStore(options: StoreOptions) {
   }
 
   return {
+    seller,
+
     getMenu(): MenuResponse {
       return publicMenu();
     },
@@ -494,7 +502,11 @@ export function createStore(options: StoreOptions) {
           lines.value,
           { role: 'customer', name: firstName },
           undefined,
-          { id: `sample-${String(++idCounter)}`, code, token: generateToken(seededFill) },
+          {
+            id: `sample-${seller.slug}-${String(++idCounter)}`,
+            code,
+            token: generateToken(seededFill),
+          },
           { returning: random() < 0.3 },
         );
         let current = order;
@@ -526,12 +538,47 @@ export function createStore(options: StoreOptions) {
     reset(): void {
       random = seededRandom(seed);
       idCounter = 0;
-      kitchen = structuredClone(fixtureKitchen);
-      week = structuredClone(fixtureWeek);
-      chefs = structuredClone(fixtureChefs);
-      items = structuredClone(fixtureItems);
-      settings = structuredClone(fixtureSettings);
+      kitchen = structuredClone(fixture.kitchen);
+      week = structuredClone(fixture.week);
+      chefs = structuredClone(fixture.chefs);
+      items = structuredClone(fixture.items);
+      settings = structuredClone(fixture.settings);
       orders = [];
+    },
+  };
+}
+
+export type SellerStore = ReturnType<typeof createSellerStore>;
+
+/**
+ * All sellers of the mock. Seller endpoints get one seller's store by slug; only the global
+ * customer endpoints (by order token) look across sellers, and they get the owning seller back.
+ */
+export function createStore(options: StoreOptions) {
+  const stores = fixtureSellers.map((fixture, index) => createSellerStore(options, fixture, index));
+
+  return {
+    sellers(): Array<Seller> {
+      return stores.map((store) => ({ ...store.seller }));
+    },
+
+    /** Undefined for an unknown slug. */
+    seller(slug: string): SellerStore | undefined {
+      return stores.find((store) => store.seller.slug === slug);
+    },
+
+    /** Tokens are globally unique: the order knows its seller. */
+    findByToken(token: string): { store: SellerStore; order: SellerOrder } | undefined {
+      for (const store of stores) {
+        const order = store.getByToken(token);
+        if (order) return { store, order };
+      }
+      return undefined;
+    },
+
+    /** Resets every seller in place (existing `seller()` references stay valid). */
+    reset(): void {
+      for (const store of stores) store.reset();
     },
   };
 }

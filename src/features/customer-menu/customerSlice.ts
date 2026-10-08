@@ -44,6 +44,8 @@ export type UpdateState =
   | { status: 'failed'; code: FailureCode; message: string };
 
 export type CustomerState = {
+  /** The seller whose menu is loaded or loading (D-037). */
+  slug: string | null;
   menu: MenuState;
   /** itemId to quantity; items at 0 are removed. */
   basket: Record<string, number>;
@@ -64,6 +66,7 @@ export type PlaceRequest = {
 export type UpdateRequest = { fulfilment: Fulfilment; note: string };
 
 const initialState: CustomerState = {
+  slug: null,
   menu: { status: 'idle' },
   basket: {},
   place: { status: 'idle' },
@@ -87,9 +90,20 @@ const customerSlice = createSlice({
   name: 'customer',
   initialState,
   reducers: {
-    menuRequested(state) {
-      // Keep showing the old menu while it refreshes.
-      if (state.menu.status !== 'ready') state.menu = { status: 'loading' };
+    menuRequested: {
+      reducer(state, action: PayloadAction<string>) {
+        if (state.slug !== action.payload) {
+          // Another seller: the old menu and basket are not theirs. (An order being edited
+          // brings its own basket.)
+          state.slug = action.payload;
+          state.menu = { status: 'loading' };
+          if (state.edit.status === 'idle') state.basket = {};
+        } else if (state.menu.status !== 'ready') {
+          // Keep showing the old menu while it refreshes.
+          state.menu = { status: 'loading' };
+        }
+      },
+      prepare: (slug: string) => ({ payload: slug }),
     },
     menuLoaded(state, action: PayloadAction<MenuResponse>) {
       state.menu = { status: 'ready', data: action.payload };

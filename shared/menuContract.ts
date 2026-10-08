@@ -1,5 +1,6 @@
 import type {
   Chef,
+  Seller,
   Kitchen,
   KitchenImages,
   MenuItemView,
@@ -10,17 +11,19 @@ import type {
 } from './domain';
 import { isHexColour } from './kitchenImages';
 import { MAX_MENU_ITEMS } from './limits';
+import { parseSeller } from './seller';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
 
-/** GET /api/menu: public. Never carries chefs or chef ids (D-012). */
+/** GET /api/s/:slug/menu: public. Never carries chefs or chef ids (D-012). */
 export type MenuResponse = {
+  seller: Seller;
   kitchen: Kitchen;
   week: Week;
   items: Array<MenuItemView>;
   ordering: OrderingState;
 };
 
-/** GET /api/seller/menu: the same menu plus the chef grouping. */
+/** GET /api/seller/menu (of the X-Seller seller): the same menu plus the chef grouping. */
 export type SellerMenuResponse = Omit<MenuResponse, 'items'> & {
   chefs: Array<Chef>;
   items: Array<SellerMenuItemView>;
@@ -29,7 +32,13 @@ export type SellerMenuResponse = Omit<MenuResponse, 'items'> & {
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-const IMAGE_KEYS = ['railImage', 'railIcon', 'desktopBanner', 'phoneBanner'] as const;
+const IMAGE_KEYS = [
+  'railImage',
+  'railIcon',
+  'desktopBanner',
+  'phoneBanner',
+  'bannerBackgroundImage',
+] as const;
 
 function parseImages(input: unknown): KitchenImages | null {
   if (!isRecord(input)) return null;
@@ -57,6 +66,8 @@ function parseKitchen(input: unknown): Kitchen | null {
   if (!isRecord(input)) return null;
   const tagline = parseLocalText(input['tagline']);
   const banner = input['bannerImageUrl'];
+  const { sellerId } = input;
+  if (typeof sellerId !== 'string' || sellerId === '') return null;
   if (typeof input['name'] !== 'string' || !tagline) return null;
   const whatsapp = input['whatsappNumber'];
   if (banner !== undefined && typeof banner !== 'string') return null;
@@ -64,6 +75,7 @@ function parseKitchen(input: unknown): Kitchen | null {
   const images = input['images'] === undefined ? undefined : parseImages(input['images']);
   if (images === null) return null;
   return {
+    sellerId,
     name: input['name'],
     tagline,
     ...(banner !== undefined ? { bannerImageUrl: banner } : {}),
@@ -106,8 +118,11 @@ function parseWeek(input: unknown): Week | null {
 
 function parseChef(input: unknown): Chef | null {
   if (!isRecord(input)) return null;
-  if (typeof input['id'] !== 'string' || typeof input['name'] !== 'string') return null;
-  return { id: input['id'], name: input['name'] };
+  const { id, sellerId, name } = input;
+  if (typeof id !== 'string' || typeof sellerId !== 'string' || typeof name !== 'string') {
+    return null;
+  }
+  return { id, sellerId, name };
 }
 
 function parseMenuItemView(input: unknown): MenuItemView | null {
@@ -152,13 +167,14 @@ function parseOrderingState(input: unknown): OrderingState | null {
 
 export function parseMenuResponse(input: unknown): MenuResponse | null {
   if (!isRecord(input) || 'chefs' in input) return null; // customers never receive chef data
+  const seller = parseSeller(input['seller']);
   const kitchen = parseKitchen(input['kitchen']);
   const week = parseWeek(input['week']);
   const items = parseArray(input['items'], parseMenuItemView);
   const ordering = parseOrderingState(input['ordering']);
-  if (!kitchen || !week || !items || !ordering) return null;
-  if (items.length > MAX_MENU_ITEMS) return null;
-  return { kitchen, week, items, ordering };
+  if (!seller || !kitchen || !week || !items || !ordering) return null;
+  if (items.length > MAX_MENU_ITEMS || kitchen.sellerId !== seller.id) return null;
+  return { seller, kitchen, week, items, ordering };
 }
 
 export function parseSellerMenuResponse(input: unknown): SellerMenuResponse | null {

@@ -9,7 +9,7 @@ const LANG_OPTIONS: ReadonlyArray<SegmentedOption<Language>> = [
 ];
 
 /** The one EN / ID switch, used by every customer and seller screen. */
-export function LanguageSwitch() {
+export function LanguageSwitch({ compact = false }: Readonly<{ compact?: boolean }>) {
   const { t, i18n } = useTranslation();
   const lang: Language = i18n.language.startsWith('id') ? 'id' : 'en';
   const onChange = useCallback((next: Language) => void i18n.changeLanguage(next), [i18n]);
@@ -19,6 +19,7 @@ export function LanguageSwitch() {
       value={lang}
       onChange={onChange}
       label={t('language.label')}
+      compact={compact}
     />
   );
 }

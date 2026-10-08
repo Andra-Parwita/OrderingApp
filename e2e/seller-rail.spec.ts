@@ -13,7 +13,7 @@ test('seller desktop: collapsible rail, equal cook-list chips, nothing cut in th
   const stamp = Date.now();
   const names = [`Wi-${stamp}`, `Maximiliana-Wijayakusuma-${stamp}`, `Tom-${stamp}`];
   for (const firstName of names) {
-    const created = await request.post('/api/orders', {
+    const created = await request.post('/api/s/onde-onde/orders', {
       data: {
         firstName,
         language: 'en',

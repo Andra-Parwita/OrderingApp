@@ -16,7 +16,8 @@ export function useLang(): Language {
 export const Page = styled.main`
   max-width: 32rem;
   margin: 0 auto;
-  min-height: 100dvh;
+  /* Leaves room for the customer tab bar when the app shell shows one. */
+  min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
   display: flex;
   flex-direction: column;
 `;
@@ -28,20 +29,6 @@ export const Block = styled.section`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-`;
-
-export const TopBar = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
-`;
-
-export const Title = styled.h1`
-  margin: 0;
-  font-size: ${({ theme }) => theme.type.size.lg};
-  line-height: ${({ theme }) => theme.type.lineHeight.tight};
 `;
 
 export const Muted = styled.p`

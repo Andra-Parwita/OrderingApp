@@ -4,13 +4,14 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { server } from '../../../mocks/server';
 import type { MenuResponse } from '../../../shared/menuContract';
-import { createOrder, fetchOrder, setOrderLocked } from '../../api/client';
+import { placeOrder, fetchOrder, setOrderLocked } from '../../api/client';
 import { MY_ORDERS_KEY, readMyOrders, saveMyOrder } from '../../api/device/myOrders';
 import { BasketScreen } from './BasketScreen';
-import { placeRequested, quantitySet } from './customerSlice';
+import { menuRequested, placeRequested, quantitySet } from './customerSlice';
 import { MenuScreen } from './MenuScreen';
 import { OrderPlacedScreen } from './OrderPlacedScreen';
 import { createTestStore, renderWithStore, setupI18n } from './testSupport';
+import { DEFAULT_SELLER_SLUG } from '../../../shared/seller';
 
 const noop = () => undefined;
 const NUMBER = '61412345678';
@@ -27,7 +28,7 @@ async function useMenu(patch: {
   whatsappNumber?: string;
   ordering?: MenuResponse['ordering'];
 }): Promise<void> {
-  const body = (await (await fetch('/api/menu')).json()) as MenuResponse;
+  const body = (await (await fetch('/api/s/onde-onde/menu')).json()) as MenuResponse;
   const next: MenuResponse = {
     ...body,
     kitchen: {
@@ -36,11 +37,11 @@ async function useMenu(patch: {
     },
     ordering: patch.ordering ?? body.ordering,
   };
-  server.use(http.get('*/api/menu', () => HttpResponse.json(next)));
+  server.use(http.get('*/api/s/onde-onde/menu', () => HttpResponse.json(next)));
 }
 
 async function placeSample(qty = 1) {
-  const result = await createOrder({
+  const result = await placeOrder(DEFAULT_SELLER_SLUG, {
     firstName: 'Rina',
     language: 'en',
     fulfilment: 'pickup',
@@ -54,16 +55,16 @@ async function placeSample(qty = 1) {
 describe('How ordering works', () => {
   it('names the kitchen and its WhatsApp number in step 3', async () => {
     await useMenu({ whatsappNumber: NUMBER });
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     await screen.findByText('How ordering works');
     expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(3);
     expect(
-      screen.getByText('Send that number to Delave on WhatsApp (+61412345678).'),
+      screen.getByText('Send that number to Onde Onde on WhatsApp (+61412345678).'),
     ).toBeVisible();
   });
 
   it('falls back to "the seller" without a number, and speaks Indonesian', async () => {
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     expect(await screen.findByText('Send that number to the seller on WhatsApp.')).toBeVisible();
     fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
     expect(await screen.findByText('Cara memesan')).toBeVisible();
@@ -79,7 +80,7 @@ describe('closed ordering', () => {
     await useMenu({ ordering: { open: false, reason }, whatsappNumber: NUMBER });
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     const store = createTestStore();
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />, store);
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />, store);
     expect(await screen.findByText('Orders for this Saturday are closed')).toBeVisible();
     expect(screen.getByText(line)).toBeVisible();
     // A basket left from before does not bring the bar back.
@@ -94,23 +95,25 @@ describe('closed ordering', () => {
   it('opens the WhatsApp chat picker when the number is not known', async () => {
     await useMenu({ ordering: { open: false, reason: 'closed_by_seller' } });
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Message seller on WhatsApp' }));
     expect(open).toHaveBeenCalledWith('https://wa.me/', '_blank', 'noopener,noreferrer');
   });
 });
 
 describe('returning customer', () => {
-  async function placeAndCaptureBody() {
+  async function placeAndCaptureBody(slug = 'onde-onde') {
     let body: Record<string, unknown> = {};
     server.use(
-      http.post('*/api/orders', async ({ request }) => {
+      http.post(`*/api/s/${slug}/orders`, async ({ request }) => {
         body = (await request.clone().json()) as Record<string, unknown>;
         return undefined;
       }),
     );
     const store = createTestStore();
-    store.dispatch(quantitySet({ itemId: 'lemper', qty: 1 }));
+    store.dispatch(menuRequested(slug));
+    await vi.waitFor(() => expect(store.getState().customer.menu.status).toBe('ready'));
+    store.dispatch(quantitySet({ itemId: slug === 'onde-onde' ? 'lemper' : 'es-teh', qty: 1 }));
     store.dispatch(
       placeRequested({ firstName: 'Rina', language: 'en', fulfilment: 'pickup', note: '' }),
     );
@@ -122,6 +125,12 @@ describe('returning customer', () => {
     const earlier = await placeSample();
     saveMyOrder({ ...earlier, status: 'collected' });
     expect((await placeAndCaptureBody())['returning']).toBe(true);
+  });
+
+  it('is per seller: an order collected from one seller does not make a customer of another', async () => {
+    const earlier = await placeSample();
+    saveMyOrder({ ...earlier, status: 'collected' });
+    expect('returning' in (await placeAndCaptureBody('dapur-demo'))).toBe(false);
   });
 
   it('sends nothing for a first-time customer or one with only open orders', async () => {

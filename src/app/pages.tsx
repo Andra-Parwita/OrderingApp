@@ -47,3 +47,38 @@ export function NotFoundPage() {
     </Page>
   );
 }
+
+// The customer pages below sit inside the tab bar shell, so they leave room for it.
+const ShellPage = styled(Page)`
+  min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
+`;
+
+/** `/`: what Delave is. Customers arrive through a seller's own link, so no list of sellers. */
+export function HomePage() {
+  const { t } = useTranslation();
+  return (
+    <ShellPage>
+      <Bar>
+        <LanguageSwitch />
+      </Bar>
+      <Title>{t('home.title')}</Title>
+      <Text>{t('home.body')}</Text>
+      <Text>{t('home.hint')}</Text>
+    </ShellPage>
+  );
+}
+
+/** `/<slug>` with a mistyped, old or reserved slug. */
+export function KitchenNotFoundPage() {
+  const { t } = useTranslation();
+  return (
+    <ShellPage>
+      <Bar>
+        <LanguageSwitch />
+      </Bar>
+      <Title>{t('kitchenNotFound.title')}</Title>
+      <Text>{t('kitchenNotFound.body')}</Text>
+      <Home to="/">{t('kitchenNotFound.home')}</Home>
+    </ShellPage>
+  );
+}

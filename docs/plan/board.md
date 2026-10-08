@@ -9,7 +9,7 @@ Live status of the current round. The plan itself (phases, stage tables, folder 
 | 0 · Plan | ✅ done 2026-10-07 (D-003 to D-015) | — |
 | 1 · Scaffold | ✅ landed ~20:24, gate verified by the coordinator | owner: open the hello screen on a phone |
 | 2 · Wireframes | ✅ done: batches 1–4 approved | — |
-| 3 · Prototype | ✅ batch 1 (22:21, 7 Oct) and **batch 2 clickable end to end** (21:37, 8 Oct) on the reference palette | owner tries batch 2; then a polish round (Findings) and batch 3 |
+| 3 · Prototype | ✅ batches 1–2, desktop seller layout, native customer app, owner's images, **multi-seller foundation** (02:19, 9 Oct) | owner commits; batch 3 stage table for approval |
 | 4–5 | ⏳ not started | — |
 
 ## Phase 1 · Scaffold (round 1)
@@ -84,11 +84,23 @@ Stage table in [roadmap.md](roadmap.md#phase-3--batch-2-after-ordering-stage-tab
 | 4.7 Collapsible rail (D-032), equal-width cook chips (D-033), no truncated names in the table | builder · sonnet | 22:20 | ~22:45 | ~22:31 | `src/ui/` (+Tooltip), `src/app/` (+railPreference), cook chips, table sizing; tests 504 → 509 | ✅ coordinator gate 22:33: 509/509, e2e 37 + 8 skipped; cook chips capture looked at |
 | 4.8 Banner image slots (rail, desktop banner, phone banner; samples from OndeOnde1.png) | builder · sonnet | 22:34 | ~23:00 | ~22:45 | `src/ui/ImageSlot`, `shared/kitchenImages`, `SellerLayout`, `public/samples/` (untracked); tests 509 → 521 | ✅ coordinator gate 22:47: 521/521, e2e 38 + 10 skipped. Owner: banner crops badly → 4.9 |
 | 4.9 No-crop banners (contain + per-seller background colour), rail 2:1 image + initial fallback, sizes per D-038, table fits at 1024 px | builder · sonnet | 22:48 | ~23:15 | | `src/ui/` (ImageSlot contain, Table, Pill), `src/app/`, `shared/`, fixture, samples (+rail.jpg); bg `#835937`; tests 521 → 529 | ✅ landed ~23:00; coordinator gate 23:01: unit 529/529, e2e 35 passed + **1 failed** (seller-batch2 "Starts as Confirmed", 3rd time) → root cause found; 1366 capture looked at (banner whole, brown sides, logo in rail) |
-| Fix e2e flake: specs order the limited Lemper (20) across 3 projects in one run → sells out; move specs to unlimited items, one serial limits test, 3 green runs | builder · sonnet | 23:03 | ~23:20 | | `e2e/` | 🔄 running (alone) |
+| Fix e2e flake: specs order the limited Lemper (20) across 3 projects in one run → sells out; move specs to unlimited items, one serial limits test, 3 green runs | builder · sonnet | 23:03 | ~23:20 | | `e2e/` (+limits.spec), `playwright.config.ts` (limits project, timeout 60 s) | ✅ landed ~23:25 (3 green runs by the builder) — but coordinator run 23:28: **1 failed again** (seller-batch2) → stock was NOT the root cause |
+| Diagnose the real cause: New order form found **reset** (name empty, steppers 0) at failure → likely a dev-server reload or a remount; fix the root cause, reconsider the 60 s timeout | builder · sonnet | 23:30 | ~23:55 | | `src/app/SellerLayout.tsx` only | ✅ **root cause:** SellerLayout swapped its whole tree when the 1024 px media query flipped (Playwright full-page screenshots briefly report a 1×1 viewport) → the New order screen remounted and lost its form. A real bug: a tablet rotation or window resize would wipe a half-typed order. Fixed with one stable shell. Builder: 24/24 repeats, 3 green full runs; coordinator gate 00:13 (9 Oct): 529/529, e2e 40 passed + 12 skipped |
+| 4.10 Native customer app (banner on top, EN/ID beside name, tabs Menu · My orders · Settings, Settings screen), owner's 5 images + background image, 2 owed fail-without-fix regression tests | builder · sonnet | 00:15 (9 Oct) | ~01:00 | | `src/app/CustomerShell.tsx` (new), `customer-settings/` (new), customer features, `public/samples/` (5 images, 448 KB total), e2e; tests 529 → 543 | ✅ stayed in its brief; both regression tests shown to fail without their fixes; coordinator gate 00:48: 543/543, e2e 42 passed + 13 skipped; iPhone menu capture looked at |
+| 4.11 (first brief: headers without language switch) | builder · sonnet | 00:58 | | 00:59 | none (no files touched) | ⛔ stopped: owner amended D-042 ("keep the language switch") |
+| 4.11 Customer sub-page headers: back + title + compact EN/ID (D-042 amended), `viewport-fit=cover`, drop unused `onMyOrders` | builder · sonnet | 01:00 | ~01:20 | | `src/ui/PageHeader` (new), customer screens, `index.html`; tests 543 → 552 | ✅ coordinator gate 01:15: 552/552, e2e 42 + 13 skipped; iPhone basket capture looked at |
+| 5.1 Multi-seller domain + mock (seller id everywhere, slug rules, isolation tests, two sample sellers) | builder · sonnet | 01:17 | ~02:00 | ~01:35 | `shared/` (+seller.ts), `worker/mock/`, `mocks/` (+multiSeller.test), `src/api/`; compile fixes in 5 src files; tests 552 → 601 | ✅ coordinator gate 01:38 (unit only, by design): 601/601; mock still tree-shaken; e2e expected broken until 5.2 |
+| 5.2 Multi-seller app: `/:slug` routes, Delave home, Menu-tab memory, My orders across sellers, dev seller picker, all e2e back to green + multi-seller spec | builder · sonnet | 01:39 | ~02:30 | | `src/app/`, `src/api/device/` (+sellerContext, lastKitchen), `src/components/SellerPicker` (dev only), features wiring, e2e (+multi-seller.spec); tests 601 → 619 | ✅ builder: 2 of 3 full runs green (1 webkit timeout); coordinator gate 02:19: 619/619, e2e **43 passed + 15 skipped**; My orders across sellers capture looked at |
 
-**Checkpoint:** before 4.6, `scratch/checkpoints/pre-4.6.tar` (21:57). After the wave, `scratch/checkpoints/post-wave4.tar` (21:21). After 4.1 + chef fix, `scratch/checkpoints/post-4.1-chef.tar` (21:03). `git status` checked before the wave: only the known 4.1 compile fixes in `src/features`.
+**Checkpoint:** before 5.2, `scratch/checkpoints/pre-5.2.tar` (01:38). Before 5.1, `scratch/checkpoints/pre-5.1.tar` (01:16). Before 4.11, `scratch/checkpoints/pre-4.11.tar` (00:58). Before 4.10, `scratch/checkpoints/pre-4.10.tar` (00:14, 9 Oct). Before 4.6, `scratch/checkpoints/pre-4.6.tar` (21:57). After the wave, `scratch/checkpoints/post-wave4.tar` (21:21). After 4.1 + chef fix, `scratch/checkpoints/post-4.1-chef.tar` (21:03). `git status` checked before the wave: only the known 4.1 compile fixes in `src/features`.
 
 ## Findings
+
+- **Mobile-webkit slowness** (medium): full suite now ~2.9 min; webkit specs take 20–70 s and one timed out once in 5.2 (WhatsApp button not stable within 60 s). Next step: run fewer projects in parallel (`workers`) or split webkit into its own run, then put the timeout back to 30 s.
+- **Returning-customer edge** (low): an old My-orders entry without a seller counts as "returning" for every seller until it is migrated on next fetch.
+
+- **4.10 follow-ups** (00:48): (1) `index.html` lacks `viewport-fit=cover`, so safe-area padding is 0 on real iPhones; (2) harness still passes the unused `onMyOrders` → drop the prop; (3) sub-page top bars → ruled D-042, in 4.11; (4) the sample kitchen is named "Delave" (the app) while its banner says "Onde Onde" → fixed by the multi-seller fixtures in 5.1.
+- **Load-related slowness** (low): one vitest timeout in `desktop.test.tsx` and one webkit reload hang while the machine was busy; both passed on rerun.
 
 - **Phone order list scrolls sideways at 390 px with 30-character names without spaces** (4.9 builder; low — real names have spaces). Fix with `overflow-wrap: anywhere` on the name in `OrderRow`.
 
@@ -97,7 +109,9 @@ Stage table in [roadmap.md](roadmap.md#phase-3--batch-2-after-ordering-stage-tab
 - **Customer app should feel native** (owner screenshot, 22:55): banner at the very top; no "My orders" link or EN/ID bar above it; language under the banner and name, or in a settings tab; a bottom tab bar. Ruled D-039 (tabs Menu · My orders · Settings; EN/ID toggle beside the name too); built as 4.10 after 4.9.
 
 - **Orders table overflows at 1024 px with long names** (4.8 builder): reached 1055 px; fix in 4.9.
-- **`seller-batch2` flaky — root cause** (coordinator, 23:02): all projects in one run share one mock store and order the limited Lemper (20 portions) → sells out → later orders fail. Fix running.
+- ~~**`seller-batch2` flaky**~~ — fixed 9 Oct 00:10: layout remount on media-query flip (see the round above). Still owed: a regression test that fails without the fix (in 4.10).
+- **Webkit hang on "Change or cancel order"** (low, seen once by the diagnosis builder in `batch2-flow` on mobile-webkit) — watch.
+- **Playwright timeout 60 s** kept: `order-flow` on mobile-webkit takes ~47 s with three projects in parallel.
 - ~~`seller-batch2` flaky again~~ (4.8 builder: "Starts as Confirmed" not found once under load, passed alone). Watch; if it recurs, give it its own serial project like the settings spec.
 
 - **Seller banner crops badly** (owner screenshot, 22:40): the 2.5:1 image in a height-capped strip with object-fit cover cuts off faces and the logo. Owner will generate a separate image per slot; seller target is a **tablet in landscape**; on wider desktops the banner should sit centred with a nice background colour filling the sides. Sizes ruled D-038; 4.9 running.

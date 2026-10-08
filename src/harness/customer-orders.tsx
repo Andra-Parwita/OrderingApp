@@ -5,7 +5,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useState } from 'react';
 import { Provider } from 'react-redux';
 import createSagaMiddleware from 'redux-saga';
-import { createOrder } from '../api/client';
+import { placeOrder } from '../api/client';
 import { readMyOrders, saveMyOrder } from '../api/device/myOrders';
 import {
   MyOrdersScreen,
@@ -20,6 +20,9 @@ import { AppThemeProvider } from '../theme/AppThemeProvider';
 // main.tsx registers the other features' strings; this feature's own are added here until the app
 // wires them (stage 4.4).
 registerCustomerOrdersI18n();
+
+/** The seller the sample order is placed with: `?seller=<slug>`, else the first sample seller. */
+const SLUG = new URLSearchParams(window.location.search).get('seller') ?? 'onde-onde';
 
 type View =
   | { name: 'seeding'; next: 'list' | 'order' }
@@ -53,7 +56,7 @@ function Seeding({
 }: Readonly<{ next: 'list' | 'order'; onDone: (v: View) => void }>) {
   useEffect(() => {
     let cancelled = false;
-    void createOrder({
+    void placeOrder(SLUG, {
       firstName: `Harness-${Date.now()}`,
       language: 'en',
       fulfilment: 'pickup',

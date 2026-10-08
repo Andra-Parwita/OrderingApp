@@ -1,4 +1,4 @@
-// ?harness=customer[&screen=menu|basket|placed[&token=...]]: the customer flow (C1, C2, C3) on
+// ?harness=customer[&seller=<slug>][&screen=menu|basket|placed[&token=...]]: the customer flow (C1, C2, C3) on
 // its own store, against the dev Worker's mock API. Dev and e2e only.
 import { configureStore } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useState } from 'react';
@@ -15,6 +15,9 @@ import {
   selectPlace,
 } from '../features/customer-menu';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
+
+/** The seller whose menu the harness shows: `?seller=<slug>`, else the first sample seller. */
+const SLUG = new URLSearchParams(window.location.search).get('seller') ?? 'onde-onde';
 
 type View =
   { name: 'menu' } | { name: 'basket' } | { name: 'placed'; token: string } | { name: 'seeding' };
@@ -75,9 +78,9 @@ function Flow() {
 
   switch (view.name) {
     case 'menu':
-      return <MenuScreen onViewBasket={toBasket} onMyOrders={noop} />;
+      return <MenuScreen slug={SLUG} onViewBasket={toBasket} />;
     case 'basket':
-      return <BasketScreen onBack={toMenu} onPlaced={toPlaced} />;
+      return <BasketScreen slug={SLUG} onBack={toMenu} onPlaced={toPlaced} />;
     case 'placed':
       return <OrderPlacedScreen token={view.token} onChange={noop} />;
     case 'seeding':

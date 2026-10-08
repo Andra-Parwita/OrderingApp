@@ -1,15 +1,16 @@
 import { all, call, put, takeLatest } from 'redux-saga/effects';
 import type { ApiResult } from '../../api/http';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchSellerMenu, fetchSettings } from '../../api/client';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
 import type { SettingsResponse } from '../../../shared/sellerContract';
 import { loaded, loadFailed, loadRequested } from './shareSlice';
 
 export function* loadShare() {
-  const [menu, settings] = (yield all([call(fetchSellerMenu), call(fetchSettings)])) as [
-    ApiResult<SellerMenuResponse>,
-    ApiResult<SettingsResponse>,
-  ];
+  const [menu, settings] = (yield all([
+    call(fetchSellerMenu, undefined, currentSellerSlug()),
+    call(fetchSettings, undefined, currentSellerSlug()),
+  ])) as [ApiResult<SellerMenuResponse>, ApiResult<SettingsResponse>];
   if (!menu.ok || !settings.ok) {
     yield put(loadFailed());
     return;

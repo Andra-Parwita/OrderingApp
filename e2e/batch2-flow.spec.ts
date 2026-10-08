@@ -22,7 +22,7 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
   const firstName = `Nudge-${Date.now()}`;
 
   // Customer orders (tempeh has no portion limit, so parallel runs never sell it out).
-  await page.goto('/');
+  await page.goto('/onde-onde');
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
   await page.getByRole('button', { name: /View basket/ }).click();
   await page.getByLabel('Your first name').fill(firstName);
@@ -120,7 +120,7 @@ test('seller desktop: table, slide-over, cook list, empty state; phone unchanged
   const baseURL = testInfo.project.use.baseURL;
   const stamp = `Layout-${Date.now()}`;
   for (const letter of ['A', 'B', 'C']) {
-    const created = await request.post('/api/orders', {
+    const created = await request.post('/api/s/onde-onde/orders', {
       data: {
         firstName: `${stamp}${letter}`,
         language: 'en',

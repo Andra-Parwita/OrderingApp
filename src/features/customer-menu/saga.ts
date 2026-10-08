@@ -1,6 +1,12 @@
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import type { CreateOrderRequest, UpdateOrderRequest } from '../../../shared/orderContract';
-import { createOrder, fetchMenu, fetchOrder, updateOrder } from '../../api/client';
+import {
+  placeOrder as placeOrderRequest,
+  fetchMenu,
+  fetchOrder,
+  updateOrder,
+} from '../../api/client';
+import { rememberKitchen } from '../../api/device/lastKitchen';
 import { isReturningCustomer, saveMyOrder } from '../../api/device/myOrders';
 import {
   editFailed,
@@ -22,10 +28,14 @@ import {
 } from './customerSlice';
 import { selectBasket, selectEdit } from './selectors';
 
-export function* loadMenu() {
-  const result = (yield call(fetchMenu)) as Awaited<ReturnType<typeof fetchMenu>>;
-  if (result.ok) yield put(menuLoaded(result.data));
-  else yield put(menuFailed(result.error));
+export function* loadMenu(action: ReturnType<typeof menuRequested>) {
+  const result = (yield call(fetchMenu, action.payload)) as Awaited<ReturnType<typeof fetchMenu>>;
+  if (result.ok) {
+    yield call(rememberKitchen, action.payload);
+    yield put(menuLoaded(result.data));
+  } else {
+    yield put(menuFailed(result.error));
+  }
 }
 
 export function* placeOrder(action: ReturnType<typeof placeRequested>) {
@@ -36,7 +46,9 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
   const { firstName, language, fulfilment, note } = action.payload;
   const trimmedNote = note.trim();
   // A phone that already has a collected or delivered order is a returning customer (D-027).
-  const returning = (yield call(isReturningCustomer)) as boolean;
+  const slug = (yield select((state: CustomerRootState) => state.customer.slug)) as string | null;
+  if (slug === null) return;
+  const returning = (yield call(isReturningCustomer, slug)) as boolean;
   const input: CreateOrderRequest = {
     firstName: firstName.trim(),
     language,
@@ -45,7 +57,9 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     ...(trimmedNote !== '' ? { note: trimmedNote } : {}),
     ...(returning ? { returning: true } : {}),
   };
-  const result = (yield call(createOrder, input)) as Awaited<ReturnType<typeof createOrder>>;
+  const result = (yield call(placeOrderRequest, slug, input)) as Awaited<
+    ReturnType<typeof placeOrderRequest>
+  >;
   if (result.ok) {
     yield call(saveMyOrder, result.data.order);
     yield put(placeSucceeded(result.data.order));

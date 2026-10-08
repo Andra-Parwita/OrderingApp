@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
@@ -9,7 +9,7 @@ import { formatOrderCode, parseOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
 import { hasUnseenUpdate, readMyOrders, type SavedOrder } from '../../api/device/myOrders';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
-import { Button, ListRow, Pill, TextField } from '../../ui';
+import { Button, ListRow, PageHeader, Pill, TextField } from '../../ui';
 import { isThisWeek, orderTotalCents } from './helpers';
 import { ORDERS_NS } from './i18n/register';
 import {
@@ -19,13 +19,11 @@ import {
   ScreenBoundary,
   StateMessage,
   Strong,
-  Title,
-  TopBar,
   VisuallyHidden,
   useLang,
 } from './layout';
-import { selectList, selectMenu } from './selectors';
-import { listRequested, menuRequested } from './slice';
+import { selectList, selectMenus } from './selectors';
+import { listRequested } from './slice';
 import { toneOf } from './tone';
 
 const SectionTitle = styled.h2`
@@ -79,13 +77,12 @@ function LockIcon() {
 type RowProps = Readonly<{
   order: CustomerOrder;
   saved: SavedOrder | undefined;
-  kitchen: string | null;
   day: string;
   lang: Language;
   onOpen: (token: string) => void;
 }>;
 
-const OrderRow = memo(function OrderRow({ order, saved, kitchen, day, lang, onOpen }: RowProps) {
+const OrderRow = memo(function OrderRow({ order, saved, day, lang, onOpen }: RowProps) {
   const { t } = useTranslation(ORDERS_NS);
   const open = useCallback(() => onOpen(order.token), [onOpen, order.token]);
   const summary = order.lines.map((line) => `${line.qty}× ${pickText(line.name, lang)}`).join(', ');
@@ -98,7 +95,7 @@ const OrderRow = memo(function OrderRow({ order, saved, kitchen, day, lang, onOp
         primary={
           <>
             {formatOrderCode(order.code)}
-            {kitchen ? ` · ${kitchen}` : ''}
+            {` · ${order.seller.name}`}
           </>
         }
         secondary={
@@ -133,26 +130,23 @@ const OrderRow = memo(function OrderRow({ order, saved, kitchen, day, lang, onOp
 });
 
 type Props = Readonly<{
-  /** Back to the menu. */
+  /** Used by the empty state's "to the menu" button; the header has no back arrow (tab root). */
   onBack: () => void;
   /** Open the order page for this private token. */
   onOpenOrder: (token: string) => void;
-  /** Page footer slot, e.g. the app's theme switch. */
-  footer?: ReactNode;
 }>;
 
-function MyOrdersContent({ onBack, onOpenOrder, footer }: Props) {
+function MyOrdersContent({ onBack, onOpenOrder }: Props) {
   const { t } = useTranslation(ORDERS_NS);
   const lang = useLang();
   const dispatch = useDispatch();
   const list = useSelector(selectList);
-  const menu = useSelector(selectMenu);
+  const menus = useSelector(selectMenus);
   const [code, setCode] = useState('');
   const [notFound, setNotFound] = useState(false);
 
   const load = useCallback(() => {
     dispatch(listRequested());
-    dispatch(menuRequested());
   }, [dispatch]);
   useEffect(load, [load]);
 
@@ -173,25 +167,26 @@ function MyOrdersContent({ onBack, onOpenOrder, footer }: Props) {
     [onOpenOrder],
   );
 
-  const cooking = menu.status === 'ready' ? menu.data.week.cookingDate : null;
-  const kitchen = menu.status === 'ready' ? menu.data.kitchen.name : null;
+  const cookingOf = (order: CustomerOrder) => menus[order.seller.slug]?.week.cookingDate ?? null;
 
   const renderRows = (orders: ReadonlyArray<CustomerOrder>, saved: ReadonlyArray<SavedOrder>) =>
-    orders.map((order) => (
-      <OrderRow
-        key={order.token}
-        order={order}
-        saved={saved.find((entry) => entry.token === order.token)}
-        kitchen={kitchen}
-        day={
-          cooking !== null && isThisWeek(order, cooking)
-            ? formatCookingDate(cooking, lang)
-            : formatDay(order.createdAt, lang)
-        }
-        lang={lang}
-        onOpen={onOpenOrder}
-      />
-    ));
+    orders.map((order) => {
+      const cooking = cookingOf(order);
+      return (
+        <OrderRow
+          key={order.token}
+          order={order}
+          saved={saved.find((entry) => entry.token === order.token)}
+          day={
+            cooking !== null && isThisWeek(order, cooking)
+              ? formatCookingDate(cooking, lang)
+              : formatDay(order.createdAt, lang)
+          }
+          lang={lang}
+          onOpen={onOpenOrder}
+        />
+      );
+    });
 
   let body;
   if (list.status === 'error') {
@@ -208,8 +203,8 @@ function MyOrdersContent({ onBack, onOpenOrder, footer }: Props) {
       </Block>
     );
   } else {
-    const thisWeek = list.orders.filter((order) => isThisWeek(order, cooking));
-    const earlier = list.orders.filter((order) => !isThisWeek(order, cooking));
+    const thisWeek = list.orders.filter((order) => isThisWeek(order, cookingOf(order)));
+    const earlier = list.orders.filter((order) => !isThisWeek(order, cookingOf(order)));
     body = (
       <>
         {thisWeek.length > 0 ? (
@@ -231,13 +226,7 @@ function MyOrdersContent({ onBack, onOpenOrder, footer }: Props) {
 
   return (
     <Page>
-      <TopBar>
-        <Button variant="quiet" onClick={onBack} aria-label={t('common.back')}>
-          ‹
-        </Button>
-        <Title>{t('list.title')}</Title>
-        <LanguageSwitch />
-      </TopBar>
+      <PageHeader title={t('list.title')} trailing={<LanguageSwitch compact />} />
       <Block>
         <Strong>{t('list.findTitle')}</Strong>
         <TextField
@@ -252,7 +241,6 @@ function MyOrdersContent({ onBack, onOpenOrder, footer }: Props) {
         />
       </Block>
       {body}
-      {footer ? <Block>{footer}</Block> : null}
     </Page>
   );
 }

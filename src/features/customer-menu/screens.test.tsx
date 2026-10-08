@@ -21,7 +21,7 @@ afterEach(async () => {
 
 async function menuStore() {
   const store = createTestStore();
-  renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />, store);
+  renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />, store);
   await screen.findByText('Chicken lemper');
   return store;
 }
@@ -29,7 +29,7 @@ async function menuStore() {
 describe('MenuScreen', () => {
   it('shows the kitchen, the week and the items, with no chef data', async () => {
     await menuStore();
-    expect(screen.getByRole('heading', { name: 'Delave' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Onde Onde' })).toBeInTheDocument();
     expect(screen.getByText('Sat 10 Oct')).toBeInTheDocument();
     expect(screen.getByText('Fri 9 Oct, 9 pm')).toBeInTheDocument();
     expect(screen.getByText('2–5 pm, Glen Waverley')).toBeInTheDocument();
@@ -50,9 +50,10 @@ describe('MenuScreen', () => {
   it('falls back to the desktop banner, then to the labelled placeholder', async () => {
     const showMenuWith = (images: unknown) =>
       server.use(
-        http.get('*/api/menu', () =>
+        http.get('*/api/s/onde-onde/menu', () =>
           HttpResponse.json({
-            kitchen: { name: 'Delave', tagline: { en: 'a', id: 'b' }, images },
+            seller: { id: 's1', slug: 'onde-onde', name: 'Delave' },
+            kitchen: { sellerId: 's1', name: 'Delave', tagline: { en: 'a', id: 'b' }, images },
             week: {
               cookingDate: '2026-10-10',
               cutoffAt: '2026-10-09T21:00:00+11:00',
@@ -66,16 +67,16 @@ describe('MenuScreen', () => {
         ),
       );
 
-    showMenuWith({ desktopBanner: '/samples/banner-desktop.jpg' });
-    const first = renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    showMenuWith({ desktopBanner: '/samples/banner-wide.jpg' });
+    const first = renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     expect(await screen.findByRole('img', { name: 'Delave banner' })).toHaveAttribute(
       'src',
-      '/samples/banner-desktop.jpg',
+      '/samples/banner-wide.jpg',
     );
     first.unmount();
 
     showMenuWith(undefined);
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     expect(await screen.findByText('Kitchen photo')).toBeInTheDocument();
     expect(document.querySelector('img')).toBeNull();
   });
@@ -111,14 +112,14 @@ describe('MenuScreen', () => {
     [1, true],
     [0, false],
   ])('with %i portions remaining, "N left" shown: %s', async (remaining, shown) => {
-    const body = (await (await fetch('/api/menu')).json()) as {
+    const body = (await (await fetch('/api/s/onde-onde/menu')).json()) as {
       items: Array<Record<string, unknown>>;
     };
     const items = body.items.map((item) =>
       item['id'] === 'lemper' ? { ...item, remaining, soldOut: remaining === 0 } : item,
     );
-    server.use(http.get('*/api/menu', () => HttpResponse.json({ ...body, items })));
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    server.use(http.get('*/api/s/onde-onde/menu', () => HttpResponse.json({ ...body, items })));
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     await screen.findByText('Chicken lemper');
     const left = screen.queryByText(`${remaining} left`);
     if (shown) expect(left).toBeInTheDocument();
@@ -127,23 +128,25 @@ describe('MenuScreen', () => {
 
   it('disables a sold out item', async () => {
     // Selling out through real orders is slow; stub the menu response instead.
-    const body = (await (await fetch('/api/menu')).json()) as {
+    const body = (await (await fetch('/api/s/onde-onde/menu')).json()) as {
       items: Array<Record<string, unknown>>;
     };
     const items = body.items.map((item) =>
       item['id'] === 'tempe-mendoan' ? { ...item, remaining: 0, soldOut: true, limit: 1 } : item,
     );
-    server.use(http.get('*/api/menu', () => HttpResponse.json({ ...body, items })));
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    server.use(http.get('*/api/s/onde-onde/menu', () => HttpResponse.json({ ...body, items })));
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     await screen.findByText('Sold out');
     expect(screen.getByRole('button', { name: 'Add one Thin battered tempeh' })).toBeDisabled();
   });
 
   it('shows an error with retry, then the menu', async () => {
     server.use(
-      http.get('*/api/menu', () => new HttpResponse(null, { status: 500 }), { once: true }),
+      http.get('*/api/s/onde-onde/menu', () => new HttpResponse(null, { status: 500 }), {
+        once: true,
+      }),
     );
-    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Chicken lemper')).toBeInTheDocument();
   });
@@ -152,7 +155,7 @@ describe('MenuScreen', () => {
     await menuStore();
     fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
     expect(await screen.findByText('Lemper ayam')).toBeInTheDocument();
-    expect(screen.getByText('Pesanan saya')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'ID' })).toBeChecked();
     expect(screen.getByText('Sabtu, 10 Okt')).toBeInTheDocument();
     expect(screen.getByText('Jumat, 9 Okt, 21.00')).toBeInTheDocument();
     expect(screen.getByText('14.00–17.00, Glen Waverley')).toBeInTheDocument();
@@ -163,7 +166,7 @@ async function basketStore() {
   const store = createTestStore();
   const onPlaced = vi.fn();
   const onBack = vi.fn();
-  renderWithStore(<BasketScreen onBack={onBack} onPlaced={onPlaced} />, store);
+  renderWithStore(<BasketScreen slug="onde-onde" onBack={onBack} onPlaced={onPlaced} />, store);
   await waitFor(() => expect(store.getState().customer.menu.status).toBe('ready'));
   store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 2 }));
   await screen.findByText('Thin battered tempeh');
@@ -218,7 +221,7 @@ describe('BasketScreen', () => {
     ['cutoff_passed', /orders for this week are closed/],
   ] as const)('shows %s inline and keeps the basket', async (code, text) => {
     server.use(
-      http.post('*/api/orders', () =>
+      http.post('*/api/s/onde-onde/orders', () =>
         HttpResponse.json({ error: code, message: 'x' }, { status: 409 }),
       ),
     );
@@ -241,7 +244,7 @@ describe('BasketScreen', () => {
 
 describe('OrderPlacedScreen', () => {
   async function placedOrder(language: 'en' | 'id', fulfilment: 'pickup' | 'delivery') {
-    const response = await fetch('/api/orders', {
+    const response = await fetch('/api/s/onde-onde/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -290,7 +293,7 @@ describe('WhatsApp text', () => {
   it('is in Indonesian for an Indonesian order, with the address ask for delivery', async () => {
     await setupI18n('en');
     const order = await (async () => {
-      const response = await fetch('/api/orders', {
+      const response = await fetch('/api/s/onde-onde/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

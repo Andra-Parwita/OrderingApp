@@ -15,28 +15,12 @@ import { pickText } from '../../../shared/text';
 import { markInboxSeen } from '../../api/device/myOrders';
 import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
-import { Button, ConfirmButton, Pill } from '../../ui';
+import { Button, ConfirmButton, PageHeader, Pill } from '../../ui';
 import { inboxNewestFirst, inboxText, isFinal, orderTotalCents, timelineSteps } from './helpers';
 import { ORDERS_NS } from './i18n/register';
-import {
-  Block,
-  Muted,
-  Page,
-  ScreenBoundary,
-  StateMessage,
-  Strong,
-  TopBar,
-  VisuallyHidden,
-  useLang,
-} from './layout';
-import { selectCancel, selectMenu, selectOrderPage } from './selectors';
-import {
-  cancelRequested,
-  menuRequested,
-  orderRefreshRequested,
-  orderRequested,
-  type FailureCode,
-} from './slice';
+import { Block, Muted, Page, ScreenBoundary, StateMessage, Strong, useLang } from './layout';
+import { selectCancel, selectMenus, selectOrderPage } from './selectors';
+import { cancelRequested, orderRefreshRequested, orderRequested, type FailureCode } from './slice';
 import { toneOf } from './tone';
 
 /** How often the open order page reloads. Replaced by push / live updates in phase 4-5. */
@@ -170,20 +154,21 @@ function OrderBody({ order, onChange }: BodyProps) {
   const { t, i18n } = useTranslation(ORDERS_NS);
   const lang = useLang();
   const dispatch = useDispatch();
-  const menu = useSelector(selectMenu);
+  const menus = useSelector(selectMenus);
+  const menu = menus[order.seller.slug];
   const cancel = useSelector(selectCancel);
 
-  const week = menu.status === 'ready' ? menu.data.week : undefined;
+  const week = menu?.week;
   const pickup = week?.pickupPoints[0];
   const dayText = week ? formatCookingDate(week.cookingDate, lang) : null;
   const whenText =
     dayText && pickup
       ? `${dayText}, ${formatWindow(pickup.window.start, pickup.window.end, lang)}`
       : dayText;
-  const whatsappNumber = menu.status === 'ready' ? menu.data.kitchen.whatsappNumber : undefined;
-  const kitchenName = menu.status === 'ready' ? menu.data.kitchen.name : null;
+  const whatsappNumber = menu?.kitchen.whatsappNumber;
+  const kitchenName = menu?.kitchen.name ?? order.seller.name;
   // Unknown until the menu loads: the server still enforces the rule.
-  const orderingOpen = menu.status === 'ready' ? menu.data.ordering.open : true;
+  const orderingOpen = menu?.ordering.open ?? true;
 
   const waText = buildWhatsAppText(
     order,
@@ -357,7 +342,6 @@ function OrderContent({ token, onBack, onChange }: Props) {
 
   const load = useCallback(() => {
     dispatch(orderRequested(token));
-    dispatch(menuRequested());
   }, [dispatch, token]);
   // Always reload on arrival: what My orders knew may be old. Later reloads come from the poll.
   useEffect(load, [load]);
@@ -371,20 +355,18 @@ function OrderContent({ token, onBack, onChange }: Props) {
   useEffect(() => {
     const timer = window.setInterval(() => {
       dispatch(orderRefreshRequested(token));
-      dispatch(menuRequested());
     }, POLL_MS);
     return () => window.clearInterval(timer);
   }, [dispatch, token]);
 
   return (
     <Page>
-      <TopBar>
-        <VisuallyHidden as="h1">{t('order.title')}</VisuallyHidden>
-        <Button variant="quiet" onClick={onBack}>
-          ‹ {t('common.myOrders')}
-        </Button>
-        <LanguageSwitch />
-      </TopBar>
+      <PageHeader
+        title={t('order.title')}
+        backLabel={t('common.back')}
+        onBack={onBack}
+        trailing={<LanguageSwitch compact />}
+      />
       {loadedOrder !== null ? (
         <OrderBody order={loadedOrder} onChange={onChange} />
       ) : page.status === 'error' ? (

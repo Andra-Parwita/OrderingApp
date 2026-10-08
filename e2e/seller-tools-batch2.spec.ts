@@ -19,7 +19,7 @@ async function placeOrder(
   itemId: string,
   note?: string,
 ) {
-  const created = await request.post('/api/orders', {
+  const created = await request.post('/api/s/onde-onde/orders', {
     data: {
       firstName,
       language: 'en',
@@ -56,7 +56,7 @@ test('cook list groups by item and by chef, and lists the notes', async ({
   await page.getByRole('radio', { name: 'Chef', exact: true }).click();
   const wati = page.getByRole('region', { name: 'Chef Wati' });
   await expect(wati.getByText('Tempe mendoan')).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Delave' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Onde Onde' })).toBeVisible();
 
   const notes = page.getByRole('region', { name: /^Notes \(/ });
   await expect(notes.getByText(`“${note}”`)).toBeVisible();

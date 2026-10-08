@@ -6,7 +6,15 @@ import type { Fulfilment, Language } from '../../../shared/domain';
 import { FIRST_NAME_MAX, LOW_STOCK, NOTE_MAX } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
-import { Button, Segmented, Stepper, TextArea, TextField, type SegmentedOption } from '../../ui';
+import {
+  Button,
+  PageHeader,
+  Segmented,
+  Stepper,
+  TextArea,
+  TextField,
+  type SegmentedOption,
+} from '../../ui';
 import {
   editCleared,
   editRequested,
@@ -20,13 +28,14 @@ import {
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { CUSTOMER_NS } from './i18n/register';
-import { Block, Muted, Page, StateMessage, Strong, Title, TopBar, useLang } from './layout';
+import { Block, Muted, Page, StateMessage, Strong, useLang } from './layout';
 import { ScreenBoundary } from './ScreenBoundary';
 import {
   selectBasketLines,
   selectBasketTotalCents,
   selectEdit,
   selectMenu,
+  selectMenuSlug,
   selectPlace,
   selectUpdate,
   type BasketLine,
@@ -121,6 +130,8 @@ function placeErrorKey(code: FailureCode): string {
 }
 
 type Props = Readonly<{
+  /** The seller whose menu this basket is for (from the route); an edited order uses its own. */
+  slug?: string;
   onBack: () => void;
   onPlaced: (token: string) => void;
   /** Edit mode: the private token of the order being changed (its lines load into the basket). */
@@ -129,7 +140,7 @@ type Props = Readonly<{
   onUpdated?: (token: string) => void;
 }>;
 
-function BasketContent({ onBack, onPlaced, editToken, onUpdated }: Props) {
+function BasketContent({ slug, onBack, onPlaced, editToken, onUpdated }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
@@ -170,17 +181,21 @@ function BasketContent({ onBack, onPlaced, editToken, onUpdated }: Props) {
     if (updatedToken !== null) onUpdated?.(updatedToken);
   }, [updatedToken, onUpdated]);
 
-  const menuIdle = menu.status === 'idle';
+  // The menu of the seller in the route, or of the order being edited once it has loaded.
+  const menuSlug = useSelector(selectMenuSlug);
+  const wantedSlug = editing ? editOrder?.seller.slug : slug;
   useEffect(() => {
-    if (menuIdle) dispatch(menuRequested());
-  }, [dispatch, menuIdle]);
+    if (wantedSlug !== undefined && wantedSlug !== menuSlug) dispatch(menuRequested(wantedSlug));
+  }, [dispatch, wantedSlug, menuSlug]);
 
   const placedToken = place.status === 'placed' ? place.token : null;
   useEffect(() => {
     if (placedToken !== null) onPlaced(placedToken);
   }, [placedToken, onPlaced]);
 
-  const retryMenu = useCallback(() => dispatch(menuRequested()), [dispatch]);
+  const retryMenu = useCallback(() => {
+    if (wantedSlug !== undefined) dispatch(menuRequested(wantedSlug));
+  }, [dispatch, wantedSlug]);
 
   const onQty = useCallback(
     (itemId: string, qty: number) => {
@@ -226,13 +241,12 @@ function BasketContent({ onBack, onPlaced, editToken, onUpdated }: Props) {
         ];
 
   const header = (
-    <TopBar>
-      <Button variant="quiet" onClick={onBack} aria-label={t('common.back')}>
-        ‹
-      </Button>
-      <Title>{editing ? t('basket.editTitle') : t('basket.title')}</Title>
-      <LanguageSwitch />
-    </TopBar>
+    <PageHeader
+      title={editing ? t('basket.editTitle') : t('basket.title')}
+      backLabel={t('common.back')}
+      onBack={onBack}
+      trailing={<LanguageSwitch compact />}
+    />
   );
 
   if (menu.status === 'error' || edit.status === 'error') {

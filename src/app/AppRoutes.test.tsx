@@ -59,11 +59,13 @@ beforeAll(async () => {
 });
 
 const MENU = {
+  seller: { id: 's1', slug: 'onde-onde', name: 'Delave' },
   kitchen: {
+    sellerId: 's1',
     name: 'Delave',
     tagline: { en: 'a', id: 'b' },
     images: {
-      desktopBanner: '/samples/banner-desktop.jpg',
+      desktopBanner: '/samples/banner-wide.jpg',
       phoneBanner: '/samples/banner-phone.jpg',
       alt: { en: 'Onde Onde banner', id: 'Banner Onde Onde' },
     },
@@ -94,9 +96,9 @@ describe('AppRoutes', () => {
     expect(screen.getByRole('link', { name: 'Go to the menu' })).toHaveAttribute('href', '/');
   });
 
-  it('shows My orders with the theme switch, and remembers the choice', () => {
-    renderAt('/my-orders');
-    expect(screen.getByRole('heading', { name: 'My orders' })).toBeInTheDocument();
+  it('shows the theme switch in the customer Settings, and remembers the choice', () => {
+    renderAt('/settings');
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
     expect(localStorage.getItem('theme')).toBe('dark');
     expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
@@ -210,7 +212,7 @@ describe('AppRoutes', () => {
     wide = true;
     renderAt('/seller');
     const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
-    expect(banner).toHaveAttribute('src', '/samples/banner-desktop.jpg');
+    expect(banner).toHaveAttribute('src', '/samples/banner-wide.jpg');
     const rail = screen.getByRole('navigation', { name: 'Seller' });
     expect(within(rail).getByRole('img', { name: 'Delave — Rail image' })).toBeInTheDocument();
     expect(within(rail).getByText('Rail image — coming soon')).toBeInTheDocument();
@@ -225,17 +227,19 @@ describe('AppRoutes', () => {
     expect(slot).toHaveAttribute('data-fit', 'contain');
     expect(slot).toHaveAttribute('data-ratio', '5 / 1');
     expect(slot).toHaveStyle({ background: 'rgb(131, 89, 55)' });
-    expect(slot.parentElement?.parentElement).toHaveStyle({ background: 'rgb(131, 89, 55)' });
+    expect(slot.parentElement?.parentElement).toHaveStyle({
+      backgroundColor: 'rgb(131, 89, 55)',
+    });
     expect(banner).toHaveStyle({ objectFit: 'contain' });
   });
 
   it('shows the rail image, expanded, at 2:1', async () => {
-    stubMenu({ ...MENU.kitchen.images, railImage: '/samples/rail.jpg' });
+    stubMenu({ ...MENU.kitchen.images, railImage: '/samples/rail.png' });
     wide = true;
     renderAt('/seller');
     const rail = screen.getByRole('navigation', { name: 'Seller' });
     const image = await within(rail).findByRole('img', { name: 'Delave — Rail image' });
-    expect(image).toHaveAttribute('src', '/samples/rail.jpg');
+    expect(image).toHaveAttribute('src', '/samples/rail.png');
     expect(image.parentElement).toHaveAttribute('data-ratio', '2 / 1');
   });
 

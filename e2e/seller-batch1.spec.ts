@@ -15,7 +15,7 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
 
   const desktop = isDesktopProject(testInfo.project.name);
   const firstName = `Sari-${testInfo.project.name}-${Date.now()}`;
-  const created = await request.post('/api/orders', {
+  const created = await request.post('/api/s/onde-onde/orders', {
     data: {
       firstName,
       language: 'en',

@@ -9,11 +9,13 @@ import {
   rememberStatus,
   saveMyOrder,
 } from './myOrders';
+import { lastKitchen } from './lastKitchen';
 import { buildWhatsAppText, whatsAppUrl } from './whatsapp';
 
 function order(patch: Partial<CustomerOrder> = {}): CustomerOrder {
   return {
     id: 'o1',
+    seller: { slug: 'onde-onde', name: 'Onde Onde' },
     code: 'K7F2QX',
     token: 'tok-1',
     firstName: 'Rina',
@@ -103,16 +105,47 @@ describe('device My orders', () => {
     expect(readMyOrders()).toEqual([]);
     expect(() => saveMyOrder(order())).not.toThrow();
     expect(() => rememberStatus(order())).not.toThrow();
-    expect(isReturningCustomer()).toBe(false);
+    expect(isReturningCustomer('onde-onde')).toBe(false);
+  });
+
+  it('keeps an entry saved before many sellers and fills its seller when it is next fetched', () => {
+    localStorage.setItem(
+      MY_ORDERS_KEY,
+      JSON.stringify([
+        {
+          code: 'K7F2QX',
+          token: 'tok-1',
+          placedAt: '2026-10-07T10:00:00.000Z',
+          lastStatus: 'ordered',
+        },
+      ]),
+    );
+    expect(readMyOrders()).toHaveLength(1);
+    expect(readMyOrders()[0]?.sellerSlug).toBeUndefined();
+    rememberStatus(order({ seller: { slug: 'dapur-demo', name: 'Dapur Demo' } }));
+    expect(readMyOrders()).toHaveLength(1);
+    expect(readMyOrders()[0]?.sellerSlug).toBe('dapur-demo');
+  });
+
+  it('records the seller on a saved order and remembers the last kitchen', () => {
+    saveMyOrder(order({ seller: { slug: 'dapur-demo', name: 'Dapur Demo' } }));
+    expect(readMyOrders()[0]?.sellerSlug).toBe('dapur-demo');
+    expect(lastKitchen()).toBe('dapur-demo');
+  });
+
+  it('counts a returning customer per seller', () => {
+    saveMyOrder(order({ status: 'collected' }));
+    expect(isReturningCustomer('onde-onde')).toBe(true);
+    expect(isReturningCustomer('dapur-demo')).toBe(false);
   });
 
   it('detects a returning customer from collected or delivered orders only', () => {
     saveMyOrder(order());
-    expect(isReturningCustomer()).toBe(false);
+    expect(isReturningCustomer('onde-onde')).toBe(false);
     saveMyOrder(order({ token: 'tok-2', code: 'BBBBBB', status: 'cancelled' }));
-    expect(isReturningCustomer()).toBe(false);
+    expect(isReturningCustomer('onde-onde')).toBe(false);
     saveMyOrder(order({ token: 'tok-3', code: 'CCCCCC', status: 'delivered' }));
-    expect(isReturningCustomer()).toBe(true);
+    expect(isReturningCustomer('onde-onde')).toBe(true);
     rememberStatus(order({ status: 'collected' }));
     expect(readMyOrders().find((entry) => entry.token === 'tok-1')?.lastStatus).toBe('collected');
   });

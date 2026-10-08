@@ -49,17 +49,22 @@ import {
   waReceivedRequested,
   weekLoaded,
 } from './sellerOrdersSlice';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 
 export const POLL_MS = 5000;
 
 export function* loadOrders() {
-  const result = (yield call(fetchSellerOrders)) as ApiResult<SellerOrdersResponse>;
+  const result = (yield call(
+    fetchSellerOrders,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrdersResponse>;
   if (result.ok) yield put(ordersLoaded({ orders: result.data.orders }));
   else yield put(ordersFailed());
 }
 
 function* loadWeek() {
-  const result = (yield call(fetchMenu)) as ApiResult<MenuResponse>;
+  const result = (yield call(fetchMenu, currentSellerSlug())) as ApiResult<MenuResponse>;
   if (result.ok) yield put(weekLoaded({ cookingDate: result.data.week.cookingDate }));
 }
 
@@ -82,35 +87,64 @@ function* watchPolling(pollMs: number) {
 
 export function* changeStatus(action: ReturnType<typeof statusChangeRequested>) {
   const { code, to } = action.payload;
-  const result = (yield call(setOrderStatus, code, to)) as ApiResult<SellerOrderResponse>;
+  const result = (yield call(
+    setOrderStatus,
+    code,
+    to,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderSaved({ order: result.data.order }));
   else yield put(changeFailed({ failed: { kind: 'status', code, to } }));
 }
 
 export function* changePaid(action: ReturnType<typeof paidChangeRequested>) {
   const { code, paid } = action.payload;
-  const result = (yield call(setOrderPaid, code, paid)) as ApiResult<SellerOrderResponse>;
+  const result = (yield call(
+    setOrderPaid,
+    code,
+    paid,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderSaved({ order: result.data.order }));
   else yield put(changeFailed({ failed: { kind: 'paid', code, paid } }));
 }
 
 export function* changeLock(action: ReturnType<typeof lockChangeRequested>) {
   const { code, locked } = action.payload;
-  const result = (yield call(setOrderLocked, code, locked)) as ApiResult<SellerOrderResponse>;
+  const result = (yield call(
+    setOrderLocked,
+    code,
+    locked,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderSaved({ order: result.data.order }));
   else yield put(changeFailed({ failed: { kind: 'lock', code, locked } }));
 }
 
 export function* changeWaReceived(action: ReturnType<typeof waReceivedRequested>) {
   const { code, received } = action.payload;
-  const result = (yield call(setOrderWaReceived, code, received)) as ApiResult<SellerOrderResponse>;
+  const result = (yield call(
+    setOrderWaReceived,
+    code,
+    received,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderSaved({ order: result.data.order }));
   else yield put(changeFailed({ failed: { kind: 'wa', code, received } }));
 }
 
 export function* nudge(action: ReturnType<typeof nudgeRequested>) {
   const { code } = action.payload;
-  const result = (yield call(nudgeOrder, code)) as ApiResult<SellerOrderResponse>;
+  const result = (yield call(
+    nudgeOrder,
+    code,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
   if (result.ok) {
     yield put(orderSaved({ order: result.data.order }));
     yield put(noticeShown({ notice: 'nudged' }));
@@ -119,26 +153,40 @@ export function* nudge(action: ReturnType<typeof nudgeRequested>) {
 
 export function* markSeen(action: ReturnType<typeof seenRequested>) {
   const { code } = action.payload;
-  const result = (yield call(markOrderSeen, code)) as ApiResult<SellerOrderResponse>;
+  const result = (yield call(
+    markOrderSeen,
+    code,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderSaved({ order: result.data.order }));
   else yield put(changeFailed({ failed: { kind: 'seen', code } }));
 }
 
 export function* loadSellerMenu() {
-  const result = (yield call(fetchSellerMenu)) as ApiResult<SellerMenuResponse>;
+  const result = (yield call(
+    fetchSellerMenu,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerMenuResponse>;
   if (result.ok) yield put(menuLoaded({ items: result.data.items }));
   else yield put(menuFailed());
 }
 
 export function* createOrder(action: ReturnType<typeof createOrderRequested>) {
-  const result = (yield call(createSellerOrder, action.payload)) as ApiResult<SellerOrderResponse>;
+  const result = (yield call(
+    createSellerOrder,
+    action.payload,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderCreated({ order: result.data.order }));
   else yield put(createFailed({ error: result.error }));
 }
 
 // Dev only: the Worker has these routes only in dev.
 export function* devSampleOrders() {
-  yield call(addSampleOrders, 5);
+  yield call(addSampleOrders, 5, currentSellerSlug());
   yield call(loadOrders);
 }
 

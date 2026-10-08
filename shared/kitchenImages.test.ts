@@ -23,7 +23,8 @@ describe('bannerAlt', () => {
 
 describe('kitchen images in the menu', () => {
   const base = {
-    kitchen: { name: 'K', tagline: { en: 'a', id: 'b' } },
+    seller: { id: 's1', slug: 'onde-onde', name: 'K' },
+    kitchen: { sellerId: 's1', name: 'K', tagline: { en: 'a', id: 'b' } },
     week: {
       cookingDate: '2026-10-10',
       cutoffAt: '2026-10-09T21:00:00+11:00',

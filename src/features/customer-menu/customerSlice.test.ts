@@ -35,7 +35,8 @@ function item(id: string, priceCents: number, remaining: number | null): MenuIte
 }
 
 const menu: MenuResponse = {
-  kitchen: { name: 'Kitchen', tagline: none },
+  seller: { id: 's1', slug: 'onde-onde', name: 'Kitchen' },
+  kitchen: { sellerId: 's1', name: 'Kitchen', tagline: none },
   week: {
     cookingDate: '2026-10-10',
     cutoffAt: '2026-10-09T21:00:00+11:00',
@@ -57,7 +58,7 @@ function loaded() {
 
 describe('customerReducer', () => {
   it('goes loading, ready, and error for the menu', () => {
-    const loading = customerReducer(undefined, menuRequested());
+    const loading = customerReducer(undefined, menuRequested('onde-onde'));
     expect(loading.menu).toEqual({ status: 'loading' });
     expect(customerReducer(loading, menuLoaded(menu)).menu).toEqual({
       status: 'ready',
@@ -70,7 +71,19 @@ describe('customerReducer', () => {
   });
 
   it('keeps showing a loaded menu while it refreshes', () => {
-    expect(customerReducer(loaded(), menuRequested()).menu.status).toBe('ready');
+    let state = customerReducer(undefined, menuRequested('onde-onde'));
+    state = customerReducer(state, menuLoaded(menu));
+    expect(customerReducer(state, menuRequested('onde-onde')).menu.status).toBe('ready');
+  });
+
+  it("drops the menu and basket of another seller when a different seller's menu is requested", () => {
+    let state = customerReducer(undefined, menuRequested('onde-onde'));
+    state = customerReducer(state, menuLoaded(menu));
+    state = customerReducer(state, quantitySet({ itemId: 'nasi-campur', qty: 1 }));
+    const next = customerReducer(state, menuRequested('dapur-demo'));
+    expect(next.slug).toBe('dapur-demo');
+    expect(next.menu).toEqual({ status: 'loading' });
+    expect(next.basket).toEqual({});
   });
 
   it('stops the basket at the portions left', () => {
@@ -119,6 +132,7 @@ describe('customerReducer', () => {
     let state = loaded();
     state = customerReducer(state, quantitySet({ itemId: 'tempe', qty: 2 }));
     const order = {
+      seller: { slug: 'onde-onde', name: 'Onde Onde' },
       id: 'o1',
       code: 'K7F2QX',
       token: 'tok',

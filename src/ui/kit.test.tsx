@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lightTheme } from '../theme/themes';
 import { ConfirmButton } from './ConfirmButton';
 import { ImageSlot } from './ImageSlot';
+import { PageHeader } from './PageHeader';
 import { Pill } from './Pill';
 import { Segmented, type SegmentedOption } from './Segmented';
 import { Stepper } from './Stepper';
@@ -259,5 +260,26 @@ describe('ImageSlot', () => {
     const img = screen.getByRole('img', { name: 'Icon' });
     expect(img).toHaveStyle({ objectFit: 'cover' });
     expect(img.parentElement).toHaveStyle({ borderRadius: '50%' });
+  });
+});
+
+describe('PageHeader', () => {
+  it('shows the title as the page heading and the right-hand slot', () => {
+    renderThemed(<PageHeader title="Basket" trailing={<span>slot</span>} />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Basket' })).toBeInTheDocument();
+    expect(screen.getByText('slot')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('shows a labelled back button only when there is somewhere to go back to', () => {
+    const onBack = vi.fn();
+    const { unmount } = renderThemed(
+      <PageHeader title="Basket" backLabel="Back" onBack={onBack} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(onBack).toHaveBeenCalledTimes(1);
+    unmount();
+    renderThemed(<PageHeader title="Basket" backLabel="Back" />);
+    expect(screen.queryByRole('button')).toBeNull();
   });
 });

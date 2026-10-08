@@ -15,6 +15,7 @@ import { ordersLoaded, sellerOrdersReducer } from './sellerOrdersSlice';
 export function makeOrder(overrides: Partial<Order> = {}): Order {
   return {
     id: 'o1',
+    sellerId: 's1',
     code: 'K7F2QX',
     token: 'tok-k7f2qx',
     firstName: 'Rina',

@@ -1,6 +1,11 @@
 export type Language = 'en' | 'id';
 export type LocalText = { en: string; id: string };
 
+/** A kitchen on Delave (D-036). `slug` is the customer link `/<slug>` (D-037); see shared/seller.ts. */
+export type Seller = { id: string; slug: string; name: string };
+/** What an order tells a customer about its seller. */
+export type SellerRef = Pick<Seller, 'slug' | 'name'>;
+
 export type Fulfilment = 'pickup' | 'delivery';
 
 export type OrderStatus =
@@ -65,6 +70,8 @@ export type OrderLine = {
 /** The full order, as the seller and chefs see it. */
 export type SellerOrder = {
   id: string;
+  /** The seller that owns the order (D-036). */
+  sellerId: string;
   /** Raw 6-character code; display it with formatOrderCode. */
   code: string;
   /** Long random token for the customer's private link. */
@@ -113,9 +120,12 @@ export type CustomerOrder = Pick<
   | 'inbox'
   | 'createdAt'
   | 'updatedAt'
->;
+> & {
+  /** Customers are not seller-scoped: each order says whose it is (My orders spans sellers). */
+  seller: SellerRef;
+};
 
-export type Chef = { id: string; name: string };
+export type Chef = { id: string; sellerId: string; name: string };
 
 export type MenuItem = {
   id: string;
@@ -138,10 +148,13 @@ export type KitchenImages = {
   phoneBanner?: string;
   /** "#rrggbb", behind the banners and beside them on wide screens. */
   bannerBackground?: string;
+  /** Soft picture behind the wide banner (D-040); the colour above shows while it loads. */
+  bannerBackgroundImage?: string;
   alt?: LocalText;
 };
 
 export type Kitchen = {
+  sellerId: string;
   name: string;
   tagline: LocalText;
   bannerImageUrl?: string;

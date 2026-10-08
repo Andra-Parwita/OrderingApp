@@ -20,12 +20,15 @@ const request: PlaceRequest = {
 
 async function storeWithMenu() {
   const store = createTestStore();
-  store.dispatch(menuRequested());
+  store.dispatch(menuRequested('onde-onde'));
   await vi.waitFor(() => expect(store.getState().customer.menu.status).toBe('ready'));
   return store;
 }
 
-beforeEach(() => localStorage.removeItem(MY_ORDERS_KEY));
+beforeEach(() => {
+  localStorage.removeItem(MY_ORDERS_KEY);
+  localStorage.removeItem('lastKitchen');
+});
 afterEach(() => vi.restoreAllMocks());
 
 describe('customer saga', () => {
@@ -36,9 +39,9 @@ describe('customer saga', () => {
   });
 
   it('maps a failed menu load to an error code', async () => {
-    server.use(http.get('*/api/menu', () => new HttpResponse(null, { status: 500 })));
+    server.use(http.get('*/api/s/onde-onde/menu', () => new HttpResponse(null, { status: 500 })));
     const store = createTestStore();
-    store.dispatch(menuRequested());
+    store.dispatch(menuRequested('onde-onde'));
     await vi.waitFor(() =>
       expect(store.getState().customer.menu).toEqual({ status: 'error', code: 'bad_response' }),
     );
@@ -72,7 +75,7 @@ describe('customer saga', () => {
     ['cutoff_passed', 409],
   ] as const)('maps %s to a failed result and keeps the basket', async (code, status) => {
     server.use(
-      http.post('*/api/orders', () =>
+      http.post('*/api/s/onde-onde/orders', () =>
         HttpResponse.json({ error: code, message: 'nope' }, { status }),
       ),
     );
@@ -86,7 +89,7 @@ describe('customer saga', () => {
   });
 
   it('maps a network failure', async () => {
-    server.use(http.post('*/api/orders', () => HttpResponse.error()));
+    server.use(http.post('*/api/s/onde-onde/orders', () => HttpResponse.error()));
     const store = await storeWithMenu();
     store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 1 }));
     store.dispatch(placeRequested(request));
@@ -110,6 +113,32 @@ describe('customer saga', () => {
     other.dispatch(orderRequested('unknown-token'));
     await vi.waitFor(() =>
       expect(other.getState().customer.order).toEqual({ status: 'error', code: 'not_found' }),
+    );
+  });
+});
+
+describe('customer saga, per seller', () => {
+  it('loads the menu of the seller in the request, remembers it, and orders from them', async () => {
+    const store = createTestStore();
+    store.dispatch(menuRequested('dapur-demo'));
+    await vi.waitFor(() => expect(store.getState().customer.menu.status).toBe('ready'));
+    const menu = store.getState().customer.menu;
+    expect(menu.status === 'ready' && menu.data.seller.slug).toBe('dapur-demo');
+    expect(localStorage.getItem('lastKitchen')).toBe('dapur-demo');
+    store.dispatch(quantitySet({ itemId: 'es-teh', qty: 1 }));
+    store.dispatch(placeRequested({ ...request, fulfilment: 'pickup' }));
+    await vi.waitFor(() => expect(store.getState().customer.place.status).toBe('placed'));
+    expect(store.getState().customer.order).toMatchObject({
+      status: 'ready',
+      order: { seller: { slug: 'dapur-demo' } },
+    });
+  });
+
+  it('reports a seller that does not exist', async () => {
+    const store = createTestStore();
+    store.dispatch(menuRequested('no-such-kitchen'));
+    await vi.waitFor(() =>
+      expect(store.getState().customer.menu).toEqual({ status: 'error', code: 'seller_not_found' }),
     );
   });
 });

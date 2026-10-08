@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { CreateOrderRequest } from '../shared/orderContract';
-import { createStore, type MockStore, type StoreResult } from '../worker/mock/store';
+import {
+  createSellerStore as createStore,
+  type SellerStore as MockStore,
+  type StoreResult,
+} from '../worker/mock/store';
 
 const BEFORE = new Date('2026-10-07T10:00:00Z');
 const AFTER = new Date('2026-10-09T10:00:01Z'); // 21:00:01 Melbourne (+11:00)

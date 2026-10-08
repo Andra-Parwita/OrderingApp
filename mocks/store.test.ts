@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parseMenuResponse } from '../shared/menuContract';
 import { parseOrder, type CreateOrderRequest } from '../shared/orderContract';
-import { createStore, type MockStore, type StoreResult } from '../worker/mock/store';
+import {
+  createSellerStore as createStore,
+  type SellerStore as MockStore,
+  type StoreResult,
+} from '../worker/mock/store';
 
 const BEFORE = new Date('2026-10-07T10:00:00Z');
 const AFTER = new Date('2026-10-09T10:00:01Z'); // 21:00:01 Melbourne (+11:00)
@@ -36,7 +40,7 @@ describe('menu', () => {
   it('is the seeded fixture and matches the contract', () => {
     const menu = store.getMenu();
     expect(parseMenuResponse(menu)).not.toBeNull();
-    expect(menu.kitchen.name).toBe('Delave');
+    expect(menu.kitchen.name).toBe('Onde Onde');
     expect(menu.items).toHaveLength(6);
     expect(item('lemper')).toMatchObject({ limit: 20, remaining: 20 });
     expect(item('lemper')).not.toHaveProperty('chefId');
@@ -45,7 +49,7 @@ describe('menu', () => {
 
   it('gives the seller the chefs and chef ids', () => {
     const menu = store.getSellerMenu();
-    expect(menu.chefs).toEqual([{ id: 'wati', name: 'Chef Wati' }]);
+    expect(menu.chefs).toEqual([{ id: 'wati', sellerId: 'seller-onde-onde', name: 'Chef Wati' }]);
     expect(menu.items.find((candidate) => candidate.id === 'lemper')?.chefId).toBe('wati');
   });
 });

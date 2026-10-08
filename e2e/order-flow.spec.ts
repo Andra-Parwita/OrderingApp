@@ -23,7 +23,7 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   const note = 'Less spicy please';
 
   // Customer (iPhone): two pesmol, one tempe, a name and a note.
-  await page.goto('/');
+  await page.goto('/onde-onde');
   const addPesmol = page.getByRole('button', { name: 'Add one Tilapia pesmol' });
   await addPesmol.click();
   await addPesmol.click();

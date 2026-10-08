@@ -24,7 +24,7 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
   const firstName = `Dewi-${Date.now()}-${testInfo.project.name}`.slice(0, 40);
 
   // Place an order (tempeh has no portion limit, so parallel runs never sell it out).
-  await page.goto('/');
+  await page.goto('/onde-onde');
   const add = page.getByRole('button', { name: 'Add one Thin battered tempeh' });
   await add.click();
   await add.click();

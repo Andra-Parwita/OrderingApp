@@ -1,7 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import type { HealthResponse } from '../shared/health';
 import { handleMockRequest } from '../worker/mock/routes';
-import { createStore, type MockStore } from '../worker/mock/store';
+import { DEFAULT_SELLER_SLUG } from '../shared/seller';
+import { createStore, type MockStore, type SellerStore } from '../worker/mock/store';
 
 export const healthFixture: HealthResponse = { status: 'ok', time: '2026-10-07T10:00:00.000Z' };
 
@@ -18,9 +19,13 @@ export function createApiHandlers(store: MockStore) {
   ];
 }
 
-export const mockStore = createStore({ now: () => MOCK_NOW });
+/** Every sample seller; reset() resets all of them in place. */
+export const mockStores = createStore({ now: () => MOCK_NOW });
+
+/** The default seller's store (Onde Onde), for tests that need one seller only. */
+export const mockStore: SellerStore = mockStores.seller(DEFAULT_SELLER_SLUG) as SellerStore;
 
 export const handlers = [
   http.get('*/api/health', () => HttpResponse.json(healthFixture)),
-  ...createApiHandlers(mockStore),
+  ...createApiHandlers(mockStores),
 ];

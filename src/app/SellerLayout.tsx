@@ -5,7 +5,9 @@ import { styled } from 'styled-components';
 import type { Kitchen } from '../../shared/domain';
 import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { fetchMenu } from '../api/client';
+import { currentSellerSlug } from '../api/device/sellerContext';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { SellerPicker } from '../components/SellerPicker';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { Icon, ImageSlot, TabBar, Tooltip, type IconName, type TabBarItem } from '../ui';
 import { BANNER_MAX_WIDTH, DESKTOP_QUERY, RAIL_WIDTH, RAIL_WIDTH_COLLAPSED } from './layout';
@@ -39,24 +41,20 @@ function activeNav(pathname: string): NavId {
   return 'orders';
 }
 
-const PhoneShell = styled.div`
-  display: flex;
+// One shell for both layouts: the page (Outlet) keeps the same place in the tree, so crossing
+// the 1024 px breakpoint (a rotated tablet, a resized window) does not remount it and lose a
+// half-filled form.
+const Shell = styled.div<{ $desktop: boolean }>`
+  display: ${({ $desktop }) => ($desktop ? 'grid' : 'flex')};
+  grid-template-columns: auto minmax(0, 1fr);
   flex-direction: column;
   min-height: 100dvh;
-`;
-const Grow = styled.div`
-  flex: 1;
+  font-size: ${({ $desktop, theme }) => ($desktop ? theme.type.size.base : 'inherit')};
 `;
 const Bottom = styled.footer`
   position: sticky;
   bottom: 0;
   background: ${({ theme }) => theme.colour.bg};
-`;
-const DesktopShell = styled.div`
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  min-height: 100dvh;
-  font-size: ${({ theme }) => theme.type.size.base};
 `;
 const Rail = styled.nav<{ $collapsed: boolean }>`
   position: sticky;
@@ -185,12 +183,18 @@ const Chevron = styled.span`
   text-align: center;
 `;
 const Main = styled.div`
+  flex: 1;
   min-width: 0;
 `;
-// The banner strip fills the full width in the seller's colour; the image sits centred in it at
-// most 1600 px wide, so on a wide screen the sides are colour, never a cropped picture (D-038).
-const BannerStrip = styled.div<{ $background?: string }>`
-  background: ${({ theme, $background }) => $background ?? theme.colour.surfaceAlt};
+// The banner strip fills the full width with the seller's background picture (D-040), on their
+// colour while it loads or if there is none; the banner sits centred in it at most 1600 px wide,
+// so on a wide screen the sides are background, never a cropped banner (D-038).
+const BannerStrip = styled.div<{ $background?: string; $image?: string }>`
+  background-color: ${({ theme, $background }) => $background ?? theme.colour.surfaceAlt};
+  ${({ $image }) =>
+    $image
+      ? `background-image: url("${$image}"); background-size: cover; background-position: center;`
+      : ''}
 `;
 const BannerArea = styled.div`
   max-width: ${BANNER_MAX_WIDTH};
@@ -249,7 +253,7 @@ function useKitchen(): Kitchen | null {
   const [kitchen, setKitchen] = useState<Kitchen | null>(null);
   useEffect(() => {
     let live = true;
-    void fetchMenu().then((result) => {
+    void fetchMenu(currentSellerSlug()).then((result) => {
       if (live && result.ok) setKitchen(result.data.kitchen);
     });
     return () => {
@@ -274,6 +278,7 @@ export function SellerLayout() {
     : `${kitchenName} — ${t('sellerNav.bannerImage')}`;
   const placeholder = t('sellerNav.imageSoon');
   const background = kitchen?.images?.bannerBackground;
+  const backgroundImage = kitchen?.images?.bannerBackgroundImage;
   const [collapsed, toggleCollapsed] = useRailCollapsed();
 
   const label = (id: NavId) => t(`sellerNav.${id}`);
@@ -305,9 +310,9 @@ export function SellerLayout() {
   };
 
   const collapseLabel = t(collapsed ? 'sellerNav.expand' : 'sellerNav.collapse');
-  if (desktop) {
-    return (
-      <DesktopShell>
+  return (
+    <Shell $desktop={desktop}>
+      {desktop ? (
         <Rail aria-label={t('sellerNav.label')} $collapsed={collapsed}>
           {collapsed ? (
             <RailIconBox>
@@ -368,6 +373,7 @@ export function SellerLayout() {
             ))}
           </RailList>
           <RailFoot $collapsed={collapsed}>
+            {collapsed ? null : <SellerPicker />}
             {collapsed ? <CompactLanguage /> : <LanguageSwitch />}
             <Tooltip text={collapsed ? collapseLabel : undefined}>
               <RailButton
@@ -383,8 +389,10 @@ export function SellerLayout() {
             </Tooltip>
           </RailFoot>
         </Rail>
-        <Main>
-          <BannerStrip $background={background}>
+      ) : null}
+      <Main>
+        {desktop ? (
+          <BannerStrip $background={background} $image={backgroundImage}>
             <BannerArea>
               <ImageSlot
                 aspectRatio="5 / 1"
@@ -395,27 +403,22 @@ export function SellerLayout() {
               />
             </BannerArea>
           </BannerStrip>
-          <Outlet />
-        </Main>
-      </DesktopShell>
-    );
-  }
-
-  return (
-    <PhoneShell>
-      <Grow>
-        <ImageSlot
-          aspectRatio="2 / 1"
-          background={background}
-          src={phoneBannerSrc(kitchen?.images)}
-          alt={bannerText}
-          placeholder={placeholder}
-        />
+        ) : (
+          <ImageSlot
+            aspectRatio="2 / 1"
+            background={background}
+            src={phoneBannerSrc(kitchen?.images)}
+            alt={bannerText}
+            placeholder={placeholder}
+          />
+        )}
         <Outlet />
-      </Grow>
-      <Bottom onClick={onTabClick}>
-        <TabBar items={tabs} activeId={active} label={t('sellerNav.label')} />
-      </Bottom>
-    </PhoneShell>
+      </Main>
+      {desktop ? null : (
+        <Bottom onClick={onTabClick}>
+          <TabBar items={tabs} activeId={active} label={t('sellerNav.label')} />
+        </Bottom>
+      )}
+    </Shell>
   );
 }

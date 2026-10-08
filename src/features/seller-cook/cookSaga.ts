@@ -1,5 +1,6 @@
 import { all, call, delay, put, race, take, takeLatest } from 'redux-saga/effects';
 import type { ApiResult } from '../../api/http';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
 import type { SellerOrdersResponse } from '../../../shared/orderContract';
@@ -8,10 +9,10 @@ import { loaded, loadFailed, pollingStarted, pollingStopped, refreshRequested } 
 export const COOK_POLL_MS = 15000;
 
 export function* loadCook() {
-  const [orders, menu] = (yield all([call(fetchSellerOrders), call(fetchSellerMenu)])) as [
-    ApiResult<SellerOrdersResponse>,
-    ApiResult<SellerMenuResponse>,
-  ];
+  const [orders, menu] = (yield all([
+    call(fetchSellerOrders, undefined, currentSellerSlug()),
+    call(fetchSellerMenu, undefined, currentSellerSlug()),
+  ])) as [ApiResult<SellerOrdersResponse>, ApiResult<SellerMenuResponse>];
   if (orders.ok && menu.ok) {
     yield put(
       loaded({

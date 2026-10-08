@@ -16,17 +16,20 @@ export type RequestOptions = {
   body?: unknown;
   /** Seller calls only; becomes the X-Actor header until real auth exists (phase 4). */
   actor?: StaffActor;
+  /** Seller calls only; becomes the X-Seller header (dev; phase 4 uses the session). */
+  seller?: string;
 };
 
 /** The only place in the app that calls fetch for the API. */
 export async function request<T>(
   path: string,
   parse: (input: unknown) => T | null,
-  { method = 'GET', body, actor }: RequestOptions = {},
+  { method = 'GET', body, actor, seller }: RequestOptions = {},
 ): Promise<ApiResult<T>> {
   const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (actor) headers['X-Actor'] = `${actor.role}:${actor.name}`;
+  if (seller) headers['X-Seller'] = seller;
   let response: Response;
   try {
     response = await fetch(path, {

@@ -235,3 +235,13 @@ Format for each entry:
 **Ruling:** "I added a few images, try them" — five files in `../imgs/` made to the D-038 sizes: `01_header_wide_1600x320.png` (seller banner), `02_header_standard_1080x540.png` (phone banner), `03_sidebar_expanded_448x224.png` (rail image, "Onde2" logo), `04_sidebar_collapsed_128x128.png` (rail icon), and `05_desktop_background_2560x512.png` (a soft blurred version of the scene).
 **Trade-off:** the seller banner sits on the **blurred background image** (cover, behind, full width) on screens wider than the banner, instead of a flat colour; `bannerBackground` colour stays as the fallback while the image loads or if none is uploaded. So a seller has up to five images: banner, phone banner, rail image, rail icon, background. Served copies are compressed (the originals stay outside the repo and are never modified). Question 38 is superseded: the wide banner is now a true 5:1 image. Note for the owner: the phone banner has blurred bands above and below the scene, so on phones the scene itself is about 3:1.
 **Revisit when:** the owner reworks any image, or another seller supplies theirs.
+
+## D-041 · Build the native customer app (4.10) without a separate mock-up (2026-10-08; exception to the mock-up rule)
+**Ruling:** "B" — build straight from the owner's annotated screenshot and D-039, skipping the mock-up step that conventions §2 requires before a UI change.
+**Trade-off:** saves a round; the owner reviews the built screens instead (captures in light and dark, phone width). Risk of rework if the built layout differs from what the owner pictured — mitigated by building exactly D-039 and showing captures before moving on.
+**Revisit when:** a later UI change is less precisely specified than this one (then mock up first).
+
+## D-042 · Customer sub-pages: native-style header, no language switch (2026-10-09)
+**Ruling:** "A" — basket, order page, order placed and My orders get a simple header: a back arrow where there is somewhere to go back to, plus the page title; their language switch is removed (language lives in Settings and beside the name on the menu, D-039).
+**Trade-off:** consistent with native apps and less clutter; switching language from a sub-page takes one tap to Settings. Shipped with the `viewport-fit=cover` fix and removing the unused `onMyOrders` prop.
+**Revisit when:** testers look for the language switch on sub-pages. **Amended same day:** "keep the language switch though" — the sub-page headers keep a compact EN/ID switch on the right (back + title + language).

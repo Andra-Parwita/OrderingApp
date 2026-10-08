@@ -14,6 +14,7 @@
     "dark": "Gelap"
   },
   "sellerNav": {
+    "devSeller": "Penjual (hanya dev)",
     "label": "Penjual",
     "kitchen": "Dapur",
     "orders": "Pesanan",
@@ -30,9 +31,46 @@
     "expand": "Perluas menu",
     "shareMenu": "Bagikan menu ke WhatsApp"
   },
+  "customerNav": {
+    "label": "Pelanggan",
+    "menu": "Menu",
+    "orders": "Pesanan saya",
+    "settings": "Pengaturan",
+    "newUpdate": "ada pembaruan"
+  },
+  "customerSettings": {
+    "title": "Pengaturan",
+    "language": "Bahasa",
+    "theme": "Tampilan",
+    "updatesTitle": "Pembaruan",
+    "updatesButton": "Aktifkan pembaruan",
+    "updatesSoon": "Segera hadir",
+    "guideTitle": "Tambahkan ke Layar Utama",
+    "guideIntro": "Menu selalu satu ketukan dari layar utama, seperti aplikasi.",
+    "iphoneTitle": "iPhone (Safari)",
+    "iphone1": "Buka halaman ini di Safari.",
+    "iphone2": "Ketuk tombol Bagikan.",
+    "iphone3": "Pilih Tambah ke Layar Utama, lalu Tambah.",
+    "iphone4": "Buka aplikasi dari Layar Utama.",
+    "androidTitle": "Android (Chrome)",
+    "android1": "Buka halaman ini di Chrome.",
+    "android2": "Ketuk menu tiga titik.",
+    "android3": "Pilih Instal aplikasi atau Tambahkan ke layar utama.",
+    "android4": "Buka aplikasi dari layar utama."
+  },
   "notFound": {
     "title": "Halaman tidak ditemukan",
     "body": "Tidak ada apa-apa di alamat ini.",
     "home": "Ke menu"
+  },
+  "home": {
+    "title": "Delave · Pesanan masakan rumahan mingguan",
+    "body": "Juru masak rumahan menerbitkan menu setiap minggu. Anda memesan lewat tautan juru masaknya, lalu memantau pesanan di sini.",
+    "hint": "Buka tautan penjual Anda dari WhatsApp."
+  },
+  "kitchenNotFound": {
+    "title": "Kami tidak menemukan dapur ini",
+    "body": "Periksa tautan yang Anda terima, atau minta penjual mengirimnya lagi.",
+    "home": "Ke halaman utama"
   }
 }

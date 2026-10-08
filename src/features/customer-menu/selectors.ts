@@ -15,6 +15,12 @@ const EMPTY_LINES: ReadonlyArray<BasketLine> = [];
 export const selectMenu = (state: CustomerRootState) => state.customer.menu;
 export const selectBasket = (state: CustomerRootState) => state.customer.basket;
 export const selectPlace = (state: CustomerRootState) => state.customer.place;
+export const selectMenuSlug = (state: CustomerRootState) => state.customer.slug;
+/** True when the server said this seller does not exist (a mistyped or old link). */
+export const selectKitchenMissing = (state: CustomerRootState, slug: string) =>
+  state.customer.slug === slug &&
+  state.customer.menu.status === 'error' &&
+  state.customer.menu.code === 'seller_not_found';
 export const selectOrder = (state: CustomerRootState) => state.customer.order;
 
 /** Basket lines in menu order; items no longer on the menu are left out. */

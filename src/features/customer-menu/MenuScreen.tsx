@@ -14,7 +14,7 @@ import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/d
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { CUSTOMER_NS } from './i18n/register';
 import { ItemRow } from './ItemRow';
-import { Block, Muted, Page, StateMessage, Strong, Title, TopBar, useLang } from './layout';
+import { Block, Muted, Page, StateMessage, Strong, Title, useLang } from './layout';
 import { ScreenBoundary } from './ScreenBoundary';
 import { selectBasket, selectBasketCount, selectBasketTotalCents, selectMenu } from './selectors';
 
@@ -57,7 +57,8 @@ const Closed = styled(Block)`
 
 const Bar = styled.div`
   position: sticky;
-  bottom: 0;
+  /* Above the customer tab bar when there is one (set by the app shell). */
+  bottom: var(--customer-tabbar-height, 0rem);
   margin-top: auto;
   display: flex;
   align-items: center;
@@ -68,7 +69,32 @@ const Bar = styled.div`
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
 `;
 
-type Props = Readonly<{ onViewBasket: () => void; onMyOrders: () => void }>;
+// The banner is the first thing on the page; the top safe area is padded in the banner's own colour.
+const BannerTop = styled.div<{ $background?: string }>`
+  padding-top: env(safe-area-inset-top);
+  background: ${({ theme, $background }) => $background ?? theme.colour.surfaceAlt};
+`;
+
+const NameRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg} 0;
+`;
+
+const NameText = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+type Props = Readonly<{
+  /** The seller whose menu this is (from the route). */
+  slug: string;
+  onViewBasket: () => void;
+}>;
 
 function WeekBlock({ data, lang }: Readonly<{ data: MenuResponse; lang: Language }>) {
   const { t } = useTranslation(CUSTOMER_NS);
@@ -133,7 +159,7 @@ function ClosedBlock({ data }: Readonly<{ data: MenuResponse }>) {
   );
 }
 
-function MenuContent({ onViewBasket, onMyOrders }: Props) {
+function MenuContent({ slug, onViewBasket }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
@@ -143,8 +169,8 @@ function MenuContent({ onViewBasket, onMyOrders }: Props) {
   const totalCents = useSelector(selectBasketTotalCents);
 
   const load = useCallback(() => {
-    dispatch(menuRequested());
-  }, [dispatch]);
+    dispatch(menuRequested(slug));
+  }, [dispatch, slug]);
   useEffect(load, [load]);
 
   const onQty = useCallback(
@@ -154,25 +180,24 @@ function MenuContent({ onViewBasket, onMyOrders }: Props) {
 
   return (
     <Page>
-      <TopBar>
-        <Button variant="quiet" onClick={onMyOrders}>
-          {t('common.myOrders')}
-        </Button>
-        <LanguageSwitch />
-      </TopBar>
       {menu.status === 'ready' ? (
         <>
-          <ImageSlot
-            aspectRatio="2 / 1"
-            background={menu.data.kitchen.images?.bannerBackground}
-            src={phoneBannerSrc(menu.data.kitchen.images) ?? menu.data.kitchen.bannerImageUrl}
-            alt={bannerAlt(menu.data.kitchen, lang)}
-            placeholder={t('menu.bannerImage')}
-          />
-          <Block>
-            <Title>{menu.data.kitchen.name}</Title>
-            <Muted>{pickText(menu.data.kitchen.tagline, lang)}</Muted>
-          </Block>
+          <BannerTop $background={menu.data.kitchen.images?.bannerBackground}>
+            <ImageSlot
+              aspectRatio="2 / 1"
+              background={menu.data.kitchen.images?.bannerBackground}
+              src={phoneBannerSrc(menu.data.kitchen.images) ?? menu.data.kitchen.bannerImageUrl}
+              alt={bannerAlt(menu.data.kitchen, lang)}
+              placeholder={t('menu.bannerImage')}
+            />
+          </BannerTop>
+          <NameRow>
+            <NameText>
+              <Title>{menu.data.kitchen.name}</Title>
+              <Muted>{pickText(menu.data.kitchen.tagline, lang)}</Muted>
+            </NameText>
+            <LanguageSwitch />
+          </NameRow>
           {menu.data.ordering.open ? null : <ClosedBlock data={menu.data} />}
           <WeekBlock data={menu.data} lang={lang} />
           <Items>

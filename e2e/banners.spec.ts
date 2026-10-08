@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { collectErrors, pageScrollWidth } from './sellerHelpers';
 
 // Stage 4.9 (D-038): images are never cropped; the seller's colour fills the sides of the banner;
-// the rail shows its image, or the seller's initial when collapsed; the orders table fits 1024 px.
+// the rail shows its image, or its icon when collapsed (the seller's initial without one); the orders table fits 1024 px.
 const alt = 'Onde Onde — Indonesian homemade food';
 const BACKGROUND = 'rgb(131, 89, 55)'; // #835937
 
@@ -72,8 +72,27 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
       // 5:1, so the height follows the width: nothing caps it and forces a crop.
       expect(Math.abs((slotBox?.width ?? 0) / (slotBox?.height ?? 1) - 5)).toBeLessThan(0.05);
       if (width === 1920) {
-        // Wider than the 1600 px image area: the colour shows on both sides of it.
+        // Wider than the 1600 px image area: the background shows on both sides of it.
         expect((stripBox?.width ?? 0) - (slotBox?.width ?? 0)).toBeGreaterThan(50);
+        // D-040: the blurred background picture fills the whole strip behind the banner, and loads.
+        const backdrop = await strip.evaluate((el) => {
+          const style = getComputedStyle(el);
+          return { image: style.backgroundImage, size: style.backgroundSize };
+        });
+        expect(backdrop.image).toContain('/samples/banner-bg.jpg');
+        expect(backdrop.size).toBe('cover');
+        const decoded = await page.evaluate(
+          (url) =>
+            new Promise<number>((resolve) => {
+              const img = new Image();
+              img.onload = () => resolve(img.naturalWidth);
+              img.onerror = () => resolve(0);
+              img.src = url;
+            }),
+          '/samples/banner-bg.jpg',
+        );
+        expect(decoded).toBe(1280);
+        expect(Math.abs((stripBox?.height ?? 0) - (slotBox?.height ?? 0))).toBeLessThan(1);
       }
       if (capture) await page.screenshot({ path: capture });
       expect(errors).toEqual([]);
@@ -89,14 +108,15 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
       await page.goto('/seller');
       const rail = page.getByRole('navigation', { name: 'Seller' });
       const railImage = rail.getByRole('img');
-      await expect(railImage).toHaveAttribute('src', '/samples/rail.jpg');
+      await expect(railImage).toHaveAttribute('src', '/samples/rail.png');
       const box = await railImage.boundingBox();
       expect(Math.abs((box?.width ?? 0) / (box?.height ?? 1) - 2)).toBeLessThan(0.05);
       await rail.getByRole('button', { name: 'Collapse menu' }).click();
-      const initial = rail.getByRole('img', { name: 'Delave' });
-      await expect(initial).toHaveText('D');
+      // The owner's rail icon (D-040) takes the place of the initial.
+      const icon = rail.getByRole('img', { name: 'Onde Onde' });
+      await expect(icon).toHaveAttribute('src', '/samples/rail-icon.png');
       await expect(rail.getByText(/coming soon$/)).toHaveCount(0);
-      const initialBox = await initial.boundingBox();
+      const initialBox = await icon.boundingBox();
       expect(Math.abs((initialBox?.width ?? 0) - 40)).toBeLessThan(1);
       expect(Math.abs((initialBox?.height ?? 0) - 40)).toBeLessThan(1);
       // The rail narrows over 150 ms; capture it once it has.
@@ -130,7 +150,7 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
   {
     const { context, page, errors } = await open(390, 844);
     try {
-      await page.goto('/');
+      await page.goto('/onde-onde');
       const image = await loaded(page, alt);
       await expect(image).toHaveAttribute('src', '/samples/banner-phone.jpg');
       await showsWholeImage(image);
@@ -160,7 +180,7 @@ test('the orders table fits 1024 px with long names, rail open and collapsed', a
   ];
   for (const [index, firstName] of names.entries()) {
     expect(firstName.length).toBeGreaterThanOrEqual(30);
-    const created = await request.post('/api/orders', {
+    const created = await request.post('/api/s/onde-onde/orders', {
       data: {
         firstName,
         language: 'en',

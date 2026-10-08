@@ -5,7 +5,7 @@ import { server } from '../../mocks/server';
 import {
   addSampleOrders,
   cancelOrder,
-  createOrder,
+  placeOrder,
   createSellerOrder,
   fetchMenu,
   fetchOrder,
@@ -18,6 +18,7 @@ import {
 } from './client';
 import type { CreateOrderRequest } from '../../shared/orderContract';
 import type { ApiResult } from './http';
+import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
 
 function data<T>(result: ApiResult<T>): T {
   if (!result.ok) throw new Error(`${result.error}: ${result.message}`);
@@ -37,13 +38,13 @@ beforeEach(() => {
 
 describe('customer endpoints', () => {
   it('loads the menu', async () => {
-    const menu = data(await fetchMenu());
-    expect(menu.kitchen.name).toBe('Delave');
+    const menu = data(await fetchMenu(DEFAULT_SELLER_SLUG));
+    expect(menu.kitchen.name).toBe('Onde Onde');
     expect(menu.items).toHaveLength(6);
   });
 
   it('creates, loads, updates and cancels an order by token', async () => {
-    const { order } = data(await createOrder(base));
+    const { order } = data(await placeOrder(DEFAULT_SELLER_SLUG, base));
     expect(order.status).toBe('ordered');
     expect(data(await fetchOrder(order.token)).order.id).toBe(order.id);
     const updated = data(await updateOrder(order.token, { note: 'less salt' }));
@@ -57,11 +58,15 @@ describe('customer endpoints', () => {
       error: 'not_found',
       status: 404,
     });
-    expect(await createOrder({ ...base, lines: [{ itemId: 'nope', qty: 1 }] })).toMatchObject({
+    expect(
+      await placeOrder(DEFAULT_SELLER_SLUG, { ...base, lines: [{ itemId: 'nope', qty: 1 }] }),
+    ).toMatchObject({
       ok: false,
       error: 'unknown_item',
     });
-    expect(await createOrder({ ...base, lines: [{ itemId: 'lemper', qty: 21 }] })).toMatchObject({
+    expect(
+      await placeOrder(DEFAULT_SELLER_SLUG, { ...base, lines: [{ itemId: 'lemper', qty: 21 }] }),
+    ).toMatchObject({
       ok: false,
       error: 'exceeds_remaining',
       status: 409,
@@ -69,7 +74,7 @@ describe('customer endpoints', () => {
   });
 
   it('rejects an invalid body with invalid_request', async () => {
-    expect(await createOrder({ ...base, firstName: '' })).toMatchObject({
+    expect(await placeOrder(DEFAULT_SELLER_SLUG, { ...base, firstName: '' })).toMatchObject({
       ok: false,
       error: 'invalid_request',
       status: 400,
@@ -98,7 +103,7 @@ describe('seller endpoints', () => {
   });
 
   it('refuses a status outside nextStatuses and an unknown code', async () => {
-    const { order } = data(await createOrder(base));
+    const { order } = data(await placeOrder(DEFAULT_SELLER_SLUG, base));
     expect(await setOrderStatus(order.code, 'delivered')).toMatchObject({
       ok: false,
       error: 'invalid_status',
@@ -117,12 +122,19 @@ describe('dev endpoints and failures', () => {
   });
 
   it('reports a body that does not match the contract', async () => {
-    server.use(http.get('*/api/menu', () => HttpResponse.json({ nonsense: true })));
-    expect(await fetchMenu()).toMatchObject({ ok: false, error: 'bad_response' });
+    server.use(http.get('*/api/s/onde-onde/menu', () => HttpResponse.json({ nonsense: true })));
+    expect(await fetchMenu(DEFAULT_SELLER_SLUG)).toMatchObject({
+      ok: false,
+      error: 'bad_response',
+    });
   });
 
   it('reports a network error', async () => {
-    server.use(http.get('*/api/menu', () => HttpResponse.error()));
-    expect(await fetchMenu()).toMatchObject({ ok: false, error: 'network', status: 0 });
+    server.use(http.get('*/api/s/onde-onde/menu', () => HttpResponse.error()));
+    expect(await fetchMenu(DEFAULT_SELLER_SLUG)).toMatchObject({
+      ok: false,
+      error: 'network',
+      status: 0,
+    });
   });
 });
