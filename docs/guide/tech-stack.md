@@ -7,6 +7,7 @@ The owner's minimum stack; it is required. No new dependency beyond this list wi
 | UI | **React** (latest stable, [D-006](../decisions/README.md)) + **TypeScript** (`strict` and `noUncheckedIndexedAccess` on) |
 | Styling | **styled-components** (latest stable) with a typed `ThemeProvider` theme, light and dark ([D-006](../decisions/README.md)) |
 | State | **Redux Toolkit** + **redux-saga** for side effects (API calls, live updates, push) |
+| Routing | **react-router** (latest stable, library mode) ([D-022](../decisions/README.md)) |
 | i18n | **react-i18next** (EN / ID) |
 | Sign-in | **Passkeys** via `@simplewebauthn/server` + `@simplewebauthn/browser`; password fallback for seller and chefs with WebCrypto PBKDF2 ([D-011](../decisions/README.md), [D-014](../decisions/README.md)) |
 | Dev server and build | **Vite**, with `@cloudflare/vite-plugin` so the Worker runs in the same dev server |

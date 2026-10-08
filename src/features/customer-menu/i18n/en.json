@@ -1,0 +1,87 @@
+{
+  "language": { "label": "Language" },
+  "common": {
+    "retry": "Try again",
+    "loading": "Loading…",
+    "back": "Back",
+    "myOrders": "My orders",
+    "errorTitle": "Something went wrong",
+    "errorBody": "Please try again."
+  },
+  "menu": {
+    "loadError": "Could not load the menu. Check your connection and try again.",
+    "notPublished": "This week's menu is not published yet. Please check back later.",
+    "bannerImage": "Kitchen photo",
+    "cooking": "Cooking",
+    "orderBy": "Order by",
+    "pickup": "Pickup",
+    "deliveryAvailable": "Delivery available",
+    "deliveryNote": "address sent on WhatsApp",
+    "noDelivery": "Pickup only",
+    "left": "{{count}} left",
+    "soldOut": "Sold out",
+    "decrease": "Remove one {{name}}",
+    "increase": "Add one {{name}}",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "viewBasket": "View basket"
+  },
+  "basket": {
+    "title": "Your basket",
+    "empty": "Your basket is empty.",
+    "backToMenu": "Back to menu",
+    "each": "{{price}} each",
+    "total": "Total",
+    "howTitle": "How do you want it?",
+    "how": "Pickup or delivery",
+    "pickup": "Pickup",
+    "delivery": "Delivery",
+    "pickupWhen": "{{when}}, {{place}}",
+    "deliveryNote": "You'll send your address to the seller on WhatsApp after ordering. It's never stored in the app.",
+    "firstName": "Your first name",
+    "firstNameHelper": "Only your first name or a nickname",
+    "firstNameRequired": "Please enter your first name",
+    "note": "Note for the seller (optional)",
+    "noteHelper": "Allergies or requests. Don't add your address, phone or other sensitive details — send those on WhatsApp.",
+    "place": "Place order · {{total}}",
+    "placing": "Placing your order…",
+    "changeUntil": "You can change or cancel until {{when}}",
+    "errors": {
+      "sold_out": "Sorry, an item just sold out. Your basket is kept; please check the menu and try again.",
+      "exceeds_remaining": "Sorry, there are fewer portions left than you asked for. Please lower the quantity and try again.",
+      "cutoff_passed": "Sorry, orders for this week are closed.",
+      "other": "Could not place your order. Check your connection and try again."
+    }
+  },
+  "placed": {
+    "title": "Order placed",
+    "yourNumber": "Your order number",
+    "loadError": "Could not load your order.",
+    "qrLabel": "QR code (coming later)",
+    "total": "Total",
+    "pickup": "Pickup",
+    "delivery": "Delivery",
+    "note": "Note: {{note}}",
+    "whatsapp": "Send to seller on WhatsApp",
+    "updates": "Turn on updates",
+    "comingSoon": "Coming soon",
+    "saved": "Saved in My orders on this phone",
+    "change": "Change or cancel order"
+  },
+  "status": {
+    "ordered": "Ordered",
+    "confirmed": "Confirmed",
+    "ready_for_pickup": "Ready for pickup",
+    "out_for_delivery": "Out for delivery",
+    "collected": "Collected",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "wa": {
+    "message": "Hi, my order is {{code}}: {{items}}. Total {{total}}. {{how}}. Name: {{name}}.",
+    "pickup": "Pickup",
+    "pickupWhen": "Pickup {{when}}",
+    "delivery": "Delivery",
+    "addAddress": "My address:"
+  }
+}

@@ -10,6 +10,7 @@
     "react-dom": "^19.3.0",
     "react-i18next": "^17.0.15",
     "react-redux": "^9.3.0",
+    "react-router": "^8.4.0",
     "redux-saga": "^1.5.1",
     "styled-components": "^6.5.3"
   },

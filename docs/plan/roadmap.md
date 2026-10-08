@@ -89,3 +89,39 @@ One builder (sonnet), alone on the tree. Starts after the owner's setup above.
 
 **Gate at the end:** `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test` plus the smoke spec; then the owner opens the hello screen on a phone.
 **Overlap:** every stage touches root config, so they run in sequence in one builder (no wave).
+
+## Phase 3 · Batch 1 (core loop) stage table
+
+Draft 2026-10-07. Q18 answered: mock API in the dev Worker ([D-021](../decisions/README.md)); Q19: react-router ([D-022](../decisions/README.md)). Batch 1 = C1 menu, C2 basket/checkout, C3 order placed, S1 seller orders, S2 order detail ([wireframes](../design/wireframes/batch-1.html)). Later batches repeat stages 3.0, 3.3–3.5 on the kit and domain built here.
+
+| stage | what | files owned | proof (done when) |
+|---|---|---|---|
+| 3.0 | **Styled mock-up**: two visual directions (A = the current theme tokens, B = an alternative), each as C1 menu + S1 seller orders in light and dark, with a token/contrast table | `docs/design/mockups/batch-1-directions.html` | owner picks a direction |
+| 3.1 | **UI kit** from the picked mock-up: Button, TextField, TextArea, Stepper, Segmented, Pill, ListRow, TabBar, Dialog (second-tap confirm), Toast; the lint rule banning literal values in styled blocks (D-006); a harness route showing every control | `src/ui/`, `src/theme/`, `eslint.config.js` (the one rule) | unit tests; harness capture looked at; contrast test green |
+| 3.2 | **Domain + mock data**: shared types (menu, order, order line snapshot D-020, statuses as a union, note D-018, chef D-012), order code generate/parse (forgiving), money in cents; fixtures from the brief; the mock API (question 18) with an "add sample orders" button | `shared/`, `worker/mock/`, `mocks/` (MSW for tests), `src/api/` | unit tests for codes, money, status transitions, parsers |
+| 3.3 | **Customer screens** C1–C3 with sagas, EN/ID strings | `src/features/customer-menu/`, `src/i18n/` (customer keys) | component tests; e2e spec on iPhone + Android; captures looked at |
+| 3.4 | **Seller screens** S1–S2 with sagas, EN/ID strings | `src/features/seller-orders/`, `src/i18n/` (seller keys) | component tests; e2e spec on desktop + Android; captures looked at |
+| 3.5 | **Routing and shell**: react-router (D-022), routes, seller tab bar (D-design nav), move `LanguageSwitch` to `components/`, remove the hello screen; one end-to-end spec: order on a phone → appears in the seller list | `src/app/`, `src/components/`, `e2e/` | the cross-screen spec green; live smoke 0 console errors; owner tries it on a phone |
+
+**Overlap:** 3.1 and 3.2 touch disjoint files. 3.3 and 3.4 are disjoint except `src/i18n/*.json` (split: each owns its own key namespace file, `customer.json` / `seller.json`, merged by 3.5). 3.5 touches the shell and must run last.
+
+**Timelines:**
+- Sequential (one builder at a time): 3.0 → 3.1 → 3.2 → 3.3 → 3.4 → 3.5. Simplest, ~6 rounds.
+- Parallel (recommended after 3.0): 3.0 → [3.1 ∥ 3.2] → [3.3 ∥ 3.4] → 3.5. Two waves of 2 sonnet builders, gate once after each wave; ~4 rounds.
+
+## Phase 3 · Batch 2 (after ordering) stage table
+
+Draft 2026-10-07, waiting on question 26. Scope = wireframe batch 2 ([batch-2.html](../design/wireframes/batch-2.html)) + the batch 2 features adopted in [D-027](../decisions/README.md). Visual source: the owner's reference prototype ([extraction](../design/reference/delave-prototype-extract.md)) in the D-027 palette; layout source: the wireframes.
+
+| stage | what | files owned | proof (done when) |
+|---|---|---|---|
+| 4.1 | **Domain + mock API**: order `locked`, `waReceived`, `returning` (sent by the customer's phone from its own My orders history), `source`; customer inbox entries (status changes, nudge, later bulk updates); "Changed" diff in the audit entry; seller-entered order with Confirm-now / Paid flags; kitchen settings (seller WhatsApp number, post greeting/closing EN/ID); ordering open/closed switch + auto-close at cut-off; contracts, client functions, MSW | `shared/`, `worker/mock/`, `mocks/`, `src/api/` | unit tests for every rule (lock blocks customer edits, diff text, auto-close, nudge → inbox) |
+| 4.2 | **Customer**: My orders (this week / earlier, unseen-update dot), order page (status timeline, inbox, QR placeholder, change → basket in edit mode, cancel two-tap, locked banner), "How ordering works", returning-customer info, "Send to seller" opens the seller's chat via the stored number | `src/features/customer-menu/`, `src/features/customer-orders/` (new) | component tests; e2e spec (iPhone + Android); captures looked at |
+| 4.3a | **Seller orders**: order detail additions (Lock / Unlock, Changed badge + diff, New / Returning / WhatsApp received banners, Nudge), "+ New order" sheet (Confirm now, Mark paid) → order saved → "Send order link on WhatsApp" | `src/features/seller-orders/` | component tests; e2e spec (desktop + Android) |
+| 4.3b | **Seller cook + share + settings**: cook list grouped by item / customer / pickup-delivery / chef (D-012) with "who ordered", stats (orders, income, paid, unpaid); share-to-WhatsApp post (ID / EN / Both, greeting, closing, order link); a minimal settings page (WhatsApp number, greeting, closing, open/closed switch) | `src/features/seller-cook/`, `src/features/seller-share/`, `src/features/seller-settings/` (new) | component tests; e2e spec (desktop + Android) |
+| 4.4 | **Shell**: routes for all of the above, seller desktop layout (left rail + list/detail split at ≥ 820 px; bottom tabs below), light / dark / auto switch (remembered on the device), one cross-screen e2e: customer orders → seller nudges → customer sees it in the inbox → seller locks → customer can't change | `src/app/`, `src/components/`, `src/theme/` (preference only), `e2e/` | full gate; live smoke 0 console errors; owner tries it on a phone |
+
+**Overlap:** 4.1 must land first (the contracts). 4.2, 4.3a, 4.3b are disjoint feature folders, each with its own i18n bundle and harness file → one parallel wave of 3. 4.4 touches the shell and runs last.
+**Timeline:** 4.1 → [4.2 ∥ 4.3a ∥ 4.3b] → 4.4 (3 rounds, gate after each).
+**Mock-ups:** no separate mock-up round — the owner's prototype is the approved visual source for every batch 2 feature, and the wireframes cover the rest; the owner reviews the built screens after 4.4.
+

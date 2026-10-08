@@ -1,13 +1,14 @@
 {
   "app": { "name": "Menu Mingguan" },
   "language": { "label": "Bahasa" },
-  "hello": {
-    "title": "Halo",
-    "health": {
-      "label": "Status server",
-      "loading": "Memeriksa…",
-      "ok": "ok",
-      "error": "Tidak terjangkau"
-    }
+  "myOrders": {
+    "title": "Pesanan saya",
+    "soon": "Pesanan saya — hadir di tahap berikutnya.",
+    "back": "Kembali ke menu"
+  },
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "body": "Tidak ada apa-apa di alamat ini.",
+    "home": "Ke menu"
   }
 }

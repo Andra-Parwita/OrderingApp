@@ -1,13 +1,14 @@
 {
   "app": { "name": "Weekly Menu" },
   "language": { "label": "Language" },
-  "hello": {
-    "title": "Hello",
-    "health": {
-      "label": "Server status",
-      "loading": "Checking…",
-      "ok": "ok",
-      "error": "Unreachable"
-    }
+  "myOrders": {
+    "title": "My orders",
+    "soon": "My orders — coming in the next batch.",
+    "back": "Back to the menu"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "There is nothing at this address.",
+    "home": "Go to the menu"
   }
 }

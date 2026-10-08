@@ -1,0 +1,83 @@
+{
+  "orders": {
+    "title": "Pesanan",
+    "titleWithDate": "Pesanan · {{date}}",
+    "live": "Langsung",
+    "offline": "Menyambung ulang…",
+    "notConfirmed_one": "{{count}} belum dikonfirmasi",
+    "notConfirmed_other": "{{count}} belum dikonfirmasi",
+    "show": "Lihat ›",
+    "filterLabel": "Saring menurut status",
+    "searchLabel": "Kode pesanan atau nama",
+    "searchHelper": "k7f2qx, K7F 2QX dan K7F-2QX semuanya bisa",
+    "loading": "Memuat pesanan…",
+    "empty": "Tidak ada pesanan yang cocok.",
+    "paid": "✓ Lunas",
+    "note": "✎ Catatan",
+    "enteredBy": "dimasukkan oleh {{name}}",
+    "devSample": "Tambah 5 pesanan contoh",
+    "devReset": "Reset",
+    "tabsLabel": "Penjual"
+  },
+  "tabs": {
+    "orders": "Pesanan",
+    "cook": "Daftar masak",
+    "handover": "Serah terima",
+    "menu": "Menu",
+    "more": "Lainnya",
+    "comingSoon": "segera hadir"
+  },
+  "filter": {
+    "all": "Semua",
+    "ordered": "Dipesan",
+    "confirmed": "Dikonfirmasi",
+    "ready": "Siap",
+    "done": "Selesai",
+    "cancelled": "Dibatalkan"
+  },
+  "status": {
+    "ordered": "Dipesan",
+    "confirmed": "Dikonfirmasi",
+    "ready_for_pickup": "Siap diambil",
+    "out_for_delivery": "Sedang diantar",
+    "collected": "Sudah diambil",
+    "delivered": "Sudah diantar",
+    "cancelled": "Dibatalkan"
+  },
+  "fulfilment": { "pickup": "Ambil", "delivery": "Antar" },
+  "detail": {
+    "back": "‹ Pesanan",
+    "customerLanguage": "Pelanggan: {{lang}}",
+    "placed": "Dipesan {{when}}",
+    "total": "Total",
+    "noteTitle": "Catatan dari pelanggan",
+    "status": "Status",
+    "paid": "Lunas",
+    "paidHint": "(catatan pribadimu)",
+    "paidYes": "Lunas",
+    "paidNo": "Belum lunas",
+    "whatsapp": "Kirim tautan pesanan lewat WhatsApp",
+    "cancel": "Batalkan pesanan",
+    "cancelConfirm": "Ketuk lagi untuk membatalkan",
+    "history": "Perubahan terakhir",
+    "notFound": "Pesanan tidak ditemukan.",
+    "loading": "Memuat pesanan…"
+  },
+  "who": { "chef": "Chef {{name}}" },
+  "audit": {
+    "created": "Dipesan",
+    "edited": "Diubah",
+    "status": "Status → {{status}}",
+    "paid": "Ditandai lunas",
+    "unpaid": "Ditandai belum lunas"
+  },
+  "whatsapp": {
+    "message": "Halo {{name}}, ini tautan pesananmu {{code}}: {{link}}"
+  },
+  "error": {
+    "load": "Pesanan tidak bisa dimuat.",
+    "change": "Perubahan tidak bisa disimpan.",
+    "retry": "Coba lagi",
+    "screen": "Terjadi masalah di layar ini."
+  }
+}

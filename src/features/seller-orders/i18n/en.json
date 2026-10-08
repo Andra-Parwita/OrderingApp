@@ -1,0 +1,83 @@
+{
+  "orders": {
+    "title": "Orders",
+    "titleWithDate": "Orders · {{date}}",
+    "live": "Live",
+    "offline": "Reconnecting…",
+    "notConfirmed_one": "{{count}} not confirmed",
+    "notConfirmed_other": "{{count}} not confirmed",
+    "show": "Show ›",
+    "filterLabel": "Filter by status",
+    "searchLabel": "Order code or name",
+    "searchHelper": "k7f2qx, K7F 2QX and K7F-2QX all work",
+    "loading": "Loading orders…",
+    "empty": "No orders match.",
+    "paid": "✓ Paid",
+    "note": "✎ Note",
+    "enteredBy": "entered by {{name}}",
+    "devSample": "Add 5 sample orders",
+    "devReset": "Reset",
+    "tabsLabel": "Seller"
+  },
+  "tabs": {
+    "orders": "Orders",
+    "cook": "Cook list",
+    "handover": "Hand-over",
+    "menu": "Menu",
+    "more": "More",
+    "comingSoon": "coming soon"
+  },
+  "filter": {
+    "all": "All",
+    "ordered": "Ordered",
+    "confirmed": "Confirmed",
+    "ready": "Ready",
+    "done": "Done",
+    "cancelled": "Cancelled"
+  },
+  "status": {
+    "ordered": "Ordered",
+    "confirmed": "Confirmed",
+    "ready_for_pickup": "Ready for pickup",
+    "out_for_delivery": "Out for delivery",
+    "collected": "Collected",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "fulfilment": { "pickup": "Pickup", "delivery": "Delivery" },
+  "detail": {
+    "back": "‹ Orders",
+    "customerLanguage": "Customer: {{lang}}",
+    "placed": "Placed {{when}}",
+    "total": "Total",
+    "noteTitle": "Note from customer",
+    "status": "Status",
+    "paid": "Paid",
+    "paidHint": "(your own reference)",
+    "paidYes": "Paid",
+    "paidNo": "Not paid",
+    "whatsapp": "Send order link on WhatsApp",
+    "cancel": "Cancel order",
+    "cancelConfirm": "Tap again to cancel",
+    "history": "Last changes",
+    "notFound": "Order not found.",
+    "loading": "Loading order…"
+  },
+  "who": { "chef": "Chef {{name}}" },
+  "audit": {
+    "created": "Placed",
+    "edited": "Edited",
+    "status": "Status → {{status}}",
+    "paid": "Marked paid",
+    "unpaid": "Marked not paid"
+  },
+  "whatsapp": {
+    "message": "Hi {{name}}, here is the link to your order {{code}}: {{link}}"
+  },
+  "error": {
+    "load": "Could not load orders.",
+    "change": "Could not save the change.",
+    "retry": "Try again",
+    "screen": "Something went wrong on this screen."
+  }
+}

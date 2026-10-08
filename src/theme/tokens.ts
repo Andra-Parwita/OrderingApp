@@ -23,3 +23,15 @@ export const motion = {
 } as const;
 
 export const minTapTarget = '44px';
+
+export const border = { hairline: '1px', focus: '2px', tab: '2px' } as const;
+
+export const statusTones = [
+  'ordered',
+  'confirmed',
+  'ready',
+  'outForDelivery',
+  'cancelled',
+  'done',
+] as const;
+export type StatusTone = (typeof statusTones)[number];

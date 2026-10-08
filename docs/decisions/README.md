@@ -104,7 +104,7 @@ Format for each entry:
 **Ruling:** "B, but there should be a way to view notes or dietary requirements. E.g. the customer can add a note during checkout and the seller can view the note in the order detail. On the order screen, maybe add an asterisk or notifier if there is a note on an order."
 **Trade-off:** an optional **note** on each order (max 200 characters), written by the customer at checkout (editable until the cut-off) or by the seller/chef when entering an order; shown in the order detail, and flagged in the seller's order list with a "Note" marker (icon + text, not an asterisk alone, so it isn't colour- or symbol-only). **Tension with D-007** (no private information in the cloud): a dietary note can be health-related and people may type an address or phone into any free-text box. Mitigation: helper text "Allergies or requests. Don't add your address or phone — send those on WhatsApp"; the note is deleted with the order; it never appears on labels or the WhatsApp group post.
 **Tension settled (owner, same day):** "The cloud should be fine as long as it prompts them to not put any sensitive data." Notes stay in the cloud; the helper text prompting not to add sensitive data is required wherever a note is written (customer checkout, seller/chef order entry).
-**Revisit when:** notes start carrying private details regularly (then move notes to WhatsApp only).
+**Revisit when:** notes start carrying private details regularly (then move notes to WhatsApp only). **Amended by D-027:** notes do appear on labels (≤ 70 chars) as a packing/allergy aid.
 
 ## D-019 · Seller can preview the menu as customers see it before publishing (2026-10-07)
 **Ruling:** "B, a menu to preview the menu in customer view before publishing it as a seller" (batch 3 approved with this change).
@@ -115,3 +115,50 @@ Format for each entry:
 **Ruling:** "A" (existing orders keep what was ordered).
 **Trade-off:** each order line stores a copy of the item's names (EN/ID), size and price at the time it was placed; edits to the menu only affect new orders. An item that has orders can't be deleted: the seller marks it Sold out, which stops new orders. Totals never change behind a customer's back and the cook list stays correct. Cost: order lines duplicate a few item fields.
 **Revisit when:** the seller needs to correct a price on existing orders (then add an explicit "apply to existing orders" action that notifies customers).
+
+## D-021 · Prototype data: a temporary mock API in the dev Worker (2026-10-07)
+**Ruling:** "A" (mock API inside the dev server's Worker; MSW stays for tests).
+**Trade-off:** orders live in the Worker's memory during the prototype (lost on restart), so an order placed on a phone over Wi-Fi shows up on the seller screen on the PC, and the app uses the same fetch path it will use against D1 in phase 4. The mock lives in `worker/mock/` behind the same typed contracts in `shared/`, and phase 4 replaces it with D1-backed routes. Cost: a throwaway in-memory store; dev-only "add sample orders" and "reset" endpoints that must never ship (guarded by a dev-only flag).
+**Revisit when:** phase 4 starts (the mock is deleted).
+
+## D-022 · react-router for navigation (2026-10-07)
+**Ruling:** "A" (react-router, latest stable, library mode).
+**Trade-off:** standard, typed routing for ~25 screens and deep links (`/o/<token>`, `/seller/...`, `/admin/...`), with correct back-button and URL behaviour; the URL owns what should survive a reload. Cost: one runtime dependency. Installed in stage 3.5 (routing and shell).
+**Revisit when:** a react-router major release forces a rewrite of the route setup.
+
+## D-023 · Visual direction: Sage (2026-10-07)
+**Ruling:** "A, Sage" (the current theme tokens: warm grey neutrals with a muted sage-green accent), over the recommended B, Clay.
+**Trade-off:** no palette change; the theme in `src/theme/themes.ts` stays as built. The status-pill tints proposed on the directions page (Ordered amber, Confirmed slate, Ready green, Cancelled clay, Done/Sold out grey, light and dark) are added as theme tokens in stage 3.1. Known risk: the accent and the Ready status are both green; mitigation: status pills always carry their text, the accent is used only on the primary action, the selected item and focus, and the Ready tint stays a light tint, never a solid fill.
+**Revisit when:** testers confuse a Ready pill with a button. **Amended by [D-025](#d-025--visual-direction-changed-to-sogan-2026-10-07-amends-d-023):** the owner switched to Sogan.
+
+## D-024 · After the cut-off, only customers are locked out (2026-10-07)
+**Ruling:** "A" (seller and chefs keep full control after the cut-off).
+**Trade-off:** after the cut-off customers can't create, change or cancel orders; the seller and chefs can still change statuses, set Paid, and enter or edit orders (e.g. a late WhatsApp order from a friend). Matches D-009 (the seller stays in control). Cost: the cook list can still move after the cut-off, so the seller re-checks it before shopping.
+**Revisit when:** late changes cause cooking mistakes (then add a "freeze cook list" switch).
+
+## D-025 · Visual direction changed to Sogan (2026-10-07; amends D-023)
+**Ruling:** "B, maybe change the theme to clay or a more traditional indonesian-like theme", then "C please" (C = Sogan, inspired by Javanese sogan batik: cream/ivory surfaces, deep soga brown and ochre, a sparing indigo or deep-green secondary).
+**Trade-off:** a warmer, heritage feel that fits an Indonesian home kitchen, and the accent (brown) no longer shares a hue with the green Ready status, which removes D-023's known risk. Cost: one theme swap (token values only; screens read tokens) plus re-checking contrast and re-capturing screens. **Pending:** whether to use the optional faint batik motif in the customer banner.
+**Revisit when:** testers find it too dark or too brown on phones. **Amended by D-027:** the palette is now the owner's reference-prototype palette (same Sogan family).
+
+## D-026 · No batik motif in the banner (2026-10-07)
+**Ruling:** "C" (no motif; plain colours only), "then continue with batch 2. Refer to this artefact: https://claude.ai/artifact/Y65hpEgWgVcKHy9wsyaKQ3".
+**Trade-off:** the most minimal look; the banner shows the seller's image or a plain surface. **Note:** the referenced artifact (the owner's own "Delave weekly orders" prototype) uses a kawung strip; that conflict is raised with the owner before anything is built.
+**Revisit when:** the owner rules on the artifact's visual details.
+
+## D-027 · Reconcile with the owner's reference prototype: accept all recommendations (2026-10-07)
+**Ruling:** "A" (accept every recommendation in [reference-reconciliation.md](../plan/reference-reconciliation.md)), after the owner pointed to their "Delave weekly orders" artifact ([extraction](../design/reference/delave-prototype-extract.md)).
+**What changes:**
+1. Sign-in stays passkeys (D-011); adopt device names, 3 devices per invite key, a 6-digit add-device code valid 10 min, and 5 failed tries → 15-min lockout. No PIN.
+2. Labels show the order note (≤ 70 chars, truncated) — **amends D-018**.
+3. Colours: the artifact's palette replaces round-2 Sogan — **amends D-025** (Sogan family kept). Coordinator's AA check found three gaps, fixed by adding tokens rather than changing the look: light sage as text (4.0–4.3:1) gets a darker text shade; gold is never used as text on light surfaces (2.7–3.2:1), only as small fills/bars; input borders get an `outline` token ≥ 3:1 (the artifact's `--line` is 1.35:1, fine for hairlines only).
+4. System font for now; self-hosting Plus Jakarta Sans needs a later OK.
+5. No kawung strip (D-026 stands).
+6. Order details are deleted after 4 weeks; weekly totals (orders, income, item totals) are kept for the past-weeks view; export to JSON/CSV and import backup.
+7. Change tracking: last-4 audit (D-013) plus a "Changed" badge and a short diff in the audit entry.
+8. Seller-entered orders: "Confirm now" (ticked by default) and "Mark paid" checkboxes — refines D-010.
+9. Cut-off: ordering closes automatically at the cut-off, with a manual Open/Closed switch; sample cut-off Fri 9 pm — refines D-024.
+10. "N left" shows only when 5 or fewer remain.
+11. Sample kitchen name is "Delave".
+**New features adopted** (placement per the reconciliation): lock order; the seller's own WhatsApp number in settings; "How ordering works"; returning customer / WhatsApp received / Nudge; order and income totals; cook-list grouping by item / customer / pickup-delivery merged with chef; light/dark/auto switch; desktop seller rail + list/detail split (batch 2); paste-a-WhatsApp-post parser, past weeks, backup/CSV (batch 3); send an update to many customers (batch 4).
+**Trade-off:** the app converges on the owner's own design; batch 2 grows. **Revisit when:** a batch gets too big to review (then split it).

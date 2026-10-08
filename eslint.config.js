@@ -21,6 +21,13 @@ const layerZones = [
     ['./src/components', './src/features', './src/app'],
     'ui may not import components, features or app',
   ),
+  zone('./src/harness', ['./src/app', './worker'], 'harness may not import app or worker'),
+  // Only src/main.tsx may import a harness.
+  zone(
+    ['app', 'features', 'components', 'ui', 'theme', 'i18n', 'api'].map((d) => `./src/${d}`),
+    './src/harness',
+    'only src/main.tsx may import harness',
+  ),
   zone(
     './src/components',
     ['./src/features', './src/app'],
@@ -35,6 +42,35 @@ const layerZones = [
     zone(`./src/features/${name}`, './src/features', 'a feature may not import another feature', [
       `./${name}`,
     ]),
+  ),
+];
+
+// D-006: no literal colours or px values inside styled-components templates (src/theme is exempt).
+const styledTag = [
+  "TaggedTemplateExpression[tag.type='MemberExpression'][tag.object.name='styled']",
+  "TaggedTemplateExpression[tag.type='CallExpression'][tag.callee.name='styled']",
+  "TaggedTemplateExpression[tag.type='CallExpression'][tag.callee.type='MemberExpression'][tag.callee.property.name='attrs']",
+  "TaggedTemplateExpression[tag.type='Identifier'][tag.name='css']",
+  "TaggedTemplateExpression[tag.type='Identifier'][tag.name='keyframes']",
+  "TaggedTemplateExpression[tag.type='Identifier'][tag.name='createGlobalStyle']",
+];
+const styledLiteral = (regex, message) =>
+  styledTag.map((tag) => ({
+    selector: `${tag} > TemplateLiteral > TemplateElement[value.raw=${regex}]`,
+    message,
+  }));
+const literalValueRules = [
+  ...styledLiteral(
+    String.raw`/#[0-9a-fA-F]{3,8}\b/`,
+    'No literal colours in styled templates: use a theme token (D-006).',
+  ),
+  ...styledLiteral(
+    String.raw`/(rgb|rgba|hsl|hsla)\(/`,
+    'No literal colours in styled templates: use a theme token (D-006).',
+  ),
+  ...styledLiteral(
+    String.raw`/[0-9.]px\b/`,
+    'No px literals in styled templates: use a theme token (D-006).',
   ),
 ];
 
@@ -81,6 +117,11 @@ export default tseslint.config(
     // Tools and the Worker runtime require default exports.
     files: ['*.config.{js,ts}', 'worker/index.ts'],
     rules: { 'import-x/no-default-export': 'off' },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/theme/**'],
+    rules: { 'no-restricted-syntax': ['error', ...literalValueRules] },
   },
   { files: ['**/*.js'], extends: [tseslint.configs.disableTypeChecked] },
   prettier,

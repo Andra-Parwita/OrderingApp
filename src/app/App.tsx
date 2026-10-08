@@ -1,13 +1,18 @@
 import { Provider } from 'react-redux';
-import { HelloScreen } from '../features/hello/HelloScreen';
+import { BrowserRouter } from 'react-router';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
+import { AppRoutes } from './AppRoutes';
 import type { AppStore } from './store';
 
-export function App({ store }: { store: AppStore }) {
+// Library mode with <BrowserRouter>: the app has no loaders or actions, so the data-router
+// features would be unused weight. State stays in Redux; the router owns the URL only.
+export function App({ store }: Readonly<{ store: AppStore }>) {
   return (
     <Provider store={store}>
       <AppThemeProvider>
-        <HelloScreen />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
       </AppThemeProvider>
     </Provider>
   );

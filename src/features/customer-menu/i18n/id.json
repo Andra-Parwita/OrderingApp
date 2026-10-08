@@ -1,0 +1,86 @@
+{
+  "language": { "label": "Bahasa" },
+  "common": {
+    "retry": "Coba lagi",
+    "loading": "Memuat…",
+    "back": "Kembali",
+    "myOrders": "Pesanan saya",
+    "errorTitle": "Terjadi kesalahan",
+    "errorBody": "Silakan coba lagi."
+  },
+  "menu": {
+    "loadError": "Menu tidak dapat dimuat. Periksa koneksi Anda lalu coba lagi.",
+    "notPublished": "Menu minggu ini belum terbit. Silakan cek lagi nanti.",
+    "bannerImage": "Foto dapur",
+    "cooking": "Masak",
+    "orderBy": "Pesan sebelum",
+    "pickup": "Ambil",
+    "deliveryAvailable": "Bisa diantar",
+    "deliveryNote": "alamat via WhatsApp",
+    "noDelivery": "Hanya ambil sendiri",
+    "left": "Sisa {{count}}",
+    "soldOut": "Habis",
+    "decrease": "Kurangi {{name}}",
+    "increase": "Tambah {{name}}",
+    "items_other": "{{count}} item",
+    "viewBasket": "Lihat keranjang"
+  },
+  "basket": {
+    "title": "Keranjang Anda",
+    "empty": "Keranjang Anda kosong.",
+    "backToMenu": "Kembali ke menu",
+    "each": "{{price}} per porsi",
+    "total": "Total",
+    "howTitle": "Mau diambil atau diantar?",
+    "how": "Ambil atau antar",
+    "pickup": "Ambil sendiri",
+    "delivery": "Diantar",
+    "pickupWhen": "{{when}}, {{place}}",
+    "deliveryNote": "Setelah memesan, kirim alamat Anda ke penjual lewat WhatsApp. Alamat tidak disimpan di aplikasi.",
+    "firstName": "Nama depan Anda",
+    "firstNameHelper": "Cukup nama depan atau nama panggilan",
+    "firstNameRequired": "Silakan isi nama depan Anda",
+    "note": "Catatan untuk penjual (opsional)",
+    "noteHelper": "Alergi atau permintaan khusus. Jangan tulis alamat, nomor telepon, atau data pribadi lain — kirim lewat WhatsApp.",
+    "place": "Pesan · {{total}}",
+    "placing": "Memproses pesanan…",
+    "changeUntil": "Anda bisa mengubah atau membatalkan sampai {{when}}",
+    "errors": {
+      "sold_out": "Maaf, ada item yang baru saja habis. Keranjang Anda tetap tersimpan; silakan cek menu lalu coba lagi.",
+      "exceeds_remaining": "Maaf, sisa porsi kurang dari jumlah yang Anda minta. Kurangi jumlahnya lalu coba lagi.",
+      "cutoff_passed": "Maaf, pemesanan untuk minggu ini sudah ditutup.",
+      "other": "Pesanan tidak dapat dikirim. Periksa koneksi Anda lalu coba lagi."
+    }
+  },
+  "placed": {
+    "title": "Pesanan diterima",
+    "yourNumber": "Nomor pesanan Anda",
+    "loadError": "Pesanan tidak dapat dimuat.",
+    "qrLabel": "Kode QR (segera hadir)",
+    "total": "Total",
+    "pickup": "Ambil sendiri",
+    "delivery": "Diantar",
+    "note": "Catatan: {{note}}",
+    "whatsapp": "Kirim ke penjual lewat WhatsApp",
+    "updates": "Aktifkan notifikasi",
+    "comingSoon": "Segera hadir",
+    "saved": "Tersimpan di Pesanan saya di ponsel ini",
+    "change": "Ubah atau batalkan pesanan"
+  },
+  "status": {
+    "ordered": "Dipesan",
+    "confirmed": "Dikonfirmasi",
+    "ready_for_pickup": "Siap diambil",
+    "out_for_delivery": "Sedang diantar",
+    "collected": "Sudah diambil",
+    "delivered": "Sudah diantar",
+    "cancelled": "Dibatalkan"
+  },
+  "wa": {
+    "message": "Halo, pesanan saya {{code}}: {{items}}. Total {{total}}. {{how}}. Nama: {{name}}.",
+    "pickup": "Ambil sendiri",
+    "pickupWhen": "Ambil sendiri {{when}}",
+    "delivery": "Diantar",
+    "addAddress": "Alamat saya:"
+  }
+}
