@@ -38,7 +38,15 @@ describe('menu', () => {
     expect(parseMenuResponse(menu)).not.toBeNull();
     expect(menu.kitchen.name).toBe('Delave');
     expect(menu.items).toHaveLength(6);
-    expect(item('lemper')).toMatchObject({ limit: 20, remaining: 20, chefId: 'wati' });
+    expect(item('lemper')).toMatchObject({ limit: 20, remaining: 20 });
+    expect(item('lemper')).not.toHaveProperty('chefId');
+    expect(menu).not.toHaveProperty('chefs');
+  });
+
+  it('gives the seller the chefs and chef ids', () => {
+    const menu = store.getSellerMenu();
+    expect(menu.chefs).toEqual([{ id: 'wati', name: 'Chef Wati' }]);
+    expect(menu.items.find((candidate) => candidate.id === 'lemper')?.chefId).toBe('wati');
   });
 });
 

@@ -1,28 +1,42 @@
 // Pure in-memory store: no Workers APIs, so unit tests and MSW reuse it.
 import type { ApiErrorCode } from '../../shared/apiError';
+import { diffOrder } from '../../shared/auditDiff';
 import type {
   Actor,
   AuditEntry,
   Chef,
+  InboxEntry,
   Kitchen,
+  KitchenSettings,
   MenuItem,
   MenuItemView,
-  Order,
+  SellerMenuItemView,
+  OrderingState,
   OrderLine,
   OrderStatus,
+  SellerOrder,
   StaffActor,
   Week,
 } from '../../shared/domain';
-import { AUDIT_MAX } from '../../shared/limits';
-import type { MenuResponse } from '../../shared/menuContract';
+import { AUDIT_MAX, INBOX_MAX } from '../../shared/limits';
+import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
 import type {
   CreateOrderRequest,
+  CreateSellerOrderRequest,
   RequestedLine,
   UpdateOrderRequest,
 } from '../../shared/orderContract';
 import { generateOrderCode, generateToken, type FillRandom } from '../../shared/orderCode';
 import { isFinalStatus, nextStatuses } from '../../shared/status';
-import { fixtureChefs, fixtureItems, fixtureKitchen, fixtureWeek } from './fixture';
+import {
+  fixtureChefs,
+  fixtureItems,
+  fixtureKitchen,
+  fixtureSettings,
+  fixtureWeek,
+} from './fixture';
+
+type Order = SellerOrder;
 
 export type StoreResult<T> =
   { ok: true; value: T } | { ok: false; error: ApiErrorCode; message: string };
@@ -37,7 +51,16 @@ export type StoreOptions = {
   seed?: number;
 };
 
+type InsertExtra = { status?: OrderStatus; paid?: boolean; returning?: boolean };
+
 const SAMPLE_NAMES = ['Rina', 'Tom', 'Sari', 'Budi', 'Mei', 'Dewi', 'Arif', 'Lisa'];
+const SAMPLE_NOTES = [
+  'No chilli please',
+  'Allergic to peanuts',
+  'Pickup around 3pm',
+  'Tolong dibungkus terpisah',
+  'Ring the bell, the gate sticks',
+];
 
 function fail<T>(error: ApiErrorCode, message: string): StoreResult<T> {
   return { ok: false, error, message };
@@ -75,10 +98,25 @@ export function createStore(options: StoreOptions) {
   let week: Week = structuredClone(fixtureWeek);
   let chefs: Array<Chef> = structuredClone(fixtureChefs);
   let items: Array<MenuItem> = structuredClone(fixtureItems);
+  let settings: KitchenSettings = structuredClone(fixtureSettings);
   let orders: Array<Order> = [];
 
   const nowIso = () => options.now().toISOString();
   const cutoffPassed = () => options.now().getTime() >= Date.parse(week.cutoffAt);
+
+  function ordering(): OrderingState {
+    if (!settings.orderingOpen) return { open: false, reason: 'closed_by_seller' };
+    if (cutoffPassed()) return { open: false, reason: 'cutoff_passed' };
+    return { open: true };
+  }
+
+  /** The error that stops a customer from placing or changing an order, if any. */
+  function closedError<T>(): StoreResult<T> | null {
+    const state = ordering();
+    if (state.reason === 'closed_by_seller') return fail('ordering_closed', 'Ordering is closed');
+    if (state.reason === 'cutoff_passed') return fail('cutoff_passed', 'Orders are closed');
+    return null;
+  }
 
   function usedPortions(itemId: string, exceptOrderId?: string): number {
     let used = 0;
@@ -89,10 +127,29 @@ export function createStore(options: StoreOptions) {
     return used;
   }
 
-  function view(item: MenuItem): MenuItemView {
+  function sellerView(item: MenuItem): SellerMenuItemView {
     const remaining =
       item.limit === undefined ? null : Math.max(0, item.limit - usedPortions(item.id));
     return { ...item, remaining, soldOut: remaining === 0 };
+  }
+
+  /** The customer view: the chef is dropped here (D-012). */
+  function view(item: MenuItem): MenuItemView {
+    const copy = sellerView(item);
+    delete copy.chefId;
+    return copy;
+  }
+
+  function publicMenu(): MenuResponse {
+    return {
+      kitchen: {
+        ...kitchen,
+        ...(settings.whatsappNumber ? { whatsappNumber: settings.whatsappNumber } : {}),
+      },
+      week,
+      items: items.map(view),
+      ordering: ordering(),
+    };
   }
 
   function snapshot(item: MenuItem, qty: number): OrderLine {
@@ -138,6 +195,10 @@ export function createStore(options: StoreOptions) {
     };
   }
 
+  function withInbox(order: Order, entry: Omit<InboxEntry, 'at'>): Order {
+    return { ...order, inbox: [{ ...entry, at: nowIso() }, ...order.inbox].slice(0, INBOX_MAX) };
+  }
+
   function replace(updated: Order): Order {
     orders = orders.map((order) => (order.id === updated.id ? updated : order));
     return updated;
@@ -150,13 +211,15 @@ export function createStore(options: StoreOptions) {
   }
 
   function insert(
-    input: CreateOrderRequest,
+    input: CreateOrderRequest | CreateSellerOrderRequest,
     lines: Array<OrderLine>,
     by: Actor,
     enteredBy: StaffActor | undefined,
     make: { id: string; code: string; token: string },
+    extra: InsertExtra = {},
   ): Order {
     const at = nowIso();
+    const status: OrderStatus = extra.status ?? (enteredBy ? 'confirmed' : 'ordered');
     const order: Order = {
       id: make.id,
       code: make.code,
@@ -166,9 +229,13 @@ export function createStore(options: StoreOptions) {
       lines,
       fulfilment: input.fulfilment,
       ...(input.note !== undefined ? { note: input.note } : {}),
-      // Orders entered by the seller or a chef start as confirmed.
-      status: enteredBy ? 'confirmed' : 'ordered',
-      paid: false,
+      status,
+      paid: extra.paid ?? false,
+      locked: false,
+      waReceived: false,
+      returning: extra.returning ?? false,
+      changed: false,
+      inbox: [{ at, kind: 'status', status }],
       ...(enteredBy ? { enteredBy } : {}),
       audit: [{ by, what: 'created', at }],
       createdAt: at,
@@ -179,36 +246,107 @@ export function createStore(options: StoreOptions) {
   }
 
   function place(
-    input: CreateOrderRequest,
+    input: CreateOrderRequest | CreateSellerOrderRequest,
     by: Actor,
     enteredBy: StaffActor | undefined,
+    extra: InsertExtra = {},
   ): StoreResult<Order> {
     const lines = buildLines(input.lines);
     if (!lines.ok) return lines;
     return ok(
-      insert(input, lines.value, by, enteredBy, {
-        id: newId(),
-        code: uniqueCode(newCode),
-        token: newToken(),
-      }),
+      insert(
+        input,
+        lines.value,
+        by,
+        enteredBy,
+        { id: newId(), code: uniqueCode(newCode), token: newToken() },
+        extra,
+      ),
     );
+  }
+
+  /** Records a customer edit: the audit diff and the "changed" flag. No-op if nothing differs. */
+  function applyEdit(order: Order, next: Order): Order {
+    const diff = diffOrder(order, next);
+    if (!diff) return order;
+    return replace(
+      withAudit(
+        { ...next, changed: true },
+        { by: { role: 'customer', name: order.firstName }, what: 'edited', diff },
+      ),
+    );
+  }
+
+  /** Applies the patch fields to a copy of the order (limits checked), without any other rule. */
+  function patched(order: Order, patch: UpdateOrderRequest): StoreResult<Order> {
+    let next: Order = order;
+    if (patch.lines) {
+      const lines = buildLines(patch.lines, order.lines, order.id);
+      if (!lines.ok) return lines;
+      next = { ...next, lines: lines.value };
+    }
+    if (patch.fulfilment) next = { ...next, fulfilment: patch.fulfilment };
+    if (patch.note !== undefined) {
+      next = { ...next };
+      if (patch.note === '') delete next.note;
+      else next.note = patch.note;
+    }
+    return ok(next);
+  }
+
+  function findByCode(code: string): Order | undefined {
+    return orders.find((candidate) => candidate.code === code);
+  }
+
+  function changeByCode(
+    code: string,
+    change: (order: Order) => StoreResult<Order>,
+  ): StoreResult<Order> {
+    const order = findByCode(code);
+    if (!order) return fail('not_found', 'Order not found');
+    const result = change(order);
+    return result.ok ? ok(replace(result.value)) : result;
   }
 
   return {
     getMenu(): MenuResponse {
-      return { kitchen, week, chefs, items: items.map(view) };
+      return publicMenu();
     },
 
-    /** Customer order: refused after the cut-off or while the week is a draft. */
+    /** Seller-only: the menu with the chef grouping. */
+    getSellerMenu(): SellerMenuResponse {
+      return { ...publicMenu(), chefs, items: items.map(sellerView) };
+    },
+
+    getSettings(): KitchenSettings {
+      return structuredClone(settings);
+    },
+
+    /** Replaces the settings; the caller has already validated and normalised them. */
+    setSettings(next: KitchenSettings): KitchenSettings {
+      settings = structuredClone(next);
+      return structuredClone(settings);
+    },
+
+    /** Customer order: refused for a draft week, when closed by the seller, or after the cut-off. */
     createOrder(input: CreateOrderRequest): StoreResult<Order> {
       if (week.status !== 'published') return fail('week_not_published', 'The menu is not open');
-      if (cutoffPassed()) return fail('cutoff_passed', 'Orders are closed');
-      return place(input, { role: 'customer', name: input.firstName }, undefined);
+      const closed = closedError<Order>();
+      if (closed) return closed;
+      return place(input, { role: 'customer', name: input.firstName }, undefined, {
+        returning: input.returning ?? false,
+      });
     },
 
-    /** Seller/chef-entered order: starts confirmed. Allowed after the cut-off. */
-    createSellerOrder(input: CreateOrderRequest, actor: StaffActor): StoreResult<Order> {
-      return place(input, actor, actor);
+    /**
+     * Seller/chef-entered order: starts confirmed unless `confirmNow` is false, `paid` defaults
+     * to false (D-027). Allowed after the cut-off (D-024).
+     */
+    createSellerOrder(input: CreateSellerOrderRequest, actor: StaffActor): StoreResult<Order> {
+      return place(input, actor, actor, {
+        status: input.confirmNow === false ? 'ordered' : 'confirmed',
+        paid: input.paid ?? false,
+      });
     },
 
     getByToken(token: string): Order | undefined {
@@ -216,7 +354,7 @@ export function createStore(options: StoreOptions) {
     },
 
     getByCode(code: string): Order | undefined {
-      return orders.find((order) => order.code === code);
+      return findByCode(code);
     },
 
     /** Newest first. */
@@ -224,73 +362,87 @@ export function createStore(options: StoreOptions) {
       return [...orders].reverse();
     },
 
-    /** Customer change before the cut-off, while the order is not final. */
+    /** Customer change: not when closed, locked or final. */
     updateOrder(token: string, patch: UpdateOrderRequest): StoreResult<Order> {
       const order = orders.find((candidate) => candidate.token === token);
       if (!order) return fail('not_found', 'Order not found');
-      if (cutoffPassed()) return fail('cutoff_passed', 'Changes are closed');
+      const closed = closedError<Order>();
+      if (closed) return closed;
+      if (order.locked) return fail('order_locked', 'The seller has locked this order');
       if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
-      let next: Order = order;
-      if (patch.lines) {
-        const lines = buildLines(patch.lines, order.lines, order.id);
-        if (!lines.ok) return lines;
-        next = { ...next, lines: lines.value };
-      }
-      if (patch.fulfilment) next = { ...next, fulfilment: patch.fulfilment };
-      if (patch.note !== undefined) {
-        next = { ...next };
-        if (patch.note === '') delete next.note;
-        else next.note = patch.note;
-      }
-      return ok(
-        replace(
-          withAudit(next, { by: { role: 'customer', name: order.firstName }, what: 'edited' }),
-        ),
-      );
+      const next = patched(order, patch);
+      return next.ok ? ok(applyEdit(order, next.value)) : next;
     },
 
-    /** Customer cancel (a change, so refused after the cut-off). */
+    /** Customer cancel (a change, so refused when closed or locked). */
     cancelOrder(token: string): StoreResult<Order> {
       const order = orders.find((candidate) => candidate.token === token);
       if (!order) return fail('not_found', 'Order not found');
-      if (cutoffPassed()) return fail('cutoff_passed', 'Changes are closed');
+      const closed = closedError<Order>();
+      if (closed) return closed;
+      if (order.locked) return fail('order_locked', 'The seller has locked this order');
       if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
+      const cancelled = withInbox(
+        { ...order, status: 'cancelled' },
+        { kind: 'status', status: 'cancelled' },
+      );
       return ok(
         replace(
-          withAudit(
-            { ...order, status: 'cancelled' },
-            {
-              by: { role: 'customer', name: order.firstName },
-              what: 'status',
-              detail: 'cancelled',
-            },
-          ),
+          withAudit(cancelled, {
+            by: { role: 'customer', name: order.firstName },
+            what: 'status',
+            detail: 'cancelled',
+          }),
         ),
       );
     },
 
+    /** Moves the order on, tells the customer, and clears the "changed" flag. */
     setStatus(code: string, to: OrderStatus, actor: StaffActor): StoreResult<Order> {
-      const order = orders.find((candidate) => candidate.code === code);
-      if (!order) return fail('not_found', 'Order not found');
-      if (!nextStatuses(order).includes(to)) {
-        return fail('invalid_status', `Cannot move from ${order.status} to ${to}`);
-      }
-      return ok(
-        replace(withAudit({ ...order, status: to }, { by: actor, what: 'status', detail: to })),
-      );
+      return changeByCode(code, (order) => {
+        if (!nextStatuses(order).includes(to)) {
+          return fail('invalid_status', `Cannot move from ${order.status} to ${to}`);
+        }
+        const moved = withInbox(
+          { ...order, status: to, changed: false },
+          { kind: 'status', status: to },
+        );
+        return ok(withAudit(moved, { by: actor, what: 'status', detail: to }));
+      });
     },
 
     setPaid(code: string, paid: boolean, actor: StaffActor): StoreResult<Order> {
-      const order = orders.find((candidate) => candidate.code === code);
-      if (!order) return fail('not_found', 'Order not found');
-      return ok(
-        replace(
+      return changeByCode(code, (order) =>
+        ok(
           withAudit(
             { ...order, paid },
             { by: actor, what: 'paid', detail: paid ? 'paid' : 'unpaid' },
           ),
         ),
       );
+    },
+
+    /** Seller lock: the customer can't change or cancel; the seller still can. */
+    setLocked(code: string, locked: boolean): StoreResult<Order> {
+      return changeByCode(code, (order) => ok({ ...order, locked, updatedAt: nowIso() }));
+    },
+
+    setWaReceived(code: string, received: boolean): StoreResult<Order> {
+      return changeByCode(code, (order) => ok({ ...order, waReceived: received }));
+    },
+
+    /** Adds a nudge to the customer's inbox; the text key differs for returning customers. */
+    nudge(code: string): StoreResult<Order> {
+      return changeByCode(code, (order) => {
+        if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
+        const textKey = order.returning ? 'nudgeReturning' : 'nudge';
+        return ok({ ...withInbox(order, { kind: 'nudge', textKey }), updatedAt: nowIso() });
+      });
+    },
+
+    /** The seller has seen the customer's change. */
+    markSeen(code: string): StoreResult<Order> {
+      return changeByCode(code, (order) => ok({ ...order, changed: false }));
     },
 
     /** Edits a menu item; existing orders keep their snapshots (D-020). */
@@ -306,7 +458,10 @@ export function createStore(options: StoreOptions) {
       week = { ...week, ...patch };
     },
 
-    /** Deterministic sample orders; respects portion limits, ignores the cut-off. Returns the count added. */
+    /**
+     * Deterministic sample orders (varied returning, changed, locked, notes, fulfilment);
+     * respects portion limits, ignores the cut-off. Returns the count added.
+     */
     addSampleOrders(count: number): number {
       let added = 0;
       for (let n = 0; n < count; n++) {
@@ -322,19 +477,47 @@ export function createStore(options: StoreOptions) {
         const lines = buildLines(requested);
         if (!lines.ok) continue;
         const firstName = SAMPLE_NAMES[Math.floor(random() * SAMPLE_NAMES.length)] as string;
+        const note =
+          random() < 0.3
+            ? (SAMPLE_NOTES[Math.floor(random() * SAMPLE_NOTES.length)] as string)
+            : undefined;
         const input: CreateOrderRequest = {
           firstName,
           language: random() < 0.5 ? 'en' : 'id',
           lines: requested,
           fulfilment: random() < 0.6 ? 'pickup' : 'delivery',
+          ...(note !== undefined ? { note } : {}),
         };
         const code = uniqueCode(() => generateOrderCode(seededFill));
-        const order = insert(input, lines.value, { role: 'customer', name: firstName }, undefined, {
-          id: `sample-${String(++idCounter)}`,
-          code,
-          token: generateToken(seededFill),
-        });
-        if (random() < 0.4) replace({ ...order, status: 'confirmed' });
+        const order = insert(
+          input,
+          lines.value,
+          { role: 'customer', name: firstName },
+          undefined,
+          { id: `sample-${String(++idCounter)}`, code, token: generateToken(seededFill) },
+          { returning: random() < 0.3 },
+        );
+        let current = order;
+        if (random() < 0.4) {
+          current = replace(
+            withInbox({ ...current, status: 'confirmed' }, { kind: 'status', status: 'confirmed' }),
+          );
+        }
+        if (random() < 0.25) current = replace({ ...current, waReceived: true });
+        if (random() < 0.2) {
+          // A customer edit after placing: flip fulfilment, change the note, and add an unlimited item.
+          const extra = items.find(
+            (item) =>
+              item.limit === undefined && !current.lines.some((line) => line.itemId === item.id),
+          );
+          const edit = patched(current, {
+            fulfilment: current.fulfilment === 'pickup' ? 'delivery' : 'pickup',
+            note: 'Changed my mind, thanks',
+            ...(extra ? { lines: [...current.lines, { itemId: extra.id, qty: 1 }] } : {}),
+          });
+          if (edit.ok) current = applyEdit(current, edit.value);
+        }
+        if (random() < 0.15) current = replace({ ...current, locked: true });
         added++;
       }
       return added;
@@ -347,6 +530,7 @@ export function createStore(options: StoreOptions) {
       week = structuredClone(fixtureWeek);
       chefs = structuredClone(fixtureChefs);
       items = structuredClone(fixtureItems);
+      settings = structuredClone(fixtureSettings);
       orders = [];
     },
   };

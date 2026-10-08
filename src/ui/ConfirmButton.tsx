@@ -42,9 +42,16 @@ export function ConfirmButton({
   }, [armed, onConfirm]);
 
   const reset = useCallback(() => setArmed(false), []);
-  const onKeyDown = useCallback((event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'Escape') setArmed(false);
-  }, []);
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLButtonElement>) => {
+      // Escape only disarms; a panel around the button must not also close.
+      if (event.key === 'Escape' && armed) {
+        event.preventDefault();
+        setArmed(false);
+      }
+    },
+    [armed],
+  );
 
   return (
     <Button

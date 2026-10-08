@@ -1,18 +1,37 @@
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { BasketScreen, MenuScreen, OrderPlacedScreen, placeReset } from '../features/customer-menu';
 import {
+  Link,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router';
+import { styled } from 'styled-components';
+import { ThemeSwitch } from '../components/ThemeSwitch';
+import { useMediaQuery } from '../components/useMediaQuery';
+import { BasketScreen, MenuScreen, OrderPlacedScreen, placeReset } from '../features/customer-menu';
+import { MyOrdersScreen, OrderScreen } from '../features/customer-orders';
+import { CookScreen } from '../features/seller-cook';
+import {
+  NewOrderScreen,
   OrderDetailScreen,
+  OrderPanel,
   OrdersScreen,
+  OrdersTableScreen,
   parseStatusFilter,
   type StatusFilter,
 } from '../features/seller-orders';
-import { MyOrdersPage, NotFoundPage } from './pages';
+import { SettingsScreen } from '../features/seller-settings';
+import { ShareScreen } from '../features/seller-share';
+import { DESKTOP_QUERY } from './layout';
+import { NotFoundPage } from './pages';
+import { SellerLayout } from './SellerLayout';
 
 // Route wrappers: the screens only get callbacks; where they lead is decided here.
-
-const noop = () => undefined;
 
 function MenuRoute() {
   const navigate = useNavigate();
@@ -31,8 +50,8 @@ function BasketRoute() {
   }, [navigate, location.key]);
   const placed = useCallback(
     (token: string) => {
-      // Replace, so Back from the order page does not return to a basket that is now empty.
-      void navigate(`/o/${token}`, { replace: true });
+      // Replace, so Back from the confirmation does not return to a basket that is now empty.
+      void navigate(`/o/${token}/placed`, { replace: true });
       // Otherwise the next visit to the basket would see the old "placed" result and redirect.
       dispatch(placeReset());
     },
@@ -41,23 +60,78 @@ function BasketRoute() {
   return <BasketScreen onBack={back} onPlaced={placed} />;
 }
 
-function OrderRoute() {
+/** "Order placed": the confirmation straight after ordering. Its only exit is the order page. */
+function PlacedRoute() {
   const { token } = useParams();
+  const navigate = useNavigate();
+  const toOrder = useCallback(() => void navigate(`/o/${token ?? ''}`), [navigate, token]);
   if (!token) return <NotFoundPage />;
-  // "Change or cancel" arrives in batch 2.
-  return <OrderPlacedScreen key={token} token={token} onChange={noop} />;
+  return <OrderPlacedScreen key={token} token={token} onChange={toOrder} />;
 }
 
-/** What the order detail remembers about the list it came from, so Back restores it. */
-type FromList = Readonly<{ search: string }>;
+/** The order page: status, updates, change or cancel. Opening the link adds it to My orders. */
+function OrderRoute() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+  const back = useCallback(() => void navigate('/my-orders'), [navigate]);
+  const change = useCallback((next: string) => void navigate(`/o/${next}/edit`), [navigate]);
+  if (!token) return <NotFoundPage />;
+  return <OrderScreen key={token} token={token} onBack={back} onChange={change} />;
+}
 
-function isFromList(value: unknown): value is FromList {
-  return typeof value === 'object' && value !== null && 'search' in value;
+function EditOrderRoute() {
+  const { token } = useParams();
+  const navigate = useNavigate();
+  const toOrder = useCallback(() => void navigate(`/o/${token ?? ''}`), [navigate, token]);
+  if (!token) return <NotFoundPage />;
+  return (
+    <BasketScreen
+      key={token}
+      editToken={token}
+      onBack={toOrder}
+      onPlaced={toOrder}
+      onUpdated={toOrder}
+    />
+  );
+}
+
+const FooterBar = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+const FooterLabel = styled.span`
+  color: ${({ theme }) => theme.colour.textMuted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+`;
+
+function MyOrdersRoute() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const back = useCallback(() => void navigate('/'), [navigate]);
+  const open = useCallback((token: string) => void navigate(`/o/${token}`), [navigate]);
+  return (
+    <MyOrdersScreen
+      onBack={back}
+      onOpenOrder={open}
+      footer={
+        <FooterBar>
+          <FooterLabel>{t('theme.label')}</FooterLabel>
+          <ThemeSwitch />
+        </FooterBar>
+      }
+    />
+  );
 }
 
 // The seller list's filter and search live in the URL (?status=ready&q=rina): they survive a
-// reload and can be shared. Not mirrored in Redux.
-function SellerListRoute() {
+// reload and can be shared. Not mirrored in Redux. Opening an order keeps them in the URL, so
+// the list beside the detail (desktop) and Back (phone) restore the same view.
+function SellerListRoute({
+  table = false,
+  selectedCode,
+}: Readonly<{ table?: boolean; selectedCode?: string }>) {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const filter = parseStatusFilter(params.get('status'));
@@ -84,32 +158,98 @@ function SellerListRoute() {
   );
   const onQueryChange = useCallback((next: string) => setParam('q', next, ''), [setParam]);
   const onOpenOrder = useCallback(
-    (code: string) => {
-      const state: FromList = { search: search === '' ? '' : `?${search}` };
-      void navigate(`/seller/orders/${code}`, { state });
-    },
+    (code: string) => void navigate(`/seller/orders/${code}${search === '' ? '' : `?${search}`}`),
+    [navigate, search],
+  );
+  const onNewOrder = useCallback(() => void navigate('/seller/new'), [navigate]);
+  const onShare = useCallback(() => void navigate('/seller/share'), [navigate]);
+  const props = { filter, query, onFilterChange, onQueryChange, onOpenOrder, onNewOrder, onShare };
+  return table ? (
+    <OrdersTableScreen {...props} selectedCode={selectedCode} />
+  ) : (
+    <OrdersScreen {...props} />
+  );
+}
+
+function SellerDetailRoute({ code }: Readonly<{ code: string }>) {
+  const navigate = useNavigate();
+  const { search } = useLocation();
+  const back = useCallback(() => void navigate(`/seller${search}`), [navigate, search]);
+  return <OrderDetailScreen key={code} code={code} onBack={back} />;
+}
+
+/** The desktop panel: the filter and search stay in the URL, so Close and Back restore the table. */
+function SellerPanelRoute({ code }: Readonly<{ code: string }>) {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const { search } = useLocation();
+  const close = useCallback(() => void navigate(`/seller${search}`), [navigate, search]);
+  const open = useCallback(
+    (next: string) => void navigate(`/seller/orders/${next}${search}`, { replace: true }),
     [navigate, search],
   );
   return (
-    <OrdersScreen
-      filter={filter}
-      query={query}
-      onFilterChange={onFilterChange}
-      onQueryChange={onQueryChange}
-      onOpenOrder={onOpenOrder}
+    <OrderPanel
+      code={code}
+      filter={parseStatusFilter(params.get('status'))}
+      query={params.get('q') ?? ''}
+      onClose={close}
+      onOpenOrder={open}
     />
   );
 }
 
-function SellerDetailRoute() {
+/** /seller and /seller/orders/:code. A phone shows one page at a time; a desktop, the table with the order in a panel. */
+function OrdersWorkspace() {
+  const desktop = useMediaQuery(DESKTOP_QUERY);
   const { code } = useParams();
+  if (!desktop) return code ? <SellerDetailRoute code={code} /> : <SellerListRoute />;
+  return (
+    <>
+      <SellerListRoute table selectedCode={code} />
+      {code ? <SellerPanelRoute code={code} /> : null}
+    </>
+  );
+}
+
+function CookRoute() {
+  return <CookScreen desktop={useMediaQuery(DESKTOP_QUERY)} />;
+}
+
+function NewOrderRoute() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const state: unknown = location.state;
-  const search = isFromList(state) ? state.search : '';
-  const back = useCallback(() => void navigate(`/seller${search}`), [navigate, search]);
-  if (!code) return <NotFoundPage />;
-  return <OrderDetailScreen key={code} code={code} onBack={back} />;
+  const desktop = useMediaQuery(DESKTOP_QUERY);
+  const toOrders = useCallback(() => void navigate('/seller'), [navigate]);
+  return <NewOrderScreen onBack={toOrders} onDone={toOrders} hideLanguage={desktop} />;
+}
+
+const MoreBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding-top: ${({ theme }) => theme.spacing.lg};
+  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
+`;
+const ShareLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  min-height: ${({ theme }) => theme.minTapTarget};
+  color: ${({ theme }) => theme.colour.accent};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+`;
+
+function SettingsRoute() {
+  const { t } = useTranslation();
+  return (
+    <SettingsScreen>
+      <MoreBlock>
+        <FooterLabel>{t('theme.label')}</FooterLabel>
+        <ThemeSwitch />
+        <ShareLink to="/seller/share">{t('sellerNav.shareMenu')}</ShareLink>
+      </MoreBlock>
+    </SettingsScreen>
+  );
 }
 
 export function AppRoutes() {
@@ -118,10 +258,18 @@ export function AppRoutes() {
       <Route path="/" element={<MenuRoute />} />
       <Route path="/basket" element={<BasketRoute />} />
       <Route path="/o/:token" element={<OrderRoute />} />
-      <Route path="/my-orders" element={<MyOrdersPage />} />
+      <Route path="/o/:token/placed" element={<PlacedRoute />} />
+      <Route path="/o/:token/edit" element={<EditOrderRoute />} />
+      <Route path="/my-orders" element={<MyOrdersRoute />} />
       {/* Seller routes have no sign-in until phase 4 (D-011); anyone with the link can open them. */}
-      <Route path="/seller" element={<SellerListRoute />} />
-      <Route path="/seller/orders/:code" element={<SellerDetailRoute />} />
+      <Route path="/seller" element={<SellerLayout />}>
+        <Route index element={<OrdersWorkspace />} />
+        <Route path="orders/:code" element={<OrdersWorkspace />} />
+        <Route path="new" element={<NewOrderRoute />} />
+        <Route path="cook" element={<CookRoute />} />
+        <Route path="share" element={<ShareScreen />} />
+        <Route path="settings" element={<SettingsRoute />} />
+      </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

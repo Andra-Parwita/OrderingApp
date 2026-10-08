@@ -9,7 +9,7 @@ Live status of the current round. The plan itself (phases, stage tables, folder 
 | 0 · Plan | ✅ done 2026-10-07 (D-003 to D-015) | — |
 | 1 · Scaffold | ✅ landed ~20:24, gate verified by the coordinator | owner: open the hello screen on a phone |
 | 2 · Wireframes | ✅ done: batches 1–4 approved | — |
-| 3 · Prototype (batch 1) | ✅ batch 1 clickable end to end (22:21) · 🔄 theme rethink (owner: Clay or a traditional Indonesian feel) | ✅ 3.6 reference palette live · batch 2 plan waiting for question 26 |
+| 3 · Prototype | ✅ batch 1 (22:21, 7 Oct) and **batch 2 clickable end to end** (21:37, 8 Oct) on the reference palette | owner tries batch 2; then a polish round (Findings) and batch 3 |
 | 4–5 | ⏳ not started | — |
 
 ## Phase 1 · Scaffold (round 1)
@@ -62,7 +62,60 @@ Stage table in [roadmap.md](roadmap.md#phase-3--batch-1-core-loop-stage-table). 
 | Extract the owner's reference prototype ("Delave weekly orders" artifact) into one staging file | Explore-style reader · haiku | 22:46 | ~23:00 | | `docs/design/reference/delave-prototype-extract.md` (484 lines) | ✅ landed; reconciliation in `docs/plan/reference-reconciliation.md`, waiting for the owner |
 | 3.6 Reference palette (with AA fixes), "Delave", cut-off 9 pm, "N left" ≤ 5 | builder · sonnet | 22:53 | ~23:15 | | `src/theme/`, fixture, limits, item row + basket; tests 252 → 286 | ✅ landed ~22:56; coordinator re-ran the gate 22:57: 286/286 unit, e2e 19 + 2 skipped; seller list capture looked at |
 
+## Phase 3 · Prototype, batch 2 (round 4) — 2026-10-08
+
+Stage table in [roadmap.md](roadmap.md#phase-3--batch-2-after-ordering-stage-table). Plan approved (Q26 "A"). Starting point: owner's commit 3d48186 (clean tree).
+
+| item | agent · tier | started | ETA | landed | diff | state |
+|---|---|---|---|---|---|---|
+| 4.1 Domain + mock API: lock, WhatsApp received, returning, changed + diff, inbox, nudge, seller-entered options, settings, ordering open/closed, customer vs seller views, tokens batch | builder · sonnet | 20:50 | ~21:30 | | `shared/`, `worker/`, `mocks/`, `src/api/`; tests 286 → 330 | ✅ landed ~20:58; coordinator gate first failed on format (26 files had CRLF), fixed, then green 21:00: 330/330, e2e 19 + 2 skipped |
+| Fix: public menu leaks chef data (D-012) + seller-only menu endpoint | builder · sonnet | 21:02 | ~21:20 | ~21:03 | `shared/`, `worker/`, `src/api/`; tests 330 → 340 | ✅ coordinator gate 21:03: 340/340 |
+| `.gitattributes` `* text=auto eol=lf` (D-029) | coordinator | 21:02 | | 21:02 | 1 file | ✅ (config, not product code) |
+| 4.2 Customer: My orders, order page, change/cancel, How it works, closed state, returning (wave) | builder · sonnet | 21:04 | ~21:45 | ~21:19 | `customer-orders/` (new), `customer-menu/` changed, `src/api/device/` (new); 105 tests | ✅ landed; note: ran one `git mv` (rename is staged in the index, nothing committed); "open by code" only finds codes saved on this phone |
+| Wave gate by the coordinator | coordinator | 21:19 | | 21:21 | — | ✅ no CRLF; typecheck, lint, format, **467/467** unit; e2e 25 passed + 2 skipped, then the settings spec alone 9/9; no server left running; captures looked at (locked order page, cook list by chef) |
+| 4.3a Seller orders: markers, Changed filter, banners, nudge, lock, seen, + New order → send link (wave) | builder · sonnet | 21:04 | ~21:45 | ~21:14 | `seller-orders/` +4 files, ~13 changed; 46 tests | ✅ landed (waiting for the wave gate); 4.4 must pass `onNewOrder` |
+| 4.3b Seller cook (group-by incl. chef, stats, notes), share post, minimal settings (wave) | builder · sonnet | 21:04 | ~21:45 | ~21:16 | `seller-cook/`, `seller-share/`, `seller-settings/` (new, ~27 files) + harness + e2e; 45 tests | ✅ landed (waiting for the wave gate); `formatPhone` duplicated in share/settings → move to `shared/phone.ts` in 4.4; its settings spec briefly closes ordering → gate runs it on its own |
+
+| 4.4 Shell: routes for all batch 2 screens, store/i18n wiring, seller rail + list/detail at ≥ 820 px, light/dark/auto, `formatPhone` → shared, dev strings out of the build, Reset two-tap, batch2-flow e2e | builder · sonnet | 21:22 | ~22:00 | ~21:35 | `src/app/` (+SellerLayout), `src/components/` (+ThemeSwitch), theme preference, `shared/phone.ts`, `e2e/` (+batch2-flow, settings spec isolated in its own projects) | ✅ landed |
+| 4.4 gate by the coordinator | coordinator | 21:35 | | 21:37 | — | ✅ typecheck, lint, format, **472/472** unit, full e2e **36 passed + 6 skipped by design**; desktop split capture looked at; the server on 5173 is the owner's (started 20:47), left running |
+| 4.5 Polish: filter chips wrap + wider list pane (owner: "you have to scroll on the All – Cancelled filters"), action verbs on next-step buttons, banner text once, one language switch / one main, unused keys, flaky New-order spec | builder · sonnet | 21:42 | ~22:05 | ~21:53 | `src/app/`, `seller-orders/`, specs; tests 472 → 483 | ✅ coordinator gate 21:55: 483/483, e2e 36 + 6 skipped; 1024 px capture looked at (all 7 chips visible, "Confirm order", banner text once) |
+| Desktop seller mock-up: A1 table + slide-over vs A2 three columns, plus cook list and empty state; low-tech-literacy rules (D-030) | builder · sonnet | 21:53 | ~22:15 | | `docs/design/mockups/seller-desktop.html` (274 lines) | ✅ owner picked A1 + "Next order" (D-031) |
+| 4.6 Desktop seller layout A1: table, slide-over with Next/Previous order, desktop cook list with inline names, empty state, rail language switch (≥ 1024 px; phones unchanged) | builder · sonnet | 21:58 | ~22:30 | ~22:17 | `src/ui/` (+Table, SlideOver, Icon), `seller-orders/` (+table, panel), `seller-cook/` desktop, `src/app/`; tests 483 → 504 | ✅ coordinator gate 22:19: 504/504, e2e 36 + 6 skipped; table capture looked at (names truncate → fixed in 4.7) |
+| 4.7 Collapsible rail (D-032), equal-width cook chips (D-033), no truncated names in the table | builder · sonnet | 22:20 | ~22:45 | ~22:31 | `src/ui/` (+Tooltip), `src/app/` (+railPreference), cook chips, table sizing; tests 504 → 509 | ✅ coordinator gate 22:33: 509/509, e2e 37 + 8 skipped; cook chips capture looked at |
+| 4.8 Banner image slots (rail, desktop banner, phone banner; samples from OndeOnde1.png) | builder · sonnet | 22:34 | ~23:00 | ~22:45 | `src/ui/ImageSlot`, `shared/kitchenImages`, `SellerLayout`, `public/samples/` (untracked); tests 509 → 521 | ✅ coordinator gate 22:47: 521/521, e2e 38 + 10 skipped. Owner: banner crops badly → 4.9 |
+| 4.9 No-crop banners (contain + per-seller background colour), rail 2:1 image + initial fallback, sizes per D-038, table fits at 1024 px | builder · sonnet | 22:48 | ~23:15 | | `src/ui/` (ImageSlot contain, Table, Pill), `src/app/`, `shared/`, fixture, samples (+rail.jpg); bg `#835937`; tests 521 → 529 | ✅ landed ~23:00; coordinator gate 23:01: unit 529/529, e2e 35 passed + **1 failed** (seller-batch2 "Starts as Confirmed", 3rd time) → root cause found; 1366 capture looked at (banner whole, brown sides, logo in rail) |
+| Fix e2e flake: specs order the limited Lemper (20) across 3 projects in one run → sells out; move specs to unlimited items, one serial limits test, 3 green runs | builder · sonnet | 23:03 | ~23:20 | | `e2e/` | 🔄 running (alone) |
+
+**Checkpoint:** before 4.6, `scratch/checkpoints/pre-4.6.tar` (21:57). After the wave, `scratch/checkpoints/post-wave4.tar` (21:21). After 4.1 + chef fix, `scratch/checkpoints/post-4.1-chef.tar` (21:03). `git status` checked before the wave: only the known 4.1 compile fixes in `src/features`.
+
 ## Findings
+
+- **Phone order list scrolls sideways at 390 px with 30-character names without spaces** (4.9 builder; low — real names have spaces). Fix with `overflow-wrap: anywhere` on the name in `OrderRow`.
+
+- **Owner's new banner `imgs/ondeondelarge.png`** (2161 × 728, ≈ 3:1, 22:57) — wider than the first sample but not the 5:1 of D-038; shown whole it would be ~385 px tall on a tablet. Superseded by D-040: the owner made the full D-038 set + a blurred 2560×512 background; swap in 4.10.
+
+- **Customer app should feel native** (owner screenshot, 22:55): banner at the very top; no "My orders" link or EN/ID bar above it; language under the banner and name, or in a settings tab; a bottom tab bar. Ruled D-039 (tabs Menu · My orders · Settings; EN/ID toggle beside the name too); built as 4.10 after 4.9.
+
+- **Orders table overflows at 1024 px with long names** (4.8 builder): reached 1055 px; fix in 4.9.
+- **`seller-batch2` flaky — root cause** (coordinator, 23:02): all projects in one run share one mock store and order the limited Lemper (20 portions) → sells out → later orders fail. Fix running.
+- ~~`seller-batch2` flaky again~~ (4.8 builder: "Starts as Confirmed" not found once under load, passed alone). Watch; if it recurs, give it its own serial project like the settings spec.
+
+- **Seller banner crops badly** (owner screenshot, 22:40): the 2.5:1 image in a height-capped strip with object-fit cover cuts off faces and the logo. Owner will generate a separate image per slot; seller target is a **tablet in landscape**; on wider desktops the banner should sit centred with a nice background colour filling the sides. Sizes ruled D-038; 4.9 running.
+
+- **Multi-seller** ruled D-036 (one app, many sellers, each with its own id/key). Plan a foundation stage before batch 3; customer link format = question 35.
+
+- **Banner image slots** (owner, 22:25, D-034): rail + main-body placeholders on seller, one on top for customers; empty containers for now; extended by D-035 (3 image slots per seller; owner's sample banner `imgs/OndeOnde1.png`); 4.8 starting.
+
+- **Collapsible left navigation** (owner, ~22:00: "like in Microsoft DevOps"): queued for after 4.6 (4.6 owns the rail; no mid-task changes). Ruled D-032 (icons only, labels on hover/focus; exception to D-030).
+- **Cook list: names and amounts aren't clear** (owner, 22:15). Ruled D-033 (equal-width chips "Rina × 2"); built with D-032 after 4.6.
+
+- **Desktop seller layout feels like a phone screen stretched** (owner, 21:50): "a lot of spacing … rearrange to not look like a mobile display on desktop". Owner ruled D-030 (mock up A, keep it simple for low tech literacy); mock-up running.
+
+- ~~**Batch 2 polish list**~~ (fixed in 4.5, 21:53; flaky spec passed in 3 full runs since) (found by the coordinator in the desktop split capture, 21:37): (1) the next-step button shows the target status ("Confirmed", "Collected") instead of an action ("Confirm order", "Mark collected"); (2) the New customer banner repeats "New customer" twice; (3) the status filter row is clipped in the narrow list pane (scrolls sideways); (4) two EN/ID switches and two `<main>` landmarks on desktop split; (5) unused `tabs.*` keys in seller-orders i18n; (6) one flaky `seller-batch2` desktop run (New order quantities lost once; 4 reruns + 2 full suites passed) — watch.
+- **Docs had CRLF** (low): five coordinator docs had picked up CRLF; normalised at 21:38 (`.gitattributes` also normalises them on commit).
+
+- ~~**Public menu leaks chef names**~~ (fixed 21:03; a test asserts the raw public menu has no "chef" text).
+- **CRLF line endings after a builder used `git stash`** (medium): `core.autocrlf=true` on this PC, so a git checkout/stash rewrites files with CRLF and Prettier fails. The 4.1 report said format passed; the gate found 26 CRLF files. The coordinator normalised them to LF (mechanical, no content change). Fix: briefs now forbid stash/checkout/reset; a `.gitattributes` with `eol=lf` needs the owner's OK.
 
 - **Dev leftovers in the client bundle** (low): the `devSampleOrdersRequested` action name and `/api/dev/...` URL strings still ship (the server side is tree-shaken, so they do nothing in production). Fix: gate the dev client calls on `import.meta.env.DEV` too.
 - **Dev "Reset" has no second tap** (low, dev only): one tap wipes the mock store. Fix: use ConfirmButton.
@@ -97,4 +150,4 @@ Stage table in [roadmap.md](roadmap.md#phase-3--batch-1-core-loop-stage-table). 
 
 ## Start here (next session)
 
-Phases 0–2 done; phase 3 batch 1 clickable (not committed); next: owner tries it, then batch 2 on branch `plan/flow-and-prototype` (nothing committed yet; commits are the owner's). Read this board, then [roadmap.md](roadmap.md). Ready prompt: "Read docs/plan/board.md and continue from the next item."
+Phases 0–2 done; batch 1 clickable on the reference palette (committed 3d48186); batch 2 in progress (4.1) on branch `plan/flow-and-prototype` (nothing committed yet; commits are the owner's). Read this board, then [roadmap.md](roadmap.md). Ready prompt: "Read docs/plan/board.md and continue from the next item."

@@ -12,7 +12,7 @@ export type ApiFailure = {
 export type ApiResult<T> = { ok: true; data: T } | ApiFailure;
 
 export type RequestOptions = {
-  method?: 'GET' | 'POST' | 'PATCH';
+  method?: 'GET' | 'POST' | 'PATCH' | 'PUT';
   body?: unknown;
   /** Seller calls only; becomes the X-Actor header until real auth exists (phase 4). */
   actor?: StaffActor;

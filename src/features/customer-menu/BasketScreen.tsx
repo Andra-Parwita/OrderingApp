@@ -8,10 +8,13 @@ import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { Button, Segmented, Stepper, TextArea, TextField, type SegmentedOption } from '../../ui';
 import {
+  editCleared,
+  editRequested,
   menuRequested,
   placeRequested,
   placeReset,
   quantitySet,
+  updateRequested,
   type FailureCode,
 } from './customerSlice';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
@@ -22,8 +25,10 @@ import { ScreenBoundary } from './ScreenBoundary';
 import {
   selectBasketLines,
   selectBasketTotalCents,
+  selectEdit,
   selectMenu,
   selectPlace,
+  selectUpdate,
   type BasketLine,
 } from './selectors';
 
@@ -95,7 +100,7 @@ const BasketLineRow = memo(function BasketLineRow({ line, lang, onQty }: LineRow
         label={name}
         decreaseLabel={t('menu.decrease', { name })}
         increaseLabel={t('menu.increase', { name })}
-        max={item.remaining ?? undefined}
+        max={line.max}
       />
       <LineTotal>{formatMoney(lineCents, lang)}</LineTotal>
     </Line>
@@ -107,15 +112,24 @@ function placeErrorKey(code: FailureCode): string {
     case 'sold_out':
     case 'exceeds_remaining':
     case 'cutoff_passed':
+    case 'order_locked':
+    case 'ordering_closed':
       return `basket.errors.${code}`;
     default:
       return 'basket.errors.other';
   }
 }
 
-type Props = Readonly<{ onBack: () => void; onPlaced: (token: string) => void }>;
+type Props = Readonly<{
+  onBack: () => void;
+  onPlaced: (token: string) => void;
+  /** Edit mode: the private token of the order being changed (its lines load into the basket). */
+  editToken?: string;
+  /** Edit mode: called once the change is saved. */
+  onUpdated?: (token: string) => void;
+}>;
 
-function BasketContent({ onBack, onPlaced }: Props) {
+function BasketContent({ onBack, onPlaced, editToken, onUpdated }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
@@ -123,16 +137,38 @@ function BasketContent({ onBack, onPlaced }: Props) {
   const lines = useSelector(selectBasketLines);
   const totalCents = useSelector(selectBasketTotalCents);
   const place = useSelector(selectPlace);
+  const edit = useSelector(selectEdit);
+  const update = useSelector(selectUpdate);
+  const editing = editToken !== undefined;
 
-  const [fulfilment, setFulfilment] = useState<Fulfilment>('pickup');
+  // What the customer picked; until then an edited order shows its own fulfilment and note.
+  const [fulfilmentPick, setFulfilment] = useState<Fulfilment | null>(null);
   const [firstName, setFirstName] = useState('');
-  const [note, setNote] = useState('');
+  const [notePick, setNote] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   // A previous attempt's error must not greet a new visit.
   useEffect(() => {
     dispatch(placeReset());
   }, [dispatch]);
+
+  // Edit mode: load the order's lines into the basket; leaving empties the basket again.
+  useEffect(() => {
+    if (editToken === undefined) return undefined;
+    dispatch(editRequested(editToken));
+    return () => {
+      dispatch(editCleared());
+    };
+  }, [dispatch, editToken]);
+
+  const editOrder = edit.status === 'ready' ? edit.order : null;
+  const fulfilment: Fulfilment = fulfilmentPick ?? editOrder?.fulfilment ?? 'pickup';
+  const note = notePick ?? editOrder?.note ?? '';
+
+  const updatedToken = update.status === 'done' && editToken !== undefined ? editToken : null;
+  useEffect(() => {
+    if (updatedToken !== null) onUpdated?.(updatedToken);
+  }, [updatedToken, onUpdated]);
 
   const menuIdle = menu.status === 'idle';
   useEffect(() => {
@@ -148,10 +184,16 @@ function BasketContent({ onBack, onPlaced }: Props) {
 
   const onQty = useCallback(
     (itemId: string, qty: number) => {
+      if (qty === 0 && lines.length === 1) {
+        // The last line of an existing order stays: to remove it all, cancel the order instead.
+        if (editing) return;
+        dispatch(quantitySet({ itemId, qty }));
+        onBack();
+        return;
+      }
       dispatch(quantitySet({ itemId, qty }));
-      if (qty === 0 && lines.length === 1) onBack();
     },
-    [dispatch, lines.length, onBack],
+    [dispatch, lines.length, onBack, editing],
   );
   const onName = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => setFirstName(event.target.value),
@@ -166,10 +208,14 @@ function BasketContent({ onBack, onPlaced }: Props) {
     submitted && firstName.trim() === '' ? t('basket.firstNameRequired') : undefined;
 
   const submit = useCallback(() => {
+    if (editing) {
+      dispatch(updateRequested({ fulfilment, note }));
+      return;
+    }
     setSubmitted(true);
     if (firstName.trim() === '') return;
     dispatch(placeRequested({ firstName, language: lang, fulfilment, note }));
-  }, [dispatch, firstName, lang, fulfilment, note]);
+  }, [dispatch, editing, firstName, lang, fulfilment, note]);
 
   const options: ReadonlyArray<SegmentedOption<Fulfilment>> =
     menu.status === 'ready' && !menu.data.week.delivery.available
@@ -184,20 +230,24 @@ function BasketContent({ onBack, onPlaced }: Props) {
       <Button variant="quiet" onClick={onBack} aria-label={t('common.back')}>
         ‹
       </Button>
-      <Title>{t('basket.title')}</Title>
+      <Title>{editing ? t('basket.editTitle') : t('basket.title')}</Title>
       <LanguageSwitch />
     </TopBar>
   );
 
-  if (menu.status === 'error') {
+  if (menu.status === 'error' || edit.status === 'error') {
     return (
       <Page>
         {header}
-        <StateMessage alert text={t('menu.loadError')} onRetry={retryMenu} />
+        <StateMessage
+          alert
+          text={edit.status === 'error' ? t('basket.errors.editLoad') : t('menu.loadError')}
+          onRetry={retryMenu}
+        />
       </Page>
     );
   }
-  if (menu.status !== 'ready') {
+  if (menu.status !== 'ready' || (editing && edit.status !== 'ready')) {
     return (
       <Page>
         {header}
@@ -219,7 +269,8 @@ function BasketContent({ onBack, onPlaced }: Props) {
 
   const { week } = menu.data;
   const pickup = week.pickupPoints[0];
-  const submitting = place.status === 'submitting';
+  const submitting = place.status === 'submitting' || update.status === 'submitting';
+  const failure = editing ? update : place;
 
   return (
     <Page>
@@ -254,18 +305,20 @@ function BasketContent({ onBack, onPlaced }: Props) {
           </Muted>
         ) : null}
       </Block>
-      <Block>
-        <TextField
-          label={t('basket.firstName')}
-          helper={t('basket.firstNameHelper')}
-          error={nameError}
-          value={firstName}
-          onChange={onName}
-          maxLength={FIRST_NAME_MAX}
-          autoComplete="given-name"
-          required
-        />
-      </Block>
+      {editing ? null : (
+        <Block>
+          <TextField
+            label={t('basket.firstName')}
+            helper={t('basket.firstNameHelper')}
+            error={nameError}
+            value={firstName}
+            onChange={onName}
+            maxLength={FIRST_NAME_MAX}
+            autoComplete="given-name"
+            required
+          />
+        </Block>
+      )}
       <Block>
         <TextArea
           label={t('basket.note')}
@@ -277,13 +330,17 @@ function BasketContent({ onBack, onPlaced }: Props) {
         />
       </Block>
       <Block>
-        {place.status === 'failed' ? (
-          <Alert role="alert">{t(placeErrorKey(place.code))}</Alert>
+        {failure.status === 'failed' ? (
+          <Alert role="alert">{t(placeErrorKey(failure.code))}</Alert>
         ) : null}
         <Button variant="primary" fullWidth onClick={submit} disabled={submitting}>
           {submitting
-            ? t('basket.placing')
-            : t('basket.place', { total: formatMoney(totalCents, lang) })}
+            ? editing
+              ? t('basket.updating')
+              : t('basket.placing')
+            : t(editing ? 'basket.update' : 'basket.place', {
+                total: formatMoney(totalCents, lang),
+              })}
         </Button>
         <Centered>{t('basket.changeUntil', { when: formatCutoff(week.cutoffAt, lang) })}</Centered>
       </Block>

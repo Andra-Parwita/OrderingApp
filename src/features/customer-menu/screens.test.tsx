@@ -2,13 +2,13 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { server } from '../../../mocks/server';
-import type { Order } from '../../../shared/domain';
+import type { CustomerOrder } from '../../../shared/domain';
 import { BasketScreen } from './BasketScreen';
 import { quantitySet } from './customerSlice';
 import { MenuScreen } from './MenuScreen';
 import { OrderPlacedScreen } from './OrderPlacedScreen';
 import { createTestStore, renderWithStore, setupI18n } from './testSupport';
-import { buildWhatsAppText, whatsAppUrl } from './whatsapp';
+import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import i18n from 'i18next';
 
 const noop = () => undefined;
@@ -35,6 +35,49 @@ describe('MenuScreen', () => {
     expect(screen.getByText('2–5 pm, Glen Waverley')).toBeInTheDocument();
     expect(screen.queryByText(/Chef Wati/)).not.toBeInTheDocument();
     expect(screen.queryByText(/View basket/)).not.toBeInTheDocument();
+  });
+
+  it('shows the phone banner with its alt text in the current language', async () => {
+    await menuStore();
+    const banner = screen.getByRole('img', { name: 'Onde Onde — Indonesian homemade food' });
+    expect(banner).toHaveAttribute('src', '/samples/banner-phone.jpg');
+    await i18n.changeLanguage('id');
+    expect(
+      await screen.findByRole('img', { name: 'Onde Onde — masakan rumahan Indonesia' }),
+    ).toBeInTheDocument();
+  });
+
+  it('falls back to the desktop banner, then to the labelled placeholder', async () => {
+    const showMenuWith = (images: unknown) =>
+      server.use(
+        http.get('*/api/menu', () =>
+          HttpResponse.json({
+            kitchen: { name: 'Delave', tagline: { en: 'a', id: 'b' }, images },
+            week: {
+              cookingDate: '2026-10-10',
+              cutoffAt: '2026-10-09T21:00:00+11:00',
+              status: 'published',
+              pickupPoints: [],
+              delivery: { available: false, note: { en: 'a', id: 'b' } },
+            },
+            items: [],
+            ordering: { open: true },
+          }),
+        ),
+      );
+
+    showMenuWith({ desktopBanner: '/samples/banner-desktop.jpg' });
+    const first = renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    expect(await screen.findByRole('img', { name: 'Delave banner' })).toHaveAttribute(
+      'src',
+      '/samples/banner-desktop.jpg',
+    );
+    first.unmount();
+
+    showMenuWith(undefined);
+    renderWithStore(<MenuScreen onViewBasket={noop} onMyOrders={noop} />);
+    expect(await screen.findByText('Kitchen photo')).toBeInTheDocument();
+    expect(document.querySelector('img')).toBeNull();
   });
 
   it('stops a limited item at its portions left', async () => {
@@ -212,7 +255,7 @@ describe('OrderPlacedScreen', () => {
         ],
       }),
     });
-    return ((await response.json()) as { order: Order }).order;
+    return ((await response.json()) as { order: CustomerOrder }).order;
   }
 
   it('shows the code, summary, note and the WhatsApp button that opens the pre-filled text', async () => {
@@ -258,7 +301,7 @@ describe('WhatsApp text', () => {
           lines: [{ itemId: 'lemper', qty: 2 }],
         }),
       });
-      return ((await response.json()) as { order: Order }).order;
+      return ((await response.json()) as { order: CustomerOrder }).order;
     })();
     const text = buildWhatsAppText(order, i18n.getFixedT('id', 'customer'), null);
     expect(text).toMatch(

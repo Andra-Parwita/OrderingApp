@@ -19,6 +19,7 @@ export const lightTheme: DefaultTheme = {
     sage: '#5e7d4f',
     sageText: '#4e6b41',
     danger: '#a63a2b',
+    scrim: 'rgba(42, 36, 32, 0.42)',
   },
   status: {
     ordered: { fg: '#5a4a3c', bg: '#efe8dc' },
@@ -54,6 +55,7 @@ export const darkTheme: DefaultTheme = {
     sage: '#8fb07d',
     sageText: '#8fb07d',
     danger: '#e07c6c',
+    scrim: 'rgba(0, 0, 0, 0.55)',
   },
   status: {
     ordered: { fg: '#d6c7b2', bg: '#2e271f' },

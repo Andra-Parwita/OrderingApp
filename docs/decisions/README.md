@@ -162,3 +162,76 @@ Format for each entry:
 11. Sample kitchen name is "Delave".
 **New features adopted** (placement per the reconciliation): lock order; the seller's own WhatsApp number in settings; "How ordering works"; returning customer / WhatsApp received / Nudge; order and income totals; cook-list grouping by item / customer / pickup-delivery merged with chef; light/dark/auto switch; desktop seller rail + list/detail split (batch 2); paste-a-WhatsApp-post parser, past weeks, backup/CSV (batch 3); send an update to many customers (batch 4).
 **Trade-off:** the app converges on the owner's own design; batch 2 grows. **Revisit when:** a batch gets too big to review (then split it).
+
+## D-028 · Asking: record the answer and ask the next question in the same message (2026-10-08)
+**Ruling:** "It is fine as is, A" — a project exception to conventions §2 ("Record the answer, then wait for the owner's 'OK' before the next question").
+**Trade-off:** fewer round trips; the coordinator records each answer and may ask the next single A/B/C question in the same message. Still one question per message, with a recommendation; the owner can stop or redirect at any time.
+**Revisit when:** a recorded answer turns out to have been misunderstood because there was no confirmation step.
+
+## D-029 · `.gitattributes` keeps LF line endings (2026-10-08)
+**Ruling:** "A" (add `.gitattributes` with `* text=auto eol=lf`).
+**Trade-off:** git keeps LF in the repo and writes LF on checkout on every machine, whatever `core.autocrlf` says, so Prettier's LF rule can't be broken by a git checkout or stash (it happened in stage 4.1). Cost: one committed config file.
+**Revisit when:** a file type genuinely needs CRLF (e.g. a Windows `.bat`/`.cmd` script) — add an override line for it.
+
+## D-030 · Desktop seller layout: mock up table + slide-over vs three columns; keep it simple (2026-10-08)
+**Ruling:** "Can you mock up A for now for review? It shouldn't have too much information either since I don't want to overwhelm the users. We should ensure it is easy to use for people with low tech literacy", after the owner found the desktop seller layout "awkward … a lot of spacing … like a mobile display on desktop".
+**Trade-off:** a real desktop layout instead of a stretched phone one, compared as two directions (A1 table + slide-over detail, A2 three columns). **Refines style principle 2 ("maximise information density") for the seller desktop:** use the width to show what matters at a glance, not more data — few columns, plain words, verbs on buttons, one obvious next action, icons always with text, nothing hidden in "…" menus for everyday tasks, large readable type and targets. Cost: one mock-up round before the build.
+**Revisit when:** the owner picks a direction, or testers with low tech literacy struggle with it.
+
+## D-031 · Desktop seller layout: A1, table + slide-over, with "Next order" (2026-10-08)
+**Ruling:** "A" (A1 from [seller-desktop.html](../design/mockups/seller-desktop.html), plus a "Next order" button in the panel).
+**Trade-off:** a calm desktop layout: left rail, orders as a simple table (≤ 6 columns: order, name, what they ordered, total, status, one "needs attention" flag), the order opening in a slide-over panel from the right with one big next action and the everyday actions as labelled buttons; cook list with quantities large and who-ordered names inline; a plain empty state. The row flag reads "Edited by customer" (not "Changed", which reads like a status). Cost: one open/close step per order, softened by "Next order". Phones keep the current layout.
+**Revisit when:** sellers mostly process orders in long runs (then reconsider A2), or testers miss the panel's close control.
+
+## D-032 · Collapsible seller rail: icons only, labels on hover (2026-10-08; exception to D-030)
+**Ruling:** "Add the ability to have a collapsible left navigation bar, like in Microsoft DevOps", then "Just an icon with the labels on hover."
+**Trade-off:** a « / » control at the bottom of the desktop rail collapses it to an icon strip (~48 px); names show as a tooltip on hover **and on keyboard focus**, and every icon keeps an accessible name for screen readers. Expanded by default; the choice is remembered per device (localStorage, try/catch). **Exception to D-030** ("icons always with a text label") for the collapsed rail only — mitigated by expanded-by-default, a clearly labelled expand control, and the current page still marked. Built after 4.6 (which owns the rail).
+**Revisit when:** testers can't find their way with the collapsed rail.
+
+## D-033 · Cook list "who ordered": equal-width chips "Name × qty" (2026-10-08)
+**Ruling:** "B, but make it the same width for each chip" (owner found "in cook list, the names and order amount isn't clear").
+**Trade-off:** under each item, one chip per customer reading `Rina × 2`, all chips the same width in a grid so they line up in columns; the quantity is bold and tabular; long names truncate with the full name on hover/focus as an addition. Compact and clearer than "+2"; no code or pickup/delivery in the chip (those stay in the order table). Applies to desktop and phone. Built with D-032 after 4.6.
+**Revisit when:** packers need the order code or pickup/delivery next to each name.
+
+## D-034 · Banner image slots: seller rail + seller main body, customer top (2026-10-08)
+**Ruling:** "make sure on both phone and seller main body to have a banner image that I can send, so in the seller menu there would be 2 images, left menu and main menu, while in the app would be one on top. For now simply make it an empty container."
+**Interpretation (coordinator, overrulable):** seller desktop gets two image slots — one at the top of the left rail (kitchen image/logo area; a small square when the rail is collapsed) and one banner across the top of the main content on every seller page; seller phone layout gets the main banner on top; customer screens keep one banner on top (already there). For now each slot is an **empty placeholder container** with a fixed aspect ratio and an accessible label ("Banner image — coming soon"); no upload, no storage yet (the banner editor and R2 images come in batch 3 / phase 5). Built after 4.7 (4.7 owns the rail).
+**Revisit when:** the owner supplies the real images, or the banner editor is built.
+
+## D-035 · Up to three seller images; the owner's banner as sample (2026-10-08; extends D-034)
+**Ruling:** "in OrderingApp\imgs there is an image that we can use for the body top of seller .. I will give you the image for left menu later", and "we will be able or need to upload the image for different seller, 2 images .. and could be 3 if you need different dimension for the phone app".
+**Trade-off:** each seller can have up to three images, each with its own shape: **rail image** (square, desktop left menu; image to come), **desktop banner** (wide, ~2.5:1 like the sample `OndeOnde1.png`, 1983×793), **phone banner** (shorter crop for phones, ~2:1; falls back to the desktop banner cropped with `object-fit: cover` when not uploaded). Uploading per seller comes with the banner editor (batch 3) and image storage (phase 5); for now the slots show the sample banner (a resized, compressed copy for dev only — the 3 MB original is never served) or an empty labelled placeholder. Every image needs alt text. Not committed unless the owner chooses to.
+**Revisit when:** the owner provides the rail image, or the multi-seller question is ruled.
+
+## D-036 · One app, many sellers (2026-10-08; overrides the brief's "one seller")
+**Ruling:** "as I said at the beginning, this is just one app, we will allow multiple sellers with different id or key." (Earlier the owner asked for an admin who "generates keys" for sellers; the coordinator had recorded one seller per the concept brief — "One seller, 10–50 orders a week" — and should have asked.)
+**Trade-off:** Delave is a single app serving many sellers (e.g. Onde Onde). Every seller-owned record (kitchen, settings, images, menu, saved sets, chefs, orders, devices, invite keys) carries a seller id; each seller is created by the admin and gets their own invite key; sellers and chefs only ever see their own seller's data; customers reach a seller through that seller's own link. Order codes stay short (unique per seller); private order links stay globally unique. Cost: a foundation stage before batch 3 (prototype mock and contracts), more isolation tests, and per-seller sign-in scope in phase 4. Free-plan limits are per account, so total volume across sellers is watched.
+**Revisit when:** the number of sellers grows past what one free Cloudflare account comfortably serves.
+
+## D-037 · Customer link per seller: a path, e.g. `/onde-onde` (2026-10-08)
+**Ruling:** "A" (a path per seller on one domain).
+**Trade-off:** each seller has a short, unique, URL-safe slug set by the admin (lowercase letters, digits, hyphens; reserved words such as `seller`, `admin`, `o`, `api`, `my-orders`, `samples` refused). Customer menu at `/<slug>`, basket `/<slug>/basket`; order links stay `/o/<token>` (globally unique, the order knows its seller); "My orders" stays one list across sellers on the phone. Works on one domain and the free plan with no DNS per seller; easy to share on WhatsApp. Seller screens resolve the seller from the signed-in session (phase 4); in the prototype a dev seller picker stands in. The root `/` shows a simple Delave page (not a seller's menu).
+**Revisit when:** a seller wants their own domain (then add custom-domain mapping on top).
+
+## D-038 · Seller image sizes; no cropping; background colour on wide screens (2026-10-08; refines D-035)
+**Ruling:** "A" — after the owner's screenshot showed the cropped banner "does not look good", and "the target for seller is tablet landscape .. if opened in desktop we should fill the bg with some bg colour nicely"; and "why is the left menu square? if expanded it should not be square".
+**Sizes the owner generates (per seller):**
+| image | size | key content inside | shown |
+|---|---|---|---|
+| seller banner | 1600 × 320 (5:1) | middle 1200 × 280 | full width up to 1600 px, never cropped (`object-fit: contain`); wider screens fill the sides with the seller's background colour |
+| phone banner | 1080 × 540 (2:1) | middle 960 × 480 | full phone width (seller phone layout + customer app) |
+| rail image (expanded) | 448 × 224 (2:1) | — | 224 × 112 at the top of the left menu |
+| rail icon (collapsed, optional) | 128 × 128 | — | ~40 × 40; fallback: the seller's initial in a circle in the accent colour |
+| background colour | one hex per seller | — | sides of the banner on wide screens |
+**Trade-off:** nothing important is ever cut off; four images to make per seller (one optional). Until the owner's new images arrive, the sample (`OndeOnde1.png`) is shown uncropped with a brown side fill, and the rail uses a crop of its logo area.
+**Revisit when:** the owner's generated images arrive (swap the samples).
+
+## D-039 · Customer app feels native: banner on top, bottom tabs Menu · My orders · Settings (2026-10-08)
+**Ruling:** the owner (with a screenshot of the customer menu): "the language selection [goes] under the image and the name, so there is no need for 'My orders' on top … or have it in settings … so there should be a tab bar, since the phone app should mimic the native app UI"; then "A".
+**Trade-off:** the customer app opens with the banner at the very top (nothing above it), then the kitchen name with a small EN/ID toggle beside it; a fixed bottom tab bar (icon + label, ≥ 44 px, safe-area aware) with **Menu · My orders · Settings**; My orders shows a dot (with accessible text) when an order has an unread update; **Settings** holds language, light/dark/auto theme, "Turn on updates" and the Home Screen guide. The basket bar sits above the tab bar. Pages under an order (`/o/:token…`) keep the tab bar with My orders active. Cost: one more screen (Settings) and moving the theme switch out of My orders.
+**Revisit when:** testers miss the language toggle or the tab bar crowds small phones.
+
+## D-040 · The owner's image set for Onde Onde; background image behind the wide banner (2026-10-08; refines D-038)
+**Ruling:** "I added a few images, try them" — five files in `../imgs/` made to the D-038 sizes: `01_header_wide_1600x320.png` (seller banner), `02_header_standard_1080x540.png` (phone banner), `03_sidebar_expanded_448x224.png` (rail image, "Onde2" logo), `04_sidebar_collapsed_128x128.png` (rail icon), and `05_desktop_background_2560x512.png` (a soft blurred version of the scene).
+**Trade-off:** the seller banner sits on the **blurred background image** (cover, behind, full width) on screens wider than the banner, instead of a flat colour; `bannerBackground` colour stays as the fallback while the image loads or if none is uploaded. So a seller has up to five images: banner, phone banner, rail image, rail icon, background. Served copies are compressed (the originals stay outside the repo and are never modified). Question 38 is superseded: the wide banner is now a true 5:1 image. Note for the owner: the phone banner has blurred bands above and below the scene, so on phones the scene itself is about 3:1.
+**Revisit when:** the owner reworks any image, or another seller supplies theirs.

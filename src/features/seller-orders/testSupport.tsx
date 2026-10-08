@@ -31,6 +31,11 @@ export function makeOrder(overrides: Partial<Order> = {}): Order {
     fulfilment: 'pickup',
     status: 'confirmed',
     paid: false,
+    locked: false,
+    waReceived: false,
+    returning: false,
+    changed: false,
+    inbox: [],
     audit: [
       { by: { role: 'customer', name: 'Rina' }, what: 'created', at: '2026-10-07T08:12:00Z' },
     ],

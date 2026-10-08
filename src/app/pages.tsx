@@ -34,32 +34,16 @@ const Home = styled(Link)`
   font-weight: ${({ theme }) => theme.type.weight.strong};
 `;
 
-type Props = Readonly<{ title: string; text: string; linkText: string }>;
-
-function Notice({ title, text, linkText }: Props) {
+export function NotFoundPage() {
+  const { t } = useTranslation();
   return (
     <Page>
       <Bar>
         <LanguageSwitch />
       </Bar>
-      <Title>{title}</Title>
-      <Text>{text}</Text>
-      <Home to="/">{linkText}</Home>
+      <Title>{t('notFound.title')}</Title>
+      <Text>{t('notFound.body')}</Text>
+      <Home to="/">{t('notFound.home')}</Home>
     </Page>
-  );
-}
-
-export function NotFoundPage() {
-  const { t } = useTranslation();
-  return (
-    <Notice title={t('notFound.title')} text={t('notFound.body')} linkText={t('notFound.home')} />
-  );
-}
-
-/** Placeholder until batch 2 builds the real list. */
-export function MyOrdersPage() {
-  const { t } = useTranslation();
-  return (
-    <Notice title={t('myOrders.title')} text={t('myOrders.soon')} linkText={t('myOrders.back')} />
   );
 }

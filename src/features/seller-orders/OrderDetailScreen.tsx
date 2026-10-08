@@ -2,35 +2,42 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import type { AuditEntry, Order, OrderStatus } from '../../../shared/domain';
+import type { Order, OrderStatus } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
-import { nextStatuses } from '../../../shared/status';
 import { pickText } from '../../../shared/text';
-import { Button, ConfirmButton, Pill, Segmented, type SegmentedOption } from '../../ui';
+import { Button, ConfirmButton, Pill, Segmented, Toast, type SegmentedOption } from '../../ui';
+import { formatAuditDiff } from '../../../shared/auditDiff';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { SELLER_NS } from './i18n/register';
 import { formatDay, formatDayTime } from '../../../shared/dates';
 import { toneOf } from './orderStatus';
-import { actorLabel, orderTotalCents, useLang } from './orderText';
+import { KIND_MARK } from './customerKind';
+import { actorLabel, orderTotalCents } from './orderText';
+import { OrderPanelBody } from './OrderPanelBody';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import {
-  selectChange,
   selectCookingDate,
   selectList,
+  selectNotice,
   selectOrderByCode,
 } from './sellerOrdersSelectors';
 import {
-  paidChangeRequested,
+  noticeCleared,
   pollingStarted,
   pollingStopped,
   refreshRequested,
   statusChangeRequested,
-  type FailedChange,
   type SellerOrdersRootState,
 } from './sellerOrdersSlice';
+import { auditText, useOrderActions } from './useOrderActions';
 
-export type OrderDetailScreenProps = Readonly<{ code: string; onBack: () => void }>;
+export type OrderDetailScreenProps = Readonly<{
+  code: string;
+  onBack: () => void;
+  /** 'panel': the desktop slide-over's content (the panel owns the heading, Close and language). */
+  layout?: 'page' | 'panel';
+}>;
 
 const Page = styled.main`
   max-width: min(100%, 45rem);
@@ -96,6 +103,20 @@ const NoteText = styled.p`
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 `;
+const Banner = styled.section<{ $tone: 'ordered' | 'confirmed' }>`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme, $tone }) => theme.status[$tone].bg};
+  color: ${({ theme, $tone }) => theme.status[$tone].fg};
+`;
+const BannerActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
 const Pillbox = styled.div`
   display: flex;
 `;
@@ -126,6 +147,12 @@ const Message = styled.p`
   color: ${({ theme }) => theme.colour.textMuted};
 `;
 
+const KIND_BANNER = {
+  new: 'detail.bannerNew',
+  returning: 'detail.bannerReturning',
+  waReceived: 'detail.bannerWaReceived',
+} as const;
+
 type StepButtonProps = Readonly<{
   order: Order;
   to: OrderStatus;
@@ -147,47 +174,17 @@ function StepButton({ order, to, primary, disabled }: StepButtonProps) {
       disabled={disabled}
       onClick={onClick}
     >
-      {t(`status.${to}`)}
+      {t(`detail.action.${to}`)}
     </Button>
   );
 }
 
-function auditText(entry: AuditEntry, t: ReturnType<typeof useTranslation>['t']): string {
-  switch (entry.what) {
-    case 'created':
-      return t('audit.created');
-    case 'edited':
-      return t('audit.edited');
-    case 'status':
-      return t('audit.status', { status: t(`status.${entry.detail ?? ''}`) });
-    case 'paid':
-      return entry.detail === 'unpaid' ? t('audit.unpaid') : t('audit.paid');
-    default: {
-      const unreachable: never = entry.what;
-      return unreachable;
-    }
-  }
-}
-
-function sortedAudit(audit: ReadonlyArray<AuditEntry>): Array<AuditEntry> {
-  // D-013: up to 4 entries, newest first.
-  return [...audit].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 4);
-}
-
 function DetailBody({ order }: Readonly<{ order: Order }>) {
-  const { t, i18n } = useTranslation(SELLER_NS);
-  const lang = useLang();
-  const dispatch = useDispatch();
-  const change = useSelector(selectChange);
+  const { t } = useTranslation(SELLER_NS);
   const cookingDate = useSelector(selectCookingDate);
-  const saving = change.status === 'saving';
-  const failed: FailedChange | null =
-    change.status === 'error' && change.failed.code === order.code ? change.failed : null;
-
-  const steps = nextStatuses(order);
-  const forward = steps.filter((status) => status !== 'cancelled');
-  const canCancel = steps.includes('cancelled');
-  const audit = useMemo(() => sortedAudit(order.audit), [order.audit]);
+  const a = useOrderActions(order);
+  const { lang, saving, failed, forward, canCancel, final, audit, kind, diff, lastEdit } = a;
+  const { onWaReceived, onNudge, onSeen, onLock, onCancel, onWhatsApp, onRetry } = a;
 
   const paidOptions = useMemo<Array<SegmentedOption<'yes' | 'no'>>>(
     () => [
@@ -196,33 +193,8 @@ function DetailBody({ order }: Readonly<{ order: Order }>) {
     ],
     [t],
   );
-  const onPaid = useCallback(
-    (next: 'yes' | 'no') =>
-      dispatch(paidChangeRequested({ code: order.code, paid: next === 'yes' })),
-    [dispatch, order.code],
-  );
-  const onCancel = useCallback(
-    () => dispatch(statusChangeRequested({ code: order.code, to: 'cancelled' })),
-    [dispatch, order.code],
-  );
-  const onWhatsApp = useCallback(() => {
-    // The message is in the customer's language, not the seller's.
-    const fixed = i18n.getFixedT(order.language, SELLER_NS);
-    const text = fixed('whatsapp.message', {
-      name: order.firstName,
-      code: formatOrderCode(order.code),
-      link: `${window.location.origin}/o/${order.token}`,
-    });
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-  }, [i18n, order]);
-  const onRetry = useCallback(() => {
-    if (!failed) return;
-    dispatch(
-      failed.kind === 'status'
-        ? statusChangeRequested({ code: failed.code, to: failed.to })
-        : paidChangeRequested({ code: failed.code, paid: failed.paid }),
-    );
-  }, [dispatch, failed]);
+  const { setPaid } = a;
+  const onPaid = useCallback((next: 'yes' | 'no') => setPaid(next === 'yes'), [setPaid]);
 
   return (
     <>
@@ -236,6 +208,37 @@ function DetailBody({ order }: Readonly<{ order: Order }>) {
           <Muted>{t('orders.enteredBy', { name: actorLabel(order.enteredBy, t) })}</Muted>
         ) : null}
       </Section>
+      {kind ? (
+        <Banner $tone="confirmed">
+          <span>
+            <strong>{t(KIND_MARK[kind])}</strong> {t(KIND_BANNER[kind])}
+          </span>
+          <BannerActions>
+            {kind === 'new' ? (
+              <Button disabled={saving} onClick={onWaReceived}>
+                {t('detail.markWa')}
+              </Button>
+            ) : null}
+            <Button disabled={saving || final} onClick={onNudge}>
+              {t('detail.nudge')}
+            </Button>
+          </BannerActions>
+        </Banner>
+      ) : null}
+      {order.changed ? (
+        <Banner $tone="ordered">
+          <span>
+            <strong>{t('orders.changed')}</strong>{' '}
+            {t('detail.changedBanner', {
+              when: formatDayTime(lastEdit, lang),
+              diff: diff ? formatAuditDiff(diff, lang) : t('audit.edited'),
+            })}
+          </span>
+          <Button disabled={saving} onClick={onSeen}>
+            {t('detail.seen')}
+          </Button>
+        </Banner>
+      ) : null}
       <Section>
         {order.lines.map((line) => (
           <Line key={line.itemId}>
@@ -258,6 +261,7 @@ function DetailBody({ order }: Readonly<{ order: Order }>) {
         <Section>
           <Title>{t('detail.noteTitle')}</Title>
           <NoteText>{order.note}</NoteText>
+          <Muted>{t('detail.noteVisible')}</Muted>
         </Section>
       ) : null}
       <Section>
@@ -294,6 +298,12 @@ function DetailBody({ order }: Readonly<{ order: Order }>) {
             label={t('detail.paid')}
           />
         </Line>
+        <Line>
+          <Muted>{order.locked ? t('detail.lockedState') : t('detail.unlockedState')}</Muted>
+          <Button disabled={saving || final} onClick={onLock}>
+            {order.locked ? t('detail.unlock') : t('detail.lock')}
+          </Button>
+        </Line>
         <Button fullWidth onClick={onWhatsApp}>
           {t('detail.whatsapp')}
         </Button>
@@ -313,7 +323,7 @@ function DetailBody({ order }: Readonly<{ order: Order }>) {
           {audit.map((entry) => (
             <HistoryItem key={`${entry.at}-${entry.what}-${entry.detail ?? ''}`}>
               <span>
-                {actorLabel(entry.by, t)} · {auditText(entry, t)}
+                {actorLabel(entry.by, t)} · {auditText(entry, t, lang)}
               </span>
               <Muted>{formatDayTime(entry.at, lang)}</Muted>
             </HistoryItem>
@@ -324,11 +334,13 @@ function DetailBody({ order }: Readonly<{ order: Order }>) {
   );
 }
 
-function DetailContent({ code, onBack }: OrderDetailScreenProps) {
+function DetailContent({ code, onBack, layout = 'page' }: OrderDetailScreenProps) {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
   const list = useSelector(selectList);
   const order = useSelector((state: SellerOrdersRootState) => selectOrderByCode(state, code));
+  const notice = useSelector(selectNotice);
+  const panel = layout === 'panel';
 
   useEffect(() => {
     dispatch(pollingStarted());
@@ -337,8 +349,34 @@ function DetailContent({ code, onBack }: OrderDetailScreenProps) {
     };
   }, [dispatch]);
   const retry = useCallback(() => dispatch(refreshRequested()), [dispatch]);
+  const clearNotice = useCallback(() => dispatch(noticeCleared()), [dispatch]);
 
   const customerLang = order ? order.language.toUpperCase() : '';
+  const status = (
+    <>
+      {!order && list.status === 'loading' ? (
+        <Message role="status">{t('detail.loading')}</Message>
+      ) : null}
+      {!order && list.status === 'error' ? (
+        <Section>
+          <Errors role="alert">
+            <span>{t('error.load')}</span>
+            <Button onClick={retry}>{t('error.retry')}</Button>
+          </Errors>
+        </Section>
+      ) : null}
+      {!order && list.status === 'ready' ? <Message>{t('detail.notFound')}</Message> : null}
+      <Toast message={notice === 'nudged' ? t('detail.nudged') : null} onDismiss={clearNotice} />
+    </>
+  );
+  if (panel) {
+    return (
+      <>
+        {order ? <OrderPanelBody order={order} /> : null}
+        {status}
+      </>
+    );
+  }
   return (
     <Page>
       <Bar>
@@ -353,18 +391,7 @@ function DetailContent({ code, onBack }: OrderDetailScreenProps) {
         </Tools>
       </Bar>
       {order ? <DetailBody order={order} /> : null}
-      {!order && list.status === 'loading' ? (
-        <Message role="status">{t('detail.loading')}</Message>
-      ) : null}
-      {!order && list.status === 'error' ? (
-        <Section>
-          <Errors role="alert">
-            <span>{t('error.load')}</span>
-            <Button onClick={retry}>{t('error.retry')}</Button>
-          </Errors>
-        </Section>
-      ) : null}
-      {!order && list.status === 'ready' ? <Message>{t('detail.notFound')}</Message> : null}
+      {status}
     </Page>
   );
 }

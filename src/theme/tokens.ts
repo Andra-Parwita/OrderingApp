@@ -9,7 +9,14 @@ export const spacing = {
 
 export const type = {
   family: `system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`,
-  size: { sm: '0.8125rem', md: '0.9375rem', lg: '1.125rem', xl: '1.5rem' },
+  size: {
+    sm: '0.8125rem',
+    md: '0.9375rem',
+    base: '1rem',
+    lg: '1.125rem',
+    xl: '1.5rem',
+    xxl: '2rem',
+  },
   weight: { regular: 400, strong: 600 },
   lineHeight: { tight: 1.25, normal: 1.5 },
 } as const;

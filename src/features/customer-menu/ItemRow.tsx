@@ -40,10 +40,12 @@ type Props = Readonly<{
   qty: number;
   lang: Language;
   onQty: (itemId: string, qty: number) => void;
+  /** Ordering is closed: the item is shown, but its stepper is off. */
+  closed?: boolean;
 }>;
 
 /** One menu item with its stepper; the stepper stops at the portions left (D-020 snapshot is server-side). */
-export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty }: Props) {
+export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty, closed = false }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const onChange = useCallback((next: number) => onQty(item.id, next), [onQty, item.id]);
   const name = pickText(item.name, lang);
@@ -71,7 +73,7 @@ export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty }: Props) 
         decreaseLabel={t('menu.decrease', { name })}
         increaseLabel={t('menu.increase', { name })}
         max={item.soldOut ? 0 : Math.min(MAX_QTY, item.remaining ?? MAX_QTY)}
-        disabled={item.soldOut}
+        disabled={item.soldOut || closed}
       />
     </Row>
   );

@@ -4,11 +4,13 @@ import { ThemeProvider } from 'styled-components';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { lightTheme } from '../theme/themes';
 import { ConfirmButton } from './ConfirmButton';
+import { ImageSlot } from './ImageSlot';
 import { Pill } from './Pill';
 import { Segmented, type SegmentedOption } from './Segmented';
 import { Stepper } from './Stepper';
 import { TabBar } from './TabBar';
 import { TextField } from './TextField';
+import { Tooltip } from './Tooltip';
 
 function renderThemed(ui: ReactElement) {
   return render(<ThemeProvider theme={lightTheme}>{ui}</ThemeProvider>);
@@ -174,5 +176,88 @@ describe('Pill', () => {
   it('renders its text', () => {
     renderThemed(<Pill tone="ready">Ready</Pill>);
     expect(screen.getByText('Ready')).toBeInTheDocument();
+  });
+});
+
+describe('Tooltip', () => {
+  it('shows its text on hover and on focus, closes on Escape, and is a no-op without text', () => {
+    renderThemed(
+      <Tooltip text="Orders">
+        <a href="/x">Orders link</a>
+      </Tooltip>,
+    );
+    const link = screen.getByRole('link', { name: 'Orders link' });
+    expect(screen.queryByText('Orders')).not.toBeInTheDocument();
+    fireEvent.focus(link);
+    expect(screen.getByText('Orders')).toHaveAttribute('aria-hidden', 'true');
+    fireEvent.keyDown(link, { key: 'Escape' });
+    expect(screen.queryByText('Orders')).not.toBeInTheDocument();
+    fireEvent.blur(link);
+    fireEvent.mouseEnter(link);
+    expect(screen.getByText('Orders')).toBeInTheDocument();
+    fireEvent.mouseLeave(link);
+    expect(screen.queryByText('Orders')).not.toBeInTheDocument();
+  });
+
+  it('renders just the children without text', () => {
+    renderThemed(
+      <Tooltip>
+        <span>plain</span>
+      </Tooltip>,
+    );
+    fireEvent.focus(screen.getByText('plain'));
+    expect(screen.getByText('plain').parentElement?.tagName).toBe('DIV');
+  });
+});
+
+describe('ImageSlot', () => {
+  it('shows the placeholder label, named by its alt, when there is no image', () => {
+    const { container } = renderThemed(
+      <ImageSlot
+        aspectRatio="5 / 2"
+        alt="Kitchen banner"
+        placeholder="Banner image — coming soon"
+      />,
+    );
+    expect(screen.getByRole('img', { name: 'Kitchen banner' })).toBeInTheDocument();
+    expect(screen.getByText('Banner image — coming soon')).toBeInTheDocument();
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('shows the image with its alt text, lazily loaded, and keeps the aspect ratio', () => {
+    renderThemed(
+      <ImageSlot aspectRatio="5 / 1" src="/samples/x.jpg" alt="Onde Onde" placeholder="soon" />,
+    );
+    const img = screen.getByRole('img', { name: 'Onde Onde' });
+    expect(img).toHaveAttribute('src', '/samples/x.jpg');
+    expect(img).toHaveAttribute('loading', 'lazy');
+    expect(screen.queryByText('soon')).toBeNull();
+    // jsdom drops aspect-ratio from computed styles, so the slot also exposes it as data.
+    expect(img.parentElement).toHaveAttribute('data-ratio', '5 / 1');
+  });
+
+  it('never crops by default: contain fit on a background colour, never stretched', () => {
+    renderThemed(
+      <ImageSlot
+        aspectRatio="2 / 1"
+        background="#835937"
+        src="/samples/x.jpg"
+        alt="Onde Onde"
+        placeholder="soon"
+      />,
+    );
+    const img = screen.getByRole('img', { name: 'Onde Onde' });
+    expect(img).toHaveStyle({ objectFit: 'contain' });
+    expect(img.parentElement).toHaveAttribute('data-fit', 'contain');
+    expect(img.parentElement).toHaveStyle({ background: 'rgb(131, 89, 55)' });
+  });
+
+  it('crops only when asked to, and rounds into a circle', () => {
+    renderThemed(
+      <ImageSlot aspectRatio="1 / 1" fit="cover" round src="/i.png" alt="Icon" placeholder="" />,
+    );
+    const img = screen.getByRole('img', { name: 'Icon' });
+    expect(img).toHaveStyle({ objectFit: 'cover' });
+    expect(img.parentElement).toHaveStyle({ borderRadius: '50%' });
   });
 });

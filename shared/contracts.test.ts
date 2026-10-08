@@ -5,12 +5,12 @@ import {
   parseSampleOrdersRequest,
   parseSampleOrdersResponse,
 } from './devContract';
-import { parseMenuResponse } from './menuContract';
+import { parseMenuResponse, parseSellerMenuResponse } from './menuContract';
 import {
   parseCreateOrderRequest,
   parseOrder,
-  parseOrderResponse,
-  parseOrdersResponse,
+  parseSellerOrderResponse,
+  parseSellerOrdersResponse,
   parseUpdateOrderRequest,
 } from './orderContract';
 import { parseSetPaidRequest, parseSetStatusRequest } from './sellerContract';
@@ -35,7 +35,7 @@ const menu = {
     ],
     delivery: { available: true, note: text },
   },
-  chefs: [{ id: 'wati', name: 'Chef Wati' }],
+  ordering: { open: true },
   items: [
     {
       id: 'lemper',
@@ -44,7 +44,6 @@ const menu = {
       size: text,
       priceCents: 1000,
       limit: 20,
-      chefId: 'wati',
       remaining: 5,
       soldOut: false,
     },
@@ -71,6 +70,11 @@ const order = {
   note: 'No chilli',
   status: 'confirmed',
   paid: false,
+  locked: false,
+  waReceived: true,
+  returning: false,
+  changed: false,
+  inbox: [{ at: '2026-10-07T10:00:00Z', kind: 'status', status: 'confirmed' }],
   enteredBy: { role: 'seller', name: 'Bu Ani' },
   audit: [{ by: { role: 'seller', name: 'Bu Ani' }, what: 'created', at: '2026-10-07T10:00:00Z' }],
   createdAt: '2026-10-07T10:00:00Z',
@@ -86,6 +90,11 @@ function mutate(base: unknown, fn: (draft: Obj) => void): unknown {
 
 const week = (d: Obj) => d['week'] as Obj;
 const items = (d: Obj) => d['items'] as Array<Obj>;
+
+const sellerMenu = mutate(menu, (d) => {
+  d['chefs'] = [{ id: 'wati', name: 'Chef Wati' }];
+  items(d)[0]!['chefId'] = 'wati';
+});
 
 describe('parseMenuResponse', () => {
   it('accepts a valid menu', () => {
@@ -105,8 +114,25 @@ describe('parseMenuResponse', () => {
     ],
     ['a fractional price', mutate(menu, (d) => (items(d)[1]!['priceCents'] = 1.5))],
     ['a missing remaining', mutate(menu, (d) => delete items(d)[1]!['remaining'])],
+    ['a chefs list (chef data leak)', mutate(menu, (d) => (d['chefs'] = []))],
+    ['an item chefId (chef data leak)', mutate(menu, (d) => (items(d)[0]!['chefId'] = 'wati'))],
   ])('rejects %s', (_label, body) => {
     expect(parseMenuResponse(body)).toBeNull();
+  });
+});
+
+describe('parseSellerMenuResponse', () => {
+  it('accepts the menu with chefs and chef ids', () => {
+    expect(parseSellerMenuResponse(sellerMenu)).toEqual(sellerMenu);
+  });
+
+  it.each([
+    ['no chefs list', mutate(sellerMenu, (d) => delete d['chefs'])],
+    ['a bad chef', mutate(sellerMenu, (d) => (d['chefs'] = [{ id: 'x' }]))],
+    ['a non-string chefId', mutate(sellerMenu, (d) => (items(d)[0]!['chefId'] = 3))],
+    ['a bad item', mutate(sellerMenu, (d) => (items(d)[1]!['priceCents'] = 1.5))],
+  ])('rejects %s', (_label, body) => {
+    expect(parseSellerMenuResponse(body)).toBeNull();
   });
 });
 
@@ -187,8 +213,8 @@ describe('parseUpdateOrderRequest', () => {
 describe('parseOrder and order responses', () => {
   it('accepts a valid order', () => {
     expect(parseOrder(order)).toEqual(order);
-    expect(parseOrderResponse({ order })).toEqual({ order });
-    expect(parseOrdersResponse({ orders: [order, order] })?.orders).toHaveLength(2);
+    expect(parseSellerOrderResponse({ order })).toEqual({ order });
+    expect(parseSellerOrdersResponse({ orders: [order, order] })?.orders).toHaveLength(2);
   });
 
   it('accepts an order without note or enteredBy', () => {
@@ -221,9 +247,9 @@ describe('parseOrder and order responses', () => {
   });
 
   it('rejects a bad envelope', () => {
-    expect(parseOrderResponse({})).toBeNull();
-    expect(parseOrdersResponse({ orders: [{}] })).toBeNull();
-    expect(parseOrdersResponse(null)).toBeNull();
+    expect(parseSellerOrderResponse({})).toBeNull();
+    expect(parseSellerOrdersResponse({ orders: [{}] })).toBeNull();
+    expect(parseSellerOrdersResponse(null)).toBeNull();
   });
 });
 

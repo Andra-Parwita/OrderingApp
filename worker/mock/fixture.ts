@@ -1,10 +1,22 @@
-import type { Chef, Kitchen, MenuItem, Week } from '../../shared/domain';
+import type { Chef, Kitchen, KitchenSettings, MenuItem, Week } from '../../shared/domain';
 
 export const fixtureKitchen: Kitchen = {
   name: 'Delave',
   tagline: {
     en: 'Home cooking, made fresh every Saturday',
     id: 'Masakan rumahan, segar tiap Sabtu',
+  },
+  // Dev-only copies of the owner's sample banner (D-035, D-038): whole image, never cropped, on a
+  // brown sampled from its edges. No rail icon, so the collapsed rail shows the initial.
+  images: {
+    desktopBanner: '/samples/banner-desktop.jpg',
+    phoneBanner: '/samples/banner-phone.jpg',
+    railImage: '/samples/rail.jpg',
+    bannerBackground: '#835937',
+    alt: {
+      en: 'Onde Onde — Indonesian homemade food',
+      id: 'Onde Onde — masakan rumahan Indonesia',
+    },
   },
 };
 
@@ -85,3 +97,15 @@ export const fixtureItems: Array<MenuItem> = [
     chefId: 'wati',
   },
 ];
+
+export const fixtureSettings: KitchenSettings = {
+  postGreeting: {
+    en: "Hi everyone! Here is this week's menu. Reply with your order number to confirm.",
+    id: 'Halo semuanya! Ini menu minggu ini. Kirim nomor pesanan kamu untuk konfirmasi.',
+  },
+  postClosing: {
+    en: 'Thank you for supporting our home kitchen!',
+    id: 'Terima kasih sudah mendukung dapur rumahan kami!',
+  },
+  orderingOpen: true,
+};

@@ -43,8 +43,8 @@ const menu: MenuResponse = {
     pickupPoints: [],
     delivery: { available: true, note: none },
   },
-  chefs: [],
   items: [item('lemper', 1000, 3), item('tempe', 1000, null), item('empek', 1000, 0)],
+  ordering: { open: true },
 };
 
 function rootOf(customer: ReturnType<typeof customerReducer>): CustomerRootState {
@@ -127,8 +127,8 @@ describe('customerReducer', () => {
       lines: [],
       fulfilment: 'pickup' as const,
       status: 'ordered' as const,
-      paid: false,
-      audit: [],
+      locked: false,
+      inbox: [],
       createdAt: '2026-10-07T10:00:00.000Z',
       updatedAt: '2026-10-07T10:00:00.000Z',
     };

@@ -1,0 +1,90 @@
+{
+  "common": {
+    "retry": "Coba lagi",
+    "loading": "Memuat…",
+    "back": "Kembali",
+    "myOrders": "Pesanan saya",
+    "errorBody": "Silakan coba lagi."
+  },
+  "list": {
+    "title": "Pesanan saya",
+    "loadError": "Pesanan tidak dapat dimuat. Periksa koneksi Anda lalu coba lagi.",
+    "findTitle": "Punya kode pesanan? Buka di sini",
+    "codeLabel": "Kode pesanan",
+    "codeHelper": "k7f2qx, K7F 2QX dan K7F-2QX semuanya bisa; terbuka di karakter ke-6",
+    "codeNotFound": "Kode itu tidak tersimpan di ponsel ini. Buka tautan dari penjual, atau chat penjual di WhatsApp.",
+    "thisWeek": "Minggu ini",
+    "earlier": "Pesanan sebelumnya",
+    "empty": "Pesanan Anda akan muncul di sini. Pilih sesuatu dari menu minggu ini untuk memulai.",
+    "toMenu": "Lihat menu minggu ini",
+    "footnote": "Hanya tersimpan di ponsel ini. Tanpa akun.",
+    "locked": "Terkunci",
+    "newUpdate": "Ada kabar baru",
+    "pickup": "Ambil sendiri",
+    "delivery": "Diantar"
+  },
+  "order": {
+    "title": "Pesanan Anda",
+    "loadError": "Pesanan tidak dapat dimuat.",
+    "yourNumber": "Nomor pesanan Anda",
+    "qrLabel": "Kode QR (segera hadir)",
+    "total": "Total",
+    "pickup": "Ambil sendiri",
+    "delivery": "Diantar",
+    "note": "Catatan: {{note}}",
+    "whatsapp": "Kirim ke penjual lewat WhatsApp",
+    "change": "Ubah pesanan",
+    "cancel": "Batalkan pesanan",
+    "cancelConfirm": "Ketuk lagi untuk membatalkan",
+    "changeUntil": "Sampai {{when}}. Pembatalan perlu ketukan kedua.",
+    "closed": "Perubahan ditutup saat batas waktu",
+    "lockedBanner": "Penjual sudah mengunci pesanan ini. Chat penjual di WhatsApp untuk mengubahnya.",
+    "readyPickup": "Siap! Ambil {{when}}",
+    "outForDelivery": "Pesanan Anda sedang diantar.",
+    "cancelled": "Pesanan ini dibatalkan.",
+    "updates": "Kabar terbaru",
+    "noUpdates": "Belum ada kabar.",
+    "errors": {
+      "order_locked": "Penjual sudah mengunci pesanan ini. Chat penjual di WhatsApp untuk mengubahnya.",
+      "ordering_closed": "Maaf, pemesanan sedang ditutup.",
+      "cutoff_passed": "Maaf, batas waktu sudah lewat.",
+      "other": "Pesanan tidak dapat dibatalkan. Periksa koneksi Anda lalu coba lagi."
+    }
+  },
+  "timeline": {
+    "label": "Perkembangan pesanan",
+    "now": "sekarang",
+    "done": "selesai"
+  },
+  "status": {
+    "ordered": "Dipesan",
+    "confirmed": "Dikonfirmasi",
+    "ready_for_pickup": "Siap diambil",
+    "out_for_delivery": "Sedang diantar",
+    "collected": "Sudah diambil",
+    "delivered": "Sudah diantar",
+    "cancelled": "Dibatalkan"
+  },
+  "inbox": {
+    "nudge": "Penjual menunggu nomor pesanan Anda lewat WhatsApp.",
+    "nudgeReturning": "Pesanan Anda sudah masuk. Mengirimnya lewat WhatsApp bersifat opsional, tetapi membantu penjual mengonfirmasi lebih cepat.",
+    "readyIn": "Siap dalam sekitar {{minutes}} menit.",
+    "other": "Kabar dari penjual",
+    "status": {
+      "ordered": "Pesanan diterima",
+      "confirmed": "Pesanan Anda dikonfirmasi",
+      "ready_for_pickup": "Siap diambil",
+      "out_for_delivery": "Sedang diantar",
+      "collected": "Sudah diambil",
+      "delivered": "Sudah diantar",
+      "cancelled": "Pesanan dibatalkan"
+    }
+  },
+  "wa": {
+    "message": "Halo, pesanan saya {{code}}: {{items}}. Total {{total}}. {{how}}. Nama: {{name}}.",
+    "pickup": "Ambil sendiri",
+    "pickupWhen": "Ambil sendiri {{when}}",
+    "delivery": "Diantar",
+    "addAddress": "Alamat saya:"
+  }
+}

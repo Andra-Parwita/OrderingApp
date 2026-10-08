@@ -1,0 +1,30 @@
+{
+  "title": "Settings",
+  "loading": "Loading settings…",
+  "error": "Could not load the settings.",
+  "retry": "Try again",
+  "ordering": {
+    "label": "Ordering",
+    "open": "Open",
+    "closed": "Closed",
+    "cutoff": "Closes automatically at {{cutoff}}"
+  },
+  "whatsapp": {
+    "label": "Your WhatsApp number",
+    "helper": "Australian mobile, for example 0412 345 678",
+    "invalid": "Enter an Australian mobile number, for example 0412 345 678."
+  },
+  "greeting": {
+    "en": "Greeting (English)",
+    "id": "Greeting (Indonesian)"
+  },
+  "closing": {
+    "en": "Closing (English)",
+    "id": "Closing (Indonesian)",
+    "helper": "{phone} is replaced with your number"
+  },
+  "save": "Save",
+  "saving": "Saving…",
+  "saved": "Saved",
+  "saveFailed": "Could not save. Try again."
+}

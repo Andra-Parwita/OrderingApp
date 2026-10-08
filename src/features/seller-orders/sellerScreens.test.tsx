@@ -76,10 +76,10 @@ describe('seller screens', () => {
 
     it('filters to Ordered from the "not confirmed" shortcut and shows counts', () => {
       renderList();
-      expect(screen.getByRole('radio', { name: 'All 3' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'All 3' })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /1 not confirmed/ }));
-      expect(screen.getByRole('radio', { name: 'Ordered 1' })).toHaveAttribute(
-        'aria-checked',
+      expect(screen.getByRole('button', { name: 'Ordered 1' })).toHaveAttribute(
+        'aria-pressed',
         'true',
       );
       expect(screen.queryByRole('button', { name: /K7F-2QX/ })).not.toBeInTheDocument();
@@ -95,13 +95,10 @@ describe('seller screens', () => {
       expect(screen.queryByRole('button', { name: /R8P-4WB/ })).not.toBeInTheDocument();
     });
 
-    it('has no add-order button (batch 2) and shows the seller tabs', () => {
+    it('has no New order or Share button unless they are wired', () => {
       renderList();
-      expect(screen.queryByRole('button', { name: /add order/i })).not.toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('href', '/seller');
-      const inert = screen.getByRole('link', { name: 'Hand-over, coming soon' });
-      expect(inert).toHaveAttribute('aria-disabled', 'true');
-      expect(inert).not.toHaveAttribute('href');
+      expect(screen.queryByRole('button', { name: /new order/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Share menu' })).not.toBeInTheDocument();
     });
   });
 
@@ -121,8 +118,13 @@ describe('seller screens', () => {
 
     it('offers one next step, plus cancel, for a confirmed pickup order', () => {
       renderDetail();
-      expect(screen.getByRole('button', { name: 'Ready for pickup' })).toBeInTheDocument();
-      for (const later of ['Collected', 'Delivered', 'Confirmed', 'Out for delivery']) {
+      expect(screen.getByRole('button', { name: 'Mark ready for pickup' })).toBeInTheDocument();
+      for (const later of [
+        'Mark collected',
+        'Mark delivered',
+        'Confirm order',
+        'Mark out for delivery',
+      ]) {
         expect(screen.queryByRole('button', { name: later })).not.toBeInTheDocument();
       }
       expect(screen.getByRole('button', { name: 'Cancel order' })).toBeInTheDocument();

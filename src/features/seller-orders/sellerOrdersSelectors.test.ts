@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { Order, OrderStatus } from '../../../shared/domain';
-import { selectCounts, selectOrderByCode, visibleOrders } from './sellerOrdersSelectors';
+import {
+  neighbourCodes,
+  selectCounts,
+  selectOrderByCode,
+  visibleOrders,
+} from './sellerOrdersSelectors';
 import { ordersLoaded, sellerOrdersReducer, type SellerOrdersRootState } from './sellerOrdersSlice';
 import { parseStatusFilter, type StatusFilter } from './orderStatus';
 import { makeOrder } from './testSupport';
@@ -30,6 +35,7 @@ describe('selectCounts', () => {
     expect(selectCounts(stateWith(ordersLoaded({ orders: ORDERS })))).toEqual({
       all: 7,
       ordered: 1,
+      changed: 0,
       confirmed: 1,
       ready: 2,
       done: 2,
@@ -99,5 +105,28 @@ describe('ordersLoaded', () => {
       ordersLoaded({ orders: structuredClone(ORDERS) }),
     );
     expect(again.orders[0]).toBe(before);
+  });
+});
+
+describe('neighbourCodes', () => {
+  const orders = [
+    makeOrder({ id: '1', code: 'AAA222' }),
+    makeOrder({ id: '2', code: 'BBB333' }),
+    makeOrder({ id: '3', code: 'CCC444' }),
+  ];
+
+  it('gives the rows before and after, in the list order', () => {
+    expect(neighbourCodes(orders, 'BBB333')).toEqual({ previous: 'AAA222', next: 'CCC444' });
+    expect(neighbourCodes(orders, 'bbb-333')).toEqual({ previous: 'AAA222', next: 'CCC444' });
+  });
+
+  it('has no previous at the top and no next at the bottom', () => {
+    expect(neighbourCodes(orders, 'AAA222')).toEqual({ previous: null, next: 'BBB333' });
+    expect(neighbourCodes(orders, 'CCC444')).toEqual({ previous: 'BBB333', next: null });
+  });
+
+  it('starts from the top when the order is not in the list', () => {
+    expect(neighbourCodes(orders, 'ZZZ999')).toEqual({ previous: null, next: 'AAA222' });
+    expect(neighbourCodes([], 'ZZZ999')).toEqual({ previous: null, next: null });
   });
 });

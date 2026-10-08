@@ -9,6 +9,8 @@ export const API_ERROR_CODES = [
   'sold_out',
   'exceeds_remaining',
   'invalid_status',
+  'order_locked',
+  'ordering_closed',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

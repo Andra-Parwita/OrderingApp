@@ -17,15 +17,25 @@
     "enteredBy": "entered by {{name}}",
     "devSample": "Add 5 sample orders",
     "devReset": "Reset",
-    "tabsLabel": "Seller"
-  },
-  "tabs": {
-    "orders": "Orders",
-    "cook": "Cook list",
-    "handover": "Hand-over",
-    "menu": "Menu",
-    "more": "More",
-    "comingSoon": "coming soon"
+    "devResetConfirm": "Tap again to reset",
+    "share": "Share menu",
+    "changed": "↻ Changed",
+    "newCustomer": "★ New customer",
+    "returning": "↩ Returning",
+    "waReceived": "✓ WhatsApp received",
+    "locked": "🔒 Locked",
+    "newOrder": "+ New order",
+    "findLabel": "Find an order (code or name)",
+    "tableLabel": "Orders",
+    "colCode": "Order",
+    "colName": "Name",
+    "colItems": "What they ordered",
+    "colTotal": "Total",
+    "colStatus": "Status",
+    "colAttention": "Needs attention",
+    "emptyTitle": "No orders yet",
+    "emptyHint": "Share this week's menu to start taking orders.",
+    "shareOnWhatsApp": "Share menu on WhatsApp"
   },
   "filter": {
     "all": "All",
@@ -33,7 +43,8 @@
     "confirmed": "Confirmed",
     "ready": "Ready",
     "done": "Done",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "changed": "Edited by customer"
   },
   "status": {
     "ordered": "Ordered",
@@ -44,7 +55,10 @@
     "delivered": "Delivered",
     "cancelled": "Cancelled"
   },
-  "fulfilment": { "pickup": "Pickup", "delivery": "Delivery" },
+  "fulfilment": {
+    "pickup": "Pickup",
+    "delivery": "Delivery"
+  },
   "detail": {
     "back": "‹ Orders",
     "customerLanguage": "Customer: {{lang}}",
@@ -61,15 +75,46 @@
     "cancelConfirm": "Tap again to cancel",
     "history": "Last changes",
     "notFound": "Order not found.",
-    "loading": "Loading order…"
+    "loading": "Loading order…",
+    "bannerNew": "Wait for their WhatsApp message so you have their number, then confirm.",
+    "bannerReturning": "You can confirm without waiting.",
+    "bannerWaReceived": "You can confirm.",
+    "markWa": "Mark WhatsApp received",
+    "nudge": "Nudge customer",
+    "nudged": "Reminder sent to the customer",
+    "changedBanner": "{{when}}: {{diff}}",
+    "seen": "Seen",
+    "lock": "Lock order",
+    "unlock": "Unlock order",
+    "lockedState": "Locked: the customer can no longer change or cancel.",
+    "unlockedState": "Unlocked: the customer can change or cancel until the cut-off.",
+    "noteVisible": "The customer can see this note.",
+    "action": {
+      "confirmed": "Confirm order",
+      "ready_for_pickup": "Mark ready for pickup",
+      "out_for_delivery": "Mark out for delivery",
+      "collected": "Mark collected",
+      "delivered": "Mark delivered"
+    },
+    "next": "Next order ›",
+    "previous": "‹ Previous",
+    "close": "Close",
+    "markPaid": "Mark paid",
+    "markUnpaid": "Mark not paid",
+    "sendLink": "Send link on WhatsApp",
+    "panelLabel": "Order {{code}}",
+    "noteFrom": "Note from {{name}}"
   },
-  "who": { "chef": "Chef {{name}}" },
+  "who": {
+    "chef": "Chef {{name}}"
+  },
   "audit": {
     "created": "Placed",
     "edited": "Edited",
     "status": "Status → {{status}}",
     "paid": "Marked paid",
-    "unpaid": "Marked not paid"
+    "unpaid": "Marked not paid",
+    "editedDiff": "Edited: {{diff}}"
   },
   "whatsapp": {
     "message": "Hi {{name}}, here is the link to your order {{code}}: {{link}}"
@@ -79,5 +124,51 @@
     "change": "Could not save the change.",
     "retry": "Try again",
     "screen": "Something went wrong on this screen."
+  },
+  "new": {
+    "title": "New order",
+    "back": "‹ Orders",
+    "name": "Customer first name",
+    "nameRequired": "Enter the first name.",
+    "language": "Customer language",
+    "fulfilment": "Pickup or delivery",
+    "items": "Items",
+    "itemsRequired": "Add at least one item.",
+    "left_one": "{{count}} left",
+    "left_other": "{{count}} left",
+    "decrease": "One less {{name}}",
+    "increase": "One more {{name}}",
+    "total": "Total",
+    "note": "Note (optional)",
+    "noteHelper": "Allergies or requests. Don't add your address, phone or other sensitive details. Send those on WhatsApp.",
+    "confirmNow": "Confirm order now",
+    "paid": "Mark paid",
+    "yes": "Yes",
+    "no": "No",
+    "create": "Create order",
+    "loading": "Loading menu…",
+    "menuError": "Could not load the menu.",
+    "error": {
+      "sold_out": "An item just sold out. Check the quantities.",
+      "exceeds_remaining": "Not enough portions left for an item. Check the quantities.",
+      "ordering_closed": "Ordering is closed.",
+      "other": "Could not create the order."
+    },
+    "saved": "Order saved",
+    "savedSummary": "{{name}} · {{how}}",
+    "whatsappLabel": "Customer's WhatsApp number (optional, not saved)",
+    "whatsappHelper": "Australian mobile, e.g. 0412 345 678. Used only to open the chat; never stored.",
+    "whatsappInvalid": "Not a valid mobile number.",
+    "send": "Send order link on WhatsApp",
+    "done": "Done",
+    "status": "Starts as {{status}}"
+  },
+  "linkMsg": "Hi {{name}}, here is your order {{code}}: {{items}}. Total {{total}}. {{how}}. Track it and get updates here: {{link}}",
+  "attention": {
+    "new": "New customer",
+    "edited": "Edited by customer",
+    "note": "Note",
+    "locked": "Locked",
+    "none": "Nothing to do"
   }
 }

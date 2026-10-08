@@ -8,7 +8,7 @@ import {
   quantitySet,
   type PlaceRequest,
 } from './customerSlice';
-import { MY_ORDERS_KEY, readMyOrders } from './myOrders';
+import { MY_ORDERS_KEY, readMyOrders } from '../../api/device/myOrders';
 import { createTestStore } from './testSupport';
 
 const request: PlaceRequest = {

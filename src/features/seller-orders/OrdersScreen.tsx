@@ -1,39 +1,25 @@
-import { useCallback, useEffect, useMemo, type ChangeEvent } from 'react';
+import { useCallback, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import {
-  Button,
-  Segmented,
-  TabBar,
-  TextField,
-  type SegmentedOption,
-  type TabBarItem,
-} from '../../ui';
+import { Button, TextField } from '../../ui';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { SELLER_NS } from './i18n/register';
 import { formatDay } from '../../../shared/dates';
 import { STATUS_FILTERS, type StatusFilter } from './orderStatus';
+import { DevTools, FilterChip, useOrdersPolling, useVisibleOrders } from './ordersShared';
 import { useLang } from './orderText';
 import { OrderRow } from './OrderRow';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
-import {
-  selectCookingDate,
-  selectCounts,
-  selectList,
-  selectOrders,
-  visibleOrders,
-} from './sellerOrdersSelectors';
-import {
-  devResetRequested,
-  devSampleOrdersRequested,
-  pollingStarted,
-  pollingStopped,
-  refreshRequested,
-} from './sellerOrdersSlice';
+import { selectCookingDate, selectCounts, selectList } from './sellerOrdersSelectors';
+import { refreshRequested } from './sellerOrdersSlice';
 
 /** The filter and the search text come from the URL (the route wrapper owns them). */
 export type OrdersScreenProps = Readonly<{
+  /** Shows the "+ New order" button when given (the route wrapper wires it in 4.4). */
+  onNewOrder?: () => void;
+  /** Shows a quiet link to the share-menu screen when given. */
+  onShare?: () => void;
   filter: StatusFilter;
   query: string;
   onFilterChange: (next: StatusFilter) => void;
@@ -50,6 +36,7 @@ const Page = styled.main`
 `;
 const Head = styled.header`
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
@@ -63,6 +50,7 @@ const Title = styled.h1`
 `;
 const Tools = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
 `;
@@ -74,8 +62,10 @@ const LiveText = styled.span<{ $ok: boolean }>`
 const Block = styled.div`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
 `;
-const Scroll = styled.div`
-  overflow-x: auto;
+const Chips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
 `;
 const Grow = styled.div`
@@ -93,65 +83,24 @@ const ErrorBox = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.lg};
 `;
-const DevBar = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
-`;
-const Bottom = styled.footer`
-  position: sticky;
-  bottom: 0;
-  background: ${({ theme }) => theme.colour.bg};
-`;
-
-// The other tabs arrive with later batches (cook list, hand-over, menu, more); inert until then.
-// "+ Add order" belongs to batch 2 and is intentionally not here.
-const TAB_IDS = ['orders', 'cook', 'handover', 'menu', 'more'] as const;
-
 function OrdersContent({
   filter,
   query,
   onFilterChange,
   onQueryChange,
   onOpenOrder,
+  onNewOrder,
+  onShare,
 }: OrdersScreenProps) {
   const { t } = useTranslation(SELLER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
   const list = useSelector(selectList);
   const counts = useSelector(selectCounts);
-  const orders = useSelector(selectOrders);
-  const visible = useMemo(() => visibleOrders(orders, filter, query), [orders, filter, query]);
+  const visible = useVisibleOrders(filter, query);
   const cookingDate = useSelector(selectCookingDate);
 
-  // Polling lives in the saga; the screen only says when it is shown.
-  useEffect(() => {
-    dispatch(pollingStarted());
-    return () => {
-      dispatch(pollingStopped());
-    };
-  }, [dispatch]);
-
-  const filterOptions = useMemo<Array<SegmentedOption<StatusFilter>>>(
-    () => STATUS_FILTERS.map((id) => ({ value: id, label: `${t(`filter.${id}`)} ${counts[id]}` })),
-    [t, counts],
-  );
-  const tabs = useMemo<Array<TabBarItem>>(
-    () =>
-      TAB_IDS.map((id) =>
-        id === 'orders'
-          ? { id, label: t(`tabs.${id}`), href: '/seller' }
-          : {
-              id,
-              label: t(`tabs.${id}`),
-              href: '/seller',
-              disabled: true,
-              hint: t('tabs.comingSoon'),
-            },
-      ),
-    [t],
-  );
+  useOrdersPolling();
 
   const onQuery = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onQueryChange(event.target.value),
@@ -159,8 +108,6 @@ function OrdersContent({
   );
   const showOrdered = useCallback(() => onFilterChange('ordered'), [onFilterChange]);
   const retry = useCallback(() => dispatch(refreshRequested()), [dispatch]);
-  const addSamples = useCallback(() => dispatch(devSampleOrdersRequested()), [dispatch]);
-  const reset = useCallback(() => dispatch(devResetRequested()), [dispatch]);
 
   const title =
     cookingDate !== null
@@ -173,6 +120,12 @@ function OrdersContent({
       <Head>
         <Title>{title}</Title>
         <Tools>
+          {onShare ? (
+            <Button variant="quiet" onClick={onShare}>
+              {t('orders.share')}
+            </Button>
+          ) : null}
+          {onNewOrder ? <Button onClick={onNewOrder}>{t('orders.newOrder')}</Button> : null}
           <LiveText $ok={liveOk} role="status">
             ● {liveOk ? t('orders.live') : t('orders.offline')}
           </LiveText>
@@ -186,14 +139,17 @@ function OrdersContent({
           </Button>
         </Block>
       ) : null}
-      <Scroll>
-        <Segmented
-          options={filterOptions}
-          value={filter}
-          onChange={onFilterChange}
-          label={t('orders.filterLabel')}
-        />
-      </Scroll>
+      <Chips role="group" aria-label={t('orders.filterLabel')}>
+        {STATUS_FILTERS.map((id) => (
+          <FilterChip
+            key={id}
+            id={id}
+            label={`${t(`filter.${id}`)} ${counts[id]}`}
+            pressed={id === filter}
+            onSelect={onFilterChange}
+          />
+        ))}
+      </Chips>
       <Block>
         <TextField
           label={t('orders.searchLabel')}
@@ -219,17 +175,7 @@ function OrdersContent({
           ? visible.map((order) => <OrderRow key={order.id} order={order} onOpen={onOpenOrder} />)
           : null}
       </Grow>
-      {import.meta.env.DEV ? (
-        <DevBar>
-          <Button onClick={addSamples}>{t('orders.devSample')}</Button>
-          <Button variant="quiet" onClick={reset}>
-            {t('orders.devReset')}
-          </Button>
-        </DevBar>
-      ) : null}
-      <Bottom>
-        <TabBar items={tabs} activeId="orders" label={t('orders.tabsLabel')} />
-      </Bottom>
+      {import.meta.env.DEV ? <DevTools /> : null}
     </Page>
   );
 }

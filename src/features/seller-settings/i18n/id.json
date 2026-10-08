@@ -1,0 +1,30 @@
+{
+  "title": "Pengaturan",
+  "loading": "Memuat pengaturan…",
+  "error": "Pengaturan tidak bisa dimuat.",
+  "retry": "Coba lagi",
+  "ordering": {
+    "label": "Pemesanan",
+    "open": "Buka",
+    "closed": "Tutup",
+    "cutoff": "Tutup otomatis pada {{cutoff}}"
+  },
+  "whatsapp": {
+    "label": "Nomor WhatsApp kamu",
+    "helper": "Nomor HP Australia, misalnya 0412 345 678",
+    "invalid": "Masukkan nomor HP Australia, misalnya 0412 345 678."
+  },
+  "greeting": {
+    "en": "Sapaan (Inggris)",
+    "id": "Sapaan (Indonesia)"
+  },
+  "closing": {
+    "en": "Penutup (Inggris)",
+    "id": "Penutup (Indonesia)",
+    "helper": "{phone} diganti dengan nomor kamu"
+  },
+  "save": "Simpan",
+  "saving": "Menyimpan…",
+  "saved": "Tersimpan",
+  "saveFailed": "Tidak bisa menyimpan. Coba lagi."
+}

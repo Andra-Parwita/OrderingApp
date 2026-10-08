@@ -111,7 +111,7 @@ Draft 2026-10-07. Q18 answered: mock API in the dev Worker ([D-021](../decisions
 
 ## Phase 3 · Batch 2 (after ordering) stage table
 
-Draft 2026-10-07, waiting on question 26. Scope = wireframe batch 2 ([batch-2.html](../design/wireframes/batch-2.html)) + the batch 2 features adopted in [D-027](../decisions/README.md). Visual source: the owner's reference prototype ([extraction](../design/reference/delave-prototype-extract.md)) in the D-027 palette; layout source: the wireframes.
+Approved 2026-10-08 (question 26: "A", no separate mock-up round). Scope = wireframe batch 2 ([batch-2.html](../design/wireframes/batch-2.html)) + the batch 2 features adopted in [D-027](../decisions/README.md). Visual source: the owner's reference prototype ([extraction](../design/reference/delave-prototype-extract.md)) in the D-027 palette; layout source: the wireframes.
 
 | stage | what | files owned | proof (done when) |
 |---|---|---|---|
@@ -124,4 +124,28 @@ Draft 2026-10-07, waiting on question 26. Scope = wireframe batch 2 ([batch-2.ht
 **Overlap:** 4.1 must land first (the contracts). 4.2, 4.3a, 4.3b are disjoint feature folders, each with its own i18n bundle and harness file → one parallel wave of 3. 4.4 touches the shell and runs last.
 **Timeline:** 4.1 → [4.2 ∥ 4.3a ∥ 4.3b] → 4.4 (3 rounds, gate after each).
 **Mock-ups:** no separate mock-up round — the owner's prototype is the approved visual source for every batch 2 feature, and the wireframes cover the rest; the owner reviews the built screens after 4.4.
+
+## Phase 3 · Multi-seller foundation (before batch 3)
+
+Rulings: [D-036](../decisions/README.md) (one app, many sellers), [D-037](../decisions/README.md) (customer link `/<slug>`).
+
+| stage | what | files owned | proof (done when) |
+|---|---|---|---|
+| 5.1 | **Domain + mock**: `Seller { id, slug, name, … }`; seller id on kitchen/settings/images/menu/chefs/orders; order codes unique per seller, tokens global; mock store keyed by seller with two sample sellers (Onde Onde with the banner, Delave Demo); public `GET /api/s/:slug/menu`, `POST /api/s/:slug/orders`; seller endpoints scoped by a dev `X-Seller` header (phase 4 → session); slug rules + reserved words | `shared/`, `worker/`, `mocks/`, `src/api/` | unit tests incl. **isolation** (seller A can never read or change seller B's orders, settings, menu) |
+| 5.2 | **App**: routes `/:slug`, `/:slug/basket`; `/o/:token` resolves the seller from the order; My orders across sellers (seller name on each card); seller screens use the current seller (dev seller picker in the rail, dev only); root `/` simple Delave page; e2e for two sellers side by side | `src/app/`, `src/features/*` (wiring), `e2e/` | full gate; e2e: orders placed at `/onde-onde` never appear for the other seller |
+
+**Overlap:** 5.2 needs 5.1's contracts → sequential. Admin screens for creating sellers come with batch 4 (sign-in and admin).
+
+## Up next (queue, 2026-10-08 22:52)
+
+| # | stage | rulings | state |
+|---|---|---|---|
+| 1 | 4.9 No-crop banners, per-seller background colour, rail image + initial, table fits at 1024 px | D-038 | running |
+| 2 | 4.10 Native-feel customer app: banner on top, EN/ID beside the name, tabs Menu · My orders · Settings | D-039 | next |
+| 3 | 5.1 Multi-seller domain + mock (seller id everywhere, isolation tests) | D-036, D-037 | queued |
+| 4 | 5.2 Multi-seller app (`/<slug>`, My orders across sellers, dev seller picker) | D-036, D-037 | queued |
+| 5 | Batch 3: menu editor, saved sets, week settings, banner/image upload (sizes per D-038), chefs, labels, past weeks, backup, paste-a-post | D-019, D-020, D-027, D-038 | queued (stage table before it starts) |
+| 6 | Batch 4: sign-in screens, admin page (create sellers), scan to collect, hand-over, delivery run, bulk updates | D-011, D-013, D-027, D-036 | queued |
+| 7 | Phase 4: real backend on this PC (D1, Worker API, Durable Object live updates, passkeys) | D-011, D-014, D-021 | queued |
+| 8 | Phase 5: Cloudflare deploy (owner), push, image storage (R2), real QR codes | — | queued |
 

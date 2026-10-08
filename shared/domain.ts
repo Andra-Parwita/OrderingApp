@@ -18,8 +18,40 @@ export type Actor = { role: ActorRole; name: string };
 export type StaffActor = { role: 'seller' | 'chef'; name: string };
 
 export type AuditWhat = 'created' | 'edited' | 'status' | 'paid';
-/** `detail` is the new status for `status`, and 'paid' or 'unpaid' for `paid`. */
-export type AuditEntry = { by: Actor; what: AuditWhat; detail?: string; at: string };
+
+/** What a customer edit changed (D-027 row 7). Language-neutral; format with formatAuditDiff. */
+export type AuditDiff = {
+  /** Quantity change per item; names come from the order's snapshot lines. */
+  items: Array<{ itemId: string; name: LocalText; delta: number }>;
+  note?: true;
+  fulfilment?: { from: Fulfilment; to: Fulfilment };
+};
+
+/**
+ * `detail` is the new status for `status`, and 'paid' or 'unpaid' for `paid`. `diff` is set on
+ * customer `edited` entries.
+ */
+export type AuditEntry = {
+  by: Actor;
+  what: AuditWhat;
+  detail?: string;
+  diff?: AuditDiff;
+  at: string;
+};
+
+export type InboxKind = 'status' | 'nudge' | 'message';
+/**
+ * A message the customer sees on their order. Keys and data only, never translated text: the
+ * screen translates `textKey` (with `minutes`) or shows the seller's own `text`.
+ */
+export type InboxEntry = {
+  at: string;
+  kind: InboxKind;
+  status?: OrderStatus;
+  textKey?: string;
+  text?: string;
+  minutes?: number;
+};
 
 /** A snapshot of the item as it was when ordered (D-020). */
 export type OrderLine = {
@@ -30,7 +62,8 @@ export type OrderLine = {
   qty: number;
 };
 
-export type Order = {
+/** The full order, as the seller and chefs see it. */
+export type SellerOrder = {
   id: string;
   /** Raw 6-character code; display it with formatOrderCode. */
   code: string;
@@ -44,12 +77,43 @@ export type Order = {
   status: OrderStatus;
   /** The seller's own reference; no payments in the app. */
   paid: boolean;
+  /** Seller lock: the customer can no longer change or cancel (D-027). */
+  locked: boolean;
+  /** The seller ticked "WhatsApp received". */
+  waReceived: boolean;
+  /** The customer's phone had a collected/delivered order when this one was placed. */
+  returning: boolean;
+  /** The customer edited after placing; cleared by the seller's next status change or "seen". */
+  changed: boolean;
+  /** Customer-visible messages, newest first, at most INBOX_MAX. */
+  inbox: Array<InboxEntry>;
   enteredBy?: StaffActor;
   /** Last 4 changes, newest first (D-013). */
   audit: Array<AuditEntry>;
   createdAt: string;
   updatedAt: string;
 };
+
+/** Seller-side name kept so existing seller code keeps compiling. */
+export type Order = SellerOrder;
+
+/** What the customer's own link may show: no audit, paid, WhatsApp, returning or changed. */
+export type CustomerOrder = Pick<
+  SellerOrder,
+  | 'id'
+  | 'code'
+  | 'token'
+  | 'firstName'
+  | 'language'
+  | 'lines'
+  | 'fulfilment'
+  | 'note'
+  | 'status'
+  | 'locked'
+  | 'inbox'
+  | 'createdAt'
+  | 'updatedAt'
+>;
 
 export type Chef = { id: string; name: string };
 
@@ -64,7 +128,38 @@ export type MenuItem = {
   chefId?: string;
 };
 
-export type Kitchen = { name: string; tagline: LocalText; bannerImageUrl?: string };
+/** Seller images and colour (D-035, D-038). Each is optional; the phone banner falls back to the desktop one. */
+export type KitchenImages = {
+  /** 2:1, shown at the top of the expanded left menu. */
+  railImage?: string;
+  /** Square, shown in the collapsed left menu; without it the seller's initial is shown. */
+  railIcon?: string;
+  desktopBanner?: string;
+  phoneBanner?: string;
+  /** "#rrggbb", behind the banners and beside them on wide screens. */
+  bannerBackground?: string;
+  alt?: LocalText;
+};
+
+export type Kitchen = {
+  name: string;
+  tagline: LocalText;
+  bannerImageUrl?: string;
+  images?: KitchenImages;
+  /** The seller's own WhatsApp number, digits with country code (public, D-027). */
+  whatsappNumber?: string;
+};
+
+/** Whether customers can order right now (the switch and the cut-off). */
+export type OrderingState = { open: boolean; reason?: 'closed_by_seller' | 'cutoff_passed' };
+
+/** Seller-editable kitchen settings (D-027). */
+export type KitchenSettings = {
+  whatsappNumber?: string;
+  postGreeting: LocalText;
+  postClosing: LocalText;
+  orderingOpen: boolean;
+};
 
 export type PickupPoint = {
   id: string;
@@ -86,5 +181,11 @@ export type Week = {
   delivery: Delivery;
 };
 
-/** A menu item plus what is left of its limit (null = unlimited). */
-export type MenuItemView = MenuItem & { remaining: number | null; soldOut: boolean };
+/** A menu item as customers see it: what is left of its limit (null = unlimited), no chef (D-012). */
+export type MenuItemView = Omit<MenuItem, 'chefId'> & {
+  remaining: number | null;
+  soldOut: boolean;
+};
+
+/** The same item as the seller sees it, with the chef grouping. */
+export type SellerMenuItemView = MenuItemView & { chefId?: string };

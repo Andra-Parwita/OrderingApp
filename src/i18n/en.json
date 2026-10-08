@@ -1,10 +1,34 @@
 {
-  "app": { "name": "Weekly Menu" },
-  "language": { "label": "Language" },
-  "myOrders": {
-    "title": "My orders",
-    "soon": "My orders — coming in the next batch.",
-    "back": "Back to the menu"
+  "app": {
+    "name": "Weekly Menu"
+  },
+  "language": {
+    "label": "Language",
+    "switchTo": "Switch language to {{name}}",
+    "name": { "en": "English", "id": "Indonesian" }
+  },
+  "theme": {
+    "label": "Appearance",
+    "auto": "Match device",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "sellerNav": {
+    "label": "Seller",
+    "kitchen": "Kitchen",
+    "orders": "Orders",
+    "cook": "Cook list",
+    "handover": "Hand-over",
+    "menu": "Menu",
+    "more": "More",
+    "comingSoon": "coming soon",
+    "imageSoon": "Banner image — coming soon",
+    "railImageSoon": "Rail image — coming soon",
+    "railImage": "Rail image",
+    "bannerImage": "Banner image",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu",
+    "shareMenu": "Share menu to WhatsApp"
   },
   "notFound": {
     "title": "Page not found",

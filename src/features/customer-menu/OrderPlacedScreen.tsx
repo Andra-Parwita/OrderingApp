@@ -1,8 +1,10 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import type { Order, OrderStatus } from '../../../shared/domain';
+import type { CustomerOrder, OrderStatus } from '../../../shared/domain';
+import { isReturningCustomer } from '../../api/device/myOrders';
+import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
@@ -15,7 +17,6 @@ import { CUSTOMER_NS } from './i18n/register';
 import { Block, Muted, Page, StateMessage, Strong, Title, TopBar, useLang } from './layout';
 import { ScreenBoundary } from './ScreenBoundary';
 import { selectMenu, selectOrder } from './selectors';
-import { buildWhatsAppText, whatsAppUrl } from './whatsapp';
 
 const Code = styled.p`
   margin: 0;
@@ -91,11 +92,12 @@ type Props = Readonly<{
   onChange: () => void;
 }>;
 
-function PlacedBody({ order, onChange }: Readonly<{ order: Order; onChange: () => void }>) {
+function PlacedBody({ order, onChange }: Readonly<{ order: CustomerOrder; onChange: () => void }>) {
   const { t, i18n } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
   const menu = useSelector(selectMenu);
 
+  const whatsappNumber = menu.status === 'ready' ? menu.data.kitchen.whatsappNumber : undefined;
   const pickup = menu.status === 'ready' ? menu.data.week.pickupPoints[0] : undefined;
   const dayText =
     menu.status === 'ready' ? formatCookingDate(menu.data.week.cookingDate, lang) : null;
@@ -106,8 +108,10 @@ function PlacedBody({ order, onChange }: Readonly<{ order: Order; onChange: () =
   // The message is in the customer's language (the one the order was placed in).
   const waText = buildWhatsAppText(order, i18n.getFixedT(order.language, CUSTOMER_NS), when);
   const openWhatsApp = useCallback(() => {
-    window.open(whatsAppUrl(waText), '_blank', 'noopener,noreferrer');
-  }, [waText]);
+    window.open(whatsAppUrl(waText, whatsappNumber), '_blank', 'noopener,noreferrer');
+  }, [waText, whatsappNumber]);
+  // A customer who has collected before can skip the WhatsApp message (D-027).
+  const [returning] = useState(isReturningCustomer);
 
   const totalCents = order.lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0);
   const how = order.fulfilment === 'delivery' ? t('placed.delivery') : t('placed.pickup');
@@ -144,6 +148,7 @@ function PlacedBody({ order, onChange }: Readonly<{ order: Order; onChange: () =
         <Button variant="primary" fullWidth onClick={openWhatsApp}>
           {t('placed.whatsapp')}
         </Button>
+        {returning ? <Centered>{t('placed.optional')}</Centered> : null}
         <Button fullWidth disabled>
           {t('placed.updates')} ({t('placed.comingSoon')})
         </Button>

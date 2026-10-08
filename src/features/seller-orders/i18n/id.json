@@ -17,15 +17,25 @@
     "enteredBy": "dimasukkan oleh {{name}}",
     "devSample": "Tambah 5 pesanan contoh",
     "devReset": "Reset",
-    "tabsLabel": "Penjual"
-  },
-  "tabs": {
-    "orders": "Pesanan",
-    "cook": "Daftar masak",
-    "handover": "Serah terima",
-    "menu": "Menu",
-    "more": "Lainnya",
-    "comingSoon": "segera hadir"
+    "devResetConfirm": "Ketuk lagi untuk reset",
+    "share": "Bagikan menu",
+    "changed": "↻ Berubah",
+    "newCustomer": "★ Pelanggan baru",
+    "returning": "↩ Langganan",
+    "waReceived": "✓ WhatsApp diterima",
+    "locked": "🔒 Dikunci",
+    "newOrder": "+ Pesanan baru",
+    "findLabel": "Cari pesanan (kode atau nama)",
+    "tableLabel": "Daftar pesanan",
+    "colCode": "Pesanan",
+    "colName": "Nama",
+    "colItems": "Yang dipesan",
+    "colTotal": "Total",
+    "colStatus": "Status",
+    "colAttention": "Perlu perhatian",
+    "emptyTitle": "Belum ada pesanan",
+    "emptyHint": "Bagikan menu minggu ini untuk mulai menerima pesanan.",
+    "shareOnWhatsApp": "Bagikan menu lewat WhatsApp"
   },
   "filter": {
     "all": "Semua",
@@ -33,7 +43,8 @@
     "confirmed": "Dikonfirmasi",
     "ready": "Siap",
     "done": "Selesai",
-    "cancelled": "Dibatalkan"
+    "cancelled": "Dibatalkan",
+    "changed": "Diubah pelanggan"
   },
   "status": {
     "ordered": "Dipesan",
@@ -44,7 +55,10 @@
     "delivered": "Sudah diantar",
     "cancelled": "Dibatalkan"
   },
-  "fulfilment": { "pickup": "Ambil", "delivery": "Antar" },
+  "fulfilment": {
+    "pickup": "Ambil",
+    "delivery": "Antar"
+  },
   "detail": {
     "back": "‹ Pesanan",
     "customerLanguage": "Pelanggan: {{lang}}",
@@ -61,15 +75,46 @@
     "cancelConfirm": "Ketuk lagi untuk membatalkan",
     "history": "Perubahan terakhir",
     "notFound": "Pesanan tidak ditemukan.",
-    "loading": "Memuat pesanan…"
+    "loading": "Memuat pesanan…",
+    "bannerNew": "Tunggu pesan WhatsApp mereka agar Anda punya nomornya, lalu konfirmasi.",
+    "bannerReturning": "Anda bisa langsung konfirmasi tanpa menunggu.",
+    "bannerWaReceived": "Anda bisa konfirmasi.",
+    "markWa": "Tandai WhatsApp diterima",
+    "nudge": "Ingatkan pelanggan",
+    "nudged": "Pengingat terkirim ke pelanggan",
+    "changedBanner": "{{when}}: {{diff}}",
+    "seen": "Sudah dilihat",
+    "lock": "Kunci pesanan",
+    "unlock": "Buka kunci pesanan",
+    "lockedState": "Dikunci: pelanggan tidak bisa lagi mengubah atau membatalkan.",
+    "unlockedState": "Tidak dikunci: pelanggan bisa mengubah atau membatalkan sampai batas waktu.",
+    "noteVisible": "Pelanggan bisa melihat catatan ini.",
+    "action": {
+      "confirmed": "Konfirmasi pesanan",
+      "ready_for_pickup": "Tandai siap diambil",
+      "out_for_delivery": "Tandai sedang diantar",
+      "collected": "Tandai sudah diambil",
+      "delivered": "Tandai sudah diantar"
+    },
+    "next": "Pesanan berikutnya ›",
+    "previous": "‹ Sebelumnya",
+    "close": "Tutup",
+    "markPaid": "Tandai lunas",
+    "markUnpaid": "Tandai belum lunas",
+    "sendLink": "Kirim tautan lewat WhatsApp",
+    "panelLabel": "Pesanan {{code}}",
+    "noteFrom": "Catatan dari {{name}}"
   },
-  "who": { "chef": "Chef {{name}}" },
+  "who": {
+    "chef": "Chef {{name}}"
+  },
   "audit": {
     "created": "Dipesan",
     "edited": "Diubah",
     "status": "Status → {{status}}",
     "paid": "Ditandai lunas",
-    "unpaid": "Ditandai belum lunas"
+    "unpaid": "Ditandai belum lunas",
+    "editedDiff": "Diubah: {{diff}}"
   },
   "whatsapp": {
     "message": "Halo {{name}}, ini tautan pesananmu {{code}}: {{link}}"
@@ -79,5 +124,51 @@
     "change": "Perubahan tidak bisa disimpan.",
     "retry": "Coba lagi",
     "screen": "Terjadi masalah di layar ini."
+  },
+  "new": {
+    "title": "Pesanan baru",
+    "back": "‹ Pesanan",
+    "name": "Nama depan pelanggan",
+    "nameRequired": "Isi nama depan.",
+    "language": "Bahasa pelanggan",
+    "fulfilment": "Ambil atau antar",
+    "items": "Menu",
+    "itemsRequired": "Tambahkan minimal satu menu.",
+    "left_one": "sisa {{count}}",
+    "left_other": "sisa {{count}}",
+    "decrease": "Kurangi {{name}}",
+    "increase": "Tambah {{name}}",
+    "total": "Total",
+    "note": "Catatan (opsional)",
+    "noteHelper": "Alergi atau permintaan. Jangan tulis alamat, nomor telepon, atau data sensitif lain. Kirim lewat WhatsApp.",
+    "confirmNow": "Konfirmasi pesanan sekarang",
+    "paid": "Tandai lunas",
+    "yes": "Ya",
+    "no": "Tidak",
+    "create": "Buat pesanan",
+    "loading": "Memuat menu…",
+    "menuError": "Tidak bisa memuat menu.",
+    "error": {
+      "sold_out": "Ada menu yang baru saja habis. Periksa jumlahnya.",
+      "exceeds_remaining": "Sisa porsi tidak cukup untuk salah satu menu. Periksa jumlahnya.",
+      "ordering_closed": "Pemesanan sudah ditutup.",
+      "other": "Tidak bisa membuat pesanan."
+    },
+    "saved": "Pesanan tersimpan",
+    "savedSummary": "{{name}} · {{how}}",
+    "whatsappLabel": "Nomor WhatsApp pelanggan (opsional, tidak disimpan)",
+    "whatsappHelper": "Nomor HP Australia, mis. 0412 345 678. Hanya untuk membuka chat; tidak pernah disimpan.",
+    "whatsappInvalid": "Nomor HP tidak valid.",
+    "send": "Kirim tautan pesanan lewat WhatsApp",
+    "done": "Selesai",
+    "status": "Dimulai sebagai {{status}}"
+  },
+  "linkMsg": "Halo {{name}}, ini pesanan Anda {{code}}: {{items}}. Total {{total}}. {{how}}. Pantau dan terima kabar terbaru di sini: {{link}}",
+  "attention": {
+    "new": "Pelanggan baru",
+    "edited": "Diubah pelanggan",
+    "note": "Catatan",
+    "locked": "Dikunci",
+    "none": "Tidak ada yang perlu dilakukan"
   }
 }

@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { ApiFailure } from '../../api/http';
-import type { Fulfilment, Language, Order } from '../../../shared/domain';
+import type { Fulfilment, Language, CustomerOrder } from '../../../shared/domain';
 import { MAX_QTY } from '../../../shared/limits';
 import type { MenuResponse } from '../../../shared/menuContract';
 
@@ -23,8 +23,25 @@ export type PlaceState =
 export type OrderState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; order: Order }
+  | { status: 'ready'; order: CustomerOrder }
   | { status: 'error'; code: FailureCode };
+
+/**
+ * Editing an existing order: its lines load into the basket. `original` is the quantity the order
+ * already holds per item (the menu's portions left already count it).
+ */
+export type EditState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'ready'; order: CustomerOrder; original: Record<string, number> }
+  | { status: 'error'; code: FailureCode };
+
+/** The result of "Update order". */
+export type UpdateState =
+  | { status: 'idle' }
+  | { status: 'submitting' }
+  | { status: 'done' }
+  | { status: 'failed'; code: FailureCode; message: string };
 
 export type CustomerState = {
   menu: MenuState;
@@ -32,6 +49,8 @@ export type CustomerState = {
   basket: Record<string, number>;
   place: PlaceState;
   order: OrderState;
+  edit: EditState;
+  update: UpdateState;
 };
 export type CustomerRootState = { customer: CustomerState };
 
@@ -42,19 +61,26 @@ export type PlaceRequest = {
   note: string;
 };
 
+export type UpdateRequest = { fulfilment: Fulfilment; note: string };
+
 const initialState: CustomerState = {
   menu: { status: 'idle' },
   basket: {},
   place: { status: 'idle' },
   order: { status: 'idle' },
+  edit: { status: 'idle' },
+  update: { status: 'idle' },
 };
 
-/** Most of this item that can be in the basket: the portion limit left, else the line maximum. */
-function maxFor(menu: MenuState, itemId: string): number {
+/** Most of this item that can be in the basket: the portion limit left (plus the order's own), else the line maximum. */
+function maxFor(state: CustomerState, itemId: string): number {
+  const { menu, edit } = state;
   if (menu.status !== 'ready') return MAX_QTY;
+  const own = edit.status === 'ready' ? (edit.original[itemId] ?? 0) : 0;
   const item = menu.data.items.find((candidate) => candidate.id === itemId);
-  if (!item || item.soldOut) return 0;
-  return Math.min(MAX_QTY, item.remaining ?? MAX_QTY);
+  if (!item) return 0;
+  if (item.remaining === null) return item.soldOut ? 0 : MAX_QTY;
+  return Math.min(MAX_QTY, item.remaining + own);
 }
 
 const customerSlice = createSlice({
@@ -69,7 +95,7 @@ const customerSlice = createSlice({
       state.menu = { status: 'ready', data: action.payload };
       // Drop or trim basket lines the new stock can no longer cover.
       for (const [itemId, qty] of Object.entries(state.basket)) {
-        const max = maxFor(state.menu, itemId);
+        const max = maxFor(state, itemId);
         if (max === 0) delete state.basket[itemId];
         else if (qty > max) state.basket[itemId] = max;
       }
@@ -79,7 +105,7 @@ const customerSlice = createSlice({
     },
     quantitySet(state, action: PayloadAction<{ itemId: string; qty: number }>) {
       const { itemId, qty } = action.payload;
-      const next = Math.max(0, Math.min(Math.floor(qty), maxFor(state.menu, itemId)));
+      const next = Math.max(0, Math.min(Math.floor(qty), maxFor(state, itemId)));
       if (next === 0) delete state.basket[itemId];
       else state.basket[itemId] = next;
     },
@@ -90,7 +116,7 @@ const customerSlice = createSlice({
       // The saga reads the payload; the reducer only needs to know a request started.
       prepare: (request: PlaceRequest) => ({ payload: request }),
     },
-    placeSucceeded(state, action: PayloadAction<Order>) {
+    placeSucceeded(state, action: PayloadAction<CustomerOrder>) {
       state.place = { status: 'placed', token: action.payload.token };
       state.order = { status: 'ready', order: action.payload };
       state.basket = {};
@@ -101,13 +127,48 @@ const customerSlice = createSlice({
     placeReset(state) {
       state.place = { status: 'idle' };
     },
+    editRequested: {
+      reducer(state) {
+        state.edit = { status: 'loading' };
+        state.update = { status: 'idle' };
+      },
+      prepare: (token: string) => ({ payload: token }),
+    },
+    editLoaded(state, action: PayloadAction<CustomerOrder>) {
+      const original: Record<string, number> = {};
+      for (const line of action.payload.lines) original[line.itemId] = line.qty;
+      state.edit = { status: 'ready', order: action.payload, original };
+      state.basket = { ...original };
+    },
+    editFailed(state, action: PayloadAction<FailureCode>) {
+      state.edit = { status: 'error', code: action.payload };
+    },
+    /** Leaving the edit screen: the basket is emptied so it cannot leak into a new order. */
+    editCleared(state) {
+      if (state.edit.status !== 'idle') state.basket = {};
+      state.edit = { status: 'idle' };
+      state.update = { status: 'idle' };
+    },
+    updateRequested: {
+      reducer(state) {
+        state.update = { status: 'submitting' };
+      },
+      prepare: (request: UpdateRequest) => ({ payload: request }),
+    },
+    updateSucceeded(state, action: PayloadAction<CustomerOrder>) {
+      state.update = { status: 'done' };
+      state.order = { status: 'ready', order: action.payload };
+    },
+    updateFailed(state, action: PayloadAction<{ code: FailureCode; message: string }>) {
+      state.update = { status: 'failed', ...action.payload };
+    },
     orderRequested: {
       reducer(state) {
         state.order = { status: 'loading' };
       },
       prepare: (token: string) => ({ payload: token }),
     },
-    orderLoaded(state, action: PayloadAction<Order>) {
+    orderLoaded(state, action: PayloadAction<CustomerOrder>) {
       state.order = { status: 'ready', order: action.payload };
     },
     orderFailed(state, action: PayloadAction<FailureCode>) {
@@ -125,6 +186,13 @@ export const {
   placeSucceeded,
   placeFailed,
   placeReset,
+  editRequested,
+  editLoaded,
+  editFailed,
+  editCleared,
+  updateRequested,
+  updateSucceeded,
+  updateFailed,
   orderRequested,
   orderLoaded,
   orderFailed,

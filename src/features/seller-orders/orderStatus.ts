@@ -1,11 +1,13 @@
 import type { OrderStatus } from '../../../shared/domain';
 import type { StatusTone } from '../../theme/tokens';
 
-export type StatusFilter = 'all' | 'ordered' | 'confirmed' | 'ready' | 'done' | 'cancelled';
+export type StatusFilter =
+  'all' | 'ordered' | 'changed' | 'confirmed' | 'ready' | 'done' | 'cancelled';
 
 export const STATUS_FILTERS: ReadonlyArray<StatusFilter> = [
   'all',
   'ordered',
+  'changed',
   'confirmed',
   'ready',
   'done',
@@ -18,7 +20,7 @@ export function parseStatusFilter(value: string | null): StatusFilter {
 }
 
 /** Which filter tab an order falls under ("Ready" and "Done" each group two statuses). */
-export function filterOf(status: OrderStatus): Exclude<StatusFilter, 'all'> {
+export function filterOf(status: OrderStatus): Exclude<StatusFilter, 'all' | 'changed'> {
   switch (status) {
     case 'ordered':
       return 'ordered';

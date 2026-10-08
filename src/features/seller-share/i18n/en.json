@@ -1,0 +1,17 @@
+{
+  "title": "Share menu",
+  "loading": "Loading the menu…",
+  "error": "Could not load the menu.",
+  "retry": "Try again",
+  "language": {
+    "label": "Language of the post",
+    "id": "Indonesian",
+    "en": "English",
+    "both": "Both"
+  },
+  "preview": "Text preview",
+  "share": "Share to WhatsApp",
+  "copy": "Copy text",
+  "copied": "Copied",
+  "copyFailed": "Could not copy. Select the text instead."
+}

@@ -1,0 +1,13 @@
+# Lessons
+
+Each entry opens with the "do this instead", then what happened and what it cost (conventions §7).
+
+1. **Check weekdays against a real calendar before putting sample dates in a brief.** The coordinator wrote "Sat 11 Oct / Fri 10 Oct 2026" into four wireframe briefs and the mock fixture; in 2026 Saturday is the 10th. A builder caught it in stage 3.2; cost one fix round, and the wireframes still carry the wrong dates.
+2. **Read the PC clock (`date`) before writing any time on the board.** Phase 2 and stage 3.0 times were estimated and ran ahead of the real clock by up to ~40 min; corrected and noted on the board. Cost: board credibility, two correction passes.
+3. **When a brief restricts what a folder may import, think about every future user of that folder.** The 3.1 brief said `src/harness` may import only `ui`/`theme`; feature harnesses in wave 2 then failed lint, and one builder suppressed the rule. Cost: one fix round plus removing a suppression.
+4. **Have the haiku reader extract a large owner source once, then reconcile it against the decisions before building.** Done right for the owner's "Delave" prototype (484-line extract, one reconciliation table, one ruling, D-027) — kept the 150 KB page out of every brief.
+5. **Run the contrast check on any palette before adopting it, even the owner's own.** The reference palette had three AA gaps (sage text, gold text, input borders); fixed by adding tokens, not changing the look.
+6. **After a bug-fix deviation in a builder report, ask for (or check) a test that fails without the fix.** 3.5 fixed a basket→order redirect bug (`placeReset`) without proof that its test fails without the fix. Not yet verified.
+7. **Forbid `git stash` / `checkout` / `reset` in builder briefs on this PC.** `core.autocrlf=true` rewrites files with CRLF on checkout; the 4.1 builder stashed to compare a build and left 26 files with CRLF, failing Prettier at the gate although its report said format passed. Cost: a failed gate and a normalisation pass.
+8. **Check what the public API returns against the visibility rulings, not just the screens.** The customer screens hid chef names (D-012), but `GET /api/menu` still sent them. Found by reading the contract before wave 2.
+9. **Keep e2e specs off limited stock.** One Playwright run shares one mock store across all projects; specs that ordered the 20-portion Lemper sold it out, and a later spec failed "randomly" three times before the coordinator traced it. Use unlimited items; test limits in one serial spec that reads the current remaining first.

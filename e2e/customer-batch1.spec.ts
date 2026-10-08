@@ -25,24 +25,24 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   // C1 menu
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Delave' })).toBeVisible();
-  const addLemper = page.getByRole('button', { name: 'Add one Chicken lemper' });
-  await addLemper.click();
-  await addLemper.click();
+  const addPesmol = page.getByRole('button', { name: 'Add one Tilapia pesmol' });
+  await addPesmol.click();
+  await addPesmol.click();
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
-  await expect(page.getByText('3 items · $30.00')).toBeVisible();
+  await expect(page.getByText('3 items · $40.00')).toBeVisible();
   await shot('menu');
 
   // C2 basket and checkout
   await page.getByRole('button', { name: /View basket/ }).click();
   await expect(page).toHaveURL(/\/basket$/);
-  await expect(page.getByRole('button', { name: 'Place order · $30.00' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Place order · $40.00' })).toBeVisible();
   await page.getByLabel('Your first name').fill(firstName);
   await page.getByLabel('Note for the seller (optional)').fill('No chilli on the tempeh please');
   await shot('basket');
-  await page.getByRole('button', { name: 'Place order · $30.00' }).click();
+  await page.getByRole('button', { name: 'Place order · $40.00' }).click();
 
   // C3 order placed: the order page has its own link
-  await expect(page).toHaveURL(/\/o\/[^/]+$/);
+  await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
   const code = page.getByTestId('order-code');
   await expect(code).toHaveText(/^[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}$/);
   await expect(page.getByText('Note: No chilli on the tempeh please')).toBeVisible();
@@ -57,8 +57,8 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   expect(url.origin + url.pathname).toBe('https://wa.me/');
   const text = url.searchParams.get('text') ?? '';
   expect(text).toContain(`my order is ${(await code.textContent()) ?? ''}`);
-  expect(text).toContain('2× Chicken lemper, 1× Thin battered tempeh');
-  expect(text).toContain('Total $30.00');
+  expect(text).toContain('2× Tilapia pesmol, 1× Thin battered tempeh');
+  expect(text).toContain('Total $40.00');
   expect(text).toContain(`Name: ${firstName}`);
   await popup.close();
 
@@ -78,23 +78,23 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
 test('customer menu in Indonesian shows Indonesian item names and dates', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('radio', { name: 'ID' }).click();
-  await expect(page.getByText('Lemper ayam')).toBeVisible();
+  await expect(page.getByText('Pesmol ikan nila')).toBeVisible();
   await expect(page.getByText('Sabtu, 10 Okt')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Pesanan saya' })).toBeVisible();
 });
 
 test('Back from the basket returns to the menu with the basket intact', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Add one Chicken lemper' }).click();
+  await page.getByRole('button', { name: 'Add one Tilapia pesmol' }).click();
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
-  await expect(page.getByText('2 items · $20.00')).toBeVisible();
+  await expect(page.getByText('2 items · $25.00')).toBeVisible();
   await page.getByRole('button', { name: /View basket/ }).click();
   await expect(page).toHaveURL(/\/basket$/);
 
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByText('2 items · $20.00')).toBeVisible();
+  await expect(page.getByText('2 items · $25.00')).toBeVisible();
   // Forward again: the basket page still has both lines.
   await page.goForward();
-  await expect(page.getByRole('button', { name: 'Place order · $20.00' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Place order · $25.00' })).toBeVisible();
 });

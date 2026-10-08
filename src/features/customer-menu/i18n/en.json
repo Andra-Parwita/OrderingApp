@@ -1,5 +1,7 @@
 {
-  "language": { "label": "Language" },
+  "language": {
+    "label": "Language"
+  },
   "common": {
     "retry": "Try again",
     "loading": "Loading…",
@@ -24,7 +26,17 @@
     "increase": "Add one {{name}}",
     "items_one": "{{count}} item",
     "items_other": "{{count}} items",
-    "viewBasket": "View basket"
+    "viewBasket": "View basket",
+    "howTitle": "How ordering works",
+    "how1": "Choose your items and place your order.",
+    "how2": "You get an order number, like K7F-2QX.",
+    "how3": "Send that number to {{kitchen}} on WhatsApp ({{number}}).",
+    "how3Generic": "Send that number to the seller on WhatsApp.",
+    "closedTitle": "Orders for this Saturday are closed",
+    "closedByseller": "The seller has paused ordering for now.",
+    "closedCutoff": "The order cut-off has passed.",
+    "messageSeller": "Message seller on WhatsApp",
+    "viewOnly": "You can still see the menu."
   },
   "basket": {
     "title": "Your basket",
@@ -50,8 +62,16 @@
       "sold_out": "Sorry, an item just sold out. Your basket is kept; please check the menu and try again.",
       "exceeds_remaining": "Sorry, there are fewer portions left than you asked for. Please lower the quantity and try again.",
       "cutoff_passed": "Sorry, orders for this week are closed.",
-      "other": "Could not place your order. Check your connection and try again."
-    }
+      "other": "Could not place your order. Check your connection and try again.",
+      "order_locked": "The seller has locked this order. Message them on WhatsApp to change it.",
+      "ordering_closed": "Sorry, ordering is closed right now.",
+      "editLoad": "Could not load your order."
+    },
+    "update": "Update order · {{total}}",
+    "updating": "Updating your order…",
+    "editTitle": "Change your order",
+    "editCutoff": "You can change or cancel until {{when}}",
+    "editOnly": "Your first name stays as it was."
   },
   "placed": {
     "title": "Order placed",
@@ -66,7 +86,8 @@
     "updates": "Turn on updates",
     "comingSoon": "Coming soon",
     "saved": "Saved in My orders on this phone",
-    "change": "Change or cancel order"
+    "change": "Change or cancel order",
+    "optional": "You have ordered before, so sending this on WhatsApp is optional."
   },
   "status": {
     "ordered": "Ordered",

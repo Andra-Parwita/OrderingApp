@@ -1,12 +1,20 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
 import { customerReducer } from '../features/customer-menu';
+import { customerOrdersReducer } from '../features/customer-orders';
+import { cookReducer } from '../features/seller-cook';
 import { sellerOrdersReducer } from '../features/seller-orders';
+import { settingsReducer } from '../features/seller-settings';
+import { shareReducer } from '../features/seller-share';
 import { rootSaga } from './rootSaga';
 
 const rootReducer = combineReducers({
   customer: customerReducer,
+  customerOrders: customerOrdersReducer,
   sellerOrders: sellerOrdersReducer,
+  sellerCook: cookReducer,
+  sellerShare: shareReducer,
+  sellerSettings: settingsReducer,
 });
 
 export function createAppStore() {

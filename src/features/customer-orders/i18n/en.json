@@ -1,0 +1,90 @@
+{
+  "common": {
+    "retry": "Try again",
+    "loading": "Loading…",
+    "back": "Back",
+    "myOrders": "My orders",
+    "errorBody": "Please try again."
+  },
+  "list": {
+    "title": "My orders",
+    "loadError": "Could not load your orders. Check your connection and try again.",
+    "findTitle": "Have an order code? Open it",
+    "codeLabel": "Order code",
+    "codeHelper": "k7f2qx, K7F 2QX and K7F-2QX all work; it opens on the 6th character",
+    "codeNotFound": "That code is not saved on this phone. Open the link the seller sent you, or message them on WhatsApp.",
+    "thisWeek": "This week",
+    "earlier": "Earlier orders",
+    "empty": "Your orders will appear here. Pick something from this week's menu to get started.",
+    "toMenu": "See this week's menu",
+    "footnote": "Saved on this phone only. No account.",
+    "locked": "Locked",
+    "newUpdate": "New update",
+    "pickup": "Pickup",
+    "delivery": "Delivery"
+  },
+  "order": {
+    "title": "Your order",
+    "loadError": "Could not load your order.",
+    "yourNumber": "Your order number",
+    "qrLabel": "QR code (coming later)",
+    "total": "Total",
+    "pickup": "Pickup",
+    "delivery": "Delivery",
+    "note": "Note: {{note}}",
+    "whatsapp": "Send to seller on WhatsApp",
+    "change": "Change order",
+    "cancel": "Cancel order",
+    "cancelConfirm": "Tap again to cancel",
+    "changeUntil": "Until {{when}}. Cancel asks for a second tap.",
+    "closed": "Changes closed at the cut-off",
+    "lockedBanner": "The seller has locked this order. Message them on WhatsApp to change it.",
+    "readyPickup": "Ready! Pick up {{when}}",
+    "outForDelivery": "Your order is on its way.",
+    "cancelled": "This order was cancelled.",
+    "updates": "Updates",
+    "noUpdates": "No updates yet.",
+    "errors": {
+      "order_locked": "The seller has locked this order. Message them on WhatsApp to change it.",
+      "ordering_closed": "Sorry, ordering is closed right now.",
+      "cutoff_passed": "Sorry, the cut-off has passed.",
+      "other": "Could not cancel your order. Check your connection and try again."
+    }
+  },
+  "timeline": {
+    "label": "Order progress",
+    "now": "now",
+    "done": "done"
+  },
+  "status": {
+    "ordered": "Ordered",
+    "confirmed": "Confirmed",
+    "ready_for_pickup": "Ready for pickup",
+    "out_for_delivery": "Out for delivery",
+    "collected": "Collected",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "inbox": {
+    "nudge": "The seller is waiting for your order number on WhatsApp.",
+    "nudgeReturning": "Your order is in. Sending it on WhatsApp is optional, but it helps the seller confirm faster.",
+    "readyIn": "Ready in about {{minutes}} minutes.",
+    "other": "Update from the seller",
+    "status": {
+      "ordered": "Order placed",
+      "confirmed": "Your order is confirmed",
+      "ready_for_pickup": "Ready for pickup",
+      "out_for_delivery": "Out for delivery",
+      "collected": "Collected",
+      "delivered": "Delivered",
+      "cancelled": "Order cancelled"
+    }
+  },
+  "wa": {
+    "message": "Hi, my order is {{code}}: {{items}}. Total {{total}}. {{how}}. Name: {{name}}.",
+    "pickup": "Pickup",
+    "pickupWhen": "Pickup {{when}}",
+    "delivery": "Delivery",
+    "addAddress": "My address:"
+  }
+}

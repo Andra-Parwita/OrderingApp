@@ -1,10 +1,34 @@
 {
-  "app": { "name": "Menu Mingguan" },
-  "language": { "label": "Bahasa" },
-  "myOrders": {
-    "title": "Pesanan saya",
-    "soon": "Pesanan saya — hadir di tahap berikutnya.",
-    "back": "Kembali ke menu"
+  "app": {
+    "name": "Menu Mingguan"
+  },
+  "language": {
+    "label": "Bahasa",
+    "switchTo": "Ganti bahasa ke {{name}}",
+    "name": { "en": "Bahasa Inggris", "id": "Bahasa Indonesia" }
+  },
+  "theme": {
+    "label": "Tampilan",
+    "auto": "Ikuti perangkat",
+    "light": "Terang",
+    "dark": "Gelap"
+  },
+  "sellerNav": {
+    "label": "Penjual",
+    "kitchen": "Dapur",
+    "orders": "Pesanan",
+    "cook": "Daftar masak",
+    "handover": "Serah terima",
+    "menu": "Menu",
+    "more": "Lainnya",
+    "comingSoon": "segera hadir",
+    "imageSoon": "Gambar banner — segera hadir",
+    "railImageSoon": "Gambar menu samping — segera hadir",
+    "railImage": "Gambar menu samping",
+    "bannerImage": "Gambar banner",
+    "collapse": "Ciutkan menu",
+    "expand": "Perluas menu",
+    "shareMenu": "Bagikan menu ke WhatsApp"
   },
   "notFound": {
     "title": "Halaman tidak ditemukan",

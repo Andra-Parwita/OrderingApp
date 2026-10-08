@@ -1,0 +1,40 @@
+{
+  "title": "To cook · {{date}}",
+  "titleBare": "To cook",
+  "live": "Live",
+  "offline": "Reconnecting…",
+  "loading": "Loading the cook list…",
+  "error": "Could not load the cook list.",
+  "retry": "Try again",
+  "empty": "Nothing to cook yet.",
+  "mode": {
+    "label": "Count",
+    "all": "Confirmed + Ordered",
+    "confirmed": "Confirmed only"
+  },
+  "group": {
+    "label": "Group by",
+    "item": "Item",
+    "chef": "Chef",
+    "customer": "Customer",
+    "fulfilment": "Pickup/delivery"
+  },
+  "stats": {
+    "label": "Totals",
+    "orders": "Orders",
+    "income": "Income",
+    "paid": "Paid",
+    "unpaid": "Unpaid"
+  },
+  "fulfilment": {
+    "pickup": "Pickup",
+    "delivery": "Delivery"
+  },
+  "items_one": "{{count}} item",
+  "items_other": "{{count}} items",
+  "ofLimit": "{{count}} of {{limit}} portions",
+  "who": "Who ordered",
+  "notes": "Notes ({{count}})",
+  "titleDesktop": "Cook list · {{date}}",
+  "print": "Print cook list"
+}

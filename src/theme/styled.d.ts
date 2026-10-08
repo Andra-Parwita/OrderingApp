@@ -22,6 +22,8 @@ declare module 'styled-components' {
       /** Sage as text: darker in light mode for AA (D-027). */
       sageText: string;
       danger: string;
+      /** The dim layer behind a modal panel. */
+      scrim: string;
     };
     /** Muted status tints: text (fg) on tint (bg). Always paired with text, never colour-only. */
     status: Record<StatusTone, { fg: string; bg: string }>;

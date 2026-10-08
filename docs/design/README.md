@@ -43,3 +43,4 @@ Mock-ups come before any UI build. The images in [briefs/mock](../../briefs/mock
 
 - [batch-1-directions.html](mockups/batch-1-directions.html): two visual directions (A Sage, B Clay), customer menu + seller orders, light and dark, with token and contrast tables and proposed status-pill tints. Picked: **A, Sage** ([D-023](../decisions/README.md)).
 - [batch-1-directions-2.html](mockups/batch-1-directions-2.html): round 2: B Clay, C Sogan, D Nila & Kunyit, with an optional batik motif in the banner. Picked: **C, Sogan** ([D-025](../decisions/README.md)); motif pending.
+- [seller-desktop.html](mockups/seller-desktop.html): desktop seller layouts A1 (table + slide-over) vs A2 (three columns), with cook list and empty state, low-tech-literacy rules (D-030). Picked: **A1** + "Next order" ([D-031](../decisions/README.md)).

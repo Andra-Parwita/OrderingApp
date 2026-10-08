@@ -5,8 +5,10 @@ import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
+import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import { pickText } from '../../../shared/text';
-import { Button } from '../../ui';
+import { whatsAppUrl } from '../../api/device/whatsapp';
+import { Button, ImageSlot } from '../../ui';
 import { menuRequested, quantitySet } from './customerSlice';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
@@ -15,23 +17,6 @@ import { ItemRow } from './ItemRow';
 import { Block, Muted, Page, StateMessage, Strong, Title, TopBar, useLang } from './layout';
 import { ScreenBoundary } from './ScreenBoundary';
 import { selectBasket, selectBasketCount, selectBasketTotalCents, selectMenu } from './selectors';
-
-const Banner = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: calc(${({ theme }) => theme.minTapTarget} * 2);
-  background: ${({ theme }) => theme.colour.surface};
-  color: ${({ theme }) => theme.colour.textMuted};
-  font-size: ${({ theme }) => theme.type.size.sm};
-`;
-
-const BannerImage = styled.img`
-  display: block;
-  width: 100%;
-  height: calc(${({ theme }) => theme.minTapTarget} * 2);
-  object-fit: cover;
-`;
 
 const Week = styled.dl`
   margin: 0;
@@ -55,6 +40,19 @@ const Items = styled.ul`
   margin: 0;
   padding: 0;
   list-style: none;
+`;
+
+const Steps = styled.ol`
+  margin: 0;
+  padding-left: ${({ theme }) => theme.spacing.xl};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  font-size: ${({ theme }) => theme.type.size.sm};
+`;
+
+const Closed = styled(Block)`
+  background: ${({ theme }) => theme.colour.surface};
 `;
 
 const Bar = styled.div`
@@ -96,6 +94,45 @@ function WeekBlock({ data, lang }: Readonly<{ data: MenuResponse; lang: Language
   );
 }
 
+function HowItWorks({ kitchen }: Readonly<{ kitchen: MenuResponse['kitchen'] }>) {
+  const { t } = useTranslation(CUSTOMER_NS);
+  return (
+    <Block as="section" aria-label={t('menu.howTitle')}>
+      <Strong>{t('menu.howTitle')}</Strong>
+      <Steps>
+        <li>{t('menu.how1')}</li>
+        <li>{t('menu.how2')}</li>
+        <li>
+          {kitchen.whatsappNumber
+            ? t('menu.how3', { kitchen: kitchen.name, number: `+${kitchen.whatsappNumber}` })
+            : t('menu.how3Generic')}
+        </li>
+      </Steps>
+    </Block>
+  );
+}
+
+function ClosedBlock({ data }: Readonly<{ data: MenuResponse }>) {
+  const { t } = useTranslation(CUSTOMER_NS);
+  const reason = data.ordering.reason === 'cutoff_passed' ? 'closedCutoff' : 'closedByseller';
+  const openWhatsApp = useCallback(() => {
+    window.open(
+      whatsAppUrl(undefined, data.kitchen.whatsappNumber),
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }, [data.kitchen.whatsappNumber]);
+  return (
+    <Closed role="status">
+      <Strong>{t('menu.closedTitle')}</Strong>
+      <Muted>{t(`menu.${reason}`)}</Muted>
+      <Button variant="primary" onClick={openWhatsApp}>
+        {t('menu.messageSeller')}
+      </Button>
+    </Closed>
+  );
+}
+
 function MenuContent({ onViewBasket, onMyOrders }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
@@ -125,15 +162,18 @@ function MenuContent({ onViewBasket, onMyOrders }: Props) {
       </TopBar>
       {menu.status === 'ready' ? (
         <>
-          {menu.data.kitchen.bannerImageUrl ? (
-            <BannerImage src={menu.data.kitchen.bannerImageUrl} alt="" />
-          ) : (
-            <Banner aria-hidden="true">{t('menu.bannerImage')}</Banner>
-          )}
+          <ImageSlot
+            aspectRatio="2 / 1"
+            background={menu.data.kitchen.images?.bannerBackground}
+            src={phoneBannerSrc(menu.data.kitchen.images) ?? menu.data.kitchen.bannerImageUrl}
+            alt={bannerAlt(menu.data.kitchen, lang)}
+            placeholder={t('menu.bannerImage')}
+          />
           <Block>
             <Title>{menu.data.kitchen.name}</Title>
             <Muted>{pickText(menu.data.kitchen.tagline, lang)}</Muted>
           </Block>
+          {menu.data.ordering.open ? null : <ClosedBlock data={menu.data} />}
           <WeekBlock data={menu.data} lang={lang} />
           <Items>
             {menu.data.items.map((item) => (
@@ -143,9 +183,11 @@ function MenuContent({ onViewBasket, onMyOrders }: Props) {
                 qty={basket[item.id] ?? 0}
                 lang={lang}
                 onQty={onQty}
+                closed={!menu.data.ordering.open}
               />
             ))}
           </Items>
+          <HowItWorks kitchen={menu.data.kitchen} />
         </>
       ) : menu.status === 'error' ? (
         <StateMessage
@@ -156,7 +198,7 @@ function MenuContent({ onViewBasket, onMyOrders }: Props) {
       ) : (
         <StateMessage text={t('common.loading')} />
       )}
-      {count > 0 ? (
+      {count > 0 && !(menu.status === 'ready' && !menu.data.ordering.open) ? (
         <Bar>
           <Strong>
             {t('menu.items', { count })} · {formatMoney(totalCents, lang)}

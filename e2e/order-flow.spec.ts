@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { orderRow, searchBox } from './sellerHelpers';
 
 function watchConsole(page: Page): Array<string> {
   const errors: Array<string> = [];
@@ -21,13 +22,13 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   const firstName = `Flow-${Date.now()}`;
   const note = 'Less spicy please';
 
-  // Customer (iPhone): two lemper, one tempe, a name and a note.
+  // Customer (iPhone): two pesmol, one tempe, a name and a note.
   await page.goto('/');
-  const addLemper = page.getByRole('button', { name: 'Add one Chicken lemper' });
-  await addLemper.click();
-  await addLemper.click();
+  const addPesmol = page.getByRole('button', { name: 'Add one Tilapia pesmol' });
+  await addPesmol.click();
+  await addPesmol.click();
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
-  await expect(page.getByText('3 items · $30.00')).toBeVisible();
+  await expect(page.getByText('3 items · $40.00')).toBeVisible();
   await page.screenshot({ path: 'captures/flow-1-menu.png', fullPage: true });
 
   await page.getByRole('button', { name: /View basket/ }).click();
@@ -35,9 +36,9 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   await page.getByLabel('Your first name').fill(firstName);
   await page.getByLabel('Note for the seller (optional)').fill(note);
   await page.screenshot({ path: 'captures/flow-2-basket.png', fullPage: true });
-  await page.getByRole('button', { name: 'Place order · $30.00' }).click();
+  await page.getByRole('button', { name: 'Place order · $40.00' }).click();
 
-  await expect(page).toHaveURL(/\/o\/[^/]+$/);
+  await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
   const code = page.getByTestId('order-code');
   await expect(code).toHaveText(/^[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}$/);
   await expect(page.getByText(`Note: ${note}`)).toBeVisible();
@@ -54,25 +55,27 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
     const sellerErrors = watchConsole(sellerPage);
     await sellerPage.goto('/seller');
     await expect(sellerPage.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
-    await sellerPage.getByLabel('Order code or name').fill(firstName);
+    await searchBox(sellerPage).fill(firstName);
     await expect(sellerPage).toHaveURL(/\/seller\?q=Flow-/);
-    const row = sellerPage.getByRole('button', { name: new RegExp(firstName) });
+    const row = orderRow(sellerPage, new RegExp(firstName));
     await expect(row).toBeVisible();
     await expect(row).toContainText(orderCode);
-    await expect(row).toContainText('$30.00');
+    await expect(row).toContainText('$40.00');
     await sellerPage.screenshot({ path: 'captures/flow-4-seller-list.png', fullPage: true });
 
     await row.click();
-    await expect(sellerPage).toHaveURL(/\/seller\/orders\/[A-Z0-9]+$/);
+    await expect(sellerPage).toHaveURL(/\/seller\/orders\/[A-Z0-9]+\?q=/);
     await expect(sellerPage.getByText(note)).toBeVisible();
-    await expect(sellerPage.getByText('2× Chicken lemper')).toBeVisible();
+    await expect(sellerPage.getByText('2× Tilapia pesmol')).toBeVisible();
     await expect(sellerPage.getByText('1× Thin battered tempeh')).toBeVisible();
 
-    await sellerPage.getByRole('button', { name: 'Confirmed', exact: true }).click();
-    const ready = sellerPage.getByRole('button', { name: 'Ready for pickup', exact: true });
+    await sellerPage.getByRole('button', { name: 'Confirm order', exact: true }).click();
+    const ready = sellerPage.getByRole('button', { name: 'Mark ready for pickup', exact: true });
     await expect(ready).toBeVisible();
     await ready.click();
-    await expect(sellerPage.getByRole('button', { name: 'Collected', exact: true })).toBeVisible();
+    await expect(
+      sellerPage.getByRole('button', { name: 'Mark collected', exact: true }),
+    ).toBeVisible();
     await sellerPage.screenshot({ path: 'captures/flow-5-seller-ready.png', fullPage: true });
 
     expect(sellerErrors).toEqual([]);

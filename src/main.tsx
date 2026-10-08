@@ -3,7 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
 import { createAppStore } from './app/store';
 import { registerCustomerI18n } from './features/customer-menu';
+import { registerCustomerOrdersI18n } from './features/customer-orders';
+import { registerCookI18n } from './features/seller-cook';
 import { registerSellerI18n } from './features/seller-orders';
+import { registerSettingsI18n } from './features/seller-settings';
+import { registerShareI18n } from './features/seller-share';
 import { initI18n } from './i18n/init';
 
 const container = document.getElementById('root');
@@ -12,8 +16,8 @@ if (!container) throw new Error('Missing #root element');
 // ?harness=<name> mounts ./harness/<name>.tsx. Dev only: `import.meta.env.DEV` is false in a
 // production build, so the glob and every harness are dropped from the bundle. The module
 // exports a component named `Harness`; a file whose name differs from the query, or that
-// exports another name, is listed in LEGACY. Harnesses bring their own store; i18n (with both
-// features' strings) is ready before they load.
+// exports another name, is listed in LEGACY. Harnesses bring their own store; i18n (with every
+// feature's strings) is ready before they load.
 const harnesses = import.meta.env.DEV
   ? import.meta.glob<Record<string, unknown>>('./harness/*.tsx')
   : {};
@@ -34,7 +38,11 @@ const harness = import.meta.env.DEV
 
 void initI18n().then(async () => {
   registerCustomerI18n();
+  registerCustomerOrdersI18n();
   registerSellerI18n();
+  registerCookI18n();
+  registerShareI18n();
+  registerSettingsI18n();
   if (harness) {
     const module = await harness.loader();
     const component = module[harness.component];
