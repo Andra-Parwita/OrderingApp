@@ -8,6 +8,12 @@ import {
 } from '../../shared/devContract';
 import type { KitchenSettings, OrderStatus, StaffActor } from '../../shared/domain';
 import {
+  parseMenuViewResponse,
+  parseUpdateMenuResponse,
+  type MenuViewResponse,
+  type UpdateMenuResponse,
+} from '../../shared/menusContract';
+import {
   parseMenuResponse,
   parseSellerMenuResponse,
   type MenuResponse,
@@ -40,29 +46,16 @@ import {
 import {
   parseChefResponse,
   parseChefsResponse,
-  parseCloseWeekResponse,
   parseImagesResponse,
   parseItemResponse,
-  parseItemsResponse,
   parseOkResponse,
-  parseSetResponse,
-  parseSetsResponse,
-  parseWeekResponse,
   type ChefResponse,
   type ChefsResponse,
-  type CloseWeekResponse,
-  type CreateItemRequest,
   type ImagesResponse,
   type ImageStyleRequest,
   type ItemResponse,
-  type ItemsResponse,
   type OkResponse,
-  type SetResponse,
-  type SetsResponse,
   type UpdateItemRequest,
-  type UseSetRequest,
-  type WeekResponse,
-  type WeekSettingsRequest,
 } from '../../shared/setupContract';
 import {
   parseSendUpdatesResponse,
@@ -184,8 +177,9 @@ export function setOrderStatus(
   to: OrderStatus,
   actor?: StaffActor,
   seller?: string,
+  force?: boolean,
 ): Promise<ApiResult<SellerOrderResponse>> {
-  return sellerPost(code, 'status', { to }, actor, seller);
+  return sellerPost(code, 'status', { to, ...(force ? { force } : {}) }, actor, seller);
 }
 
 export function setOrderPaid(
@@ -219,8 +213,40 @@ export function nudgeOrder(
   code: string,
   actor?: StaffActor,
   seller?: string,
+  force?: boolean,
 ): Promise<ApiResult<SellerOrderResponse>> {
-  return sellerPost(code, 'nudge', undefined, actor, seller);
+  return sellerPost(code, 'nudge', force ? { force } : undefined, actor, seller);
+}
+
+/** The quiet "Mark collected" (D-069 Q4). A warning (409) is overridden with force. */
+export function markOrderCollected(
+  code: string,
+  actor?: StaffActor,
+  seller?: string,
+  force?: boolean,
+): Promise<ApiResult<SellerOrderResponse>> {
+  return sellerPost(code, 'collected', force ? { force } : undefined, actor, seller);
+}
+
+/** The seller's current menu: its state, taking-orders switch, cut-off and dishes (plan 001 stage 3). */
+export function fetchCurrentMenu(
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<MenuViewResponse>> {
+  return request('/api/seller/menus/current', parseMenuViewResponse, who(actor, seller));
+}
+
+/** The Taking orders switch on Orders (allowed while live, instant). */
+export function setTakingOrders(
+  takingOrders: boolean,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<UpdateMenuResponse>> {
+  return request('/api/seller/menus/current', parseUpdateMenuResponse, {
+    method: 'PUT',
+    body: { takingOrders },
+    ...who(actor, seller),
+  });
 }
 
 /** The seller has seen the customer's change. */
@@ -277,65 +303,7 @@ export function fetchDevSellers(): Promise<ApiResult<DevSellersResponse>> {
 
 // ---- Seller setup (stage 6.1) ----
 
-export function fetchWeek(actor?: StaffActor, seller?: string): Promise<ApiResult<WeekResponse>> {
-  return request('/api/seller/week', parseWeekResponse, who(actor, seller));
-}
-
-export function saveWeek(
-  input: WeekSettingsRequest,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<WeekResponse>> {
-  return request('/api/seller/week', parseWeekResponse, {
-    method: 'PUT',
-    body: input,
-    ...who(actor, seller),
-  });
-}
-
-/** 409 `no_items` when the menu is empty. */
-export function publishWeek(actor?: StaffActor, seller?: string): Promise<ApiResult<WeekResponse>> {
-  return request('/api/seller/week/publish', parseWeekResponse, {
-    method: 'POST',
-    ...who(actor, seller),
-  });
-}
-
-export function unpublishWeek(
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<WeekResponse>> {
-  return request('/api/seller/week/unpublish', parseWeekResponse, {
-    method: 'POST',
-    ...who(actor, seller),
-  });
-}
-
-/** Archives the week into Past weeks and starts the next draft week. */
-export function closeWeek(
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<CloseWeekResponse>> {
-  return request('/api/seller/week/close', parseCloseWeekResponse, {
-    method: 'POST',
-    ...who(actor, seller),
-  });
-}
-
-/** 409 `limit_reached` at 10 items. */
-export function createItem(
-  input: CreateItemRequest,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<ItemResponse>> {
-  return request('/api/seller/menu/items', parseItemResponse, {
-    method: 'POST',
-    body: input,
-    ...who(actor, seller),
-  });
-}
-
-/** Edits only affect new orders (D-020). `soldOut` is the manual switch. */
+/** The live Dishes panel and the Prices & limits table edit a menu dish with this (per menu). */
 export function updateItem(
   id: string,
   patch: UpdateItemRequest,
@@ -345,30 +313,6 @@ export function updateItem(
   return request(`/api/seller/menu/items/${enc(id)}`, parseItemResponse, {
     method: 'PATCH',
     body: patch,
-    ...who(actor, seller),
-  });
-}
-
-/** 409 `item_has_orders` when the item has orders: mark it sold out instead. */
-export function deleteItem(
-  id: string,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<OkResponse>> {
-  return request(`/api/seller/menu/items/${enc(id)}`, parseOkResponse, {
-    method: 'DELETE',
-    ...who(actor, seller),
-  });
-}
-
-export function reorderItems(
-  ids: ReadonlyArray<string>,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<ItemsResponse>> {
-  return request('/api/seller/menu/order', parseItemsResponse, {
-    method: 'PUT',
-    body: { ids },
     ...who(actor, seller),
   });
 }
@@ -410,62 +354,6 @@ export function deleteChef(
 ): Promise<ApiResult<OkResponse>> {
   return request(`/api/seller/chefs/${enc(id)}`, parseOkResponse, {
     method: 'DELETE',
-    ...who(actor, seller),
-  });
-}
-
-export function fetchSets(actor?: StaffActor, seller?: string): Promise<ApiResult<SetsResponse>> {
-  return request('/api/seller/sets', parseSetsResponse, who(actor, seller));
-}
-
-/** Saves this week's items and images; a 6th set needs `replaceSetId` (else 409 `limit_reached`). */
-export function saveSet(
-  name: string,
-  replaceSetId?: string,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<SetResponse>> {
-  return request('/api/seller/sets', parseSetResponse, {
-    method: 'POST',
-    body: { name, ...(replaceSetId ? { replaceSetId } : {}) },
-    ...who(actor, seller),
-  });
-}
-
-export function renameSet(
-  id: string,
-  name: string,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<SetResponse>> {
-  return request(`/api/seller/sets/${enc(id)}`, parseSetResponse, {
-    method: 'PATCH',
-    body: { name },
-    ...who(actor, seller),
-  });
-}
-
-export function deleteSet(
-  id: string,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<OkResponse>> {
-  return request(`/api/seller/sets/${enc(id)}`, parseOkResponse, {
-    method: 'DELETE',
-    ...who(actor, seller),
-  });
-}
-
-/** Replaces the draft week's items; send `confirm: true` when the week already has items. */
-export function useSet(
-  id: string,
-  options: UseSetRequest = {},
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<ItemsResponse>> {
-  return request(`/api/seller/sets/${enc(id)}/use`, parseItemsResponse, {
-    method: 'POST',
-    body: options,
     ...who(actor, seller),
   });
 }
@@ -553,18 +441,6 @@ export function fetchOrdersCsv(actor?: StaffActor, seller?: string): Promise<Api
 }
 
 // Saturday tools (stage 7.1).
-
-/** "Arriving soon" for one delivery order (409 `invalid_status` for pickup or closed orders). */
-export function sendArrivingSoon(
-  code: string,
-  actor?: StaffActor,
-  seller?: string,
-): Promise<ApiResult<SellerOrderResponse>> {
-  return request(`/api/seller/orders/${enc(code)}/arriving-soon`, parseSellerOrderResponse, {
-    method: 'POST',
-    ...who(actor, seller),
-  });
-}
 
 /** A bulk update to many customers' inboxes; the answer says what happened per order. */
 export function sendUpdates(

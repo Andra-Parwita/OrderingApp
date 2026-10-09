@@ -1,5 +1,15 @@
 // API routes on standard Request/Response; shared by the Worker and the MSW handlers.
+import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
 import { parseSampleOrdersRequest, type DevSellersResponse } from '../../shared/devContract';
+import {
+  parseDeliveryStepRequest,
+  parseMarkCollectedRequest,
+  parseMessagePlaceRequest,
+  parsePackRequest,
+  type DeliveryStepResponse,
+  type MessagePlaceResponse,
+  type MessagesResponse,
+} from '../../shared/handoverContract';
 import { parseBackupFile } from '../../shared/backup';
 import type {
   Chef,
@@ -10,29 +20,42 @@ import type {
   StaffActor,
 } from '../../shared/domain';
 import { IMAGE_SLOTS, isImageSlot } from '../../shared/imageSlots';
+import {
+  parseCreateDishRequest,
+  parseCreateDishSetRequest,
+  parseCreateMenuRequest,
+  parseUpdateDishRequest,
+  parseUpdateMenuRequest,
+  parseUpdatePickupPlaceRequest,
+  parseUpdatePreferencesRequest,
+  type DeleteDishResponse,
+  type DeletePickupPlaceResponse,
+  type DishesResponse,
+  type DishResponse,
+  type DishSetResponse,
+  type DishSetsResponse,
+  type FinishMenuResponse,
+  type MenuViewResponse,
+  type PickupPlaceResponse,
+  type PickupPlacesResponse,
+  type PreferencesResponse,
+  type UpdateMenuResponse,
+  type UseDishSetResponse,
+} from '../../shared/menusContract';
 import type { PastWeekResponse, PastWeeksResponse } from '../../shared/pastWeeks';
 import {
   parseChefNameRequest,
-  parseCreateItemRequest,
   parseImageStyleRequest,
-  parseRenameSetRequest,
-  parseReorderItemsRequest,
-  parseSaveSetRequest,
+  parseKitchenNameRequest,
+  parsePickupPointInput,
   parseUpdateItemRequest,
   parseUploadImageRequest,
-  parseUseSetRequest,
-  parseWeekSettingsRequest,
   type ChefResponse,
   type ChefsResponse,
-  type CloseWeekResponse,
   type ImagesResponse,
   type ItemResponse,
-  type ItemsResponse,
+  type KitchenNameResponse,
   type OkResponse,
-  type SavedSetView,
-  type SetResponse,
-  type SetsResponse,
-  type WeekResponse,
 } from '../../shared/setupContract';
 import { TOKENS_MAX } from '../../shared/limits';
 import {
@@ -52,6 +75,7 @@ import {
 import { parseOrderCode } from '../../shared/orderCode';
 import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
 import {
+  parseForce,
   parseSetLockedRequest,
   parseSetPaidRequest,
   parseSetStatusRequest,
@@ -99,9 +123,21 @@ function sellerSlugOf(request: Request): string {
   return raw ? raw : DEFAULT_SELLER_SLUG;
 }
 
+/**
+ * A failed store call as an error response. A refusal the seller may override (D-062) carries its
+ * `warning`; the same call with `force: true` goes ahead.
+ */
+function refusal(result: {
+  error: ApiErrorCode;
+  message: string;
+  warning?: ApiWarning | undefined;
+}): Response {
+  return error(result.error, result.message, result.warning ? { warning: result.warning } : {});
+}
+
 /** Seller endpoints return the full order. */
 function sellerResult(result: StoreResult<SellerOrder>, status = 200): Response {
-  if (!result.ok) return error(result.error, result.message);
+  if (!result.ok) return refusal(result);
   const body: SellerOrderResponse = { order: result.value };
   return Response.json(body, { status });
 }
@@ -127,12 +163,6 @@ function chefResult(result: StoreResult<Chef>, status = 200): Response {
     : error(result.error, result.message);
 }
 
-function setResult(result: StoreResult<SavedSetView>, status = 200): Response {
-  return result.ok
-    ? Response.json({ set: result.value } satisfies SetResponse, { status })
-    : error(result.error, result.message);
-}
-
 function okResult(result: StoreResult<true>): Response {
   return result.ok
     ? Response.json({ ok: true } satisfies OkResponse)
@@ -145,7 +175,7 @@ function customerResult(
   seller: SellerRef,
   status = 200,
 ): Response {
-  if (!result.ok) return error(result.error, result.message);
+  if (!result.ok) return refusal(result);
   const body: CustomerOrderResponse = { order: toCustomerOrder(result.value, seller) };
   return Response.json(body, { status });
 }
@@ -305,6 +335,19 @@ export async function handleApiRequest(
         return customerResult(result, hit.sellerRepo.seller);
       }
     }
+    // plan 001 stage 4: "I've collected it". The token is the auth, as on the order page. Idempotent.
+    if (a && b === 'collected' && !c && method === 'POST') {
+      const hit = await store.lookupByToken(a);
+      if (!hit) return error('not_found', 'Order not found');
+      if (hit.kind !== 'live') return weekClosed();
+      const result = await afterOrderWrite(
+        context,
+        hit.sellerRepo.seller.id,
+        'order.changed',
+        await hit.sellerRepo.customerCollected(a),
+      );
+      return customerResult(result, hit.sellerRepo.seller);
+    }
     if (a && b === 'cancel' && !c && method === 'POST') {
       const hit = await store.lookupByToken(a);
       if (!hit) return error('not_found', 'Order not found');
@@ -400,7 +443,21 @@ export async function handleApiRequest(
  */
 function chefMayNot(method: string, a: string | undefined): boolean {
   if (a === 'backup' || a === 'chef-invites' || a === 'chef-devices') return true;
-  const closed = ['menu', 'chefs', 'sets', 'images', 'week', 'settings'];
+  const closed = [
+    'menu',
+    'chefs',
+    'sets',
+    'images',
+    'week',
+    'settings',
+    // plan 001, stage 3
+    'menus',
+    'dishes',
+    'saved-sets',
+    'pickup-places',
+    'preferences',
+    'kitchen',
+  ];
   return closed.includes(a ?? '') && method !== 'GET';
 }
 
@@ -421,6 +478,7 @@ async function dropUnusedImages(
       if (ref !== undefined) inUse.add(ref);
     }
   }
+  if (backup.menu?.pictureRef !== undefined) inUse.add(backup.menu.pictureRef);
   await deleteImageRefs(
     bucket,
     refs.filter((ref) => ref !== undefined && !inUse.has(ref)),
@@ -463,6 +521,23 @@ async function handleSeller(
     return Response.json(await chefAccess(repo, store));
   }
 
+  // plan 001 stage 4: messages. The log of the current menu, and a message to a pickup place.
+  if (a === 'messages') {
+    if (!b && method === 'GET') {
+      return Response.json({ messages: await store.listMessages() } satisfies MessagesResponse);
+    }
+    if (b === 'place' && c && method === 'POST') {
+      const input = parseMessagePlaceRequest(await readJson(request));
+      if (!input) return bad();
+      const result = await store.messagePlace(c, input, actor);
+      if (!result.ok) return refusal(result);
+      // Many orders changed (and `ready_now` moved some to Ready): the screens refetch.
+      await signal(context, sellerId, 'order.changed');
+      return Response.json(result.value satisfies MessagePlaceResponse);
+    }
+    return null;
+  }
+
   // Bulk updates to customers' inboxes (Saturday tools).
   if (a === 'updates' && !b && method === 'POST') {
     const input = parseSendUpdatesRequest(await readJson(request));
@@ -497,37 +572,6 @@ async function handleSeller(
     return null;
   }
 
-  if (a === 'week') {
-    if (!b && method === 'GET')
-      return Response.json({ week: await store.getWeek() } satisfies WeekResponse);
-    if (!b && method === 'PUT') {
-      const input = parseWeekSettingsRequest(await readJson(request));
-      if (!input) return bad();
-      const week = await store.updateWeek(input);
-      await menuChanged();
-      return Response.json({ week } satisfies WeekResponse);
-    }
-    if (b === 'publish' && !c && method === 'POST') {
-      const result = await store.publishWeek();
-      if (!result.ok) return error(result.error, result.message);
-      await menuChanged();
-      return Response.json({ week: result.value } satisfies WeekResponse);
-    }
-    if (b === 'unpublish' && !c && method === 'POST') {
-      const week = await store.unpublishWeek();
-      await menuChanged();
-      return Response.json({ week } satisfies WeekResponse);
-    }
-    if (b === 'close' && !c && method === 'POST') {
-      const closed = await store.closeWeek();
-      // The live orders were archived and a new draft week began: both screens refetch.
-      await signal(context, sellerId, 'order.changed');
-      await menuChanged();
-      return Response.json(closed satisfies CloseWeekResponse);
-    }
-    return null;
-  }
-
   if (a === 'past-weeks') {
     if (!b && method === 'GET') {
       return Response.json({ weeks: await store.listPastWeeks() } satisfies PastWeeksResponse);
@@ -541,35 +585,205 @@ async function handleSeller(
     return null;
   }
 
-  if (a === 'menu' && b === 'items') {
-    if (!c && method === 'POST') {
-      const input = parseCreateItemRequest(await readJson(request));
+  // The legacy item edit (PATCH /menu/items/:id, used by the live Dishes panel).
+  if (a === 'menu' && b === 'items' && c && method === 'PATCH') {
+    const input = parseUpdateItemRequest(await readJson(request));
+    if (!input) return bad();
+    const result = await store.patchItem(c, input);
+    if (result.ok) await menuChanged();
+    return itemResult(result);
+  }
+
+  // ---- Menus and dishes (plan 001, stage 3) ----
+
+  // The one menu: not published -> live -> finished (D-063). A new one only after it finished.
+  if (a === 'menus') {
+    if (!b && method === 'POST') {
+      const text = await request.text();
+      const input = parseCreateMenuRequest(text === '' ? undefined : safeParse(text));
       if (!input) return bad();
-      const result = await store.addItem(input);
-      if (result.ok) await menuChanged();
-      return itemResult(result, 201);
+      const result = await store.createMenu(input);
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json({ menu: result.value } satisfies MenuViewResponse, { status: 201 });
     }
-    if (c && method === 'PATCH') {
-      const input = parseUpdateItemRequest(await readJson(request));
+    if (b !== 'current') return null;
+    if (!c && method === 'GET') {
+      return Response.json({ menu: await store.getCurrentMenu() } satisfies MenuViewResponse);
+    }
+    if (!c && method === 'PUT') {
+      const input = parseUpdateMenuRequest(await readJson(request));
       if (!input) return bad();
-      const result = await store.patchItem(c, input);
-      if (result.ok) await menuChanged();
-      return itemResult(result);
+      const result = await store.updateMenu(input);
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json(result.value satisfies UpdateMenuResponse);
     }
-    if (c && method === 'DELETE') {
-      const result = await store.removeItem(c);
-      if (result.ok) await menuChanged();
-      return okResult(result);
+    if (c === 'publish' && method === 'POST') {
+      const force = parseForce(await readJson(request));
+      if (force === null) return bad();
+      const result = await store.publishMenu(force);
+      if (!result.ok) return refusal(result);
+      await menuChanged();
+      return Response.json({ menu: result.value } satisfies MenuViewResponse);
+    }
+    if (!c && method === 'DELETE') {
+      const result = await store.deleteMenu();
+      if (!result.ok) return error(result.error, result.message);
+      if (context.images) await dropUnusedImages(context.images, store, [result.value.before]);
+      await menuChanged();
+      return Response.json({ menu: result.value.view } satisfies MenuViewResponse);
+    }
+    if (c === 'unpublish' && method === 'POST') {
+      const result = await store.unpublishMenu();
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json({ menu: result.value } satisfies MenuViewResponse);
+    }
+    // The menu picture (D-060): R2 with a bucket, the same pattern as the kitchen images.
+    if (c === 'picture' && method === 'PUT') {
+      const input = parseUploadImageRequest(await readJson(request));
+      if (!input) return bad();
+      const stored = context.images
+        ? await putUploadedImage(context.images, sellerId, 'menuPicture', input.dataUrl)
+        : null;
+      const result = await store.setMenuPicture(input.dataUrl, stored?.ref);
+      if (!result.ok) {
+        if (stored && context.images) await dropUnusedImages(context.images, store, [stored.ref]);
+        return error(result.error, result.message);
+      }
+      if (context.images) await dropUnusedImages(context.images, store, [result.value.before]);
+      await menuChanged();
+      return Response.json({ menu: result.value.view } satisfies MenuViewResponse);
+    }
+    if (c === 'picture' && method === 'DELETE') {
+      const removed = await store.removeMenuPicture();
+      if (context.images) await dropUnusedImages(context.images, store, [removed.before]);
+      await menuChanged();
+      return Response.json({ menu: removed.view } satisfies MenuViewResponse);
+    }
+    if (c === 'finish' && method === 'POST') {
+      const result = await store.finishMenuNow();
+      if (!result.ok) return error(result.error, result.message);
+      // The open orders were closed and archived: the order screens refetch too.
+      await signal(context, sellerId, 'order.changed');
+      await menuChanged();
+      return Response.json(result.value satisfies FinishMenuResponse);
     }
     return null;
   }
-  if (a === 'menu' && b === 'order' && !c && method === 'PUT') {
-    const input = parseReorderItemsRequest(await readJson(request));
+
+  // "Your dishes". Deleting one is always allowed; `usedOnLiveMenu` is the warning (D-062).
+  if (a === 'dishes') {
+    if (!b && method === 'GET') {
+      return Response.json({ dishes: await store.listDishes() } satisfies DishesResponse);
+    }
+    if (!b && method === 'POST') {
+      const input = parseCreateDishRequest(await readJson(request));
+      if (!input) return bad();
+      const result = await store.createDish(input);
+      if (!result.ok) return error(result.error, result.message);
+      return Response.json({ dish: result.value } satisfies DishResponse, { status: 201 });
+    }
+    if (b && !c && method === 'PATCH') {
+      const input = parseUpdateDishRequest(await readJson(request));
+      if (!input) return bad();
+      const result = await store.updateDish(b, input);
+      if (!result.ok) return error(result.error, result.message);
+      return Response.json({ dish: result.value } satisfies DishResponse);
+    }
+    if (b && !c && method === 'DELETE') {
+      const result = await store.deleteDish(b);
+      if (!result.ok) return error(result.error, result.message);
+      if (result.value.usedOnLiveMenu) await menuChanged();
+      return Response.json({
+        ok: true,
+        usedOnLiveMenu: result.value.usedOnLiveMenu,
+      } satisfies DeleteDishResponse);
+    }
+    return null;
+  }
+
+  // Saved sets as lists of dishes. (The older /sets endpoints above keep their item-copy shape.)
+  if (a === 'saved-sets') {
+    if (!b && method === 'GET') {
+      return Response.json({ sets: await store.listDishSets() } satisfies DishSetsResponse);
+    }
+    if (!b && method === 'POST') {
+      const input = parseCreateDishSetRequest(await readJson(request));
+      if (!input) return bad();
+      const result = await store.createDishSet(input);
+      if (!result.ok) return error(result.error, result.message);
+      return Response.json({ set: result.value } satisfies DishSetResponse, { status: 201 });
+    }
+    if (b && c === 'use' && method === 'POST') {
+      const result = await store.useDishSet(b);
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json(result.value satisfies UseDishSetResponse);
+    }
+    return null;
+  }
+
+  // Saved pickup places: at most 5 (`pickup_place_limit`).
+  if (a === 'pickup-places') {
+    if (!b && method === 'GET') {
+      return Response.json({
+        places: await store.listPickupPlaces(),
+      } satisfies PickupPlacesResponse);
+    }
+    if (!b && method === 'POST') {
+      const input = parsePickupPointInput(await readJson(request));
+      if (!input) return bad();
+      const result = await store.createPickupPlace(input);
+      if (!result.ok) return error(result.error, result.message);
+      return Response.json({ place: result.value } satisfies PickupPlaceResponse, { status: 201 });
+    }
+    if (b && !c && method === 'PATCH') {
+      const input = parseUpdatePickupPlaceRequest(await readJson(request));
+      if (!input) return bad();
+      const result = await store.updatePickupPlace(b, input);
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json({ place: result.value } satisfies PickupPlaceResponse);
+    }
+    if (b && !c && method === 'DELETE') {
+      const result = await store.deletePickupPlace(b);
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json({
+        ok: true,
+        usedOnLiveMenu: result.value.usedOnLiveMenu,
+      } satisfies DeletePickupPlaceResponse);
+    }
+    return null;
+  }
+
+  // The kitchen's colour theme (D-064) and the defaults a new menu starts from.
+  if (a === 'preferences' && !b) {
+    if (method === 'GET') {
+      return Response.json({
+        preferences: await store.getPreferences(),
+      } satisfies PreferencesResponse);
+    }
+    if (method === 'PUT') {
+      const input = parseUpdatePreferencesRequest(await readJson(request));
+      if (!input) return bad();
+      return Response.json({
+        preferences: await store.setPreferences(input),
+      } satisfies PreferencesResponse);
+    }
+    return null;
+  }
+
+  // The owner renames the kitchen (chefs are closed out by chefMayNot).
+  if (a === 'kitchen' && b === 'name' && !c) {
+    if (method !== 'PUT') return null;
+    const input = parseKitchenNameRequest(await readJson(request));
     if (!input) return bad();
-    const result = await store.reorderItems(input.ids);
-    if (!result.ok) return error(result.error, result.message);
-    await menuChanged();
-    return Response.json({ items: result.value } satisfies ItemsResponse);
+    return Response.json({
+      name: await store.setKitchenName(input.name),
+    } satisfies KitchenNameResponse);
   }
 
   if (a === 'chefs') {
@@ -588,31 +802,6 @@ async function handleSeller(
       const removed = await store.removeChef(b);
       if (removed.ok) await repo.auth.revokeChef(store.seller.id, b);
       return okResult(removed);
-    }
-    return null;
-  }
-
-  if (a === 'sets') {
-    if (!b && method === 'GET') {
-      return Response.json({ sets: await store.listSets() } satisfies SetsResponse);
-    }
-    if (!b && method === 'POST') {
-      const input = parseSaveSetRequest(await readJson(request));
-      return input ? setResult(await store.saveSet(input.name, input.replaceSetId), 201) : bad();
-    }
-    if (b && !c && method === 'PATCH') {
-      const input = parseRenameSetRequest(await readJson(request));
-      return input ? setResult(await store.renameSet(b, input.name)) : bad();
-    }
-    if (b && !c && method === 'DELETE') return okResult(await store.removeSet(b));
-    if (b && c === 'use' && method === 'POST') {
-      const text = await request.text();
-      const input = parseUseSetRequest(text === '' ? undefined : safeParse(text));
-      if (!input) return bad();
-      const result = await store.useSet(b, input);
-      if (!result.ok) return error(result.error, result.message);
-      await menuChanged();
-      return Response.json({ items: result.value } satisfies ItemsResponse);
     }
     return null;
   }
@@ -708,7 +897,35 @@ async function handleSeller(
       const input = parseSetStatusRequest(await readJson(request));
       if (!input) return bad();
       return code
-        ? sellerResult(await changed(await store.setStatus(code, input.to, actor)))
+        ? sellerResult(
+            await changed(await store.setStatus(code, input.to, actor, input.force === true)),
+          )
+        : error('not_found', 'Order not found');
+    }
+    if (b && c === 'pack' && method === 'POST') {
+      const input = parsePackRequest(await readJson(request));
+      if (!input) return bad();
+      // The signal carries only the code, for the seller's other screens; a customer's view of the
+      // order does not change (D-066).
+      const result = code ? await store.packOrder(code, input) : null;
+      if (!result) return error('not_found', 'Order not found');
+      if (result.ok) await signal(context, sellerId, 'order.changed', result.value.code);
+      return sellerResult(result);
+    }
+    if (b && c === 'delivery-step' && method === 'POST') {
+      const input = parseDeliveryStepRequest(await readJson(request));
+      if (!input) return bad();
+      if (!code) return error('not_found', 'Order not found');
+      const result = await store.deliveryStep(code, input, actor);
+      if (!result.ok) return refusal(result);
+      await signal(context, sellerId, 'order.changed', code);
+      return Response.json(result.value satisfies DeliveryStepResponse);
+    }
+    if (b && c === 'collected' && method === 'POST') {
+      const input = parseMarkCollectedRequest(await readJson(request));
+      if (!input) return bad();
+      return code
+        ? sellerResult(await changed(await store.markCollected(code, input, actor)))
         : error('not_found', 'Order not found');
     }
     if (b && c === 'paid' && method === 'POST') {
@@ -732,15 +949,12 @@ async function handleSeller(
         ? sellerResult(await changed(await store.setWaReceived(code, input.received)))
         : error('not_found', 'Order not found');
     }
-    if (b && c === 'arriving-soon' && method === 'POST') {
-      return code
-        ? sellerResult(await changed(await store.arrivingSoon(code)))
-        : error('not_found', 'Order not found');
-    }
     if (b && (c === 'nudge' || c === 'seen') && method === 'POST') {
       if (!code) return error('not_found', 'Order not found');
+      const force = c === 'nudge' ? parseForce(await readJson(request)) : false;
+      if (force === null) return bad();
       return sellerResult(
-        await changed(c === 'nudge' ? await store.nudge(code) : await store.markSeen(code)),
+        await changed(c === 'nudge' ? await store.nudge(code, force) : await store.markSeen(code)),
       );
     }
   }

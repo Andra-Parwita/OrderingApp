@@ -12,8 +12,11 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 
 | # | plan | status |
 |---|---|---|
-| 001 | [Seller app UX redesign](001-seller-ux-redesign.md) | approved, ready to build |
-| 002 | [Web push notifications](002-web-push.md) | placeholder; **must be done before going live** |
+| 001 | [Seller app UX redesign](001-seller-ux-redesign.md) | done (2026-10-10); owner check pending |
+| 002 | [Web push notifications](002-web-push.md) | replaced by 004 (builder: "A", 2026-10-10) |
+| 003 | [Phase 4 follow-ups](003-phase4-followups.md) | done (2026-10-10) |
+| 004 | [Customer app redesign and web push](004-customer-redesign-and-push.md) | approved, building; **must be done before going live** |
+| 005 | [Code-review fixes](005-review-fixes.md) | approved; after plan 004 checkpoint 1 (stage 2) |
 
 ## Template
 

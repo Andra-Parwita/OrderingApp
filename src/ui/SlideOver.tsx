@@ -12,6 +12,10 @@ export type SlideOverProps = Readonly<{
   headerStart?: ReactNode;
   /** Where focus goes when the panel closes; by default the element that had it when it opened. */
   returnFocus?: () => HTMLElement | null;
+  /** Panel width as a CSS length; the default is 27.5rem. The editor pattern uses 560 px. */
+  width?: string;
+  /** Pinned to the bottom of the panel (Cancel and Save). */
+  footer?: ReactNode;
   children: ReactNode;
 }>;
 
@@ -25,14 +29,14 @@ const Scrim = styled.div`
   inset: 0;
   background: ${({ theme }) => theme.colour.scrim};
 `;
-const Panel = styled.div`
+const Panel = styled.div<{ $width: string }>`
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   display: flex;
   flex-direction: column;
-  width: min(27.5rem, 100%);
+  width: min(${({ $width }) => $width}, 100%);
   overflow-y: auto;
   background: ${({ theme }) => theme.colour.surface};
   border-left: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.outline};
@@ -56,6 +60,18 @@ const Start = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+const Footer = styled.div`
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  background: ${({ theme }) => theme.c.surf};
+`;
+
 const FOCUSABLE =
   'a[href], button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), summary, [tabindex]:not([tabindex="-1"])';
 
@@ -66,6 +82,8 @@ export function SlideOver({
   onClose,
   headerStart,
   returnFocus,
+  width = '27.5rem',
+  footer,
   children,
 }: SlideOverProps) {
   const panel = useRef<HTMLDivElement>(null);
@@ -117,6 +135,7 @@ export function SlideOver({
         role="dialog"
         aria-modal="true"
         aria-label={label}
+        $width={width}
         tabIndex={-1}
         onKeyDown={onKeyDown}
       >
@@ -128,6 +147,7 @@ export function SlideOver({
           </Button>
         </Header>
         {children}
+        {footer ? <Footer>{footer}</Footer> : null}
       </Panel>
     </Overlay>
   );

@@ -13,5 +13,8 @@
   "share": "Share to WhatsApp",
   "copy": "Copy text",
   "copied": "Copied",
-  "copyFailed": "Could not copy. Select the text instead."
+  "copyFailed": "Could not copy. Select the text instead.",
+  "copyLink": "Copy order link",
+  "linkCopied": "Order link copied",
+  "goOrders": "Go to orders"
 }

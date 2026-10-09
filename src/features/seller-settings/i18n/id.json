@@ -26,5 +26,89 @@
   "save": "Simpan",
   "saving": "Menyimpan…",
   "saved": "Tersimpan",
-  "saveFailed": "Tidak bisa menyimpan. Coba lagi."
+  "saveFailed": "Tidak bisa menyimpan. Coba lagi.",
+  "panes": {
+    "nav": "Bagian pengaturan",
+    "kitchen": { "title": "Dapur", "sub": "Nama, WhatsApp, gambar" },
+    "post": { "title": "Postingan WhatsApp", "sub": "Sapaan dan penutup" },
+    "pickup": { "title": "Lokasi ambil", "sub": "Sampai 5 tempat" },
+    "defaults": { "title": "Bawaan menu", "sub": "Batas pesan, antar" },
+    "look": { "title": "Tampilan", "sub": "Terang / gelap, tema" },
+    "chefs": { "title": "Juru masak", "sub": "Undang, ganti nama, hapus" },
+    "devices": { "title": "Perangkat", "sub": "Tambah, ganti nama, keluar" },
+    "backup": { "title": "Cadangan", "sub": "Unduh atau pulihkan" }
+  },
+  "kitchen": {
+    "name": "Nama dapur",
+    "nameHelper": "Tampil ke pelanggan di menu Anda. Maksimal 60 karakter.",
+    "nameInvalid": "Isi nama (maksimal 60 karakter).",
+    "phone": "Nomor WhatsApp",
+    "phoneHelper": "Pelanggan mengirim nomor pesanan ke sini."
+  },
+  "post": {
+    "preview": "Pratinjau",
+    "previewHelper": "Begini postingan terbaca dengan menu di tengahnya.",
+    "previewEn": "Inggris",
+    "previewId": "Indonesia",
+    "menuHere": "(menu kamu di sini)"
+  },
+  "pickup": {
+    "intro": "Sampai 5 tempat. Setiap menu memilih tempat mana yang dipakai, dan pelanggan memilih satu saat memesan.",
+    "count": "{{count}} dari {{max}}",
+    "empty": "Belum ada lokasi ambil. Tambahkan yang pertama.",
+    "add": "Tambah tempat",
+    "canAdd_one": "Kamu bisa menambah {{count}} lagi.",
+    "canAdd_other": "Kamu bisa menambah {{count}} lagi.",
+    "full": "Sudah 5 tempat. Hapus satu untuk menambah yang lain.",
+    "edit": "Ubah {{place}}",
+    "editLabel": "Ubah",
+    "place": "Tempat",
+    "directionsEn": "Petunjuk (Inggris)",
+    "directionsId": "Petunjuk (Indonesia)",
+    "from": "Dari",
+    "to": "Sampai",
+    "window": "{{start}}–{{end}}",
+    "saveNew": "Tambah tempat",
+    "saveEdit": "Simpan tempat",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "deleteConfirm": "Ketuk lagi untuk menghapus",
+    "deleted": "{{place}} dihapus.",
+    "deletedLive": "{{place}} ada di menu yang sedang buka. Menu itu tidak lagi menawarkannya.",
+    "invalid": "Periksa tempat, petunjuk, dan jamnya (jam selesai harus setelah jam mulai).",
+    "limit": "Kamu bisa menyimpan sampai 5 tempat.",
+    "failed": "Tidak bisa menyimpan. Coba lagi.",
+    "loadFailed": "Lokasi ambil tidak bisa dimuat."
+  },
+  "defaults": {
+    "intro": "Menu baru dimulai dengan ini. Kamu bisa mengubahnya di setiap menu.",
+    "cutoffTitle": "Batas pesan",
+    "daysBefore": "Berapa hari sebelum hari memasak",
+    "daysHelper": "0 berarti tutup pada hari memasak itu sendiri.",
+    "time": "Jam",
+    "deliveryTitle": "Antar",
+    "deliveryOn": "Tawarkan antar",
+    "deliveryOff": "Tanpa antar",
+    "noteEn": "Catatan antar (Inggris)",
+    "noteId": "Catatan antar (Indonesia)",
+    "invalid": "Periksa jumlah hari (0 sampai 14), jam, dan catatannya.",
+    "loadFailed": "Bawaan menu tidak bisa dimuat."
+  },
+  "look": {
+    "modeTitle": "Terang atau gelap",
+    "light": "Terang",
+    "dark": "Gelap",
+    "auto": "Otomatis",
+    "modeHelper": "Otomatis mengikuti pengaturan perangkat ini. Disimpan di perangkat ini.",
+    "themeTitle": "Tema warna",
+    "themeHelper": "Mengubah warna aksen dan latar untuk semua orang di dapurmu.",
+    "themes": {
+      "onde": "Onde Onde",
+      "bali": "Bali",
+      "sumatra": "Sumatra",
+      "sunda": "Sunda",
+      "jawa": "Jawa"
+    },
+    "loadFailed": "Tema warna tidak bisa dimuat."
+  }
 }

@@ -215,7 +215,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
       async reset() {
         requireDevTools();
         samples.clear();
-        await wipeAndSeed(db);
+        await wipeAndSeed(db, options.now());
       },
     },
   };

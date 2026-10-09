@@ -1,227 +1,57 @@
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import { styled } from 'styled-components';
 import type { Kitchen } from '../../shared/domain';
 import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { fetchMenu } from '../api/client';
 import { currentSellerSlug } from '../api/device/sellerContext';
-import { useSession } from './session';
-import { LanguageSwitch } from '../components/LanguageSwitch';
-import { SellerPicker } from '../components/SellerPicker';
 import { useMediaQuery } from '../components/useMediaQuery';
-import { Icon, ImageSlot, TabBar, Tooltip, type IconName, type TabBarItem } from '../ui';
-import { BANNER_MAX_WIDTH, DESKTOP_QUERY, RAIL_WIDTH, RAIL_WIDTH_COLLAPSED } from './layout';
+import { ImageSlot } from '../ui';
+import { BANNER_MAX_WIDTH, BANNER_STRIP_HEIGHT, DESKTOP_QUERY } from './layout';
+import { PhoneBar } from './PhoneBar';
 import { useRailCollapsed } from './railPreference';
-import { RailSwitchPerson } from './SwitchPerson';
+import { SellerRail } from './SellerRail';
+import {
+  activeNav,
+  activePhoneNav,
+  hidesPhoneBar,
+  isTabletOnly,
+  isTaskScreen,
+  navIdsFor,
+} from './sellerNav';
+import { TabletOnlyPage } from './TabletOnlyPage';
+import { useNotPublished } from './useNotPublished';
+import { useSession } from './session';
 
-// Seller navigation: a bottom tab bar on a phone, a left rail on a desktop. A chef gets no Menu
-// (D-013).
-const NAV_IDS = ['orders', 'cook', 'handover', 'menu', 'more'] as const;
-type NavId = (typeof NAV_IDS)[number];
-
-const HREF: Readonly<Record<NavId, string>> = {
-  orders: '/seller',
-  cook: '/seller/cook',
-  handover: '/seller/hand-over',
-  menu: '/seller/menu',
-  more: '/seller/more',
-};
-const ICON: Readonly<Record<NavId, IconName>> = {
-  orders: 'list',
-  cook: 'pot',
-  handover: 'box',
-  menu: 'menu',
-  more: 'dots',
-};
-
-// Every page reached from More keeps the More tab current.
-const MORE_PATHS = [
-  '/seller/more',
-  '/seller/settings',
-  '/seller/share',
-  '/seller/week',
-  '/seller/images',
-  '/seller/chefs',
-  '/seller/labels',
-  '/seller/past-weeks',
-  '/seller/backup',
-  '/seller/devices',
-];
-
-function activeNav(pathname: string): NavId {
-  if (pathname.startsWith('/seller/cook')) return 'cook';
-  if (pathname.startsWith('/seller/hand-over') || pathname.startsWith('/seller/updates')) {
-    return 'handover';
-  }
-  if (pathname.startsWith('/seller/menu')) return 'menu';
-  if (MORE_PATHS.some((path) => pathname.startsWith(path))) return 'more';
-  return 'orders';
-}
-
-// One shell for both layouts: the page (Outlet) keeps the same place in the tree, so crossing
-// the 1024 px breakpoint (a rotated tablet, a resized window) does not remount it and lose a
+// One shell for both layouts: the page (Outlet) keeps the same place in the tree, so crossing the
+// 600 px breakpoint (a rotated tablet, a resized window) does not remount it and lose a
 // half-filled form.
-const Shell = styled.div<{ $desktop: boolean }>`
-  display: ${({ $desktop }) => ($desktop ? 'grid' : 'flex')};
+const Shell = styled.div<{ $tablet: boolean }>`
+  display: ${({ $tablet }) => ($tablet ? 'grid' : 'flex')};
   grid-template-columns: auto minmax(0, 1fr);
   flex-direction: column;
   min-height: 100dvh;
-  font-size: ${({ $desktop, theme }) => ($desktop ? theme.type.size.base : 'inherit')};
+  font-size: ${({ $tablet }) => ($tablet ? '0.875rem' : '0.9375rem')};
 `;
-const Bottom = styled.footer`
-  position: sticky;
-  bottom: 0;
-  padding-bottom: env(safe-area-inset-bottom);
-  background: ${({ theme }) => theme.colour.bg};
-`;
-const Rail = styled.nav<{ $collapsed: boolean }>`
-  position: sticky;
-  box-sizing: border-box;
-  width: ${({ $collapsed }) => ($collapsed ? RAIL_WIDTH_COLLAPSED : RAIL_WIDTH)};
-  overflow-x: clip;
-  transition: width 150ms ease;
-
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
-
-  top: 0;
-  align-self: start;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.lg}
-    ${({ $collapsed, theme }) => ($collapsed ? theme.spacing.xs : theme.spacing.md)};
-`;
-// The column fills the full height of the shell, so the rail's background never stops short on a
-// tall page; the rail inside stays pinned to the viewport.
-const RailColumn = styled.div`
-  border-right: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme }) => theme.colour.hairline};
-  background: ${({ theme }) => theme.colour.surface};
-`;
-const Kitchen = styled.p`
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  margin: 0;
-  padding: 0 ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  font-size: ${({ theme }) => theme.type.size.lg};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  line-height: ${({ theme }) => theme.type.lineHeight.tight};
-`;
-const RailList = styled.ul`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  margin: 0;
-  padding: 0;
-  list-style: none;
-`;
-const RailItem = styled(Link)<{ $active: boolean; $collapsed: boolean }>`
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: ${({ $collapsed }) => ($collapsed ? 'center' : 'flex-start')};
-  gap: ${({ theme }) => theme.spacing.md};
-  min-height: 3rem;
-  padding: 0 ${({ theme, $collapsed }) => ($collapsed ? '0' : theme.spacing.md)};
-  white-space: nowrap;
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme, $active }) => ($active ? theme.colour.surfaceAlt : 'transparent')};
-  color: ${({ theme }) => theme.colour.text};
-  font-weight: ${({ theme, $active }) =>
-    $active ? theme.type.weight.strong : theme.type.weight.regular};
-  text-decoration: none;
-
-  /* The current page is marked by weight and a bar, not by colour alone. */
-  &::before {
-    content: '';
-    display: ${({ $active }) => ($active ? 'block' : 'none')};
-    position: absolute;
-    left: 0;
-    top: 0.625rem;
-    bottom: 0.625rem;
-    width: 0.25rem;
-    border-radius: 0.125rem;
-    background: ${({ theme }) => theme.colour.accent};
-  }
-`;
-const RailFoot = styled.div<{ $collapsed: boolean }>`
-  display: flex;
-  flex-direction: column;
-  align-items: ${({ $collapsed }) => ($collapsed ? 'center' : 'stretch')};
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-top: auto;
-  padding: 0 ${({ theme, $collapsed }) => ($collapsed ? '0' : theme.spacing.sm)};
-`;
-// Kept in the page for screen readers while the rail shows icons only.
-const Hidden = styled.span`
-  position: absolute;
-  width: 0.0625rem;
-  height: 0.0625rem;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-`;
-const RailButton = styled.button<{ $collapsed: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: ${({ $collapsed }) => ($collapsed ? 'center' : 'flex-start')};
-  gap: ${({ theme }) => theme.spacing.md};
-  width: 100%;
-  min-height: 3rem;
-  padding: 0 ${({ theme, $collapsed }) => ($collapsed ? '0' : theme.spacing.md)};
-  border: 0;
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: transparent;
-  color: ${({ theme }) => theme.colour.text};
-  font: inherit;
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  white-space: nowrap;
-  cursor: pointer;
-
-  &:hover {
-    background: ${({ theme }) => theme.colour.surfaceAlt};
-  }
-`;
-// The collapsed language button hugs its 44 px target and sits centred like the nav icons.
-const CompactButton = styled(RailButton)`
-  width: 2.75rem;
-  min-height: 2.75rem;
-  padding: 0;
-`;
-// The expanded rail stretches its children; the EN / ID switch keeps its content width instead.
-const ExpandedLanguage = styled.div`
-  align-self: flex-start;
-`;
-const Chevron = styled.span`
-  width: 1.25rem;
-  flex: none;
-  font-size: ${({ theme }) => theme.type.size.lg};
-  line-height: 1;
-  text-align: center;
+const Main = styled.div<{ $tablet: boolean }>`
+  flex: 1;
+  min-width: 0;
+  background: ${({ $tablet, theme }) => ($tablet ? theme.c.panel : theme.c.bg)};
 `;
 const Who = styled.p`
   margin: 0;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme }) => theme.colour.hairline};
-  color: ${({ theme }) => theme.colour.textMuted};
-  font-size: ${({ theme }) => theme.type.size.sm};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.8125rem;
   text-align: right;
 `;
-const Main = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-// The banner strip fills the full width with the seller's background picture (D-040), on their
-// colour while it loads or if there is none; the banner sits centred in it at most 1600 px wide,
-// so on a wide screen the sides are background, never a cropped banner (D-038).
+// The strip fills the full width with the seller's background picture (D-040), on their colour
+// while it loads or if there is none; the banner sits centred in it at most 1600 px wide, so on a
+// wide screen the sides are background, never a cropped banner (D-038).
 const BannerStrip = styled.div<{ $background?: string; $image?: string }>`
-  background-color: ${({ theme, $background }) => $background ?? theme.colour.surfaceAlt};
+  background-color: ${({ theme, $background }) => $background ?? theme.c.surf2};
   ${({ $image }) =>
     $image
       ? `background-image: url("${$image}"); background-size: cover; background-position: center;`
@@ -231,53 +61,19 @@ const BannerArea = styled.div`
   max-width: ${BANNER_MAX_WIDTH};
   margin: 0 auto;
 `;
-// Full-bleed at the top of the expanded rail, cancelling the rail's padding.
-const RailImageBox = styled.div`
-  margin: calc(-1 * ${({ theme }) => theme.spacing.lg})
-    calc(-1 * ${({ theme }) => theme.spacing.md}) 0;
+// Task screens: the banner shrinks to a thin strip of the background; the sheet rises over it.
+const TaskStrip = styled(BannerStrip)`
+  height: ${BANNER_STRIP_HEIGHT};
 `;
-const RailIconBox = styled.div`
-  display: flex;
-  justify-content: center;
+// The content sheet: 16 px top corners that overlap the banner above.
+const Sheet = styled.div<{ $tablet: boolean }>`
+  position: relative;
+  min-height: 60dvh;
+  margin-top: ${({ $tablet, theme }) => ($tablet ? `-${theme.size.radiusSheet}px` : '0')};
+  border-radius: ${({ $tablet, theme }) =>
+    $tablet ? `${theme.size.radiusSheet}px ${theme.size.radiusSheet}px 0 0` : '0'};
+  background: ${({ theme }) => theme.c.bg};
 `;
-const Initial = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  flex: none;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.colour.accent};
-  color: ${({ theme }) => theme.colour.onAccent};
-  font-size: ${({ theme }) => theme.type.size.lg};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  line-height: 1;
-`;
-
-/** The first letter of the kitchen name, for the collapsed rail when there is no icon. */
-function initialOf(name: string): string {
-  return Array.from(name.trim())[0]?.toUpperCase() ?? '?';
-}
-
-/** EN / ID as one small button, for the collapsed rail. */
-function CompactLanguage() {
-  const { t, i18n } = useTranslation();
-  const isId = i18n.language.startsWith('id');
-  const next = isId ? 'en' : 'id';
-  const change = useCallback(() => void i18n.changeLanguage(next), [i18n, next]);
-  const name = t(`language.name.${next}`);
-  return (
-    <CompactButton
-      type="button"
-      $collapsed
-      onClick={change}
-      aria-label={`${t('language.label')}: ${isId ? 'ID' : 'EN'}. ${t('language.switchTo', { name })}`}
-    >
-      {isId ? 'ID' : 'EN'}
-    </CompactButton>
-  );
-}
 
 /** The kitchen (name and images) from the public menu; null until it arrives. */
 function useKitchen(): Kitchen | null {
@@ -294,7 +90,7 @@ function useKitchen(): Kitchen | null {
   return kitchen;
 }
 
-/** The signed-in person as the header shows them: the seller's kitchen, or "Chef Wati". */
+/** The signed-in person as the bar shows them: the seller's kitchen, or "Chef Wati". */
 function useWho(): string | null {
   const { t } = useTranslation();
   const { me } = useSession();
@@ -306,14 +102,15 @@ function useWho(): string | null {
 // The guard in front of this layout has already checked the sign-in (see guards.tsx).
 export function SellerLayout() {
   const { t, i18n } = useTranslation();
-  const desktop = useMediaQuery(DESKTOP_QUERY);
+  const tablet = useMediaQuery(DESKTOP_QUERY);
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const { me } = useSession();
   const who = useWho();
-  const navIds = useMemo(() => NAV_IDS.filter((id) => id !== 'menu' || me?.role !== 'chef'), [me]);
-  const active = activeNav(pathname);
+  const role = me?.role === 'chef' ? 'chef' : me?.role === 'seller' ? 'seller' : undefined;
+  const navIds = useMemo(() => navIdsFor(role), [role]);
   const kitchen = useKitchen();
+  const notPublished = useNotPublished(role === 'seller', pathname);
+  const [collapsed, toggleCollapsed] = useRailCollapsed();
   const lang = i18n.language.startsWith('id') ? 'id' : 'en';
   const kitchenName = kitchen?.name ?? t('sellerNav.kitchen');
   const bannerText = kitchen
@@ -322,108 +119,32 @@ export function SellerLayout() {
   const placeholder = t('sellerNav.imageSoon');
   const background = kitchen?.images?.bannerBackground;
   const backgroundImage = kitchen?.images?.bannerBackgroundImage;
-  const [collapsed, toggleCollapsed] = useRailCollapsed();
-  // The Switch person block already names the signed-in person: in the expanded rail, and at the
-  // top of the More tab on a phone. Everywhere else the bar is the only place the name appears.
-  const nameShownElsewhere = desktop ? !collapsed : pathname === '/seller/more';
+  // The Switch person block already names the signed-in person: in the open panel, and at the top
+  // of the More tab on a phone. Everywhere else the bar is the only place the name appears.
+  const nameShownElsewhere = tablet ? !collapsed : pathname === '/seller/more';
+  const tabletOnlyHere = !tablet && isTabletOnly(pathname);
+  // Phone: the 3:1 banner belongs to the Orders list only; other phone screens have none.
+  const phoneBanner = !tablet && pathname === '/seller';
 
-  const label = (id: NavId) => t(`sellerNav.${id}`);
-  const tabs = useMemo<Array<TabBarItem>>(
-    () => navIds.map((id) => ({ id, label: t(`sellerNav.${id}`), href: HREF[id] })),
-    [navIds, t],
-  );
-
-  // The tab bar renders plain links; keep them inside the single-page app.
-  const onTabClick = (event: MouseEvent<HTMLElement>) => {
-    if (event.defaultPrevented || event.button !== 0) return;
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
-    const href = link?.getAttribute('href');
-    if (!href?.startsWith('/')) return;
-    event.preventDefault();
-    void navigate(href);
-  };
-
-  const collapseLabel = t(collapsed ? 'sellerNav.expand' : 'sellerNav.collapse');
   return (
-    <Shell $desktop={desktop}>
-      {desktop ? (
-        <RailColumn>
-          <Rail aria-label={t('sellerNav.label')} $collapsed={collapsed}>
-            {collapsed ? (
-              <RailIconBox>
-                {kitchen?.images?.railIcon ? (
-                  <ImageSlot
-                    aspectRatio="1 / 1"
-                    width="2.5rem"
-                    round
-                    src={kitchen.images.railIcon}
-                    alt={kitchenName}
-                    placeholder=""
-                  />
-                ) : (
-                  <Initial role="img" aria-label={kitchenName}>
-                    <span aria-hidden="true">{initialOf(kitchenName)}</span>
-                  </Initial>
-                )}
-              </RailIconBox>
-            ) : (
-              <RailImageBox>
-                <ImageSlot
-                  aspectRatio="2 / 1"
-                  src={kitchen?.images?.railImage}
-                  alt={`${kitchenName} — ${t('sellerNav.railImage')}`}
-                  placeholder={t('sellerNav.railImageSoon')}
-                />
-              </RailImageBox>
-            )}
-            {collapsed ? null : <Kitchen>{kitchenName}</Kitchen>}
-            <RailList>
-              {navIds.map((id) => (
-                <li key={id}>
-                  <Tooltip text={collapsed ? label(id) : undefined}>
-                    <RailItem
-                      to={HREF[id]}
-                      $active={id === active}
-                      $collapsed={collapsed}
-                      aria-current={id === active ? 'page' : undefined}
-                    >
-                      <Icon name={ICON[id]} />
-                      {collapsed ? <Hidden>{label(id)}</Hidden> : label(id)}
-                    </RailItem>
-                  </Tooltip>
-                </li>
-              ))}
-            </RailList>
-            <RailFoot $collapsed={collapsed}>
-              {collapsed || me !== null ? null : <SellerPicker />}
-              <RailSwitchPerson collapsed={collapsed} />
-              {collapsed ? (
-                <CompactLanguage />
-              ) : (
-                <ExpandedLanguage>
-                  <LanguageSwitch compact />
-                </ExpandedLanguage>
-              )}
-              <Tooltip text={collapsed ? collapseLabel : undefined}>
-                <RailButton
-                  type="button"
-                  $collapsed={collapsed}
-                  aria-expanded={!collapsed}
-                  aria-label={collapseLabel}
-                  onClick={toggleCollapsed}
-                >
-                  <Chevron aria-hidden="true">{collapsed ? '»' : '«'}</Chevron>
-                  {collapsed ? null : collapseLabel}
-                </RailButton>
-              </Tooltip>
-            </RailFoot>
-          </Rail>
-        </RailColumn>
+    <Shell $tablet={tablet}>
+      {tablet ? (
+        <SellerRail
+          ids={navIds}
+          activeId={activeNav(pathname)}
+          collapsed={collapsed}
+          onToggle={toggleCollapsed}
+          kitchen={kitchen}
+          menuNotPublished={notPublished}
+          showPicker={me === null}
+        />
       ) : null}
-      <Main>
+      <Main $tablet={tablet}>
         {who && !nameShownElsewhere ? <Who>{t('sellerNav.signedInAs', { name: who })}</Who> : null}
-        {desktop ? (
+        {tablet && isTaskScreen(pathname) ? (
+          <TaskStrip $background={background} $image={backgroundImage} aria-hidden="true" />
+        ) : null}
+        {tablet && !isTaskScreen(pathname) ? (
           <BannerStrip $background={background} $image={backgroundImage}>
             <BannerArea>
               <ImageSlot
@@ -435,22 +156,19 @@ export function SellerLayout() {
               />
             </BannerArea>
           </BannerStrip>
-        ) : (
+        ) : null}
+        {phoneBanner ? (
           <ImageSlot
-            aspectRatio="2 / 1"
+            aspectRatio="3 / 1"
             background={background}
             src={phoneBannerSrc(kitchen?.images)}
             alt={bannerText}
             placeholder={placeholder}
           />
-        )}
-        <Outlet />
+        ) : null}
+        <Sheet $tablet={tablet}>{tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}</Sheet>
       </Main>
-      {desktop ? null : (
-        <Bottom onClick={onTabClick}>
-          <TabBar items={tabs} activeId={active} label={t('sellerNav.label')} />
-        </Bottom>
-      )}
+      {tablet || hidesPhoneBar(pathname) ? null : <PhoneBar activeId={activePhoneNav(pathname)} />}
     </Shell>
   );
 }

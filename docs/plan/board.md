@@ -268,6 +268,12 @@ Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-n
 
 ## Start here (next session)
 
+**Resumed (10 Oct, 00:43):**
+- The pull brought two commits from the owner on COVID-PC: the seller design drop, plans 001/002, and D-053…D-069. Reviewed; the unit gate is green, 1130/1130.
+- The user on this PC is the owner's son, who builds the plans.
+- They chose to carry on from phase 4 rather than start the redesign (D-070). Plan 003 (follow-ups) was approved and started at 00:50. Amended at 00:53: plan 001 (redesign) starts right after 003, then plan 002 (web push).
+- New way of working (D-055): every change starts as a plan in `docs/plans/`; typecheck only while building; the full gate at the end of the phase.
+
 **Update (9 Oct, 20:25):** after phase 4, these landed and passed the gate:
 - the admin-lockout fix (passkeys per role);
 - Switch person (D-050);

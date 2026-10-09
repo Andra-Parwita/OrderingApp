@@ -1,39 +1,57 @@
 {
-  "title": "Yang dimasak · {{date}}",
-  "titleBare": "Yang dimasak",
-  "live": "Langsung",
-  "offline": "Menghubungkan ulang…",
-  "loading": "Memuat daftar masak…",
-  "error": "Daftar masak tidak bisa dimuat.",
+  "title": "Dapur · {{date}}",
+  "titleBare": "Dapur",
+  "subtitle_other": "Dari {{count}} pesanan. Pesanan yang dibatalkan tidak dihitung. Diperbarui saat pesanan berubah.",
+  "loading": "Memuat dapur…",
+  "error": "Dapur tidak bisa dimuat.",
   "retry": "Coba lagi",
   "empty": "Belum ada yang dimasak.",
-  "mode": {
-    "label": "Hitung",
-    "all": "Dikonfirmasi + Dipesan",
-    "confirmed": "Hanya dikonfirmasi"
+  "printLabels": "Cetak label",
+  "tabs": {
+    "label": "Dapur",
+    "cook": "Masak",
+    "cookSub": "per menu",
+    "pack": "Kemas",
+    "packSub": "per pesanan"
   },
   "group": {
     "label": "Kelompokkan",
-    "item": "Menu",
-    "chef": "Koki",
-    "customer": "Pelanggan",
-    "fulfilment": "Ambil/antar"
+    "dish": "Menu",
+    "chef": "Koki"
   },
-  "stats": {
-    "label": "Total",
-    "orders": "Pesanan",
-    "income": "Pemasukan",
-    "paid": "Lunas",
-    "unpaid": "Belum lunas"
-  },
-  "fulfilment": {
-    "pickup": "Ambil",
-    "delivery": "Antar"
-  },
-  "items_other": "{{count}} menu",
-  "ofLimit": "{{count}} dari {{limit}} porsi",
-  "who": "Siapa yang pesan",
+  "countMode": "Mode hitung",
+  "countHint": "centang saat memasak",
+  "cooked": "{{made}} dari {{total}} dimasak",
+  "less": "Kurangi satu {{name}}",
+  "more": "Tambah satu {{name}}",
+  "splitPickup": "{{count}} ambil",
+  "splitDelivery": "{{count}} antar",
   "notes": "Catatan ({{count}})",
-  "titleDesktop": "Daftar masak · {{date}}",
-  "print": "Cetak daftar masak"
+  "pack": {
+    "orderBy": "Urutkan",
+    "sort": {
+      "time": "Jam ambil",
+      "place": "Tempat",
+      "code": "Kode"
+    },
+    "list": "Kantong",
+    "packedCount": "{{packed}} dari {{total}} kantong dikemas",
+    "packed": "Dikemas",
+    "delivery": "Antar",
+    "pickupAt": "ambil {{time}}",
+    "inBag": "{{ticked}} dari {{total}} menu di kantong",
+    "note": "Catatan",
+    "notTicked_other": "{{count}} belum dicentang. Tetap bisa ditandai dikemas.",
+    "allIn": "Semua masuk. Mengemas tidak mengubah status pesanan; tandai siap di Serah terima.",
+    "isPacked": "Sudah dikemas. Status pesanan tidak berubah.",
+    "packedNext": "Dikemas · kantong berikutnya",
+    "skip": "Lewati dulu",
+    "unpack": "Tandai belum dikemas",
+    "saveError": "Tidak bisa menyimpan. Periksa koneksi lalu coba lagi.",
+    "empty": "Belum ada kantong untuk dikemas.",
+    "warnTitle_other": "{{count}} menu belum dicentang",
+    "warnBody_other": "{{count}} menu di kantong ini belum dicentang. Tandai dikemas saja?",
+    "warnCancel": "Lanjut mengemas",
+    "warnContinue": "Tandai dikemas"
+  }
 }

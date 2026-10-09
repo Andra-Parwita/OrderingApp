@@ -1,11 +1,14 @@
 import { all, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import { TOKENS_MAX } from '../../../shared/limits';
 import type { FetchedOrderResponse } from '../../../shared/orderContract';
+import { markCollected } from '../../api/customer';
 import { cancelOrder, fetchMenu, fetchMyOrders, fetchOrderOrExpired } from '../../api/client';
 import { readMyOrders, rememberStatus } from '../../api/device/myOrders';
 import {
   cancelFailed,
   cancelRequested,
+  collectFailed,
+  collectRequested,
   listFailed,
   listLoaded,
   listRequested,
@@ -88,10 +91,23 @@ export function* cancel(action: ReturnType<typeof cancelRequested>) {
   }
 }
 
+export function* collect(action: ReturnType<typeof collectRequested>) {
+  const result = (yield call(markCollected, action.payload)) as Awaited<
+    ReturnType<typeof markCollected>
+  >;
+  if (result.ok) {
+    yield call(rememberStatus, result.data.order);
+    yield put(orderLoaded(result.data.order));
+  } else {
+    yield put(collectFailed(result.error));
+  }
+}
+
 export function* customerOrdersSaga() {
   yield takeLatest(listRequested.type, loadList);
   yield takeEvery(menuRequested.type, loadMenu);
   yield takeLatest(orderRequested.type, loadOrder);
   yield takeLatest(orderRefreshRequested.type, refreshOrder);
   yield takeEvery(cancelRequested.type, cancel);
+  yield takeLatest(collectRequested.type, collect);
 }

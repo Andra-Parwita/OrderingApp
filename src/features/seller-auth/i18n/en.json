@@ -21,60 +21,36 @@
     "computer": "Computer"
   },
   "key": {
-    "title": "Set up your sign-in",
-    "label": "Enter the key you were sent",
-    "helper": "Valid for 24 hours. Spaces, dashes and small letters are fine.",
+    "title": "First time on this device",
+    "method": "How you got access",
+    "tab": "Invite key",
+    "label": "Invite key from the kitchen owner",
+    "helper": "Paste it from WhatsApp. Dashes and lowercase are fine. A key works for 24 hours.",
     "empty": "Type the key you were sent.",
     "submit": "Continue",
-    "checking": "Checking…",
-    "useCode": "I have a 6-digit code from another device"
+    "checking": "Checking…"
   },
   "code": {
-    "title": "Use a code from another device",
+    "tab": "6-digit code",
     "label": "6-digit code",
+    "digit": "Digit {{n}} of {{total}}",
     "helper": "On your other device, open Devices and tap Add a device. The code works for 10 minutes.",
-    "empty": "Type the 6-digit code.",
-    "submit": "Continue",
-    "useKey": "I have a key instead"
+    "empty": "Type all 6 digits of the code.",
+    "submit": "Continue"
   },
   "passkey": {
-    "title": "Create a passkey",
-    "greeting": "Hi {{name}}",
-    "deviceLabel": "Your device",
-    "deviceGroup": "Your device type",
-    "iphone": "iPhone",
-    "android": "Android",
-    "computer": "Windows / Mac",
-    "steps": {
-      "iphone": {
-        "1": "Make sure your phone has a screen lock (Settings → Face ID & Passcode)",
-        "2": "Tap Create passkey below",
-        "3": "Confirm with Face ID or your passcode"
-      },
-      "android": {
-        "1": "Make sure your phone has a screen lock (Settings → Security → Screen lock)",
-        "2": "Tap Create passkey below",
-        "3": "Confirm with your fingerprint or screen PIN"
-      },
-      "computer": {
-        "1": "Make sure Windows Hello or Touch ID is set up (Settings → Sign-in options)",
-        "2": "Tap Create passkey below",
-        "3": "Confirm with Windows Hello, Touch ID or your computer PIN"
-      }
-    },
-    "note": {
-      "iphone": "Your passkey stays on your phone and syncs with iCloud Keychain. Nothing to remember.",
-      "android": "Your passkey stays on your phone and syncs with Google Password Manager. Nothing to remember.",
-      "computer": "Your passkey stays on this computer. No Windows Hello or Touch ID? Use your phone, or set a password."
-    },
-    "submit": "Create passkey",
-    "working": "Creating…",
-    "usePassword": "My phone can't do this → set a password instead",
-    "unavailable": "Passkeys do not work on this web address (it is an IP address). Set a password instead."
+    "title": "Welcome, {{name}}",
+    "titleNoName": "Welcome",
+    "choose": "How do you want to sign in on this device from now on?",
+    "faceTitle": "Face or fingerprint",
+    "faceText": "Recommended. Nothing to remember.",
+    "working": "Setting up…",
+    "passwordTitle": "Set a password",
+    "passwordText": "For devices without face or fingerprint.",
+    "unavailable": "Face or fingerprint does not work on this web address (it is an IP address). Set a password instead."
   },
   "password": {
     "title": "Set a password",
-    "banner": "Your device can't make a passkey, so set a password",
     "label": "New password",
     "confirm": "Confirm password",
     "helper": "At least 10 characters",
@@ -85,22 +61,24 @@
     "hide": "Hide",
     "submit": "Save password",
     "working": "Saving…",
-    "later": "You can switch to a passkey later from a newer device.",
-    "usePasskey": "Try a passkey instead"
+    "later": "You can switch to face or fingerprint later from a newer device."
   },
   "signIn": {
     "title": "Sign in",
-    "passkey": "Sign in with passkey",
-    "noPasskey": "This device has no passkey yet. Use your password, or ask for a new key.",
+    "passwordTitle": "Sign in with password",
+    "back": "Back",
+    "passkey": "Sign in with face or fingerprint",
+    "noPasskey": "This device has no passkey yet. Use your password, or ask the owner for a new invite.",
     "adminPasskey": "That passkey belongs to the admin. Admins sign in on the admin page. Pick your own passkey, or use your password.",
     "usePassword": "Use password instead",
-    "hidePassword": "Hide password",
     "passwordLabel": "Password",
     "submit": "Sign in",
     "working": "Signing in…",
     "empty": "Type your password.",
-    "lost": "Lost access? Ask the person who set you up for a new key",
-    "noPasskeysHere": "Passkeys do not work on this web address (it is an IP address). Use your password."
+    "firstTime": "First time on this device? Use your invite key",
+    "alreadySetUp": "Already set up? Sign in",
+    "lost": "Lost access? Ask the owner for a new invite.",
+    "noPasskeysHere": "Face or fingerprint does not work on this web address (it is an IP address). Use your password."
   },
   "devices": {
     "title": "Devices",
@@ -110,6 +88,9 @@
     "thisDevice": "This device",
     "others": "Other devices",
     "none": "No other devices yet.",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{pages}}",
     "lastUsed": "Last used {{when}}",
     "activeNow": "Active now",
     "rename": "Rename",

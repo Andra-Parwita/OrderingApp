@@ -26,8 +26,10 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SellerLive"] }],
   // Weekly retention (stage 8.4b, D-044): Mondays 03:00 UTC, the first run after a Saturday's
-  // cooking date plus 4 weeks has passed. The handler is `scheduled` in worker/index.ts.
-  "triggers": { "crons": ["0 3 * * 1"] },
+  // cooking date plus 4 weeks has passed. Hourly (plan 001, D-069 Q5): finish every live menu whose
+  // cooking day has ended (midnight Melbourne). The handler is `scheduled` in worker/index.ts; if
+  // the weekly entry changes, change RETENTION_CRON in worker/api/scheduled.ts with it.
+  "triggers": { "crons": ["0 3 * * 1", "0 * * * *"] },
   // Seller images (stage 8.3). Locally this is a simulated bucket; phase 5 creates the real one.
   "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "delave-images" }],
 }

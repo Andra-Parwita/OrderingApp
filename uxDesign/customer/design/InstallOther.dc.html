@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Other browsers, Android, desktop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+.th{--text:#1C1F1A;--muted:#5D6358;--edge:#7F857A;--ok:#1F6B5C;--warn:#8A5A00;--danger:#A93724;--onfill:#FFFFFF;--disabled:#A9AFA3;--okbg:color-mix(in srgb,var(--ok) 12%,var(--surface));--warnbg:#FBF1D9;--ready:#2B5C9E;--kbg:#E9E3CF;--dangerline:color-mix(in srgb,var(--danger) 40%,var(--surface))}
+.th.dark{--text:#F1EEE6;--muted:#A9AFA3;--edge:#6B7266;--ok:#7EC4B0;--warn:#E9B949;--danger:#EE8B78;--disabled:#5E6459;--warnbg:rgba(233,185,73,.10);--ready:#8DB4E8;--kbg:#1D2A1A;color-scheme:dark}
+.th.ondeonde{--fill:#2F6B36;--acc:#2A5F30;--tint:#E5EFE2;--bg:#F6F2E8;--panel:#EFEADD;--surface:#FFFDF8;--s2:#F4F0E6;--line:#E4DED0}
+.th.ondeonde.dark{--fill:#8CC08A;--onfill:#0F1E10;--acc:#93C590;--tint:color-mix(in srgb,#8CC08A 15%,#121411);--bg:#121411;--panel:#0E100D;--surface:#181A16;--s2:#20231E;--line:#2A2E27}
+.th.bali{--fill:#1D5C73;--acc:#1A5469;--tint:#E0EDF1;--bg:#F1F4F4;--panel:#E7EDEE;--surface:#FCFEFE;--s2:#EEF3F4;--line:#DAE2E4}
+.th.bali.dark{--fill:#84C3D6;--onfill:#0B2129;--acc:#8CC6D8;--tint:color-mix(in srgb,#84C3D6 15%,#101417);--bg:#101417;--panel:#0C1013;--surface:#161B1F;--s2:#1E2429;--line:#283037}
+.th.sumatra{--fill:#8A2232;--acc:#7E1F2E;--tint:#F5E1E3;--bg:#F7F0EE;--panel:#F0E6E3;--surface:#FFFBFA;--s2:#F6EEEC;--line:#E6D9D6}
+.th.sumatra.dark{--fill:#EBA0AA;--onfill:#2B0A10;--acc:#EDA6AF;--tint:color-mix(in srgb,#EBA0AA 15%,#161112);--bg:#161112;--panel:#110D0E;--surface:#1C1617;--s2:#251D1F;--line:#322729}
+.th.sunda{--fill:#3A4C96;--acc:#34448A;--tint:#E4E7F4;--bg:#F2F2F7;--panel:#E9EAF2;--surface:#FDFDFF;--s2:#F0F1F7;--line:#DDDFEA}
+.th.sunda.dark{--fill:#A9B6EC;--onfill:#121A3A;--acc:#AEBBEE;--tint:color-mix(in srgb,#A9B6EC 15%,#111219);--bg:#111219;--panel:#0D0E14;--surface:#17181F;--s2:#1F2029;--line:#2A2C37}
+.th.jawa{--fill:#7A4A1E;--acc:#6E431B;--tint:#F2E7DA;--bg:#F6F0E6;--panel:#EEE5D7;--surface:#FFFBF4;--s2:#F5EEE2;--line:#E5DACA}
+.th.jawa.dark{--fill:#D9AE7E;--onfill:#2A1A08;--acc:#DDB38A;--tint:color-mix(in srgb,#D9AE7E 15%,#15120E);--bg:#15120E;--panel:#100E0B;--surface:#1B1813;--s2:#24201A;--line:#312B23}
+body{margin:0;background:#ECE7E1}
+a{color:var(--acc)}a:hover{color:var(--acc)}
+.cap{height:32px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;color:#2B2420}
+.cap span{font-weight:500;color:#6B5F55}
+.dev{width:418px;height:872px;border-radius:60px;background:#1C1C1E;padding:14px;box-sizing:border-box;box-shadow:inset 0 0 0 2px #48484A,0 24px 48px rgba(40,30,20,.22)}
+.dev.and{border-radius:44px}
+.scr{width:390px;height:844px;border-radius:47px;overflow:hidden;position:relative;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45}
+.and .scr{border-radius:32px}
+.sb{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 46px;font-size:16px;font-weight:600;z-index:20;color:var(--text)}
+.asb{position:absolute;top:0;left:0;right:0;height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:14px;font-weight:600;z-index:20;color:var(--text)}
+.di{position:absolute;top:11px;left:50%;margin-left:-62px;width:124px;height:36px;border-radius:18px;background:#000;z-index:21}
+.ph{position:absolute;top:10px;left:50%;margin-left:-8px;width:16px;height:16px;border-radius:8px;background:#000;z-index:21}
+.hi{position:absolute;bottom:8px;left:50%;margin-left:-67px;width:134px;height:5px;border-radius:3px;background:var(--text);z-index:22}
+.ahi{position:absolute;bottom:10px;left:50%;margin-left:-54px;width:108px;height:4px;border-radius:2px;background:var(--text);z-index:22}
+.m{color:var(--muted)}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;border-radius:27px;background:var(--fill);color:var(--onfill);font-weight:700;font-size:17px;text-decoration:none;border:0;font-family:inherit;width:100%}
+.ghost{display:flex;align-items:center;justify-content:center;min-height:46px;color:var(--acc);font-weight:600;font-size:15.5px;text-decoration:none}
+.num{flex:none;width:30px;height:30px;border-radius:15px;background:var(--panel);color:var(--acc);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.icon{width:56px;height:56px;border-radius:14px;background:#FBF3E4;object-fit:cover;display:block}
+.chrome{position:absolute;top:36px;left:0;right:0;height:56px;background:#F1EDEA;display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid #DDD6CF;z-index:15;color:#1D1B19}
+.url{flex:1;height:40px;border-radius:20px;background:var(--surface);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:14.5px}
+.ctab{position:absolute;top:36px;left:0;right:0;height:56px;background:var(--surface);display:flex;align-items:center;gap:12px;padding:0 12px;border-bottom:1px solid #DDD6CF;z-index:15;color:#1D1B19}
+.hero{padding:116px 20px 0}
+.hero h2{margin:14px 0 0;font-size:25px;line-height:1.2}
+.hero p{margin:8px 0 0;font-size:16px;color:var(--muted)}
+.badge{width:64px;height:64px;border-radius:32px;background:var(--panel);color:var(--acc);display:flex;align-items:center;justify-content:center}
+.foot{position:absolute;left:16px;right:16px;bottom:36px;display:flex;flex-direction:column;gap:4px}
+.row{display:flex;align-items:center;gap:14px;min-height:60px;padding:6px 20px;border-bottom:1px solid var(--line);background:var(--surface)}
+.tab{position:absolute;left:0;right:0;bottom:0;height:72px;background:color-mix(in srgb, var(--bg) 96%, transparent);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));z-index:8}
+.nv{display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:3px;color:var(--muted);text-decoration:none;font-size:12px;font-weight:500}
+.nv.on{color:var(--acc);font-weight:700}
+</style>
+</helmet>
+<div class="th {{brandKey}} {{modeKey}}" style="width: 2314px; height: 920px; display: flex; gap: 56px; font-family: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif">
+
+  <!-- iPhone in WhatsApp -->
+  <div>
+    <div class="cap">iPhone, inside WhatsApp <span>· detected, said plainly</span></div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:45</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div style="position: absolute; top: 54px; left: 0; right: 0; height: 46px; background: #F2F1EF; color: #1C1C1E; display: flex; align-items: center; padding: 0 12px; gap: 10px; border-bottom: 1px solid #DAD6D0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg><div style="flex: 1; text-align: center; font-size: 14px"><strong>Onde Onde</strong><div style="font-size: 12px; color: #6B6B70">ondeonde.app</div></div><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></div>
+      <div class="hero" style="padding-top: 124px">
+        <div class="badge"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg></div>
+        <h2>First, open this page in Safari</h2>
+        <p>You&#39;re inside WhatsApp. Order updates only work from Safari on iPhone.</p>
+        <ol style="list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; font-size: 16px">
+          <li style="display: flex; gap: 12px; align-items: center"><span class="num">1</span>Tap <strong>Copy link</strong> below</li>
+          <li style="display: flex; gap: 12px; align-items: center"><span class="num">2</span>Open <strong>Safari</strong></li>
+          <li style="display: flex; gap: 12px; align-items: center"><span class="num">3</span>Tap the address bar and <strong>Paste and Go</strong></li>
+        </ol>
+      </div>
+      <div class="foot" style="bottom: 40px">
+        <button class="btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a1 1 0 0 1 1-1h9"></path></svg>Copy link</button>
+        <div class="m" style="text-align: center; font-size: 13.5px">After tapping: &quot;Link copied. Now open Safari.&quot;</div>
+        <a href="#" class="ghost">Skip, I&#39;ll check the order page</a>
+      </div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- Android Chrome: straight to Allow -->
+  <div>
+    <div class="cap">Android, Chrome <span>· Turn on updates goes straight to Allow</span></div>
+    <div class="dev and"><div class="scr">
+      <div class="asb"><span>12:45</span><span style="display: flex; gap: 6px; align-items: center"><svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="10" height="15" viewBox="0 0 10 15" fill="currentColor"><rect x="0" y="1.5" width="10" height="13.5" rx="2"></rect><rect x="3" y="0" width="4" height="2" rx="1"></rect></svg></span></div><div class="ph"></div>
+      <div class="chrome"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"></path></svg><div class="url"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>ondeonde.app/o/K7F2QX</div><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg></div>
+      <div style="padding: 108px 20px 0">
+        <div class="m" style="font-size: 14px">Order K7F-2QX placed</div>
+        <h2 style="margin: 4px 0 0; font-size: 24px; line-height: 1.2">Get a message when your order is ready</h2>
+        <p style="margin: 8px 0 0; font-size: 16px; color: var(--muted)">Tap Allow when your phone asks.</p>
+        <div style="margin-top: 16px; min-height: 54px; border-radius: 27px; background: var(--tint)"></div>
+      </div>
+      <div style="position: absolute; inset: 0; background: rgba(0,0,0,.42); z-index: 16"></div>
+      <div role="dialog" aria-label="Show notifications?" style="position: absolute; left: 20px; right: 20px; bottom: 40px; z-index: 17; padding: 22px 22px 14px; border-radius: 28px; background: #F4EFEA; color: #1D1B19">
+        <div style="display: flex; gap: 12px; align-items: center"><svg style="flex: none; color: #5E5853" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg><div style="font-size: 16px">ondeonde.app wants to show notifications</div></div>
+        <div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 18px"><span style="min-height: 44px; padding: 0 16px; border-radius: 22px; color: #6B4E33; font-weight: 600; display: flex; align-items: center">Don&#39;t allow</span><span style="min-height: 44px; padding: 0 22px; border-radius: 22px; background: #6B4E33; color: #fff; font-weight: 600; display: flex; align-items: center">Allow</span></div>
+      </div>
+      <div class="ahi"></div>
+    </div></div>
+  </div>
+
+  <!-- Android in WhatsApp -->
+  <div>
+    <div class="cap">Android, inside WhatsApp <span>· open in Chrome first</span></div>
+    <div class="dev and"><div class="scr">
+      <div class="asb"><span>12:45</span><span style="display: flex; gap: 6px; align-items: center"><svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="10" height="15" viewBox="0 0 10 15" fill="currentColor"><rect x="0" y="1.5" width="10" height="13.5" rx="2"></rect><rect x="3" y="0" width="4" height="2" rx="1"></rect></svg></span></div><div class="ph"></div>
+      <div class="ctab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg><div style="flex: 1; font-size: 14px"><strong>Onde Onde</strong><div style="font-size: 12px; color: #5E5853">ondeonde.app</div></div><span style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; box-shadow: 0 0 0 3px var(--warn)"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg></span></div>
+      <div style="position: absolute; top: 96px; right: 10px; width: 230px; z-index: 16; border-radius: 12px; background: var(--surface); box-shadow: 0 8px 24px rgba(0,0,0,.18); color: #1D1B19; overflow: hidden; font-size: 15px">
+        <div style="height: 46px; display: flex; align-items: center; padding: 0 16px">Copy link</div>
+        <div style="height: 46px; display: flex; align-items: center; padding: 0 16px">Share…</div>
+        <div style="height: 46px; display: flex; align-items: center; padding: 0 16px; font-weight: 700; background: var(--warnbg); box-shadow: inset 0 0 0 2px var(--warn)">Open in Chrome</div>
+      </div>
+      <div class="hero" style="padding-top: 250px">
+        <h2 style="margin-top: 0">First, open this page in Chrome</h2>
+        <p>You&#39;re inside WhatsApp, which can&#39;t send order updates.</p>
+        <ol style="list-style: none; margin: 20px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; font-size: 16px">
+          <li style="display: flex; gap: 12px; align-items: center"><span class="num">1</span><span>Tap <strong>⋮</strong> at the top right</span></li>
+          <li style="display: flex; gap: 12px; align-items: center"><span class="num">2</span><span>Tap <strong>Open in Chrome</strong></span></li>
+        </ol>
+      </div>
+      <div class="foot"><a href="#" class="ghost">Skip, I&#39;ll check the order page</a></div>
+      <div class="ahi"></div>
+    </div></div>
+  </div>
+
+  <!-- Android optional install -->
+  <div>
+    <div class="cap">Android, install is optional <span>· offered in Settings</span></div>
+    <div class="dev and"><div class="scr">
+      <div class="asb"><span>12:50</span><span style="display: flex; gap: 6px; align-items: center"><svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="10" height="15" viewBox="0 0 10 15" fill="currentColor"><rect x="0" y="1.5" width="10" height="13.5" rx="2"></rect><rect x="3" y="0" width="4" height="2" rx="1"></rect></svg></span></div><div class="ph"></div>
+      <div class="chrome"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"></path></svg><div class="url">ondeonde.app/settings</div><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg></div>
+      <div style="padding-top: 92px">
+        <h1 style="margin: 16px 20px 12px; font-size: 28px">Settings</h1>
+        <div style="border-top: 1px solid var(--line)">
+          <div class="row"><span style="flex: 1; font-size: 16px">Language</span><span class="m">English</span></div>
+          <div class="row"><span style="flex: 1; font-size: 16px">Appearance</span><span class="m">Auto · follows phone</span></div>
+          <div class="row"><div style="flex: 1"><div style="font-size: 16px">Order updates</div><div style="font-size: 14px; color: var(--ok); font-weight: 600">On</div></div><span style="width: 52px; height: 32px; border-radius: 16px; background: var(--acc); position: relative"><span style="position: absolute; right: 3px; top: 3px; width: 26px; height: 26px; border-radius: 13px; background: #fff"></span></span></div>
+        </div>
+        <div style="margin: 20px 16px 0; padding: 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line)">
+          <div style="display: flex; gap: 14px; align-items: center"><img class="icon" src="assets/home-icon.jpg" alt=""><div><strong style="font-size: 16px">Put Onde Onde on your home screen</strong><div class="m" style="font-size: 14px">Opens like an app, one tap away.</div></div></div>
+          <button class="btn" style="margin-top: 14px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>Install</button>
+          <p class="m" style="margin: 10px 0 0; font-size: 13.5px">No Install button? Tap <strong>⋮</strong> in Chrome, then <strong>Add to home screen</strong>.</p>
+        </div>
+      </div>
+      <nav class="tab"><a href="#" class="nv"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>Menu</a><a href="#" class="nv"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>My orders</a><a href="#" class="nv on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg>Settings</a></nav>
+      <div class="ahi"></div>
+    </div></div>
+  </div>
+
+  <!-- Desktop -->
+  <div>
+    <div class="cap">Desktop <span>· optional, a quiet line only</span></div>
+    <div style="width: 418px; height: 300px; border-radius: 12px; overflow: hidden; background: var(--bg); color: var(--text); box-shadow: 0 24px 48px rgba(40,30,20,.22); font-size: 14px">
+      <div style="height: 36px; background: #E4DDD5; display: flex; align-items: center; gap: 8px; padding: 0 12px"><span style="width: 10px; height: 10px; border-radius: 5px; background: #E5655A"></span><span style="width: 10px; height: 10px; border-radius: 5px; background: #E5B94E"></span><span style="width: 10px; height: 10px; border-radius: 5px; background: #6FBF5E"></span><div style="flex: 1; margin-left: 10px; height: 22px; border-radius: 11px; background: var(--s2); color: var(--muted); font-size: 12px; display: flex; align-items: center; padding: 0 10px">ondeonde.app/o/K7F2QX</div></div>
+      <div style="padding: 20px">
+        <div class="m">Onde Onde · Sat 17 Oct</div>
+        <div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 24px; font-weight: 700; letter-spacing: .06em">K7F-2QX</div>
+        <div style="margin-top: 14px; display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)"><svg style="flex: none; color: var(--muted)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg><span style="flex: 1">Get updates on this computer</span><a href="#" style="font-weight: 600; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center">Turn on</a></div>
+        <div class="m" style="margin-top: 10px; font-size: 13px">Desktop browsers show notifications without installing. The browser offers its own install icon in the address bar.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"brand": {"editor": "enum", "options": ["Onde Onde", "Bali", "Sumatra", "Sunda", "Jawa"], "default": "Onde Onde", "section": "Seller theme"}, "mode": {"editor": "enum", "options": ["Light", "Dark"], "default": "Light", "section": "Seller theme"}, "$preview": {"width": 2314, "height": 920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const brands = { 'Onde Onde': 'ondeonde', 'Bali': 'bali', 'Sumatra': 'sumatra', 'Sunda': 'sunda', 'Jawa': 'jawa' };
+    const b = brands[this.props.brand ?? 'Onde Onde'] ?? 'ondeonde';
+    const d = (this.props.mode ?? 'Light') === 'Dark' ? 'dark' : 'light';
+    return { brandKey: b, modeKey: d };
+  }
+}
+</script>
+</body>
+</html>

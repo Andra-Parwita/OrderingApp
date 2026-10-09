@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { orderRow, pageScrollWidth, searchBox } from './sellerHelpers';
+import { orderRow, pageScrollWidth, sampleDay, searchBox, searchFor } from './sellerHelpers';
 
 function watchConsole(page: Page): Array<string> {
   const errors: Array<string> = [];
@@ -10,8 +10,8 @@ function watchConsole(page: Page): Array<string> {
   return errors;
 }
 
-// Stage 4.4: the nudge and lock flow across two devices, on the real routes. The mock store is
-// shared by parallel tests: this test never resets it; it finds its own order by a unique name.
+// The nudge and lock flow across two devices, on the real routes. The mock store is shared by
+// parallel tests: this test never resets it; it finds its own order by a unique name.
 test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
   page,
   browser,
@@ -44,16 +44,16 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
     // Seller (desktop) finds the order and sees it is from a new customer.
     await sellerPage.goto('/seller');
     await expect(sellerPage.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
-    await searchBox(sellerPage).fill(firstName);
+    await searchFor(sellerPage, firstName);
     const row = orderRow(sellerPage, new RegExp(firstName));
-    await expect(row).toContainText('New customer');
     await row.click();
     await expect(sellerPage).toHaveURL(/\/seller\/orders\/[A-Z0-9]+\?q=/);
+    await expect(sellerPage.getByText('★ New customer')).toBeVisible();
     await expect(sellerPage.getByText(/Wait for their WhatsApp message/)).toBeVisible();
     await sellerPage.screenshot({ path: 'captures/b2flow-2-seller-detail.png', fullPage: true });
 
     // Nudge: the reminder reaches the customer's order page (it polls every 15 s).
-    await sellerPage.getByRole('button', { name: 'Nudge customer' }).click();
+    await sellerPage.getByRole('button', { name: /^Nudge/ }).click();
     await expect(sellerPage.getByText('Reminder sent to the customer')).toBeVisible();
     await expect(page.getByTestId('updates')).toContainText(
       'The seller is waiting for your order number on WhatsApp.',
@@ -62,8 +62,8 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
     await page.screenshot({ path: 'captures/b2flow-3-customer-nudged.png', fullPage: true });
 
     // Lock: the customer can no longer change the order.
-    await sellerPage.getByRole('button', { name: 'Lock order' }).click();
-    await expect(sellerPage.getByRole('button', { name: 'Unlock order' })).toBeVisible();
+    await sellerPage.getByRole('button', { name: /^Lock/ }).click();
+    await expect(sellerPage.getByRole('button', { name: /^Unlock/ })).toBeVisible();
     await expect(
       page.getByText('The seller has locked this order. Message them on WhatsApp to change it.'),
     ).toBeVisible({ timeout: 40_000 });
@@ -71,15 +71,20 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
     await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
     await page.screenshot({ path: 'captures/b2flow-4-customer-locked.png', fullPage: true });
 
-    // Seller adds a WhatsApp order for someone else (the order panel dims the page: close it).
-    await sellerPage.getByRole('button', { name: 'Close' }).click();
-    await sellerPage.getByRole('button', { name: '+ New order' }).click();
+    // Seller adds a WhatsApp order for someone else (New order is a slide-over on a desktop).
+    await sellerPage
+      .getByRole('complementary', { name: /^Order / })
+      .getByRole('button', { name: 'Close' })
+      .click();
+    await sellerPage.getByRole('button', { name: 'New order' }).click();
     await expect(sellerPage).toHaveURL(/\/seller\/new$/);
+    const form = sellerPage.getByRole('dialog', { name: 'New order' });
     const walkIn = `Lisa-${Date.now()}`;
-    await sellerPage.getByLabel('Customer first name').fill(walkIn);
-    await sellerPage.getByRole('button', { name: 'One more Tilapia pesmol' }).click();
-    await sellerPage.getByRole('button', { name: 'Create order' }).click();
-    await expect(sellerPage.getByText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/)).toBeVisible();
+    await form.getByLabel('Customer first name').fill(walkIn);
+    await form.getByRole('button', { name: 'One more Tilapia pesmol' }).click();
+    await form.getByRole('button', { name: 'Create only' }).click();
+    await searchFor(sellerPage, walkIn);
+    await expect(orderRow(sellerPage, new RegExp(walkIn))).toBeVisible();
     await sellerPage.screenshot({ path: 'captures/b2flow-5-seller-saved.png', fullPage: true });
 
     expect(sellerErrors).toEqual([]);
@@ -89,29 +94,28 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
   expect(customerErrors).toEqual([]);
 });
 
-// Every status filter chip must sit fully inside the list pane (the pane that holds the search).
-async function expectChipsInsideList(page: Page, width: number) {
-  const group = page.getByRole('group', { name: 'Filter by status' });
-  const chips = group.getByRole('button');
-  await expect(chips).toHaveCount(7);
+// Every status tab must sit fully inside the list pane (the pane that holds the search).
+async function expectTabsInsideList(page: Page, width: number) {
+  const group = page.getByRole('group', { name: 'Order status' });
+  const tabs = group.getByRole('button');
+  await expect(tabs).toHaveCount(6);
   const pane = await page.getByRole('main').boundingBox();
   expect(pane, `list pane at ${width}`).not.toBeNull();
-  for (let i = 0; i < 7; i += 1) {
-    const chip = chips.nth(i);
-    await expect(chip).toBeVisible();
-    const box = await chip.boundingBox();
-    expect(box, `chip ${i} at ${width}`).not.toBeNull();
+  for (let i = 0; i < 6; i += 1) {
+    const tab = tabs.nth(i);
+    await expect(tab).toBeVisible();
+    const box = await tab.boundingBox();
+    expect(box, `tab ${i} at ${width}`).not.toBeNull();
     if (box && pane) {
-      expect(box.x, `chip ${i} left at ${width}`).toBeGreaterThanOrEqual(pane.x);
-      expect(box.x + box.width, `chip ${i} right at ${width}`).toBeLessThanOrEqual(
+      expect(box.x, `tab ${i} left at ${width}`).toBeGreaterThanOrEqual(pane.x);
+      expect(box.x + box.width, `tab ${i} right at ${width}`).toBeLessThanOrEqual(
         pane.x + pane.width,
       );
-      expect(box.height).toBeGreaterThanOrEqual(44);
     }
   }
 }
 
-test('seller desktop: table, slide-over, cook list, empty state; phone unchanged', async ({
+test('seller desktop: list and panel, kitchen, empty state; tablet and phone layouts', async ({
   browser,
   request,
 }, testInfo) => {
@@ -138,7 +142,7 @@ test('seller desktop: table, slide-over, cook list, empty state; phone unchanged
     await page.goto('/seller');
     await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
 
-    // Rail: current page marked, the one language switch in its footer.
+    // Left panel: current page marked, the one language switch in its footer.
     const rail = page.getByRole('navigation', { name: 'Seller' });
     await expect(rail.getByRole('link', { name: 'Orders' })).toHaveAttribute(
       'aria-current',
@@ -148,81 +152,60 @@ test('seller desktop: table, slide-over, cook list, empty state; phone unchanged
     await expect(page.getByRole('radiogroup', { name: 'Language' })).toHaveCount(1);
     await expect(page.getByRole('main')).toHaveCount(1);
 
-    // A1-1: the table, six columns, rows open with a click.
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(/Orders · /);
-    const table = page.getByRole('table', { name: 'Orders' });
-    await expect(table.getByRole('columnheader')).toHaveText([
-      'Order',
-      'Name',
-      'What they ordered',
-      'Total',
-      'Status',
-      'Needs attention',
-    ]);
-    await expect(page.getByRole('button', { name: /^Edited by customer \d+$/ })).toBeVisible();
-    await expectChipsInsideList(page, 1280);
+    // The list: a heading, search, the Changed / Not paid toggles and the status tabs.
+    await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible();
+    await expect(searchBox(page)).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Changed \d+$/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Not paid \d+$/ })).toBeVisible();
+    await expectTabsInsideList(page, 1280);
     await page.screenshot({ path: 'captures/desktop-a1-table.png' });
 
-    // The three new orders, in table order.
-    await searchBox(page).fill(stamp);
-    const rows = table.getByRole('row').filter({ hasText: stamp });
+    // The three new orders, in list order.
+    await searchFor(page, stamp);
+    const rows = page.getByRole('button', { name: new RegExp(stamp) });
     await expect(rows).toHaveCount(3);
     const codeOf = async (index: number) =>
-      (await rows.nth(index).getByRole('cell').first().textContent()) ?? '';
+      ((await rows.nth(index).textContent()) ?? '').match(/[A-Z0-9]{3}-[A-Z0-9]{3}/)?.[0] ?? '';
     const first = await codeOf(0);
     const second = await codeOf(1);
     expect(first).toMatch(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
 
-    // A1-2: the panel. Click opens it; the URL names the order, so Back would close it.
+    // The panel sits beside the list. A click opens it; the URL names the order.
+    const panel = page.getByRole('complementary', { name: /^Order / });
     await rows.nth(0).click();
-    const dialog = page.getByRole('dialog');
-    await expect(dialog).toBeVisible();
-    await expect(dialog).toHaveAttribute('aria-modal', 'true');
+    await expect(panel).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/seller/orders/${first.replace('-', '')}\\?`));
-    await expect(dialog.getByRole('heading', { name: first })).toBeVisible();
-    await expect(dialog).toBeFocused();
+    await expect(panel.getByRole('heading', { name: new RegExp(first) })).toBeVisible();
+    await expect(rows.nth(1)).toBeVisible();
     await page.screenshot({ path: 'captures/desktop-a1-panel.png' });
 
-    // Next order moves to the next row of the same table.
-    await dialog.getByRole('button', { name: /Next order/ }).click();
-    await expect(dialog.getByRole('heading', { name: second })).toBeVisible();
+    // Another row swaps the panel to that order; Close leaves the list with the search.
+    await rows.nth(1).click();
+    await expect(panel.getByRole('heading', { name: new RegExp(second) })).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/seller/orders/${second.replace('-', '')}\\?`));
-
-    // Escape closes it and focus is back on that row; Enter opens it again.
-    await page.keyboard.press('Escape');
-    await expect(dialog).toHaveCount(0);
+    await panel.getByRole('button', { name: 'Close' }).click();
+    await expect(panel).toHaveCount(0);
     await expect(page).toHaveURL(/\/seller\?/);
-    await expect(rows.nth(1)).toBeFocused();
-    await page.keyboard.press('Enter');
-    await expect(dialog.getByRole('heading', { name: second })).toBeVisible();
-    await dialog.getByRole('button', { name: 'Close' }).click();
-    await expect(dialog).toHaveCount(0);
 
-    // 1024 px is still the desktop layout and nothing spills sideways.
+    // 1024 px is still the tablet layout and nothing spills sideways.
     await page.setViewportSize({ width: 1024, height: 800 });
-    await expect(table).toBeVisible();
-    await expectChipsInsideList(page, 1024);
+    await expectTabsInsideList(page, 1024);
     expect(await pageScrollWidth(page)).toBeLessThanOrEqual(1024);
     await rows.nth(0).click();
-    await expect(dialog).toBeVisible();
+    await expect(panel).toBeVisible();
     expect(await pageScrollWidth(page)).toBeLessThanOrEqual(1024);
-    await page.keyboard.press('Escape');
+    await panel.getByRole('button', { name: 'Close' }).click();
     await page.setViewportSize({ width: 1280, height: 800 });
 
-    // A1-3: the cook list, with who ordered inline.
-    await rail.getByRole('link', { name: 'Cook list' }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Cook list · Sat 10 Oct');
-    await expect(page.getByRole('button', { name: 'Print cook list' })).toBeVisible();
+    // Kitchen: the cook list with its tools.
+    await rail.getByRole('link', { name: 'Kitchen' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(`Kitchen · ${sampleDay()}`);
+    await expect(page.getByRole('button', { name: 'Print labels' })).toBeVisible();
     await expect(page.getByRole('radiogroup', { name: 'Group by' })).toBeVisible();
-    const chipA = page
-      .getByRole('list', { name: 'Who ordered' })
-      .getByRole('listitem')
-      .filter({ hasText: `${stamp}A` });
-    await expect(chipA).toContainText('\u00d71');
-    await expect(page.getByRole('button', { name: /Who ordered/ })).toHaveCount(0);
+    await expect(page.getByRole('tab', { name: 'Pack by order' })).toBeVisible();
     await page.screenshot({ path: 'captures/desktop-a1-cook.png' });
 
-    // A1-4: the empty state. The store is shared, so the list answer is emptied in this tab only.
+    // The empty state. The store is shared, so the list answer is emptied in this tab only.
     await page.route('**/api/seller/orders', async (route) => {
       if (route.request().method() !== 'GET') return route.continue();
       const response = await route.fetch();
@@ -230,42 +213,39 @@ test('seller desktop: table, slide-over, cook list, empty state; phone unchanged
     });
     await rail.getByRole('link', { name: 'Orders' }).click();
     await expect(page.getByText('No orders yet')).toBeVisible();
-    await expect(page.getByText("Share this week's menu to start taking orders.")).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Share menu on WhatsApp' })).toBeVisible();
     await page.screenshot({ path: 'captures/desktop-a1-empty.png' });
-    await page.getByRole('button', { name: 'Share menu on WhatsApp' }).click();
-    await expect(page).toHaveURL(/\/seller\/share$/);
     expect(errors).toEqual([]);
   } finally {
     await wide.close();
   }
 
-  // 820 to 1023 px uses the phone layout, as it did before.
+  // 600 px and up is the tablet layout: the left panel and the list, no phone bar.
   const mid = await browser.newContext({ baseURL, viewport: { width: 900, height: 800 } });
   try {
     const page = await mid.newPage();
     await page.goto('/seller');
-    await expect(
-      page.getByRole('navigation', { name: 'Seller' }).getByRole('link', { name: 'More' }),
-    ).toBeVisible();
-    await expect(page.getByRole('table')).toHaveCount(0);
+    const rail = page.getByRole('navigation', { name: 'Seller' });
+    await expect(rail.getByRole('link', { name: 'Kitchen' })).toBeVisible();
+    await expect(rail.getByRole('link', { name: 'More' })).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Seller (phone)' })).toHaveCount(0);
+    expect(await pageScrollWidth(page)).toBeLessThanOrEqual(900);
   } finally {
     await mid.close();
   }
 
-  // The phone layout is unchanged: tab bar at the bottom, cards, no table.
+  // The phone layout: tab bar at the bottom (Orders, Pickup & delivery, More), a list of cards.
   const narrow = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 } });
   try {
     const page = await narrow.newPage();
     const errors = watchConsole(page);
     await page.goto('/seller');
-    const tabs = page.getByRole('navigation', { name: 'Seller' });
+    const tabs = page.getByRole('navigation', { name: 'Seller (phone)' });
     await expect(tabs.getByRole('link', { name: 'Orders' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    await expect(page.getByRole('table')).toHaveCount(0);
-    await expect(page.getByLabel('Order code or name')).toBeVisible();
+    await expect(tabs.getByRole('link', { name: 'Pickup & delivery' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Search orders' })).toBeVisible();
     const box = await tabs.boundingBox();
     expect(box).not.toBeNull();
     if (box) {
@@ -274,10 +254,8 @@ test('seller desktop: table, slide-over, cook list, empty state; phone unchanged
     }
     await tabs.getByRole('link', { name: 'More' }).click();
     await expect(page).toHaveURL(/\/seller\/more$/);
-    await page.getByRole('button', { name: /^Settings/ }).click();
-    await expect(page).toHaveURL(/\/seller\/settings$/);
-    await expect(page.getByRole('radio', { name: 'Dark' })).toBeVisible();
-    await page.screenshot({ path: 'captures/b2flow-8-phone-settings.png', fullPage: true });
+    await expect(page.getByRole('radio', { name: 'ID', exact: true })).toBeVisible();
+    await page.screenshot({ path: 'captures/b2flow-8-phone-more.png', fullPage: true });
     expect(errors).toEqual([]);
   } finally {
     await narrow.close();

@@ -85,7 +85,7 @@ try {
     const existing = await db.first('SELECT COUNT(*) AS n FROM sellers');
     if (existing.n > 0)
       stop(`the database already has ${existing.n} seller(s); nothing was seeded`);
-    await db.batch(fixtureStatements(db));
+    await db.batch(fixtureStatements(db, new Date()));
     console.log('db: seeded Onde Onde and Dapur Demo');
   }
 

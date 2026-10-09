@@ -2,11 +2,6 @@
   "orders": {
     "title": "Pesanan",
     "titleWithDate": "Pesanan · {{date}}",
-    "link": {
-      "live": "Langsung",
-      "reconnecting": "Menyambung lagi…",
-      "offline": "Offline · memuat lebih lambat"
-    },
     "notConfirmed_one": "{{count}} belum dikonfirmasi",
     "notConfirmed_other": "{{count}} belum dikonfirmasi",
     "show": "Lihat ›",
@@ -37,7 +32,7 @@
     "colStatus": "Status",
     "colAttention": "Perlu perhatian",
     "emptyTitle": "Belum ada pesanan",
-    "emptyHint": "Bagikan menu minggu ini untuk mulai menerima pesanan.",
+    "emptyHint": "Bagikan menu Anda untuk mulai menerima pesanan.",
     "shareOnWhatsApp": "Bagikan menu lewat WhatsApp"
   },
   "filter": {
@@ -173,5 +168,209 @@
     "note": "Catatan",
     "locked": "Dikunci",
     "none": "Tidak ada yang perlu dilakukan"
+  },
+  "home": {
+    "title": "Pesanan",
+    "live": "Langsung",
+    "noLive": "Tidak ada menu aktif · pelanggan tidak bisa memesan",
+    "paused": "Pesanan dijeda",
+    "takingOrders": "Menerima pesanan",
+    "takingOrdersLabel": "Menerima pesanan, nyala atau mati",
+    "menuFor": "Menu untuk {{date}} · Pesanan ditutup {{cutoff}}",
+    "loading": "Memuat…",
+    "loadError": "Menu tidak bisa dimuat.",
+    "setup": {
+      "title": "Siapkan dapur Anda",
+      "why": "Empat langkah singkat, lalu pelanggan bisa memesan.",
+      "pictures": "Tambah gambar",
+      "whatsapp": "Tambah nomor WhatsApp",
+      "menu": "Buat menu",
+      "publish": "Terbitkan dan bagikan",
+      "go": "Buka",
+      "action": "Buat menu"
+    },
+    "notPublished": "Menu Anda untuk {{date}} belum diterbitkan.",
+    "stepOf": "Langkah {{step}} dari 4 · tersimpan",
+    "continue": "Lanjutkan",
+    "justFinished": "Baru selesai",
+    "lastMenu": "Menu terakhir",
+    "closedNote": "Menu ditutup di akhir hari memasak.",
+    "seeAll": "Lihat semua {{count}} pesanan",
+    "hideAll": "Sembunyikan pesanan",
+    "statOrders_one": "pesanan · {{cancelled}} dibatalkan",
+    "statOrders_other": "pesanan · {{cancelled}} dibatalkan",
+    "statTotal": "total",
+    "statDone": "diambil · diantar",
+    "statUnpaid_one": "belum dibayar · {{count}} pesanan",
+    "statUnpaid_other": "belum dibayar · {{count}} pesanan",
+    "dishesSold": "Hidangan terjual",
+    "unpaidLine": "{{name}} belum membayar {{amount}}",
+    "markPaid": "Tandai lunas",
+    "useDishes": "Pakai hidangan ini untuk menu baru",
+    "earlier": "Menu sebelumnya",
+    "earlierHint": "Rincian pesanan disimpan 4 minggu, lalu hanya totalnya.",
+    "earlierRow": "{{orders}} pesanan · {{dishes}} hidangan",
+    "allPaid": "Semua lunas",
+    "unpaidAmount": "{{amount}} belum dibayar",
+    "noEarlier": "Belum ada menu sebelumnya.",
+    "allMenus": "Semua menu sebelumnya",
+    "noMenu": "Belum ada menu yang dibuka."
+  },
+  "live": {
+    "search": "Nama atau kode",
+    "changed": "Diubah",
+    "notPaid": "Belum dibayar",
+    "toggles": "Tampilkan saja",
+    "newOrder": "Pesanan baru",
+    "share": "Bagikan menu",
+    "paid": "Lunas",
+    "wa": "Nomor pesanan sudah diterima lewat WhatsApp",
+    "returning": "Pelanggan lama",
+    "staff": "Dimasukkan oleh staf",
+    "newCustomer": "Pelanggan baru",
+    "note": "Ada catatan",
+    "locked": "Dikunci",
+    "list": "Pesanan",
+    "status": "Status pesanan"
+  },
+  "panel": {
+    "changedBy": "{{name}} mengubah pesanan ini · {{when}}",
+    "items": "Pesanan",
+    "noteFrom": "Catatan dari {{name}}",
+    "pickup": "Ambil sendiri",
+    "delivery": "Antar",
+    "language": "Bahasa",
+    "langEn": "Inggris",
+    "langId": "Indonesia",
+    "whatsapp": "WhatsApp",
+    "waYes": "Nomor pesanan sudah diterima",
+    "waNo": "Belum",
+    "enteredBy": "Dimasukkan oleh",
+    "enteredByCustomer": "{{name}}, lewat tautan pesanan",
+    "customer": "Pelanggan",
+    "custNew": "Pelanggan baru",
+    "custReturning": "Pelanggan lama",
+    "canChange": "Bisa diubah",
+    "canYes": "Ya, sampai Anda kunci",
+    "canNo": "Tidak, terkunci",
+    "recent": "Perubahan terakhir",
+    "collected": "Diambil {{when}}",
+    "collectedBySeller": "ditandai oleh Anda",
+    "collectedByCustomer": "oleh pelanggan",
+    "cancelTitle": "Batalkan pesanan {{name}}?",
+    "cancelBody": "{{name}} akan melihat bahwa pesanan dibatalkan. Anda bisa membatalkan tindakan ini selama beberapa detik.",
+    "cancelKeep": "Pertahankan",
+    "cancelGo": "Batalkan pesanan",
+    "lock": "Kunci",
+    "unlock": "Buka kunci",
+    "nudge": "Ingatkan"
+  },
+  "warn": {
+    "continue": "Tetap lanjutkan",
+    "back": "Kembali",
+    "generic": {
+      "title": "Tetap lanjutkan?",
+      "body": "Ini tampak tidak biasa. Anda tetap bisa melakukannya."
+    },
+    "status_out_of_order": {
+      "title": "Lewati satu langkah?",
+      "body": "Pesanan {{name}} belum berada di langkah sebelum ini."
+    },
+    "order_closed": {
+      "title": "Pesanan ini sudah selesai",
+      "body": "Pesanan {{name}} sudah diambil, diantar atau dibatalkan."
+    },
+    "order_cancelled": {
+      "title": "Pesanan ini dibatalkan",
+      "body": "Pesanan {{name}} dibatalkan."
+    },
+    "not_pickup": {
+      "title": "Ini pesanan antar",
+      "body": "Pesanan {{name}} diantar, bukan diambil sendiri."
+    },
+    "not_ready": {
+      "title": "Belum siap",
+      "body": "Pesanan {{name}} belum ditandai siap diambil."
+    },
+    "over_limit": {
+      "title": "Melebihi sisa",
+      "body": "Pesanan ini lebih banyak dari porsi yang tersisa. Tetap buat?"
+    }
+  },
+  "toast": {
+    "confirmed": "{{name}} dikonfirmasi",
+    "paid": "{{name}} ditandai lunas",
+    "cancelled": "{{name}} dibatalkan",
+    "collected": "{{name}} ditandai diambil"
+  },
+  "dishes": {
+    "title": "Hidangan",
+    "empty": "Belum ada hidangan di menu ini.",
+    "sold": "terjual",
+    "limit": "batas",
+    "left": "sisa",
+    "noLimit": "tanpa batas",
+    "row": "{{sold}} terjual · sisa {{left}} dari {{limit}}",
+    "rowNoLimit": "{{sold}} terjual · tanpa batas",
+    "editLimit": "Ubah batas",
+    "limitLabel": "Batas untuk {{name}} (kosong = tanpa batas)",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "soldOutBadge": "Habis",
+    "markSoldOut": "Habis",
+    "backOn": "Tersedia lagi"
+  },
+  "newPanel": {
+    "title": "Pesanan baru",
+    "pickupPlace": "Tempat ambil",
+    "soldOut": "habis",
+    "alreadyPaid": "Sudah dibayar",
+    "confirmNow": "Konfirmasi sekarang",
+    "createSend": "Buat & kirim tautan lewat WhatsApp",
+    "createOnly": "Buat saja",
+    "noPlaces": "Belum ada tempat ambil untuk menu ini."
+  },
+  "phone": {
+    "allOrders": "Semua pesanan",
+    "filterTitle": "Tampilkan",
+    "moreFilters": "Tampilkan hanya",
+    "changedN": "{{count}} berubah",
+    "searchOpen": "Cari pesanan",
+    "searchClose": "Tutup pencarian",
+    "sendOn": "Kirim tautan pesanan {{name}} lewat WhatsApp",
+    "confirmSend": "Konfirmasi & kirim lewat WhatsApp",
+    "confirmOnly": "Konfirmasi saja",
+    "lockHint": "Hentikan perubahan",
+    "unlockHint": "Boleh diubah lagi",
+    "nudgeHint": "Pengingat",
+    "backTo": "Kembali ke pesanan",
+    "itemsCount_one": "{{count}} item",
+    "itemsCount_other": "{{count}} item",
+    "cancel": "Batal"
+  },
+  "contact": {
+    "title": "Kontak di ponsel ini",
+    "phone": "Nomor WhatsApp pelanggan",
+    "phoneHelper": "Membuka chat mereka. Nomor seluler Australia, mis. 0412 345 678.",
+    "address": "Alamat pengantaran",
+    "addressHelper": "Opsional.",
+    "onlyHere": "Hanya disimpan di ponsel ini. Tidak dikirim ke server dan tidak masuk cadangan.",
+    "invalid": "Bukan nomor seluler yang valid.",
+    "save": "Simpan di ponsel ini",
+    "saved": "Tersimpan di ponsel ini",
+    "notPersisted": "Ponsel ini tidak akan menyimpannya setelah aplikasi ditutup."
+  },
+  "phoneMore": {
+    "note": "Menu, Dapur, dan Pengaturan ada di tablet atau komputer Anda.",
+    "language": "Bahasa",
+    "contactsTitle": "Kontak pelanggan di ponsel ini",
+    "contactsHelp": "Nomor telepon dan alamat tetap di ponsel ini. Ekspor ke file untuk menyimpan salinan atau pindah ke ponsel lain.",
+    "export": "Ekspor kontak",
+    "import": "Impor kontak",
+    "exported": "{{count}} kontak disimpan ke file.",
+    "imported": "{{count}} kontak ditambahkan.",
+    "importBad": "File itu bukan ekspor kontak.",
+    "count_one": "{{count}} kontak tersimpan di ponsel ini",
+    "count_other": "{{count}} kontak tersimpan di ponsel ini"
   }
 }

@@ -11,6 +11,10 @@ import { buildShareText, type PostLanguage } from './shareText';
 /** Where the customer link points: `origin/slug`; defaults to the page origin and the signed-in seller. */
 export type ShareScreenProps = Readonly<{ origin?: string; slug?: string }>;
 
+/** Wizard step 4 adds the order link and the way on to Orders (plan 001, stage 7). */
+export type ShareComposerProps = ShareScreenProps &
+  Readonly<{ withLink?: boolean; onGoToOrders?: () => void }>;
+
 const Page = styled.main`
   display: flex;
   flex-direction: column;
@@ -76,13 +80,15 @@ function shareText(text: string): void {
 }
 
 /**
- * S5. Route-agnostic. Menu images (collage, up to 5) come with batch 3, so only the text is
- * shared here.
+ * The post to share: language, the exact text, Share to WhatsApp and Copy text (and, in the wizard,
+ * Copy order link and Go to orders). Route-agnostic.
  */
-export function ShareScreen({
+export function ShareComposer({
   origin = window.location.origin,
   slug = currentSellerSlug(),
-}: ShareScreenProps) {
+  withLink = false,
+  onGoToOrders,
+}: ShareComposerProps) {
   const { t } = useTranslation(SHARE_NS);
   const dispatch = useDispatch();
   const state = useSelector((root: ShareRootState) => root.sellerShare);
@@ -113,11 +119,16 @@ export function ShareScreen({
       () => setToast(t('copyFailed')),
     );
   }, [text, t]);
+  const copyLink = useCallback(() => {
+    navigator.clipboard.writeText(`${origin}/${slug}`).then(
+      () => setToast(t('linkCopied')),
+      () => setToast(t('copyFailed')),
+    );
+  }, [origin, slug, t]);
   const dismiss = useCallback(() => setToast(null), []);
 
   return (
-    <Page>
-      <Title>{t('title')}</Title>
+    <>
       {state.status === 'loading' ? <Centered role="status">{t('loading')}</Centered> : null}
       {state.status === 'error' ? (
         <Centered role="alert">
@@ -151,10 +162,31 @@ export function ShareScreen({
             <Button fullWidth onClick={copy}>
               {t('copy')}
             </Button>
+            {withLink ? (
+              <Button fullWidth onClick={copyLink}>
+                {t('copyLink')}
+              </Button>
+            ) : null}
+            {onGoToOrders ? (
+              <Button fullWidth variant="quiet" onClick={onGoToOrders}>
+                {t('goOrders')}
+              </Button>
+            ) : null}
           </Actions>
         </>
       ) : null}
       <Toast message={toast} onDismiss={dismiss} />
+    </>
+  );
+}
+
+/** S5, the Share menu page (Share again on a live menu). */
+export function ShareScreen(props: ShareScreenProps) {
+  const { t } = useTranslation(SHARE_NS);
+  return (
+    <Page>
+      <Title>{t('title')}</Title>
+      <ShareComposer {...props} />
     </Page>
   );
 }

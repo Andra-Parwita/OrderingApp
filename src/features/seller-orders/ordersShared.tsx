@@ -8,15 +8,20 @@ import { Button, ConfirmButton } from '../../ui';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
 import { SELLER_NS } from './i18n/register';
 import type { StatusFilter } from './orderStatus';
-import { selectOrders, visibleOrders } from './sellerOrdersSelectors';
+import { selectOrders, visibleOrders, type ListToggles } from './sellerOrdersSelectors';
 import { pollingStarted, pollingStopped } from './sellerOrdersSlice';
 
 // Pieces the phone list (OrdersScreen) and the desktop table (OrdersTableScreen) both use.
 
 /** The orders for the URL's filter and search. */
-export function useVisibleOrders(filter: StatusFilter, query: string) {
+export function useVisibleOrders(filter: StatusFilter, query: string, toggles?: ListToggles) {
   const orders = useSelector(selectOrders);
-  return useMemo(() => visibleOrders(orders, filter, query), [orders, filter, query]);
+  const changed = toggles?.changed === true;
+  const unpaid = toggles?.unpaid === true;
+  return useMemo(
+    () => visibleOrders(orders, filter, query, { changed, unpaid }),
+    [orders, filter, query, changed, unpaid],
+  );
 }
 
 /** Polling lives in the saga; a screen only says when it is shown. */

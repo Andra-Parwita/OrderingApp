@@ -1,7 +1,7 @@
 // One seller's data on D1. The business rules are ported from the retired in-memory store (D-047) and every
 // query filters by `seller_id` (D-036). Rules run in TypeScript on rows read from D1; each
 // operation that writes several rows sends them as one batch, which D1 runs as one transaction.
-import type { ApiErrorCode } from '../../shared/apiError';
+import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
 import { diffOrder } from '../../shared/auditDiff';
 import { BACKUP_VERSION, type BackupFile } from '../../shared/backup';
 import { ordersToCsv } from '../../shared/csv';
@@ -18,14 +18,21 @@ import type {
   OrderingState,
   OrderLine,
   OrderStatus,
+  PickupPoint,
   Seller,
-  SellerMenuItemView,
   SellerOrder,
   StaffActor,
   Week,
 } from '../../shared/domain';
 import { checkImageUpload, IMAGE_SLOTS, type ImageSlot } from '../../shared/imageSlots';
-import { AUDIT_MAX, INBOX_MAX, MAX_CHEFS, MAX_MENU_ITEMS, MAX_SETS } from '../../shared/limits';
+import { AUDIT_MAX, INBOX_MAX, MAX_CHEFS } from '../../shared/limits';
+import {
+  DEFAULT_MENU_DEFAULTS,
+  DEFAULT_THEME,
+  type Dish,
+  type Menu,
+  type Preferences,
+} from '../../shared/menusContract';
 import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
 import type {
   CreateOrderRequest,
@@ -39,22 +46,8 @@ import {
   parseOrderCode,
   type FillRandom,
 } from '../../shared/orderCode';
-import {
-  keepsOrderDetails,
-  shiftDays,
-  summariseOrders,
-  type PastWeek,
-  type PastWeekSummary,
-} from '../../shared/pastWeeks';
-import type {
-  CreateItemRequest,
-  ImageStyleRequest,
-  SavedSet,
-  SavedSetView,
-  UpdateItemRequest,
-  UseSetRequest,
-  WeekSettingsRequest,
-} from '../../shared/setupContract';
+import { keepsOrderDetails, type PastWeek, type PastWeekSummary } from '../../shared/pastWeeks';
+import type { ImageStyleRequest, SavedSet, UpdateItemRequest } from '../../shared/setupContract';
 import { isFinalStatus, nextStatuses } from '../../shared/status';
 import {
   statusOfTemplate,
@@ -63,6 +56,8 @@ import {
 } from '../../shared/updateContract';
 import type { SellerRepository, StoreResult } from '../repo/Repository';
 import { marks, type Db, type D1Statement } from './d1';
+import { MENU_PLACES_SQL, sellerView, USED_SQL } from './menuView';
+import { createMenuOps, type MenuDeps } from './menus';
 import {
   changeStatements,
   insertOrderStatements,
@@ -70,6 +65,7 @@ import {
   readOrders,
   type OrderChange,
 } from './orders';
+import { createHandoverOps } from './handover';
 import { dropExpiredDetails } from './retention';
 import {
   chefOf,
@@ -80,24 +76,27 @@ import {
   settingsOf,
   weekOf,
   type ChefRow,
+  type DishRow,
   type ImageRow,
   type ItemRow,
   type KitchenRow,
+  type MenuRow,
   type PickupRow,
+  type SetDishRow,
   type SetImageRow,
-  type SetItemRow,
   type SetRow,
   type SettingsRow,
-  type WeekRow,
 } from './rows';
 import {
   chefStatement,
+  dishStatement,
   itemStatement,
   kitchenStatements,
-  pickupStatement,
+  menuStatements,
+  placeStatement,
   setStatements,
   settingsStatement,
-  weekStatements,
+  type StoredSet,
 } from './write';
 
 /** What a seller repository needs from the repository that creates it. */
@@ -112,6 +111,11 @@ export type Deps = {
   samples: Map<string, SampleState>;
 };
 export type SampleState = { random: () => number; fill: FillRandom; counter: number };
+
+const defaultPreferences: Preferences = {
+  theme: DEFAULT_THEME,
+  menuDefaults: DEFAULT_MENU_DEFAULTS,
+};
 
 const SAMPLE_NAMES = ['Rina', 'Tom', 'Sari', 'Budi', 'Mei', 'Dewi', 'Arif', 'Lisa'];
 const SAMPLE_NOTES = [
@@ -151,6 +155,14 @@ function ok<T>(value: T): StoreResult<T> {
   return { ok: true, value };
 }
 
+/**
+ * D-062: a refusal the seller may override with `force`. `error` stays the code the call used to
+ * refuse with, so the screens that only know the old refusals keep working.
+ */
+function warn<T>(error: ApiErrorCode, warning: ApiWarning, message: string): StoreResult<T> {
+  return { ok: false, error, message, warning };
+}
+
 /** A copy of the object without one key. */
 function without<T extends object, K extends keyof T>(source: T, key: K): Omit<T, K> {
   const copy = { ...source } as Partial<T>;
@@ -167,13 +179,21 @@ type State = {
   /** Portions taken per item by live, not cancelled orders. */
   used: Map<string, number>;
   chefs: Array<Chef>;
+  /** plan 001 stage 12: what the public menu adds (D-064 theme, D-060 menu picture). */
+  theme: SettingsRow['theme'];
+  pictureUrl?: string;
 };
 
-type StaffInsert = { status?: OrderStatus; paid?: boolean; returning?: boolean };
+type StaffInsert = {
+  status?: OrderStatus;
+  paid?: boolean;
+  returning?: boolean;
+  /** Seller-entered order that went ahead although it takes more portions than are left. */
+  force?: boolean;
+};
 
-const USED_SQL = `SELECT l.item_id AS item_id, SUM(l.qty) AS used
-  FROM order_lines l JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
-  WHERE o.seller_id = ? AND o.past_week_id IS NULL AND o.status <> 'cancelled'`;
+/** What a portion limit does to a requested line: refuse (customers), warn (sellers) or let it pass. */
+type OverLimit = 'refuse' | 'warn' | 'allow';
 
 /** A draft change to one order: the new state plus the entries to append. */
 type Draft = OrderChange;
@@ -187,6 +207,9 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   const { db } = deps;
   const sid = seller.id;
   const nowIso = () => deps.now().toISOString();
+  const menuDeps: MenuDeps = { db, now: deps.now, newId: deps.newId };
+  const menuOps = createMenuOps(menuDeps, sid);
+  const handover = createHandoverOps(menuDeps, sid);
 
   // ---- Reading ----
 
@@ -197,38 +220,32 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   }
 
   async function loadState(exceptOrderId?: string): Promise<State> {
-    const [kitchens, images, settings, weeks, points, items, used, chefs] = await db.reads([
+    const [kitchens, images, settings, menus, points, items, used, chefs] = await db.reads([
       db.stmt('SELECT * FROM kitchens WHERE seller_id = ?', sid),
       db.stmt('SELECT slot, ref FROM kitchen_images WHERE seller_id = ?', sid),
       db.stmt('SELECT * FROM kitchen_settings WHERE seller_id = ?', sid),
-      db.stmt('SELECT * FROM weeks WHERE seller_id = ?', sid),
-      db.stmt('SELECT * FROM pickup_points WHERE seller_id = ? ORDER BY position', sid),
+      db.stmt('SELECT * FROM menus WHERE seller_id = ?', sid),
+      db.stmt(MENU_PLACES_SQL, sid),
       db.stmt('SELECT * FROM menu_items WHERE seller_id = ? ORDER BY position', sid),
       usedStatement(exceptOrderId),
       db.stmt('SELECT id, name FROM chefs WHERE seller_id = ? ORDER BY position', sid),
     ]);
     const kitchen = kitchens[0] as KitchenRow | undefined;
     const settingsRow = settings[0] as SettingsRow | undefined;
-    const weekRow = weeks[0] as WeekRow | undefined;
-    if (!kitchen || !settingsRow || !weekRow) throw new Error(`Seller ${sid} has no kitchen rows`);
+    const menuRow = menus[0] as MenuRow | undefined;
+    if (!kitchen || !settingsRow || !menuRow) throw new Error(`Seller ${sid} has no kitchen rows`);
     return {
       kitchen: kitchenOf(sid, kitchen, images as Array<ImageRow>),
-      settings: settingsOf(settingsRow),
-      week: weekOf(weekRow, points as Array<PickupRow>),
+      settings: settingsOf(settingsRow, menuRow.taking_orders === 1),
+      week: weekOf(menuRow, points as Array<PickupRow>),
       items: (items as Array<ItemRow>).map(itemOf),
       used: new Map(
         (used as Array<{ item_id: string; used: number }>).map((row) => [row.item_id, row.used]),
       ),
       chefs: (chefs as Array<ChefRow>).map((row) => chefOf(sid, row)),
+      theme: settingsRow.theme,
+      ...(menuRow.picture_ref !== null ? { pictureUrl: menuRow.picture_ref } : {}),
     };
-  }
-
-  async function readWeek(): Promise<Week> {
-    const [weeks, points] = await db.reads([
-      db.stmt('SELECT * FROM weeks WHERE seller_id = ?', sid),
-      db.stmt('SELECT * FROM pickup_points WHERE seller_id = ? ORDER BY position', sid),
-    ]);
-    return weekOf(weeks[0] as WeekRow, points as Array<PickupRow>);
   }
 
   async function readImages(): Promise<KitchenImages> {
@@ -273,32 +290,41 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     return statements;
   }
 
-  async function readSets(): Promise<Array<SavedSet>> {
-    const [sets, items, images] = await db.reads([
+  /** plan 001: a saved set is a list of library dishes; `items` is the legacy item-copy view of them. */
+  type FullSet = SavedSet & { dishIds: Array<string>; timesUsed: number };
+
+  async function readSets(): Promise<Array<FullSet>> {
+    const [sets, links, dishes, images] = await db.reads([
       db.stmt('SELECT * FROM saved_sets WHERE seller_id = ? ORDER BY position', sid),
-      db.stmt('SELECT * FROM saved_set_items WHERE seller_id = ? ORDER BY set_id, position', sid),
+      db.stmt(
+        'SELECT set_id, dish_id FROM saved_set_dishes WHERE seller_id = ? ORDER BY set_id, position',
+        sid,
+      ),
+      db.stmt('SELECT * FROM dishes WHERE seller_id = ?', sid),
       db.stmt('SELECT set_id, slot, ref FROM saved_set_images WHERE seller_id = ?', sid),
     ]);
-    return (sets as Array<SetRow>).map((set) => ({
-      id: set.id,
-      name: set.name,
-      items: (items as Array<SetItemRow>).filter((i) => i.set_id === set.id).map(setItemOf),
-      images: imagesOf(
-        (images as Array<SetImageRow>).filter((i) => i.set_id === set.id),
-        set.banner_background,
-        set.image_alt_en,
-        set.image_alt_id,
-      ),
-    }));
-  }
-
-  function setView(set: SavedSet): SavedSetView {
-    return {
-      id: set.id,
-      name: set.name,
-      items: set.items,
-      imageSlots: IMAGE_SLOTS.filter((slot) => set.images[slot] !== undefined),
-    };
+    const dishById = new Map((dishes as Array<DishRow>).map((dish) => [dish.id, dish]));
+    return (sets as Array<SetRow>).map((set) => {
+      const dishIds = (links as Array<SetDishRow>)
+        .filter((link) => link.set_id === set.id)
+        .map((link) => link.dish_id);
+      return {
+        id: set.id,
+        name: set.name,
+        dishIds,
+        timesUsed: set.times_used,
+        items: dishIds.flatMap((dishId) => {
+          const dish = dishById.get(dishId);
+          return dish ? [setItemOf(dish)] : [];
+        }),
+        images: imagesOf(
+          (images as Array<SetImageRow>).filter((i) => i.set_id === set.id),
+          set.banner_background,
+          set.image_alt_en,
+          set.image_alt_id,
+        ),
+      };
+    });
   }
 
   // ---- Menu rules ----
@@ -319,18 +345,6 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     return null;
   }
 
-  function sellerView(item: MenuItem, used: Map<string, number>): SellerMenuItemView {
-    const { soldOut: manual, ...rest } = item;
-    const remaining =
-      item.limit === undefined ? null : Math.max(0, item.limit - (used.get(item.id) ?? 0));
-    return {
-      ...rest,
-      remaining,
-      soldOut: manual === true || remaining === 0,
-      ...(manual === true ? { manualSoldOut: true } : {}),
-    };
-  }
-
   /** The customer view: the chef (D-012) and the manual flag are dropped here. */
   function view(item: MenuItem, used: Map<string, number>): MenuItemView {
     const copy = sellerView(item, used);
@@ -349,23 +363,9 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       week: s.week,
       items: s.items.map((item) => view(item, s.used)),
       ordering: ordering(s),
+      theme: s.theme,
+      ...(s.pictureUrl !== undefined ? { pictureUrl: s.pictureUrl } : {}),
     };
-  }
-
-  /** Any live order that is not cancelled counts as "has orders" (D-020). */
-  async function itemHasOrders(itemId: string): Promise<boolean> {
-    const row = await db.first(
-      `SELECT 1 AS hit FROM order_lines l JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
-       WHERE o.seller_id = ? AND o.past_week_id IS NULL AND o.status <> 'cancelled' AND l.item_id = ? LIMIT 1`,
-      sid,
-      itemId,
-    );
-    return row !== null;
-  }
-
-  async function sellerItems(): Promise<Array<SellerMenuItemView>> {
-    const s = await loadState();
-    return s.items.map((item) => sellerView(item, s.used));
   }
 
   // ---- Order rules ----
@@ -388,20 +388,34 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     s: State,
     requested: Array<RequestedLine>,
     existing: Array<OrderLine> = [],
+    over: OverLimit = 'refuse',
   ): StoreResult<Array<OrderLine>> {
     const lines: Array<OrderLine> = [];
+    // Customers are refused; a seller-entered order warns (D-062) and `force` lets it pass.
+    const tooMany = (code: ApiErrorCode, message: string): StoreResult<Array<OrderLine>> | null =>
+      over === 'allow'
+        ? null
+        : over === 'warn'
+          ? warn(code, { code: 'over_limit' }, message)
+          : fail(code, message);
     for (const { itemId, qty } of requested) {
       const item = s.items.find((candidate) => candidate.id === itemId);
       if (!item) return fail('unknown_item', `Unknown item: ${itemId}`);
       const previous = existing.find((line) => line.itemId === itemId);
       // Manually sold out: no new portions (an order may keep what it already has).
       if (item.soldOut === true && (!previous || qty > previous.qty)) {
-        return fail('sold_out', `${item.name.en} is sold out`);
+        const refused = tooMany('sold_out', `${item.name.en} is sold out`);
+        if (refused) return refused;
       }
       if (item.limit !== undefined) {
         const left = item.limit - (s.used.get(itemId) ?? 0);
-        if (left <= 0) return fail('sold_out', `${item.name.en} is sold out`);
-        if (qty > left) return fail('exceeds_remaining', `Only ${left} left of ${item.name.en}`);
+        const refused =
+          left <= 0
+            ? tooMany('sold_out', `${item.name.en} is sold out`)
+            : qty > left
+              ? tooMany('exceeds_remaining', `Only ${left} left of ${item.name.en}`)
+              : null;
+        if (refused) return refused;
       }
       lines.push(previous ? { ...previous, qty } : snapshot(item, qty));
     }
@@ -530,6 +544,9 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       inbox: [{ at, kind: 'status', status }],
       ...(enteredBy ? { enteredBy } : {}),
       audit: [{ by, what: 'created', at }],
+      ...(input.fulfilment === 'pickup' && input.pickupPlaceId !== undefined
+        ? { pickupPlaceId: input.pickupPlaceId }
+        : {}),
       createdAt: at,
       updatedAt: at,
     };
@@ -542,13 +559,22 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     enteredBy: StaffActor | undefined,
     extra: StaffInsert,
   ): Promise<StoreResult<SellerOrder>> {
-    const lines = buildLines(s, input.lines);
+    if (
+      input.fulfilment === 'pickup' &&
+      input.pickupPlaceId !== undefined &&
+      !s.week.pickupPoints.some((point) => point.id === input.pickupPlaceId)
+    ) {
+      return fail('invalid_request', 'Unknown pickup place');
+    }
+    const over: OverLimit = !enteredBy ? 'refuse' : extra.force === true ? 'allow' : 'warn';
+    const lines = buildLines(s, input.lines, [], over);
     if (!lines.ok) return lines;
     const id = deps.newId();
     const code = await uniqueCode(deps.newCode);
     const token = deps.newToken();
     const order = buildOrder(input, lines.value, by, enteredBy, { id, code, token }, extra);
-    const guard = portionGuard(order);
+    // A forced order takes the portions it asked for, so the race guard must not stop it.
+    const guard = over === 'allow' ? null : portionGuard(order);
     try {
       await db.batch([...(guard ? [guard] : []), ...insertOrderStatements(db, order, null)]);
     } catch (error) {
@@ -696,6 +722,14 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         lines: requested,
         fulfilment: random() < 0.6 ? 'pickup' : 'delivery',
         ...(note !== undefined ? { note } : {}),
+        // Pickup samples rotate over the menu's places (no random draw, so seeds stay stable).
+        ...(s.week.pickupPoints.length > 0
+          ? {
+              pickupPlaceId: (
+                s.week.pickupPoints[sample.counter % s.week.pickupPoints.length] as PickupPoint
+              ).id,
+            }
+          : {}),
       };
       const code = await uniqueCode(() => generateOrderCode(sample.fill));
       const order = buildOrder(
@@ -752,6 +786,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
   const repo: SellerRepository = {
     seller,
+    ...handover,
 
     async getMenu() {
       return publicMenu(await loadState());
@@ -763,126 +798,36 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       return { ...menu, chefs: s.chefs, items: s.items.map((item) => sellerView(item, s.used)) };
     },
 
+    ...menuOps,
+
     async getSettings() {
-      const row = (await db.first<SettingsRow>(
-        'SELECT * FROM kitchen_settings WHERE seller_id = ?',
-        sid,
-      )) as SettingsRow;
-      return settingsOf(row);
-    },
-
-    /** Replaces the settings; the caller has already validated and normalised them. */
-    async setSettings(next) {
-      await db.batch([
-        db.stmt('DELETE FROM kitchen_settings WHERE seller_id = ?', sid),
-        settingsStatement(db, sid, next),
+      const [settings, menus] = await db.reads([
+        db.stmt('SELECT * FROM kitchen_settings WHERE seller_id = ?', sid),
+        db.stmt('SELECT taking_orders FROM menus WHERE seller_id = ?', sid),
       ]);
-      return structuredClone(next);
-    },
-
-    // ---- Week ----
-
-    getWeek: readWeek,
-
-    /** One pickup point for now (D-008); the ordering switch stays in the settings. */
-    async updateWeek(input: WeekSettingsRequest) {
-      const current = await readWeek();
-      const point = input.pickupPoints[0];
-      await db.batch([
-        db.stmt(
-          `UPDATE weeks SET cooking_date = ?, cutoff_at = ?, delivery_available = ?, delivery_note_en = ?,
-             delivery_note_id = ? WHERE seller_id = ?`,
-          input.cookingDate,
-          input.cutoffAt,
-          input.delivery.available,
-          input.delivery.note.en,
-          input.delivery.note.id,
-          sid,
-        ),
-        db.stmt('DELETE FROM pickup_points WHERE seller_id = ?', sid),
-        pickupStatement(
-          db,
-          sid,
-          {
-            id: point.id ?? current.pickupPoints[0]?.id ?? 'main',
-            place: point.place,
-            directions: { ...point.directions },
-            window: { ...point.window },
-          },
-          0,
-        ),
-      ]);
-      return readWeek();
-    },
-
-    async publishWeek() {
-      const row = await db.first<{ n: number }>(
-        'SELECT COUNT(*) AS n FROM menu_items WHERE seller_id = ?',
-        sid,
-      );
-      if ((row?.n ?? 0) === 0) return fail('no_items', 'Add at least one item first');
-      await db.stmt("UPDATE weeks SET status = 'published' WHERE seller_id = ?", sid).run();
-      return ok(await readWeek());
-    },
-
-    async unpublishWeek() {
-      await db.stmt("UPDATE weeks SET status = 'draft' WHERE seller_id = ?", sid).run();
-      return readWeek();
+      const taking = (menus[0] as Pick<MenuRow, 'taking_orders'>).taking_orders === 1;
+      return settingsOf(settings[0] as SettingsRow, taking);
     },
 
     /**
-     * Archives the week (totals kept for good, orders for 4 weeks) and starts the next draft
-     * week 7 days later with the same items. Orders leave the live list.
+     * Replaces the settings; the caller has already validated and normalised them. The theme and
+     * menu defaults are kept as they are; "ordering open" is the menu's taking-orders switch.
      */
-    async closeWeek() {
-      const [orders, week] = await Promise.all([
-        readOrders(db, sid, 'o.past_week_id IS NULL'),
-        readWeek(),
-      ]);
-      const id = deps.newId();
-      const totals = summariseOrders(orders);
+    async setSettings(next) {
       await db.batch([
         db.stmt(
-          `INSERT INTO past_weeks (seller_id, id, cooking_date, closed_at, orders_count, cancelled_count, income_cents,
-             paid_cents, unpaid_cents, details_dropped_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
-          sid,
-          id,
-          week.cookingDate,
-          nowIso(),
-          totals.orders,
-          totals.cancelled,
-          totals.incomeCents,
-          totals.paidCents,
-          totals.unpaidCents,
-        ),
-        ...totals.items.map((item, position) =>
-          db.stmt(
-            `INSERT INTO past_week_items (seller_id, past_week_id, position, item_id, name_en, name_id, qty)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            sid,
-            id,
-            position,
-            item.itemId,
-            item.name.en,
-            item.name.id,
-            item.qty,
-          ),
-        ),
-        db.stmt(
-          'UPDATE orders SET past_week_id = ? WHERE seller_id = ? AND past_week_id IS NULL',
-          id,
+          `UPDATE kitchen_settings SET whatsapp_number = ?, post_greeting_en = ?, post_greeting_id = ?,
+             post_closing_en = ?, post_closing_id = ? WHERE seller_id = ?`,
+          next.whatsappNumber ?? null,
+          next.postGreeting.en,
+          next.postGreeting.id,
+          next.postClosing.en,
+          next.postClosing.id,
           sid,
         ),
-        db.stmt(
-          "UPDATE weeks SET cooking_date = ?, cutoff_at = ?, status = 'draft' WHERE seller_id = ?",
-          shiftDays(week.cookingDate, 7),
-          shiftDays(week.cutoffAt, 7),
-          sid,
-        ),
-        db.stmt('UPDATE menu_items SET sold_out = 0 WHERE seller_id = ?', sid),
+        db.stmt('UPDATE menus SET taking_orders = ? WHERE seller_id = ?', next.orderingOpen, sid),
       ]);
-      const closed = (await readPastWeeks()).find((candidate) => candidate.id === id);
-      return { week: await readWeek(), closed: closed as PastWeekSummary };
+      return structuredClone(next);
     },
 
     listPastWeeks: readPastWeeks,
@@ -893,35 +838,6 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       const { hasOrders, ...rest } = found;
       if (!hasOrders) return rest;
       return { ...rest, orders: await readOrders(db, sid, 'o.past_week_id = ?', id) };
-    },
-
-    // ---- Menu items (D-020: edits only touch new orders; snapshots live on the order lines) ----
-
-    async addItem(input: CreateItemRequest) {
-      const [counts, chefs] = await db.reads([
-        db.stmt(
-          'SELECT COUNT(*) AS n, COALESCE(MAX(position), -1) AS top FROM menu_items WHERE seller_id = ?',
-          sid,
-        ),
-        db.stmt('SELECT id FROM chefs WHERE seller_id = ? AND id = ?', sid, input.chefId ?? ''),
-      ]);
-      const { n, top } = counts[0] as { n: number; top: number };
-      if (n >= MAX_MENU_ITEMS)
-        return fail('limit_reached', `At most ${String(MAX_MENU_ITEMS)} items`);
-      if (input.chefId !== undefined && chefs.length === 0) {
-        return fail('unknown_chef', 'Unknown chef');
-      }
-      const item: MenuItem = {
-        id: deps.newId(),
-        name: { ...input.name },
-        description: { ...(input.description ?? { en: '', id: '' }) },
-        size: { ...(input.size ?? { en: '', id: '' }) },
-        priceCents: input.priceCents,
-        ...(input.limit !== undefined ? { limit: input.limit } : {}),
-        ...(input.chefId !== undefined ? { chefId: input.chefId } : {}),
-      };
-      await itemStatement(db, sid, item, top + 1).run();
-      return ok(sellerView(item, new Map()));
     },
 
     async patchItem(id: string, patch: UpdateItemRequest) {
@@ -974,40 +890,12 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       return ok(sellerView(next, usedMap));
     },
 
-    /** `ids` must list every item once. */
-    async reorderItems(ids: ReadonlyArray<string>) {
-      const rows = await db.all<{ id: string }>(
-        'SELECT id FROM menu_items WHERE seller_id = ?',
-        sid,
-      );
-      const same = ids.length === rows.length && rows.every((row) => ids.includes(row.id));
-      if (!same) return fail('invalid_request', 'List every item once');
-      await db.batch(
-        ids.map((id, position) =>
-          db.stmt(
-            'UPDATE menu_items SET position = ? WHERE seller_id = ? AND id = ?',
-            position,
-            sid,
-            id,
-          ),
-        ),
-      );
-      return ok(await sellerItems());
-    },
-
-    /** An item with a live (not cancelled) order can't be deleted; mark it sold out instead. */
-    async removeItem(id: string) {
-      const found = await db.first(
-        'SELECT 1 AS hit FROM menu_items WHERE seller_id = ? AND id = ?',
-        sid,
-        id,
-      );
-      if (!found) return fail('not_found', 'Item not found');
-      if (await itemHasOrders(id)) {
-        return fail('item_has_orders', 'This item has orders; mark it sold out');
-      }
-      await db.stmt('DELETE FROM menu_items WHERE seller_id = ? AND id = ?', sid, id).run();
-      return ok(true as const);
+    async setKitchenName(name: string) {
+      await db.batch([
+        db.stmt('UPDATE sellers SET name = ? WHERE id = ?', name, sid),
+        db.stmt('UPDATE kitchens SET name = ? WHERE seller_id = ?', name, sid),
+      ]);
+      return name;
     },
 
     // ---- Chefs ----
@@ -1058,118 +946,11 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
           sid,
           id,
         ),
-        db.stmt(
-          'UPDATE saved_set_items SET chef_id = NULL WHERE seller_id = ? AND chef_id = ?',
-          sid,
-          id,
-        ),
+        // Dishes that were the chef's go back to the whole kitchen.
+        db.stmt('UPDATE dishes SET chef_id = NULL WHERE seller_id = ? AND chef_id = ?', sid, id),
         db.stmt('DELETE FROM chefs WHERE seller_id = ? AND id = ?', sid, id),
       ]);
       return ok(true as const);
-    },
-
-    // ---- Saved sets ----
-
-    async listSets() {
-      return (await readSets()).map(setView);
-    },
-
-    /** Saves the week's items and the current images. A 6th set needs `replaceSetId`. */
-    async saveSet(name: string, replaceSetId?: string) {
-      const [s, sets, images] = await Promise.all([loadState(), readSets(), readImages()]);
-      if (s.items.length === 0) return fail('no_items', 'Add at least one item first');
-      const target =
-        replaceSetId === undefined ? undefined : sets.find((set) => set.id === replaceSetId);
-      if (replaceSetId !== undefined && !target) return fail('not_found', 'Set not found');
-      if (!target && sets.length >= MAX_SETS) {
-        return fail('limit_reached', `At most ${String(MAX_SETS)} sets; replace one`);
-      }
-      const saved: SavedSet = {
-        id: target?.id ?? deps.newId(),
-        name,
-        items: s.items.map((item) => structuredClone(without(without(item, 'id'), 'soldOut'))),
-        images: structuredClone(images),
-      };
-      const position = target ? sets.findIndex((set) => set.id === saved.id) : sets.length;
-      await db.batch([
-        ...(target
-          ? [
-              db.stmt(
-                'DELETE FROM saved_set_images WHERE seller_id = ? AND set_id = ?',
-                sid,
-                saved.id,
-              ),
-              db.stmt(
-                'DELETE FROM saved_set_items WHERE seller_id = ? AND set_id = ?',
-                sid,
-                saved.id,
-              ),
-              db.stmt('DELETE FROM saved_sets WHERE seller_id = ? AND id = ?', sid, saved.id),
-            ]
-          : []),
-        ...setStatements(db, sid, saved, position),
-      ]);
-      return ok(setView(saved));
-    },
-
-    async renameSet(id: string, name: string) {
-      const set = (await readSets()).find((candidate) => candidate.id === id);
-      if (!set) return fail('not_found', 'Set not found');
-      await db
-        .stmt('UPDATE saved_sets SET name = ? WHERE seller_id = ? AND id = ?', name, sid, id)
-        .run();
-      return ok(setView({ ...set, name }));
-    },
-
-    async removeSet(id: string) {
-      const found = await db.first(
-        'SELECT 1 AS hit FROM saved_sets WHERE seller_id = ? AND id = ?',
-        sid,
-        id,
-      );
-      if (!found) return fail('not_found', 'Set not found');
-      await db.batch([
-        db.stmt('DELETE FROM saved_set_images WHERE seller_id = ? AND set_id = ?', sid, id),
-        db.stmt('DELETE FROM saved_set_items WHERE seller_id = ? AND set_id = ?', sid, id),
-        db.stmt('DELETE FROM saved_sets WHERE seller_id = ? AND id = ?', sid, id),
-      ]);
-      return ok(true as const);
-    },
-
-    /**
-     * Replaces a draft week's items with the set's. Needs `confirm` when the week has items;
-     * refused while a current item has orders (D-020).
-     */
-    async useSet(id: string, request: UseSetRequest) {
-      const [s, sets, images] = await Promise.all([loadState(), readSets(), readImages()]);
-      const set = sets.find((candidate) => candidate.id === id);
-      if (!set) return fail('not_found', 'Set not found');
-      if (s.week.status !== 'draft') return fail('week_not_draft', 'Unpublish the week first');
-      if (s.items.length > 0 && request.confirm !== true) {
-        return fail('confirm_required', 'This replaces the items of the week');
-      }
-      for (const item of s.items) {
-        if (await itemHasOrders(item.id)) {
-          return fail('item_has_orders', 'Some items already have orders');
-        }
-      }
-      const known = new Set(s.chefs.map((chef) => chef.id));
-      const items = set.items.map((item) => {
-        const copy: MenuItem = { ...structuredClone(item), id: deps.newId() };
-        return copy.chefId === undefined || known.has(copy.chefId) ? copy : without(copy, 'chefId');
-      });
-      const statements = [
-        db.stmt('DELETE FROM menu_items WHERE seller_id = ?', sid),
-        ...items.map((item, position) => itemStatement(db, sid, item, position)),
-      ];
-      if (request.applyImages === true) {
-        const alt = images.alt;
-        statements.push(
-          ...imageStatements({ ...structuredClone(set.images), ...(alt ? { alt } : {}) }),
-        );
-      }
-      await db.batch(statements);
-      return ok(items.map((item) => sellerView(item, new Map())));
     },
 
     // ---- Images (D-038, D-040) ----
@@ -1218,18 +999,30 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
     async exportBackup(): Promise<BackupFile> {
       await dropExpiredDetails(db, deps.now(), sid);
-      const [s, sets, live, past, archived, pastRows] = await Promise.all([
-        loadState(),
-        readSets(),
-        readOrders(db, sid, 'o.past_week_id IS NULL'),
-        readPastWeeks(),
-        readOrders(db, sid, 'o.past_week_id IS NOT NULL'),
-        db.all<{ id: string; past_week_id: string }>(
-          'SELECT id, past_week_id FROM orders WHERE seller_id = ? AND past_week_id IS NOT NULL',
-          sid,
-        ),
-      ]);
+      const [s, sets, live, past, archived, pastRows, view, places, dishes, links, prefs, log] =
+        await Promise.all([
+          loadState(),
+          readSets(),
+          readOrders(db, sid, 'o.past_week_id IS NULL'),
+          readPastWeeks(),
+          readOrders(db, sid, 'o.past_week_id IS NOT NULL'),
+          db.all<{ id: string; past_week_id: string }>(
+            'SELECT id, past_week_id FROM orders WHERE seller_id = ? AND past_week_id IS NOT NULL',
+            sid,
+          ),
+          menuOps.getCurrentMenu(),
+          menuOps.listPickupPlaces(),
+          menuOps.listDishes(),
+          db.all<{ id: string; dish_id: string | null }>(
+            'SELECT id, dish_id FROM menu_items WHERE seller_id = ?',
+            sid,
+          ),
+          menuOps.getPreferences(),
+          handover.listMessages(),
+        ]);
       const weekOfOrder = new Map(pastRows.map((row) => [row.id, row.past_week_id]));
+      const itemDishIds: Record<string, string> = {};
+      for (const link of links) if (link.dish_id !== null) itemDishIds[link.id] = link.dish_id;
       return structuredClone({
         version: BACKUP_VERSION,
         exportedAt: nowIso(),
@@ -1239,7 +1032,19 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         week: s.week,
         items: s.items,
         chefs: s.chefs,
-        sets,
+        sets: sets.map(({ id, name, items, images }): SavedSet => ({ id, name, items, images })),
+        menu: view.menu,
+        pickupPlaces: places,
+        dishes,
+        itemDishIds,
+        dishSets: sets.map(({ id, name, dishIds, timesUsed }) => ({
+          id,
+          name,
+          dishIds,
+          timesUsed,
+        })),
+        preferences: prefs,
+        ...(log.length > 0 ? { messageLog: log } : {}),
         orders: live,
         pastWeeks: past.map(({ hasOrders, ...rest }): PastWeek => {
           if (!hasOrders) return rest;
@@ -1260,13 +1065,67 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       const fixChef = <T extends { chefId?: string }>(item: T): T =>
         item.chefId === undefined || known.has(item.chefId) ? item : (without(item, 'chefId') as T);
       const items = copy.items.map(fixChef);
-      const sets = copy.sets.map((set) => ({ ...set, items: set.items.map(fixChef) }));
+
+      // The stage 3 records come from the file; a file made before them is rebuilt: every menu
+      // item and every item of a set becomes a library dish, and the week becomes the menu.
+      const dishes: Array<Dish> = [];
+      let itemDishIds: Record<string, string> = {};
+      let storedSets: Array<StoredSet>;
+      if (copy.dishes) {
+        dishes.push(...copy.dishes.map(fixChef));
+        itemDishIds = copy.itemDishIds ?? {};
+        const byId = new Map((copy.dishSets ?? []).map((set) => [set.id, set]));
+        storedSets = copy.sets.map((set) => ({
+          id: set.id,
+          name: set.name,
+          dishIds: byId.get(set.id)?.dishIds ?? [],
+          timesUsed: byId.get(set.id)?.timesUsed ?? 0,
+          images: set.images,
+        }));
+      } else {
+        const asDish = (item: Omit<MenuItem, 'id'>, id: string): Dish => ({
+          id,
+          name: item.name,
+          description: item.description,
+          size: item.size,
+          priceCents: item.priceCents,
+          ...(item.limit !== undefined ? { limit: item.limit } : {}),
+          ...(item.chefId !== undefined ? { chefId: item.chefId } : {}),
+        });
+        for (const item of items) {
+          dishes.push(asDish(item, item.id));
+          itemDishIds[item.id] = item.id;
+        }
+        storedSets = copy.sets.map((set) => ({
+          id: set.id,
+          name: set.name,
+          dishIds: set.items.map((item) => {
+            const dish = asDish(fixChef(item), deps.newId());
+            dishes.push(dish);
+            return dish.id;
+          }),
+          timesUsed: 0,
+          images: set.images,
+        }));
+      }
+      const pickupPlaces = copy.pickupPlaces ?? copy.week.pickupPoints;
+      const menu: Menu = copy.menu ?? {
+        id: deps.newId(),
+        state: copy.week.status === 'published' ? 'live' : 'not_published',
+        cookingDate: copy.week.cookingDate,
+        cutoffAt: copy.week.cutoffAt,
+        delivery: copy.week.delivery,
+        wizardStep: copy.week.status === 'published' ? 3 : 0,
+        takingOrders: copy.settings.orderingOpen,
+        placeUses: copy.week.pickupPoints.map((point) => ({ placeId: point.id })),
+      };
       const forMe = (order: SellerOrder): SellerOrder => ({ ...order, sellerId: sid });
       const own = (table: string) => db.stmt(`DELETE FROM ${table} WHERE seller_id = ?`, sid);
       const chefList = [...known];
 
       const statements: Array<D1Statement> = [
         // Everything this seller has, children before parents. Chefs that stay keep their account.
+        own('message_log'),
         own('order_audit'),
         own('order_inbox'),
         own('order_lines'),
@@ -1275,11 +1134,13 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         own('past_week_items'),
         own('past_weeks'),
         own('saved_set_images'),
-        own('saved_set_items'),
+        own('saved_set_dishes'),
         own('saved_sets'),
         own('menu_items'),
-        own('pickup_points'),
-        own('weeks'),
+        own('menu_pickup_places'),
+        own('pickup_places'),
+        own('menus'),
+        own('dishes'),
         own('kitchen_images'),
         own('kitchens'),
         own('kitchen_settings'),
@@ -1305,10 +1166,33 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       });
       statements.push(
         ...kitchenStatements(db, { ...copy.kitchen, sellerId: sid, name: copy.kitchen.name }, at),
-        settingsStatement(db, sid, copy.settings),
-        ...weekStatements(db, sid, copy.week),
-        ...items.map((item, position) => itemStatement(db, sid, item, position)),
-        ...sets.flatMap((set, position) => setStatements(db, sid, set, position)),
+        settingsStatement(db, sid, copy.settings, copy.preferences ?? defaultPreferences),
+        ...pickupPlaces.map((place, position) => placeStatement(db, sid, place, position)),
+        ...menuStatements(db, sid, menu),
+        ...dishes.map((dish) => dishStatement(db, sid, dish, at)),
+        ...items.map((item, position) =>
+          itemStatement(db, sid, item, position, itemDishIds[item.id]),
+        ),
+        ...storedSets.flatMap((set, position) => setStatements(db, sid, set, position)),
+        // The log belongs to the file's menu: entries of another menu id are not kept.
+        ...(copy.messageLog ?? [])
+          .filter((entry) => entry.menuId === menu.id)
+          .map((entry) =>
+            db.stmt(
+              `INSERT INTO message_log (seller_id, id, menu_id, group_key, type, minutes, text_en, text_id, at, sent_count)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              sid,
+              entry.id,
+              entry.menuId,
+              entry.group,
+              entry.type,
+              entry.minutes ?? null,
+              entry.text?.en ?? null,
+              entry.text?.id ?? null,
+              entry.at,
+              entry.sentCount,
+            ),
+          ),
       );
       // Newest closed week is first in the file; rows are listed newest-inserted first, so the
       // oldest goes in first.
@@ -1437,6 +1321,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       return place(s, input, actor, actor, {
         status: input.confirmNow === false ? 'ordered' : 'confirmed',
         paid: input.paid ?? false,
+        ...(input.force === true ? { force: true } : {}),
       });
     },
 
@@ -1448,10 +1333,15 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     },
 
     /** Moves the order on, tells the customer, and clears the "changed" flag. */
-    setStatus(code: string, to: OrderStatus, actor: StaffActor) {
+    setStatus(code: string, to: OrderStatus, actor: StaffActor, force = false) {
       return changeByCode(code, (order) => {
-        if (!nextStatuses(order).includes(to)) {
-          return fail('invalid_status', `Cannot move from ${order.status} to ${to}`);
+        // D-062: a jump (or leaving a closed order) warns; `force` goes ahead.
+        if (!force && !nextStatuses(order).includes(to)) {
+          return warn(
+            'invalid_status',
+            { code: 'status_out_of_order' },
+            `Cannot move from ${order.status} to ${to}`,
+          );
         }
         const moved = addInbox(withOrder(draft(order), { status: to, changed: false }), {
           kind: 'status',
@@ -1485,27 +1375,14 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     },
 
     /** Adds a nudge to the customer's inbox; the text key differs for returning customers. */
-    nudge(code: string) {
+    nudge(code: string, force = false) {
       return changeByCode(code, (order) => {
-        if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
+        if (!force && isFinalStatus(order.status)) {
+          return warn('invalid_status', { code: 'order_closed' }, 'This order is closed');
+        }
         const textKey = order.returning ? 'nudgeReturning' : 'nudge';
         return ok(
           withOrder(addInbox(draft(order), { kind: 'nudge', textKey }), { updatedAt: nowIso() }),
-        );
-      });
-    },
-
-    /** "Arriving soon" for one delivery order: an inbox entry only (no status change). */
-    arrivingSoon(code: string) {
-      return changeByCode(code, (order) => {
-        if (order.fulfilment !== 'delivery') {
-          return fail('invalid_status', 'Only delivery orders can be arriving soon');
-        }
-        if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
-        return ok(
-          withOrder(addInbox(draft(order), { kind: 'message', textKey: 'arrivingSoon' }), {
-            updatedAt: nowIso(),
-          }),
         );
       });
     },
@@ -1537,7 +1414,15 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         const code = parseOrderCode(rawCode);
         const order = code ? byCode.get(code) : undefined;
         if (!code || !order) return { code: rawCode, ok: false, error: 'not_found' };
-        if (order.status === 'cancelled') return { code, ok: false, error: 'invalid_status' };
+        // D-062: a cancelled order is reached only when the seller says so (`force`).
+        if (order.status === 'cancelled' && update.force !== true) {
+          return {
+            code,
+            ok: false,
+            error: 'invalid_status',
+            warning: { code: 'order_cancelled' },
+          };
+        }
         const wanted = update.alsoSetStatus === true ? statusOfTemplate(update.template) : null;
         const target = wanted !== null && nextStatuses(order).includes(wanted) ? wanted : null;
         const allowed = target !== null;

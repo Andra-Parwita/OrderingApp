@@ -6,15 +6,15 @@ import { Button } from '../../ui';
 import { failureMessage } from './authText';
 import { AUTH_NS } from './i18n/register';
 import {
-  Actions,
-  Banner,
-  Body,
+  AuthForm,
+  AuthNote,
+  AuthPanel,
+  AuthTitle,
+  BackButton,
+  BigAction,
   DeviceNameField,
-  Failure,
-  Hint,
-  Page,
+  ErrorText,
   PasswordField,
-  Title,
   useDeviceName,
 } from './parts';
 
@@ -56,17 +56,16 @@ export function PasswordSetupScreen({ onDone, onUsePasskey }: PasswordSetupScree
   }, [confirm, device.name, onDone, password, t]);
 
   return (
-    <Page>
-      <Title>{t('password.title')}</Title>
-      <Body
-        as="form"
+    <AuthPanel>
+      {onUsePasskey ? <BackButton onClick={onUsePasskey} /> : null}
+      <AuthTitle>{t('password.title')}</AuthTitle>
+      <AuthForm
         onSubmit={(event: { preventDefault: () => void }) => {
           event.preventDefault();
           void save();
         }}
         noValidate
       >
-        <Banner>{t('password.banner')}</Banner>
         <PasswordField
           label={t('password.label')}
           helper={t('password.helper')}
@@ -87,19 +86,14 @@ export function PasswordSetupScreen({ onDone, onUsePasskey }: PasswordSetupScree
           onChange={device.setName}
           {...(nameError ? { error: nameError } : {})}
         />
-        {error ? <Failure role="alert">{error}</Failure> : null}
-        <Actions>
+        {error ? <ErrorText>{error}</ErrorText> : null}
+        <BigAction>
           <Button type="submit" variant="primary" fullWidth disabled={busy}>
             {busy ? t('password.working') : t('password.submit')}
           </Button>
-          {onUsePasskey ? (
-            <Button variant="quiet" fullWidth onClick={onUsePasskey}>
-              {t('password.usePasskey')}
-            </Button>
-          ) : null}
-        </Actions>
-        <Hint>{t('password.later')}</Hint>
-      </Body>
-    </Page>
+        </BigAction>
+        <AuthNote>{t('password.later')}</AuthNote>
+      </AuthForm>
+    </AuthPanel>
   );
 }

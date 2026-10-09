@@ -1,6 +1,6 @@
 # 002 · Web push notifications
 
-**Status:** placeholder: must be done **before the app goes live on Cloudflare** (D-069, owner: "a push is very important and needs to be done"). Detailed after plan 001.
+**Status:** replaced by [plan 004](004-customer-redesign-and-push.md) (2026-10-10; builder chose one plan for the customer redesign and web push).
 **Goal:** a customer who turns on updates gets a notification on their phone for every message and status change on their order, even with the app closed.
 
 ## Scope (to detail)

@@ -3,7 +3,7 @@ import { adminSignIn, originHeaders, type AdminLabel } from './adminSession';
 import { collectErrors } from './sellerHelpers';
 import { credentialsOf, virtualAuthenticator } from './virtualAuthenticator';
 
-// Stage 7.2a: sign-in screens through the harness. Runs on the Android phone and the desktop only,
+// Sign-in and set-up on the real routes (plan 001 stage 5). Runs on the Android phone and the desktop only,
 // in the "auth" projects (one at a time). The admin comes from global-setup.ts, with its own
 // passkey per project. Device names are unique per project. Stage 8.2: passkeys are real WebAuthn,
 // made and used in Chrome's virtual authenticator; the password path stays covered.
@@ -29,6 +29,24 @@ async function inviteKeyFor(request: APIRequestContext, project: string): Promis
   return ((await invite.json()) as { key: string }).key;
 }
 
+/** A tablet or desktop shows the left panel and Settings; a phone (under 600 px) the bottom bar. */
+const isWide = (page: Page) => (page.viewportSize()?.width ?? 0) >= 600;
+
+/** Signs this device out: the Devices pane on a tablet or desktop, More on a phone. */
+async function signOutThisDevice(page: Page) {
+  // Let the screen finish its first loads: a sign-out while they are in flight turns them into 401s.
+  await page.waitForTimeout(600);
+  if (isWide(page)) {
+    await page.goto('/seller/settings/devices');
+    await page.getByRole('button', { name: 'Sign out of this device' }).click();
+    await page.getByRole('button', { name: 'Tap again to sign out' }).click();
+  } else {
+    await page.getByRole('link', { name: 'More' }).click();
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  }
+  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
+}
+
 const capture = (page: Page, name: string, project: string) =>
   page.screenshot({ path: `captures/seller-auth-${name}-${project}.png`, fullPage: true });
 
@@ -38,20 +56,21 @@ test('a real passkey: create it, sign out, sign back in with it', async ({
 }, testInfo) => {
   const errors = collectErrors(page);
   const project = testInfo.project.name;
-  const deviceName = `E2E passkey ${project}`;
   const key = await inviteKeyFor(request, project);
   const authenticator = await virtualAuthenticator(page);
 
-  await page.goto('/?harness=seller-auth&screen=key');
-  await page.getByLabel('Enter the key you were sent').fill(key);
+  await page.goto('/seller/setup');
+  await page.getByLabel('Invite key from the kitchen owner').fill(key);
   await page.getByRole('button', { name: 'Continue' }).click();
-  await expect(page.getByRole('heading', { name: 'Create a passkey' })).toBeVisible();
-  // The prototype note is gone: the passkey is real now.
+  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
   await expect(page.getByText(/simulated/i)).toHaveCount(0);
-  await page.getByLabel('Name of this device').fill(deviceName);
-  await page.getByRole('button', { name: 'Create passkey' }).click();
-  await expect(page.getByRole('heading', { name: 'Devices', exact: true })).toBeVisible();
-  await expect(page.getByText(deviceName, { exact: true })).toBeVisible();
+  // One tap makes the passkey under a guessed device name (Devices renames it).
+  await page.getByRole('button', { name: /Face or fingerprint/ }).click();
+  await expect(page).toHaveURL(/\/seller$/);
+  if (isWide(page)) {
+    await page.goto('/seller/settings/devices');
+    await expect(page.getByText('This device', { exact: true })).toBeVisible();
+  }
 
   // The authenticator really holds a passkey for this site, and the page kept only its id.
   const made = await credentialsOf(authenticator);
@@ -71,12 +90,13 @@ test('a real passkey: create it, sign out, sign back in with it', async ({
   const session = cookies.find((cookie) => cookie.name === '__Host-session');
   expect(session).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Strict', path: '/' });
 
-  await page.getByRole('button', { name: 'Sign out of this device' }).click();
-  await page.getByRole('button', { name: 'Tap again to sign out' }).click();
-  await expect(page.getByRole('heading', { name: 'Dapur Demo' })).toBeVisible();
-  await page.getByRole('button', { name: 'Sign in with passkey' }).click();
-  await expect(page.getByRole('heading', { name: 'Devices', exact: true })).toBeVisible();
-  await expect(page.getByText('Active now')).toBeVisible();
+  await signOutThisDevice(page);
+  await page.getByRole('button', { name: 'Sign in with face or fingerprint' }).click();
+  await expect(page).toHaveURL(/\/seller$/);
+  if (isWide(page)) {
+    await page.goto('/seller/settings/devices');
+    await expect(page.getByText('Active now')).toBeVisible();
+  }
   // The signature counter went up on the authenticator (a replay would be refused).
   const used = await credentialsOf(authenticator);
   expect(used[0]?.signCount).toBeGreaterThan(made[0]?.signCount ?? 0);
@@ -93,71 +113,78 @@ test('key, password, devices and add-device code, then sign out and back in', as
   const deviceName = `E2E ${project}`;
   const key = await inviteKeyFor(request, project);
 
-  await page.goto('/?harness=seller-auth&screen=key');
-  await expect(page.getByRole('heading', { name: 'Set up your sign-in' })).toBeVisible();
+  await page.goto('/seller/setup');
+  await expect(page.getByRole('heading', { name: 'First time on this device' })).toBeVisible();
   await capture(page, 'key', project);
 
   // A key typed in small letters, with spaces, is accepted.
-  await page.getByLabel('Enter the key you were sent').fill(key.toLowerCase().replaceAll('-', ' '));
+  await page
+    .getByLabel('Invite key from the kitchen owner')
+    .fill(key.toLowerCase().replaceAll('-', ' '));
   await page.getByRole('button', { name: 'Continue' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Create a passkey' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
   await expect(page.getByText(/simulated/i)).toHaveCount(0);
   await capture(page, 'passkey', project);
 
-  await page
-    .getByRole('button', { name: "My phone can't do this → set a password instead" })
-    .click();
+  await page.getByRole('button', { name: /Set a password/ }).click();
   await expect(page.getByRole('heading', { name: 'Set a password' })).toBeVisible();
   await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
   await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD);
   await page.getByLabel('Name of this device').fill(deviceName);
   await capture(page, 'password', project);
   await page.getByRole('button', { name: 'Save password' }).click();
+  await expect(page).toHaveURL(/\/seller$/);
 
-  await expect(page.getByRole('heading', { name: 'Devices', exact: true })).toBeVisible();
-  await expect(page.getByText(deviceName, { exact: true })).toBeVisible();
-  await expect(page.getByText('Active now')).toBeVisible();
+  if (isWide(page)) {
+    // Devices is a Settings pane on a tablet or desktop (a phone has no Devices).
+    await page.goto('/seller/settings/devices');
+    await expect(page.getByText(deviceName, { exact: true })).toBeVisible();
+    await expect(page.getByText('Active now')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Add a device' }).click();
-  await expect(page.getByLabel('Your code')).toHaveText(/^\d{6}$/);
-  await expect(page.getByText(/^Expires in \d\d:\d\d$/)).toBeVisible();
-  await capture(page, 'devices', project);
+    await page.getByRole('button', { name: 'Add a device' }).click();
+    await expect(page.getByLabel('Your code')).toHaveText(/^\d{6}$/);
+    await expect(page.getByText(/^Expires in \d\d:\d\d$/)).toBeVisible();
+    await capture(page, 'devices', project);
+  }
 
-  // Sign out of this device (two taps), then back in with the password.
-  await page.getByRole('button', { name: 'Sign out of this device' }).click();
-  await page.getByRole('button', { name: 'Tap again to sign out' }).click();
-  await expect(page.getByRole('heading', { name: 'Dapur Demo' })).toBeVisible();
+  // Sign out of this device, then back in with the password.
+  await signOutThisDevice(page);
   await page.getByRole('button', { name: 'Use password instead' }).click();
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await capture(page, 'signin', project);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Devices', exact: true })).toBeVisible();
-  await expect(page.getByText('Active now')).toBeVisible();
+  await expect(page).toHaveURL(/\/seller$/);
+  if (isWide(page)) {
+    await page.goto('/seller/settings/devices');
+    await expect(page.getByText('Active now')).toBeVisible();
+  }
 
   expect(errors).toEqual([]);
 });
 
 /** Setup with a key and a real passkey, on the real route; lands on the seller home. */
-async function setUpWithPasskey(page: Page, key: string, device: string) {
+async function setUpWithPasskey(page: Page, key: string) {
   await page.goto('/seller/setup');
-  await page.getByLabel('Enter the key you were sent').fill(key);
+  await page.getByLabel('Invite key from the kitchen owner').fill(key);
   await page.getByRole('button', { name: 'Continue' }).click();
-  await expect(page.getByRole('heading', { name: 'Create a passkey' })).toBeVisible();
-  await page.getByLabel('Name of this device').fill(device);
-  await page.getByRole('button', { name: 'Create passkey' }).click();
+  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
+  await page.getByRole('button', { name: /Face or fingerprint/ }).click();
   await expect(page).toHaveURL(/\/seller$/);
 }
 
 /** D-050: the rail button on a tablet or desktop, the top of the More tab on a phone. */
 async function switchPerson(page: Page) {
-  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+  // Let the screen finish its first loads: a sign-out while they are in flight turns them into 401s.
+  await page.waitForTimeout(600);
+  if ((page.viewportSize()?.width ?? 0) >= 600) {
     await page
       .getByRole('navigation', { name: 'Seller' })
       .getByRole('button', { name: /Switch person/ })
       .click();
   } else {
     await page.getByRole('link', { name: 'More' }).click();
+    await page.waitForTimeout(600);
     await page.getByRole('button', { name: /Switch person/ }).click();
   }
   // Sign out, then the passkey picker opens by itself and signs the chosen person in.
@@ -171,11 +198,11 @@ test('two staff passkeys on one device: Switch person goes between them', async 
   const errors = collectErrors(page);
   const project = testInfo.project.name;
   const chefName = `Switchy ${project}`;
-  const wide = (page.viewportSize()?.width ?? 0) >= 1024;
+  const wide = isWide(page);
   const authenticator = await virtualAuthenticator(page);
 
   // The seller, then a chef, each make a passkey on this one device.
-  await setUpWithPasskey(page, await inviteKeyFor(request, project), `E2E seller ${project}`);
+  await setUpWithPasskey(page, await inviteKeyFor(request, project));
   await expect(
     page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
   ).toBeVisible();
@@ -187,7 +214,7 @@ test('two staff passkeys on one device: Switch person goes between them', async 
   });
   expect(invited.ok()).toBe(true);
   const chefKey = ((await invited.json()) as { key: string }).key;
-  await setUpWithPasskey(page, chefKey, `E2E chef ${project}`);
+  await setUpWithPasskey(page, chefKey);
   await expect(
     page.getByText(`Signed in as Chef ${chefName}`).or(page.getByText(`${chefName} · chef`)),
   ).toBeVisible();

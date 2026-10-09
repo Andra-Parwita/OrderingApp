@@ -1,5 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { ApiWarning } from '../../../shared/apiError';
 import type { Order, OrderStatus, SellerMenuItemView } from '../../../shared/domain';
+import type { MenuView } from '../../../shared/menusContract';
+import type { PastWeekSummary } from '../../../shared/pastWeeks';
+import type { UpdateItemRequest } from '../../../shared/setupContract';
 import type { CreateSellerOrderRequest } from '../../../shared/orderContract';
 
 /** What the last failed change was, so the screen can offer a retry. */
@@ -24,6 +28,32 @@ export type CreateState =
   | { status: 'error'; error: string }
   | { status: 'saved'; order: Order };
 
+/** The current menu: its state decides what Home shows. */
+export type CurrentMenuState =
+  { status: 'loading' } | { status: 'ready'; view: MenuView } | { status: 'error' };
+
+/** Earlier menus (closed weeks): totals only. */
+export type PastMenusState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'ready'; weeks: Array<PastWeekSummary> }
+  | { status: 'error' };
+
+/** A call the server answered with an overridable warning (D-062). Continue anyway sends it again with force. */
+export type WarnedCall =
+  | { kind: 'status'; code: string; to: OrderStatus; from?: OrderStatus }
+  | { kind: 'collected'; code: string }
+  | { kind: 'nudge'; code: string }
+  | { kind: 'create'; request: CreateSellerOrderRequest };
+export type Warned = { call: WarnedCall; warning: ApiWarning; name: string };
+
+/** How to take a quick action back (only where the API allows it). */
+export type UndoAction =
+  { kind: 'status'; code: string; to: OrderStatus } | { kind: 'paid'; code: string; paid: boolean };
+export type ToastKind = 'confirmed' | 'paid' | 'cancelled' | 'collected';
+/** What just happened, for the toast; undo is null where no Undo exists; id restarts the 6 s timer. */
+export type ActionToast = { id: number; kind: ToastKind; name: string; undo: UndoAction | null };
+
 /** One-off messages for the toast. */
 export type Notice = 'nudged';
 
@@ -43,6 +73,10 @@ export type SellerOrdersState = {
   menu: SellerMenuState;
   create: CreateState;
   notice: Notice | null;
+  current: CurrentMenuState;
+  past: PastMenusState;
+  warned: Warned | null;
+  toast: ActionToast | null;
 };
 export type SellerOrdersRootState = { sellerOrders: SellerOrdersState };
 
@@ -54,7 +88,13 @@ const initialState: SellerOrdersState = {
   menu: { status: 'loading' },
   create: { status: 'idle' },
   notice: null,
+  current: { status: 'loading' },
+  past: { status: 'idle' },
+  warned: null,
+  toast: null,
 };
+
+let toastId = 0;
 
 const sellerOrdersSlice = createSlice({
   name: 'sellerOrders',
@@ -87,13 +127,21 @@ const sellerOrdersSlice = createSlice({
       reducer(state) {
         state.change = { status: 'saving' };
       },
-      prepare: (payload: { code: string; to: OrderStatus }) => ({ payload }),
+      prepare: (payload: {
+        code: string;
+        to: OrderStatus;
+        /** The status it had, so Undo can go back (confirm, cancel). */
+        from?: OrderStatus;
+        force?: boolean;
+        /** An Undo: no toast afterwards. */
+        undo?: boolean;
+      }) => ({ payload }),
     },
     paidChangeRequested: {
       reducer(state) {
         state.change = { status: 'saving' };
       },
-      prepare: (payload: { code: string; paid: boolean }) => ({ payload }),
+      prepare: (payload: { code: string; paid: boolean; undo?: boolean }) => ({ payload }),
     },
     lockChangeRequested: {
       reducer(state) {
@@ -111,13 +159,64 @@ const sellerOrdersSlice = createSlice({
       reducer(state) {
         state.change = { status: 'saving' };
       },
-      prepare: (payload: { code: string }) => ({ payload }),
+      prepare: (payload: { code: string; force?: boolean }) => ({ payload }),
     },
     seenRequested: {
       reducer(state) {
         state.change = { status: 'saving' };
       },
       prepare: (payload: { code: string }) => ({ payload }),
+    },
+    collectedRequested: {
+      reducer(state) {
+        state.change = { status: 'saving' };
+      },
+      prepare: (payload: { code: string; force?: boolean }) => ({ payload }),
+    },
+    /** The server asked the seller to confirm: the dialog opens. */
+    warningRaised(state, action: PayloadAction<Warned>) {
+      state.warned = action.payload;
+      state.change = { status: 'idle' };
+      if (action.payload.call.kind === 'create') state.create = { status: 'idle' };
+    },
+    /** "Continue anyway": the saga sends the same call again with force. */
+    warningConfirmed() {},
+    warningDismissed(state) {
+      state.warned = null;
+    },
+    toastShown: {
+      reducer(state, action: PayloadAction<ActionToast>) {
+        state.toast = action.payload;
+      },
+      prepare: (payload: Omit<ActionToast, 'id'>) => ({ payload: { ...payload, id: ++toastId } }),
+    },
+    toastCleared(state) {
+      state.toast = null;
+    },
+    currentRequested(state) {
+      if (state.current.status === 'error') state.current = { status: 'loading' };
+    },
+    currentLoaded(state, action: PayloadAction<{ view: MenuView }>) {
+      state.current = { status: 'ready', view: action.payload.view };
+      state.cookingDate = action.payload.view.menu.cookingDate;
+    },
+    currentFailed(state) {
+      if (state.current.status !== 'ready') state.current = { status: 'error' };
+    },
+    /** The Taking orders switch. */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- saga-only action: the reducer ignores it
+    takingOrdersRequested(_state, _action: PayloadAction<{ value: boolean }>) {},
+    /** Live Dishes panel: edit one dish's limit or sold out (today's menu item route). */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- saga-only action: the reducer ignores it
+    dishPatchRequested(_state, _action: PayloadAction<{ id: string; patch: UpdateItemRequest }>) {},
+    pastRequested(state) {
+      if (state.past.status !== 'ready') state.past = { status: 'loading' };
+    },
+    pastLoaded(state, action: PayloadAction<{ weeks: Array<PastWeekSummary> }>) {
+      state.past = { status: 'ready', weeks: action.payload.weeks };
+    },
+    pastFailed(state) {
+      state.past = { status: 'error' };
     },
     noticeShown(state, action: PayloadAction<{ notice: Notice }>) {
       state.notice = action.payload.notice;
@@ -178,6 +277,20 @@ export const {
   waReceivedRequested,
   nudgeRequested,
   seenRequested,
+  collectedRequested,
+  warningRaised,
+  warningConfirmed,
+  warningDismissed,
+  toastShown,
+  toastCleared,
+  currentRequested,
+  currentLoaded,
+  currentFailed,
+  takingOrdersRequested,
+  dishPatchRequested,
+  pastRequested,
+  pastLoaded,
+  pastFailed,
   noticeShown,
   noticeCleared,
   menuRequested,

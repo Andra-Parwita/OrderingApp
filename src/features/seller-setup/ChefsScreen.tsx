@@ -128,7 +128,7 @@ function ChefRow({ chef, count, busy, devices, invite, onInvite, onInviteDone }:
 }
 
 /** Chefs (S11, chefs part), route-agnostic: list, add, rename, delete and invite to sign in. */
-export function ChefsScreen() {
+export function ChefsScreen({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const { t } = useTranslation(SETUP_NS);
   const dispatch = useDispatch();
   const { load, list, counts, kitchenName, busy, failure } = useSelector(
@@ -183,7 +183,7 @@ export function ChefsScreen() {
 
   return (
     <Page>
-      <Title>{t('chefs.title')}</Title>
+      {embedded ? null : <Title>{t('chefs.title')}</Title>}
       {load === 'loading' && list.length === 0 ? (
         <Centered role="status">{t('loading')}</Centered>
       ) : null}

@@ -9,10 +9,12 @@ import type {
   KitchenSettings,
   MenuItem,
   OrderLine,
+  PickupPoint,
   SellerOrder,
   Week,
 } from '../../shared/domain';
 import { IMAGE_SLOTS, type ImageSlot } from '../../shared/imageSlots';
+import type { Dish, Menu, MenuState, Preferences, ThemeName } from '../../shared/menusContract';
 import type { SavedSetItem } from '../../shared/setupContract';
 
 export type KitchenRow = {
@@ -31,15 +33,45 @@ export type SettingsRow = {
   post_greeting_id: string;
   post_closing_en: string;
   post_closing_id: string;
-  ordering_open: number;
+  theme: ThemeName;
+  default_cutoff_days: number;
+  default_cutoff_time: string;
+  default_delivery: number;
+  default_delivery_note_en: string;
+  default_delivery_note_id: string;
 };
-export type WeekRow = {
+export type MenuRow = {
+  id: string;
+  state: MenuState;
   cooking_date: string;
   cutoff_at: string;
-  status: 'draft' | 'published';
   delivery_available: number;
   delivery_note_en: string;
   delivery_note_id: string;
+  picture_ref: string | null;
+  wizard_step: number;
+  taking_orders: number;
+  published_at: string | null;
+  finished_at: string | null;
+};
+/** A place the menu uses: `window_*` are the override, NULL when the place's usual time applies. */
+export type MenuPlaceRow = {
+  place_id: string;
+  window_start: string | null;
+  window_end: string | null;
+};
+export type DishRow = {
+  id: string;
+  name_en: string;
+  name_id: string;
+  description_en: string;
+  description_id: string;
+  size_en: string;
+  size_id: string;
+  price_cents: number;
+  portion_limit: number | null;
+  chef_id: string | null;
+  last_used_at: string | null;
 };
 export type PickupRow = {
   id: string;
@@ -51,6 +83,7 @@ export type PickupRow = {
 };
 export type ItemRow = {
   id: string;
+  position: number;
   name_en: string;
   name_id: string;
   description_en: string;
@@ -61,16 +94,18 @@ export type ItemRow = {
   portion_limit: number | null;
   chef_id: string | null;
   sold_out: number;
+  dish_id: string | null;
 };
-export type SetItemRow = Omit<ItemRow, 'id' | 'sold_out'> & { set_id: string };
 export type ChefRow = { id: string; name: string };
 export type SetRow = {
   id: string;
   name: string;
+  times_used: number;
   banner_background: string | null;
   image_alt_en: string;
   image_alt_id: string;
 };
+export type SetDishRow = { set_id: string; dish_id: string };
 export type SetImageRow = { set_id: string; slot: ImageSlot; ref: string };
 
 export type OrderRow = {
@@ -91,10 +126,15 @@ export type OrderRow = {
   changed: number;
   entered_by_role: 'seller' | 'chef' | null;
   entered_by_name: string | null;
+  packed: number;
+  collected_at: string | null;
+  collected_by: 'customer' | 'seller' | null;
+  pickup_place_id: string | null;
   created_at: string;
   updated_at: string;
 };
 export type LineRow = {
+  ticked: number;
   order_id: string;
   item_id: string;
   name_en: string;
@@ -157,30 +197,88 @@ export function kitchenOf(
   };
 }
 
-export function settingsOf(row: SettingsRow): KitchenSettings {
+/** `takingOrders` lives on the menu now; the settings keep their old shape. */
+export function settingsOf(row: SettingsRow, takingOrders: boolean): KitchenSettings {
   return {
     ...(row.whatsapp_number !== null ? { whatsappNumber: row.whatsapp_number } : {}),
     postGreeting: text(row.post_greeting_en, row.post_greeting_id),
     postClosing: text(row.post_closing_en, row.post_closing_id),
-    orderingOpen: row.ordering_open === 1,
+    orderingOpen: takingOrders,
   };
 }
 
-export function weekOf(row: WeekRow, points: ReadonlyArray<PickupRow>): Week {
+export function preferencesOf(row: SettingsRow): Preferences {
   return {
+    theme: row.theme,
+    menuDefaults: {
+      cutoffDaysBefore: row.default_cutoff_days,
+      cutoffTime: row.default_cutoff_time,
+      delivery: {
+        available: row.default_delivery === 1,
+        note: text(row.default_delivery_note_en, row.default_delivery_note_id),
+      },
+    },
+  };
+}
+
+export function menuOf(row: MenuRow, uses: ReadonlyArray<MenuPlaceRow>): Menu {
+  return {
+    id: row.id,
+    state: row.state,
     cookingDate: row.cooking_date,
     cutoffAt: row.cutoff_at,
-    status: row.status,
-    pickupPoints: points.map((point) => ({
-      id: point.id,
-      place: point.place,
-      directions: text(point.directions_en, point.directions_id),
-      window: { start: point.window_start, end: point.window_end },
-    })),
     delivery: {
       available: row.delivery_available === 1,
       note: text(row.delivery_note_en, row.delivery_note_id),
     },
+    ...(row.picture_ref !== null ? { pictureRef: row.picture_ref } : {}),
+    wizardStep: row.wizard_step,
+    takingOrders: row.taking_orders === 1,
+    placeUses: uses.map((use) => ({
+      placeId: use.place_id,
+      ...(use.window_start !== null && use.window_end !== null
+        ? { window: { start: use.window_start, end: use.window_end } }
+        : {}),
+    })),
+    ...(row.published_at !== null ? { publishedAt: row.published_at } : {}),
+    ...(row.finished_at !== null ? { finishedAt: row.finished_at } : {}),
+  };
+}
+
+export function dishOf(row: DishRow): Dish {
+  return {
+    id: row.id,
+    name: text(row.name_en, row.name_id),
+    description: text(row.description_en, row.description_id),
+    size: text(row.size_en, row.size_id),
+    priceCents: row.price_cents,
+    ...(row.portion_limit !== null ? { limit: row.portion_limit } : {}),
+    ...(row.chef_id !== null ? { chefId: row.chef_id } : {}),
+    ...(row.last_used_at !== null ? { lastUsedAt: row.last_used_at } : {}),
+  };
+}
+
+/** plan 001: the legacy week shape, adapted from the menu, until stage 7. */
+export function weekOf(row: MenuRow, points: ReadonlyArray<PickupRow>): Week {
+  return {
+    cookingDate: row.cooking_date,
+    cutoffAt: row.cutoff_at,
+    // plan 001: legacy shape until stage 7 (live = published; not published and finished = draft)
+    status: row.state === 'live' ? 'published' : 'draft',
+    pickupPoints: points.map(pickupOf),
+    delivery: {
+      available: row.delivery_available === 1,
+      note: text(row.delivery_note_en, row.delivery_note_id),
+    },
+  };
+}
+
+export function pickupOf(point: PickupRow): PickupPoint {
+  return {
+    id: point.id,
+    place: point.place,
+    directions: text(point.directions_en, point.directions_id),
+    window: { start: point.window_start, end: point.window_end },
   };
 }
 
@@ -197,7 +295,8 @@ export function itemOf(row: ItemRow): MenuItem {
   };
 }
 
-export function setItemOf(row: SetItemRow): SavedSetItem {
+/** plan 001: a library dish as the legacy saved-set item, until stage 7. */
+export function setItemOf(row: DishRow): SavedSetItem {
   return {
     name: text(row.name_en, row.name_id),
     description: text(row.description_en, row.description_id),
@@ -244,6 +343,7 @@ export function ordersOf(
       size: text(line.size_en, line.size_id),
       priceCents: line.price_cents,
       qty: line.qty,
+      ...(line.ticked === 1 ? { ticked: true } : {}),
     })),
     fulfilment: row.fulfilment,
     ...(row.note !== null ? { note: row.note } : {}),
@@ -271,6 +371,11 @@ export function ordersOf(
       ...(entry.diff_json !== null ? { diff: JSON.parse(entry.diff_json) as AuditDiff } : {}),
       at: entry.at,
     })),
+    ...(row.pickup_place_id !== null ? { pickupPlaceId: row.pickup_place_id } : {}),
+    ...(row.packed === 1 ? { packed: true } : {}),
+    ...(row.collected_at !== null && row.collected_by !== null
+      ? { collectedAt: row.collected_at, collectedBy: row.collected_by }
+      : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));

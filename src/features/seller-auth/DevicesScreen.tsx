@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import {
@@ -193,13 +200,51 @@ function AddDevice({ onError }: Readonly<{ onError: (message: string) => void }>
   );
 }
 
+/** Devices per page in the list of other devices (stage 10). */
+export const DEVICES_PAGE_SIZE = 20;
+
+function OtherDevices({
+  others,
+  row,
+}: Readonly<{ others: ReadonlyArray<DeviceView>; row: (device: DeviceView) => ReactNode }>) {
+  const { t } = useTranslation(AUTH_NS);
+  const [page, setPage] = useState(0);
+  const pages = Math.max(1, Math.ceil(others.length / DEVICES_PAGE_SIZE));
+  const shown = Math.min(page, pages - 1);
+  const slice = others.slice(shown * DEVICES_PAGE_SIZE, (shown + 1) * DEVICES_PAGE_SIZE);
+  return (
+    <>
+      <List>{slice.map(row)}</List>
+      {pages > 1 ? (
+        <Actions>
+          <Button disabled={shown === 0} onClick={() => setPage(shown - 1)}>
+            {t('devices.previous')}
+          </Button>
+          <Hint role="status">{t('devices.pageOf', { page: shown + 1, pages })}</Hint>
+          <Button disabled={shown >= pages - 1} onClick={() => setPage(shown + 1)}>
+            {t('devices.next')}
+          </Button>
+        </Actions>
+      ) : null}
+    </>
+  );
+}
+
 export type DevicesScreenProps = Readonly<{
   /** This device signed out (its token is forgotten). Send the person to sign-in. */
   onSignedOut: () => void;
+  /** Signs this device out. The app passes the session's `end`, which also stops the seller sagas. */
+  signOutHere?: () => Promise<void>;
+  /** Inside a Settings pane: the pane has the title. */
+  embedded?: boolean;
 }>;
 
 /** This device, the others, rename and sign out, and "Add a device" with its 6-digit code. */
-export function DevicesScreen({ onSignedOut }: DevicesScreenProps) {
+export function DevicesScreen({
+  onSignedOut,
+  signOutHere: endSession,
+  embedded = false,
+}: DevicesScreenProps) {
   const { t } = useTranslation(AUTH_NS);
   const [devices, setDevices] = useState<ReadonlyArray<DeviceView> | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -227,14 +272,15 @@ export function DevicesScreen({ onSignedOut }: DevicesScreenProps) {
     load();
   }, [load]);
   const signOutHere = useCallback(async () => {
-    await signOut();
+    if (endSession) await endSession();
+    else await signOut();
     onSignedOut();
-  }, [onSignedOut]);
+  }, [onSignedOut, endSession]);
 
   if (loadFailed) {
     return (
       <Page>
-        <Title>{t('devices.title')}</Title>
+        {embedded ? null : <Title>{t('devices.title')}</Title>}
         <Body>
           <Failure role="alert">{t('devices.loadFailed')}</Failure>
           <Button onClick={retry}>{t('devices.retry')}</Button>
@@ -245,7 +291,7 @@ export function DevicesScreen({ onSignedOut }: DevicesScreenProps) {
   if (devices === null) {
     return (
       <Page>
-        <Title>{t('devices.title')}</Title>
+        {embedded ? null : <Title>{t('devices.title')}</Title>}
         <Centered>{t('devices.loading')}</Centered>
       </Page>
     );
@@ -257,7 +303,7 @@ export function DevicesScreen({ onSignedOut }: DevicesScreenProps) {
   );
   return (
     <Page>
-      <Title>{t('devices.title')}</Title>
+      {embedded ? null : <Title>{t('devices.title')}</Title>}
       <Body>
         {error ? <Failure role="alert">{error}</Failure> : null}
         <Section>
@@ -266,7 +312,11 @@ export function DevicesScreen({ onSignedOut }: DevicesScreenProps) {
         </Section>
         <Section>
           <SectionTitle>{t('devices.others')}</SectionTitle>
-          {others.length === 0 ? <Hint>{t('devices.none')}</Hint> : <List>{others.map(row)}</List>}
+          {others.length === 0 ? (
+            <Hint>{t('devices.none')}</Hint>
+          ) : (
+            <OtherDevices others={others} row={row} />
+          )}
           <AddDevice onError={setError} />
         </Section>
         <Section>

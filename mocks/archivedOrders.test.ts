@@ -44,12 +44,13 @@ describe('archived orders', () => {
     return { status: response.status, body: (await response.json()) as unknown };
   }
 
+  /** An unlimited dish on the seller's live sample menu. */
   async function newItem(seller: string): Promise<string> {
-    const reply = await call('POST', '/api/seller/menu/items', {
-      seller,
-      body: { name: { en: 'Soto', id: 'Soto ayam' }, priceCents: 1400 },
-    });
-    return (reply.body as { item: { id: string } }).item.id;
+    const reply = await call('GET', `/api/s/${seller}/menu`);
+    const items = (reply.body as { items: Array<{ id: string; limit?: number }> }).items;
+    const item = items.find((candidate) => candidate.limit === undefined);
+    if (!item) throw new Error('no unlimited dish on the sample menu');
+    return item.id;
   }
 
   /** Places an order with an unlimited item and returns its token. */
@@ -66,7 +67,8 @@ describe('archived orders', () => {
     return (reply.body as { order: { token: string } }).order.token;
   }
 
-  const closeWeek = (seller: string) => call('POST', '/api/seller/week/close', { seller });
+  const finishMenu = (seller: string) =>
+    call('POST', '/api/seller/menus/current/finish', { seller });
 
   beforeEach(async () => {
     counter = 0;
@@ -78,10 +80,10 @@ describe('archived orders', () => {
     });
   });
 
-  describe('a closed week order, by its link', () => {
+  describe('a finished menu order, by its link', () => {
     it('is still found, read-only, with the week date and the seller', async () => {
       const token = await place(A);
-      expect((await closeWeek(A)).status).toBe(200);
+      expect((await finishMenu(A)).status).toBe(200);
       const reply = await call('GET', `/api/orders/${token}`);
       expect(reply.status).toBe(200);
       const order = parseCustomerOrderResponse(reply.body)?.order;
@@ -90,7 +92,7 @@ describe('archived orders', () => {
         archived: true,
         cookingDate: COOKING,
         seller: { slug: A },
-        status: 'ordered',
+        status: 'collected',
       });
       expect(order?.lines).toHaveLength(1);
     });
@@ -106,7 +108,7 @@ describe('archived orders', () => {
 
     it('refuses change and cancel with 409 week_closed', async () => {
       const token = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       expect(await call('PATCH', `/api/orders/${token}`, { body: { note: 'hi' } })).toMatchObject({
         status: 409,
         body: { error: 'week_closed' },
@@ -116,14 +118,14 @@ describe('archived orders', () => {
         body: { error: 'week_closed' },
       });
       const after = parseCustomerOrderResponse((await call('GET', `/api/orders/${token}`)).body);
-      expect(after?.order.status).toBe('ordered');
+      expect(after?.order.status).toBe('collected');
       expect(after?.order.note).toBeUndefined();
     });
 
     it('is in the My orders list, marked archived, next to a live order', async () => {
       const old = await place(A);
-      await closeWeek(A);
-      const live = await place(B); // A's next week is a draft until published
+      await finishMenu(A);
+      const live = await place(B); // B's menu is still live
       const list = parseCustomerOrdersResponse(
         (await call('GET', `/api/orders?tokens=${old},${live},unknown`)).body,
       );
@@ -136,7 +138,7 @@ describe('archived orders', () => {
 
     it('is gone from the seller live list but kept in their past week', async () => {
       const token = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       const live = (await call('GET', '/api/seller/orders', { seller: A })).body as {
         orders: Array<unknown>;
       };
@@ -152,7 +154,7 @@ describe('archived orders', () => {
   describe('retention (cooking date + 28 days, the same clock as the seller history)', () => {
     it('still shows the order one second before 28 days', async () => {
       const token = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       now = LAST_MOMENT;
       const got = parseFetchedOrderResponse((await call('GET', `/api/orders/${token}`)).body);
       expect(got && 'order' in got && got.order.archived).toBe(true);
@@ -160,7 +162,7 @@ describe('archived orders', () => {
 
     it('shows only the expired summary at exactly 28 days, with no items', async () => {
       const token = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       now = EXACTLY_28_DAYS;
       const reply = await call('GET', `/api/orders/${token}`);
       expect(reply.status).toBe(200);
@@ -178,7 +180,7 @@ describe('archived orders', () => {
 
     it('keeps the expired summary for good, and reports it in the list', async () => {
       const token = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       now = new Date('2027-06-01T00:00:00Z');
       expect((await call('GET', `/api/orders/${token}`)).body).toMatchObject({
         expired: { cookingDate: COOKING },
@@ -192,7 +194,7 @@ describe('archived orders', () => {
 
     it('still refuses change and cancel after expiry', async () => {
       const token = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       now = EXACTLY_28_DAYS;
       expect((await call('PATCH', `/api/orders/${token}`, { body: { note: 'x' } })).status).toBe(
         409,
@@ -209,7 +211,7 @@ describe('archived orders', () => {
 
     it('forgets the expired summary after a dev reset', async () => {
       const token = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       now = EXACTLY_28_DAYS;
       await call('GET', `/api/orders/${token}`);
       await call('POST', '/api/dev/reset');
@@ -221,8 +223,8 @@ describe('archived orders', () => {
     it('shows the right seller on each archived order', async () => {
       const a = await place(A);
       const b = await place(B);
-      await closeWeek(A);
-      await closeWeek(B);
+      await finishMenu(A);
+      await finishMenu(B);
       const list = parseCustomerOrdersResponse(
         (await call('GET', `/api/orders?tokens=${a},${b}`)).body,
       );
@@ -234,7 +236,7 @@ describe('archived orders', () => {
 
     it("does not let a seller see another seller's archive", async () => {
       const a = await place(A);
-      await closeWeek(A);
+      await finishMenu(A);
       const weeksB = (await call('GET', '/api/seller/past-weeks', { seller: B })).body as {
         weeks: Array<unknown>;
       };
@@ -250,7 +252,7 @@ describe('archived orders', () => {
     it('closing one seller does not archive the other seller orders', async () => {
       const a = await place(A);
       const b = await place(B);
-      await closeWeek(A);
+      await finishMenu(A);
       const gotA = parseCustomerOrderResponse((await call('GET', `/api/orders/${a}`)).body);
       const gotB = parseCustomerOrderResponse((await call('GET', `/api/orders/${b}`)).body);
       expect(gotA?.order.archived).toBe(true);

@@ -13,5 +13,8 @@
   "share": "Bagikan ke WhatsApp",
   "copy": "Salin teks",
   "copied": "Tersalin",
-  "copyFailed": "Tidak bisa menyalin. Pilih teksnya saja."
+  "copyFailed": "Tidak bisa menyalin. Pilih teksnya saja.",
+  "copyLink": "Salin tautan pesanan",
+  "linkCopied": "Tautan pesanan disalin",
+  "goOrders": "Ke pesanan"
 }

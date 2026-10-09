@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { sampleDayId } from './sellerHelpers';
 
 // The server's mock store is shared by parallel tests: no reset, no assertions on global counts.
 test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', async ({
@@ -79,7 +80,7 @@ test('customer menu in Indonesian shows Indonesian item names and dates', async 
   await page.goto('/onde-onde');
   await page.getByRole('radio', { name: 'ID' }).click();
   await expect(page.getByText('Pesmol ikan nila')).toBeVisible();
-  await expect(page.getByText('Sabtu, 10 Okt')).toBeVisible();
+  await expect(page.getByText(sampleDayId())).toBeVisible();
   await expect(page.getByRole('link', { name: 'Pesanan saya' })).toBeVisible();
 });
 

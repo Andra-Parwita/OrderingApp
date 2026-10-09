@@ -3,6 +3,7 @@ import type {
   Fulfilment,
   LocalText,
   Order,
+  PickupPoint,
   SellerMenuItemView,
 } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
@@ -18,6 +19,8 @@ export type CookMenu = {
   cookingDate: string;
   items: Array<SellerMenuItemView>;
   chefs: Array<Chef>;
+  /** The menu's pickup places, for the Pack tab. */
+  pickupPoints?: Array<PickupPoint>;
 };
 
 export type CookWho = { code: string; firstName: string; qty: number; fulfilment: Fulfilment };

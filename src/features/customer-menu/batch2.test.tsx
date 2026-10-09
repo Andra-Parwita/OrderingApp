@@ -8,7 +8,6 @@ import { placeOrder, fetchOrder, setOrderLocked } from '../../api/client';
 import { MY_ORDERS_KEY, readMyOrders, saveMyOrder } from '../../api/device/myOrders';
 import { BasketScreen } from './BasketScreen';
 import { menuRequested, placeRequested, quantitySet } from './customerSlice';
-import { MenuScreen } from './MenuScreen';
 import { OrderPlacedScreen } from './OrderPlacedScreen';
 import { createTestStore, renderWithStore, setupI18n } from './testSupport';
 import { DEFAULT_SELLER_SLUG } from '../../../shared/seller';
@@ -51,58 +50,6 @@ async function placeSample(qty = 1) {
   if (!result.ok) throw new Error('could not place the sample order');
   return result.data.order;
 }
-
-describe('How ordering works', () => {
-  it('names the kitchen and its WhatsApp number in step 3', async () => {
-    await useMenu({ whatsappNumber: NUMBER });
-    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
-    await screen.findByText('How ordering works');
-    expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(3);
-    const number = screen.getByText('+61 412 345 678');
-    expect(number.closest('li')).toHaveTextContent(
-      'Send that number to Onde Onde on WhatsApp (+61 412 345 678).',
-    );
-    // The number never wraps mid-number.
-    expect(number).toHaveStyle({ whiteSpace: 'nowrap' });
-  });
-
-  it('falls back to "the seller" without a number, and speaks Indonesian', async () => {
-    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
-    expect(await screen.findByText('Send that number to the seller on WhatsApp.')).toBeVisible();
-    fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
-    expect(await screen.findByText('Cara memesan')).toBeVisible();
-    expect(screen.getByText('Kirim nomor itu ke penjual lewat WhatsApp.')).toBeVisible();
-  });
-});
-
-describe('closed ordering', () => {
-  it.each([
-    ['cutoff_passed', 'The order cut-off has passed.'],
-    ['closed_by_seller', 'The seller has paused ordering for now.'],
-  ] as const)('shows the closed state for %s and hides the basket bar', async (reason, line) => {
-    await useMenu({ ordering: { open: false, reason }, whatsappNumber: NUMBER });
-    const open = vi.spyOn(window, 'open').mockReturnValue(null);
-    const store = createTestStore();
-    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />, store);
-    expect(await screen.findByText('Orders for this Saturday are closed')).toBeVisible();
-    expect(screen.getByText(line)).toBeVisible();
-    // A basket left from before does not bring the bar back.
-    store.dispatch(quantitySet({ itemId: 'lemper', qty: 2 }));
-    expect(screen.queryByRole('button', { name: /View basket/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add one Chicken lemper' })).toBeDisabled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Message seller on WhatsApp' }));
-    expect(open).toHaveBeenCalledWith(`https://wa.me/${NUMBER}`, '_blank', 'noopener,noreferrer');
-  });
-
-  it('opens the WhatsApp chat picker when the number is not known', async () => {
-    await useMenu({ ordering: { open: false, reason: 'closed_by_seller' } });
-    const open = vi.spyOn(window, 'open').mockReturnValue(null);
-    renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Message seller on WhatsApp' }));
-    expect(open).toHaveBeenCalledWith('https://wa.me/', '_blank', 'noopener,noreferrer');
-  });
-});
 
 describe('returning customer', () => {
   async function placeAndCaptureBody(slug = 'onde-onde') {
@@ -219,7 +166,7 @@ describe('basket edit mode', () => {
 
   it.each([
     ['ordering_closed', 'Sorry, ordering is closed right now.'],
-    ['cutoff_passed', 'Sorry, orders for this week are closed.'],
+    ['cutoff_passed', 'Sorry, orders for this menu are closed.'],
   ] as const)('shows %s inline', async (code, text) => {
     const placed = await placeSample(1);
     server.use(

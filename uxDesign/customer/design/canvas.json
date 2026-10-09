@@ -1,0 +1,26 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-09T13:40:00Z"},
+  "title": "Onde Onde customer app",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 2314, "h": 920, "title": "Menu · photo behind, dishes slide up"},
+    "MenuStates.dc.html": {"x": 2394, "y": 0, "w": 1840, "h": 920, "title": "Menu · states"},
+    "Basket.dc.html": {"x": 0, "y": 1300, "w": 1840, "h": 920, "title": "Basket and checkout"},
+    "Placed.dc.html": {"x": 1920, "y": 1300, "w": 1366, "h": 920, "title": "Placing, placed and QR code"},
+    "Order.dc.html": {"x": 3366, "y": 1300, "w": 1366, "h": 920, "title": "Order page"},
+    "MyOrders.dc.html": {"x": 4812, "y": 1300, "w": 1840, "h": 920, "title": "My orders"},
+    "InstallIOS.dc.html": {"x": 0, "y": 2600, "w": 3262, "h": 920, "title": "iPhone · Safari"},
+    "InstallOther.dc.html": {"x": 3342, "y": 2600, "w": 2314, "h": 920, "title": "Inside WhatsApp · Android · Desktop"},
+    "Notify.dc.html": {"x": 0, "y": 3900, "w": 1840, "h": 920, "title": "Notifications · four states"}
+  },
+  "order": ["Main.dc.html", "MenuStates.dc.html", "Basket.dc.html", "Placed.dc.html", "Order.dc.html", "MyOrders.dc.html", "InstallIOS.dc.html", "InstallOther.dc.html", "Notify.dc.html"],
+  "notes": {
+    "r1": {"x": 0, "y": -260, "text": "1 · Menu", "kind": "title1", "maxW": 4234},
+    "r2": {"x": 0, "y": 1040, "text": "2 · Order flow", "kind": "title1", "maxW": 6652},
+    "r3": {"x": 0, "y": 2340, "text": "3 · Add to Home Screen", "kind": "title1", "maxW": 5656},
+    "r4": {"x": 0, "y": 3640, "text": "4 · Notifications", "kind": "title1", "maxW": 1840}
+  },
+  "designSystems": []
+}

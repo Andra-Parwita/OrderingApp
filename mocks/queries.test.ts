@@ -64,9 +64,13 @@ const ROUTES: Array<Route> = [
   },
   { name: 'GET seller/menu', method: 'GET', path: () => '/api/seller/menu' },
   { name: 'GET seller/settings', method: 'GET', path: () => '/api/seller/settings' },
-  { name: 'GET seller/week', method: 'GET', path: () => '/api/seller/week' },
   { name: 'GET seller/chefs', method: 'GET', path: () => '/api/seller/chefs' },
-  { name: 'GET seller/sets', method: 'GET', path: () => '/api/seller/sets' },
+  // plan 001, stage 3
+  { name: 'GET seller/menus/current', method: 'GET', path: () => '/api/seller/menus/current' },
+  { name: 'GET seller/dishes', method: 'GET', path: () => '/api/seller/dishes' },
+  { name: 'GET seller/saved-sets', method: 'GET', path: () => '/api/seller/saved-sets' },
+  { name: 'GET seller/pickup-places', method: 'GET', path: () => '/api/seller/pickup-places' },
+  { name: 'GET seller/preferences', method: 'GET', path: () => '/api/seller/preferences' },
   { name: 'GET seller/images', method: 'GET', path: () => '/api/seller/images' },
   { name: 'GET seller/chef-devices', method: 'GET', path: () => '/api/seller/chef-devices' },
   { name: 'GET seller/past-weeks', method: 'GET', path: () => '/api/seller/past-weeks' },
@@ -128,7 +132,11 @@ const ROUTES: Array<Route> = [
     body: (c) => c.backup,
     bulk: true,
   },
-  { name: 'POST seller/week/close', method: 'POST', path: () => '/api/seller/week/close' },
+  {
+    name: 'POST seller/menus/current/finish',
+    method: 'POST',
+    path: () => '/api/seller/menus/current/finish',
+  },
   {
     name: 'GET seller/past-weeks/:id',
     method: 'GET',

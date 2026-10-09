@@ -67,14 +67,30 @@
     "pickup": "Hand-over",
     "delivery": "Delivery run",
     "updates": "Send an update",
-    "backToSaturday": "Back to Hand-over"
+    "backToSaturday": "Back to Hand-over",
+    "navOrders": "Orders",
+    "navKitchen": "Kitchen",
+    "navHandover": "Pickup & delivery",
+    "navMenu": "Menu",
+    "navSettings": "Settings",
+    "navMore": "More",
+    "notPublished": "Not published",
+    "phoneLabel": "Seller (phone)",
+    "tabletOnlyTitle": "Open this on a tablet or computer",
+    "tabletOnlyBody": "This part of the app needs a bigger screen. Orders and Pickup & delivery work on your phone.",
+    "tabletOnlyOrders": "Go to orders",
+    "switchPersonShort": "Switch",
+    "signedInWho": "Signed in"
   },
   "customerNav": {
     "label": "Customer",
     "menu": "Menu",
     "orders": "My orders",
     "settings": "Settings",
-    "newUpdate": "new update"
+    "newUpdate": "new update",
+    "back": "Back",
+    "backTo": "Back to {{page}}",
+    "notBuilt": "Not built yet: {{id}}"
   },
   "customerSettings": {
     "title": "Settings",
@@ -110,5 +126,33 @@
     "title": "We couldn't find this kitchen",
     "body": "Check the link you were sent, or ask the seller to send it again.",
     "home": "Go to the home page"
+  },
+  "liveLink": {
+    "live": "Live",
+    "reconnecting": "Reconnecting…",
+    "offline": "Offline · refreshing slowly"
+  },
+  "patterns": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "back": "Back",
+    "continueAnyway": "Continue anyway",
+    "undo": "Undo",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "{{from}}–{{to}} of {{total}}",
+    "pagerLabel": "Pages",
+    "send": "Send",
+    "language": "Language",
+    "preview": "Exactly what will be sent",
+    "checklistDone": "Done",
+    "checklistTodo": "To do",
+    "unsavedTitle": "Close without saving?",
+    "unsavedBody": "You have changes that are not saved yet.",
+    "keepEditing": "Keep editing",
+    "discard": "Discard changes",
+    "sheetHandle": "Drag handle (use Close instead)",
+    "sidePanel": "Details"
   }
 }

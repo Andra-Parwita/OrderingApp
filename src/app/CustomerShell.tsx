@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Link, Outlet, useLocation } from 'react-router';
-import { styled } from 'styled-components';
+import { Link, Outlet, useLocation, useNavigationType } from 'react-router';
+import { css, keyframes, styled } from 'styled-components';
 import { isValidSlug } from '../../shared/seller';
 import { lastKitchen } from '../api/device/lastKitchen';
 import { useUnseenUpdate } from '../features/customer-orders';
@@ -34,11 +34,40 @@ export function activeTab(pathname: string): TabId {
   return 'menu';
 }
 
-const TAB_HEIGHT = '3.5rem';
+/** Checkout pages (the basket, also in change-order mode) hide the tab bar (spec §3). */
+export function hasTabBar(pathname: string): boolean {
+  return !/^\/[^/]+\/basket\/?$/.test(pathname) && !/^\/o\/[^/]+\/edit\/?$/.test(pathname);
+}
 
-const Wrap = styled.div`
-  --customer-tabbar-height: calc(${TAB_HEIGHT} + env(safe-area-inset-bottom));
+/** Root pages are the tabs' own pages; every other page is pushed on top of one. */
+export function isRootPage(pathname: string): boolean {
+  return pathname.split('/').filter(Boolean).length <= 1;
+}
+
+const TAB_HEIGHT = '3.5rem';
+const MAX_WIDTH = '30rem'; // 480 px: phone width, centred on wider screens
+
+const Wrap = styled.div<{ $tabs: boolean }>`
+  --customer-tabbar-height: ${({ $tabs }) =>
+    $tabs ? `calc(${TAB_HEIGHT} + var(--sab, 0px))` : '0px'};
+  max-width: ${MAX_WIDTH};
+  margin: 0 auto;
+  overflow-x: clip; /* the sliding page starts off-screen */
   padding-bottom: var(--customer-tabbar-height);
+`;
+const slideIn = keyframes`
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+`;
+// A page pushed on top slides in from the right. Reduced motion: GlobalStyle turns every
+// animation off, so the page just appears.
+const Slide = styled.div<{ $push: boolean }>`
+  animation: ${({ $push }) =>
+    $push
+      ? css`
+          ${slideIn} 240ms ease-out
+        `
+      : 'none'};
 `;
 const Bar = styled.nav`
   position: fixed;
@@ -46,13 +75,16 @@ const Bar = styled.nav`
   right: 0;
   bottom: 0;
   z-index: 10;
-  padding-bottom: env(safe-area-inset-bottom);
+  width: 100%;
+  max-width: ${MAX_WIDTH};
+  margin: 0 auto;
+  padding-bottom: var(--sab, 0px);
   background: ${({ theme }) => theme.colour.bg};
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
 `;
 const List = styled.ul`
   display: flex;
-  max-width: 32rem;
+  max-width: ${MAX_WIDTH};
   margin: 0 auto;
   padding: 0;
   list-style: none;
@@ -69,11 +101,22 @@ const Tab = styled(Link)<{ $active: boolean }>`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.xs};
   min-height: ${TAB_HEIGHT};
-  color: ${({ theme, $active }) => ($active ? theme.colour.accent : theme.colour.textMuted)};
+  color: ${({ theme, $active }) => ($active ? theme.c.atext : theme.colour.textMuted)};
   font-size: ${({ theme }) => theme.type.size.sm};
   font-weight: ${({ theme, $active }) =>
     $active ? theme.type.weight.strong : theme.type.weight.regular};
   text-decoration: none;
+
+  /* The active tab is also marked by a bar above its icon: never colour alone. */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 2rem;
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+    background: ${({ theme, $active }) => ($active ? theme.c.atext : 'transparent')};
+  }
 
   &:focus-visible {
     outline-offset: -${({ theme }) => theme.border.focus};
@@ -108,31 +151,37 @@ export function CustomerShell() {
   const { pathname } = useLocation();
   const active = activeTab(pathname);
   const unseen = useUnseenUpdate(pathname);
+  const navigationType = useNavigationType();
+  const tabs = hasTabBar(pathname);
   return (
-    <Wrap>
-      <Outlet />
-      <Bar aria-label={t('customerNav.label')}>
-        <List>
-          {TABS.map((tab) => (
-            <Item key={tab.id}>
-              <Tab
-                to={tab.id === 'menu' ? menuTabHref(pathname) : tab.href}
-                $active={tab.id === active}
-                aria-current={tab.id === active ? 'page' : undefined}
-              >
-                <IconBox>
-                  <Icon name={tab.icon} />
-                  {tab.id === 'orders' && unseen ? <Dot aria-hidden="true" /> : null}
-                </IconBox>
-                <span>{t(`customerNav.${tab.id}`)}</span>
-                {tab.id === 'orders' && unseen ? (
-                  <Hidden>{`, ${t('customerNav.newUpdate')}`}</Hidden>
-                ) : null}
-              </Tab>
-            </Item>
-          ))}
-        </List>
-      </Bar>
+    <Wrap $tabs={tabs}>
+      <Slide key={pathname} $push={navigationType === 'PUSH' && !isRootPage(pathname)}>
+        <Outlet />
+      </Slide>
+      {tabs ? (
+        <Bar aria-label={t('customerNav.label')}>
+          <List>
+            {TABS.map((tab) => (
+              <Item key={tab.id}>
+                <Tab
+                  to={tab.id === 'menu' ? menuTabHref(pathname) : tab.href}
+                  $active={tab.id === active}
+                  aria-current={tab.id === active ? 'page' : undefined}
+                >
+                  <IconBox>
+                    <Icon name={tab.icon} />
+                    {tab.id === 'orders' && unseen ? <Dot aria-hidden="true" /> : null}
+                  </IconBox>
+                  <span>{t(`customerNav.${tab.id}`)}</span>
+                  {tab.id === 'orders' && unseen ? (
+                    <Hidden>{`, ${t('customerNav.newUpdate')}`}</Hidden>
+                  ) : null}
+                </Tab>
+              </Item>
+            ))}
+          </List>
+        </Bar>
+      ) : null}
     </Wrap>
   );
 }

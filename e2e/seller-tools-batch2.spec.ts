@@ -1,8 +1,11 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+import { sampleDay } from './sellerHelpers';
 
 // The mock store is shared by parallel tests: this spec never resets it and never asserts global
 // counts. It finds its own orders by unique names and notes. The settings test, which closes
-// ordering for a moment, lives in seller-settings-batch2.spec.ts and runs alone.
+// ordering for a moment, lives in seller-settings-batch2.spec.ts and runs alone. Kitchen and Share
+// menu are tablet and computer screens (a phone shows "Open this on a tablet or computer").
+test.skip(({ viewport }) => (viewport?.width ?? 0) < 600, 'tablet and desktop only');
 
 function watchConsole(page: Page): Array<string> {
   const errors: Array<string> = [];
@@ -43,20 +46,19 @@ test('cook list groups by item and by chef, and lists the notes', async ({
 
   await page.goto('/seller/cook');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
-    /(To cook|Cook list) · Sat 10 Oct/,
+    new RegExp(`Kitchen · ${sampleDay()}`),
   );
 
-  // Group by Item is the default: the tempeh is a row in the one list.
-  await expect(page.getByRole('radio', { name: 'Item', exact: true })).toHaveAttribute(
+  // Group by Dish is the default: the tempeh is a row in the one list.
+  await expect(page.getByRole('radio', { name: 'Dish', exact: true })).toHaveAttribute(
     'aria-checked',
     'true',
   );
-  await expect(page.getByText('Tempe mendoan').first()).toBeVisible();
+  await expect(page.getByText('Thin battered tempeh').first()).toBeVisible();
 
   await page.getByRole('radio', { name: 'Chef', exact: true }).click();
   const wati = page.getByRole('region', { name: 'Chef Wati' });
-  await expect(wati.getByText('Tempe mendoan')).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Onde Onde' })).toBeVisible();
+  await expect(wati.getByText('Thin battered tempeh')).toBeVisible();
 
   const notes = page.getByRole('region', { name: /^Notes \(/ });
   await expect(notes.getByText(`“${note}”`)).toBeVisible();

@@ -1,5 +1,5 @@
 // Tiny fake images for tests: just enough header for readImageSize, plus optional padding.
-import type { ImageSlot } from '../shared/imageSlots';
+import type { UploadSlot } from '../shared/imageSlots';
 import { slotSpec } from '../shared/imageSlots';
 
 function toDataUrl(mime: string, bytes: Array<number>, padding: number): string {
@@ -69,7 +69,7 @@ export function fakeWebp(width: number, height: number, kind: 'vp8x' | 'vp8l' | 
 }
 
 /** A png with exactly the slot's size (a correct upload). */
-export function pngFor(slot: ImageSlot, padding = 0): string {
+export function pngFor(slot: UploadSlot, padding = 0): string {
   const { width, height } = slotSpec(slot);
   return fakePng(width, height, padding);
 }

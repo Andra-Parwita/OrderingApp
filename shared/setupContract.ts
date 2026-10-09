@@ -46,17 +46,17 @@ export type WeekResponse = { week: Week };
 /** POST /api/seller/week/close: the archived week, and the new draft week that replaces it. */
 export type CloseWeekResponse = { week: Week; closed: PastWeekSummary };
 
-const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
-const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const DATE = /^\d{4}-\d{2}-\d{2}$/;
+export const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+export const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-function realDate(value: unknown): value is string {
+export function realDate(value: unknown): value is string {
   if (typeof value !== 'string' || !DATE.test(value)) return false;
   const ms = Date.parse(`${value}T00:00:00Z`);
   return !Number.isNaN(ms) && new Date(ms).toISOString().startsWith(value);
 }
 
-function parseWindow(input: unknown): PickupPoint['window'] | null {
+export function parseWindow(input: unknown): PickupPoint['window'] | null {
   if (!isRecord(input)) return null;
   const { start, end } = input;
   if (typeof start !== 'string' || typeof end !== 'string') return null;
@@ -64,14 +64,14 @@ function parseWindow(input: unknown): PickupPoint['window'] | null {
   return { start, end };
 }
 
-function parseTrimmedText(input: unknown, max: number): LocalText | null {
+export function parseTrimmedText(input: unknown, max: number): LocalText | null {
   const text = parseLocalText(input);
   if (!text) return null;
   const trimmed = { en: text.en.trim(), id: text.id.trim() };
   return trimmed.en.length <= max && trimmed.id.length <= max ? trimmed : null;
 }
 
-function parsePickupPointInput(input: unknown): PickupPointInput | null {
+export function parsePickupPointInput(input: unknown): PickupPointInput | null {
   if (!isRecord(input)) return null;
   const { id, place } = input;
   const directions = parseTrimmedText(input['directions'], 200);
@@ -147,8 +147,8 @@ function parseItemName(input: unknown): LocalText | null {
   return name && (name.en !== '' || name.id !== '') ? name : null;
 }
 
-const PRICE_MAX = 1_000_000;
-const LIMIT_MAX = 10_000;
+export const PRICE_MAX = 1_000_000;
+export const LIMIT_MAX = 10_000;
 
 export function parseCreateItemRequest(input: unknown): CreateItemRequest | null {
   if (!isRecord(input)) return null;
@@ -256,7 +256,7 @@ export function parseItemsResponse(input: unknown): ItemsResponse | null {
   return items ? { items } : null;
 }
 
-function parseSellerItem(input: unknown): SellerMenuItemView | null {
+export function parseSellerItem(input: unknown): SellerMenuItemView | null {
   if (!isRecord(input)) return null;
   const { chefId, manualSoldOut, remaining, soldOut } = input;
   const base = parseMenuItem({ ...input, soldOut: undefined });
@@ -270,6 +270,26 @@ function parseSellerItem(input: unknown): SellerMenuItemView | null {
     ...(chefId !== undefined && typeof chefId === 'string' ? { chefId } : {}),
     ...(manualSoldOut !== undefined ? { manualSoldOut } : {}),
   };
+}
+
+// ---- Kitchen name ----------------------------------------------------------------------------
+
+/** The longest kitchen name the owner can set. */
+export const KITCHEN_NAME_MAX = 60;
+
+/** PUT /api/seller/kitchen/name (owner only, not chefs). */
+export type KitchenNameRequest = { name: string };
+export type KitchenNameResponse = { name: string };
+
+export function parseKitchenNameRequest(input: unknown): KitchenNameRequest | null {
+  if (!isRecord(input) || typeof input['name'] !== 'string') return null;
+  const name = input['name'].trim();
+  return name !== '' && name.length <= KITCHEN_NAME_MAX ? { name } : null;
+}
+
+export function parseKitchenNameResponse(input: unknown): KitchenNameResponse | null {
+  if (!isRecord(input) || typeof input['name'] !== 'string') return null;
+  return { name: input['name'] };
 }
 
 // ---- Chefs -----------------------------------------------------------------------------------

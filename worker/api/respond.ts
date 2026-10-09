@@ -1,5 +1,5 @@
 // Shared by the API route files: error bodies with their HTTP status, and JSON body reading.
-import type { ApiErrorBody, ApiErrorCode } from '../../shared/apiError';
+import type { ApiErrorBody, ApiErrorCode, ApiWarning } from '../../shared/apiError';
 import type { AuthFail } from '../repo/Repository';
 
 const STATUS: Record<ApiErrorCode, number> = {
@@ -25,6 +25,9 @@ const STATUS: Record<ApiErrorCode, number> = {
   image_too_big: 400,
   image_ratio: 400,
   invalid_backup: 400,
+  pickup_place_limit: 409,
+  menu_in_progress: 409,
+  menu_not_live: 409,
   unauthorized: 401,
   forbidden: 403,
   invalid_credentials: 401,
@@ -37,7 +40,7 @@ const STATUS: Record<ApiErrorCode, number> = {
 export function error(
   code: ApiErrorCode,
   message: string,
-  extra: { triesLeft?: number; retryAfterSeconds?: number } = {},
+  extra: { triesLeft?: number; retryAfterSeconds?: number; warning?: ApiWarning } = {},
 ): Response {
   const body: ApiErrorBody = { error: code, message, ...extra };
   return Response.json(body, { status: STATUS[code] });

@@ -1,74 +1,64 @@
 import type { DefaultTheme } from 'styled-components';
+import { font, makeColors, size, type Brand, type Colors, type Mode } from './designTokens';
 import { border, minTapTarget, motion, radius, spacing, type } from './tokens';
 
-export const lightTheme: DefaultTheme = {
-  mode: 'light',
-  colour: {
-    bg: '#faf7f0',
-    surface: '#ffffff',
-    surfaceAlt: '#f3ede2',
-    text: '#2a2420',
-    textMuted: '#6e5c4b',
-    hairline: '#e7ddcc',
-    outline: '#85755f',
-    accent: '#7a4b2a',
-    onAccent: '#ffffff',
-    focus: '#7a4b2a',
-    indigo: '#1f3550',
-    gold: '#b8892e',
-    sage: '#5e7d4f',
-    sageText: '#4e6b41',
-    danger: '#a63a2b',
-    scrim: 'rgba(42, 36, 32, 0.42)',
-  },
-  status: {
-    ordered: { fg: '#5a4a3c', bg: '#efe8dc' },
-    confirmed: { fg: '#3e5a31', bg: '#e4ecdd' },
-    ready: { fg: '#6e4f12', bg: '#f6e9cc' },
-    outForDelivery: { fg: '#1f3550', bg: '#dfe6ef' },
-    cancelled: { fg: '#8a2e21', bg: '#f5e1dd' },
-    done: { fg: '#5f5a52', bg: '#ece9e3' },
-  },
-  border,
-  spacing,
-  type,
-  radius,
-  motion,
-  minTapTarget,
+export type ThemeColors = { [K in keyof Colors]: string };
+
+/** Sumatra's accent is red, so its danger moves toward orange-red to stay distinct (AA on surf). */
+const sumatraDanger: Record<Mode, string> = { dark: '#FF8A5C', light: '#B33A0C' };
+
+export function colorsFor(brand: Brand, mode: Mode): ThemeColors {
+  const c: ThemeColors = makeColors(brand, mode);
+  return brand === 'sumatra' ? { ...c, danger: sumatraDanger[mode] } : c;
+}
+
+const scrim: Record<Mode, string> = {
+  dark: 'rgba(0, 0, 0, 0.55)',
+  light: 'rgba(28, 31, 26, 0.42)',
 };
 
-export const darkTheme: DefaultTheme = {
-  mode: 'dark',
-  colour: {
-    bg: '#16120e',
-    surface: '#211b15',
-    surfaceAlt: '#2b241c',
-    text: '#f3ece1',
-    textMuted: '#bca98f',
-    hairline: '#3a3027',
-    outline: '#857460',
-    accent: '#c68a57',
-    onAccent: '#1a120b',
-    focus: '#c68a57',
-    indigo: '#a9bfdc',
-    gold: '#d9ae57',
-    sage: '#8fb07d',
-    sageText: '#8fb07d',
-    danger: '#e07c6c',
-    scrim: 'rgba(0, 0, 0, 0.55)',
-  },
-  status: {
-    ordered: { fg: '#d6c7b2', bg: '#2e271f' },
-    confirmed: { fg: '#b9d3a9', bg: '#26321f' },
-    ready: { fg: '#e8c77e', bg: '#3a2f17' },
-    outForDelivery: { fg: '#b5c9e4', bg: '#1e2a3a' },
-    cancelled: { fg: '#efa597', bg: '#3a1f1a' },
-    done: { fg: '#bdb6aa', bg: '#2a2723' },
-  },
-  border,
-  spacing,
-  type,
-  radius,
-  motion,
-  minTapTarget,
-};
+export function makeTheme(brand: Brand, mode: Mode): DefaultTheme {
+  const c = colorsFor(brand, mode);
+  return {
+    mode,
+    c,
+    font,
+    size,
+    // Deprecated aliases, all derived from `c`.
+    colour: {
+      bg: c.bg,
+      surface: c.surf,
+      surfaceAlt: c.surf2,
+      text: c.text,
+      textMuted: c.muted,
+      hairline: c.line,
+      outline: c.ctrl,
+      accent: c.fill,
+      onAccent: c.on,
+      focus: c.fill,
+      indigo: c.ready,
+      gold: c.warn,
+      sage: c.conf,
+      sageText: c.conf,
+      danger: c.danger,
+      scrim: scrim[mode],
+    },
+    status: {
+      ordered: { fg: c.atext, bg: c.tint },
+      confirmed: { fg: c.conf, bg: c.surf2 },
+      ready: { fg: c.warn, bg: c.warnTint },
+      outForDelivery: { fg: c.ready, bg: c.surf2 },
+      cancelled: { fg: c.danger, bg: c.surf2 },
+      done: { fg: c.muted, bg: c.surf2 },
+    },
+    border,
+    spacing,
+    type,
+    radius,
+    motion,
+    minTapTarget,
+  };
+}
+
+export const lightTheme: DefaultTheme = makeTheme('onde', 'light');
+export const darkTheme: DefaultTheme = makeTheme('onde', 'dark');

@@ -89,7 +89,7 @@ function renderLayout(Layout: () => React.JSX.Element = SellerLayout) {
   );
 }
 
-/** The regression: typing, then crossing the 1024 px line, must not clear the form. */
+/** The regression: typing, then crossing the 600 px line, must not clear the form. */
 function typeThenFlip(): void {
   const draft = screen.getByLabelText('Draft');
   fireEvent.change(draft, { target: { value: 'half-filled' } });
@@ -102,7 +102,7 @@ describe('SellerLayout', () => {
   it('keeps the page state when the screen crosses 1024 px (one stable shell)', () => {
     stubKitchen();
     renderLayout();
-    expect(screen.queryByRole('navigation', { name: 'Seller' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Seller (phone)' })).toBeInTheDocument();
     typeThenFlip();
     // The rail is there now, so the flip really changed the layout.
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toBeInTheDocument();

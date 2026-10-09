@@ -36,11 +36,11 @@ describe('a new seller default week', () => {
     // Mon 12 Oct 2026, 10:00 in Melbourne
     const world = await create({ now: () => new Date('2026-10-11T23:00:00Z') });
     await world.repo.addSeller('Kedai Baru', 'kedai-baru');
-    const week = await (await world.repo.sellerBySlug('kedai-baru'))?.getWeek();
-    expect(week).toMatchObject({
+    const week = await (await world.repo.sellerBySlug('kedai-baru'))?.getCurrentMenu();
+    expect(week?.menu).toMatchObject({
       cookingDate: '2026-10-17',
       cutoffAt: '2026-10-16T21:00:00+11:00',
-      status: 'draft',
+      state: 'not_published',
     });
   });
 
@@ -48,8 +48,8 @@ describe('a new seller default week', () => {
     // Mon 6 Apr 2026, after the clocks went back
     const world = await create({ now: () => new Date('2026-04-06T00:00:00Z') });
     await world.repo.addSeller('Kedai Dua', 'kedai-dua');
-    const week = await (await world.repo.sellerBySlug('kedai-dua'))?.getWeek();
-    expect(week).toMatchObject({
+    const week = await (await world.repo.sellerBySlug('kedai-dua'))?.getCurrentMenu();
+    expect(week?.menu).toMatchObject({
       cookingDate: '2026-04-11',
       cutoffAt: '2026-04-10T21:00:00+10:00',
     });

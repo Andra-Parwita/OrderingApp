@@ -98,7 +98,7 @@ describe('seller rules', () => {
     });
 
     it('refuses a draft week', async () => {
-      await store.unpublishWeek();
+      await store.unpublishMenu();
       expect(await store.createOrder(one('pesmol'))).toMatchObject({
         ok: false,
         error: 'week_not_published',

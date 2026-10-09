@@ -4,6 +4,7 @@
 // database is exactly as a full reset leaves it. Anything it cannot read falls back to a full reset.
 import type { D1Like, D1Statement } from '../worker/db/d1';
 import { Db } from '../worker/db/d1';
+import { comingSaturday } from '../shared/dates';
 import { fixtureStatements, TABLES_CHILDREN_FIRST, wipeAndSeed } from '../worker/db/seed';
 
 const WRITE =
@@ -32,10 +33,17 @@ class Tracked implements D1Statement {
 /** For each table, the tables that hold a foreign key to it (they go with it on a reset). */
 function childrenOf(migrations: ReadonlyArray<string>): Map<string, Set<string>> {
   const children = new Map<string, Set<string>>();
+  // In file order: a later migration may drop a table (0003 reshapes several) and create it again.
   for (const sql of migrations) {
-    for (const block of sql.matchAll(/CREATE TABLE (\w+) \(([\s\S]*?)\n\)/g)) {
-      const child = block[1] as string;
-      for (const reference of (block[2] as string).matchAll(/REFERENCES\s+(\w+)/g)) {
+    for (const block of sql.matchAll(/DROP TABLE (\w+);|CREATE TABLE (\w+) \(([\s\S]*?)\n\)/g)) {
+      const dropped = block[1];
+      if (dropped !== undefined) {
+        children.delete(dropped);
+        for (const set of children.values()) set.delete(dropped);
+        continue;
+      }
+      const child = block[2] as string;
+      for (const reference of (block[3] as string).matchAll(/REFERENCES\s+(\w+)/g)) {
         const parent = reference[1] as string;
         (children.get(parent) ?? children.set(parent, new Set()).get(parent))?.add(child);
       }
@@ -47,15 +55,19 @@ function childrenOf(migrations: ReadonlyArray<string>): Map<string, Set<string>>
 export type TrackedDatabase = {
   /** The binding to give the repository: same as the real one, with writes noted. */
   d1: D1Like;
-  /** Puts the sample kitchens back, touching only what changed since the last call. */
-  reset(): Promise<void>;
+  /**
+   * Puts the sample kitchens back (their week computed from `now`), touching only what changed
+   * since the last call. A `now` in a different sample week re-seeds everything.
+   */
+  reset(now: Date): Promise<void>;
   /** A full wipe and re-seed (the repository's own dev reset has run, or is about to). */
-  markFresh(): void;
+  markFresh(now: Date): void;
 };
 
 export function trackWrites(real: D1Like, migrations: ReadonlyArray<string>): TrackedDatabase {
   const dirty = new Set<string>();
   let everything = true; // a database that was never reset is not known
+  let seededWeek: string | undefined; // the sample week (its cooking date) the rows were seeded for
   const note = (sql: string) => {
     const table = WRITE.exec(sql)?.[1];
     if (table) dirty.add(table);
@@ -81,14 +93,18 @@ export function trackWrites(real: D1Like, migrations: ReadonlyArray<string>): Tr
 
   return {
     d1,
-    markFresh() {
+    markFresh(now) {
+      seededWeek = comingSaturday(now);
       dirty.clear();
       everything = false;
     },
-    async reset() {
+    async reset(now) {
+      const week = comingSaturday(now);
+      if (week !== seededWeek) everything = true;
+      seededWeek = week;
       if (!everything && dirty.size === 0) return;
       if (everything) {
-        await wipeAndSeed(db);
+        await wipeAndSeed(db, now);
       } else {
         const tables = closure();
         if (
@@ -96,17 +112,17 @@ export function trackWrites(real: D1Like, migrations: ReadonlyArray<string>): Tr
             (table) => !(TABLES_CHILDREN_FIRST as ReadonlyArray<string>).includes(table),
           )
         ) {
-          await wipeAndSeed(db);
+          await wipeAndSeed(db, now);
           dirty.clear();
           everything = false;
           return;
         }
-        const seeds = fixtureStatements(db).map((statement) => ({
+        const seeds = fixtureStatements(db, now).map((statement) => ({
           statement,
           table: WRITE.exec((statement as Tracked).sql)?.[1],
         }));
         if (seeds.some((seed) => seed.table === undefined)) {
-          await wipeAndSeed(db);
+          await wipeAndSeed(db, now);
         } else {
           await db.batch([
             ...TABLES_CHILDREN_FIRST.filter((table) => tables.has(table)).map((table) =>

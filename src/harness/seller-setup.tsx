@@ -5,14 +5,13 @@ import createSagaMiddleware from 'redux-saga';
 import {
   ChefsScreen,
   ImagesScreen,
-  WeekSettingsScreen,
   registerSellerSetupI18n,
   setupReducer,
   setupSaga,
 } from '../features/seller-setup';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 
-// ?harness=seller-setup&screen=week|images|chefs; talks to the dev Worker mock API.
+// ?harness=seller-setup&screen=images|chefs; talks to the dev Worker mock API.
 // Own store, theme and strings, so the screens run without the app shell (6.3 adds the routes).
 
 registerSellerSetupI18n();
@@ -30,8 +29,7 @@ function createHarnessStore() {
 function Screen() {
   const screen = new URLSearchParams(window.location.search).get('screen');
   if (screen === 'images') return <ImagesScreen />;
-  if (screen === 'chefs') return <ChefsScreen />;
-  return <WeekSettingsScreen settingsHref="/seller/settings" />;
+  return <ChefsScreen />;
 }
 
 export function SellerSetupHarness() {

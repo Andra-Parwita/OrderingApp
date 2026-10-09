@@ -1,13 +1,26 @@
-import { call, put, race, take, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects';
+import {
+  call,
+  put,
+  race,
+  select,
+  take,
+  takeEvery,
+  takeLatest,
+  takeLeading,
+} from 'redux-saga/effects';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
-import type { ApiResult } from '../../api/http';
+import type { ApiFailure, ApiResult } from '../../api/http';
 import {
   addSampleOrders,
   createSellerOrder,
-  fetchMenu,
+  fetchCurrentMenu,
+  fetchPastWeeks,
   fetchSellerMenu,
   fetchSellerOrders,
+  markOrderCollected,
   markOrderSeen,
+  setTakingOrders,
+  updateItem,
   nudgeOrder,
   resetMock,
   setOrderLocked,
@@ -17,11 +30,31 @@ import {
 } from '../../api/client';
 import { liveRefreshLoop, type LiveMessage } from '../../api/live';
 import type { EventChannel } from 'redux-saga';
-import type { MenuResponse, SellerMenuResponse } from '../../../shared/menuContract';
+import type { SellerMenuResponse } from '../../../shared/menuContract';
+import type { MenuViewResponse, UpdateMenuResponse } from '../../../shared/menusContract';
+import type { PastWeeksResponse } from '../../../shared/pastWeeks';
+import type { ItemResponse } from '../../../shared/setupContract';
 import type { SellerOrderResponse, SellerOrdersResponse } from '../../../shared/orderContract';
 import {
   changeFailed,
+  type FailedChange,
+  warningDismissed,
+  collectedRequested,
   createFailed,
+  currentFailed,
+  currentLoaded,
+  currentRequested,
+  dishPatchRequested,
+  pastFailed,
+  pastLoaded,
+  pastRequested,
+  takingOrdersRequested,
+  toastShown,
+  warningConfirmed,
+  warningRaised,
+  type SellerOrdersRootState,
+  type Warned,
+  type WarnedCall,
   createOrderRequested,
   lockChangeRequested,
   menuFailed,
@@ -40,7 +73,6 @@ import {
   seenRequested,
   statusChangeRequested,
   waReceivedRequested,
-  weekLoaded,
 } from './sellerOrdersSlice';
 import { staffSignedOut } from '../../api/staffSignedOut';
 import { currentSellerSlug } from '../../api/device/sellerContext';
@@ -58,9 +90,24 @@ export function* loadOrders() {
   else yield put(ordersFailed());
 }
 
-function* loadWeek() {
-  const result = (yield call(fetchMenu, currentSellerSlug())) as ApiResult<MenuResponse>;
-  if (result.ok) yield put(weekLoaded({ cookingDate: result.data.week.cookingDate }));
+export function* loadCurrent() {
+  const result = (yield call(
+    fetchCurrentMenu,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<MenuViewResponse>;
+  if (result.ok) yield put(currentLoaded({ view: result.data.menu }));
+  else yield put(currentFailed());
+}
+
+export function* loadPast() {
+  const result = (yield call(
+    fetchPastWeeks,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<PastWeeksResponse>;
+  if (result.ok) yield put(pastLoaded({ weeks: result.data.weeks }));
+  else yield put(pastFailed());
 }
 
 // Live updates (stage 8.3): while a seller screen is shown the list reloads when the seller's
@@ -68,7 +115,7 @@ function* loadWeek() {
 // Phase 5 note: the "Live" dot still shows whether the last load worked; the socket's own status
 // (`Reconnecting…`) can drive it once the screens are reworked.
 function* refresh() {
-  yield call(loadWeek);
+  yield call(loadCurrent);
   yield call(loadOrders);
 }
 
@@ -86,21 +133,52 @@ function* watchPolling(pollMs: number, channel?: () => EventChannel<LiveMessage>
   }
 }
 
+/** A 409 with a warning body opens the dialog; anything else is a failed change. */
+function* warnOr(result: ApiFailure, call: WarnedCall, name: string, failed: FailedChange | null) {
+  if (result.status === 409 && result.warning) {
+    yield put(warningRaised({ call, warning: result.warning, name } satisfies Warned));
+  } else if (failed) yield put(changeFailed({ failed }));
+}
+
+function* nameOf(code: string) {
+  const state = (yield select()) as SellerOrdersRootState;
+  return state.sellerOrders.orders.find((order) => order.code === code)?.firstName ?? '';
+}
+
 export function* changeStatus(action: ReturnType<typeof statusChangeRequested>) {
-  const { code, to } = action.payload;
+  const { code, to, from, force, undo } = action.payload;
   const result = (yield call(
     setOrderStatus,
     code,
     to,
     undefined,
     currentSellerSlug(),
+    force,
   )) as ApiResult<SellerOrderResponse>;
-  if (result.ok) yield put(orderSaved({ order: result.data.order }));
-  else yield put(changeFailed({ failed: { kind: 'status', code, to } }));
+  if (result.ok) {
+    yield put(orderSaved({ order: result.data.order }));
+    // Confirm and cancel get a toast with Undo: the same call back to the old status, forced.
+    if (!undo && (to === 'confirmed' || to === 'cancelled')) {
+      yield put(
+        toastShown({
+          kind: to === 'confirmed' ? 'confirmed' : 'cancelled',
+          name: result.data.order.firstName,
+          undo: from ? { kind: 'status', code, to: from } : null,
+        }),
+      );
+    }
+  } else {
+    const name = (yield call(nameOf, code)) as string;
+    yield call(warnOr, result, { kind: 'status', code, to, ...(from ? { from } : {}) }, name, {
+      kind: 'status',
+      code,
+      to,
+    });
+  }
 }
 
 export function* changePaid(action: ReturnType<typeof paidChangeRequested>) {
-  const { code, paid } = action.payload;
+  const { code, paid, undo } = action.payload;
   const result = (yield call(
     setOrderPaid,
     code,
@@ -108,8 +186,18 @@ export function* changePaid(action: ReturnType<typeof paidChangeRequested>) {
     undefined,
     currentSellerSlug(),
   )) as ApiResult<SellerOrderResponse>;
-  if (result.ok) yield put(orderSaved({ order: result.data.order }));
-  else yield put(changeFailed({ failed: { kind: 'paid', code, paid } }));
+  if (result.ok) {
+    yield put(orderSaved({ order: result.data.order }));
+    if (paid && !undo) {
+      yield put(
+        toastShown({
+          kind: 'paid',
+          name: result.data.order.firstName,
+          undo: { kind: 'paid', code, paid: false },
+        }),
+      );
+    }
+  } else yield put(changeFailed({ failed: { kind: 'paid', code, paid } }));
 }
 
 export function* changeLock(action: ReturnType<typeof lockChangeRequested>) {
@@ -139,17 +227,40 @@ export function* changeWaReceived(action: ReturnType<typeof waReceivedRequested>
 }
 
 export function* nudge(action: ReturnType<typeof nudgeRequested>) {
-  const { code } = action.payload;
+  const { code, force } = action.payload;
   const result = (yield call(
     nudgeOrder,
     code,
     undefined,
     currentSellerSlug(),
+    force,
   )) as ApiResult<SellerOrderResponse>;
   if (result.ok) {
     yield put(orderSaved({ order: result.data.order }));
     yield put(noticeShown({ notice: 'nudged' }));
-  } else yield put(changeFailed({ failed: { kind: 'nudge', code } }));
+  } else {
+    const name = (yield call(nameOf, code)) as string;
+    yield call(warnOr, result, { kind: 'nudge', code }, name, { kind: 'nudge', code });
+  }
+}
+
+/** The quiet Mark collected: no Undo (there is no route that takes it back). */
+export function* markCollected(action: ReturnType<typeof collectedRequested>) {
+  const { code, force } = action.payload;
+  const result = (yield call(
+    markOrderCollected,
+    code,
+    undefined,
+    currentSellerSlug(),
+    force,
+  )) as ApiResult<SellerOrderResponse>;
+  if (result.ok) {
+    yield put(orderSaved({ order: result.data.order }));
+    yield put(toastShown({ kind: 'collected', name: result.data.order.firstName, undo: null }));
+  } else {
+    const name = (yield call(nameOf, code)) as string;
+    yield call(warnOr, result, { kind: 'collected', code }, name, null);
+  }
 }
 
 export function* markSeen(action: ReturnType<typeof seenRequested>) {
@@ -182,7 +293,71 @@ export function* createOrder(action: ReturnType<typeof createOrderRequested>) {
     currentSellerSlug(),
   )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderCreated({ order: result.data.order }));
-  else yield put(createFailed({ error: result.error }));
+  else if (result.status === 409 && result.warning) {
+    yield put(
+      warningRaised({
+        call: { kind: 'create', request: action.payload },
+        warning: result.warning,
+        name: action.payload.firstName,
+      }),
+    );
+  } else yield put(createFailed({ error: result.error }));
+}
+
+/** Continue anyway: the call that warned goes again with force. */
+export function* sendForced() {
+  const state = (yield select()) as SellerOrdersRootState;
+  const warned = state.sellerOrders.warned;
+  if (!warned) return;
+  yield put(warningDismissed());
+  const { call: again } = warned;
+  switch (again.kind) {
+    case 'status':
+      yield put(
+        statusChangeRequested({
+          code: again.code,
+          to: again.to,
+          ...(again.from ? { from: again.from } : {}),
+          force: true,
+        }),
+      );
+      break;
+    case 'collected':
+      yield put(collectedRequested({ code: again.code, force: true }));
+      break;
+    case 'nudge':
+      yield put(nudgeRequested({ code: again.code, force: true }));
+      break;
+    case 'create':
+      yield put(createOrderRequested({ ...again.request, force: true }));
+      break;
+    default: {
+      const unreachable: never = again;
+      throw new Error(String(unreachable));
+    }
+  }
+}
+
+export function* changeTakingOrders(action: ReturnType<typeof takingOrdersRequested>) {
+  const result = (yield call(
+    setTakingOrders,
+    action.payload.value,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<UpdateMenuResponse>;
+  if (result.ok) yield put(currentLoaded({ view: result.data.menu }));
+}
+
+/** Live Dishes panel: limit and sold out go through today's menu item route (instant, D-069 Q2). */
+export function* patchDish(action: ReturnType<typeof dishPatchRequested>) {
+  const result = (yield call(
+    updateItem,
+    action.payload.id,
+    action.payload.patch,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<ItemResponse>;
+  if (result.ok) yield call(loadCurrent);
 }
 
 // Dev only: the Worker has these routes only in dev.
@@ -207,6 +382,12 @@ export function* sellerOrdersSaga(
   yield takeEvery(waReceivedRequested.type, changeWaReceived);
   yield takeEvery(nudgeRequested.type, nudge);
   yield takeEvery(seenRequested.type, markSeen);
+  yield takeEvery(collectedRequested.type, markCollected);
+  yield takeEvery(warningConfirmed.type, sendForced);
+  yield takeLatest(takingOrdersRequested.type, changeTakingOrders);
+  yield takeEvery(dishPatchRequested.type, patchDish);
+  yield takeLatest(currentRequested.type, loadCurrent);
+  yield takeLatest(pastRequested.type, loadPast);
   yield takeLatest(menuRequested.type, loadSellerMenu);
   yield takeLeading(createOrderRequested.type, createOrder);
   // Only the dev buttons dispatch these, and they show only when the server has DEV_TOOLS on.

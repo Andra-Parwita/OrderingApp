@@ -1,3 +1,5 @@
+import { font } from './designTokens';
+
 export const spacing = {
   xs: '4px',
   sm: '8px',
@@ -8,7 +10,7 @@ export const spacing = {
 } as const;
 
 export const type = {
-  family: `system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif`,
+  family: font.ui,
   size: {
     sm: '0.8125rem',
     md: '0.9375rem',

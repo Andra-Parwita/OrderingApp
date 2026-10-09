@@ -1,10 +1,17 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { OrderPanel } from './OrderPanel';
 import { OrdersTableScreen } from './OrdersTableScreen';
 import type { StatusFilter } from './orderStatus';
-import { createTestStore, makeOrder, renderWithStore, seed, setupI18n } from './testSupport';
+import {
+  createTestStore,
+  makeMenuView,
+  makeOrder,
+  renderWithStore,
+  seed,
+  seedMenu,
+  setupI18n,
+} from './testSupport';
 
 beforeAll(setupI18n);
 
@@ -12,167 +19,175 @@ const noop = () => undefined;
 
 function orders() {
   return [
-    makeOrder({ id: '1', code: 'AAA222', firstName: 'Rina', status: 'ordered' }),
+    makeOrder({ id: '1', code: 'AAA222', firstName: 'Rina', status: 'ordered', changed: true }),
     makeOrder({ id: '2', code: 'BBB333', firstName: 'Budi', status: 'confirmed', note: 'x' }),
-    makeOrder({ id: '3', code: 'CCC444', firstName: 'Sari', status: 'confirmed' }),
+    makeOrder({ id: '3', code: 'CCC444', firstName: 'Sari', status: 'confirmed', paid: true }),
     makeOrder({ id: '4', code: 'DDD555', firstName: 'Tom', status: 'ready_for_pickup' }),
   ];
 }
 
-/** Stands in for the route wrapper: the code, filter and search live in its state. */
+/** Stands in for the route wrapper: the code, filter, search and toggles live in its state. */
 function Workspace({ initialFilter = 'all' }: Readonly<{ initialFilter?: StatusFilter }>) {
-  const [code, setCode] = useState<string | null>(null);
+  const [code, setCode] = useState<string | undefined>(undefined);
   const [filter, setFilter] = useState<StatusFilter>(initialFilter);
   const [query, setQuery] = useState('');
+  const [toggles, setToggles] = useState({ changed: false, unpaid: false });
   return (
-    <>
-      <OrdersTableScreen
-        filter={filter}
-        query={query}
-        onFilterChange={setFilter}
-        onQueryChange={setQuery}
-        onOpenOrder={setCode}
-        onNewOrder={noop}
-        onShare={noop}
-        {...(code ? { selectedCode: code } : {})}
-      />
-      {code ? (
-        <OrderPanel
-          code={code}
-          filter={filter}
-          query={query}
-          onClose={() => setCode(null)}
-          onOpenOrder={setCode}
-        />
-      ) : null}
-    </>
+    <OrdersTableScreen
+      filter={filter}
+      query={query}
+      onFilterChange={setFilter}
+      onQueryChange={setQuery}
+      onOpenOrder={setCode}
+      onNewOrder={noop}
+      onShare={noop}
+      toggles={toggles}
+      onToggle={(key) => setToggles((old) => ({ ...old, [key]: !old[key] }))}
+      onCloseOrder={() => setCode(undefined)}
+      {...(code ? { selectedCode: code } : {})}
+    />
   );
 }
 
-function renderWorkspace(initialFilter: StatusFilter = 'all') {
+function renderLive(initialFilter: StatusFilter = 'all') {
   const store = createTestStore({ saga: false });
   seed(store, orders());
+  seedMenu(store, makeMenuView('live'));
   renderWithStore(<Workspace initialFilter={initialFilter} />, store);
+  return store;
 }
 
-describe('the desktop orders table', () => {
-  it('has the six plain columns and at most one flag per row', () => {
-    renderWorkspace();
-    const table = screen.getByRole('table', { name: 'Orders' });
-    expect(
-      within(table)
-        .getAllByRole('columnheader')
-        .map((th) => th.textContent),
-    ).toEqual(['Order', 'Name', 'What they ordered', 'Total', 'Status', 'Needs attention']);
-    const rows = within(table).getAllByRole('row').slice(1);
-    expect(rows).toHaveLength(4);
-    for (const row of rows) expect(within(row).getAllByRole('cell')).toHaveLength(6);
-    // Rina is waiting for confirmation and is new: just that flag. Budi has a note.
-    expect(within(rows[0] as HTMLElement).getByText('New customer')).toBeInTheDocument();
-    expect(within(rows[1] as HTMLElement).getByText('Note')).toBeInTheDocument();
-    expect(within(rows[2] as HTMLElement).getByText('Nothing to do')).toBeInTheDocument();
+describe('Home with a live menu', () => {
+  it('has the header, the Taking orders switch, Share menu, New order and the sub-line', () => {
+    renderLive();
+    expect(screen.getByRole('heading', { name: 'Orders' })).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: 'Taking orders' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Share menu' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New order' })).toBeInTheDocument();
+    expect(screen.getByText(/Menu for .*17 Oct.* · Orders close/)).toBeInTheDocument();
   });
 
-  it('never cuts the code, name, total, status or flag; only "what they ordered" gives way', () => {
-    renderWorkspace();
-    const rows = within(screen.getByRole('table', { name: 'Orders' }))
-      .getAllByRole('row')
-      .slice(1);
-    const cells = within(rows[0] as HTMLElement).getAllByRole('cell');
-    for (const index of [0, 1, 3, 4, 5]) {
-      const style = getComputedStyle(cells[index] as HTMLElement);
-      expect(style.maxWidth).not.toBe('0');
-      expect(style.textOverflow).not.toBe('ellipsis');
-      expect(cells[index]?.querySelector('[data-full]')).toBeNull();
-      expect(cells[index]).not.toHaveAttribute('data-full');
-    }
-    expect((cells[1] as HTMLElement).textContent).toBe('Rina');
-    expect(cells[2]).toHaveAttribute('data-full');
-    const widths = Array.from(
-      screen.getByRole('table', { name: 'Orders' }).querySelectorAll('col'),
-    ).map((col) => col.style.width);
-    expect(widths).toEqual(['', '', '100%', '', '', '']);
+  it('shows "Orders paused" when Taking orders is off', () => {
+    const store = createTestStore({ saga: false });
+    seed(store, orders());
+    seedMenu(store, makeMenuView('live', { takingOrders: false }));
+    renderWithStore(<Workspace />, store);
+    expect(screen.getByRole('switch', { name: 'Orders paused' })).not.toBeChecked();
   });
 
-  it('names the chip for edited orders "Edited by customer"', () => {
-    renderWorkspace();
-    expect(screen.getByRole('button', { name: 'Edited by customer 0' })).toBeInTheDocument();
+  it('lists every order as a row, with Changed and Not paid counts and status tab counts', () => {
+    renderLive();
+    expect(screen.getByRole('button', { name: /Rina/ })).toHaveTextContent('Changed');
+    // The count sits in its own span, so the name reads "Changed1" or "Changed 1".
+    expect(screen.getByRole('button', { name: /^Changed\s*1$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Not paid\s*3$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^All\s*4$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Confirmed\s*2$/ })).toBeInTheDocument();
+  });
+
+  it('narrows the list with the status tab, the toggles and the search', () => {
+    renderLive();
+    fireEvent.click(screen.getByRole('button', { name: /^Confirmed\s*2$/ }));
+    expect(screen.queryByRole('button', { name: /Rina/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Not paid\s*3$/ }));
+    expect(screen.queryByRole('button', { name: /Sari/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Budi/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Name or code' }), {
+      target: { value: 'zzz' },
+    });
+    expect(screen.getByText('No orders match.')).toBeInTheDocument();
+  });
+
+  it('shows the live Dishes panel with sold, left and the limit', () => {
+    renderLive();
+    // The panel is open on the live Home; the dish also appears in the order rows.
+    expect(screen.getByText('Dishes')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit limit: Chicken lemper' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sold out' })).toBeInTheDocument();
   });
 
   it('shows the empty state when there are no orders at all', () => {
     const store = createTestStore({ saga: false });
     seed(store, []);
-    renderWithStore(
-      <OrdersTableScreen
-        filter="all"
-        query=""
-        onFilterChange={noop}
-        onQueryChange={noop}
-        onOpenOrder={noop}
-        onShare={noop}
-      />,
-      store,
-    );
+    seedMenu(store, makeMenuView('live'));
+    renderWithStore(<Workspace />, store);
     expect(screen.getByText('No orders yet')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Share menu on WhatsApp' })).toBeInTheDocument();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 });
 
-describe('the order panel', () => {
-  const rowOf = (name: string) => screen.getByRole('row', { name: new RegExp(name) });
+describe('the order beside the list', () => {
+  const rowOf = (name: string) => screen.getByRole('button', { name: new RegExp(name) });
 
-  it('opens from a row with Enter and takes focus; Escape closes and returns focus to the row', () => {
-    renderWorkspace();
-    const row = rowOf('Budi');
-    row.focus();
-    fireEvent.keyDown(row, { key: 'Enter' });
-    const dialog = screen.getByRole('dialog', { name: 'Order BBB-333' });
-    expect(dialog).toHaveAttribute('aria-modal', 'true');
-    expect(dialog).toHaveFocus();
-    fireEvent.keyDown(dialog, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(rowOf('Budi')).toHaveFocus();
-  });
-
-  it('closes with the labelled Close button', () => {
-    renderWorkspace();
-    fireEvent.click(rowOf('Sari'));
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
-
-  it('moves with Next order and Previous through the rows of the table', () => {
-    renderWorkspace();
+  it('opens from a row and closes with the labelled Close button', () => {
+    renderLive();
     fireEvent.click(rowOf('Budi'));
-    expect(screen.getByRole('heading', { name: 'BBB-333' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Next order/ }));
-    expect(screen.getByRole('heading', { name: 'CCC-444' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Previous/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Previous/ }));
-    expect(screen.getByRole('heading', { name: 'AAA-222' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Previous/ })).toBeDisabled();
+    const panel = screen.getByRole('complementary', { name: 'Order BBB333' });
+    expect(within(panel).getByRole('heading', { level: 2, name: /Budi/ })).toBeInTheDocument();
+    fireEvent.click(within(panel).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 
-  it('follows the filtered order, not the whole week', () => {
-    renderWorkspace('confirmed');
-    fireEvent.click(rowOf('Budi'));
-    expect(screen.getByRole('button', { name: /Previous/ })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: /Next order/ }));
-    expect(screen.getByRole('heading', { name: 'CCC-444' })).toBeInTheDocument();
-    // Tom (Ready) is not in the Confirmed table, so Sari is the last stop.
-    expect(screen.getByRole('button', { name: /Next order/ })).toBeDisabled();
-  });
-
-  it('shows one big next step, labelled helpers, Cancel, and history folded away', () => {
-    renderWorkspace();
+  it('shows Confirm order as the main button, the helpers, plain buttons and a quiet Mark collected', () => {
+    renderLive();
     fireEvent.click(rowOf('Rina'));
-    const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByRole('button', { name: 'Confirm order' })).toBeInTheDocument();
-    for (const name of ['Mark paid', 'Lock order', 'Send link on WhatsApp', 'Nudge customer']) {
-      expect(within(dialog).getByRole('button', { name })).toBeInTheDocument();
+    const panel = screen.getByRole('complementary');
+    for (const name of [
+      'Confirm order',
+      'Send link on WhatsApp',
+      'Mark paid',
+      'Lock',
+      'Nudge',
+      'Cancel order',
+      'Mark collected',
+    ]) {
+      expect(within(panel).getByRole('button', { name })).toBeInTheDocument();
     }
-    expect(within(dialog).getByRole('button', { name: 'Cancel order' })).toBeInTheDocument();
-    expect(within(dialog).getByText('Last changes').closest('details')).not.toHaveAttribute('open');
+  });
+
+  it('asks before cancelling and names who is told', () => {
+    renderLive();
+    fireEvent.click(rowOf('Rina'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }));
+    const dialog = screen.getByRole('alertdialog');
+    expect(within(dialog).getByText("Cancel Rina's order?")).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Keep order' })).toBeInTheDocument();
+  });
+});
+
+describe('Home without a live menu', () => {
+  it('first run: the set-up checklist', () => {
+    const store = createTestStore({ saga: false });
+    seed(store, []);
+    const view = makeMenuView('not_published', { wizardStep: 0 });
+    seedMenu(store, { ...view, dishes: [] });
+    renderWithStore(<Workspace />, store);
+    expect(screen.getByText('Set up your kitchen')).toBeInTheDocument();
+    expect(screen.getAllByText('Add your pictures').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Add your WhatsApp number').length).toBeGreaterThan(0);
+    expect(screen.getByText('Publish and share')).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('not published: the Continue line for the cooking date', () => {
+    const store = createTestStore({ saga: false });
+    seed(store, []);
+    seedMenu(store, makeMenuView('not_published', { wizardStep: 1 }));
+    renderWithStore(<Workspace />, store);
+    expect(screen.getByText(/isn't published yet/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continue/ })).toBeInTheDocument();
+    expect(screen.getByText('Step 2 of 4 · saved')).toBeInTheDocument();
+  });
+
+  it('cooking day over: Just finished, the unpaid loose ends and Earlier menus', () => {
+    const store = createTestStore({ saga: false });
+    seed(store, orders());
+    seedMenu(store, makeMenuView('finished'));
+    renderWithStore(<Workspace />, store);
+    expect(screen.getByText('Just finished')).toBeInTheDocument();
+    expect(screen.getByText('Earlier menus')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Mark paid' }).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'See all 4 orders' })).toBeInTheDocument();
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 });

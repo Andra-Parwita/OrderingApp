@@ -1,10 +1,11 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { collectErrors } from './sellerHelpers';
 
-// Saturday tools (stage 7.2c) through the dev harness (7.3 adds the routes). The mock store is
-// shared by parallel tests: this spec never resets it, never asserts global counts, orders only
-// unlimited items, and finds its own orders by a unique name. Runs on the Android and desktop
-// projects; WebKit adds nothing here.
+// Pickup & delivery (plan 001 stage 9) on the real route /seller/hand-over. The mock store is shared by
+// parallel tests: this spec never resets it, never asserts global counts, orders only unlimited
+// items, and finds its own orders by a unique name. Runs on the Android and desktop projects.
+// A message to a place reaches every open order there, so each project sends its own number of
+// minutes (the same message twice in a few minutes would ask "Send this again?").
 
 type Made = { code: string; token: string; label: string };
 
@@ -38,13 +39,14 @@ async function place(
   };
 }
 
-test('hand-over, delivery run and send update work together', async ({
+test('message a pickup place, and walk a delivery through its steps', async ({
   page,
   request,
 }, testInfo) => {
   test.skip(testInfo.project.name.includes('webkit'), 'Android and desktop only');
   const errors = collectErrors(page);
   const project = testInfo.project.name;
+  const minutes = project.includes('desktop') ? 20 : 15;
   const suffix = String(Date.now()).slice(-5);
   const pickupName = `Sat${suffix}P`;
   const deliveryName = `Sat${suffix}D`;
@@ -54,61 +56,41 @@ test('hand-over, delivery run and send update work together', async ({
     'out_for_delivery',
   ]);
 
-  // Send an update: "Ready in 15" to the pickup customer only.
-  await page.goto('/?harness=seller-saturday&screen=update');
-  await expect(page.getByRole('heading', { level: 1, name: 'Send an update' })).toBeVisible();
-  await page.getByRole('button', { name: 'Pickup', exact: true }).click();
-  await page.getByRole('button', { name: 'Clear all' }).click();
-  await page.getByRole('checkbox', { name: `${pickupName} ${pickup.label}` }).check();
-  await expect(page.getByRole('button', { name: 'Ready in…' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await page.getByRole('button', { name: '15 min' }).click();
-  await expect(
-    page.getByText(
-      'Every customer sees it in their order. Customers with updates on also get a notification.',
-    ),
-  ).toBeVisible();
+  // Pickup: the order is in the place's column; "Ready in N min" tells the customers there.
+  await page.goto('/seller/hand-over');
+  await expect(page.getByRole('heading', { level: 1, name: /^Pickup & delivery/ })).toBeVisible();
+  await page.getByLabel('Bag code or name').fill(pickupName);
+  const column = page.getByLabel('Glen Waverley', { exact: true });
+  const row = column.getByLabel(`Order ${pickup.label}, ${pickupName}`);
+  await expect(row).toContainText('Ready');
+  await page.screenshot({ path: `captures/saturday-handover-${project}.png`, fullPage: true });
+  await page.getByRole('button', { name: 'Message Glen Waverley' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Message Glen Waverley' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('radio', { name: 'Ready in N min' }).check();
+  await dialog.getByRole('radio', { name: `${minutes} min` }).check();
+  await expect(dialog.getByText('This does not change any order')).toBeVisible();
   await page.screenshot({ path: `captures/saturday-update-${project}.png`, fullPage: true });
-  await page.getByRole('button', { name: 'Send to 1' }).click();
-  await expect(page.getByText('Sent to 1 of 1 customers.')).toBeVisible();
-  await page.screenshot({ path: `captures/saturday-update-sent-${project}.png`, fullPage: true });
+  await dialog.getByRole('button', { name: /^Send to \d+ orders?$/ }).click();
+  await expect(page.getByText(/^Sent to \d+ orders? at Glen Waverley\.$/)).toBeVisible();
 
   // The customer sees it in Updates.
   await page.goto(`/o/${pickup.token}`);
   await expect(page.getByTestId('updates')).toContainText(
-    'Your food will be ready in about 15 minutes.',
+    `Your food will be ready in about ${minutes} minutes.`,
   );
 
-  // Hand-over: a sloppy code finds the order; one tap collects it.
-  await page.goto('/?harness=seller-saturday&screen=handover');
-  await expect(page.getByRole('heading', { level: 1, name: /^Pickup/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Scan label' })).toBeDisabled();
-  const sloppy = `${pickup.code.slice(0, 3).toLowerCase()} ${pickup.code.slice(3).toLowerCase()}`;
-  await page.getByLabel('Type order code').fill(sloppy);
-  const card = page.getByRole('article', { name: `Order ${pickup.label}` });
-  await expect(card).toContainText(pickupName);
-  await expect(card).toContainText('Ready for pickup');
-  await page.screenshot({ path: `captures/saturday-handover-${project}.png`, fullPage: true });
-  await card.getByRole('button', { name: 'Mark collected' }).click();
-  await expect(page.getByText(`${pickupName}'s order ${pickup.label} is collected.`)).toBeVisible();
-  await page.screenshot({
-    path: `captures/saturday-handover-done-${project}.png`,
-    fullPage: true,
-  });
-
-  // Delivery run: Arriving soon is one tap and reaches the customer.
-  await page.goto('/?harness=seller-saturday&screen=delivery');
-  await expect(page.getByRole('heading', { level: 1, name: /^Delivery/ })).toBeVisible();
-  const run = page.getByRole('article', { name: `Order ${delivery.label}` });
-  await expect(run).toContainText(deliveryName);
-  await expect(run.getByRole('button', { name: 'Out for delivery' })).toBeDisabled();
+  // Delivery: Arriving soon (no time) is one tap and reaches the customer.
+  await page.goto('/seller/hand-over');
+  await page.getByRole('radio', { name: /^Delivery/ }).check();
+  await page.getByLabel('Bag code or name').fill(deliveryName);
+  const run = page.getByLabel(`Order ${delivery.label}, ${deliveryName}`);
+  await expect(run).toContainText('Out for delivery');
+  await run
+    .getByLabel(`Minutes until ${delivery.label} arrives`)
+    .selectOption({ label: 'no time' });
   await run.getByRole('button', { name: 'Arriving soon' }).click();
-  await expect(page.getByText(`Sent “arriving soon” to ${deliveryName}.`)).toBeVisible();
-  await expect(
-    page.getByText('Addresses are in your WhatsApp chats, not in the app (D-007).'),
-  ).toBeVisible();
+  await expect(page.getByText(`Told ${deliveryName} the order is arriving soon.`)).toBeVisible();
   await page.screenshot({ path: `captures/saturday-delivery-${project}.png`, fullPage: true });
 
   await page.goto(`/o/${delivery.token}`);

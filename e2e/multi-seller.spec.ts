@@ -29,12 +29,13 @@ test('two sellers: orders at each link, My orders across both, the seller side p
   await order('/onde-onde', 'Add one Tilapia pesmol', ondeName);
   await order('/dapur-demo', 'Add one Iced sweet tea', demoName);
 
-  // Dapur Demo has its own items and a placeholder banner (no images yet).
+  // Dapur Demo has its own items and, in dev, the sample pictures.
   await page.goto('/dapur-demo');
   await expect(page.getByRole('heading', { name: 'Dapur Demo' })).toBeVisible();
   await expect(page.getByText('Chicken soto')).toBeVisible();
   await expect(page.getByText('Tilapia pesmol')).toHaveCount(0);
-  await expect(page.getByText('Kitchen photo')).toBeVisible();
+  await expect(page.getByText('Kitchen photo')).toHaveCount(0);
+  await expect(page.getByRole('img', { name: /Dapur Demo/ }).first()).toBeVisible();
   // The Menu tab remembers the last seller menu this phone visited.
   await page.goto('/settings');
   await expect(
@@ -43,7 +44,7 @@ test('two sellers: orders at each link, My orders across both, the seller side p
 
   // My orders: one list, each card names its seller.
   await page.goto('/my-orders');
-  await expect(page.getByText('This week').first()).toBeVisible();
+  await expect(page.getByText('Current orders').first()).toBeVisible();
   const ondeCard = page.getByRole('button', { name: /Onde Onde/ }).filter({ hasText: 'pesmol' });
   const demoCard = page.getByRole('button', { name: /Dapur Demo/ }).filter({ hasText: 'tea' });
   await expect(ondeCard.first()).toBeVisible();

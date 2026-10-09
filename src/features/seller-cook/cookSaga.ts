@@ -26,6 +26,7 @@ export function* loadCook() {
           cookingDate: menu.data.week.cookingDate,
           items: menu.data.items,
           chefs: menu.data.chefs,
+          pickupPoints: menu.data.week.pickupPoints,
         },
       }),
     );

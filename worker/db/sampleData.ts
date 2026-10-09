@@ -4,10 +4,19 @@ import type {
   KitchenImages,
   KitchenSettings,
   MenuItem,
+  PickupPoint,
   Seller,
   Week,
 } from '../../shared/domain';
 import { comingSaturday, defaultCutoffAt } from '../../shared/dates';
+import {
+  DEFAULT_MENU_DEFAULTS,
+  DEFAULT_THEME,
+  type Dish,
+  type Menu,
+  type Preferences,
+} from '../../shared/menusContract';
+import type { StoredSet } from './write';
 
 /** Everything one seller owns (D-036). */
 export type SellerFixture = {
@@ -15,11 +24,54 @@ export type SellerFixture = {
   /** When the admin added the seller (ISO); the admin list shows it. */
   createdAt: string;
   kitchen: Kitchen;
+  /** The menu in the shape the first app reads; `menuOfFixture` turns it into the stored menu. */
   week: Week;
   chefs: Array<Chef>;
+  /** The dishes on the menu (each is also a library dish with the same id). */
   items: Array<MenuItem>;
   settings: KitchenSettings;
+  // ---- plan 001 stage 3 ----
+  /** The stored menu's id. */
+  menuId: string;
+  /** Saved pickup places (up to 5); the menu uses those in `week.pickupPoints`. */
+  pickupPlaces: Array<PickupPoint>;
+  /** "Your dishes": the sample items. */
+  dishes: Array<Dish>;
+  savedSets: Array<StoredSet>;
+  preferences: Preferences;
 };
+
+const dishesOf = (items: ReadonlyArray<MenuItem>): Array<Dish> =>
+  items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    size: item.size,
+    priceCents: item.priceCents,
+    ...(item.limit !== undefined ? { limit: item.limit } : {}),
+    ...(item.chefId !== undefined ? { chefId: item.chefId } : {}),
+  }));
+
+const defaultPreferences: Preferences = {
+  theme: DEFAULT_THEME,
+  menuDefaults: DEFAULT_MENU_DEFAULTS,
+};
+
+/** The stored menu for a fixture: a published week is live, a draft one is not published. */
+export function menuOfFixture(fixture: SellerFixture): Menu {
+  const live = fixture.week.status === 'published';
+  return {
+    id: fixture.menuId,
+    state: live ? 'live' : 'not_published',
+    cookingDate: fixture.week.cookingDate,
+    cutoffAt: fixture.week.cutoffAt,
+    delivery: fixture.week.delivery,
+    wizardStep: live ? 3 : 0,
+    takingOrders: fixture.settings.orderingOpen,
+    placeUses: fixture.week.pickupPoints.map((point) => ({ placeId: point.id })),
+    ...(live ? { publishedAt: fixture.createdAt } : {}),
+  };
+}
 
 export const ONDE_ID = 'seller-onde-onde';
 export const DEMO_ID = 'seller-dapur-demo';
@@ -51,10 +103,14 @@ const ondeKitchen: Kitchen = {
   ),
 };
 
-// Dates are as given in the brief (cooking Sat 10 Oct 2026, cut-off Fri 9 Oct 21:00 Melbourne, AEDT = +11:00).
-const ondeWeek: Week = {
-  cookingDate: '2026-10-10',
-  cutoffAt: '2026-10-09T21:00:00+11:00',
+// The sample week is computed from `now`: cooking the coming Saturday, cut-off the evening before.
+function sampleWeekDates(now: Date): Pick<Week, 'cookingDate' | 'cutoffAt'> {
+  const cookingDate = comingSaturday(now);
+  return { cookingDate, cutoffAt: defaultCutoffAt(cookingDate) };
+}
+
+const ondeWeek = (now: Date): Week => ({
+  ...sampleWeekDates(now),
   status: 'published',
   pickupPoints: [
     {
@@ -65,7 +121,7 @@ const ondeWeek: Week = {
     },
   ],
   delivery: { available: true, note: { en: '', id: '' } },
-};
+});
 
 const ondeChefs: Array<Chef> = [{ id: 'wati', sellerId: ONDE_ID, name: 'Chef Wati' }];
 
@@ -148,9 +204,8 @@ const demoKitchen: Kitchen = {
   images: sampleImages('Dapur Demo — a small second kitchen', 'Dapur Demo — dapur kecil kedua'),
 };
 
-const demoWeek: Week = {
-  cookingDate: '2026-10-10',
-  cutoffAt: '2026-10-09T21:00:00+11:00',
+const demoWeek = (now: Date): Week => ({
+  ...sampleWeekDates(now),
   status: 'published',
   pickupPoints: [
     {
@@ -161,7 +216,7 @@ const demoWeek: Week = {
     },
   ],
   delivery: { available: false, note: { en: '', id: '' } },
-};
+});
 
 const demoChefs: Array<Chef> = [{ id: 'rudi', sellerId: DEMO_ID, name: 'Chef Rudi' }];
 
@@ -203,27 +258,71 @@ const demoSettings: KitchenSettings = {
   orderingOpen: true,
 };
 
-/** The two sample sellers; the first is the dev default (shared/seller.ts). */
-export const fixtureSellers: ReadonlyArray<SellerFixture> = [
-  {
-    seller: { id: ONDE_ID, slug: 'onde-onde', name: 'Onde Onde' },
-    createdAt: '2026-08-15T09:00:00.000Z',
-    kitchen: ondeKitchen,
-    week: ondeWeek,
-    chefs: ondeChefs,
-    items: ondeItems,
-    settings: ondeSettings,
-  },
-  {
-    seller: { id: DEMO_ID, slug: 'dapur-demo', name: 'Dapur Demo' },
-    createdAt: '2026-09-20T09:00:00.000Z',
-    kitchen: demoKitchen,
-    week: demoWeek,
-    chefs: demoChefs,
-    items: demoItems,
-    settings: demoSettings,
-  },
-];
+/** The second saved place of each sample kitchen (the menu itself uses the first). */
+const ondeSecondPlace: PickupPoint = {
+  id: 'box-hill',
+  place: 'Box Hill',
+  directions: { en: 'By the station entrance', id: 'Dekat pintu stasiun' },
+  window: { start: '10:00', end: '12:00' },
+};
+const demoSecondPlace: PickupPoint = {
+  id: 'oakleigh',
+  place: 'Oakleigh',
+  directions: { en: '', id: '' },
+  window: { start: '16:00', end: '18:00' },
+};
+
+/** The two sample sellers, their week computed from `now`; the first is the dev default (shared/seller.ts). */
+export const fixtureSellers = (now: Date): ReadonlyArray<SellerFixture> => {
+  const onde = ondeWeek(now);
+  const demo = demoWeek(now);
+  return [
+    {
+      seller: { id: ONDE_ID, slug: 'onde-onde', name: 'Onde Onde' },
+      createdAt: '2026-08-15T09:00:00.000Z',
+      kitchen: ondeKitchen,
+      week: onde,
+      chefs: ondeChefs,
+      items: ondeItems,
+      settings: ondeSettings,
+      menuId: 'menu-onde-onde-1',
+      pickupPlaces: [...onde.pickupPoints, ondeSecondPlace],
+      dishes: dishesOf(ondeItems),
+      savedSets: [
+        {
+          id: 'set-onde-classic',
+          name: 'Classic',
+          dishIds: ['nasi-campur', 'pesmol', 'lemper'],
+          timesUsed: 3,
+          images: {},
+        },
+      ],
+      preferences: defaultPreferences,
+    },
+    {
+      seller: { id: DEMO_ID, slug: 'dapur-demo', name: 'Dapur Demo' },
+      createdAt: '2026-09-20T09:00:00.000Z',
+      kitchen: demoKitchen,
+      week: demo,
+      chefs: demoChefs,
+      items: demoItems,
+      settings: demoSettings,
+      menuId: 'menu-dapur-demo-1',
+      pickupPlaces: [...demo.pickupPoints, demoSecondPlace],
+      dishes: dishesOf(demoItems),
+      savedSets: [
+        {
+          id: 'set-demo-soto',
+          name: 'Soto and martabak',
+          dishIds: ['soto-ayam', 'martabak'],
+          timesUsed: 1,
+          images: {},
+        },
+      ],
+      preferences: defaultPreferences,
+    },
+  ];
+};
 
 /**
  * An empty kitchen for a seller the admin just created (stage 7.1): no items, no chefs. Its first
@@ -237,7 +336,7 @@ export function blankFixture(
 ): SellerFixture {
   const cookingDate = comingSaturday(new Date(createdAt));
   const week: Week = {
-    ...structuredClone((fixtureSellers[0] as SellerFixture).week),
+    ...(fixtureSellers(new Date(createdAt))[0] as SellerFixture).week,
     status: 'draft',
     cookingDate,
     cutoffAt: defaultCutoffAt(cookingDate),
@@ -261,5 +360,10 @@ export function blankFixture(
       postClosing: { en: '', id: '' },
       orderingOpen: true,
     },
+    menuId: `menu-${seller.slug}-1`,
+    pickupPlaces: [],
+    dishes: [],
+    savedSets: [],
+    preferences: defaultPreferences,
   };
 }

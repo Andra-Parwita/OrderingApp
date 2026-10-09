@@ -67,14 +67,30 @@
     "pickup": "Serah terima",
     "delivery": "Antar pesanan",
     "updates": "Kirim kabar",
-    "backToSaturday": "Kembali ke Serah terima"
+    "backToSaturday": "Kembali ke Serah terima",
+    "navOrders": "Pesanan",
+    "navKitchen": "Dapur",
+    "navHandover": "Serah terima",
+    "navMenu": "Menu",
+    "navSettings": "Pengaturan",
+    "navMore": "Lainnya",
+    "notPublished": "Belum terbit",
+    "phoneLabel": "Penjual (ponsel)",
+    "tabletOnlyTitle": "Buka ini di tablet atau komputer",
+    "tabletOnlyBody": "Bagian aplikasi ini perlu layar yang lebih besar. Pesanan dan Serah terima bisa dipakai di ponsel.",
+    "tabletOnlyOrders": "Ke pesanan",
+    "switchPersonShort": "Ganti",
+    "signedInWho": "Masuk sebagai"
   },
   "customerNav": {
     "label": "Pelanggan",
     "menu": "Menu",
     "orders": "Pesanan saya",
     "settings": "Pengaturan",
-    "newUpdate": "ada pembaruan"
+    "newUpdate": "ada pembaruan",
+    "back": "Kembali",
+    "backTo": "Kembali ke {{page}}",
+    "notBuilt": "Belum dibuat: {{id}}"
   },
   "customerSettings": {
     "title": "Pengaturan",
@@ -110,5 +126,33 @@
     "title": "Kami tidak menemukan dapur ini",
     "body": "Periksa tautan yang Anda terima, atau minta penjual mengirimnya lagi.",
     "home": "Ke halaman utama"
+  },
+  "liveLink": {
+    "live": "Langsung",
+    "reconnecting": "Menyambung lagi…",
+    "offline": "Offline · memuat lebih lambat"
+  },
+  "patterns": {
+    "close": "Tutup",
+    "cancel": "Batal",
+    "save": "Simpan",
+    "back": "Kembali",
+    "continueAnyway": "Lanjutkan saja",
+    "undo": "Urungkan",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "pageOf": "{{from}}–{{to}} dari {{total}}",
+    "pagerLabel": "Halaman",
+    "send": "Kirim",
+    "language": "Bahasa",
+    "preview": "Persis seperti yang akan dikirim",
+    "checklistDone": "Selesai",
+    "checklistTodo": "Belum",
+    "unsavedTitle": "Tutup tanpa menyimpan?",
+    "unsavedBody": "Ada perubahan yang belum disimpan.",
+    "keepEditing": "Lanjut mengedit",
+    "discard": "Buang perubahan",
+    "sheetHandle": "Gagang geser (pakai Tutup)",
+    "sidePanel": "Rincian"
   }
 }

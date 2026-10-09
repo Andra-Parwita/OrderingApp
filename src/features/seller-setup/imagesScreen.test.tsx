@@ -39,10 +39,10 @@ describe('ImagesScreen', () => {
     }
     expect(
       screen.getByText(
-        'Best size 1600 × 320 px. Keep faces and the logo in the middle 1200 × 280 px.',
+        'Best size 2000 × 400 px. Keep faces and the logo in the middle 1500 × 350 px.',
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText('Best size 128 × 128 px')).toBeInTheDocument();
+    expect(screen.getByText('Best size 512 × 512 px')).toBeInTheDocument();
     expect(screen.getByAltText(`Preview of ${ICON}`)).toHaveAttribute(
       'src',
       (await mockStore.getImages()).railIcon,
@@ -172,6 +172,6 @@ describe('ImagesScreen', () => {
       await screen.findByRole('heading', { name: 'Spanduk lebar (tablet dan komputer)' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Simpan warna dan teks' })).toBeInTheDocument();
-    expect(screen.getByText('Ukuran terbaik 128 × 128 px')).toBeInTheDocument();
+    expect(screen.getByText('Ukuran terbaik 512 × 512 px')).toBeInTheDocument();
   });
 });

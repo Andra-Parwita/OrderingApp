@@ -8,6 +8,7 @@ import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
+import { setKitchenBrand } from '../../theme/kitchenBrand';
 import type { StatusTone } from '../../theme/tokens';
 import { Button, PageHeader, Pill } from '../../ui';
 import { menuRequested, orderRequested } from './customerSlice';
@@ -104,8 +105,16 @@ function PlacedBody({ order, onChange }: Readonly<{ order: CustomerOrder; onChan
       ? ({ status: 'idle' } as const)
       : loadedMenu;
 
+  // The kitchen's colours (D-064).
+  const theme = menu.status === 'ready' ? (menu.data.theme ?? 'onde') : undefined;
+  useEffect(() => {
+    if (theme !== undefined) setKitchenBrand(theme);
+  }, [theme]);
+
   const whatsappNumber = menu.status === 'ready' ? menu.data.kitchen.whatsappNumber : undefined;
-  const pickup = menu.status === 'ready' ? menu.data.week.pickupPoints[0] : undefined;
+  const points = menu.status === 'ready' ? menu.data.week.pickupPoints : [];
+  // The place the customer chose; an order without one counts as the menu's first.
+  const pickup = points.find((point) => point.id === order.pickupPlaceId) ?? points[0];
   const dayText =
     menu.status === 'ready' ? formatCookingDate(menu.data.week.cookingDate, lang) : null;
   const when =
@@ -146,8 +155,10 @@ function PlacedBody({ order, onChange }: Readonly<{ order: CustomerOrder; onChan
           </Total>
         </Lines>
         <Muted>
-          {[how, when].filter(Boolean).join(' · ')} ·{' '}
-          <Pill tone={toneOf(order.status)}>{t(`status.${order.status}`)}</Pill>
+          {[how, when, order.fulfilment === 'pickup' ? pickup?.place : undefined]
+            .filter(Boolean)
+            .join(' · ')}{' '}
+          · <Pill tone={toneOf(order.status)}>{t(`status.${order.status}`)}</Pill>
         </Muted>
         {order.note ? <Muted>{t('placed.note', { note: order.note })}</Muted> : null}
       </Block>

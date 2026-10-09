@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { styled } from 'styled-components';
@@ -7,311 +8,412 @@ import { formatDay, formatDayTime } from '../../../shared/dates';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
-import { Button, ConfirmButton, Icon, Pill, type IconName } from '../../ui';
+import { Button, Icon, WarningDialog, type IconName } from '../../ui';
 import { SELLER_NS } from './i18n/register';
-import { KIND_MARK } from './customerKind';
-import { toneOf } from './orderStatus';
+import { StatusMark } from './StatusMark';
 import { actorLabel, orderTotalCents } from './orderText';
-import { selectCookingDate } from './sellerOrdersSelectors';
+import { selectCookingDate, selectCurrent } from './sellerOrdersSelectors';
 import { auditText, useOrderActions } from './useOrderActions';
 
-// The order inside the desktop slide-over (A1-2): who, what, one big next step, a few labelled
-// helpers, cancel at the bottom, history folded away.
+// The order beside the list (384 px; handoff, Home): changed note, items, the customer's note,
+// details, recent changes. One main button pinned at the bottom (OrderPanelActions).
 
-const Body = styled.div`
+const Head = styled.header`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.xl}
-    ${({ theme }) => theme.spacing.xl};
+  gap: ${({ theme }) => theme.spacing.xs};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
 `;
-const Code = styled.h2`
+const HeadTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+const Title = styled.h2`
+  display: flex;
+  align-items: baseline;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 0;
   margin: 0;
-  font-size: ${({ theme }) => theme.type.size.xxl};
-  line-height: ${({ theme }) => theme.type.lineHeight.tight};
-  white-space: nowrap;
+  font-size: 1.375rem;
+  font-weight: 700;
+
+  code {
+    font-family: ${({ theme }) => theme.font.mono};
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: ${({ theme }) => theme.c.muted};
+  }
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
-const WhoRow = styled.div`
+const CloseButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${({ theme }) => theme.size.tap}px;
+  height: ${({ theme }) => theme.size.tap}px;
+  border: 0;
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: transparent;
+  color: ${({ theme }) => theme.c.muted};
+  cursor: pointer;
+`;
+const Meta = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  margin-top: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
 `;
-const Name = styled.span`
-  font-size: ${({ theme }) => theme.type.size.xl};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+const MetaItem = styled.span<{ $warn?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme, $warn }) => ($warn ? theme.c.warn : 'inherit')};
 `;
-const Muted = styled.span`
-  color: ${({ theme }) => theme.colour.textMuted};
-`;
-const Lines = styled.div`
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
-`;
-const Line = styled.div<{ $total?: boolean }>`
+const Notice = styled.div`
   display: flex;
-  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: ${({ theme }) => theme.c.warnTint};
+  color: ${({ theme }) => theme.c.text};
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+
+  svg {
+    flex: none;
+    color: ${({ theme }) => theme.c.warn};
+  }
+  strong {
+    display: block;
+  }
+  span {
+    color: ${({ theme }) => theme.c.muted};
+  }
+`;
+const Group = styled.h3`
+  margin: ${({ theme }) => theme.spacing.lg} 0 ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+`;
+const ItemRow = styled.div<{ $total?: boolean }>`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.sm} 0;
-  border-bottom: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme }) => theme.colour.hairline};
-  font-weight: ${({ theme, $total }) =>
-    $total ? theme.type.weight.strong : theme.type.weight.regular};
-  font-size: ${({ theme, $total }) => ($total ? theme.type.size.lg : theme.type.size.base)};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  font-size: ${({ $total }) => ($total ? '1rem' : '0.9375rem')};
+  font-weight: ${({ $total }) => ($total ? 700 : 400)};
+  font-variant-numeric: tabular-nums;
+
+  small {
+    color: ${({ theme }) => theme.c.muted};
+    font-size: 0.8125rem;
+  }
 `;
-const How = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-`;
-const Tint = styled.div<{ $tone: 'ready' | 'ordered' | 'confirmed' }>`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme, $tone }) => theme.status[$tone].bg};
-  color: ${({ theme, $tone }) => theme.status[$tone].fg};
+const NoteText = styled.p`
+  margin: 0;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
 `;
-const TintText = styled.div`
+const Details = styled.dl`
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  margin: 0;
+  font-size: 0.875rem;
+
+  dt {
+    color: ${({ theme }) => theme.c.muted};
+  }
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+`;
+const Recent = styled.ul`
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.sm};
-  min-width: 0;
-  white-space: pre-wrap;
+  margin: 0;
+  padding: 0;
+  font-size: 0.875rem;
+  list-style: none;
+
+  small {
+    display: block;
+    color: ${({ theme }) => theme.c.muted};
+  }
 `;
-const Big = styled.div`
+const ErrorLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.c.danger};
+`;
+
+export function OrderPanelBody({
+  order,
+  onClose,
+}: Readonly<{ order: Order; onClose?: () => void }>) {
+  const { t } = useTranslation(SELLER_NS);
+  const current = useSelector(selectCurrent);
+  const cookingDate = useSelector(selectCookingDate);
+  const a = useOrderActions(order);
+  const { lang, failed, audit, kind, diff, lastEdit } = a;
+
+  const place =
+    current.status === 'ready'
+      ? current.view.pickupPoints.find((point) => point.id === order.pickupPlaceId)
+      : undefined;
+  const when = cookingDate !== null ? formatDay(cookingDate, lang) : '';
+  const pickupText = [
+    place ? `${place.place} · ${when}, ${place.window.start}–${place.window.end}` : when,
+  ]
+    .filter((part) => part !== '')
+    .join('');
+  const metaIcon: IconName = order.fulfilment === 'delivery' ? 'truck' : 'bag';
+
+  return (
+    <>
+      <Head>
+        <HeadTop>
+          <Title>
+            <code>{formatOrderCode(order.code)}</code>
+            <span>{order.firstName}</span>
+          </Title>
+          {onClose ? (
+            <CloseButton type="button" aria-label={t('detail.close')} onClick={onClose}>
+              <Icon name="x" />
+            </CloseButton>
+          ) : null}
+        </HeadTop>
+        <Meta>
+          <StatusMark status={order.status} />
+          <MetaItem>
+            <Icon name={metaIcon} />
+            {t(`fulfilment.${order.fulfilment}`)}
+          </MetaItem>
+          <MetaItem $warn={!order.paid}>
+            {order.paid ? <Icon name="check" /> : null}
+            {order.paid ? t('live.paid') : t('live.notPaid')}
+          </MetaItem>
+        </Meta>
+      </Head>
+
+      {order.changed ? (
+        <Notice>
+          <Icon name="pencil" />
+          <div>
+            <strong>
+              {t('panel.changedBy', { name: order.firstName, when: formatDayTime(lastEdit, lang) })}
+            </strong>
+            <span>{diff ? formatAuditDiff(diff, lang) : t('audit.edited')}</span>
+            <div>
+              <Button variant="quiet" disabled={a.saving} onClick={a.onSeen}>
+                {t('detail.seen')}
+              </Button>
+            </div>
+          </div>
+        </Notice>
+      ) : null}
+      {kind === 'new' ? (
+        <Notice>
+          <Icon name="chat" />
+          <div>
+            <strong>{t('orders.newCustomer')}</strong>
+            <span>{t('detail.bannerNew')}</span>
+            <div>
+              <Button variant="quiet" disabled={a.saving} onClick={a.onWaReceived}>
+                {t('detail.markWa')}
+              </Button>
+            </div>
+          </div>
+        </Notice>
+      ) : null}
+
+      <Group>{t('panel.items')}</Group>
+      <div>
+        {order.lines.map((line) => (
+          <ItemRow key={line.itemId}>
+            <span>
+              {pickText(line.name, lang)}
+              {pickText(line.size, lang) ? <small> · {pickText(line.size, lang)}</small> : null}
+            </span>
+            <small>×{line.qty}</small>
+            <span>{formatMoney(line.priceCents * line.qty, lang)}</span>
+          </ItemRow>
+        ))}
+        <ItemRow $total>
+          <span>{t('detail.total')}</span>
+          <span />
+          <span>{formatMoney(orderTotalCents(order), lang)}</span>
+        </ItemRow>
+      </div>
+
+      {order.note ? (
+        <>
+          <Group>{t('panel.noteFrom', { name: order.firstName })}</Group>
+          <NoteText>{order.note}</NoteText>
+        </>
+      ) : null}
+
+      <Group>{t('detail.status')}</Group>
+      <Details>
+        <dt>{t(order.fulfilment === 'delivery' ? 'panel.delivery' : 'panel.pickup')}</dt>
+        <dd>{pickupText}</dd>
+        <dt>{t('panel.language')}</dt>
+        <dd>{t(order.language === 'id' ? 'panel.langId' : 'panel.langEn')}</dd>
+        <dt>{t('panel.whatsapp')}</dt>
+        <dd>{order.waReceived ? t('panel.waYes') : t('panel.waNo')}</dd>
+        <dt>{t('panel.enteredBy')}</dt>
+        <dd>
+          {order.enteredBy
+            ? actorLabel(order.enteredBy, t)
+            : t('panel.enteredByCustomer', { name: order.firstName })}
+        </dd>
+        <dt>{t('panel.customer')}</dt>
+        <dd>{order.returning ? t('panel.custReturning') : t('panel.custNew')}</dd>
+        <dt>{t('panel.canChange')}</dt>
+        <dd>{order.locked ? t('panel.canNo') : t('panel.canYes')}</dd>
+        {order.collectedAt ? (
+          <>
+            <dt>{t('status.collected')}</dt>
+            <dd>
+              {t('panel.collected', { when: formatDayTime(order.collectedAt, lang) })}
+              {' · '}
+              {order.collectedBy === 'customer'
+                ? t('panel.collectedByCustomer')
+                : t('panel.collectedBySeller')}
+            </dd>
+          </>
+        ) : null}
+      </Details>
+
+      <Group>{t('panel.recent')}</Group>
+      <Recent>
+        {audit.map((entry) => (
+          <li key={`${entry.at}-${entry.what}-${entry.detail ?? ''}`}>
+            {actorLabel(entry.by, t)} · {auditText(entry, t, lang)}
+            <small>{formatDayTime(entry.at, lang)}</small>
+          </li>
+        ))}
+      </Recent>
+      {failed ? (
+        <ErrorLine role="alert">
+          <span>{t('error.change')}</span>
+          <Button onClick={a.onRetry}>{t('error.retry')}</Button>
+        </ErrorLine>
+      ) : null}
+    </>
+  );
+}
+
+const Foot = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
 
   & > button:first-child {
-    min-height: 3.5rem;
-    font-size: ${({ theme }) => theme.type.size.lg};
+    min-height: ${({ theme }) => theme.size.mainAction + 4}px;
+    font-size: 1rem;
   }
 `;
-const Helpers = styled.div`
+const Pair = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing.sm};
-
-  & > button {
-    flex-direction: column;
-    min-height: 4.75rem;
-    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.xs};
-    text-align: center;
-    line-height: ${({ theme }) => theme.type.lineHeight.tight};
-  }
 `;
-const Errors = styled.div`
+const Plain = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.status.cancelled.fg};
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
-const Details = styled.details`
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
+const Danger = styled(Button)`
+  color: ${({ theme }) => theme.c.danger};
 `;
-const Summary = styled.summary`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  min-height: ${({ theme }) => theme.minTapTarget};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  cursor: pointer;
-`;
-const History = styled.ul`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin: 0;
-  padding: 0 0 ${({ theme }) => theme.spacing.sm};
-  list-style: none;
-`;
-const HistoryItem = styled.li`
-  display: flex;
-  flex-direction: column;
+const Quiet = styled(Button)`
+  color: ${({ theme }) => theme.c.text};
 `;
 
-const KIND_BANNER = {
-  new: 'detail.bannerNew',
-  returning: 'detail.bannerReturning',
-  waReceived: 'detail.bannerWaReceived',
-} as const;
-
-type HelperProps = Readonly<{
-  icon: IconName;
-  label: string;
-  disabled?: boolean;
-  onClick: () => void;
-}>;
-
-function Helper({ icon, label, disabled = false, onClick }: HelperProps) {
-  return (
-    <Button disabled={disabled} onClick={onClick}>
-      <Icon name={icon} />
-      {label}
-    </Button>
-  );
-}
-
-export function OrderPanelBody({ order }: Readonly<{ order: Order }>) {
+/** The pinned buttons: one main step, two helpers, then plain Lock, Nudge, Cancel and a quiet Mark collected. */
+export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
   const { t } = useTranslation(SELLER_NS);
-  const cookingDate = useSelector(selectCookingDate);
   const a = useOrderActions(order);
-  const { lang, saving, failed, forward, canCancel, final, audit, kind, diff, lastEdit } = a;
-  const [first, ...more] = forward;
-
+  const [asking, setAsking] = useState(false);
+  // Collected is the quiet button below (D-069 Q4), so it is never the main step here.
+  const main = a.forward.find((status) => status !== 'collected');
+  const canCollect = order.fulfilment === 'pickup' && !a.final;
   return (
-    <Body>
-      <div>
-        <Code>{formatOrderCode(order.code)}</Code>
-        <WhoRow>
-          <Name>{order.firstName}</Name>
-          <Pill large tone={toneOf(order.status)}>
-            {t(`status.${order.status}`)}
-          </Pill>
-          <Pill large tone="done">
-            {t('detail.customerLanguage', { lang: order.language.toUpperCase() })}
-          </Pill>
-          {order.paid ? <strong>{t('orders.paid')}</strong> : null}
-        </WhoRow>
-        {order.enteredBy ? (
-          <Muted>{t('orders.enteredBy', { name: actorLabel(order.enteredBy, t) })}</Muted>
+    <Foot>
+      {main ? (
+        <Button variant="primary" fullWidth disabled={a.saving} onClick={() => a.onStep(main)}>
+          <Icon name="check" />
+          {t(`detail.action.${main}`)}
+        </Button>
+      ) : null}
+      <Pair>
+        <Button onClick={a.onWhatsApp}>
+          <Icon name="chat" />
+          {t('detail.sendLink')}
+        </Button>
+        <Button disabled={a.saving} onClick={() => a.setPaid(!order.paid)}>
+          <Icon name="coin" />
+          {order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
+        </Button>
+      </Pair>
+      <Plain>
+        <Quiet variant="quiet" disabled={a.saving || a.final} onClick={a.onLock}>
+          <Icon name="lock" />
+          {order.locked ? t('panel.unlock') : t('panel.lock')}
+        </Quiet>
+        <Quiet variant="quiet" disabled={a.saving || a.final} onClick={a.onNudge}>
+          <Icon name="bell" />
+          {t('panel.nudge')}
+        </Quiet>
+        {a.canCancel ? (
+          <Danger variant="quiet" disabled={a.saving} onClick={() => setAsking(true)}>
+            <Icon name="x" />
+            {t('detail.cancel')}
+          </Danger>
         ) : null}
-      </div>
-
-      {kind ? (
-        <Tint $tone="confirmed">
-          <TintText>
-            <span>
-              <strong>{t(KIND_MARK[kind])}</strong> {t(KIND_BANNER[kind])}
-            </span>
-            {kind === 'new' ? (
-              <Button disabled={saving} onClick={a.onWaReceived}>
-                {t('detail.markWa')}
-              </Button>
-            ) : null}
-          </TintText>
-        </Tint>
+      </Plain>
+      {canCollect ? (
+        <Quiet variant="quiet" fullWidth disabled={a.saving} onClick={a.onCollected}>
+          {t('detail.action.collected')}
+        </Quiet>
       ) : null}
-      {order.changed ? (
-        <Tint $tone="ordered">
-          <TintText>
-            <span>
-              <strong>{t('orders.changed')}</strong>{' '}
-              {t('detail.changedBanner', {
-                when: formatDayTime(lastEdit, lang),
-                diff: diff ? formatAuditDiff(diff, lang) : t('audit.edited'),
-              })}
-            </span>
-            <Button disabled={saving} onClick={a.onSeen}>
-              {t('detail.seen')}
-            </Button>
-          </TintText>
-        </Tint>
+      {asking ? (
+        <WarningDialog
+          title={t('panel.cancelTitle', { name: order.firstName })}
+          cancelLabel={t('panel.cancelKeep')}
+          continueLabel={t('panel.cancelGo')}
+          onCancel={() => setAsking(false)}
+          onContinue={() => {
+            setAsking(false);
+            a.onCancel();
+          }}
+        >
+          {t('panel.cancelBody', { name: order.firstName })}
+        </WarningDialog>
       ) : null}
-
-      <Lines>
-        {order.lines.map((line) => (
-          <Line key={line.itemId}>
-            <span>
-              {line.qty}× {pickText(line.name, lang)}
-            </span>
-            <span>{formatMoney(line.priceCents * line.qty, lang)}</span>
-          </Line>
-        ))}
-        <Line $total>
-          <span>{t('detail.total')}</span>
-          <span>{formatMoney(orderTotalCents(order), lang)}</span>
-        </Line>
-      </Lines>
-      <How>
-        <Icon name={order.fulfilment === 'delivery' ? 'truck' : 'bag'} />
-        <span>
-          {t(`fulfilment.${order.fulfilment}`)}
-          {cookingDate !== null ? ` · ${formatDay(cookingDate, lang)}` : ''}
-        </span>
-      </How>
-      {order.note ? (
-        <Tint $tone="ready">
-          <Icon name="note" />
-          <TintText>
-            <strong>{t('detail.noteFrom', { name: order.firstName })}</strong>
-            <span>{order.note}</span>
-          </TintText>
-        </Tint>
-      ) : null}
-
-      {first ? (
-        <Big>
-          <Button variant="primary" fullWidth disabled={saving} onClick={() => a.onStep(first)}>
-            {t(`detail.action.${first}`)}
-          </Button>
-          {more.map((status) => (
-            <Button key={status} fullWidth disabled={saving} onClick={() => a.onStep(status)}>
-              {t(`detail.action.${status}`)}
-            </Button>
-          ))}
-        </Big>
-      ) : null}
-      {failed ? (
-        <Errors role="alert">
-          <span>{t('error.change')}</span>
-          <Button onClick={a.onRetry}>{t('error.retry')}</Button>
-        </Errors>
-      ) : null}
-
-      <Helpers>
-        <Helper
-          icon="coin"
-          label={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
-          onClick={() => a.setPaid(!order.paid)}
-        />
-        <Helper
-          icon="lock"
-          label={order.locked ? t('detail.unlock') : t('detail.lock')}
-          disabled={saving || final}
-          onClick={a.onLock}
-        />
-        <Helper icon="chat" label={t('detail.sendLink')} onClick={a.onWhatsApp} />
-        <Helper
-          icon="bell"
-          label={t('detail.nudge')}
-          disabled={saving || final}
-          onClick={a.onNudge}
-        />
-      </Helpers>
-
-      {canCancel ? (
-        <ConfirmButton
-          fullWidth
-          label={t('detail.cancel')}
-          confirmLabel={t('detail.cancelConfirm')}
-          disabled={saving}
-          onConfirm={a.onCancel}
-        />
-      ) : null}
-
-      <Details>
-        <Summary>
-          <Icon name="history" />
-          {t('detail.history')}
-        </Summary>
-        <History>
-          {audit.map((entry) => (
-            <HistoryItem key={`${entry.at}-${entry.what}-${entry.detail ?? ''}`}>
-              <span>
-                {actorLabel(entry.by, t)} · {auditText(entry, t, lang)}
-              </span>
-              <Muted>{formatDayTime(entry.at, lang)}</Muted>
-            </HistoryItem>
-          ))}
-        </History>
-      </Details>
-    </Body>
+    </Foot>
   );
 }

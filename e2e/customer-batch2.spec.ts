@@ -44,7 +44,7 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
 
   // C4 My orders: the order is there, and typing its code opens it.
   await page.goto('/my-orders');
-  await expect(page.getByText('This week')).toBeVisible();
+  await expect(page.getByText('Current orders')).toBeVisible();
   const row = page.getByRole('button', { name: new RegExp(codeText) });
   await expect(row).toBeVisible();
   await expect(row).toContainText('2× Thin battered tempeh');

@@ -65,7 +65,11 @@ export type OrderLine = {
   size: LocalText;
   priceCents: number;
   qty: number;
+  /** Seller-only packing tick (D-066). Absent means not ticked; never in the customer's view. */
+  ticked?: boolean;
 };
+
+export type CollectedBy = 'customer' | 'seller';
 
 /** The full order, as the seller and chefs see it. */
 export type SellerOrder = {
@@ -97,6 +101,13 @@ export type SellerOrder = {
   enteredBy?: StaffActor;
   /** Last 4 changes, newest first (D-013). */
   audit: Array<AuditEntry>;
+  /** plan 001 stage 4. The pickup place (id) of a pickup order; absent counts as the menu's first. */
+  pickupPlaceId?: string;
+  /** Kitchen · Pack (D-066): a flag only. Never changes the status, never shown to the customer. */
+  packed?: boolean;
+  /** When and by whom the hand-over was confirmed; both or neither. */
+  collectedAt?: string;
+  collectedBy?: CollectedBy;
   createdAt: string;
   updatedAt: string;
 };
@@ -120,6 +131,8 @@ export type CustomerOrder = Pick<
   | 'inbox'
   | 'createdAt'
   | 'updatedAt'
+  | 'pickupPlaceId'
+  | 'collectedAt'
 > & {
   /** Customers are not seller-scoped: each order says whose it is (My orders spans sellers). */
   seller: SellerRef;

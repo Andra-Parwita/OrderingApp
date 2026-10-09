@@ -6,7 +6,7 @@
 //
 // The hash is in the key, so a key never changes its bytes and can be cached for a year; a new
 // upload is a new key, and the old object is deleted once nothing refers to it.
-import { checkImageUpload, type ImageSlot } from '../../shared/imageSlots';
+import { checkImageUpload, type UploadSlot } from '../../shared/imageSlots';
 
 /** The part of an R2 bucket that is used; the real binding fits it. */
 export type ImageBucket = {
@@ -76,7 +76,7 @@ function decodeDataUrl(dataUrl: string): Uint8Array<ArrayBuffer> {
 export async function putUploadedImage(
   bucket: ImageBucket,
   sellerId: string,
-  slot: ImageSlot,
+  slot: UploadSlot,
   dataUrl: unknown,
 ): Promise<{ key: string; ref: string } | null> {
   const check = checkImageUpload(slot, dataUrl);

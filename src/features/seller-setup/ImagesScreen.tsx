@@ -31,8 +31,8 @@ import {
 
 /** The middle area (D-038) where faces and the logo are safe on the two banners. */
 const KEEP: Partial<Record<ImageSlot, { width: number; height: number }>> = {
-  desktopBanner: { width: 1200, height: 280 },
-  phoneBanner: { width: 960, height: 480 },
+  desktopBanner: { width: 1500, height: 350 },
+  phoneBanner: { width: 1000, height: 340 },
 };
 
 const FALLBACK_COLOUR = '#ffffff';
@@ -121,7 +121,7 @@ function Preview({ images, colour }: PreviewProps) {
         <Caption>{t('images.previewPhone')}</Caption>
         <PhoneFrame>
           <Picture
-            aspectRatio="2 / 1"
+            aspectRatio="3 / 1"
             src={phoneBannerSrc(images)}
             alt={alt('phoneBanner')}
             placeholder={empty}
@@ -425,7 +425,10 @@ function ImagesBody({ resize }: ImagesBodyProps) {
  * Pictures (D-038, D-040), route-agnostic: five slots with size guides, a live preview and the
  * banner colour. Pictures are resized in the browser first; `resize` is injectable for tests.
  */
-export function ImagesScreen({ resize = resizeImage }: Readonly<{ resize?: ResizeFn }>) {
+export function ImagesScreen({
+  resize = resizeImage,
+  embedded = false,
+}: Readonly<{ resize?: ResizeFn; embedded?: boolean }>) {
   const { t } = useTranslation(SETUP_NS);
   const dispatch = useDispatch();
   const load = useSelector((state: SetupRootState) => state.sellerSetup.images.load);
@@ -440,7 +443,7 @@ export function ImagesScreen({ resize = resizeImage }: Readonly<{ resize?: Resiz
 
   return (
     <Page>
-      <Title>{t('images.title')}</Title>
+      {embedded ? null : <Title>{t('images.title')}</Title>}
       {load === 'loading' ? <Centered role="status">{t('loading')}</Centered> : null}
       {load === 'error' ? (
         <Centered role="alert">

@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import { collectErrors, pageScrollWidth, searchBox } from './sellerHelpers';
 
-// Stage 4.7: the collapsible rail (D-032), equal-width "who ordered" chips (D-033) and a table
-// whose key identifiers never truncate. Desktop only; orders are found by a unique name.
-test('seller desktop: collapsible rail, equal cook-list chips, nothing cut in the table', async ({
+// The collapsible left panel (D-032) and an orders list whose key identifiers never truncate.
+// (The cook list's equal-width "who ordered" chips are gone with the Kitchen redesign.) Desktop only; orders are found by a unique name.
+test('seller desktop: collapsible rail, nothing cut in the list', async ({
   browser,
   request,
 }, testInfo) => {
@@ -44,20 +44,17 @@ test('seller desktop: collapsible rail, equal cook-list chips, nothing cut in th
       await page.setViewportSize({ width: viewport, height: 800 });
       await searchBox(page).fill(String(stamp));
       const rows = page
-        .getByRole('table', { name: 'Orders' })
-        .getByRole('row')
-        .filter({
-          hasText: String(stamp),
-        });
+        .getByRole('button', { name: new RegExp(String(stamp)) })
+        .filter({ hasText: '$15.00' });
       await expect(rows).toHaveCount(3);
       expect(await pageScrollWidth(page), `page width at ${viewport}`).toBeLessThanOrEqual(
         viewport,
       );
       const cutCells: unknown = await page.evaluate(
-        `Array.from(document.querySelectorAll('tbody tr'))
+        `Array.from(document.querySelectorAll('main button'))
           .filter((row) => row.textContent.includes('${stamp}'))
-          .flatMap((row) => [0, 1, 3, 4, 5].map((i) => row.children[i]))
-          .filter((cell) => cell.scrollWidth > cell.clientWidth).length`,
+          .flatMap((row) => Array.from(row.querySelectorAll('*')))
+          .filter((cell) => cell.scrollWidth > cell.clientWidth + 1).length`,
       );
       expect(cutCells, `cut cells at ${viewport}`).toBe(0);
       await expect(rows.filter({ hasText: names[1] ?? '' })).toContainText(names[1] ?? '');
@@ -70,14 +67,14 @@ test('seller desktop: collapsible rail, equal cook-list chips, nothing cut in th
     await collapse.click();
     const expand = rail.getByRole('button', { name: 'Expand menu' });
     await expect(expand).toHaveAttribute('aria-expanded', 'false');
-    await expect.poll(width).toBeLessThan(4 * remPx);
+    await expect.poll(width).toBeLessThan(5 * remPx);
     await expect(rail.getByRole('link', { name: 'Orders' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    await rail.getByRole('link', { name: 'Cook list' }).focus();
+    await rail.getByRole('link', { name: 'Kitchen' }).focus();
     await expect(
-      rail.getByText('Cook list', { exact: true }).and(page.locator('[aria-hidden]')),
+      rail.getByText('Kitchen', { exact: true }).and(page.locator('[aria-hidden]')),
     ).toBeVisible();
     await rail.getByRole('link', { name: 'Orders' }).hover();
     await expect(
@@ -90,22 +87,12 @@ test('seller desktop: collapsible rail, equal cook-list chips, nothing cut in th
     // Remembered on reload.
     await page.reload();
     await expect(rail.getByRole('button', { name: 'Expand menu' })).toBeVisible();
-    await expect.poll(width).toBeLessThan(4 * remPx);
+    await expect.poll(width).toBeLessThan(5 * remPx);
 
-    // The cook list: every "who ordered" chip is the same width.
-    await rail.getByRole('link', { name: 'Cook list' }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Cook list');
-    const chips = page.getByRole('list', { name: 'Who ordered' }).getByRole('listitem');
-    await expect(chips.filter({ hasText: String(stamp) })).toHaveCount(3);
-    const widths: Array<number> = [];
-    for (let i = 0; i < (await chips.count()); i += 1) {
-      const box = await chips.nth(i).boundingBox();
-      widths.push(Math.round((box?.width ?? 0) * 10) / 10);
-    }
-    expect(widths.length).toBeGreaterThanOrEqual(3);
-    expect(new Set(widths).size, `chip widths ${widths.join(', ')}`).toBe(1);
-    await expect(chips.filter({ hasText: `Wi-${stamp}` })).toContainText('\u00d71');
-    await page.screenshot({ path: 'captures/a1-cook-chips.png' });
+    // Kitchen opens from the collapsed panel.
+    await rail.getByRole('link', { name: 'Kitchen' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Kitchen');
+    await page.screenshot({ path: 'captures/a1-kitchen.png' });
 
     // Expand again, leave the state as it was found.
     await rail.getByRole('button', { name: 'Expand menu' }).click();

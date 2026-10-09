@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { collectErrors } from './sellerHelpers';
 
-// D-044: an order of a closed week stays readable by its link, read-only. Closing the week changes
-// the whole seller's week, so this spec must run alone (its own Playwright project, after the
+// D-044: an order of a finished menu stays readable by its link, read-only. Finishing the menu changes
+// the whole seller's menu, so this spec must run alone (its own Playwright project, after the
 // others) and puts the mock back with a dev reset when it is done. Unlimited item only.
 
-test('an order of a closed week opens read-only from its link', async ({
+test('an order of a finished menu opens read-only from its link', async ({
   page,
   request,
 }, testInfo) => {
@@ -24,15 +24,16 @@ test('an order of a closed week opens read-only from its link', async ({
   const { order } = (await created.json()) as { order: { token: string } };
 
   try {
-    const closed = await request.post('/api/seller/week/close', {
+    const closed = await request.post('/api/seller/menus/current/finish', {
       headers: { 'X-Seller': 'onde-onde' },
     });
     expect(closed.ok()).toBe(true);
 
     await page.goto(`/o/${order.token}`);
-    await expect(page.getByText('This week is closed')).toBeVisible();
+    await expect(page.getByText('This menu is closed')).toBeVisible();
     await expect(page.getByText(/2× Lime-leaf mixed rice/)).toBeVisible();
-    await expect(page.getByText('Ordered', { exact: true })).toBeVisible();
+    // Finishing the menu closes the order that was still open (D-069 Q4) as collected.
+    await expect(page.getByText('Collected', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change order' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
 

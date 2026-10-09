@@ -111,20 +111,18 @@ describe('seller screens', () => {
 
     it('shows the note and who entered the order', () => {
       renderDetail({ enteredBy: { role: 'seller', name: 'Bu Ani' } });
-      expect(screen.getByText('Note from customer')).toBeInTheDocument();
+      expect(screen.getByText('Note from Rina')).toBeInTheDocument();
       expect(screen.getByText('No chilli on the tempeh please')).toBeInTheDocument();
-      expect(screen.getByText('entered by Bu Ani')).toBeInTheDocument();
+      expect(screen.getByText('Entered by')).toBeInTheDocument();
+      expect(screen.getByText('Bu Ani')).toBeInTheDocument();
     });
 
     it('offers one next step, plus cancel, for a confirmed pickup order', () => {
       renderDetail();
       expect(screen.getByRole('button', { name: 'Mark ready for pickup' })).toBeInTheDocument();
-      for (const later of [
-        'Mark collected',
-        'Mark delivered',
-        'Confirm order',
-        'Mark out for delivery',
-      ]) {
+      // Mark collected is always there, quietly (D-069); the other later steps are not.
+      expect(screen.getByRole('button', { name: 'Mark collected' })).toBeInTheDocument();
+      for (const later of ['Mark delivered', 'Confirm order', 'Mark out for delivery']) {
         expect(screen.queryByRole('button', { name: later })).not.toBeInTheDocument();
       }
       expect(screen.getByRole('button', { name: 'Cancel order' })).toBeInTheDocument();
@@ -162,7 +160,7 @@ describe('seller screens', () => {
       expect(screen.getByText('Order not found.')).toBeInTheDocument();
     });
 
-    it('needs a second tap to cancel, then cancels on the server', async () => {
+    it('asks first to cancel, then cancels on the server', async () => {
       const created = await mockStore.createOrder({
         firstName: 'Rina',
         language: 'en',
@@ -175,12 +173,11 @@ describe('seller screens', () => {
 
       const cancel = await screen.findByRole('button', { name: 'Cancel order' });
       fireEvent.click(cancel);
-      expect(
-        await screen.findByRole('button', { name: 'Tap again to cancel' }),
-      ).toBeInTheDocument();
+      const dialog = await screen.findByRole('alertdialog');
+      expect(within(dialog).getByRole('button', { name: 'Keep order' })).toBeInTheDocument();
       expect((await mockStore.getByCode(created.value.code))?.status).toBe('ordered');
 
-      fireEvent.click(screen.getByRole('button', { name: 'Tap again to cancel' }));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel order' }));
       expect(await screen.findByText('Cancelled')).toBeInTheDocument();
       expect((await mockStore.getByCode(created.value.code))?.status).toBe('cancelled');
     });

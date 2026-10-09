@@ -21,12 +21,6 @@ export function guessDevice(userAgent: string = navigator.userAgent): DeviceKind
   return 'computer';
 }
 
-/** The three device tabs on the passkey help: an iPad reads the iPhone steps. */
-export type HelpTab = 'iphone' | 'android' | 'computer';
-export function helpTabFor(kind: DeviceKind): HelpTab {
-  return kind === 'ipad' ? 'iphone' : kind;
-}
-
 /** One plain sentence for a failed call; never says which part of a key or password was wrong. */
 export function failureMessage(t: TFunction, failure: ApiFailure): string {
   switch (failure.error) {

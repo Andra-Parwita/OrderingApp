@@ -6,20 +6,13 @@ import {
   deleteChef,
   fetchImages,
   fetchSellerMenu,
-  fetchWeek,
   removeImage,
   renameChef,
   saveImageStyle,
-  saveWeek,
   uploadImage,
 } from '../../api/client';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
-import type {
-  ChefResponse,
-  ImagesResponse,
-  OkResponse,
-  WeekResponse,
-} from '../../../shared/setupContract';
+import type { ChefResponse, ImagesResponse, OkResponse } from '../../../shared/setupContract';
 import {
   chefAddRequested,
   chefChangeFailed,
@@ -37,30 +30,7 @@ import {
   styleRequested,
   styleSaved,
   uploadRequested,
-  weekLoaded,
-  weekLoadFailed,
-  weekRequested,
-  weekSaved,
-  weekSaveFailed,
-  weekSaveRequested,
 } from './setupSlice';
-
-export function* loadWeek() {
-  const result = (yield call(fetchWeek, undefined, currentSellerSlug())) as ApiResult<WeekResponse>;
-  if (result.ok) yield put(weekLoaded(result.data.week));
-  else yield put(weekLoadFailed());
-}
-
-export function* saveWeekSaga(action: ReturnType<typeof weekSaveRequested>) {
-  const result = (yield call(
-    saveWeek,
-    action.payload,
-    undefined,
-    currentSellerSlug(),
-  )) as ApiResult<WeekResponse>;
-  if (result.ok) yield put(weekSaved(result.data.week));
-  else yield put(weekSaveFailed({ code: result.error, message: result.message }));
-}
 
 export function* loadImages() {
   const result = (yield call(
@@ -150,8 +120,6 @@ export function* chefChangeSaga(action: ChefAction) {
 }
 
 export function* setupSaga() {
-  yield takeLatest(weekRequested.type, loadWeek);
-  yield takeLatest(weekSaveRequested.type, saveWeekSaga);
   yield takeLatest(imagesRequested.type, loadImages);
   yield takeLatest(uploadRequested.type, uploadSaga);
   yield takeLatest(removeRequested.type, removeSaga);

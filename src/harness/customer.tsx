@@ -1,4 +1,4 @@
-// ?harness=customer[&seller=<slug>][&screen=menu|basket|placed[&token=...]]: the customer flow (C1, C2, C3) on
+// ?harness=customer[&seller=<slug>][&screen=menu|dishes|basket|placed[&token=...]]: the customer flow (C1, C2, C3) on
 // its own store, against the dev Worker's mock API. Dev and e2e only.
 import { configureStore } from '@reduxjs/toolkit';
 import { useCallback, useEffect, useState } from 'react';
@@ -6,6 +6,7 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import createSagaMiddleware from 'redux-saga';
 import {
   BasketScreen,
+  DishesScreen,
   MenuScreen,
   OrderPlacedScreen,
   customerReducer,
@@ -20,7 +21,11 @@ import { AppThemeProvider } from '../theme/AppThemeProvider';
 const SLUG = new URLSearchParams(window.location.search).get('seller') ?? 'onde-onde';
 
 type View =
-  { name: 'menu' } | { name: 'basket' } | { name: 'placed'; token: string } | { name: 'seeding' };
+  | { name: 'menu' }
+  | { name: 'dishes' }
+  | { name: 'basket' }
+  | { name: 'placed'; token: string }
+  | { name: 'seeding' };
 
 function createStore() {
   const sagaMiddleware = createSagaMiddleware();
@@ -34,6 +39,8 @@ function createStore() {
 
 function initialView(params: URLSearchParams): View {
   switch (params.get('screen')) {
+    case 'dishes':
+      return { name: 'dishes' };
     case 'basket':
       return { name: 'basket' };
     case 'placed': {
@@ -72,13 +79,16 @@ function Seeding({ onPlaced }: SeedingProps) {
 function Flow() {
   const [view, setView] = useState<View>(() => initialView(new URLSearchParams(location.search)));
   const toMenu = useCallback(() => setView({ name: 'menu' }), []);
+  const toDishes = useCallback(() => setView({ name: 'dishes' }), []);
   const toBasket = useCallback(() => setView({ name: 'basket' }), []);
   const toPlaced = useCallback((token: string) => setView({ name: 'placed', token }), []);
   const noop = useCallback(() => undefined, []);
 
   switch (view.name) {
     case 'menu':
-      return <MenuScreen slug={SLUG} onViewBasket={toBasket} />;
+      return <MenuScreen slug={SLUG} onSeeDishes={toDishes} />;
+    case 'dishes':
+      return <DishesScreen slug={SLUG} onBack={toMenu} onViewBasket={toBasket} />;
     case 'basket':
       return <BasketScreen slug={SLUG} onBack={toMenu} onPlaced={toPlaced} />;
     case 'placed':

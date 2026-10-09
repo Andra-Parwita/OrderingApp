@@ -1,16 +1,16 @@
 import { all, call, put, takeLatest } from 'redux-saga/effects';
 import type { ApiResult } from '../../api/http';
 import { currentSellerSlug } from '../../api/device/sellerContext';
-import { fetchSellerMenu, fetchSettings } from '../../api/client';
-import type { SellerMenuResponse } from '../../../shared/menuContract';
+import { fetchCurrentMenu, fetchSettings } from '../../api/client';
+import type { MenuViewResponse } from '../../../shared/menusContract';
 import type { SettingsResponse } from '../../../shared/sellerContract';
 import { loaded, loadFailed, loadRequested } from './shareSlice';
 
 export function* loadShare() {
   const [menu, settings] = (yield all([
-    call(fetchSellerMenu, undefined, currentSellerSlug()),
+    call(fetchCurrentMenu, undefined, currentSellerSlug()),
     call(fetchSettings, undefined, currentSellerSlug()),
-  ])) as [ApiResult<SellerMenuResponse>, ApiResult<SettingsResponse>];
+  ])) as [ApiResult<MenuViewResponse>, ApiResult<SettingsResponse>];
   if (!menu.ok || !settings.ok) {
     yield put(loadFailed());
     return;
@@ -18,12 +18,12 @@ export function* loadShare() {
   yield put(
     loaded({
       menu: {
-        cookingDate: menu.data.week.cookingDate,
-        cutoffAt: menu.data.week.cutoffAt,
-        pickupPoints: menu.data.week.pickupPoints,
-        delivery: menu.data.week.delivery,
+        cookingDate: menu.data.menu.menu.cookingDate,
+        cutoffAt: menu.data.menu.menu.cutoffAt,
+        pickupPoints: menu.data.menu.pickupPoints,
+        delivery: menu.data.menu.menu.delivery,
         // Only the fields the post needs: no chef id can reach the text (D-012).
-        items: menu.data.items.map(({ name, description, size, priceCents }) => ({
+        items: menu.data.menu.dishes.map(({ name, description, size, priceCents }) => ({
           name,
           description,
           size,

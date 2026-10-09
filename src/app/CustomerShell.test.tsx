@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from 'react-router';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { server } from '../../mocks/server';
 import type { CustomerOrder } from '../../shared/domain';
 import indexHtml from '../../index.html?raw';
@@ -15,7 +15,8 @@ import { registerCustomerOrdersI18n } from '../features/customer-orders';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import { AppRoutes } from './AppRoutes';
-import { activeTab } from './CustomerShell';
+import { CustomerPage } from '../components/CustomerPage';
+import { activeTab, hasTabBar, isRootPage } from './CustomerShell';
 import { createAppStore } from './store';
 import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
 
@@ -92,13 +93,19 @@ describe('customer tab bar', () => {
     expect(activeTab('/settings')).toBe('settings');
   });
 
-  it('shows the right tab on the basket and on an order page', () => {
-    const basket = renderAt('/onde-onde/basket');
-    expect(within(tabBar()).getByRole('link', { name: 'Menu' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    basket.unmount();
+  it('hides the tab bar on checkout pages and shows it elsewhere', () => {
+    expect(hasTabBar('/onde-onde/basket')).toBe(false);
+    expect(hasTabBar('/o/abc/edit')).toBe(false);
+    expect(hasTabBar('/onde-onde')).toBe(true);
+    expect(hasTabBar('/o/abc')).toBe(true);
+    expect(hasTabBar('/o/abc/placed')).toBe(true);
+    expect(isRootPage('/my-orders')).toBe(true);
+    expect(isRootPage('/onde-onde/basket')).toBe(false);
+    renderAt('/onde-onde/basket');
+    expect(screen.queryByRole('navigation', { name: 'Customer' })).toBeNull();
+  });
+
+  it('shows the right tab on an order page', () => {
     renderAt('/o/some-token');
     expect(within(tabBar()).getByRole('link', { name: 'My orders' })).toHaveAttribute(
       'aria-current',
@@ -114,7 +121,9 @@ describe('customer tab bar', () => {
     // Tab height 3.5rem = 56 px, above the 44 px minimum.
     const height = /min-height:\s*([\d.]+)rem/.exec(css);
     expect(parseFloat(height?.[1] ?? '0') * 16).toBeGreaterThanOrEqual(44);
-    expect(css).toMatch(/padding-bottom:\s*env\(safe-area-inset-bottom\)/);
+    expect(css).toMatch(/padding-bottom:\s*var\(--sab/);
+    expect(css).toMatch(/--sat:\s*env\(safe-area-inset-top/);
+    expect(css).toMatch(/max-width:\s*30rem/);
   });
 
   it('shows a dot, with text for screen readers, only when an order has an unread update', async () => {
@@ -143,6 +152,59 @@ describe('customer tab bar', () => {
     renderAt('/onde-onde');
     expect(await within(tabBar()).findByText(/new update/)).toBeInTheDocument();
     expect(within(tabBar()).getByRole('link', { name: 'My orders, new update' })).toBeVisible();
+  });
+});
+
+describe('customer pushed pages', () => {
+  it('names the previous page on the Back button and shows the kitchen name without a logo', () => {
+    const onBack = vi.fn();
+    render(
+      <AppThemeProvider>
+        <CustomerPage title="Dishes" kitchenName="Onde Onde" backLabel="Menu" onBack={onBack} />
+      </AppThemeProvider>,
+    );
+    const back = screen.getByRole('button', { name: 'Back to Menu' });
+    expect(back).toHaveTextContent('Menu');
+    fireEvent.click(back);
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(screen.getByRole('heading', { name: 'Dishes' })).toBeVisible();
+    expect(screen.getByText('Onde Onde')).toBeVisible();
+  });
+
+  it('shows the wide logo when there is one', () => {
+    render(
+      <AppThemeProvider>
+        <CustomerPage title="Basket" kitchenName="Onde Onde" logoSrc="/logo.png" />
+      </AppThemeProvider>,
+    );
+    expect(screen.getByRole('img', { name: 'Onde Onde' })).toHaveAttribute('src', '/logo.png');
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('slides pages in from the right, and drops every animation for reduced motion', async () => {
+    renderAt('/settings');
+    act(() => void navigateTo('/onde-onde/basket'));
+    await screen.findByRole('heading', { name: 'Your basket' });
+    const css = Array.from(document.querySelectorAll('style'))
+      .map((style) => style.textContent)
+      .join('');
+    expect(css).toMatch(/translateX\(100%\)/);
+    expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*animation:\s*none !important/);
+  });
+});
+
+describe('customer fixtures mode', () => {
+  it('renders a placeholder for a screen that is not built yet, in the chosen language', async () => {
+    renderAt('/__fixtures/order-qr?brand=bali&mode=dark');
+    expect(await screen.findByRole('heading', { name: 'Not built yet: order-qr' })).toBeVisible();
+    await act(() => i18n.changeLanguage('id'));
+    expect(screen.getByRole('heading', { name: 'Belum dibuat: order-qr' })).toBeVisible();
+  });
+
+  it('renders an existing screen from fixtures, without the shell', async () => {
+    renderAt('/__fixtures/my-orders-empty');
+    expect(await screen.findByRole('heading', { name: 'My orders' })).toBeVisible();
+    expect(screen.queryByRole('navigation', { name: 'Customer' })).toBeNull();
   });
 });
 

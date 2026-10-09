@@ -85,9 +85,9 @@ const loadWrangler = async () => (await import(/* @vite-ignore */ WRANGLER)) as 
 export type Database = {
   d1: D1Like;
   /** The sample kitchens, no orders, no accounts; touches only the tables a test wrote to. */
-  reset(): Promise<void>;
+  reset(now: Date): Promise<void>;
   /** Marks the database as just fully reset (after the repository's own `dev.reset`). */
-  markFresh(): void;
+  markFresh(now: Date): void;
   close(): Promise<void>;
 };
 
@@ -110,11 +110,10 @@ export async function openDatabase(name: string): Promise<Database> {
     d1,
     migrations.map((migration) => migration.sql),
   );
-  await tracked.reset();
   return {
     d1: tracked.d1,
-    reset: () => tracked.reset(),
-    markFresh: () => tracked.markFresh(),
+    reset: (now) => tracked.reset(now),
+    markFresh: (now) => tracked.markFresh(now),
     close: async () => {
       await proxy.dispose();
       rmSync(dir, { recursive: true, force: true });
@@ -132,7 +131,7 @@ export async function makeWorld(database: Database, options: TestOptions): Promi
     adminSetupKey: DEV_ADMIN_SETUP_KEY,
     devTools: true,
   });
-  await database.reset();
+  await database.reset(options.now());
   return {
     repo,
     queries,
@@ -140,7 +139,7 @@ export async function makeWorld(database: Database, options: TestOptions): Promi
     // The repository's own dev reset also forgets the sample-order generator it keeps.
     reset: async () => {
       await repo.dev.reset();
-      database.markFresh();
+      database.markFresh(options.now());
     },
     dumpSecrets: async () => {
       const [keys, codes, accounts] = await Promise.all([

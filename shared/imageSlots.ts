@@ -12,6 +12,9 @@ export const IMAGE_SLOTS = [
 
 export type ImageSlot = (typeof IMAGE_SLOTS)[number];
 
+/** The per-menu picture (3:2, D-060) is uploaded like a slot but kept on the menu, not on the kitchen. */
+export type UploadSlot = ImageSlot | 'menuPicture';
+
 export type SlotSpec = {
   width: number;
   height: number;
@@ -20,16 +23,19 @@ export type SlotSpec = {
   maxKB: number;
 };
 
-const SIZES: Record<ImageSlot, { width: number; height: number }> = {
-  desktopBanner: { width: 1600, height: 320 },
-  phoneBanner: { width: 1080, height: 540 },
-  railImage: { width: 448, height: 224 },
-  railIcon: { width: 128, height: 128 },
-  bannerBackgroundImage: { width: 2560, height: 512 },
+const SIZES: Record<UploadSlot, { width: number; height: number }> = {
+  // Stage 10 sizes (handoff, Picture slots): wide banner 5:1, phone banner 3:1, kitchen menu
+  // picture 2:1, small icon square, background 5:1.
+  desktopBanner: { width: 2000, height: 400 },
+  phoneBanner: { width: 1200, height: 400 },
+  railImage: { width: 1200, height: 600 },
+  railIcon: { width: 512, height: 512 },
+  bannerBackgroundImage: { width: 1280, height: 256 },
+  menuPicture: { width: 1200, height: 800 },
 };
 
 /** Target size of a slot, so the screen can resize before uploading. */
-export function slotSpec(slot: ImageSlot): SlotSpec {
+export function slotSpec(slot: UploadSlot): SlotSpec {
   const { width, height } = SIZES[slot];
   return { width, height, ratio: width / height, maxKB: IMAGE_MAX_KB };
 }
@@ -127,7 +133,7 @@ export type ImageCheck =
  * Checks an upload for a slot: a base64 data URL of jpeg, png or webp, at most 600 KB, whose
  * header size has the slot's aspect ratio within 5%. The client resizes first (slotSpec).
  */
-export function checkImageUpload(slot: ImageSlot, dataUrl: unknown): ImageCheck {
+export function checkImageUpload(slot: UploadSlot, dataUrl: unknown): ImageCheck {
   if (typeof dataUrl !== 'string') return { ok: false, error: 'image_type' };
   // Cheap size guard before the regex and the decode (base64 is 4/3 of the bytes).
   if (dataUrl.length > Math.ceil(((IMAGE_MAX_KB * 1024) / 3) * 4) + 64) {

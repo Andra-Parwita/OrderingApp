@@ -1,7 +1,9 @@
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 import { ThemeProvider } from 'styled-components';
 import { GlobalStyle } from './GlobalStyle';
-import { darkTheme, lightTheme } from './themes';
+import type { Brand } from './designTokens';
+import { useKitchenBrand } from './kitchenBrand';
+import { makeTheme } from './themes';
 import { useThemePreference } from './themePreference';
 
 const QUERY = '(prefers-color-scheme: dark)';
@@ -27,11 +29,23 @@ function useThemeColourMeta(colour: string): void {
   }, [colour]);
 }
 
-export function AppThemeProvider({ children }: { children: ReactNode }) {
+/**
+ * The colour theme is the kitchen's (stage 10): the seller app sets it with `setKitchenBrand`
+ * (kitchenBrand.ts). A `brand` prop wins, for tests and previews; Onde Onde until it is known.
+ */
+export function AppThemeProvider({
+  children,
+  brand: forced,
+}: {
+  children: ReactNode;
+  brand?: Brand;
+}) {
+  const kitchen = useKitchenBrand();
+  const brand = forced ?? kitchen;
   const device = useSyncExternalStore(subscribe, deviceDark, () => false);
   const preference = useThemePreference();
   const dark = preference === 'auto' ? device : preference === 'dark';
-  const theme = dark ? darkTheme : lightTheme;
+  const theme = useMemo(() => makeTheme(brand, dark ? 'dark' : 'light'), [brand, dark]);
   useThemeColourMeta(theme.colour.bg);
   return (
     <ThemeProvider theme={theme}>

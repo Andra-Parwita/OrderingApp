@@ -65,7 +65,7 @@ describe('archived order page', () => {
   it('is read-only in English: status, items, total, seller, date, a closed note', async () => {
     answerOrder(archived.token, { order: archived });
     renderWithStore(<OrderScreen token={archived.token} onBack={noop} onChange={noop} />);
-    expect(await screen.findByText('This week is closed')).toBeVisible();
+    expect(await screen.findByText('This menu is closed')).toBeVisible();
     expect(screen.getByTestId('order-code')).toHaveTextContent(/ABC.?D23/);
     expect(screen.getByText('Collected')).toBeVisible();
     expect(screen.getByText('3× Thin battered tempeh')).toBeVisible();
@@ -80,7 +80,7 @@ describe('archived order page', () => {
     await i18n.changeLanguage('id');
     answerOrder(archived.token, { order: { ...archived, status: 'ordered' } });
     renderWithStore(<OrderScreen token={archived.token} onBack={noop} onChange={noop} />);
-    expect(await screen.findByText('Minggu ini sudah ditutup')).toBeVisible();
+    expect(await screen.findByText('Menu ini sudah ditutup')).toBeVisible();
     expect(screen.getByText('3× Tempe mendoan')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Ubah pesanan' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Batalkan pesanan' })).not.toBeInTheDocument();
@@ -96,7 +96,7 @@ describe('archived order page', () => {
     );
     answerOrder(archived.token, { order: archived });
     renderWithStore(<OrderScreen token={archived.token} onBack={noop} onChange={noop} />);
-    await screen.findByText('This week is closed');
+    await screen.findByText('This menu is closed');
     expect(menuHit).not.toHaveBeenCalled();
   });
 });
@@ -163,7 +163,7 @@ describe('My orders grouping', () => {
     const onOpenOrder = vi.fn();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={onOpenOrder} />);
     expect(await screen.findByText('Earlier orders')).toBeVisible();
-    expect(screen.queryByText('This week')).not.toBeInTheDocument();
+    expect(screen.queryByText('Current orders')).not.toBeInTheDocument();
     const full = screen.getByRole('button', { name: /ABC.*Onde Onde/ });
     expect(full).toHaveTextContent('3× Thin battered tempeh');
     expect(full).toHaveTextContent('Sat 10 Oct');

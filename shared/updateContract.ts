@@ -2,7 +2,7 @@
 import type { Fulfilment, OrderStatus } from './domain';
 import { isFinalStatus } from './status';
 import { isInt, isOneOf, isRecord, parseArray } from './parse';
-import { API_ERROR_CODES, type ApiErrorCode } from './apiError';
+import { API_ERROR_CODES, parseApiWarning, type ApiErrorCode, type ApiWarning } from './apiError';
 
 export const UPDATE_TEMPLATES = [
   'readyIn',
@@ -52,6 +52,8 @@ export type SendUpdatesRequest = {
   minutes?: number;
   text?: string;
   alsoSetStatus?: boolean;
+  /** D-062: send to cancelled orders too (without it they answer `order_cancelled`). */
+  force?: boolean;
   /** Order codes (forgiving input is accepted: "k7f-2qx"). */
   codes: Array<string>;
 };
@@ -62,6 +64,8 @@ export type UpdateResult = {
   ok: boolean;
   /** Set when `ok` is false. */
   error?: ApiErrorCode;
+  /** Set when `ok` is false because the order needs a "go ahead anyway" (resend with `force`). */
+  warning?: ApiWarning;
   /** The status moved on as asked. False when not asked, or when nextStatuses did not allow it. */
   statusChanged?: boolean;
 };
@@ -69,11 +73,12 @@ export type SendUpdatesResponse = { results: Array<UpdateResult>; sent: number }
 
 export function parseSendUpdatesRequest(input: unknown): SendUpdatesRequest | null {
   if (!isRecord(input)) return null;
-  const { template, minutes, text, alsoSetStatus, codes } = input;
+  const { template, minutes, text, alsoSetStatus, codes, force } = input;
   if (!isOneOf(UPDATE_TEMPLATES, template)) return null;
   if (!Array.isArray(codes) || codes.length < 1 || codes.length > UPDATE_CODES_MAX) return null;
   if (!codes.every((code): code is string => typeof code === 'string' && code !== '')) return null;
   if (alsoSetStatus !== undefined && typeof alsoSetStatus !== 'boolean') return null;
+  if (force !== undefined && typeof force !== 'boolean') return null;
   if (needsMinutes(template) && !isInt(minutes, 1, UPDATE_MINUTES_MAX)) return null;
   if (minutes !== undefined && !isInt(minutes, 1, UPDATE_MINUTES_MAX)) return null;
   let custom: string | undefined;
@@ -88,6 +93,7 @@ export function parseSendUpdatesRequest(input: unknown): SendUpdatesRequest | nu
     ...(needsMinutes(template) ? { minutes: minutes as number } : {}),
     ...(custom !== undefined ? { text: custom } : {}),
     ...(alsoSetStatus !== undefined ? { alsoSetStatus } : {}),
+    ...(force !== undefined ? { force } : {}),
   };
 }
 
@@ -97,10 +103,13 @@ function parseResult(input: unknown): UpdateResult | null {
   if (typeof code !== 'string' || typeof ok !== 'boolean') return null;
   if (error !== undefined && !isOneOf(API_ERROR_CODES, error)) return null;
   if (statusChanged !== undefined && typeof statusChanged !== 'boolean') return null;
+  const warning = input['warning'] === undefined ? undefined : parseApiWarning(input['warning']);
+  if (input['warning'] !== undefined && !warning) return null;
   return {
     code,
     ok,
     ...(error !== undefined ? { error } : {}),
+    ...(warning ? { warning } : {}),
     ...(statusChanged !== undefined ? { statusChanged } : {}),
   };
 }

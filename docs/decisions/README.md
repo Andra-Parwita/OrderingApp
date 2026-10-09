@@ -429,3 +429,27 @@ Format for each entry:
 **Trade-off:** plan 001 grows a server stage (menus, dish library, pickup places, packing, message log) before the screens.
 **Revisit when:** the customer design changes any of these.
 **Amended (2026-10-10, owner):** "but a push is very important and needs to be done". Web push is a must-have: plan 002, scheduled straight after plan 001 (not waiting for the customer redesign; its customer "Turn on updates" screen gets restyled later).
+
+## D-070 · Plan 001 on hold on this PC; carry on from phase 4 (2026-10-10; the builder, the owner's son)
+**Ruling:** "Just follow through with what is currently done rather than the plan and make note of it", then "A" (to: A keep the app as it is, no redesign, carry on from phase 4 / B build the redesign from what exists / C only the tidy-ups).
+**Decision:** the seller redesign (plan 001) is **not started** on ANDRAPC. Work continues from the state at the end of phase 4: first the open low findings and doc tidy-ups (plan 003), then web push (plan 002, a must before going live per D-069). Plan 001 stays approved as written; its status says "on hold", with a note, so the owner sees it. New work still starts as a plan (D-055).
+**Trade-off:** the design drop and D-056…D-069 wait; plan 002's customer screens use today's UI and get restyled later.
+**Revisit when:** the owner or the builder restarts plan 001.
+**Amended (2026-10-10, builder):** "B" (after learning the pull held the design, not built screens: A keep on hold / B start plan 001 right after plan 003 / C stop 003 and start 001 now). Plan 001 starts **right after plan 003**, stage by stage with checkpoints; plan 002 (web push) follows plan 001, as D-069 says.
+
+## D-071 · One plan for the customer redesign and web push (2026-10-10; builder)
+**Ruling:** "A" (to: A one plan, 004, replacing plan 002 / B the redesign first, then push / C push first on today's screens). Asked after the customer design drop `uxDesign/customer/` arrived; it draws the whole install-and-notify flow.
+**Decision:** plan 004, "Customer app redesign and web push", replaces the placeholder plan 002. It is drafted for approval (D-055) and must be done before going live (D-069).
+**Trade-off:** one longer plan; push can't ship ahead of the customer redesign.
+**Revisit when:** going live is needed before the customer redesign is ready.
+
+## D-072 · Plan 004 settled: two new packages, Ready keeps D-069, initials icon, checkpoints 2/4/7 (2026-10-10; builder)
+**Ruling:** "A" (packages), "A" (keep D-069), "B" (initials icon), "A" (checkpoints), then "A" (approve plan 004).
+**Decision:**
+- A QR code generator and a Workers-compatible web push library may be added. The builder names them, with versions, in its report (approval under CLAUDE.md "no new dependency without the owner's OK").
+- "Ready for pickup" keeps marking orders Ready (D-069 Q3); the customer spec's "messages don't change status" is overridden for that message.
+- A kitchen without a small icon gets a generated icon: its initials on its theme colour.
+- Plan 004 pauses after stages 2, 4 and 7; no coordinator commits.
+- The owner's `imgs/OndeOndeIcon.jpg` becomes the sample kitchen's small icon, cropped to full bleed at 512 × 512.
+**Trade-off:** two more dependencies to keep updated.
+**Revisit when:** a package becomes unmaintained or adds weight beyond its use.

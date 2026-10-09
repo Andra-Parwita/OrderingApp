@@ -21,3 +21,9 @@ export const ITEM_DESCRIPTION_MAX = 300;
 export const ITEM_SIZE_MAX = 40;
 export const SET_NAME_MAX = 40;
 export const CHEF_NAME_MAX = 40;
+/** Saved pickup places per seller (D-061). */
+export const MAX_PICKUP_PLACES = 5;
+/** Dishes in the library ("Your dishes"). */
+export const MAX_DISHES = 200;
+export const PLACE_NAME_MAX = 80;
+export const PLACE_DIRECTIONS_MAX = 200;

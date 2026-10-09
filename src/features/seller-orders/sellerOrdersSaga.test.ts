@@ -10,6 +10,7 @@ import {
   pollingStarted,
   pollingStopped,
   statusChangeRequested,
+  warningConfirmed,
 } from './sellerOrdersSlice';
 import { chooseSeller, SELLER_KEY } from '../../api/device/sellerContext';
 import { createTestStore } from './testSupport';
@@ -45,7 +46,8 @@ describe('sellerOrdersSaga', () => {
     await waitFor(() => store.getState().sellerOrders.list.status === 'ready');
     await waitFor(() => store.getState().sellerOrders.cookingDate !== null);
     expect(store.getState().sellerOrders.orders.map((o) => o.firstName)).toEqual(['Rina']);
-    expect(store.getState().sellerOrders.cookingDate).toBe('2026-10-10');
+    // The date now comes from the current menu (GET /api/seller/menus/current).
+    expect(store.getState().sellerOrders.cookingDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     store.dispatch(pollingStopped());
   });
 
@@ -97,14 +99,29 @@ describe('sellerOrdersSaga', () => {
     expect(saved?.audit[0]).toMatchObject({ what: 'status', detail: 'confirmed' });
   });
 
-  it('keeps the failed change for a retry when the status is not allowed', async () => {
+  it('asks first when the status skips a step, and goes ahead with force on "Continue anyway" (D-062)', async () => {
     const created = await newOrder('Rina');
     const store = createTestStore({ saga: true });
     store.dispatch(statusChangeRequested({ code: created.code, to: 'delivered' }));
-    await waitFor(() => store.getState().sellerOrders.change.status === 'error');
-    expect(store.getState().sellerOrders.change).toEqual({
-      status: 'error',
-      failed: { kind: 'status', code: created.code, to: 'delivered' },
+    await waitFor(() => store.getState().sellerOrders.warned !== null);
+    expect(store.getState().sellerOrders.warned?.warning.code).toBe('status_out_of_order');
+    // Nothing was saved while it waits for the answer.
+    expect(store.getState().sellerOrders.orders.some((order) => order.status === 'delivered')).toBe(
+      false,
+    );
+    store.dispatch(warningConfirmed());
+    await waitFor(() => store.getState().sellerOrders.orders[0]?.status === 'delivered');
+    expect(store.getState().sellerOrders.warned).toBeNull();
+  });
+
+  it('confirming raises a toast whose Undo goes back to the old status', async () => {
+    const created = await newOrder('Rina');
+    const store = createTestStore({ saga: true });
+    store.dispatch(statusChangeRequested({ code: created.code, to: 'confirmed', from: 'ordered' }));
+    await waitFor(() => store.getState().sellerOrders.toast !== null);
+    expect(store.getState().sellerOrders.toast).toMatchObject({
+      kind: 'confirmed',
+      undo: { kind: 'status', code: created.code, to: 'ordered' },
     });
   });
 

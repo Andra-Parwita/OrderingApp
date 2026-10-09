@@ -1,280 +1,210 @@
-import { useCallback, useEffect } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useCallback, useEffect, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import type { Language } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
-import { formatMoney } from '../../../shared/money';
-import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
-import { formatPhone } from '../../../shared/phone';
-import { pickText } from '../../../shared/text';
 import { whatsAppUrl } from '../../api/device/whatsapp';
-import { Button, ImageSlot } from '../../ui';
+import { setKitchenBrand } from '../../theme/kitchenBrand';
 import { menuRequested, quantitySet } from './customerSlice';
-import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
-import { LanguageSwitch } from '../../components/LanguageSwitch';
+import { DishesView, DishList } from './DishesView';
+import { HowItWorksView } from './HowItWorksView';
+import { hasSeenHowItWorks, markHowItWorksSeen } from './howItWorksSeen';
 import { CUSTOMER_NS } from './i18n/register';
-import { ItemRow } from './ItemRow';
-import { Block, Muted, Page, StateMessage, Strong, Title, useLang } from './layout';
+import { useLang } from './layout';
+import { MenuErrorView, MenuLoadingView } from './MenuLoadStates';
+import { MenuHomeView, NotPublishedView } from './MenuHomeView';
 import { ScreenBoundary } from './ScreenBoundary';
-import { selectBasket, selectBasketCount, selectBasketTotalCents, selectMenu } from './selectors';
+import {
+  selectBasket,
+  selectBasketCount,
+  selectBasketTotalCents,
+  selectMenu,
+  selectMenuSlug,
+} from './selectors';
 
-const Week = styled.dl`
-  margin: 0;
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colour.surface};
-  font-size: ${({ theme }) => theme.type.size.sm};
+// The routed menu screens: menu home, dishes and how ordering works. Each loads the menu through
+// the store and hands it to a presentational view (the fixtures page feeds the same views).
 
-  dt {
-    color: ${({ theme }) => theme.colour.textMuted};
-  }
-  dd {
-    margin: 0;
-    font-weight: ${({ theme }) => theme.type.weight.strong};
-  }
-`;
-
-const PreviewNote = styled(Muted)`
-  display: block;
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg} 0;
-`;
-
-const Items = styled.ul`
-  margin: 0;
-  padding: 0;
-  list-style: none;
-`;
-
-const Steps = styled.ol`
-  margin: 0;
-  padding-left: ${({ theme }) => theme.spacing.xl};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  font-size: ${({ theme }) => theme.type.size.sm};
-`;
-
-const Closed = styled(Block)`
-  background: ${({ theme }) => theme.colour.surface};
-`;
-
-const Bar = styled.div`
-  position: sticky;
-  /* Above the customer tab bar when there is one (set by the app shell). */
-  bottom: var(--customer-tabbar-height, 0rem);
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.colour.bg};
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
-`;
-
-// The banner is the first thing on the page; the top safe area is padded in the banner's own colour.
-const BannerTop = styled.div<{ $background?: string }>`
-  padding-top: env(safe-area-inset-top);
-  background: ${({ theme, $background }) => $background ?? theme.colour.surfaceAlt};
-`;
-
-const NameRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg} 0;
-`;
-
-const NameText = styled.div`
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-type Props = Readonly<{
-  /** The seller whose menu this is (from the route). */
-  slug: string;
-  onViewBasket: () => void;
-  /**
-   * The seller's preview (D-019): this menu is shown instead of loading one, and nothing can be
-   * ordered (steppers off, no basket bar).
-   */
-  preview?: MenuResponse;
-}>;
-
-function WeekBlock({ data, lang }: Readonly<{ data: MenuResponse; lang: Language }>) {
-  const { t } = useTranslation(CUSTOMER_NS);
-  const { week } = data;
-  const pickup = week.pickupPoints[0];
-  return (
-    <Week>
-      <dt>{t('menu.cooking')}</dt>
-      <dd>{formatCookingDate(week.cookingDate, lang)}</dd>
-      <dt>{t('menu.orderBy')}</dt>
-      <dd>{formatCutoff(week.cutoffAt, lang)}</dd>
-      {pickup ? (
-        <>
-          <dt>{t('menu.pickup')}</dt>
-          <dd>
-            {formatWindow(pickup.window.start, pickup.window.end, lang)}, {pickup.place}
-          </dd>
-        </>
-      ) : null}
-      {week.delivery.available ? (
-        <>
-          <dt>{t('menu.deliveryAvailable')}</dt>
-          <dd>{t('menu.deliveryNote')}</dd>
-        </>
-      ) : (
-        <>
-          <dt>{t('menu.deliveryLabel')}</dt>
-          <dd>{t('menu.noDelivery')}</dd>
-        </>
-      )}
-    </Week>
-  );
-}
-
-// The seller's number stays on one line; it never wraps mid-number.
-const NoWrap = styled.span`
-  white-space: nowrap;
-`;
-
-function HowItWorks({ kitchen }: Readonly<{ kitchen: MenuResponse['kitchen'] }>) {
-  const { t } = useTranslation(CUSTOMER_NS);
-  return (
-    <Block as="section" aria-label={t('menu.howTitle')}>
-      <Strong>{t('menu.howTitle')}</Strong>
-      <Steps>
-        <li>{t('menu.how1')}</li>
-        <li>{t('menu.how2')}</li>
-        <li>
-          {kitchen.whatsappNumber ? (
-            <Trans
-              t={t}
-              i18nKey="menu.how3"
-              values={{ kitchen: kitchen.name, number: formatPhone(kitchen.whatsappNumber) }}
-              components={{ num: <NoWrap /> }}
-            />
-          ) : (
-            t('menu.how3Generic')
-          )}
-        </li>
-      </Steps>
-    </Block>
-  );
-}
-
-function ClosedBlock({ data }: Readonly<{ data: MenuResponse }>) {
-  const { t } = useTranslation(CUSTOMER_NS);
-  const reason = data.ordering.reason === 'cutoff_passed' ? 'closedCutoff' : 'closedByseller';
-  const openWhatsApp = useCallback(() => {
-    window.open(
-      whatsAppUrl(undefined, data.kitchen.whatsappNumber),
-      '_blank',
-      'noopener,noreferrer',
-    );
-  }, [data.kitchen.whatsappNumber]);
-  return (
-    <Closed role="status">
-      <Strong>{t('menu.closedTitle')}</Strong>
-      <Muted>{t(`menu.${reason}`)}</Muted>
-      <Button variant="primary" onClick={openWhatsApp}>
-        {t('menu.messageSeller')}
-      </Button>
-    </Closed>
-  );
-}
-
-function MenuContent({ slug, onViewBasket, preview }: Props) {
-  const { t } = useTranslation(CUSTOMER_NS);
-  const lang = useLang();
+function useMenuData(slug: string, preview?: MenuResponse) {
   const dispatch = useDispatch();
   const stored = useSelector(selectMenu);
-  const menu = preview ? ({ status: 'ready', data: preview } as const) : stored;
-  const basket = useSelector(selectBasket);
-  const count = useSelector(selectBasketCount);
-  const totalCents = useSelector(selectBasketTotalCents);
+  const storedSlug = useSelector(selectMenuSlug);
+  // Until the request for this slug has started, the stored menu may be another seller's.
+  const menu =
+    preview !== undefined
+      ? ({ status: 'ready', data: preview } as const)
+      : storedSlug === slug
+        ? stored
+        : ({ status: 'loading' } as const);
+
+  // The kitchen's colours on its customer pages (D-064). Not in the seller's preview.
+  const theme = menu.status === 'ready' ? (menu.data.theme ?? 'onde') : undefined;
+  useEffect(() => {
+    if (theme !== undefined && !preview) setKitchenBrand(theme);
+  }, [theme, preview]);
 
   const load = useCallback(() => {
     if (!preview) dispatch(menuRequested(slug));
   }, [dispatch, slug, preview]);
   useEffect(load, [load]);
+  return { menu, load };
+}
 
+function openWhatsApp(number: string | undefined): void {
+  window.open(whatsAppUrl(undefined, number), '_blank', 'noopener,noreferrer');
+}
+
+type MenuData = ReturnType<typeof useMenuData>['menu'];
+
+/** Loading, error and "not out yet" for every menu page; `children` gets a ready menu. */
+function MenuGate({
+  menu,
+  load,
+  children,
+}: Readonly<{ menu: MenuData; load: () => void; children: (data: MenuResponse) => ReactNode }>) {
+  const lang = useLang();
+  const onMessage = useCallback(() => openWhatsApp(undefined), []);
+  if (menu.status === 'ready') return children(menu.data);
+  if (menu.status === 'error') {
+    return menu.code === 'week_not_published' ? (
+      <NotPublishedView lang={lang} onMessageSeller={onMessage} />
+    ) : (
+      <MenuErrorView onRetry={load} />
+    );
+  }
+  return <MenuLoadingView />;
+}
+
+type HomeProps = Readonly<{
+  /** The seller whose menu this is (from the route). */
+  slug: string;
+  onSeeDishes?: () => void;
+  onHowItWorks?: () => void;
+  /**
+   * The seller's preview (D-019): this menu is shown instead of loading one, and nothing can be
+   * ordered.
+   */
+  preview?: MenuResponse;
+}>;
+
+function HomeContent({ slug, onSeeDishes, onHowItWorks, preview }: HomeProps) {
+  const lang = useLang();
+  const { menu, load } = useMenuData(slug, preview);
+  const ready = menu.status === 'ready' ? menu.data : null;
+  const showHow = ready?.ordering.open === true && !preview;
+
+  // A first-timer sees "How ordering works" once, by itself; Back returns to the menu.
+  useEffect(() => {
+    if (showHow && onHowItWorks && !hasSeenHowItWorks()) {
+      markHowItWorksSeen();
+      onHowItWorks();
+    }
+  }, [showHow, onHowItWorks]);
+
+  return (
+    <MenuGate menu={menu} load={load}>
+      {(data) => (
+        <MenuHomeView
+          data={data}
+          lang={lang}
+          onSeeDishes={preview ? undefined : onSeeDishes}
+          onHowItWorks={preview ? undefined : onHowItWorks}
+          onMessageSeller={() => openWhatsApp(data.kitchen.whatsappNumber)}
+        />
+      )}
+    </MenuGate>
+  );
+}
+
+export function MenuScreen(props: HomeProps) {
+  return (
+    <ScreenBoundary>
+      <HomeContent {...props} />
+    </ScreenBoundary>
+  );
+}
+
+const PreviewNote = styled.p`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+`;
+const noop = () => undefined;
+
+/** The seller's preview of a menu: the home screen, then the dishes, nothing orderable. */
+export function MenuPreview({ slug, menu }: Readonly<{ slug: string; menu: MenuResponse }>) {
+  const { t } = useTranslation(CUSTOMER_NS);
+  const lang = useLang();
+  return (
+    <ScreenBoundary>
+      <HomeContent slug={slug} preview={menu} />
+      <PreviewNote>{t('menu.previewOff')}</PreviewNote>
+      <DishList data={menu} basket={{}} lang={lang} onQty={noop} readOnly />
+    </ScreenBoundary>
+  );
+}
+
+type DishesProps = Readonly<{
+  slug: string;
+  onBack: () => void;
+  onViewBasket: () => void;
+}>;
+
+function DishesContent({ slug, onBack, onViewBasket }: DishesProps) {
+  const lang = useLang();
+  const dispatch = useDispatch();
+  const { menu, load } = useMenuData(slug);
+  const basket = useSelector(selectBasket);
+  const count = useSelector(selectBasketCount);
+  const totalCents = useSelector(selectBasketTotalCents);
   const onQty = useCallback(
     (itemId: string, qty: number) => dispatch(quantitySet({ itemId, qty })),
     [dispatch],
   );
-
   return (
-    <Page>
-      {menu.status === 'ready' ? (
-        <>
-          <BannerTop $background={menu.data.kitchen.images?.bannerBackground}>
-            <ImageSlot
-              aspectRatio="2 / 1"
-              background={menu.data.kitchen.images?.bannerBackground}
-              src={phoneBannerSrc(menu.data.kitchen.images) ?? menu.data.kitchen.bannerImageUrl}
-              alt={bannerAlt(menu.data.kitchen, lang)}
-              placeholder={t('menu.bannerImage')}
-            />
-          </BannerTop>
-          <NameRow>
-            <NameText>
-              <Title>{menu.data.kitchen.name}</Title>
-              <Muted>{pickText(menu.data.kitchen.tagline, lang)}</Muted>
-            </NameText>
-            <LanguageSwitch />
-          </NameRow>
-          {menu.data.ordering.open || preview ? null : <ClosedBlock data={menu.data} />}
-          <WeekBlock data={menu.data} lang={lang} />
-          {preview ? <PreviewNote>{t('menu.previewOff')}</PreviewNote> : null}
-          <Items>
-            {menu.data.items.map((item) => (
-              <ItemRow
-                key={item.id}
-                item={item}
-                qty={basket[item.id] ?? 0}
-                lang={lang}
-                onQty={onQty}
-                closed={!menu.data.ordering.open || preview !== undefined}
-              />
-            ))}
-          </Items>
-          <HowItWorks kitchen={menu.data.kitchen} />
-        </>
-      ) : menu.status === 'error' ? (
-        <StateMessage
-          alert
-          text={menu.code === 'week_not_published' ? t('menu.notPublished') : t('menu.loadError')}
-          onRetry={load}
+    <MenuGate menu={menu} load={load}>
+      {(data) => (
+        <DishesView
+          data={data}
+          basket={basket}
+          lang={lang}
+          onQty={onQty}
+          readOnly={!data.ordering.open}
+          count={count}
+          totalCents={totalCents}
+          onBack={onBack}
+          onViewBasket={onViewBasket}
         />
-      ) : (
-        <StateMessage text={t('common.loading')} />
       )}
-      {!preview && count > 0 && !(menu.status === 'ready' && !menu.data.ordering.open) ? (
-        <Bar>
-          <Strong>
-            {t('menu.items', { count })} · {formatMoney(totalCents, lang)}
-          </Strong>
-          <Button variant="primary" onClick={onViewBasket}>
-            {t('menu.viewBasket')} ›
-          </Button>
-        </Bar>
-      ) : null}
-    </Page>
+    </MenuGate>
   );
 }
 
-export function MenuScreen(props: Props) {
+export function DishesScreen(props: DishesProps) {
   return (
     <ScreenBoundary>
-      <MenuContent {...props} />
+      <DishesContent {...props} />
+    </ScreenBoundary>
+  );
+}
+
+type HowProps = Readonly<{ slug: string; onBack: () => void; onSeeDishes: () => void }>;
+
+function HowContent({ slug, onBack, onSeeDishes }: HowProps) {
+  const { menu, load } = useMenuData(slug);
+  useEffect(markHowItWorksSeen, []);
+  return (
+    <MenuGate menu={menu} load={load}>
+      {(data) => <HowItWorksView data={data} onBack={onBack} onSeeDishes={onSeeDishes} />}
+    </MenuGate>
+  );
+}
+
+export function HowItWorksScreen(props: HowProps) {
+  return (
+    <ScreenBoundary>
+      <HowContent {...props} />
     </ScreenBoundary>
   );
 }

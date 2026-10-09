@@ -1,267 +1,218 @@
-import { useCallback, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import type { SellerOrder } from '../../../shared/domain';
-import { formatOrderCode, ORDER_CODE_LENGTH, parseOrderCode } from '../../../shared/orderCode';
-import { pickText } from '../../../shared/text';
-import { fetchSellerOrder, setOrderStatus } from '../../api/client';
-import { currentSellerSlug } from '../../api/device/sellerContext';
-import { Button, Pill, TextField } from '../../ui';
+import type { PickupPoint, SellerOrder } from '../../../shared/domain';
+import type { DeliveryStep, MessagePlaceResponse } from '../../../shared/handoverContract';
+import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
+import { DeliveryView } from './DeliveryRunScreen';
+import { PickupView } from './PickupView';
 import { SATURDAY_NS } from './i18n/register';
-import {
-  Action,
-  Actions,
-  Card,
-  Code,
-  Count,
-  Head,
-  LoadState,
-  money,
-  Muted,
-  Notice,
-  Page,
-  Row,
-  Section,
-  Small,
-  Title,
-  toneOf,
-  totalCents,
-  useLang,
-  useSaturdayData,
-} from './parts';
+import { matches, Muted, Notice, useHandoverData, useLang } from './parts';
 
-const Big = styled.div`
+export type HandoverViewName = 'pickup' | 'delivery';
+
+const Page = styled.main`
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+`;
+const Top = styled.div<{ $phone: boolean }>`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.lg}
+    ${({ theme, $phone }) => ($phone ? theme.size.pagePadPhone : theme.size.pagePadTablet)}px
+    ${({ theme }) => theme.spacing.md};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+`;
+const Title = styled.h1<{ $phone: boolean }>`
+  margin: 0;
+  font-size: ${({ $phone }) => ($phone ? '1.625rem' : '1.75rem')};
+`;
+const Search = styled.label<{ $phone: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-width: ${({ $phone }) => ($phone ? '0' : '16rem')};
+  flex: ${({ $phone }) => ($phone ? '1 1 100%' : '0 1 auto')};
+  min-height: ${({ theme }) => theme.minTapTarget};
+  padding: 0 ${({ theme }) => theme.spacing.md};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  color: ${({ theme }) => theme.c.muted};
+
   input {
-    min-height: calc(${({ theme }) => theme.minTapTarget} * 1.25);
-    font-size: ${({ theme }) => theme.type.size.xl};
-    font-weight: ${({ theme }) => theme.type.weight.strong};
-    letter-spacing: ${({ theme }) => theme.spacing.xs};
-    text-transform: uppercase;
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: ${({ theme }) => theme.c.text};
+    font: inherit;
+  }
+  input:focus-visible {
+    outline: none;
+  }
+  &:focus-within {
+    outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.fill};
+    outline-offset: 0.125rem;
   }
 `;
-
-const Tag = styled.span`
-  font-size: ${({ theme }) => theme.type.size.sm};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+const Bar = styled.div<{ $phone: boolean }>`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md}
+    ${({ theme, $phone }) => ($phone ? theme.size.pagePadPhone : theme.size.pagePadTablet)}px;
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+`;
+const Body = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+`;
+const Pad = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadTablet}px;
 `;
 
-type Lookup =
-  | Readonly<{ kind: 'idle' }>
-  | Readonly<{ kind: 'looking' }>
-  | Readonly<{ kind: 'bad' }>
-  | Readonly<{ kind: 'notFound' }>
-  | Readonly<{ kind: 'error' }>
-  | Readonly<{ kind: 'found'; order: SellerOrder; justCollected: boolean }>;
+type Props = Readonly<{
+  view?: HandoverViewName;
+  /** Below 600 px: one place at a time, the saved delivery address (D-059), phone padding. */
+  phone?: boolean;
+  /** Phone only: the delivery address kept on this phone for an order (D-059). */
+  addressOf?: (code: string) => string | undefined;
+}>;
 
-/** The reason "Mark collected" is not available yet, or null when it is. */
-function collectReason(order: SellerOrder): string | null {
-  switch (order.status) {
-    case 'ready_for_pickup':
-      return null;
-    case 'collected':
-      return 'handover.reason.collected';
-    case 'cancelled':
-      return 'handover.reason.cancelled';
-    default:
-      return 'handover.reason.early';
-  }
-}
-
-/** Hand-over (S13): find the order by its code, check it, mark it collected. Route-agnostic. */
-export function HandOverScreen() {
+/** Pickup & delivery (plan 001 stage 9): tell customers, never collect for them (D-068). */
+export function HandOverScreen({ view: initial = 'pickup', phone = false, addressOf }: Props) {
   const { t } = useTranslation(SATURDAY_NS);
-  const slug = currentSellerSlug();
-  const { data, reload } = useSaturdayData();
-  const [typed, setTyped] = useState('');
-  const [lookup, setLookup] = useState<Lookup>({ kind: 'idle' });
-  const [failed, setFailed] = useState(false);
-  const [busy, setBusy] = useState(false);
-  // Only the newest lookup may answer; a slow earlier one is ignored.
-  const latest = useRef(0);
+  const lang = useLang();
+  const { data, reload } = useHandoverData();
+  const [view, setView] = useState<HandoverViewName>(initial);
+  const [query, setQuery] = useState('');
+  const [note, setNote] = useState<string | null>(null);
 
-  const onType = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      setTyped(value);
-      setFailed(false);
-      latest.current += 1;
-      const mine = latest.current;
-      const code = parseOrderCode(value);
-      if (code === null) {
-        const length = value.replace(/[\s-]/g, '').length;
-        setLookup(length >= ORDER_CODE_LENGTH ? { kind: 'bad' } : { kind: 'idle' });
-        return;
-      }
-      setLookup({ kind: 'looking' });
-      void fetchSellerOrder(code, undefined, slug).then((result) => {
-        if (latest.current !== mine) return;
-        if (result.ok) {
-          setLookup({ kind: 'found', order: result.data.order, justCollected: false });
-        } else {
-          setLookup({ kind: result.error === 'not_found' ? 'notFound' : 'error' });
-        }
-      });
-    },
-    [slug],
+  const ready = data.status === 'ready' ? data : null;
+  const pickup = useMemo<ReadonlyArray<SellerOrder>>(
+    () => (ready ? ready.orders.filter((o) => o.fulfilment === 'pickup') : []),
+    [ready],
   );
-
-  const collect = useCallback(
-    async (order: SellerOrder) => {
-      setBusy(true);
-      setFailed(false);
-      const result = await setOrderStatus(order.code, 'collected', undefined, slug);
-      setBusy(false);
-      if (!result.ok) {
-        setFailed(true);
-        return;
-      }
-      setLookup({ kind: 'found', order: result.data.order, justCollected: true });
-      await reload();
-    },
-    [slug, reload],
+  const delivery = useMemo<ReadonlyArray<SellerOrder>>(
+    () => (ready ? ready.orders.filter((o) => o.fulfilment === 'delivery') : []),
+    [ready],
   );
+  const live = (orders: ReadonlyArray<SellerOrder>) =>
+    orders.filter((o) => o.status !== 'cancelled');
+  const pickupShown = live(pickup).filter((o) => matches(o, query));
+  const deliveryShown = live(delivery).filter((o) => matches(o, query));
 
-  const next = useCallback(() => {
-    latest.current += 1;
-    setTyped('');
-    setLookup({ kind: 'idle' });
-    setFailed(false);
-  }, []);
+  const collectedCount = pickup.filter((o) => o.status === 'collected').length;
+  const deliveredCount = delivery.filter((o) => o.status === 'delivered').length;
+  const options: ReadonlyArray<SegmentedOption<HandoverViewName>> = [
+    {
+      value: 'pickup',
+      label: t('view.pickup', { count: live(pickup).length }),
+    },
+    {
+      value: 'delivery',
+      label: t('view.delivery', { count: live(delivery).length }),
+    },
+  ];
 
-  const pickups =
-    data.status === 'ready' ? data.orders.filter((o) => o.fulfilment === 'pickup') : [];
-  const ready = pickups.filter((o) => o.status === 'ready_for_pickup').length;
-  const collected = pickups.filter((o) => o.status === 'collected').length;
-  const date = data.status === 'ready' ? data.date : null;
+  const sent = useCallback(
+    (result: MessagePlaceResponse, place: PickupPoint) => {
+      setNote(
+        result.message.type === 'ready_now'
+          ? t('note.placeReady', { place: place.place, sent: result.sent, readied: result.readied })
+          : t('note.placeSent', { place: place.place, sent: result.sent }),
+      );
+      void reload();
+    },
+    [reload, t],
+  );
+  const stepped = useCallback(
+    (order: SellerOrder, step: DeliveryStep) => {
+      setNote(t(`note.step.${step}`, { name: order.firstName }));
+      void reload();
+    },
+    [reload, t],
+  );
 
   return (
     <Page>
-      <Head>
-        <Title>{date ? t('handover.title', { date }) : t('handover.titleNoDate')}</Title>
-        {data.status === 'ready' ? (
-          <Count aria-label={t('handover.countsLabel')}>
-            {t('handover.counts', { ready, collected })}
-          </Count>
-        ) : null}
-      </Head>
-      <LoadState data={data} onRetry={() => void reload()} />
-
-      <Section>
-        <Big>
-          <TextField
-            label={t('handover.codeLabel')}
-            helper={t('handover.codeHelp')}
-            value={typed}
-            onChange={onType}
+      <Top $phone={phone}>
+        <Title $phone={phone}>
+          {ready?.date ? t('title', { date: ready.date }) : t('titleNoDate')}
+        </Title>
+        <Search $phone={phone}>
+          <Icon name="list" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('search')}
+            aria-label={t('search')}
             autoComplete="off"
-            autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}
-            maxLength={12}
           />
-        </Big>
-        {lookup.kind === 'looking' ? <Muted role="status">{t('handover.lookingUp')}</Muted> : null}
-        {lookup.kind === 'bad' ? (
-          <Notice $bad role="alert">
-            {t('handover.badCode')}
-          </Notice>
+        </Search>
+      </Top>
+      <Bar $phone={phone}>
+        <Segmented options={options} value={view} onChange={setView} label={t('viewLabel')} />
+        <Muted>
+          {view === 'pickup'
+            ? t('summary.pickup', { collected: collectedCount })
+            : t('summary.delivery', { delivered: deliveredCount })}
+        </Muted>
+      </Bar>
+      <Body>
+        {data.status === 'loading' ? (
+          <Pad>
+            <Muted role="status">{t('common.loading')}</Muted>
+          </Pad>
         ) : null}
-        {lookup.kind === 'notFound' ? (
-          <Notice $bad role="alert">
-            {t('handover.notFound')}
-          </Notice>
+        {data.status === 'error' ? (
+          <Pad>
+            <Notice $bad role="alert">
+              {t('common.loadError')}
+            </Notice>
+            <div>
+              <Button onClick={() => void reload()}>{t('common.retry')}</Button>
+            </div>
+          </Pad>
         ) : null}
-        {lookup.kind === 'error' ? (
-          <Notice $bad role="alert">
-            {t('common.actionFailed')}
-          </Notice>
+        {note ? (
+          <Pad>
+            <Notice role="status">{note}</Notice>
+          </Pad>
         ) : null}
-        {lookup.kind === 'found' ? (
-          <FoundOrder
-            order={lookup.order}
-            justCollected={lookup.justCollected}
-            busy={busy}
-            onCollect={collect}
-            onNext={next}
+        {ready && view === 'pickup' ? (
+          <PickupView
+            places={ready.places}
+            orders={pickupShown}
+            messages={ready.messages}
+            lang={lang}
+            onSent={sent}
+            single={phone}
           />
         ) : null}
-        {failed ? (
-          <Notice $bad role="alert">
-            {t('common.actionFailed')}
-          </Notice>
+        {ready && view === 'delivery' ? (
+          <DeliveryView
+            orders={deliveryShown}
+            messages={ready.messages}
+            lang={lang}
+            onDone={stepped}
+            addressOf={phone ? addressOf : undefined}
+          />
         ) : null}
-        <Row>
-          <Action>
-            <Button disabled aria-describedby="scan-note">
-              {t('handover.scan')}
-            </Button>
-            <Muted id="scan-note">{t('handover.scanNote')}</Muted>
-          </Action>
-        </Row>
-      </Section>
+      </Body>
     </Page>
-  );
-}
-
-type FoundProps = Readonly<{
-  order: SellerOrder;
-  justCollected: boolean;
-  busy: boolean;
-  onCollect: (order: SellerOrder) => Promise<void>;
-  onNext: () => void;
-}>;
-
-function FoundOrder({ order, justCollected, busy, onCollect, onNext }: FoundProps) {
-  const { t } = useTranslation(SATURDAY_NS);
-  const lang = useLang();
-  const code = formatOrderCode(order.code);
-  const reasonKey = collectReason(order);
-  const isDelivery = order.fulfilment === 'delivery';
-  return (
-    <Card aria-label={t('handover.cardLabel', { code })}>
-      <Row>
-        <Code>{code}</Code>
-        <Pill tone={toneOf(order.status)}>{t(`status.${order.status}`)}</Pill>
-      </Row>
-      <b>{order.firstName}</b>
-      {order.lines.map((line) => (
-        <Small key={line.itemId}>
-          {line.qty}× {pickText(line.name, lang)}
-        </Small>
-      ))}
-      <Row>
-        <b>{money(totalCents(order), lang)}</b>
-        <Tag>{order.paid ? t('common.paid') : t('common.notPaid')}</Tag>
-      </Row>
-      {order.note ? <Small>{t('common.note', { note: order.note })}</Small> : null}
-      {justCollected ? (
-        <>
-          <Notice role="status">
-            {t('handover.collectedDone', { name: order.firstName, code })}
-          </Notice>
-          <Button variant="primary" onClick={onNext}>
-            {t('handover.next')}
-          </Button>
-        </>
-      ) : isDelivery ? (
-        <Notice $bad role="status">
-          {t('handover.isDelivery')}
-        </Notice>
-      ) : (
-        <Actions>
-          <Action>
-            <Button
-              variant="primary"
-              disabled={reasonKey !== null || busy}
-              aria-describedby={reasonKey !== null ? 'collect-reason' : undefined}
-              onClick={() => void onCollect(order)}
-            >
-              {t('handover.markCollected')}
-            </Button>
-            {reasonKey !== null ? <Muted id="collect-reason">{t(reasonKey)}</Muted> : null}
-          </Action>
-        </Actions>
-      )}
-    </Card>
   );
 }

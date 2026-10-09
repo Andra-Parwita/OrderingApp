@@ -43,7 +43,7 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     string,
     number
   >;
-  const { firstName, language, fulfilment, note } = action.payload;
+  const { firstName, language, fulfilment, note, pickupPlaceId } = action.payload;
   const trimmedNote = note.trim();
   // A phone that already has a collected or delivered order is a returning customer (D-027).
   const slug = (yield select((state: CustomerRootState) => state.customer.slug)) as string | null;
@@ -55,6 +55,7 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     fulfilment,
     lines: Object.entries(basket).map(([itemId, qty]) => ({ itemId, qty })),
     ...(trimmedNote !== '' ? { note: trimmedNote } : {}),
+    ...(fulfilment === 'pickup' && pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
     ...(returning ? { returning: true } : {}),
   };
   const result = (yield call(placeOrderRequest, slug, input)) as Awaited<

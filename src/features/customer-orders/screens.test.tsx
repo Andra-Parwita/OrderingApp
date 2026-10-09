@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -61,17 +61,17 @@ describe('MyOrdersScreen', () => {
     renderWithStore(<MyOrdersScreen onBack={onBack} onOpenOrder={noop} />);
     expect(
       await screen.findByText(
-        "Your orders will appear here. Pick something from this week's menu to get started.",
+        'Your orders will appear here. Pick something from the current menu to get started.',
       ),
     ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: "See this week's menu" }));
+    fireEvent.click(screen.getByRole('button', { name: 'See the current menu' }));
     expect(onBack).toHaveBeenCalled();
   });
 
-  it('lists a saved order in "This week" with status, summary, fulfilment and total', async () => {
+  it('lists a saved order in "Current orders" with status, summary, fulfilment and total', async () => {
     const placed = await place();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    expect(await screen.findByText('This week')).toBeVisible();
+    expect(await screen.findByText('Current orders')).toBeVisible();
     const row = screen.getByRole('button', { name: new RegExp(placed.code.slice(0, 3)) });
     expect(row).toHaveTextContent('Ordered');
     expect(row).toHaveTextContent('3× Thin battered tempeh');
@@ -92,7 +92,7 @@ describe('MyOrdersScreen', () => {
     if (!demo.ok) throw new Error('could not place the sample order');
     saveMyOrder(demo.data.order);
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    await screen.findByText('This week');
+    await screen.findByText('Current orders');
     expect(
       screen.getByRole('button', { name: new RegExp(`${onde.code.slice(0, 3)}.*Onde Onde`) }),
     ).toBeVisible();
@@ -175,7 +175,7 @@ describe('MyOrdersScreen', () => {
     );
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
-    expect(await screen.findByText('This week')).toBeVisible();
+    expect(await screen.findByText('Current orders')).toBeVisible();
   });
 });
 
@@ -355,6 +355,23 @@ describe('OrderScreen', () => {
     renderOrder(placed.token);
     expect(await screen.findByText(/Ready! Pick up Sat 10 Oct, 2–5 pm/)).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
+  });
+
+  it('offers "I\'ve collected it" only when ready, with a confirm step, then shows Collected', async () => {
+    const placed = await place();
+    renderOrder(placed.token);
+    await screen.findByTestId('order-code');
+    expect(screen.queryByRole('button', { name: "I've collected it" })).not.toBeInTheDocument();
+    cleanup();
+    await setOrderStatus(placed.code, 'confirmed');
+    await setOrderStatus(placed.code, 'ready_for_pickup');
+    renderOrder(placed.token);
+    const button = await screen.findByRole('button', { name: "I've collected it" });
+    fireEvent.click(button);
+    expect(await screen.findByText('Tap again to confirm you collected it')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Tap again to confirm you collected it' }));
+    expect(await screen.findByText('You collected this order.')).toBeVisible();
+    expect(screen.queryByRole('button', { name: "I've collected it" })).not.toBeInTheDocument();
   });
 
   it('hands the token to the Change callback', async () => {

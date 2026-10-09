@@ -84,7 +84,7 @@ const Counts = styled.ul`
 type Note = Readonly<{ text: string; bad: boolean }>;
 
 /** Download backup / orders CSV and restore. Route-agnostic. */
-export function BackupScreen() {
+export function BackupScreen({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const { t, i18n } = useTranslation(HISTORY_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const slug = currentSellerSlug();
@@ -172,7 +172,7 @@ export function BackupScreen() {
 
   return (
     <Page>
-      <Title>{t('backup.title')}</Title>
+      {embedded ? null : <Title>{t('backup.title')}</Title>}
 
       <Block>
         <Muted>
@@ -217,6 +217,15 @@ export function BackupScreen() {
               <li>{t('backup.count.items', { count: pending.items.length })}</li>
               <li>{t('backup.count.chefs', { count: pending.chefs.length })}</li>
               <li>{t('backup.count.sets', { count: pending.sets.length })}</li>
+              {pending.pickupPlaces ? (
+                <li>{t('backup.count.pickupPlaces', { count: pending.pickupPlaces.length })}</li>
+              ) : null}
+              {pending.dishes ? (
+                <li>{t('backup.count.dishes', { count: pending.dishes.length })}</li>
+              ) : null}
+              {pending.dishSets ? (
+                <li>{t('backup.count.dishSets', { count: pending.dishSets.length })}</li>
+              ) : null}
             </Counts>
             <ConfirmButton
               variant="primary"

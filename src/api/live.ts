@@ -22,6 +22,8 @@ export type LiveListener = {
 export type SocketLike = {
   send(data: string): void;
   close(): void;
+  /** 0 while still connecting (a real WebSocket); fakes may leave it out. */
+  readyState?: number;
   onopen: ((event: Event) => unknown) | null;
   onmessage: ((event: MessageEvent) => unknown) | null;
   onclose: ((event: CloseEvent) => unknown) | null;
@@ -143,7 +145,9 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
       socket = null;
       if (current) {
         current.onopen = current.onmessage = current.onclose = current.onerror = null;
-        current.close();
+        // Closing a socket that is still connecting makes the browser log an error: wait for it to open.
+        if (current.readyState === 0) current.onopen = () => current.close();
+        else current.close();
       }
     },
   };

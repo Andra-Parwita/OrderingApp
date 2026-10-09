@@ -10,6 +10,7 @@ import { customerKind, latestDiff } from './customerKind';
 import { useLang } from './orderText';
 import { selectChange } from './sellerOrdersSelectors';
 import {
+  collectedRequested,
   lockChangeRequested,
   nudgeRequested,
   paidChangeRequested,
@@ -88,11 +89,17 @@ export function useOrderActions(order: Order) {
     [dispatch, order.code, order.locked],
   );
   const onCancel = useCallback(
-    () => dispatch(statusChangeRequested({ code: order.code, to: 'cancelled' })),
-    [dispatch, order.code],
+    () =>
+      dispatch(statusChangeRequested({ code: order.code, to: 'cancelled', from: order.status })),
+    [dispatch, order.code, order.status],
   );
   const onStep = useCallback(
-    (to: Order['status']) => dispatch(statusChangeRequested({ code: order.code, to })),
+    (to: Order['status']) =>
+      dispatch(statusChangeRequested({ code: order.code, to, from: order.status })),
+    [dispatch, order.code, order.status],
+  );
+  const onCollected = useCallback(
+    () => dispatch(collectedRequested({ code: order.code })),
     [dispatch, order.code],
   );
   const onWhatsApp = useCallback(() => {
@@ -151,6 +158,7 @@ export function useOrderActions(order: Order) {
     onLock,
     onCancel,
     onStep,
+    onCollected,
     onWhatsApp,
     onRetry,
   };

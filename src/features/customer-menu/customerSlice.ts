@@ -61,6 +61,8 @@ export type PlaceRequest = {
   language: Language;
   fulfilment: Fulfilment;
   note: string;
+  /** D-061: the pickup place chosen at checkout (a pickup order). */
+  pickupPlaceId?: string;
 };
 
 export type UpdateRequest = { fulfilment: Fulfilment; note: string };

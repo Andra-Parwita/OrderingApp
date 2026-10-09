@@ -26,5 +26,89 @@
   "save": "Save",
   "saving": "Saving…",
   "saved": "Saved",
-  "saveFailed": "Could not save. Try again."
+  "saveFailed": "Could not save. Try again.",
+  "panes": {
+    "nav": "Settings sections",
+    "kitchen": { "title": "Kitchen", "sub": "Name, WhatsApp, pictures" },
+    "post": { "title": "WhatsApp post", "sub": "Greeting and closing" },
+    "pickup": { "title": "Pickup locations", "sub": "Up to 5 places" },
+    "defaults": { "title": "Menu defaults", "sub": "Cut-off, delivery" },
+    "look": { "title": "Appearance", "sub": "Light / dark, theme" },
+    "chefs": { "title": "Chefs", "sub": "Invite, rename, delete" },
+    "devices": { "title": "Devices", "sub": "Add, rename, sign out" },
+    "backup": { "title": "Backup", "sub": "Download or restore" }
+  },
+  "kitchen": {
+    "name": "Kitchen name",
+    "nameHelper": "Shown to customers on your menu. Up to 60 characters.",
+    "nameInvalid": "Enter a name (up to 60 characters).",
+    "phone": "WhatsApp number",
+    "phoneHelper": "Customers send their order number here."
+  },
+  "post": {
+    "preview": "Preview",
+    "previewHelper": "How the post reads with your menu in the middle.",
+    "previewEn": "English",
+    "previewId": "Indonesian",
+    "menuHere": "(your menu goes here)"
+  },
+  "pickup": {
+    "intro": "Up to 5 places. Each menu picks which ones it uses, and customers choose one when they order.",
+    "count": "{{count}} of {{max}}",
+    "empty": "No pickup places yet. Add the first one.",
+    "add": "Add a place",
+    "canAdd_one": "You can add {{count}} more.",
+    "canAdd_other": "You can add {{count}} more.",
+    "full": "You have reached 5 places. Delete one to add another.",
+    "edit": "Edit {{place}}",
+    "editLabel": "Edit",
+    "place": "Place",
+    "directionsEn": "Directions (English)",
+    "directionsId": "Directions (Indonesian)",
+    "from": "From",
+    "to": "To",
+    "window": "{{start}}–{{end}}",
+    "saveNew": "Add place",
+    "saveEdit": "Save place",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleteConfirm": "Tap again to delete",
+    "deleted": "Deleted {{place}}.",
+    "deletedLive": "{{place}} was on the live menu. The live menu no longer offers it.",
+    "invalid": "Check the place, directions and times (the end must be after the start).",
+    "limit": "You can save up to 5 places.",
+    "failed": "Could not save. Please try again.",
+    "loadFailed": "Could not load your pickup places."
+  },
+  "defaults": {
+    "intro": "A new menu starts with these. You can change them on each menu.",
+    "cutoffTitle": "Cut-off",
+    "daysBefore": "Days before the cooking day",
+    "daysHelper": "0 closes on the cooking day itself.",
+    "time": "Time",
+    "deliveryTitle": "Delivery",
+    "deliveryOn": "Offer delivery",
+    "deliveryOff": "No delivery",
+    "noteEn": "Delivery note (English)",
+    "noteId": "Delivery note (Indonesian)",
+    "invalid": "Check the days (0 to 14), the time and the notes.",
+    "loadFailed": "Could not load the menu defaults."
+  },
+  "look": {
+    "modeTitle": "Light or dark",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto",
+    "modeHelper": "Auto follows this device's own setting. Saved on this device.",
+    "themeTitle": "Colour theme",
+    "themeHelper": "Changes the accent and background tint for everyone in your kitchen.",
+    "themes": {
+      "onde": "Onde Onde",
+      "bali": "Bali",
+      "sumatra": "Sumatra",
+      "sunda": "Sunda",
+      "jawa": "Jawa"
+    },
+    "loadFailed": "Could not load the colour theme."
+  }
 }

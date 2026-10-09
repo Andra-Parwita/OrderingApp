@@ -1,0 +1,70 @@
+{
+  "about": "Sample data used in the design. Load it in a fixtures or dev mode so each screen can be rendered exactly as drawn. Names, prices and codes are placeholders; prices are AUD. 'today' is the frozen date for date-relative copy ('Today', 'Tomorrow').",
+  "today": "2026-10-17T12:41:00+10:30",
+  "kitchen": {
+    "slug": "onde-onde",
+    "name": "Onde Onde",
+    "tagline": { "en": "Indonesian homemade food", "id": "Masakan rumahan Indonesia" },
+    "cook": "Ibu Sari",
+    "whatsapp": "+61 4xx xxx xxx",
+    "theme": { "brand": "ondeonde", "note": "Seller picks in Seller app → Settings → Appearance" },
+    "pictures": {
+      "phoneBanner": "design/assets/phone-banner.jpg",
+      "logoWide": "design/assets/logo-wide.png",
+      "homeScreenIcon": "design/assets/home-icon.jpg",
+      "note": "phoneBanner is a 2:1 file with blurred bands; the real seller upload is 3:1 (1200 × 400). homeScreenIcon is the seller's 'Small icon' upload (square, 512 × 512)."
+    }
+  },
+  "menu": {
+    "id": "m-2026-10-17",
+    "state": "live",
+    "takingOrders": true,
+    "cookingDate": "2026-10-17",
+    "orderBy": "2026-10-16T21:00:00+10:30",
+    "picture": "design/assets/menu-picture.jpg",
+    "delivery": { "available": true, "note": { "en": "You send your address on WhatsApp", "id": "Alamat dikirim lewat WhatsApp" } },
+    "pickupPlaces": [
+      { "id": "p1", "name": "Glen Waverley", "from": "14:00", "to": "17:00", "directions": { "en": "12 Kingsway", "id": "12 Kingsway" } },
+      { "id": "p2", "name": "Box Hill station", "from": "18:00", "to": "19:00", "directions": { "en": "bus bay 3", "id": "halte bus 3" } },
+      { "id": "p3", "name": "Clayton", "from": "11:00", "to": "12:00", "directions": { "en": "Monash Medical Centre car park", "id": "Parkir Monash Medical Centre" } }
+    ],
+    "dishes": [
+      { "id": "d1", "name": { "en": "Lime-leaf mixed rice", "id": "Nasi campur daun jeruk" }, "description": { "en": "with salt-and-chilli fried chicken, crispy tempeh and stir-fried cabbage", "id": "dengan ayam goreng garam cabai, tempe kering dan tumis kol" }, "size": { "en": "1 box", "id": "1 kotak" }, "price": 15.0, "left": null, "soldOut": false },
+      { "id": "d2", "name": { "en": "Tilapia pesmol", "id": "Pesmol nila" }, "description": { "en": "turmeric pesmol sauce", "id": "bumbu pesmol kunyit" }, "size": { "en": "1 portion", "id": "1 porsi" }, "price": 15.0, "left": 3, "soldOut": false },
+      { "id": "d3", "name": { "en": "Chicken lemper", "id": "Lemper ayam" }, "description": { "en": "sticky rice rolls in banana leaf", "id": "ketan isi ayam dalam daun pisang" }, "size": { "en": "4 pieces", "id": "4 buah" }, "price": 10.0, "left": 0, "soldOut": true },
+      { "id": "d4", "name": { "en": "Palembang fish cake with egg", "id": "Pempek kapal selam" }, "description": { "en": "\"submarine\"", "id": "\"kapal selam\"" }, "size": { "en": "1 portion", "id": "1 porsi" }, "price": 10.0, "left": null, "soldOut": false },
+      { "id": "d5", "name": { "en": "Kue lapis", "id": "Kue lapis" }, "description": { "en": "steamed layer cake, pandan and coconut", "id": "kue lapis kukus, pandan dan kelapa" }, "size": { "en": "6 pieces", "id": "6 potong" }, "price": 12.0, "left": 1, "soldOut": false }
+    ]
+  },
+  "basket": [ { "dishId": "d1", "qty": 2 }, { "dishId": "d5", "qty": 1 } ],
+  "orders": [
+    {
+      "code": "K7F2QX", "display": "K7F-2QX", "kitchen": "Onde Onde", "menuDate": "2026-10-17",
+      "firstName": "Dewi", "note": "Less chilli please",
+      "items": [ { "dishId": "d1", "qty": 2, "price": 15.0 }, { "dishId": "d5", "qty": 1, "price": 12.0 } ],
+      "total": 42.0, "fulfilment": { "type": "pickup", "placeId": "p1" },
+      "status": "ready", "paid": false, "locked": false, "hasNewUpdate": true,
+      "timeline": { "ordered": "2026-10-14T19:42:00+10:30", "confirmed": "2026-10-14T20:10:00+10:30", "ready": "2026-10-17T14:05:00+10:30" },
+      "messages": [
+        { "type": "ready_at_place", "text": { "en": "Ready for pickup at Glen Waverley", "id": "Siap diambil di Glen Waverley" }, "at": "2026-10-17T14:05:00+10:30" },
+        { "type": "ready_in", "minutes": 15, "text": { "en": "Ready in 15 min", "id": "Siap dalam 15 menit" }, "at": "2026-10-17T13:50:00+10:30" },
+        { "type": "own_text", "text": { "en": "Less chilli noted. See you Saturday, Dewi!" }, "from": "Ibu Sari", "at": "2026-10-14T20:10:00+10:30" }
+      ]
+    },
+    { "code": "M3P8HD", "display": "M3P-8HD", "kitchen": "Dapur Bu Rina", "menuDate": "2026-10-18", "items": [ { "name": "Rendang", "qty": 2 }, { "name": "Sayur lodeh", "qty": 1 } ], "total": 36.0, "fulfilment": { "type": "delivery" }, "status": "confirmed", "paid": true, "locked": true },
+    { "code": "B2Q7LN", "display": "B2Q-7LN", "kitchen": "Onde Onde", "menuDate": "2026-10-10", "total": 27.0, "status": "collected", "collectedAt": "2026-10-10T15:12:00+10:30", "paid": true, "menuClosed": true, "keptUntil": "2026-11-07" },
+    { "code": "H8T4WC", "display": "H8T-4WC", "kitchen": "Onde Onde", "menuDate": "2026-10-03", "total": 15.0, "status": "cancelled" },
+    { "code": "J5R9KA", "display": "J5R-9KA", "kitchen": "Onde Onde", "menuDate": "2026-09-05", "status": "archived" }
+  ],
+  "screenStates": {
+    "menu-paused": { "menu.takingOrders": false },
+    "menu-closed": { "now": "2026-10-16T21:14:00+10:30" },
+    "menu-not-published": { "menu": null },
+    "menu-load-error": { "menuRequest": "network-error" },
+    "basket-delivery-error": { "basket": [ { "dishId": "d1", "qty": 2 } ], "fulfilment": "delivery", "notice": "d5 sold out after it was added" },
+    "order-confirmed": { "orders[0].status": "confirmed", "orders[0].messages": "only the own_text message", "now": "2026-10-15T08:15:00+10:30" },
+    "notify-off": { "displayMode": "standalone", "Notification.permission": "default", "orders[0].status": "ordered" },
+    "notify-on": { "displayMode": "standalone", "Notification.permission": "granted" },
+    "notify-blocked": { "displayMode": "standalone", "Notification.permission": "denied" }
+  }
+}

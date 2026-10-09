@@ -1,4 +1,4 @@
-import { parseApiError, type ApiErrorCode } from '../../shared/apiError';
+import { parseApiError, type ApiErrorCode, type ApiWarning } from '../../shared/apiError';
 import type { StaffActor } from '../../shared/domain';
 import { dropLegacySessionToken, setSessionHint } from './device/session';
 
@@ -16,6 +16,8 @@ export type ApiFailure = {
   triesLeft?: number;
   /** On `locked_out`: seconds until sign-in works again. */
   retryAfterSeconds?: number;
+  /** On a 409 the seller can override (D-062): what is wrong; send the call again with force: true. */
+  warning?: ApiWarning;
 };
 
 export type ApiResult<T> = { ok: true; data: T } | ApiFailure;
@@ -74,6 +76,7 @@ async function failureOf(response: Response): Promise<ApiFailure> {
         ...(apiError.retryAfterSeconds !== undefined
           ? { retryAfterSeconds: apiError.retryAfterSeconds }
           : {}),
+        ...(apiError.warning ? { warning: apiError.warning } : {}),
       }
     : {
         ok: false,

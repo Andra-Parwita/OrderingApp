@@ -97,7 +97,7 @@ export function formatDayTime(iso: string, lang: Language): string {
 const DAY_MS = 86_400_000;
 
 /** Today's date in the cook's zone, "YYYY-MM-DD". */
-function localDate(now: Date): string {
+export function localDate(now: Date): string {
   const parts = partsOf(now, 'en', { year: 'numeric', month: '2-digit', day: '2-digit' });
   return `${parts.year ?? ''}-${parts.month ?? ''}-${parts.day ?? ''}`;
 }
@@ -126,4 +126,19 @@ function zoneOffset(date: string): string {
 export function defaultCutoffAt(cookingDate: string): string {
   const day = addDays(cookingDate, -1);
   return `${day}T21:00:00${zoneOffset(day)}`;
+}
+
+/** The cut-off for a cooking day: `daysBefore` days earlier at local `time` ("HH:MM"), with offset. */
+export function cutoffAtFor(cookingDate: string, daysBefore: number, time: string): string {
+  const day = addDays(cookingDate, -daysBefore);
+  return `${day}T${time}:00${zoneOffset(day)}`;
+}
+
+/**
+ * When a menu finishes by itself (D-069 Q5): the midnight that ends its cooking day in the cook's
+ * zone, as an instant with offset. Daylight saving changes at 02:00, so the offset on the cooking
+ * day is still the right one at that midnight.
+ */
+export function menuFinishesAt(cookingDate: string): string {
+  return `${addDays(cookingDate, 1)}T00:00:00${zoneOffset(cookingDate)}`;
 }

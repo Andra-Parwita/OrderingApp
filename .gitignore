@@ -59,3 +59,12 @@ desktop.ini
 
 # Design reference screenshots: regenerate with `node uxDesign/<app>/capture.mjs` (17 MB, not kept in git)
 uxDesign/*/captures/
+
+# Design-compare screenshots (e2e/design-compare.spec.ts)
+captures/
+
+graphify-out/
+
+
+# graphify knowledge graph output (regenerate with /graphify)
+graphify-out/

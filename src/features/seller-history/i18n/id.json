@@ -51,7 +51,10 @@
       "pastWeeks": "Pekan lalu: {{count}}",
       "items": "Menu: {{count}}",
       "chefs": "Koki: {{count}}",
-      "sets": "Set tersimpan: {{count}}"
+      "sets": "Set tersimpan: {{count}}",
+      "pickupPlaces": "Lokasi ambil: {{count}}",
+      "dishes": "Hidangan kamu: {{count}}",
+      "dishSets": "Paket hidangan tersimpan: {{count}}"
     },
     "restore": "Pulihkan cadangan ini",
     "restoreConfirm": "Ganti semua data dapur ini?",

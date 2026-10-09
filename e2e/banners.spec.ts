@@ -132,8 +132,8 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
   {
     const { context, page, errors } = await open(390, 844);
     try {
-      // The settings page: the order list's width depends on whatever orders other specs placed.
-      await page.goto('/seller/settings');
+      // Orders on a phone (under 600 px): the 3:1 phone banner above the list.
+      await page.goto('/seller');
       const image = await loaded(page, alt);
       await expect(image).toHaveAttribute('src', '/samples/banner-phone.jpg');
       await showsWholeImage(image);
@@ -163,7 +163,7 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
   }
 });
 
-test('the orders table fits 1024 px with long names, rail open and collapsed', async ({
+test('the orders list fits 1024 px with long names, panel open and collapsed', async ({
   browser,
   request,
 }, testInfo) => {
@@ -217,16 +217,17 @@ test('the orders table fits 1024 px with long names, rail open and collapsed', a
     const errors = collectErrors(page);
     await page.goto('/seller');
     await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
-    await expect(page.getByRole('row', { name: new RegExp(stamp) })).toHaveCount(names.length);
-    const table = page.getByRole('table');
+    const rows = page.getByRole('button', { name: new RegExp(stamp) });
+    await expect(rows).toHaveCount(names.length);
+    const list = rows.first().locator('xpath=..');
 
     const fits = async () => {
       expect(await pageScrollWidth(page)).toBeLessThanOrEqual(1024);
-      const box = await table.boundingBox();
+      const box = await list.boundingBox();
       expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(1024);
       // Names wrap rather than truncate: each full name is shown and none is cut off.
       for (const name of names) {
-        const cell = page.getByRole('cell', { name, exact: true });
+        const cell = page.getByText(name, { exact: true });
         await expect(cell).toBeVisible();
         const clipped = await cell.evaluate((td) => td.scrollWidth > td.clientWidth + 1);
         expect(clipped).toBe(false);

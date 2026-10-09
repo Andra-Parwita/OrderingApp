@@ -1,74 +1,107 @@
-import { useCallback, useMemo, type ChangeEvent } from 'react';
+import { useCallback, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import { formatDay } from '../../../shared/dates';
-import type { Order } from '../../../shared/domain';
-import { formatMoney } from '../../../shared/money';
-import { formatOrderCode } from '../../../shared/orderCode';
+import { formatDay, formatDayTime } from '../../../shared/dates';
+import { parseOrderCode } from '../../../shared/orderCode';
+import type { MenuView } from '../../../shared/menusContract';
+import { Button, EmptyState, Icon, ListWithPanel } from '../../ui';
+import { LiveDot } from '../../components/LiveDot';
+import { DishesPanel } from './DishesPanel';
+import { FeedbackHost } from './FeedbackHost';
 import {
-  Button,
-  Icon,
-  Pill,
-  Table,
-  TableCell,
-  TableRow,
-  TextField,
-  type IconName,
-  type TableColumn,
-} from '../../ui';
+  FinishedHome,
+  HomeMessage,
+  NotPublishedHome,
+  SetupChecklist,
+  useEarlierMenus,
+} from './HomeStates';
 import { SELLER_NS } from './i18n/register';
-import { attentionFlag, type AttentionFlag } from './customerKind';
-import { STATUS_FILTERS } from './orderStatus';
-import {
-  DevTools,
-  FilterChip,
-  useOrdersPolling,
-  useShowDevTools,
-  useVisibleOrders,
-} from './ordersShared';
-import { LiveDot } from './LiveDot';
+import { LiveOrderRow } from './LiveOrderRow';
+import { NewOrderPanel } from './NewOrderPanel';
 import type { OrdersScreenProps } from './OrdersScreen';
-import { itemsSummary, orderTotalCents, useLang } from './orderText';
-import { toneOf } from './orderStatus';
+import { OrderPanelActions, OrderPanelBody } from './OrderPanelBody';
+import { homeKindOf } from './homeState';
+import { STATUS_FILTERS, type StatusFilter } from './orderStatus';
+import { useLang } from './orderText';
+import { DevTools, useOrdersPolling, useShowDevTools, useVisibleOrders } from './ordersShared';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
-import { selectCookingDate, selectCounts, selectList } from './sellerOrdersSelectors';
-import { refreshRequested } from './sellerOrdersSlice';
+import {
+  selectCounts,
+  selectCurrent,
+  selectList,
+  selectOrderByCode,
+  selectOrders,
+  selectPast,
+  selectUnpaidCount,
+} from './sellerOrdersSelectors';
+import {
+  currentRequested,
+  refreshRequested,
+  takingOrdersRequested,
+  type SellerOrdersRootState,
+} from './sellerOrdersSlice';
 
-// Desktop orders (A1-1, A1-4): one simple table; a click opens the slide-over. At most six
-// columns, plain words, one "needs attention" flag per row (D-030, D-031). Order, name, total,
-// status and flag never truncate; only "what they ordered" gives way first, then names, status and
-// flag wrap onto a second line so the table fits 1024 px (D-038).
+// Orders, the home screen on a tablet or computer (plan 001 stage 6; handoff, Home). What it shows
+// depends on the menu: first-run checklist, "not published yet", live (list + detail), or the
+// cooking day over. Live: list with search, toggles and status tabs, the order beside it (384 px),
+// New order as a 560 px slide-over, and the live Dishes panel.
 
 export type OrdersTableScreenProps = OrdersScreenProps &
   Readonly<{
     /** The order whose panel is open, to mark its row. */
     selectedCode?: string;
+    /** The Changed and Not paid toggles (in the URL). */
+    toggles?: Readonly<{ changed: boolean; unpaid: boolean }>;
+    onToggle?: (key: 'changed' | 'unpaid') => void;
+    onCloseOrder?: () => void;
+    /** The New order slide-over is open (route /seller/new). */
+    newOrderOpen?: boolean;
+    onCloseNewOrder?: () => void;
   }>;
-
-// The column that takes the rest would squeeze the name to its floor, so the floor grows with the
-// screen: about nine characters per line at 1024 px, roomy from 1366 px.
-const NAME_MIN_WIDTH = 'clamp(7rem, 14vw, 14rem)';
 
 const Page = styled.main`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
   min-height: 100dvh;
-  padding: ${({ theme }) => theme.spacing.xl};
-  font-size: ${({ theme }) => theme.type.size.base};
+  font-size: 0.9375rem;
 `;
 const Head = styled.header`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.size.pagePadTablet}px ${({ theme }) => theme.size.pagePadTablet}px
+    ${({ theme }) => theme.spacing.sm};
+`;
+const TitleBlock = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  min-width: 0;
+`;
+const TitleLine = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
 `;
 const Title = styled.h1`
   margin: 0;
-  font-size: ${({ theme }) => theme.type.size.xl};
-  line-height: ${({ theme }) => theme.type.lineHeight.tight};
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.25;
+`;
+const SubLine = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
+
+  strong {
+    color: ${({ theme }) => theme.c.text};
+    font-weight: 600;
+  }
 `;
 const Tools = styled.div`
   display: flex;
@@ -76,199 +109,251 @@ const Tools = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
 `;
-const Chips = styled.div`
+const NoLive = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
+`;
+const Ring = styled.span`
+  width: 0.75rem;
+  height: 0.75rem;
+  border: ${({ theme }) => theme.border.focus} solid currentColor;
+  border-radius: 50%;
+`;
+const Switch = styled.button<{ $on: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.sm};
+  border: 0;
+  background: transparent;
+  color: ${({ theme }) => theme.c.text};
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  i {
+    position: relative;
+    width: 2.5rem;
+    height: 1.5rem;
+    border: ${({ theme }) => theme.border.hairline} solid
+      ${({ theme, $on }) => ($on ? theme.c.fill : theme.c.ctrl)};
+    border-radius: ${({ theme }) => theme.radius.pill};
+    background: ${({ theme, $on }) => ($on ? theme.c.fill : 'transparent')};
+  }
+  i::after {
+    content: '';
+    position: absolute;
+    top: 0.125rem;
+    left: ${({ $on }) => ($on ? '18px' : '2px')};
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    background: ${({ theme, $on }) => ($on ? theme.c.on : theme.c.ctrl)};
+    transition: left ${({ theme }) => theme.motion.fast};
+  }
+`;
+const Filters = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadTablet}px;
 `;
-const SearchBox = styled.div`
-  max-width: 27.5rem;
+const Search = styled.label`
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 12rem;
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.md};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  color: ${({ theme }) => theme.c.muted};
+
+  input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: ${({ theme }) => theme.c.text};
+    font: inherit;
+  }
 `;
-const Flag = styled.span<{ $none?: boolean }>`
+const Toggle = styled.button<{ $on: boolean }>`
   display: inline-flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  color: ${({ theme, $none }) => ($none ? theme.colour.textMuted : theme.colour.text)};
-  font-weight: ${({ theme, $none }) =>
-    $none ? theme.type.weight.regular : theme.type.weight.strong};
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.md};
+  border: ${({ theme }) => theme.border.hairline} solid
+    ${({ theme, $on }) => ($on ? theme.c.fill : theme.c.ctrl)};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: ${({ theme, $on }) => ($on ? theme.c.tint : 'transparent')};
+  color: ${({ theme }) => theme.c.text};
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  span {
+    color: ${({ theme }) => theme.c.muted};
+    font-variant-numeric: tabular-nums;
+  }
+`;
+const Tabs = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.lg};
+  overflow-x: auto;
+  padding: 0 ${({ theme }) => theme.size.pagePadTablet}px;
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+`;
+const Tab = styled.button<{ $on: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0;
+  border: 0;
+  border-bottom: ${({ theme }) => theme.border.tab} solid
+    ${({ theme, $on }) => ($on ? theme.c.fill : 'transparent')};
+  background: transparent;
+  color: ${({ theme, $on }) => ($on ? theme.c.text : theme.c.muted)};
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  span {
+    min-width: 1.5rem;
+    padding: 0 ${({ theme }) => theme.spacing.sm};
+    border-radius: ${({ theme }) => theme.radius.pill};
+    background: ${({ theme, $on }) => ($on ? theme.c.tint : theme.c.surf2)};
+    color: ${({ theme, $on }) => ($on ? theme.c.atext : theme.c.muted)};
+    font-size: 0.8125rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
 `;
 const Message = styled.p`
   margin: 0;
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colour.textMuted};
-`;
-const Empty = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  max-width: 28.75rem;
-  margin: ${({ theme }) => theme.spacing.xxl} auto;
-  text-align: center;
-`;
-const EmptyIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: ${({ theme }) => theme.radius.pill};
-  background: ${({ theme }) => theme.colour.surfaceAlt};
-  color: ${({ theme }) => theme.colour.textMuted};
-
-  svg {
-    width: 2.25rem;
-    height: 2.25rem;
-  }
-`;
-const EmptyTitle = styled.h2`
-  margin: 0;
-  font-size: ${({ theme }) => theme.type.size.xl};
-`;
-const EmptyHint = styled.p`
-  margin: 0;
-  font-size: ${({ theme }) => theme.type.size.lg};
-  color: ${({ theme }) => theme.colour.textMuted};
+  padding: ${({ theme }) => theme.size.pagePadTablet}px;
+  color: ${({ theme }) => theme.c.muted};
 `;
 const ErrorBox = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.size.pagePadTablet}px;
 `;
 const Bottom = styled.div`
   margin-top: auto;
 `;
 
-const FLAG_ICON: Readonly<Record<AttentionFlag, IconName>> = {
-  new: 'star',
-  edited: 'pencil',
-  note: 'note',
-  locked: 'lock',
-};
+const TAB_FILTERS = STATUS_FILTERS.filter((id) => id !== 'changed');
 
-type OrderTableRowProps = Readonly<{
-  order: Order;
-  selected: boolean;
-  onOpen: (code: string) => void;
-}>;
-
-function OrderTableRow({ order, selected, onOpen }: OrderTableRowProps) {
+function TakingOrders({ view }: Readonly<{ view: MenuView }>) {
   const { t } = useTranslation(SELLER_NS);
-  const lang = useLang();
-  const flag = attentionFlag(order);
-  const items = itemsSummary(order, lang);
+  const dispatch = useDispatch();
+  const on = view.menu.takingOrders;
+  const flip = useCallback(() => dispatch(takingOrdersRequested({ value: !on })), [dispatch, on]);
   return (
-    <TableRow rowId={order.code} selected={selected} onOpen={onOpen}>
-      <TableCell strong>{formatOrderCode(order.code)}</TableCell>
-      <TableCell wrap minWidth={NAME_MIN_WIDTH} breakWords>
-        {order.firstName}
-      </TableCell>
-      <TableCell fullText={items}>{items}</TableCell>
-      <TableCell align="end">{formatMoney(orderTotalCents(order), lang)}</TableCell>
-      <TableCell wrap minWidth="6rem">
-        <Pill large wrap tone={toneOf(order.status)}>
-          {t(`status.${order.status}`)}
-        </Pill>
-      </TableCell>
-      <TableCell wrap minWidth="6rem">
-        {flag ? (
-          <Flag>
-            <Icon name={FLAG_ICON[flag]} />
-            {t(`attention.${flag}`)}
-          </Flag>
-        ) : (
-          <Flag $none>{t('attention.none')}</Flag>
-        )}
-      </TableCell>
-    </TableRow>
+    <Switch type="button" role="switch" aria-checked={on} $on={on} onClick={flip}>
+      <i aria-hidden="true" />
+      {on ? t('home.takingOrders') : t('home.paused')}
+    </Switch>
   );
 }
 
-function OrdersTableContent({
+type BoardProps = OrdersTableScreenProps & Readonly<{ readOnly: boolean }>;
+
+/** The orders list with its toggles and tabs, and the order beside it. */
+function OrdersBoard({
+  readOnly,
   filter,
   query,
+  toggles = { changed: false, unpaid: false },
+  onToggle,
   onFilterChange,
   onQueryChange,
   onOpenOrder,
-  onNewOrder,
+  onCloseOrder,
   onShare,
   selectedCode,
-}: OrdersTableScreenProps) {
+}: BoardProps) {
   const { t } = useTranslation(SELLER_NS);
-  const lang = useLang();
   const dispatch = useDispatch();
   const list = useSelector(selectList);
   const counts = useSelector(selectCounts);
-  const visible = useVisibleOrders(filter, query);
-  const cookingDate = useSelector(selectCookingDate);
-  useOrdersPolling();
-  const showDev = useShowDevTools();
-
+  const unpaid = useSelector(selectUnpaidCount);
+  const visible = useVisibleOrders(filter, query, toggles);
+  const selected = useSelector((state: SellerOrdersRootState) =>
+    selectedCode ? selectOrderByCode(state, selectedCode) : undefined,
+  );
+  const retry = useCallback(() => dispatch(refreshRequested()), [dispatch]);
   const onQuery = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onQueryChange(event.target.value),
     [onQueryChange],
   );
-  const retry = useCallback(() => dispatch(refreshRequested()), [dispatch]);
-
-  const columns = useMemo<Array<TableColumn>>(
-    () => [
-      { id: 'code', header: t('orders.colCode') },
-      { id: 'name', header: t('orders.colName') },
-      { id: 'items', header: t('orders.colItems'), width: '100%' },
-      { id: 'total', header: t('orders.colTotal'), align: 'end' },
-      { id: 'status', header: t('orders.colStatus') },
-      { id: 'attention', header: t('orders.colAttention') },
-    ],
-    [t],
-  );
-
-  const title =
-    cookingDate !== null
-      ? t('orders.titleWithDate', { date: formatDay(cookingDate, lang) })
-      : t('orders.title');
-  const fetchFailed = list.status === 'error' || (list.status === 'ready' && list.live === 'error');
   const noOrdersAtAll = list.status === 'ready' && counts.all === 0;
+  const raw = selectedCode ? (parseOrderCode(selectedCode) ?? selectedCode) : undefined;
 
-  return (
-    <Page>
-      <Head>
-        <Title>{title}</Title>
-        <Tools>
-          <LiveDot fetchFailed={fetchFailed} />
-          {onShare ? (
-            <Button variant="quiet" onClick={onShare}>
-              {t('orders.share')}
-            </Button>
-          ) : null}
-          {onNewOrder ? (
-            <Button variant="primary" onClick={onNewOrder}>
-              {t('orders.newOrder')}
-            </Button>
-          ) : null}
-        </Tools>
-      </Head>
-      <Chips role="group" aria-label={t('orders.filterLabel')}>
-        {STATUS_FILTERS.map((id) => (
-          <FilterChip
-            key={id}
-            id={id}
-            label={`${t(`filter.${id}`)} ${counts[id]}`}
-            pressed={id === filter}
-            onSelect={onFilterChange}
+  const listNode = (
+    <div>
+      <Filters role="search">
+        <Search>
+          <Icon name="list" />
+          <input
+            type="search"
+            value={query}
+            onChange={onQuery}
+            placeholder={t('live.search')}
+            aria-label={t('live.search')}
+            autoComplete="off"
+            enterKeyHint="search"
           />
+        </Search>
+        <Toggle
+          type="button"
+          aria-pressed={toggles.changed}
+          $on={toggles.changed}
+          onClick={() => onToggle?.('changed')}
+        >
+          <Icon name="pencil" />
+          {t('live.changed')}
+          <span>{counts.changed}</span>
+        </Toggle>
+        <Toggle
+          type="button"
+          aria-pressed={toggles.unpaid}
+          $on={toggles.unpaid}
+          onClick={() => onToggle?.('unpaid')}
+        >
+          <Icon name="coin" />
+          {t('live.notPaid')}
+          <span>{unpaid}</span>
+        </Toggle>
+      </Filters>
+      <Tabs role="group" aria-label={t('live.status')}>
+        {TAB_FILTERS.map((id: StatusFilter) => (
+          <Tab
+            key={id}
+            type="button"
+            aria-pressed={id === filter}
+            $on={id === filter}
+            onClick={() => onFilterChange(id)}
+          >
+            {t(`filter.${id}`)}
+            <span>{counts[id]}</span>
+          </Tab>
         ))}
-      </Chips>
-      <SearchBox>
-        <TextField
-          label={t('orders.findLabel')}
-          value={query}
-          onChange={onQuery}
-          autoComplete="off"
-          enterKeyHint="search"
-        />
-      </SearchBox>
-
+      </Tabs>
       {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
       {list.status === 'error' ? (
         <ErrorBox role="alert">
@@ -277,34 +362,152 @@ function OrdersTableContent({
         </ErrorBox>
       ) : null}
       {noOrdersAtAll ? (
-        <Empty>
-          <EmptyIcon>
-            <Icon name="share" />
-          </EmptyIcon>
-          <EmptyTitle>{t('orders.emptyTitle')}</EmptyTitle>
-          <EmptyHint>{t('orders.emptyHint')}</EmptyHint>
-          {onShare ? (
-            <Button variant="primary" onClick={onShare}>
-              <Icon name="chat" />
-              {t('orders.shareOnWhatsApp')}
-            </Button>
-          ) : null}
-        </Empty>
+        <EmptyState
+          icon="share"
+          title={t('orders.emptyTitle')}
+          why={t('orders.emptyHint')}
+          action={
+            onShare && !readOnly ? (
+              <Button variant="primary" onClick={onShare}>
+                <Icon name="chat" />
+                {t('orders.shareOnWhatsApp')}
+              </Button>
+            ) : undefined
+          }
+        />
       ) : null}
-      {list.status === 'ready' && counts.all > 0 ? (
-        <>
-          <Table label={t('orders.tableLabel')} columns={columns}>
-            {visible.map((order) => (
-              <OrderTableRow
-                key={order.id}
-                order={order}
-                selected={order.code === selectedCode}
-                onOpen={onOpenOrder}
-              />
-            ))}
-          </Table>
-          {visible.length === 0 ? <Message>{t('orders.empty')}</Message> : null}
-        </>
+      {list.status === 'ready' && counts.all > 0 && visible.length === 0 ? (
+        <Message>{t('orders.empty')}</Message>
+      ) : null}
+      {list.status === 'ready'
+        ? visible.map((order) => (
+            <LiveOrderRow
+              key={order.id}
+              order={order}
+              selected={order.code === raw}
+              onOpen={onOpenOrder}
+            />
+          ))
+        : null}
+    </div>
+  );
+
+  let panel = null;
+  if (selectedCode) {
+    if (selected)
+      panel = <OrderPanelBody order={selected} onClose={onCloseOrder ?? (() => undefined)} />;
+    else
+      panel = (
+        <Message role="status">
+          {list.status === 'loading' ? t('detail.loading') : t('detail.notFound')}
+        </Message>
+      );
+  }
+  return (
+    <>
+      {readOnly ? null : <DishesPanel />}
+      <ListWithPanel
+        list={listNode}
+        panel={panel}
+        panelLabel={t('detail.panelLabel', { code: raw ?? '' })}
+        panelAction={selected ? <OrderPanelActions order={selected} /> : undefined}
+      />
+    </>
+  );
+}
+
+function OrdersTableContent(props: OrdersTableScreenProps) {
+  const { t } = useTranslation(SELLER_NS);
+  const lang = useLang();
+  const dispatch = useDispatch();
+  const list = useSelector(selectList);
+  const current = useSelector(selectCurrent);
+  const past = useSelector(selectPast);
+  const orders = useSelector(selectOrders);
+  const [showAll, setShowAll] = useState(false);
+  useOrdersPolling();
+  useEarlierMenus();
+  const showDev = useShowDevTools();
+  const retryCurrent = useCallback(() => dispatch(currentRequested()), [dispatch]);
+
+  const fetchFailed = list.status === 'error' || (list.status === 'ready' && list.live === 'error');
+  const view = current.status === 'ready' ? current.view : null;
+  const kind = view
+    ? homeKindOf(view, past.status === 'ready' ? past.weeks : null, orders)
+    : 'checking';
+  const live = kind === 'live';
+
+  let body: ReactNode;
+  if (current.status === 'error') {
+    body = (
+      <ErrorBox role="alert">
+        <span>{t('home.loadError')}</span>
+        <Button onClick={retryCurrent}>{t('error.retry')}</Button>
+      </ErrorBox>
+    );
+  } else if (!view || kind === 'checking') {
+    body = <HomeMessage text={t('home.loading')} />;
+  } else if (kind === 'first_run') {
+    body = <SetupChecklist view={view} />;
+  } else if (kind === 'not_published') {
+    body = <NotPublishedHome view={view} />;
+  } else if (kind === 'finished') {
+    body = (
+      <>
+        <FinishedHome view={view} showAll={showAll} onToggleAll={() => setShowAll((on) => !on)} />
+        {showAll ? <OrdersBoard {...props} readOnly /> : null}
+      </>
+    );
+  } else {
+    body = <OrdersBoard {...props} readOnly={false} />;
+  }
+
+  return (
+    <Page>
+      <FeedbackHost />
+      <Head>
+        <TitleBlock>
+          <TitleLine>
+            <Title>{t('home.title')}</Title>
+            {live ? (
+              <LiveDot fetchFailed={fetchFailed} />
+            ) : (
+              <NoLive>
+                <Ring aria-hidden="true" />
+                {t('home.noLive')}
+              </NoLive>
+            )}
+            {live && view ? <TakingOrders view={view} /> : null}
+          </TitleLine>
+          {live && view ? (
+            <SubLine>
+              {t('home.menuFor', {
+                date: formatDay(view.menu.cookingDate, lang),
+                cutoff: formatDayTime(view.menu.cutoffAt, lang),
+              })}
+            </SubLine>
+          ) : null}
+        </TitleBlock>
+        {live ? (
+          <Tools>
+            {props.onShare ? (
+              <Button variant="quiet" onClick={props.onShare}>
+                <Icon name="share" />
+                {t('live.share')}
+              </Button>
+            ) : null}
+            {props.onNewOrder ? (
+              <Button variant="primary" onClick={props.onNewOrder}>
+                <Icon name="plus" />
+                {t('live.newOrder')}
+              </Button>
+            ) : null}
+          </Tools>
+        ) : null}
+      </Head>
+      {body}
+      {props.newOrderOpen && view ? (
+        <NewOrderPanel onClose={props.onCloseNewOrder ?? (() => undefined)} />
       ) : null}
       {showDev ? (
         <Bottom>

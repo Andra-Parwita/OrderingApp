@@ -13,44 +13,48 @@ function watchConsole(page: Page): Array<string> {
   page.on('pageerror', (error) => errors.push(error.message));
   return errors;
 }
-test('settings saves the WhatsApp number normalised and the ordering switch', async ({
+test('settings saves the WhatsApp number normalised; Orders pauses and resumes taking orders', async ({
   page,
   request,
 }, testInfo) => {
   const errors = watchConsole(page);
   try {
-    await page.goto('/seller/settings');
-    const number = page.getByLabel('Your WhatsApp number');
+    await page.goto('/seller/settings/kitchen');
+    const number = page.getByLabel('WhatsApp number');
     await number.fill('0412 345 678');
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(number).toHaveValue('+61 412 345 678');
 
     await page.reload();
-    await expect(page.getByLabel('Your WhatsApp number')).toHaveValue('+61 412 345 678');
+    await expect(page.getByLabel('WhatsApp number')).toHaveValue('+61 412 345 678');
     await page.screenshot({
       path: `captures/seller-tools-settings-${testInfo.project.name}.png`,
       fullPage: true,
     });
 
-    // Closed, saved; then Open again (other tests share this server).
-    await page.getByRole('radio', { name: 'Closed', exact: true }).click();
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Saved', { exact: true })).toBeVisible();
-    await expect(page.getByRole('radio', { name: 'Closed', exact: true })).toHaveAttribute(
+    // The ordering switch is "Taking orders" on Orders now: pause, then resume (other tests share
+    // this server).
+    await page.goto('/seller');
+    const taking = page.getByRole('switch', { name: 'Taking orders' });
+    await expect(taking).toHaveAttribute('aria-checked', 'true');
+    await taking.click();
+    const paused = page.getByRole('switch', { name: 'Paused' });
+    await expect(paused).toHaveAttribute('aria-checked', 'false');
+    await page.reload();
+    await expect(page.getByRole('switch', { name: 'Paused' })).toHaveAttribute(
       'aria-checked',
-      'true',
+      'false',
     );
-    await page.getByRole('radio', { name: 'Open', exact: true }).click();
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByRole('radio', { name: 'Open', exact: true })).toHaveAttribute(
+    await page.getByRole('switch', { name: 'Paused' }).click();
+    await expect(page.getByRole('switch', { name: 'Taking orders' })).toHaveAttribute(
       'aria-checked',
       'true',
     );
   } finally {
-    const current = await request.get('/api/seller/settings');
-    const { settings } = (await current.json()) as { settings: Record<string, unknown> };
-    await request.put('/api/seller/settings', { data: { ...settings, orderingOpen: true } });
+    await request.put('/api/seller/menus/current', {
+      headers: { 'X-Seller': 'onde-onde' },
+      data: { takingOrders: true },
+    });
   }
   expect(errors).toEqual([]);
 });

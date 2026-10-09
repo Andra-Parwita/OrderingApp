@@ -1,40 +1,61 @@
 {
-  "title": "To cook · {{date}}",
-  "titleBare": "To cook",
-  "live": "Live",
-  "offline": "Reconnecting…",
-  "loading": "Loading the cook list…",
-  "error": "Could not load the cook list.",
+  "title": "Kitchen · {{date}}",
+  "titleBare": "Kitchen",
+  "subtitle_one": "From {{count}} order. Cancelled orders aren't counted. Updates as orders change.",
+  "subtitle_other": "From {{count}} orders. Cancelled orders aren't counted. Updates as orders change.",
+  "loading": "Loading the kitchen…",
+  "error": "Could not load the kitchen.",
   "retry": "Try again",
   "empty": "Nothing to cook yet.",
-  "mode": {
-    "label": "Count",
-    "all": "Confirmed + Ordered",
-    "confirmed": "Confirmed only"
+  "printLabels": "Print labels",
+  "tabs": {
+    "label": "Kitchen",
+    "cook": "Cook",
+    "cookSub": "by dish",
+    "pack": "Pack",
+    "packSub": "by order"
   },
   "group": {
     "label": "Group by",
-    "item": "Item",
-    "chef": "Chef",
-    "customer": "Customer",
-    "fulfilment": "Pickup/delivery"
+    "dish": "Dish",
+    "chef": "Chef"
   },
-  "stats": {
-    "label": "Totals",
-    "orders": "Orders",
-    "income": "Income",
-    "paid": "Paid",
-    "unpaid": "Unpaid"
-  },
-  "fulfilment": {
-    "pickup": "Pickup",
-    "delivery": "Delivery"
-  },
-  "items_one": "{{count}} item",
-  "items_other": "{{count}} items",
-  "ofLimit": "{{count}} of {{limit}} portions",
-  "who": "Who ordered",
+  "countMode": "Count mode",
+  "countHint": "tick off as you cook",
+  "cooked": "{{made}} of {{total}} cooked",
+  "less": "One less {{name}}",
+  "more": "One more {{name}}",
+  "splitPickup": "{{count}} pickup",
+  "splitDelivery": "{{count}} delivery",
   "notes": "Notes ({{count}})",
-  "titleDesktop": "Cook list · {{date}}",
-  "print": "Print cook list"
+  "pack": {
+    "orderBy": "Order by",
+    "sort": {
+      "time": "Pickup time",
+      "place": "Place",
+      "code": "Code"
+    },
+    "list": "Bags",
+    "packedCount": "{{packed}} of {{total}} bags packed",
+    "packed": "Packed",
+    "delivery": "Delivery",
+    "pickupAt": "{{time}} pickup",
+    "inBag": "{{ticked}} of {{total}} items in the bag",
+    "note": "Note",
+    "notTicked_one": "{{count}} not ticked yet. You can still mark it packed.",
+    "notTicked_other": "{{count}} not ticked yet. You can still mark it packed.",
+    "allIn": "All in. Packing doesn't change the order status; mark it ready in Pickup & delivery.",
+    "isPacked": "Packed. This doesn't change the order status.",
+    "packedNext": "Packed · next bag",
+    "skip": "Skip for now",
+    "unpack": "Mark not packed",
+    "saveError": "Could not save. Check the connection and try again.",
+    "empty": "No bags to pack yet.",
+    "warnTitle_one": "{{count}} item not ticked",
+    "warnTitle_other": "{{count}} items not ticked",
+    "warnBody_one": "{{count}} item in this bag isn't ticked. Mark the bag packed anyway?",
+    "warnBody_other": "{{count}} items in this bag aren't ticked. Mark the bag packed anyway?",
+    "warnCancel": "Keep packing",
+    "warnContinue": "Mark packed anyway"
+  }
 }

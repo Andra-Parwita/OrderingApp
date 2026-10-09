@@ -5,12 +5,14 @@ import { styled } from 'styled-components';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { AdminHomeScreen, AdminSetupScreen, AdminSignInScreen } from '../features/admin';
 import {
+  AUTH_NS,
   DeviceCodeScreen,
   PasskeyHelpScreen,
   PasswordSetupScreen,
   SetupKeyScreen,
   SignInScreen,
 } from '../features/seller-auth';
+import type { Me } from '../../shared/authContract';
 import { isValidSlug } from '../../shared/seller';
 import { lastSignedIn } from '../api/device/sellerContext';
 import { PageHeader } from '../ui';
@@ -34,7 +36,7 @@ const FootLink = styled(Link)`
   display: inline-flex;
   align-items: center;
   min-height: ${({ theme }) => theme.minTapTarget};
-  color: ${({ theme }) => theme.colour.accent};
+  color: ${({ theme }) => theme.c.atext};
   font-weight: ${({ theme }) => theme.type.weight.strong};
 `;
 
@@ -44,13 +46,18 @@ type SetupStep = 'key' | 'code' | 'passkey' | 'password';
 export function SellerSetupRoute() {
   const navigate = useNavigate();
   const { refresh } = useSession();
-  const { t } = useTranslation();
+  const { t } = useTranslation(AUTH_NS);
   const [step, setStep] = useState<SetupStep>('key');
-  const toPasskey = useCallback(() => setStep('passkey'), []);
+  // "Welcome, <first name>": only a chef's invite carries a person's name.
+  const [firstName, setFirstName] = useState<string | undefined>(undefined);
+  const toPasskey = useCallback((me: Me) => {
+    setFirstName(me.chefName?.trim().split(/\s+/)[0] || undefined);
+    setStep('passkey');
+  }, []);
   const done = useCallback(() => {
     void refresh().then(() => navigate('/seller', { replace: true }));
   }, [navigate, refresh]);
-  const alreadySetUp = <FootLink to={SWITCH_SIGN_IN}>{t('sellerNav.alreadySetUp')}</FootLink>;
+  const alreadySetUp = <FootLink to={SWITCH_SIGN_IN}>{t('signIn.alreadySetUp')}</FootLink>;
   return (
     <SignInFrame>
       {step === 'key' ? (
@@ -68,16 +75,22 @@ export function SellerSetupRoute() {
         />
       ) : null}
       {step === 'passkey' ? (
-        <PasskeyHelpScreen onDone={done} onUsePassword={() => setStep('password')} />
+        <PasskeyHelpScreen
+          name={firstName}
+          onDone={done}
+          onUsePassword={() => setStep('password')}
+        />
       ) : null}
-      {step === 'password' ? <PasswordSetupScreen onDone={done} onUsePasskey={toPasskey} /> : null}
+      {step === 'password' ? (
+        <PasswordSetupScreen onDone={done} onUsePasskey={() => setStep('passkey')} />
+      ) : null}
     </SignInFrame>
   );
 }
 
 /** /seller/sign-in: the kitchen is `?kitchen=`, else the one last signed in on this device. */
 export function SellerSignInRoute() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(AUTH_NS);
   const navigate = useNavigate();
   const { adopt } = useSession();
   const [params] = useSearchParams();
@@ -98,14 +111,13 @@ export function SellerSignInRoute() {
   if (!slug && !switching) return <Navigate to="/seller/setup" replace />;
   const kitchenName = last && slug === last.slug ? last.kitchenName : undefined;
   return (
-    <SignInFrame>
+    <SignInFrame kitchenName={kitchenName}>
       <SignInScreen
         {...(slug ? { slug } : {})}
-        {...(kitchenName ? { kitchenName } : {})}
         {...(chefId ? { chefId } : {})}
         onSignedIn={signedIn}
         switchPerson={switching}
-        footer={<FootLink to="/seller/setup">{t('sellerNav.firstTime')}</FootLink>}
+        footer={<FootLink to="/seller/setup">{t('signIn.firstTime')}</FootLink>}
       />
     </SignInFrame>
   );

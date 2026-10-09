@@ -111,7 +111,7 @@ describe('AppRoutes', () => {
     expect(localStorage.getItem('theme')).toBe('dark');
     expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
       'content',
-      '#16120e',
+      '#121411',
     );
     fireEvent.click(screen.getByRole('radio', { name: 'Match device' }));
     expect(localStorage.getItem('theme')).toBe('auto');
@@ -121,7 +121,7 @@ describe('AppRoutes', () => {
     const phone = renderAt('/seller');
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('href', '/seller/more');
-    expect(screen.getByRole('link', { name: 'Hand-over' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Pickup & delivery' })).toHaveAttribute(
       'href',
       '/seller/hand-over',
     );
@@ -149,8 +149,8 @@ describe('AppRoutes', () => {
     // Names stay for assistive tech; the current page is still marked.
     const orders = within(rail).getByRole('link', { name: 'Orders' });
     expect(orders).toHaveAttribute('aria-current', 'page');
-    expect(within(rail).getByRole('link', { name: 'Cook list' })).toBeInTheDocument();
-    expect(within(rail).getByRole('link', { name: 'Hand-over' })).toBeInTheDocument();
+    expect(within(rail).getByRole('link', { name: 'Kitchen' })).toBeInTheDocument();
+    expect(within(rail).getByRole('link', { name: 'Pickup & delivery' })).toBeInTheDocument();
     expect(within(rail).queryByRole('radiogroup')).not.toBeInTheDocument();
     expect(within(rail).getByRole('button', { name: /Language: EN/ })).toBeInTheDocument();
     expect(within(rail).queryByText('Orders', { selector: '[aria-hidden]' })).toBeNull();
@@ -170,91 +170,75 @@ describe('AppRoutes', () => {
     expect(screen.getByRole('radiogroup', { name: 'Language' })).toBeInTheDocument();
   });
 
-  it('keeps the table behind an open order on a desktop, with the filter in the URL', () => {
+  it('keeps the table beside an open order on a desktop, with the filter in the URL', async () => {
     wide = true;
     renderAt('/seller/orders/K7F2QX?status=ready');
-    expect(screen.getByLabelText('Find an order (code or name)')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Name or code', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Ready/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('dialog', { name: 'Order K7F-2QX' })).toHaveAttribute(
-      'aria-modal',
-      'true',
-    );
+    // The order opens in a panel beside the list, not over it.
+    expect(screen.getByRole('complementary', { name: 'Order K7F2QX' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('has one main landmark and one language switch on the desktop table', () => {
+  it('has one main landmark and one language switch on the desktop table', async () => {
     wide = true;
     renderAt('/seller/orders/K7F2QX');
+    await screen.findByLabelText('Name or code', {}, { timeout: 5000 });
     expect(screen.getAllByRole('main')).toHaveLength(1);
     expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Order K7F2QX' })).toBeInTheDocument();
   });
 
-  it('lists the seller pages on More, and Menu is a live tab', () => {
+  it('shows the phone More page with its tab marked, and sends the owner on a tablet to Settings', () => {
+    const phone = renderAt('/seller/more');
+    expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('heading', { name: 'More' })).toBeInTheDocument();
+    phone.unmount();
+
+    wide = true;
     renderAt('/seller/more');
-    for (const name of ['Settings', 'Week settings', 'Pictures', 'Chefs', 'Labels', 'Past weeks']) {
-      expect(screen.getByRole('button', { name: new RegExp('^' + name) })).toBeInTheDocument();
-    }
-    expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Menu' })).toHaveAttribute('href', '/seller/menu');
-    fireEvent.click(screen.getByRole('button', { name: /^Backup/ }));
-    expect(screen.getByTestId('where')).toHaveTextContent('/seller/backup');
-    expect(screen.getByRole('button', { name: 'Back to More' })).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent('/seller/settings/kitchen');
   });
 
-  it('previews the draft as a customer: seller bar on top, nothing orderable, no chef data', async () => {
-    const item = {
-      id: 'i1',
-      name: { en: 'Preview dish', id: 'Hidangan' },
-      description: { en: '', id: '' },
-      size: { en: '', id: '' },
-      priceCents: 1000,
-      remaining: null,
-      soldOut: false,
-      chefId: 'chef-1',
-    };
-    const menu = {
-      ...MENU,
-      week: { ...MENU.week, status: 'draft' },
-      chefs: [{ id: 'chef-1', sellerId: 's1', name: 'Secret Chef' }],
-      items: [item],
-    };
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.resolve(Response.json(menu))),
-    );
+  it('has no customer preview route any more: the Check step of Make a menu replaces it', () => {
     renderAt('/seller/menu/preview');
-    expect(await screen.findByText('Preview dish')).toBeInTheDocument();
-    expect(screen.getByText('Preview · not published yet')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to editing' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Publish' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add one Preview dish' })).toBeDisabled();
-    expect(screen.queryByText('Secret Chef')).not.toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Seller' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
   });
 
-  it('puts the theme switch and the share link in the seller settings', () => {
-    renderAt('/seller/settings');
-    expect(screen.getByRole('radio', { name: 'Light' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Share menu to WhatsApp' })).toHaveAttribute(
-      'href',
-      '/seller/share',
-    );
-    expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('aria-current', 'page');
-  });
-  it('reads the seller filter and search from the URL', () => {
-    renderAt('/seller?status=ready&q=rina');
-    expect(screen.getByRole('button', { name: /^Ready/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByLabelText('Order code or name')).toHaveValue('rina');
+  it('puts the light, dark and auto switch in the seller Appearance settings', async () => {
+    wide = true;
+    renderAt('/seller/settings/look');
+    expect(
+      await screen.findByRole('radio', { name: 'Light' }, { timeout: 5000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Dark' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('writes the seller filter and search to the URL, dropping the defaults', () => {
+  it('opens the share page from the Orders header', async () => {
+    wide = true;
     renderAt('/seller');
+    fireEvent.click(await screen.findByRole('button', { name: 'Share menu' }, { timeout: 5000 }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/seller/share');
+  });
+
+  it('reads the seller filter and search from the URL', async () => {
+    wide = true;
+    renderAt('/seller?status=ready&q=rina');
+    expect(await screen.findByLabelText('Name or code', {}, { timeout: 5000 })).toHaveValue('rina');
+    expect(screen.getByRole('button', { name: /^Ready/ })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('writes the seller filter and search to the URL, dropping the defaults', async () => {
+    wide = true;
+    renderAt('/seller');
+    await screen.findByLabelText('Name or code', {}, { timeout: 5000 });
     fireEvent.click(screen.getByRole('button', { name: /^Done/ }));
     expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done');
-    fireEvent.change(screen.getByLabelText('Order code or name'), { target: { value: 'tom' } });
+    fireEvent.change(screen.getByLabelText('Name or code'), { target: { value: 'tom' } });
     expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done&q=tom');
     fireEvent.click(screen.getByRole('button', { name: /^All/ }));
-    fireEvent.change(screen.getByLabelText('Order code or name'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('Name or code'), { target: { value: '' } });
     expect(screen.getByTestId('where')).toHaveTextContent(/^\/seller$/);
   });
 
@@ -328,6 +312,6 @@ describe('AppRoutes', () => {
     expect(banner).toHaveAttribute('src', '/samples/banner-phone.jpg');
     expect(document.querySelectorAll('img')).toHaveLength(1);
     expect(banner.parentElement).toHaveAttribute('data-fit', 'contain');
-    expect(banner.parentElement).toHaveAttribute('data-ratio', '2 / 1');
+    expect(banner.parentElement).toHaveAttribute('data-ratio', '3 / 1');
   });
 });

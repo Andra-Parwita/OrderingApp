@@ -4,11 +4,11 @@ import { checkImageUpload, IMAGE_SLOTS, isImageSlot, readImageSize, slotSpec } f
 
 describe('slotSpec', () => {
   it('gives the D-038 / D-040 sizes, ratios and 600 KB cap', () => {
-    expect(slotSpec('desktopBanner')).toEqual({ width: 1600, height: 320, ratio: 5, maxKB: 600 });
-    expect(slotSpec('phoneBanner')).toMatchObject({ width: 1080, height: 540, ratio: 2 });
-    expect(slotSpec('railImage')).toMatchObject({ width: 448, height: 224, ratio: 2 });
-    expect(slotSpec('railIcon')).toMatchObject({ width: 128, height: 128, ratio: 1 });
-    expect(slotSpec('bannerBackgroundImage')).toMatchObject({ width: 2560, height: 512, ratio: 5 });
+    expect(slotSpec('desktopBanner')).toEqual({ width: 2000, height: 400, ratio: 5, maxKB: 600 });
+    expect(slotSpec('phoneBanner')).toMatchObject({ width: 1200, height: 400, ratio: 3 });
+    expect(slotSpec('railImage')).toMatchObject({ width: 1200, height: 600, ratio: 2 });
+    expect(slotSpec('railIcon')).toMatchObject({ width: 512, height: 512, ratio: 1 });
+    expect(slotSpec('bannerBackgroundImage')).toMatchObject({ width: 1280, height: 256, ratio: 5 });
     expect(IMAGE_SLOTS).toHaveLength(5);
   });
 
@@ -50,7 +50,7 @@ describe('readImageSize', () => {
 describe('checkImageUpload', () => {
   it('accepts an exact-size image of each type', () => {
     expect(checkImageUpload('desktopBanner', pngFor('desktopBanner'))).toMatchObject({ ok: true });
-    expect(checkImageUpload('phoneBanner', fakeJpeg(1080, 540))).toMatchObject({ ok: true });
+    expect(checkImageUpload('phoneBanner', fakeJpeg(1200, 400))).toMatchObject({ ok: true });
     expect(checkImageUpload('railIcon', fakeWebp(128, 128))).toMatchObject({ ok: true });
   });
 

@@ -13,6 +13,7 @@ import {
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
+import { setKitchenBrand } from '../../theme/kitchenBrand';
 import { markInboxSeen } from '../../api/device/myOrders';
 import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
@@ -20,8 +21,14 @@ import { Button, ConfirmButton, PageHeader, Pill } from '../../ui';
 import { inboxNewestFirst, inboxText, isFinal, orderTotalCents, timelineSteps } from './helpers';
 import { ORDERS_NS } from './i18n/register';
 import { Block, Muted, Page, ScreenBoundary, StateMessage, Strong, useLang } from './layout';
-import { selectCancel, selectMenus, selectOrderPage } from './selectors';
-import { cancelRequested, orderRefreshRequested, orderRequested, type FailureCode } from './slice';
+import { selectCancel, selectCollect, selectMenus, selectOrderPage } from './selectors';
+import {
+  cancelRequested,
+  collectRequested,
+  orderRefreshRequested,
+  orderRequested,
+  type FailureCode,
+} from './slice';
 import { toneOf } from './tone';
 
 /** How often the open order page reloads. Replaced by push / live updates in phase 4-5. */
@@ -227,9 +234,18 @@ function OrderBody({ order, onChange }: BodyProps) {
   const menus = useSelector(selectMenus);
   const menu = menus[order.seller.slug];
   const cancel = useSelector(selectCancel);
+  const collect = useSelector(selectCollect);
+
+  // The kitchen's colours (D-064) once its menu is known.
+  const theme = menu?.theme ?? 'onde';
+  useEffect(() => {
+    setKitchenBrand(theme);
+  }, [theme]);
 
   const week = menu?.week;
-  const pickup = week?.pickupPoints[0];
+  // The place the customer chose at checkout; an older order has none and counts as the first.
+  const pickup =
+    week?.pickupPoints.find((point) => point.id === order.pickupPlaceId) ?? week?.pickupPoints[0];
   const dayText = week ? formatCookingDate(week.cookingDate, lang) : null;
   const whenText =
     dayText && pickup
@@ -254,12 +270,17 @@ function OrderBody({ order, onChange }: BodyProps) {
   const token = order.token;
   const change = useCallback(() => onChange(token), [onChange, token]);
   const doCancel = useCallback(() => dispatch(cancelRequested(token)), [dispatch, token]);
+  const doCollect = useCallback(() => dispatch(collectRequested(token)), [dispatch, token]);
 
   const final = isFinal(order.status);
   const editableStatus = order.status === 'ordered' || order.status === 'confirmed';
   const canChange = !order.locked && editableStatus && orderingOpen;
   const how = order.fulfilment === 'delivery' ? t('order.delivery') : t('order.pickup');
   const place = order.fulfilment === 'pickup' ? pickup?.place : undefined;
+  const directions =
+    order.fulfilment === 'pickup' && pickup ? pickText(pickup.directions, lang) : '';
+  // D-069 Q4: a pickup order that is Ready and not yet collected (the server keeps it idempotent).
+  const canCollect = order.fulfilment === 'pickup' && order.status === 'ready_for_pickup';
 
   return (
     <>
@@ -332,9 +353,23 @@ function OrderBody({ order, onChange }: BodyProps) {
             ? ` · ${[whenText, place].filter(Boolean).join(' · ')}`
             : ''}
         </Muted>
+        {directions ? <Muted>{directions}</Muted> : null}
         {order.note ? <Muted>{t('order.note', { note: order.note })}</Muted> : null}
       </Block>
       <Block>
+        {canCollect ? (
+          <ConfirmButton
+            fullWidth
+            label={t('order.collect')}
+            confirmLabel={t('order.collectConfirm')}
+            onConfirm={doCollect}
+            disabled={collect.status === 'submitting'}
+          />
+        ) : null}
+        {order.status === 'collected' ? (
+          <LockedBanner role="status">{t('order.collectedNote')}</LockedBanner>
+        ) : null}
+        {collect.status === 'failed' ? <Alert role="alert">{t('order.collectError')}</Alert> : null}
         {order.locked && !final ? (
           <LockedBanner role="status">{t('order.lockedBanner')}</LockedBanner>
         ) : null}

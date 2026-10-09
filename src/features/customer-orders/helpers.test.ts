@@ -65,11 +65,15 @@ describe('inboxText', () => {
 
 describe('isThisWeek', () => {
   const base = { status: 'confirmed', createdAt: '2026-10-07T10:00:00.000Z' } as CustomerOrder;
-  it('uses the cooking date when known', () => {
-    expect(isThisWeek(base, '2026-10-10')).toBe(true);
-    expect(isThisWeek({ ...base, createdAt: '2026-10-01T10:00:00.000Z' }, '2026-10-10')).toBe(
-      false,
-    );
+  const now = new Date('2026-10-09T14:30:00Z'); // Sat 10 Oct 01:30 in Melbourne
+  it('counts an order for the coming cooking date as current, early on the Saturday', () => {
+    expect(isThisWeek(base, '2026-10-17', now)).toBe(true);
+  });
+  it('counts an order cooking before today as earlier', () => {
+    expect(isThisWeek(base, '2026-10-03', now)).toBe(false);
+  });
+  it('counts an order cooking today as current', () => {
+    expect(isThisWeek(base, '2026-10-10', now)).toBe(true);
   });
   it('falls back to "not finished" without the menu', () => {
     expect(isThisWeek(base, null)).toBe(true);

@@ -28,7 +28,8 @@ describe('weekly retention cron', () => {
       });
       if (!placed.ok) throw new Error(placed.message);
     }
-    await seller.closeWeek();
+    await seller.publishMenu();
+    await seller.finishMenuNow();
   }
 
   const count = async (table: string) =>
@@ -42,7 +43,7 @@ describe('weekly retention cron', () => {
       newToken: () => `token-${String(++n)}-padding-padding`,
     });
     // Both sample kitchens publish a menu for 2026-10-10, so both can have a closed week.
-    await world.db.stmt("UPDATE weeks SET status = 'published'").run();
+    await world.db.stmt("UPDATE menus SET state = 'live'").run();
   });
 
   it('drops the details of every seller past the keep date and keeps the totals', async () => {
@@ -82,7 +83,7 @@ describe('weekly retention cron', () => {
   it('does not touch the live week', async () => {
     await closedWeekWith('onde-onde', ['Rina']);
     const seller = await world.repo.sellerBySlug('onde-onde');
-    await world.db.stmt("UPDATE weeks SET status = 'published'").run();
+    await world.db.stmt("UPDATE menus SET state = 'live'").run();
     await seller?.createOrder({
       firstName: 'Live',
       language: 'en',

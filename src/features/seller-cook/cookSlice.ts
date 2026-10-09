@@ -30,6 +30,11 @@ const cookSlice = createSlice({
       }
       state.list = { status: 'ready', live: 'ok' };
     },
+    /** One order changed on this device (a tick or "Packed"); the next live reload confirms it. */
+    orderReplaced(state, action: PayloadAction<Order>) {
+      const index = state.orders.findIndex((order) => order.id === action.payload.id);
+      if (index >= 0) state.orders[index] = action.payload;
+    },
     loadFailed(state) {
       state.list =
         state.list.status === 'ready' ? { status: 'ready', live: 'error' } : { status: 'error' };
@@ -37,6 +42,12 @@ const cookSlice = createSlice({
   },
 });
 
-export const { pollingStarted, pollingStopped, refreshRequested, loaded, loadFailed } =
-  cookSlice.actions;
+export const {
+  pollingStarted,
+  pollingStopped,
+  refreshRequested,
+  loaded,
+  loadFailed,
+  orderReplaced,
+} = cookSlice.actions;
 export const cookReducer = cookSlice.reducer;

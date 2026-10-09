@@ -35,11 +35,15 @@ export type MenusState = Record<string, MenuResponse>;
 export type CancelState =
   { status: 'idle' } | { status: 'submitting' } | { status: 'failed'; code: FailureCode };
 
+/** "I've collected it" (D-069 Q4): same shape as cancel. */
+export type CollectState = CancelState;
+
 export type CustomerOrdersState = {
   list: ListState;
   order: OrderPageState;
   menus: MenusState;
   cancel: CancelState;
+  collect: CollectState;
 };
 export type CustomerOrdersRootState = { customerOrders: CustomerOrdersState };
 
@@ -48,6 +52,7 @@ const initialState: CustomerOrdersState = {
   order: { status: 'idle' },
   menus: {},
   cancel: { status: 'idle' },
+  collect: { status: 'idle' },
 };
 
 const slice = createSlice({
@@ -84,6 +89,7 @@ const slice = createSlice({
       reducer(state) {
         state.order = { status: 'loading' };
         state.cancel = { status: 'idle' };
+        state.collect = { status: 'idle' };
       },
       prepare: (token: string) => ({ payload: token }),
     },
@@ -97,6 +103,7 @@ const slice = createSlice({
     orderLoaded(state, action: PayloadAction<CustomerOrder>) {
       state.order = { status: 'ready', order: action.payload };
       state.cancel = { status: 'idle' };
+      state.collect = { status: 'idle' };
     },
     orderExpired(state, action: PayloadAction<ExpiredOrder>) {
       state.order = { status: 'expired', order: action.payload };
@@ -114,6 +121,15 @@ const slice = createSlice({
     cancelFailed(state, action: PayloadAction<FailureCode>) {
       state.cancel = { status: 'failed', code: action.payload };
     },
+    collectRequested: {
+      reducer(state) {
+        state.collect = { status: 'submitting' };
+      },
+      prepare: (token: string) => ({ payload: token }),
+    },
+    collectFailed(state, action: PayloadAction<FailureCode>) {
+      state.collect = { status: 'failed', code: action.payload };
+    },
   },
 });
 
@@ -130,5 +146,7 @@ export const {
   orderFailed,
   cancelRequested,
   cancelFailed,
+  collectRequested,
+  collectFailed,
 } = slice.actions;
 export const customerOrdersReducer = slice.reducer;

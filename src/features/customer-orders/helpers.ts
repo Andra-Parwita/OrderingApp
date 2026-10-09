@@ -1,3 +1,4 @@
+import { localDate } from '../../../shared/dates';
 import type { CustomerOrder, Fulfilment, InboxEntry, OrderStatus } from '../../../shared/domain';
 
 export type StepState = 'done' | 'current' | 'todo';
@@ -46,16 +47,17 @@ export function inboxNewestFirst(inbox: ReadonlyArray<InboxEntry>): Array<InboxE
   return [...inbox].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
 
-const DAY_MS = 86_400_000;
-
 /**
- * Which section an order sits in. With the menu's cooking date: placed in the 7 days before it
- * (or later) is "this week". Without it, an order that is not finished is.
+ * Which section an order sits in. With the week's cooking date: current when that date is today
+ * or later in the cook's zone. Without it, an order that is not finished is.
  */
-export function isThisWeek(order: CustomerOrder, cookingDate: string | null): boolean {
+export function isThisWeek(
+  order: CustomerOrder,
+  cookingDate: string | null,
+  now: Date = new Date(),
+): boolean {
   if (cookingDate === null) return !isFinal(order.status);
-  const cooking = Date.parse(`${cookingDate}T00:00:00Z`);
-  return Date.parse(order.createdAt) > cooking - 7 * DAY_MS;
+  return cookingDate >= localDate(now);
 }
 
 export type InboxText =

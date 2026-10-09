@@ -14,7 +14,7 @@ import {
   useShowDevTools,
   useVisibleOrders,
 } from './ordersShared';
-import { LiveDot } from './LiveDot';
+import { LiveDot } from '../../components/LiveDot';
 import { useLang } from './orderText';
 import { OrderRow } from './OrderRow';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';

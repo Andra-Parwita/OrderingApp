@@ -161,7 +161,6 @@ describe('live events and images', () => {
         ['paid', { paid: true }],
         ['lock', { locked: true }],
         ['wa-received', { received: true }],
-        ['arriving-soon', undefined],
         ['nudge', undefined],
         ['seen', undefined],
       ];
@@ -206,13 +205,13 @@ describe('live events and images', () => {
       );
     });
 
-    it('menu and week changes say menu.changed; closing the week says both', async () => {
-      await call('POST', '/api/seller/week/unpublish', { seller: A });
-      await call('POST', '/api/seller/week/publish', { seller: A });
+    it('menu changes say menu.changed; finishing the menu says both', async () => {
+      await call('POST', '/api/seller/menus/current/unpublish', { seller: A });
+      await call('POST', '/api/seller/menus/current/publish', { seller: A });
       await call('PATCH', '/api/seller/menu/items/pesmol', { seller: A, body: { soldOut: true } });
       expect(types()).toEqual(['menu.changed', 'menu.changed', 'menu.changed']);
       room.sent.length = 0;
-      await call('POST', '/api/seller/week/close', { seller: A });
+      await call('POST', '/api/seller/menus/current/finish', { seller: A });
       expect(types().sort()).toEqual(['menu.changed', 'order.changed']);
     });
 
@@ -322,11 +321,13 @@ describe('live events and images', () => {
 
     it('keeps an object a saved set still shows', async () => {
       const ref = imagesOf(await put('railIcon', { dataUrl: png('railIcon') })).railIcon as string;
-      const saved = await call('POST', '/api/seller/sets', {
-        seller: A,
-        body: { name: 'With icon' },
-      });
-      expect(saved.status).toBe(201);
+      // Sets of dishes no longer carry pictures; a set from an old backup file still does.
+      const backup = (await call('GET', '/api/seller/backup', { seller: A })).body as {
+        sets: Array<unknown>;
+      };
+      backup.sets = [{ id: 'old-set', name: 'With icon', items: [], images: { railIcon: ref } }];
+      const restored = await call('POST', '/api/seller/backup', { seller: A, body: backup });
+      expect(restored.status).toBe(200);
       await call('DELETE', '/api/seller/images/railIcon', { seller: A });
       expect(r2.objects.has(ref.slice('/images/'.length))).toBe(true);
     });

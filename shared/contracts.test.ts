@@ -103,6 +103,24 @@ describe('parseMenuResponse', () => {
     expect(parseMenuResponse(menu)).toEqual(menu);
   });
 
+  it('carries the kitchen theme and the menu picture (stage 12)', () => {
+    const withBoth = { ...(menu as Obj), theme: 'bali', pictureUrl: '/images/x.jpg' };
+    expect(parseMenuResponse(withBoth)).toEqual(withBoth);
+    expect(parseMenuResponse({ ...withBoth, theme: 'purple' })).toBeNull();
+    expect(parseMenuResponse({ ...withBoth, pictureUrl: 3 })).toBeNull();
+  });
+
+  it('keeps pickupPlaceId on an order request', () => {
+    const body = {
+      firstName: 'Rina',
+      language: 'en',
+      fulfilment: 'pickup',
+      lines: [{ itemId: 'rice', qty: 1 }],
+      pickupPlaceId: 'place-1',
+    };
+    expect(parseCreateOrderRequest(body)).toMatchObject({ pickupPlaceId: 'place-1' });
+  });
+
   it.each([
     ['null', null],
     ['no kitchen', mutate(menu, (d) => delete d['kitchen'])],

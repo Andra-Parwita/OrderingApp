@@ -19,7 +19,7 @@ import {
   signInWithPassword,
   signOut,
 } from './auth';
-import { fetchSellerOrders, sendArrivingSoon, sendUpdates } from './client';
+import { fetchSellerOrders, sendUpdates } from './client';
 import { getCredentialId } from './device/session';
 import type { ApiResult } from './http';
 
@@ -257,6 +257,5 @@ describe('sign-in client', () => {
     const code = ((await placed.json()) as { order: { code: string } }).order.code;
     const result = data(await sendUpdates({ template: 'readyIn', minutes: 15, codes: [code] }));
     expect(result.sent).toBe(1);
-    expect(await sendArrivingSoon(code)).toMatchObject({ ok: false, error: 'invalid_status' });
   });
 });

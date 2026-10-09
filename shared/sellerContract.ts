@@ -5,7 +5,11 @@ import { normaliseAuMobile } from './phone';
 import { ORDER_STATUSES } from './status';
 
 /** POST /api/seller/orders/:code/status; `to` must be in nextStatuses(order). */
-export type SetStatusRequest = { to: OrderStatus };
+export type SetStatusRequest = {
+  to: OrderStatus;
+  /** D-062: move there although it skips a step or leaves a closed order (`status_out_of_order`). */
+  force?: boolean;
+};
 /** POST /api/seller/orders/:code/paid */
 export type SetPaidRequest = { paid: boolean };
 /** POST /api/seller/orders/:code/lock */
@@ -17,7 +21,16 @@ export type SettingsResponse = { sellerId: string; settings: KitchenSettings };
 
 export function parseSetStatusRequest(input: unknown): SetStatusRequest | null {
   if (!isRecord(input) || !isOneOf(ORDER_STATUSES, input['to'])) return null;
-  return { to: input['to'] };
+  if (input['force'] !== undefined && typeof input['force'] !== 'boolean') return null;
+  return { to: input['to'], ...(input['force'] !== undefined ? { force: input['force'] } : {}) };
+}
+
+/** Optional body of the calls that only need "go ahead anyway" (arriving-soon, nudge). */
+export function parseForce(input: unknown): boolean | null {
+  if (input === undefined || input === null) return false;
+  if (!isRecord(input)) return null;
+  if (input['force'] === undefined) return false;
+  return typeof input['force'] === 'boolean' ? input['force'] : null;
 }
 
 export function parseSetPaidRequest(input: unknown): SetPaidRequest | null {

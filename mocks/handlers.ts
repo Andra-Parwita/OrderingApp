@@ -162,7 +162,11 @@ export const mockStore: DefaultSellerTestApi = Object.assign(lazy(defaultSeller)
     const { db } = await openWorld();
     const seller = await defaultSeller();
     await db
-      .stmt('UPDATE weeks SET status = ? WHERE seller_id = ?', patch.status, seller.seller.id)
+      .stmt(
+        'UPDATE menus SET state = ? WHERE seller_id = ?',
+        patch.status === 'published' ? 'live' : 'not_published',
+        seller.seller.id,
+      )
       .run();
   },
 });

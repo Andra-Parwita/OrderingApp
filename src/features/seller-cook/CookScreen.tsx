@@ -1,375 +1,109 @@
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useInRouterContext, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import { formatDay } from '../../../shared/dates';
-import { formatMoney } from '../../../shared/money';
-import { pickText } from '../../../shared/text';
-import { Button, Icon, Segmented, Tooltip, type SegmentedOption } from '../../ui';
+import { LiveDot } from '../../components/LiveDot';
+import { Button, Icon } from '../../ui';
 import { COOK_NS } from './i18n/register';
-import type { CookGroup, CookRow, CountMode, GroupBy } from './cookModel';
-import {
-  selectCookGroups,
-  selectCookList,
-  selectCookMenu,
-  selectCookNotes,
-  selectCookStats,
-} from './cookSelectors';
+import { CookTab } from './CookTab';
+import { PackTab } from './PackTab';
+import { selectBags, selectCookList, selectCookMenu, selectCounted } from './cookSelectors';
 import { pollingStarted, pollingStopped, refreshRequested, type CookRootState } from './cookSlice';
 
-const Page = styled.main<{ $desktop: boolean }>`
+type Tab = 'cook' | 'pack';
+
+const LABELS_PATH = '/seller/labels';
+
+const Page = styled.main`
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: ${({ $desktop }) => ($desktop ? 'none' : 'min(100%, 45rem)')};
-  margin: 0 auto;
-  padding: 0 ${({ theme, $desktop }) => ($desktop ? theme.spacing.lg : '0')};
-  font-size: ${({ theme, $desktop }) => ($desktop ? theme.type.size.base : 'inherit')};
+  color: ${({ theme }) => theme.c.text};
 `;
-const Controls = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0 ${({ theme }) => theme.spacing.xl};
-`;
-const DesktopRowWrap = styled.li`
-  display: grid;
-  grid-template-columns: 5.25rem minmax(0, 22rem) minmax(0, 1fr);
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-  min-height: 5.25rem;
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme }) => theme.colour.hairline};
-`;
-const BigQty = styled.span`
-  font-size: ${({ theme }) => theme.type.size.xxl};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-`;
-const NameBig = styled.span`
-  font-size: ${({ theme }) => theme.type.size.lg};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  line-height: ${({ theme }) => theme.type.lineHeight.tight};
-`;
-/** Who ordered: equal-width chips in columns, so the names line up (D-033). */
-const WhoChips = styled.ul`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin: 0;
-  padding: 0;
-  list-style: none;
-`;
-const WhoItem = styled.li`
-  min-width: 0;
-`;
-const WhoChip = styled.div`
-  display: flex;
-  align-items: baseline;
-  gap: ${({ theme }) => theme.spacing.xs};
-  min-width: 0;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
-  border-radius: ${({ theme }) => theme.radius.pill};
-  background: ${({ theme }) => theme.colour.surfaceAlt};
-  font-size: ${({ theme }) => theme.type.size.sm};
-  white-space: nowrap;
-
-  &:hover,
-  &:focus-visible {
-    background: ${({ theme }) => theme.colour.surface};
-  }
-`;
-const ChipName = styled.span`
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-const ChipQty = styled.b`
-  font-variant-numeric: tabular-nums;
-`;
-
 const Head = styled.header`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg}
-    ${({ theme }) => theme.spacing.sm};
-`;
-const Title = styled.h1<{ $desktop: boolean }>`
-  margin: 0;
-  font-size: ${({ theme, $desktop }) => ($desktop ? theme.type.size.xl : theme.type.size.lg)};
-  line-height: ${({ theme }) => theme.type.lineHeight.tight};
-`;
-const LiveText = styled.span<{ $ok: boolean }>`
-  font-size: ${({ theme }) => theme.type.size.sm};
-  color: ${({ theme, $ok }) => ($ok ? theme.colour.accent : theme.status.cancelled.fg)};
-  white-space: nowrap;
-`;
-const Block = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
-`;
-const Label = styled.span`
-  font-size: ${({ theme }) => theme.type.size.sm};
-  color: ${({ theme }) => theme.colour.textMuted};
-`;
-const Scroll = styled.div`
-  overflow-x: auto;
-`;
-const Stats = styled.dl`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme }) => theme.colour.hairline};
-`;
-const Stat = styled.div`
-  display: flex;
-  flex-direction: column-reverse;
-  min-width: 0;
-`;
-const StatName = styled.dt`
-  font-size: ${({ theme }) => theme.type.size.sm};
-  color: ${({ theme }) => theme.colour.textMuted};
-`;
-const StatValue = styled.dd`
-  margin: 0;
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  font-variant-numeric: tabular-nums;
-`;
-const GroupHead = styled.h2`
-  display: flex;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg}
-    ${({ theme }) => theme.spacing.xs};
-  font-size: ${({ theme }) => theme.type.size.md};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-`;
-const Muted = styled.span`
-  font-size: ${({ theme }) => theme.type.size.sm};
-  font-weight: ${({ theme }) => theme.type.weight.regular};
-  color: ${({ theme }) => theme.colour.textMuted};
-`;
-const List = styled.ul`
-  margin: 0;
-  padding: 0;
-  list-style: none;
-`;
-const RowWrap = styled.li`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme }) => theme.colour.hairline};
-`;
-const RowMain = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl} 0;
 `;
-const Names = styled.div`
+const Title = styled.h1`
   display: flex;
-  flex-direction: column;
-  min-width: 0;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.2;
 `;
-const NameMain = styled.span`
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+const Sub = styled.p`
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  color: ${({ theme }) => theme.c.muted};
 `;
-const Qty = styled.div`
+const Side = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  flex: none;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.lg};
+  color: ${({ theme }) => theme.c.muted};
 `;
-const QtyNumber = styled.span`
-  font-size: ${({ theme }) => theme.type.size.lg};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+const Tabs = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl} 0;
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 `;
-const Bar = styled.div`
-  height: ${({ theme }) => theme.spacing.xs};
-  margin-top: ${({ theme }) => theme.spacing.xs};
-  border-radius: ${({ theme }) => theme.radius.pill};
-  background: ${({ theme }) => theme.colour.surfaceAlt};
-  overflow: hidden;
-`;
-const BarFill = styled.div<{ $percent: number }>`
-  width: ${({ $percent }) => $percent}%;
-  height: 100%;
-  background: ${({ theme, $percent }) => ($percent >= 80 ? theme.colour.gold : theme.colour.sage)};
-`;
-const Toggle = styled.button`
-  min-height: ${({ theme }) => theme.minTapTarget};
-  padding: 0;
+const TabButton = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: baseline;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.xs};
   border: 0;
-  background: none;
-  color: ${({ theme }) => theme.colour.accent};
+  border-bottom: ${({ theme }) => theme.border.focus} solid
+    ${({ theme, $active }) => ($active ? theme.c.fill : 'transparent')};
+  background: transparent;
+  color: ${({ theme, $active }) => ($active ? theme.c.text : theme.c.muted)};
   font: inherit;
-  font-size: ${({ theme }) => theme.type.size.sm};
+  font-weight: ${({ $active }) => ($active ? 700 : 500)};
   cursor: pointer;
 `;
-const WhoBox = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+const TabHint = styled.span`
+  font-size: 0.875rem;
+  font-weight: 400;
 `;
-const Code = styled.span`
-  font-family: ui-monospace, Consolas, monospace;
-`;
-const Centered = styled.p`
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
-  color: ${({ theme }) => theme.colour.textMuted};
+const Body = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 `;
 
-const MODES: ReadonlyArray<CountMode> = ['all', 'confirmed'];
-const GROUPS: ReadonlyArray<GroupBy> = ['item', 'chef', 'customer', 'fulfilment'];
+function tabFromUrl(): Tab {
+  return new URLSearchParams(window.location.search).get('tab') === 'pack' ? 'pack' : 'cook';
+}
 
-/** The chips read "Rina × 2"; the full name shows on hover and focus when it is cut off. */
-function WhoChipList({ who, label }: Readonly<{ who: CookRow['who']; label: string }>) {
+function LabelsButton() {
+  const { t } = useTranslation(COOK_NS);
+  const navigate = useNavigate();
+  const go = useCallback(() => void navigate(LABELS_PATH), [navigate]);
   return (
-    <WhoChips aria-label={label}>
-      {who.map((entry) => (
-        <WhoItem key={entry.code}>
-          <Tooltip text={entry.firstName}>
-            <WhoChip tabIndex={0}>
-              <ChipName>{entry.firstName}</ChipName>
-              <span>×</span>
-              <ChipQty>{entry.qty}</ChipQty>
-            </WhoChip>
-          </Tooltip>
-        </WhoItem>
-      ))}
-    </WhoChips>
+    <Button onClick={go}>
+      <Icon name="print" />
+      {t('printLabels')}
+    </Button>
   );
 }
 
-type RowProps = Readonly<{ row: CookRow; showWho: boolean; lang: Language }>;
-
-const Row = memo(function Row({ row, showWho, lang }: RowProps) {
-  const { t } = useTranslation(COOK_NS);
-  const [open, setOpen] = useState(false);
-  const toggle = useCallback(() => setOpen((value) => !value), []);
-  // The cook reads Indonesian first; the English name is the smaller line (D-012 menu names).
-  const nameId = pickText(row.name, 'id');
-  const nameEn = pickText(row.name, 'en');
-  const percent =
-    row.limit !== undefined && row.limit > 0 ? Math.min(100, (row.qty / row.limit) * 100) : null;
-  return (
-    <RowWrap>
-      <RowMain>
-        <Names>
-          <NameMain>{nameId}</NameMain>
-          {nameEn !== nameId ? <Muted>{nameEn}</Muted> : null}
-        </Names>
-        <Qty>
-          <QtyNumber>{row.qty}</QtyNumber>
-          <Muted>{pickText(row.size, lang)}</Muted>
-          {/* The bar is decoration: the numbers carry the meaning. */}
-          {row.limit !== undefined ? (
-            <Muted>{t('ofLimit', { count: row.qty, limit: row.limit })}</Muted>
-          ) : null}
-        </Qty>
-      </RowMain>
-      {percent !== null ? (
-        <Bar aria-hidden="true">
-          <BarFill $percent={percent} />
-        </Bar>
-      ) : null}
-      {showWho ? (
-        <>
-          <Toggle type="button" aria-expanded={open} onClick={toggle}>
-            {t('who')} {open ? '▴' : '▾'}
-          </Toggle>
-          {open ? (
-            <WhoBox>
-              <WhoChipList who={row.who} label={t('who')} />
-            </WhoBox>
-          ) : null}
-        </>
-      ) : null}
-    </RowWrap>
-  );
-});
-
-/** Desktop: the quantity, the dish, and who ordered it with how many, all in view (A1-3). */
-const DesktopRow = memo(function DesktopRow({ row, showWho, lang }: RowProps) {
-  const { t } = useTranslation(COOK_NS);
-  const nameId = pickText(row.name, 'id');
-  const nameEn = pickText(row.name, 'en');
-  const percent =
-    row.limit !== undefined && row.limit > 0 ? Math.min(100, (row.qty / row.limit) * 100) : null;
-  return (
-    <DesktopRowWrap>
-      <BigQty>{row.qty}</BigQty>
-      <Names>
-        <NameBig>{nameId}</NameBig>
-        {nameEn !== nameId ? <Muted>{nameEn}</Muted> : null}
-        <Muted>
-          {pickText(row.size, lang)}
-          {row.limit !== undefined
-            ? ` · ${t('ofLimit', { count: row.qty, limit: row.limit })}`
-            : ''}
-        </Muted>
-        {percent !== null ? (
-          <Bar aria-hidden="true">
-            <BarFill $percent={percent} />
-          </Bar>
-        ) : null}
-      </Names>
-      {showWho ? <WhoChipList who={row.who} label={t('who')} /> : <span />}
-    </DesktopRowWrap>
-  );
-});
-
-type GroupProps = Readonly<{
-  group: CookGroup;
-  showWho: boolean;
-  lang: Language;
-  desktop: boolean;
-}>;
-
-const Group = memo(function Group({ group, showWho, lang, desktop }: GroupProps) {
-  const { t } = useTranslation(COOK_NS);
-  const title = group.fulfilment ? t(`fulfilment.${group.fulfilment}`) : group.title;
-  return (
-    <section aria-label={title ?? undefined}>
-      {title !== null ? (
-        <GroupHead>
-          <span>{title}</span>
-          <Muted>{t('items', { count: group.rows.length })}</Muted>
-        </GroupHead>
-      ) : null}
-      <List>
-        {group.rows.map((row) =>
-          desktop ? (
-            <DesktopRow key={row.itemId} row={row} showWho={showWho} lang={lang} />
-          ) : (
-            <Row key={row.itemId} row={row} showWho={showWho} lang={lang} />
-          ),
-        )}
-      </List>
-    </section>
-  );
-});
-
-/** S4. Route-agnostic: the app shell (4.4) puts it on a route and adds the tab bar. */
-export function CookScreen({ desktop = false }: Readonly<{ desktop?: boolean }>) {
+/** Kitchen (plan 001, stage 8): Cook and Pack on today's cook route; `?tab=pack` opens Pack. */
+export function CookScreen() {
   const { t, i18n } = useTranslation(COOK_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const dispatch = useDispatch();
-  const [mode, setMode] = useState<CountMode>('all');
-  const [groupBy, setGroupBy] = useState<GroupBy>('item');
+  const inRouter = useInRouterContext();
+  const [tab, setTab] = useState<Tab>(tabFromUrl);
 
   useEffect(() => {
     dispatch(pollingStarted());
@@ -380,122 +114,78 @@ export function CookScreen({ desktop = false }: Readonly<{ desktop?: boolean }>)
 
   const list = useSelector(selectCookList);
   const menu = useSelector(selectCookMenu);
-  const stats = useSelector((state: CookRootState) => selectCookStats(state, mode));
-  const notes = useSelector((state: CookRootState) => selectCookNotes(state, mode));
-  const groups = useSelector((state: CookRootState) => selectCookGroups(state, mode, groupBy));
+  const bags = useSelector((state: CookRootState) => selectBags(state));
+  const counted = useSelector((state: CookRootState) => selectCounted(state, 'all'));
   const retry = useCallback(() => dispatch(refreshRequested()), [dispatch]);
-  const printList = useCallback(() => window.print(), []);
 
-  const modeOptions: ReadonlyArray<SegmentedOption<CountMode>> = MODES.map((value) => ({
-    value,
-    label: t(`mode.${value}`),
-  }));
-  const groupOptions: ReadonlyArray<SegmentedOption<GroupBy>> = GROUPS.map((value) => ({
-    value,
-    label: t(`group.${value}`),
-  }));
-  const money = (cents: number) => formatMoney(cents, lang);
+  const choose = useCallback((next: Tab) => {
+    setTab(next);
+    try {
+      const url = new URL(window.location.href);
+      if (next === 'pack') url.searchParams.set('tab', 'pack');
+      else url.searchParams.delete('tab');
+      window.history.replaceState(window.history.state, '', url);
+    } catch {
+      // The tab still switches; only the address stays as it was.
+    }
+  }, []);
+
   const date = menu ? formatDay(menu.cookingDate, lang) : '';
+  const packed = bags.filter((bag) => bag.packed).length;
 
   return (
-    <Page $desktop={desktop}>
+    <Page>
       <Head>
-        <Title $desktop={desktop}>
-          {menu ? t(desktop ? 'titleDesktop' : 'title', { date }) : t('titleBare')}
-        </Title>
-        {list.status === 'ready' ? (
-          <LiveText $ok={list.live === 'ok'} role="status">
-            {list.live === 'ok' ? t('live') : t('offline')}
-          </LiveText>
-        ) : null}
-        {desktop ? (
-          <Button variant="primary" onClick={printList}>
-            <Icon name="print" />
-            {t('print')}
-          </Button>
-        ) : null}
+        <div>
+          <Title>
+            {menu ? t('title', { date }) : t('titleBare')}
+            {list.status === 'ready' ? <LiveDot fetchFailed={list.live === 'error'} /> : null}
+          </Title>
+          {tab === 'cook' ? <Sub>{t('subtitle', { count: counted.length })}</Sub> : null}
+        </div>
+        <Side>
+          {tab === 'pack' ? (
+            <span>{t('pack.packedCount', { packed, total: bags.length })}</span>
+          ) : null}
+          {inRouter ? <LabelsButton /> : null}
+        </Side>
       </Head>
 
-      <Controls>
-        <Block>
-          <Label>{t('group.label')}</Label>
-          <Scroll>
-            <Segmented
-              options={groupOptions}
-              value={groupBy}
-              onChange={setGroupBy}
-              label={t('group.label')}
-            />
-          </Scroll>
-        </Block>
-        <Block>
-          <Label>{t('mode.label')}</Label>
-          <Scroll>
-            <Segmented
-              options={modeOptions}
-              value={mode}
-              onChange={setMode}
-              label={t('mode.label')}
-            />
-          </Scroll>
-        </Block>
-      </Controls>
+      <Tabs role="tablist" aria-label={t('tabs.label')}>
+        <TabButton
+          type="button"
+          role="tab"
+          aria-selected={tab === 'cook'}
+          $active={tab === 'cook'}
+          onClick={() => choose('cook')}
+        >
+          {t('tabs.cook')} <TabHint>{t('tabs.cookSub')}</TabHint>
+        </TabButton>
+        <TabButton
+          type="button"
+          role="tab"
+          aria-selected={tab === 'pack'}
+          $active={tab === 'pack'}
+          onClick={() => choose('pack')}
+        >
+          {t('tabs.pack')} <TabHint>{t('tabs.packSub')}</TabHint>
+        </TabButton>
+      </Tabs>
 
-      <Stats aria-label={t('stats.label')}>
-        <Stat>
-          <StatValue>{stats.orders}</StatValue>
-          <StatName>{t('stats.orders')}</StatName>
-        </Stat>
-        <Stat>
-          <StatValue>{money(stats.incomeCents)}</StatValue>
-          <StatName>{t('stats.income')}</StatName>
-        </Stat>
-        <Stat>
-          <StatValue>{money(stats.paidCents)}</StatValue>
-          <StatName>{t('stats.paid')}</StatName>
-        </Stat>
-        <Stat>
-          <StatValue>{money(stats.unpaidCents)}</StatValue>
-          <StatName>{t('stats.unpaid')}</StatName>
-        </Stat>
-      </Stats>
-
-      {list.status === 'loading' ? <Centered role="status">{t('loading')}</Centered> : null}
-      {list.status === 'error' ? (
-        <Centered role="alert">
-          {t('error')}{' '}
-          <Button variant="quiet" onClick={retry}>
-            {t('retry')}
-          </Button>
-        </Centered>
-      ) : null}
-      {list.status === 'ready' && groups.length === 0 ? <Centered>{t('empty')}</Centered> : null}
-
-      {groups.map((group) => (
-        <Group
-          key={group.key}
-          group={group}
-          showWho={desktop ? groupBy !== 'customer' : groupBy === 'item' || groupBy === 'chef'}
-          lang={lang}
-          desktop={desktop}
-        />
-      ))}
-
-      {notes.length > 0 ? (
-        <section aria-label={t('notes', { count: notes.length })}>
-          <GroupHead>
-            <span>{t('notes', { count: notes.length })}</span>
-          </GroupHead>
-          <List>
-            {notes.map((note) => (
-              <RowWrap key={note.code}>
-                <Code>{note.code}</Code> <b>{note.firstName}</b>
-                <div>“{note.note}”</div>
-              </RowWrap>
-            ))}
-          </List>
-        </section>
-      ) : null}
+      <Body role="tabpanel">
+        {tab === 'cook' ? (
+          <CookTab
+            key={menu?.cookingDate ?? ''}
+            cookingDate={menu?.cookingDate ?? ''}
+            status={list.status}
+            onRetry={retry}
+          />
+        ) : list.status === 'ready' ? (
+          <PackTab />
+        ) : (
+          <p role="status">{list.status === 'error' ? t('error') : t('loading')}</p>
+        )}
+      </Body>
     </Page>
   );
 }

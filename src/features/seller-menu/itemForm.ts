@@ -1,4 +1,5 @@
 import type { SellerMenuItemView } from '../../../shared/domain';
+import type { Dish, UpdateDishRequest } from '../../../shared/menusContract';
 import { ITEM_DESCRIPTION_MAX, ITEM_NAME_MAX, ITEM_SIZE_MAX } from '../../../shared/limits';
 import type { CreateItemRequest, UpdateItemRequest } from '../../../shared/setupContract';
 
@@ -125,4 +126,28 @@ export function updateRequestOf(draft: ItemDraft): UpdateItemRequest | null {
     chefId: draft.chefId === '' ? null : draft.chefId,
     soldOut: draft.soldOut,
   };
+}
+
+export function draftOfDish(dish: Dish): ItemDraft {
+  return {
+    nameEn: dish.name.en,
+    nameId: dish.name.id,
+    descEn: dish.description.en,
+    descId: dish.description.id,
+    sizeEn: dish.size.en,
+    sizeId: dish.size.id,
+    price: priceInputOf(dish.priceCents),
+    limit: dish.limit === undefined ? '' : String(dish.limit),
+    chefId: dish.chefId ?? '',
+    soldOut: false,
+  };
+}
+
+/** A library dish has no sold out (that is per menu). */
+export function updateDishRequestOf(draft: ItemDraft): UpdateDishRequest | null {
+  const request = updateRequestOf(draft);
+  if (!request) return null;
+  const rest = { ...request };
+  delete rest.soldOut;
+  return rest;
 }

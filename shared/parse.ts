@@ -33,6 +33,26 @@ export function parseArray<T>(
   return out;
 }
 
+/**
+ * D-059: a customer's phone number and delivery address live on the seller's phone only. A request
+ * that carries a field for either is refused by its parser, so no route can store one by accident.
+ */
+const PERSONAL_DATA_KEYS = [
+  'phone',
+  'phoneNumber',
+  'phone_number',
+  'mobile',
+  'whatsapp',
+  'whatsappNumber',
+  'address',
+  'deliveryAddress',
+  'delivery_address',
+];
+
+export function hasPersonalData(input: Json): boolean {
+  return PERSONAL_DATA_KEYS.some((key) => key in input);
+}
+
 export function isLanguage(value: unknown): value is Language {
   return value === 'en' || value === 'id';
 }

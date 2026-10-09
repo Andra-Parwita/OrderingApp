@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { Button, TextField } from '../../ui';
+import { Button, Icon, TextField } from '../../ui';
 import { guessDevice } from './authText';
 import { AUTH_NS } from './i18n/register';
 
@@ -60,51 +60,133 @@ export const Actions = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
 `;
-export const Banner = styled.p`
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.colour.surfaceAlt};
-`;
-export const Steps = styled.ol`
+
+// The sign-in pages (plan 001 stage 5): one narrow column inside SignInFrame, colours from `theme.c`.
+export const AuthPanel = styled.main`
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.lg};
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 0 ${({ theme }) => theme.size.pagePadTablet / 16}rem ${({ theme }) => theme.spacing.xxl};
+`;
+export const AuthTitle = styled.h1`
   margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: step;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: ${({ theme }) => theme.type.lineHeight.tight};
+  letter-spacing: -0.01em;
+  color: ${({ theme }) => theme.c.text};
+`;
+export const AuthSub = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.c.muted};
+`;
+export const AuthNote = styled.p`
+  margin: 0;
+  font-size: ${({ theme }) => theme.type.size.sm};
+  color: ${({ theme }) => theme.c.muted};
+`;
+export const AuthForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.lg};
+`;
+/** The one big filled button of a panel: 52 px tall (handoff: main action 48 to 56). */
+export const BigAction = styled.div`
+  display: flex;
+  flex-direction: column;
 
-  & > li {
-    display: flex;
-    gap: ${({ theme }) => theme.spacing.md};
-    counter-increment: step;
-  }
-  & > li::before {
-    content: counter(step);
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: ${({ theme }) => theme.radius.pill};
-    background: ${({ theme }) => theme.colour.surfaceAlt};
-    font-weight: ${({ theme }) => theme.type.weight.strong};
+  & > button {
+    min-height: 3.25rem;
+    font-size: ${({ theme }) => theme.type.size.base};
   }
 `;
-export const FieldRow = styled.div`
+export const Divider = styled.hr`
+  width: 100%;
+  margin: ${({ theme }) => theme.spacing.xs} 0;
+  border: 0;
+  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+`;
+export const MonoField = styled.div`
+  & input {
+    font-family: ${({ theme }) => theme.font.mono};
+    font-weight: 600;
+    letter-spacing: 0.06em;
+  }
+`;
+/** Left-aligned quiet button with a back arrow. */
+export const BackRow = styled.div`
+  align-self: flex-start;
+  margin-left: -${({ theme }) => theme.spacing.lg};
+`;
+/** An inline error under the control it belongs to: plain words, never a popup. */
+export const InlineError = styled.p`
   display: flex;
   align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.sm};
+  margin: 0;
+  font-size: ${({ theme }) => theme.type.size.md};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+  color: ${({ theme }) => theme.c.danger};
+`;
 
-  & > :first-child {
-    flex: 1;
-    min-width: 0;
+/** Icon + words (never colour alone), announced when it appears. */
+export function ErrorText({ children }: Readonly<{ children: string }>) {
+  return (
+    <InlineError role="alert">
+      <Icon name="warning" />
+      <span>{children}</span>
+    </InlineError>
+  );
+}
+
+export function BackButton({ onClick }: Readonly<{ onClick: () => void }>) {
+  const { t } = useTranslation(AUTH_NS);
+  return (
+    <BackRow>
+      <Button variant="quiet" onClick={onClick}>
+        <Icon name="back" />
+        {t('signIn.back')}
+      </Button>
+    </BackRow>
+  );
+}
+
+/** Face-with-brackets mark of "face or fingerprint" (the Icon set has no such glyph). */
+export function FaceIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="22"
+      height="22"
+      aria-hidden="true"
+      focusable="false"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 8V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v2M20 16v2a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-2M9 10v1M15 10v1M9 15a4 4 0 006 0" />
+    </svg>
+  );
+}
+
+// The Show / Hide button sits inside the box, at its right end (below the label line).
+const PasswordWrap = styled.div`
+  position: relative;
+
+  & input {
+    padding-right: 5.5rem;
   }
 `;
 const Toggle = styled.div`
-  padding-top: 1.35rem;
+  position: absolute;
+  top: 1.45rem;
+  right: 0;
 `;
 
 /** Device name, pre-guessed from the browser and editable. */
@@ -133,7 +215,7 @@ export function DeviceNameField({
   );
 }
 
-/** A password box with a Show / Hide button beside it. */
+/** A password box with a Show / Hide button inside it. */
 export function PasswordField({
   label,
   value,
@@ -152,7 +234,7 @@ export function PasswordField({
   const { t } = useTranslation(AUTH_NS);
   const [shown, setShown] = useState(false);
   return (
-    <FieldRow>
+    <PasswordWrap>
       <TextField
         label={label}
         type={shown ? 'text' : 'password'}
@@ -173,6 +255,6 @@ export function PasswordField({
           {shown ? t('password.hide') : t('password.show')}
         </Button>
       </Toggle>
-    </FieldRow>
+    </PasswordWrap>
   );
 }

@@ -2,6 +2,7 @@ import type {
   Actor,
   AuditDiff,
   AuditEntry,
+  CollectedBy,
   CustomerOrder,
   Fulfilment,
   InboxEntry,
@@ -13,6 +14,7 @@ import type {
 } from './domain';
 import { AUDIT_MAX, FIRST_NAME_MAX, INBOX_MAX, MAX_MENU_ITEMS, MAX_QTY, NOTE_MAX } from './limits';
 import {
+  hasPersonalData,
   isInt,
   isIsoDate,
   isLanguage,
@@ -25,6 +27,7 @@ import { isValidSlug } from './seller';
 import { ORDER_STATUSES } from './status';
 
 const FULFILMENTS: ReadonlyArray<Fulfilment> = ['pickup', 'delivery'];
+const COLLECTED_BY: ReadonlyArray<CollectedBy> = ['customer', 'seller'];
 const INBOX_KINDS: ReadonlyArray<InboxEntry['kind']> = ['status', 'nudge', 'message'];
 
 /** One requested line; the server snapshots the item's names, size and price. */
@@ -39,12 +42,20 @@ export type CreateOrderRequest = {
   note?: string;
   /** Customer only: the phone's own My orders history holds a collected/delivered order. */
   returning?: boolean;
+  /**
+   * plan 001 stage 4: the pickup place (one of the menu's) for a pickup order; the customer picks
+   * it at checkout when the menu uses more than one (stage 12). Ignored for a delivery order. No phone or address
+   * fields exist here, or anywhere else in a request (D-059).
+   */
+  pickupPlaceId?: string;
 };
 
 /** POST /api/seller/orders (seller or chef, in the X-Seller seller; D-027 row 8). Defaults: confirmNow true, paid false. */
 export type CreateSellerOrderRequest = Omit<CreateOrderRequest, 'returning'> & {
   confirmNow?: boolean;
   paid?: boolean;
+  /** D-062: go ahead although the order takes more portions than are left (`over_limit`). */
+  force?: boolean;
 };
 
 /** PATCH /api/orders/:token. At least one field; an empty note clears it. */
@@ -91,12 +102,21 @@ export function toCustomerOrder(order: SellerOrder, seller: SellerRef): Customer
     token: order.token,
     firstName: order.firstName,
     language: order.language,
-    lines: order.lines,
+    // Packing ticks are the seller's: copy the fields a customer may see, nothing else (D-066).
+    lines: order.lines.map((line): OrderLine => ({
+      itemId: line.itemId,
+      name: line.name,
+      size: line.size,
+      priceCents: line.priceCents,
+      qty: line.qty,
+    })),
     fulfilment: order.fulfilment,
     ...(order.note !== undefined ? { note: order.note } : {}),
     status: order.status,
     locked: order.locked,
     inbox: order.inbox,
+    ...(order.pickupPlaceId !== undefined ? { pickupPlaceId: order.pickupPlaceId } : {}),
+    ...(order.collectedAt !== undefined ? { collectedAt: order.collectedAt } : {}),
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
   };
@@ -150,7 +170,7 @@ function parseNote(input: unknown): string | null {
 type CreateCore = Omit<CreateOrderRequest, 'returning'>;
 
 function parseCreateCore(input: unknown): CreateCore | null {
-  if (!isRecord(input)) return null;
+  if (!isRecord(input) || hasPersonalData(input)) return null;
   const { firstName, language, fulfilment } = input;
   if (typeof firstName !== 'string') return null;
   const name = firstName.trim();
@@ -164,12 +184,20 @@ function parseCreateCore(input: unknown): CreateCore | null {
     if (parsed === null) return null;
     if (parsed !== '') note = parsed;
   }
+  const placeId = input['pickupPlaceId'];
+  if (
+    placeId !== undefined &&
+    (typeof placeId !== 'string' || placeId === '' || placeId.length > 64)
+  ) {
+    return null;
+  }
   return {
     firstName: name,
     language,
     lines,
     fulfilment,
     ...(note !== undefined ? { note } : {}),
+    ...(placeId !== undefined ? { pickupPlaceId: placeId } : {}),
   };
 }
 
@@ -184,18 +212,20 @@ export function parseCreateOrderRequest(input: unknown): CreateOrderRequest | nu
 export function parseCreateSellerOrderRequest(input: unknown): CreateSellerOrderRequest | null {
   const core = parseCreateCore(input);
   if (!core || !isRecord(input)) return null;
-  const { confirmNow, paid } = input;
+  const { confirmNow, paid, force } = input;
   if (confirmNow !== undefined && typeof confirmNow !== 'boolean') return null;
   if (paid !== undefined && typeof paid !== 'boolean') return null;
+  if (force !== undefined && typeof force !== 'boolean') return null;
   return {
     ...core,
     ...(confirmNow !== undefined ? { confirmNow } : {}),
     ...(paid !== undefined ? { paid } : {}),
+    ...(force !== undefined ? { force } : {}),
   };
 }
 
 export function parseUpdateOrderRequest(input: unknown): UpdateOrderRequest | null {
-  if (!isRecord(input)) return null;
+  if (!isRecord(input) || hasPersonalData(input)) return null;
   const out: UpdateOrderRequest = {};
   if (input['lines'] !== undefined) {
     const lines = parseRequestedLines(input['lines']);
@@ -221,7 +251,15 @@ function parseOrderLine(input: unknown): OrderLine | null {
   const { itemId, priceCents, qty } = input;
   if (typeof itemId !== 'string' || !name || !size) return null;
   if (!isInt(priceCents, 0, 1_000_000) || !isInt(qty, 1, MAX_QTY)) return null;
-  return { itemId, name, size, priceCents, qty };
+  if (input['ticked'] !== undefined && typeof input['ticked'] !== 'boolean') return null;
+  return {
+    itemId,
+    name,
+    size,
+    priceCents,
+    qty,
+    ...(input['ticked'] === true ? { ticked: true } : {}),
+  };
 }
 
 function parseActor(input: unknown): Actor | null {
@@ -343,10 +381,18 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
   const core = parseCoreFields(input);
   const seller = parseSellerRef(input['seller']);
   if (!core || !seller) return null;
-  const { archived, cookingDate } = input;
-  if (archived === undefined && cookingDate === undefined) return { ...core, seller };
+  const { archived, cookingDate, pickupPlaceId, collectedAt } = input;
+  if (pickupPlaceId !== undefined && (typeof pickupPlaceId !== 'string' || pickupPlaceId === '')) {
+    return null;
+  }
+  if (collectedAt !== undefined && !isIsoDate(collectedAt)) return null;
+  const extra = {
+    ...(pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
+    ...(collectedAt !== undefined ? { collectedAt } : {}),
+  };
+  if (archived === undefined && cookingDate === undefined) return { ...core, ...extra, seller };
   if (archived !== true || typeof cookingDate !== 'string' || !DATE.test(cookingDate)) return null;
-  return { ...core, seller, archived, cookingDate };
+  return { ...core, ...extra, seller, archived, cookingDate };
 }
 
 export function parseExpiredOrder(input: unknown): ExpiredOrder | null {
@@ -382,6 +428,14 @@ export function parseOrder(input: unknown): SellerOrder | null {
     if (!parsed) return null;
     enteredBy = parsed;
   }
+  // plan 001 stage 4: all optional, so a backup made before them still parses.
+  const { pickupPlaceId, packed, collectedAt, collectedBy } = input;
+  if (pickupPlaceId !== undefined && (typeof pickupPlaceId !== 'string' || pickupPlaceId === '')) {
+    return null;
+  }
+  if (packed !== undefined && typeof packed !== 'boolean') return null;
+  if (collectedAt !== undefined && !isIsoDate(collectedAt)) return null;
+  if (collectedBy !== undefined && !isOneOf(COLLECTED_BY, collectedBy)) return null;
   return {
     ...base,
     sellerId,
@@ -391,6 +445,9 @@ export function parseOrder(input: unknown): SellerOrder | null {
     changed,
     ...(enteredBy ? { enteredBy } : {}),
     audit,
+    ...(pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
+    ...(packed === true ? { packed } : {}),
+    ...(collectedAt !== undefined && collectedBy !== undefined ? { collectedAt, collectedBy } : {}),
   };
 }
 

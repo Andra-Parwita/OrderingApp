@@ -43,14 +43,49 @@ function matchesFilter(order: Order, filter: StatusFilter): boolean {
   return filterOf(order.status) === filter;
 }
 
-/** The list for a filter tab and a search text (both come from the URL). */
+/** An order the seller is still owed money for (cancelled orders are not owed). */
+export function isUnpaid(order: Order): boolean {
+  return !order.paid && order.status !== 'cancelled';
+}
+
+/** The two toggles beside the tabs: Changed and Not paid (they narrow the tab's list). */
+export type ListToggles = Readonly<{ changed?: boolean; unpaid?: boolean }>;
+
+/** The list for a filter tab, a search text and the toggles (all come from the URL). */
 export function visibleOrders(
   orders: ReadonlyArray<Order>,
   filter: StatusFilter,
   query: string,
+  toggles: ListToggles = {},
 ): Array<Order> {
-  return orders.filter((order) => matchesFilter(order, filter) && matchesQuery(order, query));
+  return orders.filter(
+    (order) =>
+      matchesFilter(order, filter) &&
+      matchesQuery(order, query) &&
+      (!toggles.changed || order.changed) &&
+      (!toggles.unpaid || isUnpaid(order)),
+  );
 }
+
+export const selectUnpaidCount = createSelector(
+  [selectOrders],
+  (orders) => orders.filter(isUnpaid).length,
+);
+
+export const selectCurrent = (state: SellerOrdersRootState) => state.sellerOrders.current;
+export const selectPast = (state: SellerOrdersRootState) => state.sellerOrders.past;
+export const selectWarned = (state: SellerOrdersRootState) => state.sellerOrders.warned;
+export const selectToast = (state: SellerOrdersRootState) => state.sellerOrders.toast;
+
+/** Portions sold per menu item id (not cancelled), for the live Dishes panel. */
+export const selectSoldByItem = createSelector([selectOrders], (orders) => {
+  const sold = new Map<string, number>();
+  for (const order of orders) {
+    if (order.status === 'cancelled') continue;
+    for (const line of order.lines) sold.set(line.itemId, (sold.get(line.itemId) ?? 0) + line.qty);
+  }
+  return sold;
+});
 
 export function selectOrderByCode(state: SellerOrdersRootState, code: string): Order | undefined {
   const raw = parseOrderCode(code) ?? code;
@@ -74,3 +109,7 @@ export function neighbourCodes(
     next: orders[index + 1]?.code ?? null,
   };
 }
+
+/** How many orders the live menu has, for the nav; null until the first load. */
+export const selectOrdersCount = (state: SellerOrdersRootState): number | null =>
+  state.sellerOrders.list.status === 'ready' ? state.sellerOrders.orders.length : null;

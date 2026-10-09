@@ -122,26 +122,28 @@ describe('seller batch 2: detail banners', () => {
     renderDetail({ status: 'ordered' });
     expect(screen.getByText(/Wait for their WhatsApp message/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mark WhatsApp received' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Nudge customer' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Confirm order' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Nudge/ })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /Confirm & send on WhatsApp/ })).toBeInTheDocument();
   });
 
-  it('returning customer: can confirm, no WhatsApp button', () => {
+  it('returning customer: can confirm, no WhatsApp banner or button', () => {
     renderDetail({ status: 'ordered', returning: true });
-    expect(screen.getByText(/You can confirm without waiting/)).toBeInTheDocument();
+    expect(screen.queryByText(/Wait for their WhatsApp message/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Mark WhatsApp received' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Nudge customer' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Nudge/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm only' })).toBeInTheDocument();
   });
 
   it('has no customer banner once confirmed', () => {
     renderDetail({ status: 'confirmed' });
-    expect(screen.queryByRole('button', { name: 'Nudge customer' })).toBeNull();
+    expect(screen.queryByText(/Wait for their WhatsApp message/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Mark WhatsApp received' })).toBeNull();
   });
 
   it('shows the lock state in text and flips the button', () => {
     renderDetail({ locked: true });
-    expect(screen.getByText(/Locked: the customer can no longer/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Unlock order' })).toBeInTheDocument();
+    expect(screen.getByText('No, locked')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Unlock/ })).toBeInTheDocument();
   });
 
   it('shows the Changed banner with the diff in English and Indonesian, and the history', async () => {
@@ -160,8 +162,8 @@ describe('seller batch 2: detail banners', () => {
 
   it('keeps the customer-visible note', () => {
     renderDetail({ note: 'No chilli' });
+    expect(screen.getByText('Note from Rina')).toBeInTheDocument();
     expect(screen.getByText('No chilli')).toBeInTheDocument();
-    expect(screen.getByText('The customer can see this note.')).toBeInTheDocument();
   });
 });
 
@@ -189,17 +191,18 @@ describe('seller batch 2: detail actions (MSW)', () => {
     await waitFor(async () =>
       expect((await mockStore.getByCode(order.code))?.waReceived).toBe(true),
     );
-    expect(await screen.findByText('You can confirm.')).toBeInTheDocument();
+    // Once the number is in, the wait-for-WhatsApp banner goes away.
+    await waitFor(() => expect(screen.queryByText(/Wait for their WhatsApp message/)).toBeNull());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nudge customer' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Nudge/ }));
     expect(await screen.findByText('Reminder sent to the customer')).toBeInTheDocument();
     expect((await mockStore.getByCode(order.code))?.inbox[0]?.kind).toBe('nudge');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Lock order' }));
-    expect(await screen.findByRole('button', { name: 'Unlock order' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Lock/ }));
+    expect(await screen.findByRole('button', { name: /^Unlock/ })).toBeInTheDocument();
     expect((await mockStore.getByCode(order.code))?.locked).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Unlock order' }));
-    expect(await screen.findByRole('button', { name: 'Lock order' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Unlock/ }));
+    expect(await screen.findByRole('button', { name: /^Lock/ })).toBeInTheDocument();
   });
 
   it('marks a changed order as seen', async () => {
@@ -214,19 +217,22 @@ describe('seller batch 2: detail actions (MSW)', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Seen' })).toBeNull());
   });
 
-  it('disables lock and offers no nudge on a cancelled order', async () => {
+  it('disables lock and nudge on a cancelled order', async () => {
     const order = await customerOrder();
     await mockStore.setStatus(order.code, 'cancelled', { role: 'seller', name: 'Bu Ani' });
     const store = createTestStore({ saga: true });
     renderWithStore(<OrderDetailScreen code={order.code} onBack={noop} />, store);
-    expect(await screen.findByRole('button', { name: 'Lock order' })).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Nudge customer' })).toBeNull();
+    expect(await screen.findByRole('button', { name: /^Lock/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^Nudge/ })).toBeDisabled();
   });
 });
 
 describe('seller batch 2: new order', () => {
   beforeAll(setupI18n);
-  beforeEach(() => mockStore.reset());
+  beforeEach(async () => {
+    await mockStore.reset();
+    localStorage.clear();
+  });
   afterEach(() => {
     vi.restoreAllMocks();
     server.events.removeAllListeners();
@@ -246,10 +252,11 @@ describe('seller batch 2: new order', () => {
   const pickEnglish = () =>
     fireEvent.click(
       within(screen.getByRole('radiogroup', { name: 'Customer language' })).getByRole('radio', {
-        name: 'EN',
+        name: 'English',
       }),
     );
   const nameField = () => screen.getByLabelText('Customer first name');
+  const createOnly = () => fireEvent.click(screen.getByRole('button', { name: 'Create only' }));
 
   it('requires a first name and at least one item, and sends nothing', async () => {
     const posts: Array<string> = [];
@@ -257,7 +264,7 @@ describe('seller batch 2: new order', () => {
       if (request.method === 'POST') posts.push(request.url);
     });
     await renderNew();
-    fireEvent.click(screen.getByRole('button', { name: 'Create order' }));
+    createOnly();
     expect(screen.getByText('Enter the first name.')).toBeInTheDocument();
     expect(screen.getByText('Add at least one item.')).toBeInTheDocument();
     expect(posts).toHaveLength(0);
@@ -267,32 +274,38 @@ describe('seller batch 2: new order', () => {
     await mockStore.patchItem('pesmol', { limit: 4 });
     await renderNew();
     more('Lime-leaf mixed rice', 2);
-    expect(screen.getByText('$30.00', { selector: 'span' })).toBeInTheDocument();
+    expect(screen.getByText('Total $30.00')).toBeInTheDocument();
     expect(screen.getByText(/4 left/)).toBeInTheDocument();
     expect(screen.getAllByText(/ left/)).toHaveLength(1);
   });
 
-  it('sends confirmNow, paid, language and items, then shows the saved screen', async () => {
+  it('sends confirmNow, paid, language and items, then leaves the screen', async () => {
     let sent: Record<string, unknown> | undefined;
     server.events.on('request:start', async ({ request }) => {
       if (request.method === 'POST' && new URL(request.url).pathname === '/api/seller/orders') {
         sent = (await request.clone().json()) as Record<string, unknown>;
       }
     });
-    await renderNew();
+    const done = vi.fn();
+    await renderNew(done);
     fireEvent.change(nameField(), { target: { value: 'Lisa' } });
     pickEnglish();
-    fireEvent.click(screen.getByRole('radio', { name: 'Delivery' }));
     more('Lime-leaf mixed rice', 2);
     more('Tilapia pesmol');
+    expect(screen.getByText('Total $45.00')).toBeInTheDocument();
+    // The Delivery option arrives with the current menu.
+    await screen.findByRole('option', { name: 'Delivery' });
+    fireEvent.change(screen.getByLabelText('Pickup or delivery'), {
+      target: { value: 'delivery' },
+    });
     fireEvent.change(screen.getByLabelText(/Note \(optional\)/), { target: { value: 'No nuts' } });
-    const confirm = within(screen.getByRole('radiogroup', { name: 'Confirm order now' }));
+    const confirm = within(screen.getByRole('radiogroup', { name: 'Confirm it now' }));
     fireEvent.click(confirm.getByRole('radio', { name: 'No' }));
-    const paid = within(screen.getByRole('radiogroup', { name: 'Mark paid' }));
+    const paid = within(screen.getByRole('radiogroup', { name: 'Already paid' }));
     fireEvent.click(paid.getByRole('radio', { name: 'Yes' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Create order' }));
+    createOnly();
 
-    expect(await screen.findByText(/Starts as Ordered/)).toBeInTheDocument();
+    await waitFor(() => expect(done).toHaveBeenCalled());
     expect(sent).toMatchObject({
       firstName: 'Lisa',
       language: 'en',
@@ -305,20 +318,20 @@ describe('seller batch 2: new order', () => {
         { itemId: 'pesmol', qty: 1 },
       ],
     });
-    expect(screen.getByText('$45.00', { selector: 'span' })).toBeInTheDocument();
   });
 
   it('defaults to confirm now and not paid', async () => {
-    const store = await renderNew();
+    const done = vi.fn();
+    const store = await renderNew(done);
     fireEvent.change(nameField(), { target: { value: 'Lisa' } });
     more('Chicken lemper');
-    fireEvent.click(screen.getByRole('button', { name: 'Create order' }));
-    expect(await screen.findByText(/Starts as Confirmed/)).toBeInTheDocument();
+    createOnly();
+    await waitFor(() => expect(done).toHaveBeenCalled());
     const [order] = store.getState().sellerOrders.orders;
     expect(order).toMatchObject({ status: 'confirmed', paid: false });
   });
 
-  it('opens WhatsApp with or without the number, and the number never reaches a request', async () => {
+  it('opens the number’s WhatsApp chat, and the number never reaches a request', async () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     const requests: Array<{ url: string; body: string }> = [];
     server.events.on('request:start', async ({ request }) => {
@@ -329,38 +342,44 @@ describe('seller batch 2: new order', () => {
     fireEvent.change(nameField(), { target: { value: 'Lisa' } });
     pickEnglish();
     more('Chicken lemper', 2);
-    fireEvent.click(screen.getByRole('button', { name: 'Create order' }));
-    const phone = await screen.findByLabelText(/WhatsApp number/);
+    fireEvent.change(screen.getByLabelText("Customer's WhatsApp number"), {
+      target: { value: '0412 345 678' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create & send link on WhatsApp' }));
+    await waitFor(() => expect(done).toHaveBeenCalled());
 
-    const send = () => screen.getByRole('button', { name: 'Send order link on WhatsApp' });
-    fireEvent.click(send());
-    const plain = String(open.mock.calls[0]?.[0]);
-    expect(plain.startsWith('https://wa.me/?text=')).toBe(true);
-    const text = decodeURIComponent(plain.split('?text=')[1] ?? '');
+    const url = String(open.mock.calls[0]?.[0]);
+    expect(url.startsWith('https://wa.me/61412345678?text=')).toBe(true);
+    const text = decodeURIComponent(url.split('?text=')[1] ?? '');
     expect(text).toContain('Hi Lisa');
     expect(text).toContain('2× Chicken lemper');
     expect(text).toContain('Total $20.00');
     expect(text).toContain(`${window.location.origin}/o/`);
 
-    fireEvent.change(phone, { target: { value: '0412 345 678' } });
-    fireEvent.click(send());
-    expect(String(open.mock.calls[1]?.[0]).startsWith('https://wa.me/61412345678?text=')).toBe(
-      true,
-    );
-
-    fireEvent.change(phone, { target: { value: '123' } });
-    expect(send()).toBeDisabled();
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(requests.some((request) => request.url.includes('/api/seller/orders'))).toBe(true);
     for (const request of requests) {
       expect(request.url).not.toContain('412345678');
       expect(request.body).not.toContain('412345678');
       expect(request.body).not.toContain('0412');
     }
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-    expect(done).toHaveBeenCalled();
+  it('opens the WhatsApp chat picker when no number is given, and refuses a bad number', async () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    const done = vi.fn();
+    await renderNew(done);
+    fireEvent.change(nameField(), { target: { value: 'Lisa' } });
+    more('Chicken lemper');
+    const phone = screen.getByLabelText("Customer's WhatsApp number");
+    fireEvent.change(phone, { target: { value: '123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create & send link on WhatsApp' }));
+    expect(open).not.toHaveBeenCalled();
+    expect(done).not.toHaveBeenCalled();
+
+    fireEvent.change(phone, { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create & send link on WhatsApp' }));
+    await waitFor(() => expect(done).toHaveBeenCalled());
+    expect(String(open.mock.calls[0]?.[0]).startsWith('https://wa.me/?text=')).toBe(true);
   });
 
   it('shows a clear message when an item sold out meanwhile', async () => {
@@ -372,7 +391,7 @@ describe('seller batch 2: new order', () => {
         HttpResponse.json({ error: 'sold_out', message: 'Sold out' }, { status: 409 }),
       ),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Create order' }));
+    createOnly();
     expect(await screen.findByText(/just sold out/)).toBeInTheDocument();
   });
 });
@@ -388,7 +407,7 @@ describe('seller polish: action labels, banners, filter chips', () => {
   }
 
   const CASES = [
-    [{ status: 'ordered' }, 'Confirm order', 'Konfirmasi pesanan'],
+    [{ status: 'ordered' }, 'Confirm & send on WhatsApp', 'Konfirmasi & kirim lewat WhatsApp'],
     [{ status: 'confirmed', fulfilment: 'pickup' }, 'Mark ready for pickup', 'Tandai siap diambil'],
     [
       { status: 'confirmed', fulfilment: 'delivery' },
@@ -410,17 +429,18 @@ describe('seller polish: action labels, banners, filter chips', () => {
     expect(await screen.findByRole('button', { name: id })).toBeInTheDocument();
   });
 
-  it.each([
-    [{ status: 'ordered' }, '★ New customer'],
-    [{ status: 'ordered', returning: true }, '↩ Returning'],
-    [{ status: 'ordered', waReceived: true }, '✓ WhatsApp received'],
-  ])('says the customer kind once in the banner: %j', (overrides, mark) => {
-    renderDetail(overrides);
-    const banner = screen.getByText(mark).closest('section');
-    expect(banner).not.toBeNull();
-    const words = mark.replace(/^\S+ /, '');
-    expect(banner?.textContent?.split(words)).toHaveLength(2);
+  it('says "New customer" once, in the banner, for a customer still to be heard from', () => {
+    renderDetail({ status: 'ordered' });
+    expect(screen.getAllByText('★ New customer')).toHaveLength(1);
   });
+
+  it.each([[{ status: 'ordered', returning: true }], [{ status: 'ordered', waReceived: true }]])(
+    'has no new-customer banner when the customer is known: %j',
+    (overrides) => {
+      renderDetail(overrides);
+      expect(screen.queryByText('★ New customer')).toBeNull();
+    },
+  );
 
   function renderList(filter: StatusFilter = 'all') {
     const store = createTestStore({ saga: false });

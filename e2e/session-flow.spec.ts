@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { keepAdminPasskey } from './adminSession';
 import { collectErrors } from './sellerHelpers';
 
-// Stage 7.3: the real routes. The admin invites Dapur Demo, the seller sets up with the key and a
+// The real routes (plan 001: Devices is a Settings pane, chefs have no Menu or Settings). The admin invites Dapur Demo, the seller sets up with the key and a
 // password, sees Devices, signs out and in again; then a chef is invited and has no Menu (D-013).
 // Desktop only. Runs in its own project after the other sign-in specs (same Dapur Demo account).
 
@@ -11,11 +11,9 @@ const CHEF_PASSWORD = 'chef flow long password';
 
 async function setUpWithKey(page: Page, key: string, password: string, device: string) {
   await page.goto('/seller/setup');
-  await page.getByLabel('Enter the key you were sent').fill(key);
+  await page.getByLabel('Invite key from the kitchen owner').fill(key);
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page
-    .getByRole('button', { name: "My phone can't do this → set a password instead" })
-    .click();
+  await page.getByRole('button', { name: /Set a password/ }).click();
   await page.getByLabel('New password', { exact: true }).fill(password);
   await page.getByLabel('Confirm password', { exact: true }).fill(password);
   await page.getByLabel('Name of this device').fill(device);
@@ -46,10 +44,13 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await expect(page.getByLabel('Seller (dev only)')).toHaveCount(0);
   await page.screenshot({ path: 'captures/session-flow-seller.png', fullPage: true });
 
-  // More: Devices lists this device; the seller sees everything.
-  await page.getByRole('link', { name: 'More' }).click();
-  await expect(page.getByRole('button', { name: 'Week settings' })).toBeVisible();
-  await page.getByRole('button', { name: 'Devices' }).click();
+  // Settings > Devices lists this device; the seller sees everything (Menu and Settings).
+  const rail = page.getByRole('navigation', { name: 'Seller' });
+  await expect(rail.getByRole('link', { name: 'Menu', exact: true })).toBeVisible();
+  await expect(rail.getByRole('link', { name: 'Settings', exact: true })).toBeVisible();
+  await rail.getByRole('link', { name: 'Settings', exact: true }).click();
+  await page.getByRole('link', { name: 'Devices' }).click();
+  await expect(page).toHaveURL(/\/seller\/settings\/devices$/);
   await expect(page.getByText('E2E session flow', { exact: true })).toBeVisible();
   await expect(page.getByText('Active now')).toBeVisible();
 
@@ -70,7 +71,7 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.getByRole('button', { name: 'Sign out of this device' }).click();
   await page.getByRole('button', { name: 'Tap again to sign out' }).click();
   await expect(page).toHaveURL(/\/seller\/sign-in$/);
-  await expect(page.getByRole('heading', { name: 'Dapur Demo' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
   await page.screenshot({ path: 'captures/session-flow-sign-in.png', fullPage: true });
 
   await page.getByRole('button', { name: 'Use password instead' }).click();
@@ -81,32 +82,31 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
     page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
   ).toBeVisible();
 
-  // More > Sign out, then the chef sets up.
-  await page.getByRole('link', { name: 'More' }).click();
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  // Settings > Devices > Sign out of this device, then the chef sets up.
+  await page.goto('/seller/settings/devices');
+  await page.getByRole('button', { name: 'Sign out of this device' }).click();
+  await page.getByRole('button', { name: 'Tap again to sign out' }).click();
   await expect(page).toHaveURL(/\/seller\/sign-in$/);
   await setUpWithKey(page, chefKey, CHEF_PASSWORD, 'E2E chef flow');
   await expect(
     page.getByText('Signed in as Chef Rudi').or(page.getByText('Rudi · chef')),
   ).toBeVisible();
-  const rail = page.getByRole('navigation', { name: 'Seller' });
   await expect(rail.getByRole('link', { name: 'Orders' })).toBeVisible();
-  await expect(rail.getByRole('link', { name: 'Hand-over' })).toBeVisible();
+  await expect(rail.getByRole('link', { name: 'Kitchen' })).toBeVisible();
+  await expect(rail.getByRole('link', { name: 'Pickup & delivery' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Menu', exact: true })).toHaveCount(0);
+  await expect(rail.getByRole('link', { name: 'Settings', exact: true })).toHaveCount(0);
   await page.screenshot({ path: 'captures/session-flow-chef.png', fullPage: true });
 
-  // The Saturday hub: three big buttons, each leading to its tool.
-  await rail.getByRole('link', { name: 'Hand-over' }).click();
+  // Pickup & delivery opens from the panel.
+  await rail.getByRole('link', { name: 'Pickup & delivery' }).click();
   await expect(page).toHaveURL(/\/seller\/hand-over$/);
-  const hub = page.getByRole('navigation', { name: 'Saturday' });
-  await expect(hub.getByRole('link')).toHaveCount(3);
-  await page.screenshot({ path: 'captures/session-flow-hub.png', fullPage: true });
-  await hub.getByRole('link', { name: 'Send an update' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Send an update' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /^Pickup & delivery/ })).toBeVisible();
+  await page.screenshot({ path: 'captures/session-flow-hand-over.png', fullPage: true });
 
   await page.goto('/seller/menu');
   await expect(page.getByRole('heading', { name: 'Not available for chefs' })).toBeVisible();
-  await page.getByRole('link', { name: 'More' }).click();
+  await page.goto('/seller/more');
   await expect(page.getByRole('button', { name: 'Devices' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Labels' })).toBeVisible();
   for (const hidden of ['Week settings', 'Pictures', 'Chefs', 'Backup', 'Settings']) {

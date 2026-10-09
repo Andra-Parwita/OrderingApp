@@ -1,21 +1,26 @@
-import { useCallback, type ReactNode } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Link,
+  Navigate,
   Route,
   Routes,
   useLocation,
+  useMatch,
   useNavigate,
   useParams,
   useSearchParams,
 } from 'react-router';
 import { styled } from 'styled-components';
-import { SellerPicker } from '../components/SellerPicker';
-import { ThemeSwitch } from '../components/ThemeSwitch';
+import { currentSellerSlug } from '../api/device/sellerContext';
+import { fetchPreferences } from '../api/menus';
+import { setKitchenBrand } from '../theme/kitchenBrand';
 import { useMediaQuery } from '../components/useMediaQuery';
 import {
   BasketScreen,
+  DishesScreen as CustomerDishesScreen,
+  HowItWorksScreen,
+  MenuPreview,
   MenuScreen,
   OrderPlacedScreen,
   placeReset,
@@ -26,27 +31,33 @@ import { MyOrdersScreen, OrderScreen } from '../features/customer-orders';
 import { CustomerSettingsScreen } from '../features/customer-settings';
 import { CookScreen } from '../features/seller-cook';
 import {
+  ContactsBackup,
   NewOrderScreen,
+  PhoneLanguageRow,
+  PhoneMoreNote,
+  getContact,
   OrderDetailScreen,
-  OrderPanel,
-  OrdersScreen,
   OrdersTableScreen,
+  PhoneOrdersScreen,
   parseStatusFilter,
   type StatusFilter,
 } from '../features/seller-orders';
 import { BackupScreen, PastWeeksScreen } from '../features/seller-history';
 import { LabelsScreen } from '../features/seller-labels';
 import {
-  ItemEditor,
+  DishesScreen,
+  MakeMenuScreen,
+  type MenuSlots,
   MenuScreen as SellerMenuScreen,
-  PastePostScreen,
   SavedSetsScreen,
+  parseStep,
+  parseTab,
 } from '../features/seller-menu';
-import { SettingsScreen } from '../features/seller-settings';
-import { ChefsScreen, ImagesScreen, WeekSettingsScreen } from '../features/seller-setup';
+import { SettingsPanes, paneHref, parsePane, type PaneId } from '../features/seller-settings';
 import { DevicesScreen } from '../features/seller-auth';
-import { DeliveryRunScreen, HandOverScreen, SendUpdateScreen } from '../features/seller-saturday';
-import { ShareScreen } from '../features/seller-share';
+import { HandOverScreen } from '../features/seller-saturday';
+import { ChefsScreen, ImagesScreen } from '../features/seller-setup';
+import { ShareComposer, ShareScreen } from '../features/seller-share';
 import { Button, ListRow, PageHeader } from '../ui';
 import {
   AdminHomeRoute,
@@ -62,10 +73,15 @@ import { DESKTOP_QUERY } from './layout';
 import { isValidSlug } from '../../shared/seller';
 import { HomePage, KitchenNotFoundPage, NotFoundPage } from './pages';
 import { SellerLayout } from './SellerLayout';
-import { SellerPreview } from './SellerPreview';
 import { MoreSwitchPerson } from './SwitchPerson';
 
 // Route wrappers: the screens only get callbacks; where they lead is decided here.
+
+// Dev only (dropped from a production build): /__fixtures/:screenId renders a customer design
+// screen from fixtures, for the design-compare check.
+const FixturesPage = import.meta.env.DEV
+  ? lazy(() => import('../harness/customerFixtures/FixturesPage'))
+  : null;
 
 /** True when the server said this kitchen does not exist. */
 function useKitchenMissing(slug: string): boolean {
@@ -75,10 +91,44 @@ function useKitchenMissing(slug: string): boolean {
 function MenuRoute() {
   const { slug = '' } = useParams();
   const navigate = useNavigate();
+  const toDishes = useCallback(() => void navigate(`/${slug}/dishes`), [navigate, slug]);
+  const toHow = useCallback(() => void navigate(`/${slug}/how-it-works`), [navigate, slug]);
+  const missing = useKitchenMissing(slug);
+  if (!isValidSlug(slug) || missing) return <KitchenNotFoundPage />;
+  return <MenuScreen slug={slug} onSeeDishes={toDishes} onHowItWorks={toHow} />;
+}
+
+/** Back goes to where the customer came from; opened directly, it goes to the menu. */
+function useBackToMenu(slug: string) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return useCallback(() => {
+    void (location.key === 'default' ? navigate(`/${slug}`, { replace: true }) : navigate(-1));
+  }, [navigate, location.key, slug]);
+}
+
+function DishesRoute() {
+  const { slug = '' } = useParams();
+  const navigate = useNavigate();
+  const back = useBackToMenu(slug);
   const toBasket = useCallback(() => void navigate(`/${slug}/basket`), [navigate, slug]);
   const missing = useKitchenMissing(slug);
   if (!isValidSlug(slug) || missing) return <KitchenNotFoundPage />;
-  return <MenuScreen slug={slug} onViewBasket={toBasket} />;
+  return <CustomerDishesScreen slug={slug} onBack={back} onViewBasket={toBasket} />;
+}
+
+function HowItWorksRoute() {
+  const { slug = '' } = useParams();
+  const navigate = useNavigate();
+  const back = useBackToMenu(slug);
+  // Replace, so Back from the dishes returns to the menu and not to this page.
+  const toDishes = useCallback(
+    () => void navigate(`/${slug}/dishes`, { replace: true }),
+    [navigate, slug],
+  );
+  const missing = useKitchenMissing(slug);
+  if (!isValidSlug(slug) || missing) return <KitchenNotFoundPage />;
+  return <HowItWorksScreen slug={slug} onBack={back} onSeeDishes={toDishes} />;
 }
 
 function BasketRoute() {
@@ -152,7 +202,8 @@ function MyOrdersRoute() {
 function SellerListRoute({
   table = false,
   selectedCode,
-}: Readonly<{ table?: boolean; selectedCode?: string }>) {
+  newOrderOpen = false,
+}: Readonly<{ table?: boolean; selectedCode?: string; newOrderOpen?: boolean }>) {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const filter = parseStatusFilter(params.get('status'));
@@ -182,13 +233,33 @@ function SellerListRoute({
     (code: string) => void navigate(`/seller/orders/${code}${search === '' ? '' : `?${search}`}`),
     [navigate, search],
   );
+  const changedOn = params.get('changed') === '1';
+  const unpaidOn = params.get('unpaid') === '1';
+  const toggles = useMemo(() => ({ changed: changedOn, unpaid: unpaidOn }), [changedOn, unpaidOn]);
+  const onToggle = useCallback(
+    (key: 'changed' | 'unpaid') => setParam(key, toggles[key] ? '0' : '1', '0'),
+    [setParam, toggles],
+  );
+  const onCloseOrder = useCallback(
+    () => void navigate(`/seller${search === '' ? '' : `?${search}`}`),
+    [navigate, search],
+  );
   const onNewOrder = useCallback(() => void navigate('/seller/new'), [navigate]);
+  const onCloseNewOrder = useCallback(() => void navigate('/seller'), [navigate]);
   const onShare = useCallback(() => void navigate('/seller/share'), [navigate]);
   const props = { filter, query, onFilterChange, onQueryChange, onOpenOrder, onNewOrder, onShare };
   return table ? (
-    <OrdersTableScreen {...props} selectedCode={selectedCode} />
+    <OrdersTableScreen
+      {...props}
+      selectedCode={selectedCode}
+      toggles={toggles}
+      onToggle={onToggle}
+      onCloseOrder={onCloseOrder}
+      newOrderOpen={newOrderOpen}
+      onCloseNewOrder={onCloseNewOrder}
+    />
   ) : (
-    <OrdersScreen {...props} />
+    <PhoneOrdersScreen {...props} toggles={toggles} onToggle={onToggle} />
   );
 }
 
@@ -199,42 +270,22 @@ function SellerDetailRoute({ code }: Readonly<{ code: string }>) {
   return <OrderDetailScreen key={code} code={code} onBack={back} />;
 }
 
-/** The desktop panel: the filter and search stay in the URL, so Close and Back restore the table. */
-function SellerPanelRoute({ code }: Readonly<{ code: string }>) {
-  const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const { search } = useLocation();
-  const close = useCallback(() => void navigate(`/seller${search}`), [navigate, search]);
-  const open = useCallback(
-    (next: string) => void navigate(`/seller/orders/${next}${search}`, { replace: true }),
-    [navigate, search],
-  );
-  return (
-    <OrderPanel
-      code={code}
-      filter={parseStatusFilter(params.get('status'))}
-      query={params.get('q') ?? ''}
-      onClose={close}
-      onOpenOrder={open}
-    />
-  );
-}
-
 /** /seller and /seller/orders/:code. A phone shows one page at a time; a desktop, the table with the order in a panel. */
 function OrdersWorkspace() {
   const desktop = useMediaQuery(DESKTOP_QUERY);
   const { code } = useParams();
-  if (!desktop) return code ? <SellerDetailRoute code={code} /> : <SellerListRoute />;
-  return (
-    <>
-      <SellerListRoute table selectedCode={code} />
-      {code ? <SellerPanelRoute code={code} /> : null}
-    </>
-  );
+  const isNew = useMatch('/seller/new') !== null;
+  if (!desktop) {
+    if (isNew) return <NewOrderRoute />;
+    return code ? <SellerDetailRoute code={code} /> : <SellerListRoute />;
+  }
+  // The same screen for the list, the order beside it and New order (a slide-over), so opening one
+  // does not reload the list.
+  return <SellerListRoute table selectedCode={code} newOrderOpen={isNew} />;
 }
 
 function CookRoute() {
-  return <CookScreen desktop={useMediaQuery(DESKTOP_QUERY)} />;
+  return <CookScreen />;
 }
 
 function NewOrderRoute() {
@@ -243,11 +294,6 @@ function NewOrderRoute() {
   const toOrders = useCallback(() => void navigate('/seller'), [navigate]);
   return <NewOrderScreen onBack={toOrders} onDone={toOrders} hideLanguage={desktop} />;
 }
-
-const FooterLabel = styled.span`
-  color: ${({ theme }) => theme.colour.textMuted};
-  font-size: ${({ theme }) => theme.type.size.sm};
-`;
 
 const MoreBlock = styled.div`
   display: flex;
@@ -262,30 +308,56 @@ const SignOutBlock = styled(MoreBlock)`
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg}
     ${({ theme }) => theme.spacing.xl};
 `;
-const PhoneWho = styled.div`
-  padding: 0 ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.md};
-`;
-const ShareLink = styled(Link)`
-  display: inline-flex;
-  align-items: center;
-  min-height: ${({ theme }) => theme.minTapTarget};
-  color: ${({ theme }) => theme.colour.accent};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+const PhoneBlocks = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xl};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadPhone}px
+    ${({ theme }) => theme.spacing.xl};
 `;
 
-function SettingsRoute() {
-  const { t } = useTranslation();
+/** The kitchen's colour theme (D-064) recolours the seller app: read once on entry, set by Settings → Appearance. */
+function KitchenBrandSync() {
   const { me } = useSession();
+  const who = me?.sellerName ?? '';
+  useEffect(() => {
+    let live = true;
+    void fetchPreferences(undefined, currentSellerSlug()).then((result) => {
+      if (live && result.ok) setKitchenBrand(result.data.preferences.theme);
+    });
+    return () => {
+      live = false;
+      // Leaving the seller app: the customer pages come in stage 12.
+      setKitchenBrand('onde');
+    };
+  }, [who]);
+  return null;
+}
+
+/** Settings: /seller/settings/:pane (owner, tablet). The Devices pane needs the session, so it is made here. */
+function SettingsRoute() {
+  const { pane } = useParams();
+  const navigate = useNavigate();
+  const { end } = useSession();
+  const signedOut = useCallback(() => {
+    void navigate('/seller/sign-in', { replace: true });
+  }, [navigate]);
+  const id = parsePane(pane);
+  if (id === null) return <Navigate to={paneHref('kitchen')} replace />;
   return (
-    <SettingsScreen>
-      <MoreBlock>
-        <FooterLabel>{t('theme.label')}</FooterLabel>
-        <ThemeSwitch />
-        {me === null ? <SellerPicker /> : null}
-        <ShareLink to="/seller/share">{t('sellerNav.shareMenu')}</ShareLink>
-      </MoreBlock>
-    </SettingsScreen>
+    <SettingsPanes
+      pane={id}
+      devices={<DevicesScreen embedded onSignedOut={signedOut} signOutHere={end} />}
+      images={<ImagesScreen embedded />}
+      chefs={<ChefsScreen embedded />}
+      backup={<BackupScreen embedded />}
+    />
   );
+}
+
+/** An old settings route: the owner goes to the pane that now holds it. */
+function ToPane({ pane }: Readonly<{ pane: PaneId }>) {
+  return <Navigate to={paneHref(pane)} replace />;
 }
 
 /** A seller page opened from More: the screen under a header whose back arrow returns to More. */
@@ -301,29 +373,9 @@ function MorePage({ title, children }: Readonly<{ title: string; children: React
   );
 }
 
+/** The old week settings now live in the Make-a-menu Details; the Settings hub link goes to the Menu screen (until stage 10). */
 function WeekRoute() {
-  const { t } = useTranslation();
-  return (
-    <MorePage title={t('sellerNav.weekSettings')}>
-      <WeekSettingsScreen settingsHref="/seller/settings" />
-    </MorePage>
-  );
-}
-function ImagesRoute() {
-  const { t } = useTranslation();
-  return (
-    <MorePage title={t('sellerNav.images')}>
-      <ImagesScreen />
-    </MorePage>
-  );
-}
-function ChefsRoute() {
-  const { t } = useTranslation();
-  return (
-    <MorePage title={t('sellerNav.chefs')}>
-      <ChefsScreen />
-    </MorePage>
-  );
+  return <Navigate to="/seller/menu" replace />;
 }
 function LabelsRoute() {
   const { t } = useTranslation();
@@ -341,15 +393,6 @@ function PastWeeksRoute() {
     </MorePage>
   );
 }
-function BackupRoute() {
-  const { t } = useTranslation();
-  return (
-    <MorePage title={t('sellerNav.backup')}>
-      <BackupScreen />
-    </MorePage>
-  );
-}
-
 const MORE_LINKS = [
   ['settings', '/seller/settings'],
   ['weekSettings', '/seller/week'],
@@ -370,21 +413,23 @@ const CHEF_HIDDEN: ReadonlySet<string> = new Set([
   'backup',
 ]);
 
+/** Chefs keep the plain Devices page (they have no Settings); the owner's is the Devices pane. */
 function DevicesRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { adopt } = useSession();
+  const { me, end } = useSession();
   const signedOut = useCallback(() => {
-    adopt(null);
     void navigate('/seller/sign-in', { replace: true });
-  }, [adopt, navigate]);
+  }, [navigate]);
+  if (me?.role !== 'chef') return <ToPane pane="devices" />;
   return (
     <MorePage title={t('sellerNav.devices')}>
-      <DevicesScreen onSignedOut={signedOut} />
+      <DevicesScreen onSignedOut={signedOut} signOutHere={end} />
     </MorePage>
   );
 }
 
+/** The phone's More tab. On a tablet the owner's More is Settings (chefs have no Settings and keep More). */
 function MoreRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -397,14 +442,29 @@ function MoreRoute() {
     await end();
     void navigate('/seller/sign-in', { replace: true });
   }, [end, navigate]);
+  if (desktop && me?.role !== 'chef') return <ToPane pane="kitchen" />;
+  // Phone: Switch person, language, sign out, where the rest lives, and the contacts on this phone.
+  if (!desktop) {
+    return (
+      <>
+        <PageHeader title={t('sellerNav.moreTitle')} />
+        <PhoneBlocks>
+          <MoreSwitchPerson />
+          <PhoneLanguageRow />
+          {me === null ? null : (
+            <Button fullWidth onClick={() => void signOutNow()}>
+              {t('sellerNav.signOut')}
+            </Button>
+          )}
+          <PhoneMoreNote />
+          <ContactsBackup />
+        </PhoneBlocks>
+      </>
+    );
+  }
   return (
     <>
       <PageHeader title={t('sellerNav.moreTitle')} />
-      {desktop ? null : (
-        <PhoneWho>
-          <MoreSwitchPerson />
-        </PhoneWho>
-      )}
       <nav aria-label={t('sellerNav.moreTitle')}>
         {links.map(([key, to]) => (
           <ListRow
@@ -424,118 +484,51 @@ function MoreRoute() {
   );
 }
 
-// ---- Saturday: the hub and the three tools (stage 7.3) ----
-
-const HubList = styled.nav`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.lg};
-
-  a {
-    display: flex;
-    align-items: center;
-    min-height: 4.5rem;
-    padding: 0 ${({ theme }) => theme.spacing.lg};
-    border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.outline};
-    border-radius: ${({ theme }) => theme.radius.md};
-    background: ${({ theme }) => theme.colour.surface};
-    color: ${({ theme }) => theme.colour.text};
-    font-size: ${({ theme }) => theme.type.size.lg};
-    font-weight: ${({ theme }) => theme.type.weight.strong};
-    text-decoration: none;
-  }
-`;
-const HubTitle = styled.h1`
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg} 0;
-  font-size: ${({ theme }) => theme.type.size.lg};
-`;
-
-function HandOverHubRoute() {
-  const { t } = useTranslation();
-  return (
-    <>
-      <HubTitle>{t('sellerNav.handover')}</HubTitle>
-      <HubList aria-label={t('sellerNav.saturday')}>
-        <Link to="/seller/hand-over/pickup">{t('sellerNav.pickup')}</Link>
-        <Link to="/seller/hand-over/delivery">{t('sellerNav.delivery')}</Link>
-        <Link to="/seller/updates">{t('sellerNav.updates')}</Link>
-      </HubList>
-    </>
+/** Pickup & delivery: /seller/hand-over. A phone shows one place at a time. */
+function HandOverRoute() {
+  const phone = !useMediaQuery(DESKTOP_QUERY);
+  // The delivery address lives on the seller's phone only (D-059): given here, never read on a tablet.
+  const addressOf = useCallback(
+    (code: string) => getContact(currentSellerSlug(), code)?.address || undefined,
+    [],
   );
+  return <HandOverScreen phone={phone} addressOf={addressOf} />;
 }
 
-/** A Saturday tool under a header whose back arrow returns to the hub (the tool has its own title). */
-function SaturdayPage({ children }: Readonly<{ children: ReactNode }>) {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const back = useCallback(() => void navigate('/seller/hand-over'), [navigate]);
-  return (
-    <>
-      <PageHeader
-        title={t('sellerNav.handover')}
-        titleHidden
-        backLabel={t('sellerNav.backToSaturday')}
-        onBack={back}
-      />
-      {children}
-    </>
-  );
-}
+/** Screens of other features that the menu wizard shows: the customer's menu and the WhatsApp post. */
+const MENU_SLOTS: MenuSlots = {
+  preview: ({ slug, menu }) => <MenuPreview slug={slug} menu={menu} />,
+  share: ({ onGoToOrders }) => <ShareComposer withLink onGoToOrders={onGoToOrders} />,
+};
 
-/** The menu, with the item editor over it on a desktop and as a page of its own on a phone. */
-function MenuWorkspace() {
-  const desktop = useMediaQuery(DESKTOP_QUERY);
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const toMenu = useCallback(() => void navigate('/seller/menu'), [navigate]);
-  const onEditItem = useCallback(
-    (itemId: string | null) => void navigate(`/seller/menu/items/${itemId ?? 'new'}`),
-    [navigate],
-  );
-  const onPreview = useCallback(() => void navigate('/seller/menu/preview'), [navigate]);
-  const onSavedSets = useCallback(() => void navigate('/seller/menu/sets'), [navigate]);
-  const onPastePost = useCallback(() => void navigate('/seller/menu/paste'), [navigate]);
-  const editor =
-    id === undefined ? null : (
-      <ItemEditor key={id} itemId={id === 'new' ? null : id} desktop={desktop} onClose={toMenu} />
-    );
-  if (editor && !desktop) return editor;
-  return (
-    <>
-      <SellerMenuScreen
-        desktop={desktop}
-        onPreview={onPreview}
-        onEditItem={onEditItem}
-        onSavedSets={onSavedSets}
-        onPastePost={onPastePost}
-      />
-      {editor}
-    </>
-  );
-}
-
-function SavedSetsRoute() {
-  const navigate = useNavigate();
-  const toMenu = useCallback(() => void navigate('/seller/menu'), [navigate]);
-  return <SavedSetsScreen onBack={toMenu} />;
-}
-
-function PastePostRoute() {
-  const navigate = useNavigate();
-  const toMenu = useCallback(() => void navigate('/seller/menu'), [navigate]);
-  return <PastePostScreen onBack={toMenu} onDone={toMenu} />;
+/** Make a menu (the wizard) and a live menu's tabs: /seller/menu/make/:step and /seller/menu/edit/:step. */
+function MakeMenuRoute({ mode }: Readonly<{ mode: 'make' | 'edit' }>) {
+  const { step } = useParams();
+  const name = mode === 'make' ? parseStep(step) : parseTab(step);
+  if (name === null) return <Navigate to="/seller/menu" replace />;
+  return <MakeMenuScreen mode={mode} step={name} slots={MENU_SLOTS} />;
 }
 
 export function AppRoutes() {
   return (
     <SessionProvider>
       <Routes>
+        {FixturesPage ? (
+          <Route
+            path="/__fixtures/:screenId"
+            element={
+              <Suspense fallback={null}>
+                <FixturesPage />
+              </Suspense>
+            }
+          />
+        ) : null}
         {/* Customer pages share the bottom tab bar (D-039). */}
         <Route element={<CustomerShell />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/:slug" element={<MenuRoute />} />
+          <Route path="/:slug/dishes" element={<DishesRoute />} />
+          <Route path="/:slug/how-it-works" element={<HowItWorksRoute />} />
           <Route path="/:slug/basket" element={<BasketRoute />} />
           <Route path="/o/:token" element={<OrderRoute />} />
           <Route path="/o/:token/placed" element={<PlacedRoute />} />
@@ -560,17 +553,26 @@ export function AppRoutes() {
           path="/seller"
           element={
             <SellerGuard>
+              <KitchenBrandSync />
               <SellerLayout />
             </SellerGuard>
           }
         >
           <Route index element={<OrdersWorkspace />} />
           <Route path="orders/:code" element={<OrdersWorkspace />} />
-          <Route path="new" element={<NewOrderRoute />} />
+          <Route path="new" element={<OrdersWorkspace />} />
           <Route path="cook" element={<CookRoute />} />
           <Route path="share" element={<ShareScreen />} />
           <Route
             path="settings"
+            element={
+              <SellerOnly>
+                <ToPane pane="kitchen" />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="settings/:pane"
             element={
               <SellerOnly>
                 <SettingsRoute />
@@ -581,15 +583,31 @@ export function AppRoutes() {
             path="menu"
             element={
               <SellerOnly>
-                <MenuWorkspace />
+                <SellerMenuScreen />
               </SellerOnly>
             }
           />
           <Route
-            path="menu/items/:id"
+            path="menu/make/:step"
             element={
               <SellerOnly>
-                <MenuWorkspace />
+                <MakeMenuRoute mode="make" />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="menu/edit/:step"
+            element={
+              <SellerOnly>
+                <MakeMenuRoute mode="edit" />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="menu/dishes"
+            element={
+              <SellerOnly>
+                <DishesScreen />
               </SellerOnly>
             }
           />
@@ -597,15 +615,7 @@ export function AppRoutes() {
             path="menu/sets"
             element={
               <SellerOnly>
-                <SavedSetsRoute />
-              </SellerOnly>
-            }
-          />
-          <Route
-            path="menu/paste"
-            element={
-              <SellerOnly>
-                <PastePostRoute />
+                <SavedSetsScreen />
               </SellerOnly>
             }
           />
@@ -622,7 +632,7 @@ export function AppRoutes() {
             path="images"
             element={
               <SellerOnly>
-                <ImagesRoute />
+                <ToPane pane="kitchen" />
               </SellerOnly>
             }
           />
@@ -630,7 +640,7 @@ export function AppRoutes() {
             path="chefs"
             element={
               <SellerOnly>
-                <ChefsRoute />
+                <ToPane pane="chefs" />
               </SellerOnly>
             }
           />
@@ -640,48 +650,17 @@ export function AppRoutes() {
             path="backup"
             element={
               <SellerOnly>
-                <BackupRoute />
+                <ToPane pane="backup" />
               </SellerOnly>
             }
           />
           <Route path="devices" element={<DevicesRoute />} />
-          <Route path="hand-over" element={<HandOverHubRoute />} />
-          <Route
-            path="hand-over/pickup"
-            element={
-              <SaturdayPage>
-                <HandOverScreen />
-              </SaturdayPage>
-            }
-          />
-          <Route
-            path="hand-over/delivery"
-            element={
-              <SaturdayPage>
-                <DeliveryRunScreen />
-              </SaturdayPage>
-            }
-          />
-          <Route
-            path="updates"
-            element={
-              <SaturdayPage>
-                <SendUpdateScreen />
-              </SaturdayPage>
-            }
-          />
+          <Route path="hand-over" element={<HandOverRoute />} />
+          {/* Old Saturday routes: the one Pickup & delivery screen holds them now. */}
+          <Route path="hand-over/pickup" element={<Navigate to="/seller/hand-over" replace />} />
+          <Route path="hand-over/delivery" element={<Navigate to="/seller/hand-over" replace />} />
+          <Route path="updates" element={<Navigate to="/seller/hand-over" replace />} />
         </Route>
-        {/* The preview is the customer's screen, so it sits outside the seller shell. */}
-        <Route
-          path="/seller/menu/preview"
-          element={
-            <SellerGuard>
-              <SellerOnly>
-                <SellerPreview />
-              </SellerOnly>
-            </SellerGuard>
-          }
-        />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </SessionProvider>

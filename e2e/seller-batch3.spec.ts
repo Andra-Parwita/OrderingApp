@@ -1,104 +1,79 @@
 import { expect, test, type Page } from '@playwright/test';
-import { collectErrors, isDesktopProject } from './sellerHelpers';
+import { collectErrors } from './sellerHelpers';
 
-// Stage 6.3: the batch 3 screens through the app's real routes (menu, preview as customer, More,
-// pictures, labels, backup). It changes the second sample seller (Dapur Demo) only, so other specs
-// keep Onde Onde's menu; the one item it adds it removes again, and it never orders anything.
+// The batch 3 screens through the app's real routes, after plan 001: the Menu screen, Settings
+// (Kitchen pictures, Backup) and Kitchen's Print labels. It looks at the second sample seller
+// (Dapur Demo) only, so other specs keep Onde Onde's menu, and it changes and orders nothing.
+// These are tablet and computer screens (a phone shows "Open this on a tablet or computer").
 
 const SELLER = 'dapur-demo';
+
+test.skip(({ viewport }) => (viewport?.width ?? 0) < 600, 'tablet and desktop only');
 
 async function open(page: Page, path: string) {
   await page.addInitScript((slug) => localStorage.setItem('devSeller', slug), SELLER);
   await page.goto(path);
 }
 
-/** Opens the editor of a dish: a click on the table row, or the row's edit button on a phone. */
-async function openItem(page: Page, desktop: boolean, name: string) {
-  await (
-    desktop
-      ? page.getByRole('row', { name: new RegExp(name) }).first()
-      : page.getByRole('button', { name: `Edit ${name}` })
-  ).click();
-}
-
-test('menu, preview as customer, then More: pictures, labels and backup', async ({
+test('menu, then Settings: pictures and backup, and Kitchen: print labels', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name.endsWith('mobile-webkit'), 'desktop and Android only');
   const errors = collectErrors(page);
-  const desktop = isDesktopProject(testInfo.project.name);
   const project = testInfo.project.name;
-  const name = `B3 dish ${project} ${String(Date.now())}`;
   const seller = page.getByRole('navigation', { name: 'Seller' });
 
-  // Menu: add an item through its route, open its editor and close it again.
+  // Menu: the live menu with its dishes and the tools around it.
   await open(page, '/seller');
-  await seller.getByRole('link', { name: 'Menu' }).click();
+  await seller.getByRole('link', { name: 'Menu', exact: true }).click();
   await expect(page).toHaveURL(/\/seller\/menu$/);
-  await expect(seller.getByRole('link', { name: 'Menu' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Menu ·');
-  await page.getByRole('button', { name: '+ Add item' }).click();
-  await expect(page).toHaveURL(/\/seller\/menu\/items\/new$/);
-  await page.getByLabel('Name (English)').fill(name);
-  await page.getByLabel('Price (AUD)').fill('9');
-  await page.getByRole('button', { name: 'Add item', exact: true }).click();
-  await expect(page).toHaveURL(/\/seller\/menu$/);
-  await openItem(page, desktop, name);
-  await expect(page).toHaveURL(/\/seller\/menu\/items\/[^/]+$/);
-  await expect(page.getByLabel('Name (English)')).toHaveValue(name);
-  await page.screenshot({ path: `captures/b3-editor-${project}.png`, fullPage: true });
-  await page.getByRole('button', { name: desktop ? 'Close' : 'Back' }).click();
-  await expect(page).toHaveURL(/\/seller\/menu$/);
+  await expect(seller.getByRole('link', { name: 'Menu', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(page.getByRole('heading', { level: 1, name: 'Menu' })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Dishes on the live menu' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /^Your dishes · \d+$/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /^Saved sets · \d+$/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finish menu now' })).toBeVisible();
+  await page.screenshot({ path: `captures/b3-menu-${project}.png`, fullPage: true });
 
-  // Preview as customer: the seller bar is on top, ordering is off, the new item is in it.
-  await page.getByRole('button', { name: 'Preview as customer' }).click();
-  await expect(page).toHaveURL(/\/seller\/menu\/preview$/);
-  await expect(page.getByRole('region', { name: /Preview/ })).toBeVisible();
-  await expect(page.getByText(/^Preview · (not published yet|published)$/)).toBeVisible();
-  await expect(page.getByText(name)).toBeVisible();
-  const plus = page.getByRole('button', { name: `Add one ${name}` });
-  await expect(plus).toBeDisabled();
-  await expect(page.getByRole('button', { name: /View basket/ })).toHaveCount(0);
-  await page.screenshot({ path: `captures/b3-preview-${project}.png`, fullPage: true });
-  await page.getByRole('button', { name: 'Back to editing' }).click();
-  await expect(page).toHaveURL(/\/seller\/menu$/);
-
-  // Remove the item again.
-  await openItem(page, desktop, name);
-  await page.getByRole('button', { name: 'Delete item' }).click();
-  await page.getByRole('button', { name: 'Tap again to delete' }).click();
-  await expect(page.getByText(name)).toHaveCount(0);
-
-  // More: the list, then pictures (five slots), labels (the preview) and backup.
-  await seller.getByRole('link', { name: 'More' }).click();
-  await expect(page).toHaveURL(/\/seller\/more$/);
-  await page.screenshot({ path: `captures/b3-more-${project}.png`, fullPage: true });
-
-  await page.getByRole('button', { name: /^Pictures/ }).click();
-  await expect(page).toHaveURL(/\/seller\/images$/);
-  for (const slot of [
-    'Wide banner (tablet and computer)',
-    'Phone banner',
-    'Menu image (left menu)',
-    'Small icon (closed menu)',
-    'Background (wide screens)',
-  ]) {
+  // Settings > Kitchen: the five picture slots in their new sizes.
+  await seller.getByRole('link', { name: 'Settings', exact: true }).click();
+  await expect(page).toHaveURL(/\/seller\/settings\/kitchen$/);
+  await expect(seller.getByRole('link', { name: 'Settings', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  const sizes: Record<string, string> = {
+    'Wide banner (tablet and computer)': 'Best size 2000 × 400 px',
+    'Phone banner': 'Best size 1200 × 400 px',
+    'Menu image (left menu)': 'Best size 1200 × 600 px',
+    'Small icon (closed menu)': 'Best size 512 × 512 px',
+    'Background (wide screens)': 'Best size 1280 × 256 px',
+  };
+  for (const [slot, size] of Object.entries(sizes)) {
     await expect(page.getByRole('heading', { name: slot })).toBeVisible();
+    await expect(page.getByText(size)).toBeVisible();
   }
-  await expect(seller.getByRole('link', { name: 'More' })).toHaveAttribute('aria-current', 'page');
   await page.screenshot({ path: `captures/b3-images-${project}.png`, fullPage: true });
 
-  await page.getByRole('button', { name: 'Back to More' }).click();
-  await page.getByRole('button', { name: /^Labels/ }).click();
-  await expect(page).toHaveURL(/\/seller\/labels$/);
-  await expect(page.getByText(/^Preview · /)).toBeVisible();
-  await page.screenshot({ path: `captures/b3-labels-${project}.png`, fullPage: true });
-
-  await page.getByRole('button', { name: 'Back to More' }).click();
-  await page.getByRole('button', { name: /^Backup/ }).click();
-  await expect(page).toHaveURL(/\/seller\/backup$/);
+  // Settings > Backup.
+  await page.getByRole('link', { name: /^Backup/ }).click();
+  await expect(page).toHaveURL(/\/seller\/settings\/backup$/);
   await expect(page.getByRole('button', { name: 'Download backup' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choose backup file' })).toBeVisible();
   await page.screenshot({ path: `captures/b3-backup-${project}.png`, fullPage: true });
+
+  // Kitchen > Print labels: the paper and order choices and the preview.
+  await seller.getByRole('link', { name: 'Kitchen', exact: true }).click();
+  await expect(page).toHaveURL(/\/seller\/cook$/);
+  await page.getByRole('button', { name: 'Print labels' }).click();
+  await expect(page).toHaveURL(/\/seller\/labels$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Print labels' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'A4 sheet (2 × 7 labels)' })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Label printer (62 mm roll)' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Preview · / })).toBeVisible();
+  await page.screenshot({ path: `captures/b3-labels-${project}.png`, fullPage: true });
 
   expect(errors).toEqual([]);
 });

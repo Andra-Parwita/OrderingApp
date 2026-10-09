@@ -2,18 +2,21 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import { deflateSync } from 'node:zlib';
 import { collectErrors, isDesktopProject } from './sellerHelpers';
 
-// Stage 6.2b: week settings, pictures and chefs, through the harness (no routes until 6.3).
-// Runs on the Android phone and the desktop only. Each project edits its own sample seller (the
-// desktop uses Onde Onde, the phone Dapur Demo), so they never touch each other's data, and
-// each test puts back what it changed.
+// Settings panes (plan 001 stage 10): pickup locations, pictures and chefs, on their real routes
+// /seller/settings/:pane. They are tablet and computer screens (a phone shows "Open this on a
+// tablet or computer"), so only the wide chromium projects run them. Each test puts back what it
+// changed.
 
-test.skip(({ browserName }) => browserName !== 'chromium', 'Android (Chromium) and desktop only');
+test.skip(
+  ({ browserName, viewport }) => browserName !== 'chromium' || (viewport?.width ?? 0) < 600,
+  'tablet and desktop (Chromium) only',
+);
 
 const sellerFor = (project: string) => (isDesktopProject(project) ? 'onde-onde' : 'dapur-demo');
 
-async function open(page: Page, seller: string, screen: 'week' | 'images' | 'chefs') {
+async function open(page: Page, seller: string, pane: 'kitchen' | 'pickup' | 'chefs') {
   await page.addInitScript((slug) => localStorage.setItem('devSeller', slug), seller);
-  await page.goto(`/?harness=seller-setup&screen=${screen}`);
+  await page.goto(`/seller/settings/${pane}`);
 }
 
 // ---- A real small PNG, made here (no fixture file needed) ----
@@ -71,34 +74,37 @@ async function restoreIcon(
   await request.put('/api/seller/images/railIcon', { ...as(seller), data: { dataUrl } });
 }
 
-test('week settings: change the pickup directions and save', async ({
+test('pickup locations: change the directions of a place and save', async ({
   page,
   request,
 }, testInfo) => {
   const errors = collectErrors(page);
   const seller = sellerFor(testInfo.project.name);
-  const before = (await (await request.get('/api/seller/week', as(seller))).json()) as {
-    week: Record<string, unknown>;
+  type Place = { id: string; place: string; directions: unknown; window: unknown };
+  const before = (await (await request.get('/api/seller/pickup-places', as(seller))).json()) as {
+    places: Array<Place>;
   };
+  const first = before.places[0];
+  if (!first) throw new Error('the sample kitchen has no pickup place');
   try {
-    await open(page, seller, 'week');
-    const directions = page.getByLabel('Directions (English)');
-    await expect(page.getByLabel('Pickup place')).not.toHaveValue('');
-    await expect(page.getByText(/^Ordering closes automatically at /)).toBeVisible();
+    await open(page, seller, 'pickup');
+    await expect(page.getByRole('heading', { name: 'Pickup locations' })).toBeVisible();
+    await page.getByRole('button', { name: `Edit ${first.place}` }).click();
     const text = `Ring the bell at the side gate (${testInfo.project.name})`;
-    await directions.fill(text);
-    await page.getByRole('button', { name: 'Save', exact: true }).click();
-    await expect(page.getByText('Saved', { exact: true })).toBeVisible();
-    await expect(page.getByLabel('Directions (English)')).toHaveValue(text);
+    await page.getByLabel('Directions (English)').fill(text);
+    await page.getByRole('button', { name: 'Save place' }).click();
+    await expect(page.getByRole('button', { name: 'Save place' })).toHaveCount(0);
+    await expect(page.getByText(text)).toBeVisible();
+    await page.reload();
+    await expect(page.getByText(text)).toBeVisible();
     await page.screenshot({
-      path: `captures/seller-setup-week-${testInfo.project.name}.png`,
+      path: `captures/seller-setup-pickup-${testInfo.project.name}.png`,
       fullPage: true,
     });
   } finally {
-    const { cookingDate, cutoffAt, pickupPoints, delivery } = before.week;
-    await request.put('/api/seller/week', {
+    await request.patch(`/api/seller/pickup-places/${first.id}`, {
       ...as(seller),
-      data: { cookingDate, cutoffAt, pickupPoints, delivery },
+      data: { place: first.place, directions: first.directions, window: first.window },
     });
   }
   expect(errors).toEqual([]);
@@ -114,14 +120,14 @@ test('pictures: upload a small icon and see it in the preview', async ({
     images: { railIcon?: string };
   };
   try {
-    await open(page, seller, 'images');
+    await open(page, seller, 'kitchen');
     await expect(page.getByRole('heading', { name: 'Small icon (closed menu)' })).toBeVisible();
-    await expect(page.getByText('Best size 128 × 128 px')).toBeVisible();
+    await expect(page.getByText('Best size 512 × 512 px')).toBeVisible();
 
     await page.getByLabel('Choose a picture for Small icon (closed menu)').setInputFiles({
       name: 'icon.png',
       mimeType: 'image/png',
-      buffer: solidPng(128, 128, [200, 90, 40]),
+      buffer: solidPng(512, 512, [200, 90, 40]),
     });
     const preview = page.getByAltText('Preview of Small icon (closed menu)', { exact: true });
     const imageSrc = /^\/images\/sellers\/[^/]+\/railIcon-[0-9a-f]{16}\.(jpg|png)$/;
@@ -152,7 +158,7 @@ test('chefs: add and rename a chef', async ({ page, request }, testInfo) => {
   const renamed = `${name} B`;
   try {
     await open(page, seller, 'chefs');
-    await expect(page.getByRole('heading', { name: 'Chefs' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Chefs', level: 2 })).toBeVisible();
     await page.getByLabel('Chef name').fill(name);
     await page.getByRole('button', { name: 'Add chef', exact: true }).click();
     await expect(page.getByText(name, { exact: true })).toBeVisible();

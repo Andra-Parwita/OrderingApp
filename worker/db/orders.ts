@@ -130,8 +130,8 @@ export function inboxStatement(
 function lineStatements(db: Db, order: SellerOrder): Array<D1Statement> {
   return order.lines.map((line, position) =>
     db.stmt(
-      `INSERT INTO order_lines (seller_id, order_id, position, item_id, name_en, name_id, size_en, size_id, price_cents, qty)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO order_lines (seller_id, order_id, position, item_id, name_en, name_id, size_en, size_id, price_cents, qty, ticked)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       order.sellerId,
       order.id,
       position,
@@ -142,6 +142,7 @@ function lineStatements(db: Db, order: SellerOrder): Array<D1Statement> {
       line.size.id,
       line.priceCents,
       line.qty,
+      line.ticked === true,
     ),
   );
 }
@@ -159,8 +160,9 @@ export function insertOrderStatements(
   const statements = [
     db.stmt(
       `INSERT INTO orders (seller_id, id, code, token, past_week_id, first_name, language, fulfilment, note, status,
-         paid, locked, wa_received, is_returning, changed, entered_by_role, entered_by_name, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         paid, locked, wa_received, is_returning, changed, entered_by_role, entered_by_name, created_at, updated_at,
+         packed, collected_at, collected_by, pickup_place_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       order.id,
       order.code,
@@ -180,6 +182,10 @@ export function insertOrderStatements(
       order.enteredBy?.name ?? null,
       order.createdAt,
       order.updatedAt,
+      order.packed === true,
+      order.collectedAt ?? null,
+      order.collectedBy ?? null,
+      order.pickupPlaceId ?? null,
     ),
     ...lineStatements(db, order),
   ];
@@ -205,8 +211,10 @@ export function changeStatements(db: Db, change: OrderChange): Array<D1Statement
   const sellerId = order.sellerId;
   const statements = [
     db.stmt(
+      // `packed` and the ticks are not written here: only the pack call changes them (D-066), so a
+      // status change read a moment earlier can never undo a tick.
       `UPDATE orders SET status = ?, paid = ?, locked = ?, wa_received = ?, changed = ?, fulfilment = ?,
-         note = ?, updated_at = ? WHERE seller_id = ? AND id = ?`,
+         note = ?, collected_at = ?, collected_by = ?, updated_at = ? WHERE seller_id = ? AND id = ?`,
       order.status,
       order.paid,
       order.locked,
@@ -214,6 +222,8 @@ export function changeStatements(db: Db, change: OrderChange): Array<D1Statement
       order.changed,
       order.fulfilment,
       order.note ?? null,
+      order.collectedAt ?? null,
+      order.collectedBy ?? null,
       order.updatedAt,
       sellerId,
       order.id,

@@ -1,37 +1,74 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Chef, SellerMenuItemView, Week } from '../../../shared/domain';
+import type { ApiWarning } from '../../../shared/apiError';
+import type { Chef } from '../../../shared/domain';
 import type {
-  CreateItemRequest,
-  SavedSetView,
-  UpdateItemRequest,
-} from '../../../shared/setupContract';
+  CreateDishRequest,
+  Dish,
+  DishSet,
+  MenuView,
+  PickupPlace,
+  Preferences,
+  UpdateDishRequest,
+  UpdateMenuRequest,
+  UpdatePickupPlaceRequest,
+} from '../../../shared/menusContract';
+import type { PastWeekSummary } from '../../../shared/pastWeeks';
+import type { PickupPointInput, UpdateItemRequest } from '../../../shared/setupContract';
 
-/** Everything the menu editor can ask the server to do; the saga runs one at a time per request. */
+/** Everything the menu screens can ask the server to do; the saga runs each and then refreshes. */
 export type MenuOp =
-  | { kind: 'publish' }
+  | { kind: 'createMenu'; cookingDate: string }
+  | { kind: 'updateMenu'; request: UpdateMenuRequest }
+  | { kind: 'publish'; force?: boolean }
   | { kind: 'unpublish' }
-  | { kind: 'reorder'; ids: Array<string> }
-  | { kind: 'createItem'; request: CreateItemRequest }
-  | { kind: 'updateItem'; id: string; request: UpdateItemRequest }
-  | { kind: 'deleteItem'; id: string }
-  | { kind: 'useSet'; id: string; confirm: boolean }
-  | { kind: 'saveSet'; name: string; replaceSetId?: string }
-  | { kind: 'renameSet'; id: string; name: string }
-  | { kind: 'deleteSet'; id: string }
-  | { kind: 'addItems'; requests: Array<CreateItemRequest> };
+  | { kind: 'deleteMenu' }
+  | { kind: 'finish' }
+  | { kind: 'uploadPicture'; dataUrl: string }
+  | { kind: 'removePicture' }
+  /** `alsoDishId`: the library dish behind it, kept in step (name, description, size, price, limit, chef). */
+  | { kind: 'updateMenuDish'; id: string; request: UpdateItemRequest; alsoDishId?: string }
+  | { kind: 'createDish'; request: CreateDishRequest; addToMenu: boolean }
+  | { kind: 'updateDish'; id: string; request: UpdateDishRequest }
+  | { kind: 'deleteDish'; id: string }
+  | { kind: 'createSet'; name: string; dishIds: Array<string> }
+  | { kind: 'useSet'; setId: string }
+  | { kind: 'usePast'; weekId: string }
+  | { kind: 'createPlace'; request: PickupPointInput }
+  | { kind: 'updatePlace'; id: string; request: UpdatePickupPlaceRequest }
+  | { kind: 'deletePlace'; id: string };
 export type MenuOpKind = MenuOp['kind'];
 
 export type OpResult =
-  | { kind: MenuOpKind; status: 'done'; count: number }
-  | { kind: MenuOpKind; status: 'failed'; code: string; message: string; count: number };
+  | {
+      kind: MenuOpKind;
+      status: 'done';
+      /** createDish: the new library dish; deleteDish / deletePlace: it was on the live menu. */
+      dishId?: string;
+      usedOnLiveMenu?: boolean;
+      /** usePast: how many dishes were added, and how many were no longer in Your dishes. */
+      added?: number;
+      missing?: number;
+      /** updateMenu: names of dishes dropped although they have orders (D-062). */
+      removedWithOrders?: number;
+    }
+  | {
+      kind: MenuOpKind;
+      status: 'failed';
+      code: string;
+      message: string;
+      warning?: ApiWarning;
+    };
 
 export type MenuLoad = 'loading' | 'ready' | 'error';
 export type MenuData = {
-  kitchenName: string;
-  week: Week;
-  items: Array<SellerMenuItemView>;
+  view: MenuView;
+  dishes: Array<Dish>;
+  sets: Array<DishSet>;
+  places: Array<PickupPlace>;
   chefs: Array<Chef>;
-  sets: Array<SavedSetView>;
+  prefs: Preferences;
+  /** Past menus, newest first. */
+  past: Array<PastWeekSummary>;
 };
 
 export type MenuState = {
@@ -46,6 +83,8 @@ export type MenuState = {
 export type MenuRootState = { sellerMenu: MenuState };
 
 const initialState: MenuState = { load: 'loading', data: null, busy: false, result: null, seq: 0 };
+
+type DoneExtras = Partial<Omit<Extract<OpResult, { status: 'done' }>, 'kind' | 'status'>>;
 
 const menuSlice = createSlice({
   name: 'sellerMenu',
@@ -68,22 +107,23 @@ const menuSlice = createSlice({
       },
       prepare: (op: MenuOp) => ({ payload: op }),
     },
-    opDone(state, action: PayloadAction<{ kind: MenuOpKind; count?: number }>) {
+    opDone(state, action: PayloadAction<{ kind: MenuOpKind } & DoneExtras>) {
       state.busy = false;
       state.seq += 1;
-      state.result = {
-        kind: action.payload.kind,
-        status: 'done',
-        count: action.payload.count ?? 0,
-      };
+      state.result = { status: 'done', ...action.payload };
     },
     opFailed(
       state,
-      action: PayloadAction<{ kind: MenuOpKind; code: string; message: string; count?: number }>,
+      action: PayloadAction<{
+        kind: MenuOpKind;
+        code: string;
+        message: string;
+        warning?: ApiWarning;
+      }>,
     ) {
       state.busy = false;
       state.seq += 1;
-      state.result = { status: 'failed', ...action.payload, count: action.payload.count ?? 0 };
+      state.result = { status: 'failed', ...action.payload };
     },
   },
 });

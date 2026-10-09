@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { isDesktopProject, orderRow, searchBox } from './sellerHelpers';
+import { isDesktopProject, orderRow, searchFor } from './sellerHelpers';
 
 // The mock store is shared by parallel tests: this spec never resets it and never asserts global
 // counts; it finds its own orders by a unique first name.
@@ -29,62 +29,73 @@ test('seller handles a new customer, then adds a WhatsApp order', async ({
 
   await page.goto('/seller');
   await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
-  await searchBox(page).fill(customer);
+  await searchFor(page, customer);
   const row = orderRow(page, new RegExp(customer));
-  await expect(row).toContainText('New customer');
+  await expect(row).toBeVisible();
   await page.screenshot({ path: `captures/seller2-orders-${project}.png`, fullPage: true });
 
   await row.click();
+  await expect(page.getByText('★ New customer')).toBeVisible();
   await expect(page.getByText(/Wait for their WhatsApp message/)).toBeVisible();
   await page.screenshot({ path: `captures/seller2-detail-${project}.png`, fullPage: true });
 
+  // The customer's order number arrived on WhatsApp: the prompt goes away, the row says so.
   await page.getByRole('button', { name: 'Mark WhatsApp received' }).click();
-  await expect(page.getByText(/^✓ WhatsApp received You can confirm.$/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Mark WhatsApp received' })).toHaveCount(0);
+  await expect(page.getByText(/Wait for their WhatsApp message/)).toHaveCount(0);
+  // The list sits beside the order on a tablet or desktop; a phone shows the order alone.
+  if (desktop) {
+    await expect(row.getByRole('img', { name: 'WhatsApp order number received' })).toBeVisible();
+  }
 
-  await page.getByRole('button', { name: 'Nudge customer' }).click();
+  await page.getByRole('button', { name: /^Nudge/ }).click();
   await expect(page.getByText('Reminder sent to the customer')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Lock order' }).click();
-  await expect(page.getByRole('button', { name: 'Unlock order' })).toBeVisible();
-  if (!desktop) await expect(page.getByText(/Locked: the customer can no longer/)).toBeVisible();
+  await page.getByRole('button', { name: /^Lock/ }).click();
+  await expect(page.getByRole('button', { name: /^Unlock/ })).toBeVisible();
+  if (desktop) await expect(row.getByRole('img', { name: 'Locked' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Confirm order', exact: true }).click();
+  await page
+    .getByRole('button', { name: desktop ? 'Confirm order' : 'Confirm only', exact: true })
+    .click();
   await expect(
     page.getByRole('button', { name: 'Mark ready for pickup', exact: true }),
   ).toBeVisible();
 
-  // "+ New order" for a WhatsApp customer.
-  if (desktop) await page.getByRole('button', { name: 'Close' }).click();
-  else await page.getByRole('button', { name: '‹ Orders' }).click();
-  await page.getByRole('button', { name: '+ New order' }).click();
-  await expect(page.getByRole('heading', { name: 'New order' })).toBeVisible();
+  // "New order" for a WhatsApp customer: a slide-over on a tablet or desktop, a screen on a phone.
+  if (desktop) {
+    await page
+      .getByRole('complementary', { name: /^Order / })
+      .getByRole('button', { name: 'Close' })
+      .click();
+  } else await page.getByRole('button', { name: '‹ Orders' }).click();
+  await page.getByRole('button', { name: 'New order' }).click();
+  await expect(page).toHaveURL(/\/seller\/new$/);
+  const form = desktop ? page.getByRole('dialog', { name: 'New order' }) : page.getByRole('main');
 
   const walkIn = `Lisa-${project}-${stamp}`;
-  await page.getByLabel('Customer first name').fill(walkIn);
-  await page
+  await form.getByLabel('Customer first name').fill(walkIn);
+  await form
     .getByRole('radiogroup', { name: 'Customer language' })
-    .getByRole('radio', { name: 'EN', exact: true })
+    .getByRole('radio', { name: /^(EN|English)$/ })
     .click();
   // Wait for the menu to load (the stepper exists and can go up), then for the value to update.
   for (const item of ['Tilapia pesmol', 'Thin battered tempeh']) {
-    const stepper = page.getByRole('group', { name: item, exact: true });
+    const stepper = form.getByRole('group', { name: item, exact: true });
     const more = stepper.getByRole('button', { name: `One more ${item}` });
     await expect(more).toBeEnabled();
     await more.click();
-    await expect(stepper.locator('[aria-live="polite"]')).toHaveText('1');
+    await expect(stepper.getByRole('status')).toHaveText('1');
   }
   await page.screenshot({ path: `captures/seller2-new-${project}.png`, fullPage: true });
-  await page.getByRole('button', { name: 'Create order' }).click();
+  await form.getByRole('button', { name: 'Create only' }).click();
 
-  await expect(page.getByText(/Starts as Confirmed/)).toBeVisible();
-  await expect(page.getByText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Send order link on WhatsApp' })).toBeVisible();
-  await expect(page.getByLabel(/WhatsApp number \(optional, not saved\)/)).toBeVisible();
+  await expect(page).toHaveURL(/\/seller(\?.*)?$/);
+  await searchFor(page, walkIn);
+  const made = orderRow(page, new RegExp(walkIn));
+  await expect(made).toBeVisible();
+  await expect(made).toContainText('Confirmed');
   await page.screenshot({ path: `captures/seller2-saved-${project}.png`, fullPage: true });
-
-  await page.getByRole('button', { name: 'Done' }).click();
-  await searchBox(page).fill(walkIn);
-  await expect(orderRow(page, new RegExp(walkIn))).toBeVisible();
 
   expect(consoleErrors).toEqual([]);
 });

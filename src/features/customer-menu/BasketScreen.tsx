@@ -6,6 +6,7 @@ import type { Fulfilment, Language } from '../../../shared/domain';
 import { FIRST_NAME_MAX, LOW_STOCK, NOTE_MAX } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
+import { setKitchenBrand } from '../../theme/kitchenBrand';
 import {
   Button,
   PageHeader,
@@ -74,6 +75,22 @@ const Alert = styled.p`
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.status.cancelled.bg};
   color: ${({ theme }) => theme.status.cancelled.fg};
+`;
+
+const Places = styled.fieldset`
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const PlaceChoice = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-height: ${({ theme }) => theme.minTapTarget};
 `;
 
 const Centered = styled(Muted)`
@@ -157,6 +174,13 @@ function BasketContent({ slug, onBack, onPlaced, editToken, onUpdated }: Props) 
   const [firstName, setFirstName] = useState('');
   const [notePick, setNote] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [placePick, setPlacePick] = useState<string | null>(null);
+
+  // The kitchen's colours (D-064).
+  const theme = menu.status === 'ready' ? (menu.data.theme ?? 'onde') : undefined;
+  useEffect(() => {
+    if (theme !== undefined) setKitchenBrand(theme);
+  }, [theme]);
 
   // A previous attempt's error must not greet a new visit.
   useEffect(() => {
@@ -219,6 +243,16 @@ function BasketContent({ slug, onBack, onPlaced, editToken, onUpdated }: Props) 
     [],
   );
 
+  // The menu's places with their times for this menu. One place: shown as before; more: the customer picks.
+  const points = menu.status === 'ready' ? menu.data.week.pickupPoints : [];
+  const choosing = !editing && points.length > 1;
+  const pickupId =
+    (placePick !== null && points.some((point) => point.id === placePick)
+      ? placePick
+      : undefined) ??
+    (editing ? editOrder?.pickupPlaceId : undefined) ??
+    points[0]?.id;
+
   const nameError =
     submitted && firstName.trim() === '' ? t('basket.firstNameRequired') : undefined;
 
@@ -229,8 +263,16 @@ function BasketContent({ slug, onBack, onPlaced, editToken, onUpdated }: Props) 
     }
     setSubmitted(true);
     if (firstName.trim() === '') return;
-    dispatch(placeRequested({ firstName, language: lang, fulfilment, note }));
-  }, [dispatch, editing, firstName, lang, fulfilment, note]);
+    dispatch(
+      placeRequested({
+        firstName,
+        language: lang,
+        fulfilment,
+        note,
+        ...(fulfilment === 'pickup' && pickupId !== undefined ? { pickupPlaceId: pickupId } : {}),
+      }),
+    );
+  }, [dispatch, editing, firstName, lang, fulfilment, note, pickupId]);
 
   const options: ReadonlyArray<SegmentedOption<Fulfilment>> =
     menu.status === 'ready' && !menu.data.week.delivery.available
@@ -282,7 +324,7 @@ function BasketContent({ slug, onBack, onPlaced, editToken, onUpdated }: Props) 
   }
 
   const { week } = menu.data;
-  const pickup = week.pickupPoints[0];
+  const pickup = week.pickupPoints.find((point) => point.id === pickupId) ?? week.pickupPoints[0];
   const submitting = place.status === 'submitting' || update.status === 'submitting';
   const failure = editing ? update : place;
 
@@ -310,13 +352,42 @@ function BasketContent({ slug, onBack, onPlaced, editToken, onUpdated }: Props) 
         />
         {fulfilment === 'delivery' ? (
           <Muted>{t('basket.deliveryNote')}</Muted>
+        ) : choosing ? (
+          <Places>
+            <legend>
+              <Strong>{t('basket.pickupPlace')}</Strong>
+            </legend>
+            {week.pickupPoints.map((point) => (
+              <PlaceChoice key={point.id}>
+                <input
+                  type="radio"
+                  name="pickup-place"
+                  checked={point.id === pickup?.id}
+                  onChange={() => setPlacePick(point.id)}
+                />
+                <span>
+                  <Strong>{point.place}</Strong>
+                  <Muted>
+                    {formatCookingDate(week.cookingDate, lang)},{' '}
+                    {formatWindow(point.window.start, point.window.end, lang)}
+                  </Muted>
+                  {point.id === pickup?.id ? (
+                    <Muted>{pickText(point.directions, lang)}</Muted>
+                  ) : null}
+                </span>
+              </PlaceChoice>
+            ))}
+          </Places>
         ) : pickup ? (
-          <Muted>
-            {t('basket.pickupWhen', {
-              when: `${formatCookingDate(week.cookingDate, lang)}, ${formatWindow(pickup.window.start, pickup.window.end, lang)}`,
-              place: pickup.place,
-            })}
-          </Muted>
+          <>
+            <Muted>
+              {t('basket.pickupWhen', {
+                when: `${formatCookingDate(week.cookingDate, lang)}, ${formatWindow(pickup.window.start, pickup.window.end, lang)}`,
+                place: pickup.place,
+              })}
+            </Muted>
+            <Muted>{pickText(pickup.directions, lang)}</Muted>
+          </>
         ) : null}
       </Block>
       {editing ? null : (

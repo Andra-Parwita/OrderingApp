@@ -1,20 +1,12 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Chef, KitchenImages, Week } from '../../../shared/domain';
+import type { Chef, KitchenImages } from '../../../shared/domain';
 import type { ImageSlot } from '../../../shared/imageSlots';
-import type { ImageStyleRequest, WeekSettingsRequest } from '../../../shared/setupContract';
+import type { ImageStyleRequest } from '../../../shared/setupContract';
 
 export type Load = 'loading' | 'ready' | 'error';
 export type Failure = { code: string; message: string };
 
 export type SetupState = {
-  week: {
-    load: Load;
-    data: Week | null;
-    /** Bumps on every load and save, so the form starts afresh from the server's values. */
-    version: number;
-    saving: boolean;
-    failure: Failure | null;
-  };
   images: {
     load: Load;
     data: KitchenImages;
@@ -37,7 +29,6 @@ export type SetupState = {
 export type SetupRootState = { sellerSetup: SetupState };
 
 const initialState: SetupState = {
-  week: { load: 'loading', data: null, version: 0, saving: false, failure: null },
   images: { load: 'loading', data: {}, busy: null, failure: null },
   chefs: { load: 'loading', list: [], counts: {}, kitchenName: '', busy: false, failure: null },
   toast: null,
@@ -47,36 +38,6 @@ const setupSlice = createSlice({
   name: 'sellerSetup',
   initialState,
   reducers: {
-    // ---- week ----
-    weekRequested(state) {
-      state.week.load = 'loading';
-    },
-    weekLoaded(state, action: PayloadAction<Week>) {
-      state.week.load = 'ready';
-      state.week.data = action.payload;
-      state.week.version += 1;
-    },
-    weekLoadFailed(state) {
-      state.week.load = 'error';
-    },
-    weekSaveRequested: {
-      reducer(state) {
-        state.week.saving = true;
-        state.week.failure = null;
-      },
-      prepare: (payload: WeekSettingsRequest) => ({ payload }),
-    },
-    weekSaved(state, action: PayloadAction<Week>) {
-      state.week.saving = false;
-      state.week.data = action.payload;
-      state.week.version += 1;
-      state.toast = 'saved';
-    },
-    weekSaveFailed(state, action: PayloadAction<Failure>) {
-      state.week.saving = false;
-      state.week.failure = action.payload;
-    },
-
     // ---- images ----
     imagesRequested(state) {
       state.images.load = 'loading';
@@ -172,12 +133,6 @@ const setupSlice = createSlice({
 });
 
 export const {
-  weekRequested,
-  weekLoaded,
-  weekLoadFailed,
-  weekSaveRequested,
-  weekSaved,
-  weekSaveFailed,
   imagesRequested,
   imagesLoaded,
   imagesLoadFailed,

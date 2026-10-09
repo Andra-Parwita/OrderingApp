@@ -21,60 +21,36 @@
     "computer": "Komputer"
   },
   "key": {
-    "title": "Siapkan cara masukmu",
-    "label": "Masukkan kunci yang kamu terima",
-    "helper": "Berlaku 24 jam. Spasi, tanda hubung, dan huruf kecil boleh.",
+    "title": "Pertama kali di perangkat ini",
+    "method": "Cara kamu mendapat akses",
+    "tab": "Kunci undangan",
+    "label": "Kunci undangan dari pemilik dapur",
+    "helper": "Tempel dari WhatsApp. Tanda hubung dan huruf kecil boleh. Kunci berlaku 24 jam.",
     "empty": "Ketik kunci yang kamu terima.",
     "submit": "Lanjut",
-    "checking": "Memeriksa…",
-    "useCode": "Saya punya kode 6 angka dari perangkat lain"
+    "checking": "Memeriksa…"
   },
   "code": {
-    "title": "Pakai kode dari perangkat lain",
+    "tab": "Kode 6 angka",
     "label": "Kode 6 angka",
+    "digit": "Angka {{n}} dari {{total}}",
     "helper": "Di perangkat lainmu, buka Perangkat lalu ketuk Tambah perangkat. Kode berlaku 10 menit.",
-    "empty": "Ketik kode 6 angka.",
-    "submit": "Lanjut",
-    "useKey": "Saya punya kunci"
+    "empty": "Ketik ke-6 angka kodenya.",
+    "submit": "Lanjut"
   },
   "passkey": {
-    "title": "Buat passkey",
-    "greeting": "Halo {{name}}",
-    "deviceLabel": "Perangkatmu",
-    "deviceGroup": "Jenis perangkatmu",
-    "iphone": "iPhone",
-    "android": "Android",
-    "computer": "Windows / Mac",
-    "steps": {
-      "iphone": {
-        "1": "Pastikan ponselmu punya kunci layar (Pengaturan → Face ID & Kode Sandi)",
-        "2": "Ketuk Buat passkey di bawah",
-        "3": "Konfirmasi dengan Face ID atau kode sandimu"
-      },
-      "android": {
-        "1": "Pastikan ponselmu punya kunci layar (Setelan → Keamanan → Kunci layar)",
-        "2": "Ketuk Buat passkey di bawah",
-        "3": "Konfirmasi dengan sidik jari atau PIN layarmu"
-      },
-      "computer": {
-        "1": "Pastikan Windows Hello atau Touch ID sudah diatur (Setelan → Opsi masuk)",
-        "2": "Ketuk Buat passkey di bawah",
-        "3": "Konfirmasi dengan Windows Hello, Touch ID, atau PIN komputermu"
-      }
-    },
-    "note": {
-      "iphone": "Passkey tersimpan di ponselmu dan tersinkron lewat iCloud Keychain. Tidak ada yang perlu diingat.",
-      "android": "Passkey tersimpan di ponselmu dan tersinkron lewat Google Password Manager. Tidak ada yang perlu diingat.",
-      "computer": "Passkey tersimpan di komputer ini. Tidak ada Windows Hello atau Touch ID? Pakai ponselmu, atau atur kata sandi."
-    },
-    "submit": "Buat passkey",
-    "working": "Membuat…",
-    "usePassword": "Ponselku tidak bisa → atur kata sandi saja",
-    "unavailable": "Passkey tidak bisa dipakai di alamat web ini (alamat IP). Buat kata sandi saja."
+    "title": "Selamat datang, {{name}}",
+    "titleNoName": "Selamat datang",
+    "choose": "Mulai sekarang, kamu mau masuk di perangkat ini dengan cara apa?",
+    "faceTitle": "Wajah atau sidik jari",
+    "faceText": "Disarankan. Tidak ada yang perlu diingat.",
+    "working": "Menyiapkan…",
+    "passwordTitle": "Atur kata sandi",
+    "passwordText": "Untuk perangkat tanpa wajah atau sidik jari.",
+    "unavailable": "Wajah atau sidik jari tidak bisa dipakai di alamat web ini (alamat IP). Atur kata sandi saja."
   },
   "password": {
     "title": "Atur kata sandi",
-    "banner": "Perangkatmu tidak bisa membuat passkey, jadi atur kata sandi",
     "label": "Kata sandi baru",
     "confirm": "Ulangi kata sandi",
     "helper": "Minimal 10 karakter",
@@ -85,22 +61,24 @@
     "hide": "Sembunyikan",
     "submit": "Simpan kata sandi",
     "working": "Menyimpan…",
-    "later": "Kamu bisa beralih ke passkey nanti dari perangkat yang lebih baru.",
-    "usePasskey": "Coba passkey saja"
+    "later": "Kamu bisa beralih ke wajah atau sidik jari nanti dari perangkat yang lebih baru."
   },
   "signIn": {
     "title": "Masuk",
-    "passkey": "Masuk dengan passkey",
-    "noPasskey": "Perangkat ini belum punya passkey. Pakai kata sandi, atau minta kunci baru.",
+    "passwordTitle": "Masuk dengan kata sandi",
+    "back": "Kembali",
+    "passkey": "Masuk dengan wajah atau sidik jari",
+    "noPasskey": "Perangkat ini belum punya passkey. Pakai kata sandi, atau minta undangan baru ke pemilik.",
     "adminPasskey": "Passkey itu milik admin. Admin masuk lewat halaman admin. Pilih passkey milikmu, atau pakai kata sandi.",
     "usePassword": "Pakai kata sandi saja",
-    "hidePassword": "Sembunyikan kata sandi",
     "passwordLabel": "Kata sandi",
     "submit": "Masuk",
     "working": "Masuk…",
     "empty": "Ketik kata sandimu.",
-    "lost": "Tidak bisa masuk? Minta kunci baru ke orang yang menyiapkan akunmu",
-    "noPasskeysHere": "Passkey tidak bisa dipakai di alamat web ini (alamat IP). Pakai kata sandimu."
+    "firstTime": "Pertama kali di perangkat ini? Pakai kunci undanganmu",
+    "alreadySetUp": "Sudah diatur? Masuk",
+    "lost": "Tidak bisa masuk? Minta undangan baru ke pemilik.",
+    "noPasskeysHere": "Wajah atau sidik jari tidak bisa dipakai di alamat web ini (alamat IP). Pakai kata sandimu."
   },
   "devices": {
     "title": "Perangkat",
@@ -110,6 +88,9 @@
     "thisDevice": "Perangkat ini",
     "others": "Perangkat lain",
     "none": "Belum ada perangkat lain.",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "pageOf": "Halaman {{page}} dari {{pages}}",
     "lastUsed": "Terakhir dipakai {{when}}",
     "activeNow": "Sedang dipakai",
     "rename": "Ganti nama",

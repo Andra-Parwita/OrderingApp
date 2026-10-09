@@ -2,13 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Language, OrderLine, OrderStatus, SellerOrder } from '../../../shared/domain';
+import type { PickupPoint } from '../../../shared/domain';
 import { formatCookingDate } from '../../../shared/dates';
+import type { MessageLogEntry, MessageText } from '../../../shared/handoverContract';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
-import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
+import { fetchCurrentMenu, fetchSellerOrders } from '../../api/client';
 import { currentSellerSlug } from '../../api/device/sellerContext';
-import type { StatusTone } from '../../theme/tokens';
-import { Button } from '../../ui';
+import { fetchMessages } from '../../api/handover';
+import { Icon, type IconName } from '../../ui';
 import { SATURDAY_NS } from './i18n/register';
 
 /** How often an open screen reloads, so counts follow what others do. */
@@ -19,59 +21,73 @@ export function useLang(): Language {
   return i18n.resolvedLanguage === 'id' ? 'id' : 'en';
 }
 
-export function toneOf(status: OrderStatus): StatusTone {
-  switch (status) {
-    case 'ordered':
-      return 'ordered';
-    case 'confirmed':
-      return 'confirmed';
-    case 'ready_for_pickup':
-      return 'ready';
-    case 'out_for_delivery':
-      return 'outForDelivery';
-    case 'collected':
-    case 'delivered':
-      return 'done';
-    case 'cancelled':
-      return 'cancelled';
-    default: {
-      const unreachable: never = status;
-      return unreachable;
-    }
-  }
-}
-
 export function totalCents(order: SellerOrder): number {
   return order.lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0);
 }
 
-/** "2 Lemper, 1 Tempe" in the seller's language. */
+/** "2× Rendang · 1× Tempe" in the seller's language. */
 export function itemsShort(lines: ReadonlyArray<OrderLine>, lang: Language): string {
-  return lines.map((line) => `${String(line.qty)} ${pickText(line.name, lang)}`).join(', ');
+  return lines.map((line) => `${String(line.qty)}× ${pickText(line.name, lang)}`).join(' · ');
 }
 
 export function money(cents: number, lang: Language): string {
   return formatMoney(cents, lang);
 }
 
-// ---- Loading the week's orders (shared by the three screens) ----
+/** A closed order: collected, delivered or cancelled. */
+export function isClosed(status: OrderStatus): boolean {
+  return status === 'collected' || status === 'delivered' || status === 'cancelled';
+}
 
-export type SaturdayData =
+/** Local "HH:MM" of an ISO instant. */
+export function clock(iso: string): string {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** The text of a custom message in a language, falling back to the other one. */
+export function customText(text: MessageText | undefined, lang: Language): string {
+  if (!text) return '';
+  return (lang === 'id' ? (text.id ?? text.en) : (text.en ?? text.id)) ?? '';
+}
+
+/** Does the search match the bag code or the first name? */
+export function matches(order: SellerOrder, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (q === '') return true;
+  const compact = q.replace(/[\s-]/g, '');
+  return (
+    order.firstName.toLowerCase().includes(q) ||
+    (compact !== '' && order.code.toLowerCase().includes(compact))
+  );
+}
+
+// ---- Loading ----
+
+export type HandoverData =
   | Readonly<{ status: 'loading' }>
   | Readonly<{ status: 'error' }>
-  | Readonly<{ status: 'ready'; orders: Array<SellerOrder>; date: string | null }>;
+  | Readonly<{
+      status: 'ready';
+      orders: ReadonlyArray<SellerOrder>;
+      places: ReadonlyArray<PickupPoint>;
+      messages: ReadonlyArray<MessageLogEntry>;
+      date: string | null;
+    }>;
 
-/** Orders and the cooking date, reloaded every REFRESH_MS. `reload` is for after an action. */
-export function useSaturdayData(): { data: SaturdayData; reload: () => Promise<void> } {
+/** Orders, the current menu's places and the message log, reloaded every REFRESH_MS. */
+export function useHandoverData(): { data: HandoverData; reload: () => Promise<void> } {
   const lang = useLang();
   const slug = currentSellerSlug();
-  const [data, setData] = useState<SaturdayData>({ status: 'loading' });
+  const [data, setData] = useState<HandoverData>({ status: 'loading' });
   const alive = useRef(true);
 
   const reload = useCallback(async () => {
-    const [orders, menu] = await Promise.all([
+    const [orders, menu, log] = await Promise.all([
       fetchSellerOrders(undefined, slug),
-      fetchSellerMenu(undefined, slug),
+      fetchCurrentMenu(undefined, slug),
+      fetchMessages(undefined, slug),
     ]);
     if (!alive.current) return;
     if (!orders.ok) {
@@ -82,7 +98,9 @@ export function useSaturdayData(): { data: SaturdayData; reload: () => Promise<v
     setData({
       status: 'ready',
       orders: orders.data.orders,
-      date: menu.ok ? formatCookingDate(menu.data.week.cookingDate, lang) : null,
+      places: menu.ok ? menu.data.menu.pickupPoints : [],
+      messages: log.ok ? log.data.messages : [],
+      date: menu.ok ? formatCookingDate(menu.data.menu.menu.cookingDate, lang) : null,
     });
   }, [slug, lang]);
 
@@ -100,152 +118,94 @@ export function useSaturdayData(): { data: SaturdayData; reload: () => Promise<v
   return { data, reload };
 }
 
-// ---- Layout pieces ----
+// ---- Small pieces ----
 
-export const Page = styled.main`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.lg};
-`;
-
-export const Head = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-export const Title = styled.h1`
-  margin: 0;
-  font-size: ${({ theme }) => theme.type.size.xl};
-`;
-
-export const Sub = styled.h2`
-  margin: 0;
-  font-size: ${({ theme }) => theme.type.size.md};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+export const Mono = styled.span`
+  font-family: ${({ theme }) => theme.font.mono};
+  font-weight: 600;
+  letter-spacing: 0.06em;
 `;
 
 export const Muted = styled.p`
   margin: 0;
-  color: ${({ theme }) => theme.colour.textMuted};
-  font-size: ${({ theme }) => theme.type.size.sm};
-`;
-
-export const Count = styled.span`
-  padding: ${({ theme }) => theme.border.hairline} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.radius.pill};
-  background: ${({ theme }) => theme.colour.surface};
-  font-size: ${({ theme }) => theme.type.size.sm};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-`;
-
-export const Section = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding-top: ${({ theme }) => theme.spacing.lg};
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
-`;
-
-export const Card = styled.article`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.md};
-  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.colour.surface};
-`;
-
-export const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-export const Code = styled.b`
-  font-size: ${({ theme }) => theme.type.size.lg};
-  letter-spacing: ${({ theme }) => theme.border.hairline};
-`;
-
-export const Small = styled.span`
-  font-size: ${({ theme }) => theme.type.size.sm};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
 `;
 
 export const Notice = styled.p<{ $bad?: boolean }>`
   margin: 0;
-  padding: ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme, $bad }) => ($bad ? theme.status.cancelled.bg : theme.status.ready.bg)};
-  color: ${({ theme, $bad }) => ($bad ? theme.status.cancelled.fg : theme.status.ready.fg)};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: ${({ theme, $bad }) => ($bad ? 'transparent' : theme.c.tint)};
+  border: ${({ theme, $bad }) => ($bad ? `1px solid ${theme.c.danger}` : '0')};
+  color: ${({ theme, $bad }) => ($bad ? theme.c.danger : theme.c.text)};
+  font-weight: 600;
 `;
 
-export const Actions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-top: ${({ theme }) => theme.spacing.sm};
-`;
-
-export const Action = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+const MarkRoot = styled.span<{ $tone: 'text' | 'conf' | 'ready' | 'muted' | 'danger' }>`
+  display: inline-flex;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  max-width: 14rem;
+  color: ${({ theme, $tone }) => theme.c[$tone]};
+  font-weight: 600;
+  white-space: nowrap;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+`;
+const Ring = styled.span`
+  width: 0.875rem;
+  height: 0.875rem;
+  border: ${({ theme }) => theme.border.focus} solid currentColor;
+  border-radius: 50%;
 `;
 
-export const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
+const MARK: Readonly<
+  Record<
+    OrderStatus,
+    Readonly<{ icon: IconName | null; tone: 'text' | 'conf' | 'ready' | 'muted' | 'danger' }>
+  >
+> = {
+  ordered: { icon: null, tone: 'text' },
+  confirmed: { icon: 'check', tone: 'conf' },
+  ready_for_pickup: { icon: 'bag', tone: 'conf' },
+  out_for_delivery: { icon: 'truck', tone: 'ready' },
+  collected: { icon: 'check', tone: 'muted' },
+  delivered: { icon: 'check', tone: 'muted' },
+  cancelled: { icon: 'x', tone: 'danger' },
+};
 
-const ChipButton = styled.button<{ $pressed: boolean }>`
-  min-height: ${({ theme }) => theme.minTapTarget};
-  min-width: ${({ theme }) => theme.minTapTarget};
-  padding: 0 ${({ theme }) => theme.spacing.md};
-  border: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme, $pressed }) => ($pressed ? theme.colour.accent : theme.colour.outline)};
-  border-radius: ${({ theme }) => theme.radius.pill};
-  background: ${({ theme, $pressed }) => ($pressed ? theme.colour.accent : 'transparent')};
-  color: ${({ theme, $pressed }) => ($pressed ? theme.colour.onAccent : theme.colour.text)};
-  font: inherit;
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  cursor: pointer;
-`;
-
-type ChipProps = Readonly<{ label: string; pressed?: boolean; onSelect: () => void }>;
-
-/** A pill-shaped toggle. Leave `pressed` out for a plain action chip. */
-export function Chip({ label, pressed, onSelect }: ChipProps) {
-  return (
-    <ChipButton type="button" aria-pressed={pressed} $pressed={pressed === true} onClick={onSelect}>
-      {label}
-    </ChipButton>
-  );
-}
-
-export function LoadState({
-  data,
-  onRetry,
-}: Readonly<{ data: SaturdayData; onRetry: () => void }>) {
+/** Status is always an icon plus a word, never colour alone. */
+export function StatusMark({ status }: Readonly<{ status: OrderStatus }>) {
   const { t } = useTranslation(SATURDAY_NS);
-  if (data.status === 'ready') return null;
-  if (data.status === 'loading') return <Muted role="status">{t('common.loading')}</Muted>;
+  const { icon, tone } = MARK[status];
   return (
-    <>
-      <Notice $bad role="alert">
-        {t('common.loadError')}
-      </Notice>
-      <Button onClick={onRetry}>{t('common.retry')}</Button>
-    </>
+    <MarkRoot $tone={tone}>
+      {icon ? <Icon name={icon} /> : <Ring aria-hidden="true" />}
+      {t(`status.${status}`)}
+    </MarkRoot>
   );
 }
+
+export const OrderRowRoot = styled.li<{ $dim: boolean }>`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.125rem ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  color: ${({ theme, $dim }) => ($dim ? theme.c.muted : theme.c.text)};
+  list-style: none;
+`;
+
+export const PackedTag = styled.span`
+  padding: 0 ${({ theme }) => theme.spacing.sm};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
+  border-radius: ${({ theme }) => theme.radius.pill};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.75rem;
+  font-weight: 600;
+`;
+
+export const Strong = styled.b``;

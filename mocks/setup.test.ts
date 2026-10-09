@@ -81,9 +81,25 @@ describe('seller setup', () => {
 
   const newItem = (extra = {}) => ({ name: text('Soto', 'Soto ayam'), priceCents: 1400, ...extra });
 
+  type View = {
+    menu: Record<string, unknown>;
+    dishes: Array<{ id: string; dishId?: string }>;
+    pickupPoints: Array<{ id: string; place: string; window: { start: string; end: string } }>;
+  };
+  async function view(seller: string): Promise<View> {
+    return ((await call('GET', '/api/seller/menus/current', as(seller))).body as { menu: View })
+      .menu;
+  }
+  const putMenu = (seller: string, body: unknown) =>
+    call('PUT', '/api/seller/menus/current', { seller, body });
+
+  /** Creates a dish in the library, puts it on the menu and returns the menu item id. */
   async function addItem(seller: string, extra = {}) {
-    const reply = await call('POST', '/api/seller/menu/items', { seller, body: newItem(extra) });
-    return (reply.body as { item: { id: string } }).item.id;
+    const made = await call('POST', '/api/seller/dishes', { seller, body: newItem(extra) });
+    const dishId = (made.body as { dish: { id: string } }).dish.id;
+    const ids = (await view(seller)).dishes.map((dish) => dish.dishId ?? '');
+    await putMenu(seller, { dishIds: [...ids, dishId] });
+    return (await view(seller)).dishes.find((dish) => dish.dishId === dishId)?.id ?? '';
   }
 
   async function order(slug: string, itemId: string, qty = 1) {
@@ -103,75 +119,55 @@ describe('seller setup', () => {
     });
   });
 
-  describe('week lifecycle', () => {
+  describe('menu settings and lifecycle', () => {
     const settings = {
       cookingDate: '2026-10-17',
       cutoffAt: '2026-10-16T21:00:00+11:00',
-      pickupPoints: [
-        {
-          place: 'Mulgrave',
-          directions: text('Back gate', 'Pintu belakang'),
-          window: { start: '10:00', end: '12:30' },
-        },
-      ],
+      places: [{ placeId: 'glen-waverley', window: { start: '10:00', end: '12:30' } }],
       delivery: { available: false, note: text('No delivery this week') },
     };
 
-    it('reads the week and saves its settings, keeping the pickup point id', async () => {
-      const before = (await call('GET', '/api/seller/week', A_)).body as {
-        week: { status: string };
-      };
-      expect(before.week.status).toBe('published');
-      const saved = await call('PUT', '/api/seller/week', { ...A_, body: settings });
+    it('reads the menu and saves its settings, keeping the pickup place id', async () => {
+      expect((await view(A)).menu['state']).toBe('live');
+      const saved = await putMenu(A, settings);
       expect(saved.status).toBe(200);
-      const week = (saved.body as { week: Record<string, unknown> }).week;
-      expect(week).toMatchObject({
+      const current = await view(A);
+      expect(current.menu).toMatchObject({
         cookingDate: '2026-10-17',
         cutoffAt: '2026-10-16T21:00:00+11:00',
-        status: 'published',
+        state: 'live',
         delivery: { available: false },
       });
-      expect(week['pickupPoints']).toEqual([
-        {
-          id: 'glen-waverley',
-          place: 'Mulgrave',
-          directions: text('Back gate', 'Pintu belakang'),
-          window: { start: '10:00', end: '12:30' },
-        },
-      ]);
+      expect(current.pickupPoints.map((point) => point.id)).toEqual(['glen-waverley']);
+      expect(current.pickupPoints[0]?.window).toEqual({ start: '10:00', end: '12:30' });
       expect((await publicMenu(A)).week.cookingDate).toBe('2026-10-17');
     });
 
-    it('refuses bad settings: no or two pickup points, bad times, dates and cut-off', async () => {
-      const put = (body: unknown) => call('PUT', '/api/seller/week', { ...A_, body });
-      const point = settings.pickupPoints[0];
-      expect(await put({ ...settings, pickupPoints: [] })).toMatchObject(
-        ERR(400, 'invalid_request'),
+    it('refuses bad settings: unknown or repeated places, bad times, dates and cut-off', async () => {
+      const place = settings.places[0];
+      expect(await putMenu(A, { places: [{ placeId: 'nope' }] })).toMatchObject(
+        ERR(404, 'not_found'),
       );
-      expect(await put({ ...settings, pickupPoints: [point, point] })).toMatchObject(
+      expect(await putMenu(A, { places: [place, place] })).toMatchObject(
         ERR(400, 'invalid_request'),
       );
       expect(
-        await put({
-          ...settings,
-          pickupPoints: [{ ...point, window: { start: '12:00', end: '10:00' } }],
-        }),
+        await putMenu(A, { places: [{ ...place, window: { start: '12:00', end: '10:00' } }] }),
       ).toMatchObject(ERR(400, 'invalid_request'));
-      expect(await put({ ...settings, cookingDate: '2026-02-30' })).toMatchObject(
+      expect(await putMenu(A, { cookingDate: '2026-02-30' })).toMatchObject(
         ERR(400, 'invalid_request'),
       );
-      expect(await put({ ...settings, cutoffAt: '2026-10-16 21:00' })).toMatchObject(
+      expect(await putMenu(A, { cutoffAt: '2026-10-16 21:00' })).toMatchObject(
         ERR(400, 'invalid_request'),
       );
-      expect(await put({ ...settings, pickupPoints: [{ ...point, place: '  ' }] })).toMatchObject(
-        ERR(400, 'invalid_request'),
-      );
+      expect(await putMenu(A, {})).toMatchObject(ERR(400, 'invalid_request'));
     });
 
     it('unpublishes (customers cannot order) and publishes again', async () => {
-      const down = await call('POST', '/api/seller/week/unpublish', A_);
-      expect((down.body as { week: { status: string } }).week.status).toBe('draft');
-      expect((await publicMenu(A)).week.status).toBe('draft');
+      const down = await call('POST', '/api/seller/menus/current/unpublish', A_);
+      expect(down.status).toBe(200);
+      expect((await view(A)).menu['state']).toBe('not_published');
+      expect((await publicMenu(A)).week.status).not.toBe('published');
       const blocked = await call('POST', `/api/s/${A}/orders`, {
         body: {
           firstName: 'Rina',
@@ -181,21 +177,24 @@ describe('seller setup', () => {
         },
       });
       expect(blocked).toMatchObject(ERR(409, 'week_not_published'));
-      const up = await call('POST', '/api/seller/week/publish', A_);
-      expect((up.body as { week: { status: string } }).week.status).toBe('published');
+      expect((await call('POST', '/api/seller/menus/current/publish', A_)).status).toBe(200);
+      expect((await view(A)).menu['state']).toBe('live');
+      expect((await publicMenu(A)).week.status).toBe('published');
     });
 
-    it('refuses to publish an empty menu', async () => {
-      for (const item of (await menu(A)).items) {
-        await call('DELETE', `/api/seller/menu/items/${item.id}`, A_);
-      }
-      await call('POST', '/api/seller/week/unpublish', A_);
-      expect(await call('POST', '/api/seller/week/publish', A_)).toMatchObject(
+    it('warns before publishing an empty menu, and publishes it only with force (D-062)', async () => {
+      await call('POST', '/api/seller/menus/current/unpublish', A_);
+      await putMenu(A, { dishIds: [] });
+      expect(await call('POST', '/api/seller/menus/current/publish', A_)).toMatchObject(
         ERR(409, 'no_items'),
       );
+      expect((await view(A)).menu['state']).toBe('not_published');
+      expect(
+        await call('POST', '/api/seller/menus/current/publish', { ...A_, body: { force: true } }),
+      ).toMatchObject({ status: 200 });
     });
 
-    it('keeps the ordering switch in the settings, not in the week', async () => {
+    it('keeps the ordering switch in the settings, not in the menu', async () => {
       await call('PUT', '/api/seller/settings', {
         ...A_,
         body: {
@@ -204,35 +203,30 @@ describe('seller setup', () => {
           orderingOpen: false,
         },
       });
-      await call('PUT', '/api/seller/week', { ...A_, body: settings });
+      await putMenu(A, settings);
       expect((await publicMenu(A)).ordering).toEqual({ open: false, reason: 'closed_by_seller' });
     });
 
-    it('isolates the week between sellers', async () => {
-      await call('PUT', '/api/seller/week', { ...A_, body: settings });
-      await call('POST', '/api/seller/week/unpublish', A_);
-      const b = (await call('GET', '/api/seller/week', B_)).body as {
-        week: Record<string, unknown>;
-      };
-      expect(b.week).toMatchObject({ cookingDate: '2026-10-10', status: 'published' });
-      expect(JSON.stringify(b)).not.toContain('Mulgrave');
+    it('isolates the menu between sellers', async () => {
+      await putMenu(A, settings);
+      await call('POST', '/api/seller/menus/current/unpublish', A_);
+      const b = await view(B);
+      expect(b.menu).toMatchObject({ cookingDate: '2026-10-10', state: 'live' });
+      expect(JSON.stringify(b)).not.toContain('Glen Waverley');
       expect((await publicMenu(B)).week.status).toBe('published');
     });
   });
 
   describe('menu items', () => {
-    it('creates, edits, and reads back an item with EN/ID, size, price, limit and chef', async () => {
-      const created = await call('POST', '/api/seller/menu/items', {
-        ...A_,
-        body: newItem({
-          description: text('turmeric broth'),
-          size: text('1 bowl', '1 mangkuk'),
-          limit: 8,
-          chefId: 'wati',
-        }),
+    it('creates a dish, puts it on the menu and edits the menu copy: EN/ID, size, price, limit and chef', async () => {
+      const id = await addItem(A, {
+        limit: 8,
+        chefId: 'wati',
+        description: text('turmeric broth'),
+        size: text('1 bowl', '1 mangkuk'),
       });
-      expect(created.status).toBe(201);
-      const item = (created.body as { item: Record<string, unknown> }).item;
+      expect(id).not.toBe('');
+      const item = (await menu(A)).items.find((x) => x.id === id);
       expect(item).toMatchObject({
         name: text('Soto', 'Soto ayam'),
         description: text('turmeric broth'),
@@ -242,7 +236,6 @@ describe('seller setup', () => {
         soldOut: false,
         chefId: 'wati',
       });
-      const id = item['id'] as string;
       const patched = await call('PATCH', `/api/seller/menu/items/${id}`, {
         ...A_,
         body: { priceCents: 1600, limit: null, chefId: null, name: text('', 'Soto') },
@@ -269,7 +262,7 @@ describe('seller setup', () => {
     });
 
     it('validates input: empty name in both languages, bad price, limit, chef, unknown item', async () => {
-      const post = (body: unknown) => call('POST', '/api/seller/menu/items', { ...A_, body });
+      const post = (body: unknown) => call('POST', '/api/seller/dishes', { ...A_, body });
       expect(await post({ name: text('', ' '), priceCents: 100 })).toMatchObject(
         ERR(400, 'invalid_request'),
       );
@@ -299,36 +292,33 @@ describe('seller setup', () => {
       ).toMatchObject(ERR(400, 'unknown_chef'));
     });
 
-    it('allows at most 10 items per week', async () => {
+    it('allows at most 10 dishes per menu', async () => {
       while ((await menu(A)).items.length < 10) await addItem(A);
-      expect(
-        await call('POST', '/api/seller/menu/items', { ...A_, body: newItem() }),
-      ).toMatchObject(ERR(409, 'limit_reached'));
+      const made = await call('POST', '/api/seller/dishes', { ...A_, body: newItem() });
+      const extra = (made.body as { dish: { id: string } }).dish.id;
+      const ids = (await view(A)).dishes.map((dish) => dish.dishId);
+      expect(await putMenu(A, { dishIds: [...ids, extra] })).toMatchObject(
+        ERR(400, 'invalid_request'),
+      );
+      expect((await menu(A)).items).toHaveLength(10);
       expect((await menu(B)).items).toHaveLength(3);
       await addItem(B);
       expect((await menu(B)).items).toHaveLength(4);
     });
 
-    it('reorders: every id once, no foreign or missing ids', async () => {
-      const ids = (await menu(A)).items.map((item) => item.id);
-      const reversed = [...ids].reverse();
-      const ok = await call('PUT', '/api/seller/menu/order', { ...A_, body: { ids: reversed } });
-      expect((ok.body as { items: Array<{ id: string }> }).items.map((item) => item.id)).toEqual(
-        reversed,
+    it('reorders: the menu follows the order of the dish ids, no foreign or unknown ids', async () => {
+      const dishIds = (await view(A)).dishes.map((dish) => dish.dishId ?? '');
+      const itemIds = (await menu(A)).items.map((item) => item.id);
+      const ok = await putMenu(A, { dishIds: [...dishIds].reverse() });
+      expect(ok.status).toBe(200);
+      expect((await menu(A)).items.map((item) => item.id)).toEqual([...itemIds].reverse());
+      expect(await putMenu(A, { dishIds: [...dishIds.slice(1), 'soto-ayam'] })).toMatchObject(
+        ERR(400, 'unknown_item'),
       );
-      expect((await menu(A)).items.map((item) => item.id)).toEqual(reversed);
-      const put = (body: unknown, seller = A) =>
-        call('PUT', '/api/seller/menu/order', { seller, body });
-      expect(await put({ ids: ids.slice(1) })).toMatchObject(ERR(400, 'invalid_request'));
-      expect(await put({ ids: [...ids.slice(1), 'soto-ayam'] })).toMatchObject(
-        ERR(400, 'invalid_request'),
-      );
-      expect(await put({ ids: [...ids, ids[0]] })).toMatchObject(ERR(400, 'invalid_request'));
-      expect(await put({ ids: ids })).toMatchObject({ status: 200 });
-      expect(await put({ ids: ids }, B)).toMatchObject(ERR(400, 'invalid_request'));
+      expect(await putMenu(B, { dishIds })).toMatchObject(ERR(400, 'unknown_item'));
     });
 
-    describe('D-020: edits only affect new orders; items with orders cannot be deleted', () => {
+    describe('D-020: edits only affect new orders; dropping an ordered item warns', () => {
       it('keeps the old price and name on an existing order', async () => {
         const placed = await order(A, 'pesmol');
         await call('PATCH', '/api/seller/menu/items/pesmol', {
@@ -345,21 +335,33 @@ describe('seller setup', () => {
         expect(newLine).toMatchObject({ priceCents: 9900, name: text('Renamed', 'Diganti') });
       });
 
-      it('refuses to delete an item with an order (409) and allows it once the order is cancelled', async () => {
+      it('warns when an item with an order leaves the menu, and not once the order is cancelled', async () => {
         const placed = await order(A, 'pesmol');
-        expect(await call('DELETE', '/api/seller/menu/items/pesmol', A_)).toMatchObject(
-          ERR(409, 'item_has_orders'),
-        );
-        expect((await menu(A)).items.some((item) => item.id === 'pesmol')).toBe(true);
-        await call('POST', `/api/orders/${placed.token}/cancel`);
-        expect(await call('DELETE', '/api/seller/menu/items/pesmol', A_)).toMatchObject({
-          status: 200,
-          body: { ok: true },
-        });
+        const keep = (await view(A)).dishes
+          .filter((dish) => dish.id !== 'pesmol')
+          .map((dish) => dish.dishId ?? '');
+        const dropped = await putMenu(A, { dishIds: keep });
+        expect(dropped.status).toBe(200);
+        expect(
+          (dropped.body as { warnings: { removedWithOrders: Array<string> } }).warnings
+            .removedWithOrders,
+        ).toEqual(['pesmol']);
         expect((await menu(A)).items.some((item) => item.id === 'pesmol')).toBe(false);
-        expect(await call('DELETE', '/api/seller/menu/items/pesmol', A_)).toMatchObject(
-          ERR(404, 'not_found'),
+        // The order keeps its line.
+        expect((await sellerOrders(A)).find((o) => o.code === placed.code)?.lines[0]).toMatchObject(
+          {
+            itemId: 'pesmol',
+          },
         );
+        // With the order cancelled, dropping another item raises no warning.
+        const second = await order(A, 'lemper');
+        await call('POST', `/api/orders/${second.token}/cancel`);
+        const rest = keep.filter((id) => id !== 'lemper');
+        const again = await putMenu(A, { dishIds: rest });
+        expect(
+          (again.body as { warnings: { removedWithOrders: Array<string> } }).warnings
+            .removedWithOrders,
+        ).toEqual([]);
       });
 
       it('lets the seller mark an ordered item sold out: no new orders, existing ones stay', async () => {
@@ -389,19 +391,48 @@ describe('seller setup', () => {
       });
     });
 
-    it('isolates items: A cannot read, edit, delete, reorder or order B items', async () => {
+    it('isolates items: A cannot read, edit or order B items, and A changes do not reach B', async () => {
       expect(
         await call('PATCH', '/api/seller/menu/items/soto-ayam', { ...A_, body: { priceCents: 1 } }),
       ).toMatchObject(ERR(404, 'not_found'));
-      expect(await call('DELETE', '/api/seller/menu/items/soto-ayam', A_)).toMatchObject(
-        ERR(404, 'not_found'),
-      );
       const before = JSON.stringify(await menu(B));
       await addItem(A, { name: text('A only') });
       expect(JSON.stringify(await menu(B))).toBe(before);
       expect(JSON.stringify(await publicMenu(B))).not.toContain('A only');
-      await call('DELETE', '/api/seller/menu/items/pesmol', A_);
+      const orderOnB = await call('POST', `/api/s/${A}/orders`, {
+        body: {
+          firstName: 'Rina',
+          language: 'en',
+          fulfilment: 'pickup',
+          lines: [{ itemId: 'soto-ayam', qty: 1 }],
+        },
+      });
+      expect(orderOnB.status).toBeGreaterThanOrEqual(400);
       expect((await menu(B)).items).toHaveLength(3);
+    });
+  });
+
+  describe('kitchen name', () => {
+    it('renames the kitchen to 60 characters and the public menu follows', async () => {
+      const renamed = await call('PUT', '/api/seller/kitchen/name', {
+        ...A_,
+        body: { name: '  Dapur Ira  ' },
+      });
+      expect(renamed).toMatchObject({ status: 200, body: { name: 'Dapur Ira' } });
+      expect(
+        ((await call('GET', `/api/s/${A}/menu`)).body as { kitchen: { name: string } }).kitchen
+          .name,
+      ).toBe('Dapur Ira');
+      // The other kitchen is untouched.
+      expect(
+        ((await call('GET', `/api/s/${B}/menu`)).body as { kitchen: { name: string } }).kitchen
+          .name,
+      ).not.toBe('Dapur Ira');
+      for (const name of ['  ', 'x'.repeat(61)]) {
+        expect(
+          await call('PUT', '/api/seller/kitchen/name', { ...A_, body: { name } }),
+        ).toMatchObject(ERR(400, 'invalid_request'));
+      }
     });
   });
 
@@ -460,158 +491,85 @@ describe('seller setup', () => {
       expect((await call('GET', '/api/seller/chefs', B_)).text).not.toContain('Only A');
       expect((await menu(B)).items.find((item) => item.id === 'soto-ayam')?.chefId).toBe('rudi');
       expect(
-        await call('POST', '/api/seller/menu/items', { ...A_, body: newItem({ chefId: 'rudi' }) }),
+        await call('POST', '/api/seller/dishes', { ...A_, body: newItem({ chefId: 'rudi' }) }),
       ).toMatchObject(ERR(400, 'unknown_chef'));
     });
   });
 
   describe('saved sets', () => {
-    const save = (name: string, extra = {}, seller = A) =>
-      call('POST', '/api/seller/sets', { seller, body: { name, ...extra } });
+    // plan 001: each sample kitchen starts with one saved set (a list of dish ids).
+    const save = (name: string, dishIds: Array<string> = ['pesmol'], seller = A) =>
+      call('POST', '/api/seller/saved-sets', { seller, body: { name, dishIds } });
+    type SetBody = { id: string; name: string; dishIds: Array<string>; timesUsed: number };
     const setsOf = async (seller: string) =>
-      (
-        (await call('GET', '/api/seller/sets', as(seller))).body as {
-          sets: Array<{
-            id: string;
-            name: string;
-            items: Array<unknown>;
-            imageSlots: Array<string>;
-          }>;
-        }
-      ).sets;
+      ((await call('GET', '/api/seller/saved-sets', as(seller))).body as { sets: Array<SetBody> })
+        .sets;
 
-    it('saves this week as a set (items without ids, image slots listed) and renames and deletes it', async () => {
-      const saved = await save('Classic');
+    it('saves a set of dishes (name trimmed) and lists it after the sample set', async () => {
+      expect(await setsOf(A)).toHaveLength(1);
+      const saved = await save('  Mine  ', ['pesmol', 'lemper']);
       expect(saved.status).toBe(201);
-      const set = (
-        saved.body as {
-          set: { id: string; items: Array<Record<string, unknown>>; imageSlots: Array<string> };
-        }
-      ).set;
-      expect(set.items).toHaveLength(6);
-      expect(set.items[0]).not.toHaveProperty('id');
-      expect(set.imageSlots).toEqual(
-        expect.arrayContaining([
-          'desktopBanner',
-          'phoneBanner',
-          'railImage',
-          'railIcon',
-          'bannerBackgroundImage',
-        ]),
-      );
-      const renamed = await call('PATCH', `/api/seller/sets/${set.id}`, {
-        ...A_,
-        body: { name: ' Week A ' },
+      expect((saved.body as { set: SetBody }).set).toMatchObject({
+        name: 'Mine',
+        dishIds: ['pesmol', 'lemper'],
+        timesUsed: 0,
       });
-      expect((renamed.body as { set: { name: string } }).set.name).toBe('Week A');
-      expect(await call('DELETE', `/api/seller/sets/${set.id}`, A_)).toMatchObject({ status: 200 });
-      expect(await setsOf(A)).toEqual([]);
+      expect((await setsOf(A)).map((set) => set.name)).toEqual(['Classic', 'Mine']);
     });
 
-    it('allows 5 sets; a 6th needs replaceSetId and then replaces that set', async () => {
-      const ids: Array<string> = [];
-      for (let n = 1; n <= 5; n++) {
-        ids.push(((await save(`Set ${String(n)}`)).body as { set: { id: string } }).set.id);
-      }
+    it('allows 5 sets and refuses the 6th with limit_reached', async () => {
+      for (let n = 2; n <= 5; n++) expect((await save(`Set ${String(n)}`)).status).toBe(201);
       expect(await save('Set 6')).toMatchObject(ERR(409, 'limit_reached'));
-      expect(await save('Set 6', { replaceSetId: 'nope' })).toMatchObject(ERR(404, 'not_found'));
-      const replaced = await save('Set 6', { replaceSetId: ids[2] });
-      expect(replaced.status).toBe(201);
-      const sets = await setsOf(A);
-      expect(sets).toHaveLength(5);
-      expect(sets.map((set) => set.name)).toEqual(['Set 1', 'Set 2', 'Set 6', 'Set 4', 'Set 5']);
-      expect(sets[2]?.id).toBe(ids[2]);
+      expect(await setsOf(A)).toHaveLength(5);
     });
 
-    it('refuses an empty name, a long name and saving an empty menu', async () => {
+    it('refuses an empty name, a long name, no dishes and unknown dishes', async () => {
       expect(await save('  ')).toMatchObject(ERR(400, 'invalid_request'));
       expect(await save('x'.repeat(41))).toMatchObject(ERR(400, 'invalid_request'));
-      for (const item of (await menu(A)).items)
-        await call('DELETE', `/api/seller/menu/items/${item.id}`, A_);
-      expect(await save('Empty')).toMatchObject(ERR(409, 'no_items'));
+      expect(await save('Empty', [])).toMatchObject(ERR(400, 'invalid_request'));
+      expect(await save('Unknown', ['nope'])).toMatchObject(ERR(400, 'unknown_item'));
     });
 
-    it('use set: needs a draft week and the confirmation flag, then replaces the items with new ids', async () => {
-      const id = ((await save('Classic')).body as { set: { id: string } }).set.id;
-      await addItem(A, { name: text('Extra') });
-      const use = (body?: unknown) =>
-        call('POST', `/api/seller/sets/${id}/use`, {
-          ...A_,
-          ...(body !== undefined ? { body } : {}),
-        });
-      expect(await use({ confirm: true })).toMatchObject(ERR(409, 'week_not_draft'));
-      await call('POST', '/api/seller/week/unpublish', A_);
-      expect(await use()).toMatchObject(ERR(409, 'confirm_required'));
-      expect(await use({ confirm: false })).toMatchObject(ERR(409, 'confirm_required'));
-      expect((await menu(A)).items).toHaveLength(7);
-      const done = await use({ confirm: true });
-      const items = (done.body as { items: Array<{ id: string; name: { en: string } }> }).items;
-      expect(items).toHaveLength(6);
-      expect(items.map((item) => item.name.en)).not.toContain('Extra');
-      expect(items.map((item) => item.id)).not.toContain('pesmol');
-      expect((await menu(A)).items.map((item) => item.id)).toEqual(items.map((item) => item.id));
-      expect(
-        await call('POST', `/api/seller/sets/${id}/use`, { ...A_, raw: '{bad' }),
-      ).toMatchObject(ERR(400, 'invalid_request'));
+    it('uses a set: its dishes join the menu as new copies, and the use is counted', async () => {
+      const id = ((await save('Two', ['pesmol', 'lemper'])).body as { set: SetBody }).set.id;
+      await putMenu(A, { dishIds: [] });
+      const used = await call('POST', `/api/seller/saved-sets/${id}/use`, A_);
+      expect(used.status).toBe(200);
+      expect((await menu(A)).items).toHaveLength(2);
+      expect((await setsOf(A)).find((set) => set.id === id)?.timesUsed).toBe(1);
+      expect(await call('POST', '/api/seller/saved-sets/nope/use', A_)).toMatchObject(
+        ERR(404, 'not_found'),
+      );
     });
 
-    it('use set refuses while a current item has orders (seller-entered, D-024)', async () => {
-      const id = ((await save('Classic')).body as { set: { id: string } }).set.id;
-      await call('POST', '/api/seller/week/unpublish', A_);
-      // A draft week takes seller-entered orders (D-024): an item with one cannot be replaced.
-      await call('POST', '/api/seller/orders', {
-        ...A_,
-        body: {
-          firstName: 'Mei',
-          language: 'en',
-          fulfilment: 'pickup',
-          lines: [{ itemId: 'lemper', qty: 1 }],
-        },
-      });
-      expect(
-        await call('POST', `/api/seller/sets/${id}/use`, { ...A_, body: { confirm: true } }),
-      ).toMatchObject(ERR(409, 'item_has_orders'));
-      expect((await menu(A)).items).toHaveLength(6);
+    it('refuses to use a set on a finished menu', async () => {
+      const id = ((await save('Two')).body as { set: SetBody }).set.id;
+      await call('POST', '/api/seller/menus/current/finish', A_);
+      expect(await call('POST', `/api/seller/saved-sets/${id}/use`, A_)).toMatchObject(
+        ERR(409, 'week_closed'),
+      );
     });
 
-    it('use set with applyImages takes the set pictures; without it the images stay', async () => {
-      const id = ((await save('Classic')).body as { set: { id: string } }).set.id;
-      await call('DELETE', '/api/seller/images/railIcon', A_);
-      await call('POST', '/api/seller/week/unpublish', A_);
-      await call('POST', `/api/seller/sets/${id}/use`, { ...A_, body: { confirm: true } });
-      expect((await publicMenu(A)).kitchen.images?.railIcon).toBeUndefined();
-      await call('POST', `/api/seller/sets/${id}/use`, {
-        ...A_,
-        body: { confirm: true, applyImages: true },
-      });
-      expect((await publicMenu(A)).kitchen.images?.railIcon).toBe('/samples/rail-icon.png');
-    });
-
-    it('drops a chef that no longer exists when a set is used, and unassigns chefs in sets', async () => {
-      const id = ((await save('Classic')).body as { set: { id: string } }).set.id;
+    it('drops a deleted chef from the dishes of a set that is used afterwards', async () => {
+      const id = ((await save('Classic')).body as { set: SetBody }).set.id;
       await call('DELETE', '/api/seller/chefs/wati', A_);
-      await call('POST', '/api/seller/week/unpublish', A_);
-      await call('POST', `/api/seller/sets/${id}/use`, { ...A_, body: { confirm: true } });
+      await putMenu(A, { dishIds: [] });
+      await call('POST', `/api/seller/saved-sets/${id}/use`, A_);
       expect((await menu(A)).items.every((item) => item.chefId === undefined)).toBe(true);
     });
 
-    it('isolates sets: B cannot see, rename, delete or use an A set; limits are per seller', async () => {
-      const id = ((await save('A set')).body as { set: { id: string } }).set.id;
-      expect(await setsOf(B)).toEqual([]);
-      expect(
-        await call('PATCH', `/api/seller/sets/${id}`, { ...B_, body: { name: 'x' } }),
-      ).toMatchObject(ERR(404, 'not_found'));
-      expect(await call('DELETE', `/api/seller/sets/${id}`, B_)).toMatchObject(
+    it('isolates sets: B cannot see or use an A set, and a dish of A cannot be in a B set', async () => {
+      const id = ((await save('A set')).body as { set: SetBody }).set.id;
+      expect((await setsOf(B)).map((set) => set.name)).not.toContain('A set');
+      expect(await call('POST', `/api/seller/saved-sets/${id}/use`, B_)).toMatchObject(
         ERR(404, 'not_found'),
       );
-      expect(
-        await call('POST', `/api/seller/sets/${id}/use`, { ...B_, body: { confirm: true } }),
-      ).toMatchObject(ERR(404, 'not_found'));
-      expect(await save('Replace?', { replaceSetId: id }, B)).toMatchObject(ERR(404, 'not_found'));
-      for (let n = 0; n < 5; n++) await save(`A${String(n)}`);
-      expect(await save('B first', {}, B)).toMatchObject({ status: 201 });
+      expect(await save('Steal', ['pesmol'], B)).toMatchObject(ERR(400, 'unknown_item'));
+      // Limits are per seller: A is full, B is not.
+      for (let n = 0; n < 3; n++) await save(`A${String(n)}`);
+      expect(await save('A full')).toMatchObject(ERR(409, 'limit_reached'));
+      expect(await save('B first', ['soto-ayam'], B)).toMatchObject({ status: 201 });
       expect(await setsOf(A)).toHaveLength(5);
-      expect(await setsOf(B)).toHaveLength(1);
     });
   });
 
@@ -697,6 +655,15 @@ describe('seller setup', () => {
   });
 
   describe('past weeks (D-027 row 6)', () => {
+    /** Finishes the menu and returns the id of the past week it made. */
+    async function finishId(seller: string) {
+      await call('POST', '/api/seller/menus/current/finish', as(seller));
+      const list = (await call('GET', '/api/seller/past-weeks', as(seller))).body as {
+        weeks: Array<{ id: string }>;
+      };
+      return list.weeks[0]?.id ?? '';
+    }
+
     async function weekWithOrders(seller = A) {
       const slug = seller;
       const first = await order(slug, seller === A ? 'lemper' : 'soto-ayam', 2);
@@ -707,37 +674,29 @@ describe('seller setup', () => {
       return first;
     }
 
-    it('closing archives totals and orders, empties the live list and starts the next draft week', async () => {
+    it('finishing archives totals and orders, empties the live list and leaves the menu finished', async () => {
       await weekWithOrders();
-      const closed = await call('POST', '/api/seller/week/close', A_);
-      expect(closed.status).toBe(200);
-      const body = closed.body as {
-        week: { cookingDate: string; cutoffAt: string; status: string };
-        closed: {
+      const finished = await call('POST', '/api/seller/menus/current/finish', A_);
+      expect(finished.status).toBe(200);
+      expect(finished.body).toMatchObject({ closedOrders: 2 });
+      expect((await view(A)).menu['state']).toBe('finished');
+      const list = (await call('GET', '/api/seller/past-weeks', A_)).body as {
+        weeks: Array<{
           id: string;
           cookingDate: string;
           hasOrders: boolean;
           totals: Record<string, unknown>;
-        };
+        }>;
       };
-      expect(body.week).toMatchObject({
-        cookingDate: '2026-10-17',
-        cutoffAt: '2026-10-16T21:00:00+11:00',
-        status: 'draft',
-      });
-      expect(body.closed).toMatchObject({
+      expect(list.weeks).toHaveLength(1);
+      const closed = list.weeks[0];
+      expect(closed).toMatchObject({
         cookingDate: '2026-10-10',
         hasOrders: true,
         totals: { orders: 2, cancelled: 1, incomeCents: 3500, paidCents: 2000, unpaidCents: 1500 },
       });
       expect(await sellerOrders(A)).toEqual([]);
-      expect((await menu(A)).items).toHaveLength(6);
-      expect((await publicMenu(A)).items.find((item) => item.id === 'lemper')?.remaining).toBe(20);
-      const list = (await call('GET', '/api/seller/past-weeks', A_)).body as {
-        weeks: Array<{ id: string }>;
-      };
-      expect(list.weeks.map((week) => week.id)).toEqual([body.closed.id]);
-      const one = (await call('GET', `/api/seller/past-weeks/${body.closed.id}`, A_)).body as {
+      const one = (await call('GET', `/api/seller/past-weeks/${closed?.id ?? ''}`, A_)).body as {
         week: { orders?: Array<unknown>; totals: { items: Array<unknown> } };
       };
       expect(one.week.orders).toHaveLength(3);
@@ -749,9 +708,7 @@ describe('seller setup', () => {
 
     it('keeps order details for 4 weeks after the cooking date, then only the totals (on read)', async () => {
       await weekWithOrders();
-      const id = (
-        (await call('POST', '/api/seller/week/close', A_)).body as { closed: { id: string } }
-      ).closed.id;
+      const id = await finishId(A);
       now = new Date('2026-11-06T12:00:00Z');
       const kept = (await call('GET', `/api/seller/past-weeks/${id}`, A_)).body as {
         week: { orders?: Array<unknown> };
@@ -772,12 +729,14 @@ describe('seller setup', () => {
     });
 
     it('lists newest first and 404s an unknown week', async () => {
-      const one = (
-        (await call('POST', '/api/seller/week/close', A_)).body as { closed: { id: string } }
-      ).closed.id;
-      const two = (
-        (await call('POST', '/api/seller/week/close', A_)).body as { closed: { id: string } }
-      ).closed.id;
+      const one = await finishId(A);
+      const next = await call('POST', '/api/seller/menus', {
+        ...A_,
+        body: { cookingDate: '2026-10-17' },
+      });
+      expect(next.status).toBe(201);
+      await call('POST', '/api/seller/menus/current/publish', { ...A_, body: { force: true } });
+      const two = await finishId(A);
       const list = (await call('GET', '/api/seller/past-weeks', A_)).body as {
         weeks: Array<{ id: string; cookingDate: string }>;
       };
@@ -790,9 +749,7 @@ describe('seller setup', () => {
 
     it('isolates past weeks: B sees none of the A weeks and cannot fetch them', async () => {
       await weekWithOrders();
-      const id = (
-        (await call('POST', '/api/seller/week/close', A_)).body as { closed: { id: string } }
-      ).closed.id;
+      const id = await finishId(A);
       expect((await call('GET', '/api/seller/past-weeks', B_)).body).toEqual({ weeks: [] });
       expect(await call('GET', `/api/seller/past-weeks/${id}`, B_)).toMatchObject(
         ERR(404, 'not_found'),
@@ -808,7 +765,10 @@ describe('seller setup', () => {
   describe('backup and CSV', () => {
     it('exports one seller: kitchen, settings, week, menu, chefs, sets, orders, past weeks', async () => {
       await order(A, 'pesmol');
-      await call('POST', '/api/seller/sets', { ...A_, body: { name: 'Classic' } });
+      await call('POST', '/api/seller/saved-sets', {
+        ...A_,
+        body: { name: 'Classic', dishIds: ['pesmol'] },
+      });
       const reply = await call('GET', '/api/seller/backup', A_);
       const file = parseBackupFile(reply.body);
       expect(file).toMatchObject({
@@ -818,7 +778,7 @@ describe('seller setup', () => {
       });
       expect(file?.items).toHaveLength(6);
       expect(file?.chefs).toHaveLength(1);
-      expect(file?.sets).toHaveLength(1);
+      expect(file?.dishSets).toHaveLength(2); // the sample set and the one saved here
       expect(file?.orders).toHaveLength(1);
       expect(reply.text).not.toContain('Dapur');
       expect(reply.text).not.toContain('Rudi');
@@ -829,7 +789,7 @@ describe('seller setup', () => {
       const backup = (await call('GET', '/api/seller/backup', A_)).body;
       const bBefore = (await call('GET', '/api/seller/backup', B_)).body as { exportedAt: string };
       await call('DELETE', '/api/seller/chefs/wati', A_);
-      await call('POST', '/api/seller/week/close', A_);
+      await call('POST', '/api/seller/menus/current/finish', A_);
       await addItem(A, { name: text('Changed') });
       expect(await call('POST', '/api/seller/backup', { ...A_, body: backup })).toMatchObject({
         status: 200,
@@ -928,17 +888,20 @@ describe('seller setup', () => {
   describe('unknown seller on every new endpoint', () => {
     it('404s seller_not_found', async () => {
       const paths: Array<[string, string, unknown?]> = [
-        ['GET', '/api/seller/week'],
-        ['PUT', '/api/seller/week', {}],
-        ['POST', '/api/seller/week/publish'],
-        ['POST', '/api/seller/week/unpublish'],
-        ['POST', '/api/seller/week/close'],
-        ['POST', '/api/seller/menu/items', newItem()],
+        ['GET', '/api/seller/menus/current'],
+        ['PUT', '/api/seller/menus/current', { takingOrders: true }],
+        ['POST', '/api/seller/menus/current/publish'],
+        ['POST', '/api/seller/menus/current/unpublish'],
+        ['POST', '/api/seller/menus/current/finish'],
+        ['POST', '/api/seller/menus', {}],
+        ['GET', '/api/seller/dishes'],
+        ['POST', '/api/seller/dishes', newItem()],
         ['PATCH', '/api/seller/menu/items/pesmol', { priceCents: 1 }],
-        ['DELETE', '/api/seller/menu/items/pesmol'],
-        ['PUT', '/api/seller/menu/order', { ids: [] }],
         ['GET', '/api/seller/chefs'],
-        ['GET', '/api/seller/sets'],
+        ['GET', '/api/seller/saved-sets'],
+        ['GET', '/api/seller/pickup-places'],
+        ['GET', '/api/seller/preferences'],
+        ['PUT', '/api/seller/kitchen/name', { name: 'x' }],
         ['GET', '/api/seller/images'],
         ['PUT', '/api/seller/images/railIcon', { dataUrl: 'x' }],
         ['GET', '/api/seller/past-weeks'],

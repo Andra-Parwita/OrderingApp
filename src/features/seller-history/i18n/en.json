@@ -51,7 +51,10 @@
       "pastWeeks": "Past weeks: {{count}}",
       "items": "Menu items: {{count}}",
       "chefs": "Chefs: {{count}}",
-      "sets": "Saved sets: {{count}}"
+      "sets": "Saved sets: {{count}}",
+      "pickupPlaces": "Pickup locations: {{count}}",
+      "dishes": "Your dishes: {{count}}",
+      "dishSets": "Saved dish sets: {{count}}"
     },
     "restore": "Restore this backup",
     "restoreConfirm": "Replace all of this kitchen's data?",

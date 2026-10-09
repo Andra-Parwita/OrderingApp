@@ -6,7 +6,16 @@
 // week", "redeem a key"), so an implementation can make it atomic (a D1 batch) and keep the rules
 // (limits, statuses, lockouts) next to the writes. Every seller-scoped method belongs to a
 // `SellerRepository`, which can only see its own seller's rows (D-036).
-import type { ApiErrorCode } from '../../shared/apiError';
+import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
+import type {
+  DeliveryStepRequest,
+  DeliveryStepResponse,
+  MarkCollectedRequest,
+  MessageLogEntry,
+  MessagePlaceRequest,
+  MessagePlaceResponse,
+  PackRequest,
+} from '../../shared/handoverContract';
 import type {
   Chef,
   KitchenImages,
@@ -16,11 +25,27 @@ import type {
   SellerMenuItemView,
   SellerOrder,
   StaffActor,
-  Week,
 } from '../../shared/domain';
 import type { BackupFile } from '../../shared/backup';
 import type { ImageSlot } from '../../shared/imageSlots';
 import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
+import type {
+  CreateDishRequest,
+  CreateDishSetRequest,
+  CreateMenuRequest,
+  Dish,
+  DishSet,
+  FinishMenuResponse,
+  MenuView,
+  PickupPlace,
+  Preferences,
+  UpdateDishRequest,
+  UpdateMenuRequest,
+  UpdateMenuResponse,
+  UpdatePickupPlaceRequest,
+  UpdatePreferencesRequest,
+  UseDishSetResponse,
+} from '../../shared/menusContract';
 import type {
   CreateOrderRequest,
   CreateSellerOrderRequest,
@@ -28,12 +53,9 @@ import type {
 } from '../../shared/orderContract';
 import type { PastWeek, PastWeekSummary } from '../../shared/pastWeeks';
 import type {
-  CreateItemRequest,
   ImageStyleRequest,
-  SavedSetView,
+  PickupPointInput,
   UpdateItemRequest,
-  UseSetRequest,
-  WeekSettingsRequest,
 } from '../../shared/setupContract';
 import type { SendUpdatesRequest, UpdateResult } from '../../shared/updateContract';
 import type {
@@ -51,7 +73,14 @@ import type {
 
 /** A rule-checked outcome: the value, or an API error code with a message. */
 export type StoreResult<T> =
-  { ok: true; value: T } | { ok: false; error: ApiErrorCode; message: string };
+  | { ok: true; value: T }
+  | {
+      ok: false;
+      error: ApiErrorCode;
+      message: string;
+      /** Set when `force: true` would have let the call through (D-062). */
+      warning?: ApiWarning;
+    };
 
 export type AuthFail = {
   ok: false;
@@ -84,20 +113,58 @@ export type SellerRepository = {
   getSellerMenu(): Promise<SellerMenuResponse>;
   getSettings(): Promise<KitchenSettings>;
   setSettings(next: KitchenSettings): Promise<KitchenSettings>;
-  getWeek(): Promise<Week>;
-  updateWeek(input: WeekSettingsRequest): Promise<Week>;
-  publishWeek(): Promise<StoreResult<Week>>;
-  unpublishWeek(): Promise<Week>;
-  /** Archives the week (totals for good, orders for 4 weeks) and starts the next draft week. */
-  closeWeek(): Promise<{ week: Week; closed: PastWeekSummary }>;
   listPastWeeks(): Promise<Array<PastWeekSummary>>;
   getPastWeek(id: string): Promise<PastWeek | undefined>;
 
+  // Menus (plan 001, stage 3): the one menu, not published -> live -> finished (D-063)
+  getCurrentMenu(): Promise<MenuView>;
+  /** Only once the current menu is finished (`menu_in_progress` otherwise). */
+  createMenu(request: CreateMenuRequest): Promise<StoreResult<MenuView>>;
+  /** Allowed while live (instant edits); refused once finished (`week_closed`). */
+  updateMenu(request: UpdateMenuRequest): Promise<StoreResult<UpdateMenuResponse>>;
+  /** An empty menu is a warning (`no_items` with `no_dishes`) that `force` overrides (D-062). */
+  publishMenu(force?: boolean): Promise<StoreResult<MenuView>>;
+  unpublishMenu(): Promise<StoreResult<MenuView>>;
+  /** A menu that is not published only (`week_not_draft`); it ends as finished with no past-menu entry. */
+  deleteMenu(): Promise<StoreResult<{ view: MenuView; before: string | undefined }>>;
+  /** The menu picture (3:2); `before` is the ref it replaced, for the caller to clean up. */
+  setMenuPicture(
+    dataUrl: unknown,
+    ref?: string,
+  ): Promise<StoreResult<{ view: MenuView; before: string | undefined }>>;
+  removeMenuPicture(): Promise<{ view: MenuView; before: string | undefined }>;
+  /** Same as the midnight auto-finish, on demand; only for a live menu (`menu_not_live`). */
+  finishMenuNow(): Promise<StoreResult<FinishMenuResponse>>;
+
+  // Your dishes (the library). Menus hold copies, so none of this touches a menu or an order.
+  listDishes(): Promise<Array<Dish>>;
+  createDish(input: CreateDishRequest): Promise<StoreResult<Dish>>;
+  updateDish(id: string, patch: UpdateDishRequest): Promise<StoreResult<Dish>>;
+  /** Always allowed (D-062); `usedOnLiveMenu` is the warning flag. */
+  deleteDish(id: string): Promise<StoreResult<{ usedOnLiveMenu: boolean }>>;
+
+  // Saved sets as lists of dishes (the older `listSets` etc. below keep their item-copy shape)
+  listDishSets(): Promise<Array<DishSet>>;
+  createDishSet(input: CreateDishSetRequest): Promise<StoreResult<DishSet>>;
+  /** Adds the set's dishes to the menu and counts a use. */
+  useDishSet(id: string): Promise<StoreResult<UseDishSetResponse>>;
+
+  // Pickup places: at most 5 (`pickup_place_limit`)
+  listPickupPlaces(): Promise<Array<PickupPlace>>;
+  createPickupPlace(input: PickupPointInput): Promise<StoreResult<PickupPlace>>;
+  updatePickupPlace(id: string, patch: UpdatePickupPlaceRequest): Promise<StoreResult<PickupPlace>>;
+  /** Always allowed (D-062); `usedOnLiveMenu` is the warning flag. */
+  deletePickupPlace(id: string): Promise<StoreResult<{ usedOnLiveMenu: boolean }>>;
+
+  // Theme and menu defaults
+  getPreferences(): Promise<Preferences>;
+  setPreferences(request: UpdatePreferencesRequest): Promise<Preferences>;
+
   // Items
-  addItem(input: CreateItemRequest): Promise<StoreResult<SellerMenuItemView>>;
   patchItem(id: string, patch: UpdateItemRequest): Promise<StoreResult<SellerMenuItemView>>;
-  reorderItems(ids: ReadonlyArray<string>): Promise<StoreResult<Array<SellerMenuItemView>>>;
-  removeItem(id: string): Promise<StoreResult<true>>;
+
+  /** Renames the kitchen (the seller's name and the public kitchen name). */
+  setKitchenName(name: string): Promise<string>;
 
   // Chefs
   listChefs(): Promise<Array<Chef>>;
@@ -105,13 +172,6 @@ export type SellerRepository = {
   renameChef(id: string, name: string): Promise<StoreResult<Chef>>;
   /** Unassigns the chef's items (this week and saved sets). Sign-in cleanup is `auth.revokeChef`. */
   removeChef(id: string): Promise<StoreResult<true>>;
-
-  // Saved sets
-  listSets(): Promise<Array<SavedSetView>>;
-  saveSet(name: string, replaceSetId?: string): Promise<StoreResult<SavedSetView>>;
-  renameSet(id: string, name: string): Promise<StoreResult<SavedSetView>>;
-  removeSet(id: string): Promise<StoreResult<true>>;
-  useSet(id: string, request: UseSetRequest): Promise<StoreResult<Array<SellerMenuItemView>>>;
 
   // Images
   getImages(): Promise<KitchenImages>;
@@ -142,12 +202,17 @@ export type SellerRepository = {
   getByCode(code: string): Promise<SellerOrder | undefined>;
   /** Live orders, newest first. */
   listOrders(): Promise<Array<SellerOrder>>;
-  setStatus(code: string, to: OrderStatus, actor: StaffActor): Promise<StoreResult<SellerOrder>>;
+  /** Warns (`status_out_of_order`) instead of refusing a jump; `force` goes ahead (D-062). */
+  setStatus(
+    code: string,
+    to: OrderStatus,
+    actor: StaffActor,
+    force?: boolean,
+  ): Promise<StoreResult<SellerOrder>>;
   setPaid(code: string, paid: boolean, actor: StaffActor): Promise<StoreResult<SellerOrder>>;
   setLocked(code: string, locked: boolean): Promise<StoreResult<SellerOrder>>;
   setWaReceived(code: string, received: boolean): Promise<StoreResult<SellerOrder>>;
-  nudge(code: string): Promise<StoreResult<SellerOrder>>;
-  arrivingSoon(code: string): Promise<StoreResult<SellerOrder>>;
+  nudge(code: string, force?: boolean): Promise<StoreResult<SellerOrder>>;
   markSeen(code: string): Promise<StoreResult<SellerOrder>>;
   /**
    * Bulk updates (stage 7.1), one result per code, in order. A code may be sloppy ("k7f-2qx"). The
@@ -158,6 +223,33 @@ export type SellerRepository = {
     update: Omit<SendUpdatesRequest, 'codes'>,
     actor: StaffActor,
   ): Promise<Array<UpdateResult>>;
+
+  // Packing, messages, delivery steps, collected (plan 001, stage 4). Each warns instead of
+  // refusing; `force` (in the request) goes ahead (D-062).
+  /** Ticks and the packed flag. Never changes the status or `updatedAt` (D-066). */
+  packOrder(code: string, request: PackRequest): Promise<StoreResult<SellerOrder>>;
+  /** The current menu's log, newest first. */
+  listMessages(): Promise<Array<MessageLogEntry>>;
+  /** Message every not-finished order of a pickup place; `ready_now` also sets them Ready (D-069 Q3). */
+  messagePlace(
+    placeId: string,
+    request: MessagePlaceRequest,
+    actor: StaffActor,
+  ): Promise<StoreResult<MessagePlaceResponse>>;
+  /** Out for delivery, Arriving soon or Delivered for one order. */
+  deliveryStep(
+    code: string,
+    request: DeliveryStepRequest,
+    actor: StaffActor,
+  ): Promise<StoreResult<DeliveryStepResponse>>;
+  /** The quiet seller "Mark collected" (`collectedBy = 'seller'`). Idempotent. */
+  markCollected(
+    code: string,
+    request: MarkCollectedRequest,
+    actor: StaffActor,
+  ): Promise<StoreResult<SellerOrder>>;
+  /** The customer's "I've collected it", by order token (`collectedBy = 'customer'`). Idempotent. */
+  customerCollected(token: string): Promise<StoreResult<SellerOrder>>;
 };
 
 /** Where an order token leads (D-044): a live order, an archived one, or just its week's date. */

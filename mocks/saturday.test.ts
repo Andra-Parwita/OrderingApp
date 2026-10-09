@@ -2,7 +2,6 @@
 // Stage 7.1: Saturday tools — "arriving soon", bulk updates, recipient groups, hand-over by code.
 // Runs against a local D1; see mocks/impl.ts.
 import { beforeEach, describe, expect, it } from 'vitest';
-import { parseApiError } from '../shared/apiError';
 import type { SellerOrder } from '../shared/domain';
 import { parseSellerOrderResponse, parseSellerOrdersResponse } from '../shared/orderContract';
 import { formatOrderCode } from '../shared/orderCode';
@@ -69,33 +68,6 @@ describe('saturday tools', () => {
   beforeEach(async () => {
     tokenCounter = 0;
     world = await create({ now: () => NOW, newToken: () => `token-${String(++tokenCounter)}` });
-  });
-
-  describe('arriving soon', () => {
-    it('adds an inbox entry to a delivery order and nothing else', async () => {
-      const order = await place('delivery');
-      await move(order.code, 'confirmed');
-      const reply = await call('POST', `/api/seller/orders/${order.code}/arriving-soon`);
-      const after = parseSellerOrderResponse(reply.body)?.order as SellerOrder;
-      expect(after.inbox[0]).toMatchObject({ kind: 'message', textKey: 'arrivingSoon' });
-      expect(after.status).toBe('confirmed');
-    });
-
-    it('refuses pickup orders, closed orders and unknown codes', async () => {
-      const pickup = await place('pickup');
-      const refused = await call('POST', `/api/seller/orders/${pickup.code}/arriving-soon`);
-      expect(refused.status).toBe(409);
-      expect(parseApiError(refused.body)?.error).toBe('invalid_status');
-      expect(
-        parseApiError((await call('POST', '/api/seller/orders/ZZZZZZ/arriving-soon')).body)?.error,
-      ).toBe('not_found');
-      const delivery = await place('delivery', 'Tono');
-      await move(delivery.code, 'confirmed');
-      await move(delivery.code, 'out_for_delivery');
-      await move(delivery.code, 'delivered');
-      const closed = await call('POST', `/api/seller/orders/${delivery.code}/arriving-soon`);
-      expect(closed.status).toBe(409);
-    });
   });
 
   describe('bulk updates', () => {
@@ -168,7 +140,8 @@ describe('saturday tools', () => {
       expect(parsed?.sent).toBe(1);
       expect(parsed?.results).toEqual([
         { code: a.code, ok: true, statusChanged: false },
-        { code: b.code, ok: false, error: 'invalid_status' },
+        // plan 001 stage 4 (D-062): a cancelled order is skipped with a warning unless forced.
+        { code: b.code, ok: false, error: 'invalid_status', warning: { code: 'order_cancelled' } },
         { code: 'ZZZZZZ', ok: false, error: 'not_found' },
         { code: 'oops', ok: false, error: 'not_found' },
       ]);

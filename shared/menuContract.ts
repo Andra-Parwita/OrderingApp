@@ -13,6 +13,7 @@ import { isHexColour } from './kitchenImages';
 import { MAX_MENU_ITEMS } from './limits';
 import { parseSeller } from './seller';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
+import { THEMES, type ThemeName } from './themes';
 
 /** GET /api/s/:slug/menu: public. Never carries chefs or chef ids (D-012). */
 export type MenuResponse = {
@@ -21,6 +22,10 @@ export type MenuResponse = {
   week: Week;
   items: Array<MenuItemView>;
   ordering: OrderingState;
+  /** plan 001 stage 12 (D-064): the kitchen's colour theme; the customer pages wear it. Absent = Onde Onde. */
+  theme?: ThemeName;
+  /** plan 001 stage 12 (D-060): the menu picture (3:2), shown whole above the dishes. */
+  pictureUrl?: string;
 };
 
 /** GET /api/seller/menu (of the X-Seller seller): the same menu plus the chef grouping. */
@@ -181,7 +186,19 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
   const ordering = parseOrderingState(input['ordering']);
   if (!seller || !kitchen || !week || !items || !ordering) return null;
   if (items.length > MAX_MENU_ITEMS || kitchen.sellerId !== seller.id) return null;
-  return { seller, kitchen, week, items, ordering };
+  const { theme, pictureUrl } = input;
+  if (theme !== undefined && !isOneOf(THEMES, theme)) return null;
+  if (pictureUrl !== undefined && (typeof pictureUrl !== 'string' || pictureUrl === ''))
+    return null;
+  return {
+    seller,
+    kitchen,
+    week,
+    items,
+    ordering,
+    ...(theme !== undefined ? { theme } : {}),
+    ...(pictureUrl !== undefined ? { pictureUrl } : {}),
+  };
 }
 
 export function parseSellerMenuResponse(input: unknown): SellerMenuResponse | null {
