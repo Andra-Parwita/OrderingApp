@@ -40,7 +40,7 @@ const IMAGE_KEYS = [
   'bannerBackgroundImage',
 ] as const;
 
-function parseImages(input: unknown): KitchenImages | null {
+export function parseImages(input: unknown): KitchenImages | null {
   if (!isRecord(input)) return null;
   const images: KitchenImages = {};
   for (const key of IMAGE_KEYS) {
@@ -62,7 +62,7 @@ function parseImages(input: unknown): KitchenImages | null {
   return images;
 }
 
-function parseKitchen(input: unknown): Kitchen | null {
+export function parseKitchen(input: unknown): Kitchen | null {
   if (!isRecord(input)) return null;
   const tagline = parseLocalText(input['tagline']);
   const banner = input['bannerImageUrl'];
@@ -98,7 +98,7 @@ function parsePickupPoint(input: unknown): PickupPoint | null {
   return { id: input['id'], place: input['place'], directions, window: { start, end } };
 }
 
-function parseWeek(input: unknown): Week | null {
+export function parseWeek(input: unknown): Week | null {
   if (!isRecord(input)) return null;
   const { cookingDate, cutoffAt, status, delivery } = input;
   const pickupPoints = parseArray(input['pickupPoints'], parsePickupPoint);
@@ -116,7 +116,7 @@ function parseWeek(input: unknown): Week | null {
   };
 }
 
-function parseChef(input: unknown): Chef | null {
+export function parseChef(input: unknown): Chef | null {
   if (!isRecord(input)) return null;
   const { id, sellerId, name } = input;
   if (typeof id !== 'string' || typeof sellerId !== 'string' || typeof name !== 'string') {
@@ -151,10 +151,17 @@ function parseMenuItemView(input: unknown): MenuItemView | null {
 
 function parseSellerMenuItemView(input: unknown): SellerMenuItemView | null {
   if (!isRecord(input)) return null;
-  const { chefId, ...rest } = input;
+  const { chefId, manualSoldOut, ...rest } = input;
   if (chefId !== undefined && typeof chefId !== 'string') return null;
+  if (manualSoldOut !== undefined && typeof manualSoldOut !== 'boolean') return null;
   const item = parseMenuItemView(rest);
-  return item ? { ...item, ...(chefId !== undefined ? { chefId } : {}) } : null;
+  return item
+    ? {
+        ...item,
+        ...(chefId !== undefined ? { chefId } : {}),
+        ...(manualSoldOut !== undefined ? { manualSoldOut } : {}),
+      }
+    : null;
 }
 
 function parseOrderingState(input: unknown): OrderingState | null {

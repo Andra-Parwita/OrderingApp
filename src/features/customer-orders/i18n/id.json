@@ -20,6 +20,7 @@
     "footnote": "Hanya tersimpan di ponsel ini. Tanpa akun.",
     "locked": "Terkunci",
     "newUpdate": "Ada kabar baru",
+    "archivedLine": "Diarsipkan · {{date}}",
     "pickup": "Ambil sendiri",
     "delivery": "Diantar"
   },
@@ -44,7 +45,12 @@
     "cancelled": "Pesanan ini dibatalkan.",
     "updates": "Kabar terbaru",
     "noUpdates": "Belum ada kabar.",
+    "weekClosed": "Minggu ini sudah ditutup",
+    "expiredTitle": "Pesanan ini sudah diarsipkan",
+    "expiredBody": "{{seller}} · {{date}}. Rincian pesanan tidak disimpan lagi.",
+    "toSellerMenu": "Lihat menu {{seller}}",
     "errors": {
+      "week_closed": "Minggu ini sudah ditutup, jadi pesanan tidak bisa diubah lagi.",
       "order_locked": "Penjual sudah mengunci pesanan ini. Chat penjual di WhatsApp untuk mengubahnya.",
       "ordering_closed": "Maaf, pemesanan sedang ditutup.",
       "cutoff_passed": "Maaf, batas waktu sudah lewat.",

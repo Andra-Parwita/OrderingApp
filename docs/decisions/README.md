@@ -245,3 +245,13 @@ Format for each entry:
 **Ruling:** "A" — basket, order page, order placed and My orders get a simple header: a back arrow where there is somewhere to go back to, plus the page title; their language switch is removed (language lives in Settings and beside the name on the menu, D-039).
 **Trade-off:** consistent with native apps and less clutter; switching language from a sub-page takes one tap to Settings. Shipped with the `viewport-fit=cover` fix and removing the unused `onMyOrders` prop.
 **Revisit when:** testers look for the language switch on sub-pages. **Amended same day:** "keep the language switch though" — the sub-page headers keep a compact EN/ID switch on the right (back + title + language).
+
+## D-043 · Batch 3 plan approved, no separate mock-up round (2026-10-09)
+**Ruling:** "A" (the batch 3 stage table in the [roadmap](../plan/roadmap.md#phase-3--batch-3-seller-setup-stage-table): 6.1 domain + mock → wave 6.2a menu editor ∥ 6.2b seller setup ∥ 6.2c labels + history → 6.3 shell).
+**Trade-off:** three rounds; visual sources are the approved batch 3 wireframes, the owner's reference prototype and the desktop A1 style (D-031); the owner reviews built screens. Sign-in, invites and the admin page stay in batch 4.
+**Revisit when:** a built screen misses the owner's intent (then mock up before the fix).
+
+## D-044 · Closed-week orders stay readable by their link for 4 weeks (2026-10-09)
+**Ruling:** first "C" (drop them from My orders), then "Nvm, do A" — the owner's final answer is **A**.
+**Trade-off:** when a seller closes a week, its orders leave the seller's live list but stay **readable, read-only** through the customer's order link (`/o/<token>`, My orders) for the same 4 weeks the order details are kept (D-027 row 6): status, items, total, seller and date, with no change/cancel and a note "This week is closed". After 4 weeks the link shows "This order has been archived" with its seller and date, and My orders shows it under "Earlier" without details. Network errors never remove anything. Cost: the global token lookup must also search archived weeks (and respect retention). Built after the 6.2 wave, together with the webkit reload fix.
+**Revisit when:** customers want older orders kept longer, or storage grows.

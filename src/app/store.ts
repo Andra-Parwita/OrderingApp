@@ -4,7 +4,9 @@ import { customerReducer } from '../features/customer-menu';
 import { customerOrdersReducer } from '../features/customer-orders';
 import { cookReducer } from '../features/seller-cook';
 import { sellerOrdersReducer } from '../features/seller-orders';
+import { menuReducer } from '../features/seller-menu';
 import { settingsReducer } from '../features/seller-settings';
+import { setupReducer } from '../features/seller-setup';
 import { shareReducer } from '../features/seller-share';
 import { rootSaga } from './rootSaga';
 
@@ -15,6 +17,8 @@ const rootReducer = combineReducers({
   sellerCook: cookReducer,
   sellerShare: shareReducer,
   sellerSettings: settingsReducer,
+  sellerMenu: menuReducer,
+  sellerSetup: setupReducer,
 });
 
 export function createAppStore() {

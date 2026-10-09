@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -34,13 +34,24 @@ import {
   parseStatusFilter,
   type StatusFilter,
 } from '../features/seller-orders';
+import { BackupScreen, PastWeeksScreen } from '../features/seller-history';
+import { LabelsScreen } from '../features/seller-labels';
+import {
+  ItemEditor,
+  MenuScreen as SellerMenuScreen,
+  PastePostScreen,
+  SavedSetsScreen,
+} from '../features/seller-menu';
 import { SettingsScreen } from '../features/seller-settings';
+import { ChefsScreen, ImagesScreen, WeekSettingsScreen } from '../features/seller-setup';
 import { ShareScreen } from '../features/seller-share';
+import { ListRow, PageHeader } from '../ui';
 import { CustomerShell } from './CustomerShell';
 import { DESKTOP_QUERY } from './layout';
 import { isValidSlug } from '../../shared/seller';
 import { HomePage, KitchenNotFoundPage, NotFoundPage } from './pages';
 import { SellerLayout } from './SellerLayout';
+import { SellerPreview } from './SellerPreview';
 
 // Route wrappers: the screens only get callbacks; where they lead is decided here.
 
@@ -256,6 +267,143 @@ function SettingsRoute() {
   );
 }
 
+/** A seller page opened from More: the screen under a header whose back arrow returns to More. */
+function MorePage({ title, children }: Readonly<{ title: string; children: ReactNode }>) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const back = useCallback(() => void navigate('/seller/more'), [navigate]);
+  return (
+    <>
+      <PageHeader title={title} titleHidden backLabel={t('sellerNav.backToMore')} onBack={back} />
+      {children}
+    </>
+  );
+}
+
+function WeekRoute() {
+  const { t } = useTranslation();
+  return (
+    <MorePage title={t('sellerNav.weekSettings')}>
+      <WeekSettingsScreen settingsHref="/seller/settings" />
+    </MorePage>
+  );
+}
+function ImagesRoute() {
+  const { t } = useTranslation();
+  return (
+    <MorePage title={t('sellerNav.images')}>
+      <ImagesScreen />
+    </MorePage>
+  );
+}
+function ChefsRoute() {
+  const { t } = useTranslation();
+  return (
+    <MorePage title={t('sellerNav.chefs')}>
+      <ChefsScreen />
+    </MorePage>
+  );
+}
+function LabelsRoute() {
+  const { t } = useTranslation();
+  return (
+    <MorePage title={t('sellerNav.labels')}>
+      <LabelsScreen />
+    </MorePage>
+  );
+}
+function PastWeeksRoute() {
+  const { t } = useTranslation();
+  return (
+    <MorePage title={t('sellerNav.pastWeeks')}>
+      <PastWeeksScreen />
+    </MorePage>
+  );
+}
+function BackupRoute() {
+  const { t } = useTranslation();
+  return (
+    <MorePage title={t('sellerNav.backup')}>
+      <BackupScreen />
+    </MorePage>
+  );
+}
+
+const MORE_LINKS = [
+  ['settings', '/seller/settings'],
+  ['weekSettings', '/seller/week'],
+  ['images', '/seller/images'],
+  ['chefs', '/seller/chefs'],
+  ['labels', '/seller/labels'],
+  ['pastWeeks', '/seller/past-weeks'],
+  ['backup', '/seller/backup'],
+  ['shareMenu', '/seller/share'],
+] as const;
+
+function MoreRoute() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  return (
+    <>
+      <PageHeader title={t('sellerNav.moreTitle')} />
+      <nav aria-label={t('sellerNav.moreTitle')}>
+        {MORE_LINKS.map(([key, to]) => (
+          <ListRow
+            key={key}
+            primary={t(`sellerNav.${key}`)}
+            trailing="›"
+            onClick={() => void navigate(to)}
+          />
+        ))}
+      </nav>
+    </>
+  );
+}
+
+/** The menu, with the item editor over it on a desktop and as a page of its own on a phone. */
+function MenuWorkspace() {
+  const desktop = useMediaQuery(DESKTOP_QUERY);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const toMenu = useCallback(() => void navigate('/seller/menu'), [navigate]);
+  const onEditItem = useCallback(
+    (itemId: string | null) => void navigate(`/seller/menu/items/${itemId ?? 'new'}`),
+    [navigate],
+  );
+  const onPreview = useCallback(() => void navigate('/seller/menu/preview'), [navigate]);
+  const onSavedSets = useCallback(() => void navigate('/seller/menu/sets'), [navigate]);
+  const onPastePost = useCallback(() => void navigate('/seller/menu/paste'), [navigate]);
+  const editor =
+    id === undefined ? null : (
+      <ItemEditor key={id} itemId={id === 'new' ? null : id} desktop={desktop} onClose={toMenu} />
+    );
+  if (editor && !desktop) return editor;
+  return (
+    <>
+      <SellerMenuScreen
+        desktop={desktop}
+        onPreview={onPreview}
+        onEditItem={onEditItem}
+        onSavedSets={onSavedSets}
+        onPastePost={onPastePost}
+      />
+      {editor}
+    </>
+  );
+}
+
+function SavedSetsRoute() {
+  const navigate = useNavigate();
+  const toMenu = useCallback(() => void navigate('/seller/menu'), [navigate]);
+  return <SavedSetsScreen onBack={toMenu} />;
+}
+
+function PastePostRoute() {
+  const navigate = useNavigate();
+  const toMenu = useCallback(() => void navigate('/seller/menu'), [navigate]);
+  return <PastePostScreen onBack={toMenu} onDone={toMenu} />;
+}
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -278,7 +426,20 @@ export function AppRoutes() {
         <Route path="cook" element={<CookRoute />} />
         <Route path="share" element={<ShareScreen />} />
         <Route path="settings" element={<SettingsRoute />} />
+        <Route path="menu" element={<MenuWorkspace />} />
+        <Route path="menu/items/:id" element={<MenuWorkspace />} />
+        <Route path="menu/sets" element={<SavedSetsRoute />} />
+        <Route path="menu/paste" element={<PastePostRoute />} />
+        <Route path="more" element={<MoreRoute />} />
+        <Route path="week" element={<WeekRoute />} />
+        <Route path="images" element={<ImagesRoute />} />
+        <Route path="chefs" element={<ChefsRoute />} />
+        <Route path="labels" element={<LabelsRoute />} />
+        <Route path="past-weeks" element={<PastWeeksRoute />} />
+        <Route path="backup" element={<BackupRoute />} />
       </Route>
+      {/* The preview is the customer's screen, so it sits outside the seller shell. */}
+      <Route path="/seller/menu/preview" element={<SellerPreview />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

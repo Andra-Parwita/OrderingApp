@@ -6,7 +6,11 @@ import { registerCustomerI18n } from './features/customer-menu';
 import { registerCustomerOrdersI18n } from './features/customer-orders';
 import { registerCookI18n } from './features/seller-cook';
 import { registerSellerI18n } from './features/seller-orders';
+import { registerSellerHistoryI18n } from './features/seller-history';
+import { registerSellerLabelsI18n } from './features/seller-labels';
+import { registerSellerMenuI18n } from './features/seller-menu';
 import { registerSettingsI18n } from './features/seller-settings';
+import { registerSellerSetupI18n } from './features/seller-setup';
 import { registerShareI18n } from './features/seller-share';
 import { initI18n } from './i18n/init';
 
@@ -43,6 +47,10 @@ void initI18n().then(async () => {
   registerCookI18n();
   registerShareI18n();
   registerSettingsI18n();
+  registerSellerMenuI18n();
+  registerSellerSetupI18n();
+  registerSellerLabelsI18n();
+  registerSellerHistoryI18n();
   if (harness) {
     const module = await harness.loader();
     const component = module[harness.component];

@@ -1,0 +1,30 @@
+{
+  "title": "Cetak label",
+  "loading": "Memuat pesanan…",
+  "error": "Pesanan tidak bisa dimuat.",
+  "retry": "Coba lagi",
+  "paper": {
+    "label": "Kertas",
+    "a4": "Lembar A4 (2 × 7 label)",
+    "roll": "Printer label (gulungan 62 mm)"
+  },
+  "which": {
+    "label": "Pesanan mana",
+    "confirmed": "Terkonfirmasi ({{count}})",
+    "notCancelled": "Semua yang tidak batal ({{count}})",
+    "selected": "Dipilih ({{count}})"
+  },
+  "pick": {
+    "label": "Pilih pesanan untuk dicetak",
+    "none": "Belum ada pesanan."
+  },
+  "print": "Cetak",
+  "previewTitle": "Pratinjau · {{paper}}",
+  "previewEmpty": "Tidak ada label untuk pilihan ini.",
+  "label": {
+    "qr": "QR",
+    "qrName": "Kode QR (segera hadir)",
+    "pickup": "Ambil · {{day}}",
+    "delivery": "Antar · {{day}}"
+  }
+}

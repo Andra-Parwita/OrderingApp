@@ -6,6 +6,7 @@ import type { CustomerOrder, Language } from '../../../shared/domain';
 import { formatCookingDate, formatDay } from '../../../shared/dates';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode, parseOrderCode } from '../../../shared/orderCode';
+import type { ExpiredOrder } from '../../../shared/orderContract';
 import { pickText } from '../../../shared/text';
 import { hasUnseenUpdate, readMyOrders, type SavedOrder } from '../../api/device/myOrders';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
@@ -129,6 +130,38 @@ const OrderRow = memo(function OrderRow({ order, saved, day, lang, onOpen }: Row
   );
 });
 
+type ExpiredRowProps = Readonly<{
+  order: ExpiredOrder;
+  /** From this phone's saved entry: the server no longer knows the code. */
+  code: string | undefined;
+  lang: Language;
+  onOpen: (token: string) => void;
+}>;
+
+/** A closed week's order past the 4 weeks: one line, no details (D-044). */
+const ExpiredRow = memo(function ExpiredRow({ order, code, lang, onOpen }: ExpiredRowProps) {
+  const { t } = useTranslation(ORDERS_NS);
+  const open = useCallback(() => onOpen(order.token), [onOpen, order.token]);
+  return (
+    <li>
+      <ListRow
+        onClick={open}
+        primary={
+          <>
+            {code ? `${formatOrderCode(code)} · ` : ''}
+            {order.seller.name}
+          </>
+        }
+        secondary={
+          <Line>
+            {t('list.archivedLine', { date: formatCookingDate(order.cookingDate, lang) })}
+          </Line>
+        }
+      />
+    </li>
+  );
+});
+
 type Props = Readonly<{
   /** Used by the empty state's "to the menu" button; the header has no back arrow (tab root). */
   onBack: () => void;
@@ -169,16 +202,20 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
 
   const cookingOf = (order: CustomerOrder) => menus[order.seller.slug]?.week.cookingDate ?? null;
 
+  // A closed week's order (D-044) is always "earlier", and shows the date of its own week.
+  const isCurrent = (order: CustomerOrder) =>
+    order.archived !== true && isThisWeek(order, cookingOf(order));
+
   const renderRows = (orders: ReadonlyArray<CustomerOrder>, saved: ReadonlyArray<SavedOrder>) =>
     orders.map((order) => {
-      const cooking = cookingOf(order);
+      const cooking = order.archived === true ? (order.cookingDate ?? null) : cookingOf(order);
       return (
         <OrderRow
           key={order.token}
           order={order}
           saved={saved.find((entry) => entry.token === order.token)}
           day={
-            cooking !== null && isThisWeek(order, cooking)
+            cooking !== null && (order.archived === true || isThisWeek(order, cooking))
               ? formatCookingDate(cooking, lang)
               : formatDay(order.createdAt, lang)
           }
@@ -193,7 +230,7 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
     body = <StateMessage alert text={t('list.loadError')} onRetry={load} />;
   } else if (list.status !== 'ready') {
     body = <StateMessage text={t('common.loading')} />;
-  } else if (list.orders.length === 0) {
+  } else if (list.orders.length === 0 && list.expired.length === 0) {
     body = (
       <Block>
         <Muted>{t('list.empty')}</Muted>
@@ -203,8 +240,8 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
       </Block>
     );
   } else {
-    const thisWeek = list.orders.filter((order) => isThisWeek(order, cookingOf(order)));
-    const earlier = list.orders.filter((order) => !isThisWeek(order, cookingOf(order)));
+    const thisWeek = list.orders.filter(isCurrent);
+    const earlier = list.orders.filter((order) => !isCurrent(order));
     body = (
       <>
         {thisWeek.length > 0 ? (
@@ -213,10 +250,21 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
             <Rows>{renderRows(thisWeek, list.saved)}</Rows>
           </section>
         ) : null}
-        {earlier.length > 0 ? (
+        {earlier.length > 0 || list.expired.length > 0 ? (
           <section>
             <SectionTitle>{t('list.earlier')}</SectionTitle>
-            <Rows>{renderRows(earlier, list.saved)}</Rows>
+            <Rows>
+              {renderRows(earlier, list.saved)}
+              {list.expired.map((expired) => (
+                <ExpiredRow
+                  key={expired.token}
+                  order={expired}
+                  code={list.saved.find((entry) => entry.token === expired.token)?.code}
+                  lang={lang}
+                  onOpen={onOpenOrder}
+                />
+              ))}
+            </Rows>
           </section>
         ) : null}
         <Centered>{t('list.footnote')}</Centered>

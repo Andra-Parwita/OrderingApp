@@ -13,8 +13,8 @@ import { Icon, ImageSlot, TabBar, Tooltip, type IconName, type TabBarItem } from
 import { BANNER_MAX_WIDTH, DESKTOP_QUERY, RAIL_WIDTH, RAIL_WIDTH_COLLAPSED } from './layout';
 import { useRailCollapsed } from './railPreference';
 
-// Seller navigation: a bottom tab bar on a phone, a left rail on a desktop. Hand-over and Menu
-// arrive with later batches and stay inert until then.
+// Seller navigation: a bottom tab bar on a phone, a left rail on a desktop. Hand-over arrives
+// with a later batch and stays inert until then.
 const NAV_IDS = ['orders', 'cook', 'handover', 'menu', 'more'] as const;
 type NavId = (typeof NAV_IDS)[number];
 
@@ -22,8 +22,8 @@ const HREF: Readonly<Record<NavId, string>> = {
   orders: '/seller',
   cook: '/seller/cook',
   handover: '/seller',
-  menu: '/seller',
-  more: '/seller/settings',
+  menu: '/seller/menu',
+  more: '/seller/more',
 };
 const ICON: Readonly<Record<NavId, IconName>> = {
   orders: 'list',
@@ -32,12 +32,25 @@ const ICON: Readonly<Record<NavId, IconName>> = {
   menu: 'menu',
   more: 'dots',
 };
-const INERT: ReadonlySet<NavId> = new Set(['handover', 'menu']);
+const INERT: ReadonlySet<NavId> = new Set(['handover']);
+
+// Every page reached from More keeps the More tab current.
+const MORE_PATHS = [
+  '/seller/more',
+  '/seller/settings',
+  '/seller/share',
+  '/seller/week',
+  '/seller/images',
+  '/seller/chefs',
+  '/seller/labels',
+  '/seller/past-weeks',
+  '/seller/backup',
+];
 
 function activeNav(pathname: string): NavId {
   if (pathname.startsWith('/seller/cook')) return 'cook';
-  if (pathname.startsWith('/seller/settings') || pathname.startsWith('/seller/share'))
-    return 'more';
+  if (pathname.startsWith('/seller/menu')) return 'menu';
+  if (MORE_PATHS.some((path) => pathname.startsWith(path))) return 'more';
   return 'orders';
 }
 

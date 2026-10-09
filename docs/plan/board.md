@@ -9,7 +9,7 @@ Live status of the current round. The plan itself (phases, stage tables, folder 
 | 0 · Plan | ✅ done 2026-10-07 (D-003 to D-015) | — |
 | 1 · Scaffold | ✅ landed ~20:24, gate verified by the coordinator | owner: open the hello screen on a phone |
 | 2 · Wireframes | ✅ done: batches 1–4 approved | — |
-| 3 · Prototype | ✅ batches 1–2, desktop seller layout, native customer app, owner's images, **multi-seller foundation** (02:19, 9 Oct) | owner commits; batch 3 stage table for approval |
+| 3 · Prototype | ✅ batches 1–2, desktop seller layout, native customer app, owner's images, **multi-seller foundation** (02:19, 9 Oct) and **batch 3** (menu editor, setup + images, labels, history, archived orders; 04:54, 9 Oct) | owner commits; polish round; batch 4 stage table |
 | 4–5 | ⏳ not started | — |
 
 ## Phase 1 · Scaffold (round 1)
@@ -92,11 +92,41 @@ Stage table in [roadmap.md](roadmap.md#phase-3--batch-2-after-ordering-stage-tab
 | 5.1 Multi-seller domain + mock (seller id everywhere, slug rules, isolation tests, two sample sellers) | builder · sonnet | 01:17 | ~02:00 | ~01:35 | `shared/` (+seller.ts), `worker/mock/`, `mocks/` (+multiSeller.test), `src/api/`; compile fixes in 5 src files; tests 552 → 601 | ✅ coordinator gate 01:38 (unit only, by design): 601/601; mock still tree-shaken; e2e expected broken until 5.2 |
 | 5.2 Multi-seller app: `/:slug` routes, Delave home, Menu-tab memory, My orders across sellers, dev seller picker, all e2e back to green + multi-seller spec | builder · sonnet | 01:39 | ~02:30 | | `src/app/`, `src/api/device/` (+sellerContext, lastKitchen), `src/components/SellerPicker` (dev only), features wiring, e2e (+multi-seller.spec); tests 601 → 619 | ✅ builder: 2 of 3 full runs green (1 webkit timeout); coordinator gate 02:19: 619/619, e2e **43 passed + 15 skipped**; My orders across sellers capture looked at |
 
-**Checkpoint:** before 5.2, `scratch/checkpoints/pre-5.2.tar` (01:38). Before 5.1, `scratch/checkpoints/pre-5.1.tar` (01:16). Before 4.11, `scratch/checkpoints/pre-4.11.tar` (00:58). Before 4.10, `scratch/checkpoints/pre-4.10.tar` (00:14, 9 Oct). Before 4.6, `scratch/checkpoints/pre-4.6.tar` (21:57). After the wave, `scratch/checkpoints/post-wave4.tar` (21:21). After 4.1 + chef fix, `scratch/checkpoints/post-4.1-chef.tar` (21:03). `git status` checked before the wave: only the known 4.1 compile fixes in `src/features`.
+**Checkpoint:** after the 6.2 wave, `scratch/checkpoints/post-wave6.tar` (03:45). After 6.1, `scratch/checkpoints/post-6.1.tar` (03:10; `git status` on src/features + e2e clean before the wave). Before 5.2, `scratch/checkpoints/pre-5.2.tar` (01:38). Before 5.1, `scratch/checkpoints/pre-5.1.tar` (01:16). Before 4.11, `scratch/checkpoints/pre-4.11.tar` (00:58). Before 4.10, `scratch/checkpoints/pre-4.10.tar` (00:14, 9 Oct). Before 4.6, `scratch/checkpoints/pre-4.6.tar` (21:57). After the wave, `scratch/checkpoints/post-wave4.tar` (21:21). After 4.1 + chef fix, `scratch/checkpoints/post-4.1-chef.tar` (21:03). `git status` checked before the wave: only the known 4.1 compile fixes in `src/features`.
+
+## Phase 3 · Batch 3 (round 5) — 2026-10-09
+
+Stage table in [roadmap.md](roadmap.md#phase-3--batch-3-seller-setup-stage-table). Plan approved (D-043). Starting point: owner's commit 528d926 (clean tree); snapshot `scratch/checkpoints/pre-6.1.tar` (02:34).
+
+| item | agent · tier | started | ETA | landed | diff | state |
+|---|---|---|---|---|---|---|
+| 6.1 Domain + mock: weeks, menu items (D-020), chefs, saved sets, 5-slot image upload, past weeks + retention, backup/CSV, paste-a-post parser | builder · sonnet | 02:35 | ~03:30 | | `shared/` (+imageSlots, pastePost, pastWeeks, csv, backup, setupContract), `worker/mock/`, `src/api/` (+27 client fns); tests 619 → 691 | ✅ landed ~03:05; coordinator gate 03:10: unit 691/691; e2e 38 passed, **1 failed** (mobile-webkit `order-flow` `page.reload()` hang — the known webkit issue, not 6.1), 4 did not run |
+| 6.2a Menu editor: items table/editor (D-020 delete rule → sold out), publish, reorder, saved sets, paste-a-post, preview callback (wave) | builder · sonnet | 03:12 | ~04:00 | | `seller-menu/` (new) + harness + e2e; 48 tests | ✅ landed ~03:35 |
+| Wave 6.2 gate by the coordinator | coordinator | 03:36 | | 03:44 | — | ❌ unit 782/785 (3 timeouts/flakes under load in seller-history + seller-settings tests); e2e 48 passed, **6 failed** (4 mobile-webkit hangs + seller-menu paste locator bug), suite 4.9 min |
+| Test reliability: webkit hang root cause, Playwright workers/order, unit timeouts, paste locator; 3 green runs each | builder · sonnet | 03:46 | ~04:30 | ~04:35 | `vitest.config.ts` (maxWorkers 4), `playwright.config.ts` (30 s timeout again, webkit after chromium, seller-menu isolated, duplicate `limits` project removed), `e2e/seller-menu.spec.ts` | ✅ root cause = CPU starvation from the stuck python processes; no app bug; unit 785 × 3 (~26 s), e2e 58 × 3 (~62 s) |
+| Coordinator: stale edits from the killed processes | coordinator | 04:36 | | 04:38 | `shared/domain.ts` (duplicate `bannerBackgroundImage` field), `e2e/sellerHelpers.ts` (duplicate comment) restored from the 03:45 snapshot | ✅ when the stuck processes were killed at 04:12, their waiting scripts resumed and re-applied old edits to 4 files; 2 had real duplicates |
+| Gate (quality + changed specs only) | coordinator | 04:38 | | 04:39 | — | ✅ no stray processes; unit **785/785** (23.6 s); e2e changed specs 58 passed, 27 skipped |
+| D-044 archived orders readable read-only for 4 weeks, then "archived" | builder · sonnet | 04:40 | ~05:20 | | `shared/`, `worker/mock/`, `src/api/`, `customer-orders/`, e2e spec; tests 785 → 818 | ✅ landed ~04:46 (waiting for the gate). Expired orders keep a tiny `{token, cookingDate, seller}` summary for good (no personal data). Its e2e spec closes a week and resets the mock → needs its own Playwright project after `limits` (config change pending) |
+| 6.3 Batch 3 shell: routes, Menu tab, More page, Preview as customer (D-019), i18n/store wiring | builder · sonnet | 04:40 | ~05:20 | | `src/app/` (+SellerPreview), `src/main.tsx`, `src/i18n/`, `customer-menu/MenuScreen` (preview prop), e2e (+seller-batch3) | ✅ landed ~04:48; unit 818 |
+| 6.4 Final fix-up: Playwright isolation (seller-batch3 serial, archived-orders last), export `opRequested`, single title on More sub-pages, run the changed specs | builder · sonnet | ~04:49 | ~05:10 | ~04:52 | `playwright.config.ts` (+archived-desktop-chromium project), `seller-menu/index.ts`, `SellerPreview`, `PageHeader` (`titleHidden`), `AppRoutes` | ✅ |
+| Final gate of the day | coordinator | 04:52 | | 04:54 | — | ✅ no stray processes before or after; no CRLF; typecheck, lint, format, unit **818/818**; changed specs: main 4 passed (batch2-flow, banners), settings-mobile 4, settings-desktop 4 (seller-batch3, seller-menu; serial projects must run one at a time), archived 1; preview capture looked at |
+
+Note: the times written at 04:46–05:12 for D-044, 6.3 and 6.4 ran ahead of the PC clock (lesson 2 again); corrected at 04:55.
+| 6.2b Seller setup: week settings, images editor (5 slots, client resize, live preview, colour, alt), chefs (wave) | builder · sonnet | 03:12 | ~04:00 | | `seller-setup/` (new, ~19 files) + harness + e2e; 23 tests | ✅ landed ~03:25 (waiting for the wave gate); added a rule: cut-off not after cooking date |
+| 6.2c Labels (A4 2×7 / 62 mm, note ≤ 70) + past weeks + backup/CSV/restore (wave) | builder · sonnet | 03:12 | ~04:00 | | `seller-labels/`, `seller-history/` (new) + harness + e2e; 23 tests | ✅ landed ~03:30 (waiting for the wave gate); no store/saga (local state); native checkbox (kit has none); roll label 62 × 40 mm assumed |
 
 ## Findings
 
-- **Mobile-webkit slowness** (medium): full suite now ~2.9 min; webkit specs take 20–70 s and one timed out once in 5.2 (WhatsApp button not stable within 60 s). Next step: run fewer projects in parallel (`workers`) or split webkit into its own run, then put the timeout back to 30 s.
+- **Batch 3 polish list** (coordinator, preview capture 04:54; low): preview steppers look enabled even though ordering is off; "Delivery available: Pickup only" reads oddly; the seller's WhatsApp number shows raw (`+61400000002`) in "How ordering works"; items without a size show a leading "· $9.00"; e2e leaves "B3 dish"/"Spec dish" items in Dapur Demo's in-memory menu (gone on server restart).
+
+- **Eight stuck `python -` processes at 100% CPU since 22:00** (critical; found 04:11 after the owner reported ~6 h of 100% CPU): `python`/`python3` launched with a bash heredoc (`python - <<'X'`) through the Windows Store launcher sometimes never sees end-of-input and spins. Started by this session (coordinator doc edits and/or builders — start times match rounds from 22:00 to 03:14). All stopped by PID at 04:12; a ninth, from the coordinator's own command at 04:12, stopped too. **Likely the main cause of the webkit hangs and unit timeouts since ~22:00.** The reliability builder was told to re-measure. From now on: no `python` heredocs on this PC (use the Edit tool or Node scripts), and every gate starts with a stray-process check.
+
+
+- **Test suite no longer reliable under its own load** (high, 03:44): 785 unit tests and ~50 e2e tests across 3 browser projects saturate the PC — unit timeouts and mobile-webkit hangs. Reliability round running before anything else lands.
+
+- **Mobile-webkit `page.reload()` hang** (medium → now blocking gates): third occurrence (order-flow, 03:10). Fix right after the 6.2 wave (playwright config/specs only), before 6.3.
+- **Archived orders become unreachable** (6.1 builder): closing a week removes its orders from the live list, so customers' My-orders links 404. Ruled D-044 — owner switched to **A**: readable read-only by link for 4 weeks, then "archived"; built after the wave with the webkit fix.
+- ~~Mobile-webkit slowness~~ (merged above) (medium): full suite now ~2.9 min; webkit specs take 20–70 s and one timed out once in 5.2 (WhatsApp button not stable within 60 s). Next step: run fewer projects in parallel (`workers`) or split webkit into its own run, then put the timeout back to 30 s.
 - **Returning-customer edge** (low): an old My-orders entry without a seller counts as "returning" for every seller until it is migrated on next fetch.
 
 - **4.10 follow-ups** (00:48): (1) `index.html` lacks `viewport-fit=cover`, so safe-area padding is 0 on real iPhones; (2) harness still passes the unused `onMyOrders` → drop the prop; (3) sub-page top bars → ruled D-042, in 4.11; (4) the sample kitchen is named "Delave" (the app) while its banner says "Onde Onde" → fixed by the multi-seller fixtures in 5.1.
@@ -164,4 +194,10 @@ Stage table in [roadmap.md](roadmap.md#phase-3--batch-2-after-ordering-stage-tab
 
 ## Start here (next session)
 
-Phases 0–2 done; batch 1 clickable on the reference palette (committed 3d48186); batch 2 in progress (4.1) on branch `plan/flow-and-prototype` (nothing committed yet; commits are the owner's). Read this board, then [roadmap.md](roadmap.md). Ready prompt: "Read docs/plan/board.md and continue from the next item."
+**Where things stand (9 Oct 2026, 04:55):** phases 0–2 done; phase 3 prototype has batches 1–3 clickable on mock data — customer app (native tabs), seller desktop/phone, multi-seller (`/onde-onde`, `/dapur-demo`), owner's Onde Onde images, menu editor, seller setup + images editor, labels, past weeks, backup, archived orders (D-044). Decisions D-001…D-044. Last owner commit: `528d926`; batch 3 work is uncommitted (message drafted in `scratch/commit-message.txt`). Gate at 04:54: typecheck, lint, format, unit **818/818**, changed e2e specs green.
+
+**Next:** (1) owner commits batch 3; (2) small polish round from the Findings list (preview steppers look enabled, "Delivery available: Pickup only" wording, raw `+614…` number on the menu, leading "·" when an item has no size, test items left in Dapur Demo); (3) **batch 4** stage table for approval — sign-in screens (D-011 passkeys + password fallback, D-013 chefs), admin page that creates sellers and slugs (D-036/D-037), invite keys, scan to collect, hand-over, delivery run, bulk updates; (4) phase 4 real backend.
+
+**Before any work:** read [lessons.md](lessons.md) (esp. 2, 10, 11) and the memory notes. Machine rules: no `python` heredocs, no `cd && write`, check for stray processes before every gate, gate = changed specs only (full suite only when the owner asks), read the clock before writing times.
+
+Ready prompt: "Read docs/plan/board.md (Start here) and docs/plan/lessons.md, then continue from Next."

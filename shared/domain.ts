@@ -123,6 +123,10 @@ export type CustomerOrder = Pick<
 > & {
   /** Customers are not seller-scoped: each order says whose it is (My orders spans sellers). */
   seller: SellerRef;
+  /** Set when the seller closed the week (D-044): the order is read-only. `cookingDate` goes with it. */
+  archived?: true;
+  /** Local date (YYYY-MM-DD) of the closed week; present with `archived`. */
+  cookingDate?: string;
 };
 
 export type Chef = { id: string; sellerId: string; name: string };
@@ -136,6 +140,8 @@ export type MenuItem = {
   /** Portion limit; absent means unlimited. */
   limit?: number;
   chefId?: string;
+  /** Manual "Sold out" switch (D-020), distinct from the portion limit running out. */
+  soldOut?: boolean;
 };
 
 /** Seller images and colour (D-035, D-038). Each is optional; the phone banner falls back to the desktop one. */
@@ -201,4 +207,8 @@ export type MenuItemView = Omit<MenuItem, 'chefId'> & {
 };
 
 /** The same item as the seller sees it, with the chef grouping. */
-export type SellerMenuItemView = MenuItemView & { chefId?: string };
+export type SellerMenuItemView = MenuItemView & {
+  chefId?: string;
+  /** The seller switched it to sold out (`soldOut` is also true when the limit ran out). */
+  manualSoldOut?: boolean;
+};

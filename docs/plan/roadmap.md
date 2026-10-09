@@ -144,14 +144,14 @@ Rulings: [D-036](../decisions/README.md) (one app, many sellers), [D-037](../dec
 | 2 | (merged into row 1) | | |
 | 3 | 5.1 Multi-seller domain + mock (seller id everywhere, isolation tests) | D-036, D-037 | ✅ done |
 | 4 | 5.2 Multi-seller app (`/<slug>`, My orders across sellers, dev seller picker) | D-036, D-037 | ✅ done |
-| 5 | Batch 3: menu editor, saved sets, week settings, banner/image upload (sizes per D-038), chefs, labels, past weeks, backup, paste-a-post | D-019, D-020, D-027, D-038 | **next** (stage table for approval) |
+| 5 | Batch 3: menu editor, saved sets, week settings, banner/image upload (sizes per D-038), chefs, labels, past weeks, backup, paste-a-post | D-019, D-020, D-027, D-038 | ✅ done 9 Oct (D-043, D-044); polish list on the board |
 | 6 | Batch 4: sign-in screens, admin page (create sellers), scan to collect, hand-over, delivery run, bulk updates | D-011, D-013, D-027, D-036 | queued |
 | 7 | Phase 4: real backend on this PC (D1, Worker API, Durable Object live updates, passkeys) | D-011, D-014, D-021 | queued |
 | 8 | Phase 5: Cloudflare deploy (owner), push, image storage (R2), real QR codes | — | queued |
 
 ## Phase 3 · Batch 3 (seller setup) stage table
 
-Draft 2026-10-09, waiting on question 41. Scope = wireframe batch 3 ([batch-3.html](../design/wireframes/batch-3.html)) + D-019 (preview as customer), D-020 (order snapshot on edit), D-027 (paste-a-post, past weeks, backup/CSV, retention), D-038/D-040 (five images per seller), multi-seller (D-036). Sign-in, invites and the admin page stay in batch 4.
+Approved 2026-10-09 ([D-043](../decisions/README.md)). Scope = wireframe batch 3 ([batch-3.html](../design/wireframes/batch-3.html)) + D-019 (preview as customer), D-020 (order snapshot on edit), D-027 (paste-a-post, past weeks, backup/CSV, retention), D-038/D-040 (five images per seller), multi-seller (D-036). Sign-in, invites and the admin page stay in batch 4.
 
 | stage | what | files owned | proof (done when) |
 |---|---|---|---|

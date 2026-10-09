@@ -1,6 +1,7 @@
 import { all, call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import { TOKENS_MAX } from '../../../shared/limits';
-import { cancelOrder, fetchMenu, fetchMyOrders, fetchOrder } from '../../api/client';
+import type { FetchedOrderResponse } from '../../../shared/orderContract';
+import { cancelOrder, fetchMenu, fetchMyOrders, fetchOrderOrExpired } from '../../api/client';
 import { readMyOrders, rememberStatus } from '../../api/device/myOrders';
 import {
   cancelFailed,
@@ -10,6 +11,7 @@ import {
   listRequested,
   menuLoaded,
   menuRequested,
+  orderExpired,
   orderFailed,
   orderLoaded,
   orderRefreshRequested,
@@ -34,9 +36,12 @@ export function* loadList() {
   const orders = [...result.data.orders].sort(
     (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
   );
-  yield put(listLoaded({ orders, saved: readMyOrders() }));
+  yield put(listLoaded({ orders, expired: result.data.expired ?? [], saved: readMyOrders() }));
   // Each seller's week (cooking date) sorts their orders into "this week" and "earlier".
-  const slugs = [...new Set(orders.map((order) => order.seller.slug))];
+  // Archived orders are always earlier, so their sellers need no menu.
+  const slugs = [
+    ...new Set(orders.filter((order) => order.archived !== true).map((o) => o.seller.slug)),
+  ];
   yield all(slugs.map((slug) => call(loadMenu, menuRequested(slug))));
 }
 
@@ -46,24 +51,29 @@ export function* loadMenu(action: ReturnType<typeof menuRequested>) {
   if (result.ok) yield put(menuLoaded(result.data));
 }
 
-export function* loadOrder(action: ReturnType<typeof orderRequested>) {
-  const result = (yield call(fetchOrder, action.payload)) as Awaited<ReturnType<typeof fetchOrder>>;
-  if (result.ok) {
-    yield call(rememberStatus, result.data.order);
-    yield put(orderLoaded(result.data.order));
-    yield call(loadMenu, menuRequested(result.data.order.seller.slug));
-  } else {
-    yield put(orderFailed(result.error));
+type Fetched = Awaited<ReturnType<typeof fetchOrderOrExpired>>;
+
+/** Shows what came back. Device storage is only ever added to or updated, never emptied. */
+function* showFetched(data: FetchedOrderResponse) {
+  if ('expired' in data) {
+    yield put(orderExpired(data.expired));
+    return;
   }
+  yield call(rememberStatus, data.order);
+  yield put(orderLoaded(data.order));
+  // A closed week has no use for the menu: the order page is read-only.
+  if (data.order.archived !== true) yield call(loadMenu, menuRequested(data.order.seller.slug));
+}
+
+export function* loadOrder(action: ReturnType<typeof orderRequested>) {
+  const result = (yield call(fetchOrderOrExpired, action.payload)) as Fetched;
+  if (result.ok) yield* showFetched(result.data);
+  else yield put(orderFailed(result.error));
 }
 
 export function* refreshOrder(action: ReturnType<typeof orderRefreshRequested>) {
-  const result = (yield call(fetchOrder, action.payload)) as Awaited<ReturnType<typeof fetchOrder>>;
-  if (result.ok) {
-    yield call(rememberStatus, result.data.order);
-    yield put(orderLoaded(result.data.order));
-    yield call(loadMenu, menuRequested(result.data.order.seller.slug));
-  }
+  const result = (yield call(fetchOrderOrExpired, action.payload)) as Fetched;
+  if (result.ok) yield* showFetched(result.data);
 }
 
 export function* cancel(action: ReturnType<typeof cancelRequested>) {

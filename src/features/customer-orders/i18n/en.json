@@ -20,6 +20,7 @@
     "footnote": "Saved on this phone only. No account.",
     "locked": "Locked",
     "newUpdate": "New update",
+    "archivedLine": "Archived · {{date}}",
     "pickup": "Pickup",
     "delivery": "Delivery"
   },
@@ -44,7 +45,12 @@
     "cancelled": "This order was cancelled.",
     "updates": "Updates",
     "noUpdates": "No updates yet.",
+    "weekClosed": "This week is closed",
+    "expiredTitle": "This order has been archived",
+    "expiredBody": "{{seller}} · {{date}}. The details are no longer kept.",
+    "toSellerMenu": "See the {{seller}} menu",
     "errors": {
+      "week_closed": "This week is closed, so the order can no longer be changed.",
       "order_locked": "The seller has locked this order. Message them on WhatsApp to change it.",
       "ordering_closed": "Sorry, ordering is closed right now.",
       "cutoff_passed": "Sorry, the cut-off has passed.",

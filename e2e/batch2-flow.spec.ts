@@ -273,6 +273,8 @@ test('seller desktop: table, slide-over, cook list, empty state; phone unchanged
       expect(box.y + box.height).toBeGreaterThan(844 - 4);
     }
     await tabs.getByRole('link', { name: 'More' }).click();
+    await expect(page).toHaveURL(/\/seller\/more$/);
+    await page.getByRole('button', { name: /^Settings/ }).click();
     await expect(page).toHaveURL(/\/seller\/settings$/);
     await expect(page.getByRole('radio', { name: 'Dark' })).toBeVisible();
     await page.screenshot({ path: 'captures/b2flow-8-phone-settings.png', fullPage: true });

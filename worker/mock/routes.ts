@@ -1,15 +1,52 @@
 // Mock API routes on standard Request/Response; shared by the dev Worker and the MSW handlers.
 import { parseSampleOrdersRequest, type DevSellersResponse } from '../../shared/devContract';
 import type { ApiErrorBody, ApiErrorCode } from '../../shared/apiError';
-import type { SellerOrder, SellerRef, StaffActor } from '../../shared/domain';
+import { parseBackupFile } from '../../shared/backup';
+import type {
+  Chef,
+  CustomerOrder,
+  SellerMenuItemView,
+  SellerOrder,
+  SellerRef,
+  StaffActor,
+} from '../../shared/domain';
+import { isImageSlot } from '../../shared/imageSlots';
+import type { PastWeekResponse, PastWeeksResponse } from '../../shared/pastWeeks';
+import {
+  parseChefNameRequest,
+  parseCreateItemRequest,
+  parseImageStyleRequest,
+  parseRenameSetRequest,
+  parseReorderItemsRequest,
+  parseSaveSetRequest,
+  parseUpdateItemRequest,
+  parseUploadImageRequest,
+  parseUseSetRequest,
+  parseWeekSettingsRequest,
+  type ChefResponse,
+  type ChefsResponse,
+  type CloseWeekResponse,
+  type ImagesResponse,
+  type ItemResponse,
+  type ItemsResponse,
+  type OkResponse,
+  type SavedSetView,
+  type SetResponse,
+  type SetsResponse,
+  type WeekResponse,
+} from '../../shared/setupContract';
 import { TOKENS_MAX } from '../../shared/limits';
 import {
   parseCreateOrderRequest,
   parseCreateSellerOrderRequest,
   parseUpdateOrderRequest,
+  toArchivedOrder,
   toCustomerOrder,
+  toExpiredOrder,
   type CustomerOrderResponse,
   type CustomerOrdersResponse,
+  type ExpiredOrder,
+  type FetchedOrderResponse,
   type SellerOrderResponse,
   type SellerOrdersResponse,
 } from '../../shared/orderContract';
@@ -37,6 +74,17 @@ const STATUS: Record<ApiErrorCode, number> = {
   invalid_status: 409,
   order_locked: 409,
   ordering_closed: 409,
+  item_has_orders: 409,
+  limit_reached: 409,
+  no_items: 409,
+  confirm_required: 409,
+  week_not_draft: 409,
+  week_closed: 409,
+  unknown_chef: 400,
+  image_type: 400,
+  image_too_big: 400,
+  image_ratio: 400,
+  invalid_backup: 400,
 };
 
 function error(code: ApiErrorCode, message: string): Response {
@@ -45,6 +93,7 @@ function error(code: ApiErrorCode, message: string): Response {
 }
 
 const noSeller = () => error('seller_not_found', 'Seller not found');
+const weekClosed = () => error('week_closed', 'This week is closed');
 
 /** Header `X-Actor: seller:Bu Ani` or `chef:Wati`. */
 const DEFAULT_ACTOR: StaffActor = { role: 'seller', name: 'Bu Ani' };
@@ -88,6 +137,39 @@ function sellerResult(result: StoreResult<SellerOrder>, status = 200): Response 
   if (!result.ok) return error(result.error, result.message);
   const body: SellerOrderResponse = { order: result.value };
   return Response.json(body, { status });
+}
+
+function safeParse(text: string): unknown {
+  try {
+    const value: unknown = JSON.parse(text);
+    return value;
+  } catch {
+    return null;
+  }
+}
+
+function itemResult(result: StoreResult<SellerMenuItemView>, status = 200): Response {
+  return result.ok
+    ? Response.json({ item: result.value } satisfies ItemResponse, { status })
+    : error(result.error, result.message);
+}
+
+function chefResult(result: StoreResult<Chef>, status = 200): Response {
+  return result.ok
+    ? Response.json({ chef: result.value } satisfies ChefResponse, { status })
+    : error(result.error, result.message);
+}
+
+function setResult(result: StoreResult<SavedSetView>, status = 200): Response {
+  return result.ok
+    ? Response.json({ set: result.value } satisfies SetResponse, { status })
+    : error(result.error, result.message);
+}
+
+function okResult(result: StoreResult<true>): Response {
+  return result.ok
+    ? Response.json({ ok: true } satisfies OkResponse)
+    : error(result.error, result.message);
 }
 
 /** Customer endpoints return the narrowed view (with the seller), never the seller-only fields. */
@@ -136,33 +218,46 @@ export async function handleMockRequest(
       if (raw === null) return bad();
       const tokens = [...new Set(raw.split(',').filter((token) => token !== ''))];
       if (tokens.length > TOKENS_MAX) return bad();
-      const found = tokens.flatMap((token) => {
-        const hit = store.findByToken(token);
-        return hit ? [toCustomerOrder(hit.order, hit.store.seller)] : [];
-      });
-      const body: CustomerOrdersResponse = { orders: found };
+      const orders: Array<CustomerOrder> = [];
+      const expired: Array<ExpiredOrder> = [];
+      for (const token of tokens) {
+        const hit = store.lookupByToken(token);
+        if (!hit) continue;
+        if (hit.kind === 'live') orders.push(toCustomerOrder(hit.order, hit.store.seller));
+        else if (hit.kind === 'archived') {
+          orders.push(toArchivedOrder(hit.order, hit.store.seller, hit.cookingDate));
+        } else expired.push(toExpiredOrder(token, hit.store.seller, hit.cookingDate));
+      }
+      const body: CustomerOrdersResponse = { orders, ...(expired.length > 0 ? { expired } : {}) };
       return Response.json(body);
     }
     if (a && !b) {
-      const hit = store.findByToken(a);
+      const hit = store.lookupByToken(a);
       if (method === 'GET') {
-        return hit
-          ? customerResult({ ok: true, value: hit.order }, hit.store.seller)
-          : error('not_found', 'Order not found');
+        if (!hit) return error('not_found', 'Order not found');
+        if (hit.kind === 'live') {
+          return customerResult({ ok: true, value: hit.order }, hit.store.seller);
+        }
+        if (hit.kind === 'archived') {
+          const order = toArchivedOrder(hit.order, hit.store.seller, hit.cookingDate);
+          return Response.json({ order } satisfies CustomerOrderResponse);
+        }
+        const expired = toExpiredOrder(a, hit.store.seller, hit.cookingDate);
+        return Response.json({ expired } satisfies FetchedOrderResponse);
       }
       if (method === 'PATCH') {
         const patch = parseUpdateOrderRequest(await readJson(request));
         if (!patch) return bad();
-        return hit
-          ? customerResult(hit.store.updateOrder(a, patch), hit.store.seller)
-          : error('not_found', 'Order not found');
+        if (!hit) return error('not_found', 'Order not found');
+        if (hit.kind !== 'live') return weekClosed();
+        return customerResult(hit.store.updateOrder(a, patch), hit.store.seller);
       }
     }
     if (a && b === 'cancel' && !c && method === 'POST') {
-      const hit = store.findByToken(a);
-      return hit
-        ? customerResult(hit.store.cancelOrder(a), hit.store.seller)
-        : error('not_found', 'Order not found');
+      const hit = store.lookupByToken(a);
+      if (!hit) return error('not_found', 'Order not found');
+      if (hit.kind !== 'live') return weekClosed();
+      return customerResult(hit.store.cancelOrder(a), hit.store.seller);
     }
     return null;
   }
@@ -170,7 +265,7 @@ export async function handleMockRequest(
   if (area === 'seller') {
     const sellerStore = store.seller(sellerSlugOf(request));
     if (!sellerStore) return noSeller();
-    return handleSeller(sellerStore, request, [a, b, c], bad);
+    return handleSeller(store, sellerStore, request, [a, b, c], bad);
   }
 
   if (area === 'dev') {
@@ -193,6 +288,7 @@ export async function handleMockRequest(
 
 /** Everything under /api/seller/*, for the one seller the request is scoped to. */
 async function handleSeller(
+  mock: MockStore,
   store: SellerStore,
   request: Request,
   [a, b, c]: [string | undefined, string | undefined, string | undefined],
@@ -213,6 +309,159 @@ async function handleSeller(
         : bad();
     }
     return null;
+  }
+
+  if (a === 'week') {
+    if (!b && method === 'GET')
+      return Response.json({ week: store.getWeek() } satisfies WeekResponse);
+    if (!b && method === 'PUT') {
+      const input = parseWeekSettingsRequest(await readJson(request));
+      return input
+        ? Response.json({ week: store.updateWeek(input) } satisfies WeekResponse)
+        : bad();
+    }
+    if (b === 'publish' && !c && method === 'POST') {
+      const result = store.publishWeek();
+      return result.ok
+        ? Response.json({ week: result.value } satisfies WeekResponse)
+        : error(result.error, result.message);
+    }
+    if (b === 'unpublish' && !c && method === 'POST') {
+      return Response.json({ week: store.unpublishWeek() } satisfies WeekResponse);
+    }
+    if (b === 'close' && !c && method === 'POST') {
+      return Response.json(store.closeWeek() satisfies CloseWeekResponse);
+    }
+    return null;
+  }
+
+  if (a === 'past-weeks') {
+    if (!b && method === 'GET') {
+      return Response.json({ weeks: store.listPastWeeks() } satisfies PastWeeksResponse);
+    }
+    if (b && !c && method === 'GET') {
+      const week = store.getPastWeek(b);
+      return week
+        ? Response.json({ week } satisfies PastWeekResponse)
+        : error('not_found', 'Week not found');
+    }
+    return null;
+  }
+
+  if (a === 'menu' && b === 'items') {
+    if (!c && method === 'POST') {
+      const input = parseCreateItemRequest(await readJson(request));
+      return input ? itemResult(store.addItem(input), 201) : bad();
+    }
+    if (c && method === 'PATCH') {
+      const input = parseUpdateItemRequest(await readJson(request));
+      return input ? itemResult(store.patchItem(c, input)) : bad();
+    }
+    if (c && method === 'DELETE') return okResult(store.removeItem(c));
+    return null;
+  }
+  if (a === 'menu' && b === 'order' && !c && method === 'PUT') {
+    const input = parseReorderItemsRequest(await readJson(request));
+    if (!input) return bad();
+    const result = store.reorderItems(input.ids);
+    return result.ok
+      ? Response.json({ items: result.value } satisfies ItemsResponse)
+      : error(result.error, result.message);
+  }
+
+  if (a === 'chefs') {
+    if (!b && method === 'GET') {
+      return Response.json({ chefs: store.listChefs() } satisfies ChefsResponse);
+    }
+    if (!b && method === 'POST') {
+      const input = parseChefNameRequest(await readJson(request));
+      return input ? chefResult(store.addChef(input.name), 201) : bad();
+    }
+    if (b && method === 'PATCH') {
+      const input = parseChefNameRequest(await readJson(request));
+      return input ? chefResult(store.renameChef(b, input.name)) : bad();
+    }
+    if (b && method === 'DELETE') return okResult(store.removeChef(b));
+    return null;
+  }
+
+  if (a === 'sets') {
+    if (!b && method === 'GET') {
+      return Response.json({ sets: store.listSets() } satisfies SetsResponse);
+    }
+    if (!b && method === 'POST') {
+      const input = parseSaveSetRequest(await readJson(request));
+      return input ? setResult(store.saveSet(input.name, input.replaceSetId), 201) : bad();
+    }
+    if (b && !c && method === 'PATCH') {
+      const input = parseRenameSetRequest(await readJson(request));
+      return input ? setResult(store.renameSet(b, input.name)) : bad();
+    }
+    if (b && !c && method === 'DELETE') return okResult(store.removeSet(b));
+    if (b && c === 'use' && method === 'POST') {
+      const text = await request.text();
+      const input = parseUseSetRequest(text === '' ? undefined : safeParse(text));
+      if (!input) return bad();
+      const result = store.useSet(b, input);
+      return result.ok
+        ? Response.json({ items: result.value } satisfies ItemsResponse)
+        : error(result.error, result.message);
+    }
+    return null;
+  }
+
+  if (a === 'images') {
+    if (!b && method === 'GET') {
+      return Response.json({ images: store.getImages() } satisfies ImagesResponse);
+    }
+    if (!b && method === 'PUT') {
+      const input = parseImageStyleRequest(await readJson(request));
+      return input
+        ? Response.json({ images: store.setImageStyle(input) } satisfies ImagesResponse)
+        : bad();
+    }
+    if (b && !c) {
+      if (!isImageSlot(b)) return error('not_found', 'Unknown image place');
+      if (method === 'PUT') {
+        const input = parseUploadImageRequest(await readJson(request));
+        if (!input) return bad();
+        const result = store.setImage(b, input.dataUrl);
+        return result.ok
+          ? Response.json({ images: result.value } satisfies ImagesResponse)
+          : error(result.error, result.message);
+      }
+      if (method === 'DELETE') {
+        return Response.json({ images: store.removeImage(b) } satisfies ImagesResponse);
+      }
+    }
+    return null;
+  }
+
+  if (a === 'backup' && !b) {
+    if (method === 'GET') return Response.json(store.exportBackup());
+    if (method === 'POST') {
+      const file = parseBackupFile(await readJson(request));
+      if (!file) return error('invalid_backup', 'This is not a valid backup file');
+      const taken = file.orders.some((order) => {
+        const hit = mock.findByToken(order.token);
+        return hit !== undefined && hit.store.seller.id !== store.seller.id;
+      });
+      if (taken) {
+        return error('invalid_backup', 'An order in this backup belongs to another kitchen');
+      }
+      store.restoreBackup(file);
+      return Response.json({ ok: true } satisfies OkResponse);
+    }
+    return null;
+  }
+
+  if (a === 'orders.csv' && !b && method === 'GET') {
+    return new Response(store.ordersCsv(), {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="orders-${store.seller.slug}.csv"`,
+      },
+    });
   }
 
   if (a === 'orders') {

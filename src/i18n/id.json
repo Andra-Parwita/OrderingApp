@@ -5,7 +5,10 @@
   "language": {
     "label": "Bahasa",
     "switchTo": "Ganti bahasa ke {{name}}",
-    "name": { "en": "Bahasa Inggris", "id": "Bahasa Indonesia" }
+    "name": {
+      "en": "Bahasa Inggris",
+      "id": "Bahasa Indonesia"
+    }
   },
   "theme": {
     "label": "Tampilan",
@@ -29,7 +32,23 @@
     "bannerImage": "Gambar banner",
     "collapse": "Ciutkan menu",
     "expand": "Perluas menu",
-    "shareMenu": "Bagikan menu ke WhatsApp"
+    "shareMenu": "Bagikan menu ke WhatsApp",
+    "moreTitle": "Lainnya",
+    "settings": "Pengaturan",
+    "weekSettings": "Pengaturan minggu ini",
+    "images": "Gambar",
+    "chefs": "Juru masak",
+    "labels": "Label",
+    "pastWeeks": "Minggu lalu",
+    "backup": "Cadangan",
+    "backToMore": "Kembali ke Lainnya",
+    "previewDraft": "Pratinjau · belum dipublikasikan",
+    "previewPublished": "Pratinjau · sudah dipublikasikan",
+    "backToEditing": "Kembali mengedit",
+    "publish": "Publikasikan",
+    "previewLoadError": "Pratinjau tidak bisa dimuat.",
+    "retry": "Coba lagi",
+    "previewPublishError": "Tidak bisa mempublikasikan. Periksa menu lalu coba lagi."
   },
   "customerNav": {
     "label": "Pelanggan",

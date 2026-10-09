@@ -94,6 +94,11 @@ type Props = Readonly<{
   /** The seller whose menu this is (from the route). */
   slug: string;
   onViewBasket: () => void;
+  /**
+   * The seller's preview (D-019): this menu is shown instead of loading one, and nothing can be
+   * ordered (steppers off, no basket bar).
+   */
+  preview?: MenuResponse;
 }>;
 
 function WeekBlock({ data, lang }: Readonly<{ data: MenuResponse; lang: Language }>) {
@@ -159,18 +164,19 @@ function ClosedBlock({ data }: Readonly<{ data: MenuResponse }>) {
   );
 }
 
-function MenuContent({ slug, onViewBasket }: Props) {
+function MenuContent({ slug, onViewBasket, preview }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
-  const menu = useSelector(selectMenu);
+  const stored = useSelector(selectMenu);
+  const menu = preview ? ({ status: 'ready', data: preview } as const) : stored;
   const basket = useSelector(selectBasket);
   const count = useSelector(selectBasketCount);
   const totalCents = useSelector(selectBasketTotalCents);
 
   const load = useCallback(() => {
-    dispatch(menuRequested(slug));
-  }, [dispatch, slug]);
+    if (!preview) dispatch(menuRequested(slug));
+  }, [dispatch, slug, preview]);
   useEffect(load, [load]);
 
   const onQty = useCallback(
@@ -198,7 +204,7 @@ function MenuContent({ slug, onViewBasket }: Props) {
             </NameText>
             <LanguageSwitch />
           </NameRow>
-          {menu.data.ordering.open ? null : <ClosedBlock data={menu.data} />}
+          {menu.data.ordering.open || preview ? null : <ClosedBlock data={menu.data} />}
           <WeekBlock data={menu.data} lang={lang} />
           <Items>
             {menu.data.items.map((item) => (
@@ -208,7 +214,7 @@ function MenuContent({ slug, onViewBasket }: Props) {
                 qty={basket[item.id] ?? 0}
                 lang={lang}
                 onQty={onQty}
-                closed={!menu.data.ordering.open}
+                closed={!menu.data.ordering.open || preview !== undefined}
               />
             ))}
           </Items>
@@ -223,7 +229,7 @@ function MenuContent({ slug, onViewBasket }: Props) {
       ) : (
         <StateMessage text={t('common.loading')} />
       )}
-      {count > 0 && !(menu.status === 'ready' && !menu.data.ordering.open) ? (
+      {!preview && count > 0 && !(menu.status === 'ready' && !menu.data.ordering.open) ? (
         <Bar>
           <Strong>
             {t('menu.items', { count })} · {formatMoney(totalCents, lang)}

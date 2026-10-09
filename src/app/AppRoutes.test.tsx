@@ -7,7 +7,11 @@ import { registerCustomerI18n } from '../features/customer-menu';
 import { registerCustomerOrdersI18n } from '../features/customer-orders';
 import { registerCookI18n } from '../features/seller-cook';
 import { registerSellerI18n } from '../features/seller-orders';
+import { registerSellerHistoryI18n } from '../features/seller-history';
+import { registerSellerLabelsI18n } from '../features/seller-labels';
+import { registerSellerMenuI18n } from '../features/seller-menu';
 import { registerSettingsI18n } from '../features/seller-settings';
+import { registerSellerSetupI18n } from '../features/seller-setup';
 import { registerShareI18n } from '../features/seller-share';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
@@ -55,6 +59,10 @@ beforeAll(async () => {
   registerCookI18n();
   registerShareI18n();
   registerSettingsI18n();
+  registerSellerMenuI18n();
+  registerSellerSetupI18n();
+  registerSellerLabelsI18n();
+  registerSellerHistoryI18n();
   await i18n.changeLanguage('en');
 });
 
@@ -112,7 +120,7 @@ describe('AppRoutes', () => {
   it('shows the bottom tab bar on a phone and the left rail on a desktop', () => {
     const phone = renderAt('/seller');
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('href', '/seller/settings');
+    expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('href', '/seller/more');
     expect(screen.getByRole('link', { name: 'Hand-over, coming soon' })).toHaveAttribute(
       'aria-disabled',
       'true',
@@ -179,6 +187,49 @@ describe('AppRoutes', () => {
     expect(screen.getAllByRole('main')).toHaveLength(1);
     expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+  });
+
+  it('lists the seller pages on More, and Menu is a live tab', () => {
+    renderAt('/seller/more');
+    for (const name of ['Settings', 'Week settings', 'Pictures', 'Chefs', 'Labels', 'Past weeks']) {
+      expect(screen.getByRole('button', { name: new RegExp('^' + name) })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Menu' })).toHaveAttribute('href', '/seller/menu');
+    fireEvent.click(screen.getByRole('button', { name: /^Backup/ }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/seller/backup');
+    expect(screen.getByRole('button', { name: 'Back to More' })).toBeInTheDocument();
+  });
+
+  it('previews the draft as a customer: seller bar on top, nothing orderable, no chef data', async () => {
+    const item = {
+      id: 'i1',
+      name: { en: 'Preview dish', id: 'Hidangan' },
+      description: { en: '', id: '' },
+      size: { en: '', id: '' },
+      priceCents: 1000,
+      remaining: null,
+      soldOut: false,
+      chefId: 'chef-1',
+    };
+    const menu = {
+      ...MENU,
+      week: { ...MENU.week, status: 'draft' },
+      chefs: [{ id: 'chef-1', sellerId: 's1', name: 'Secret Chef' }],
+      items: [item],
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(Response.json(menu))),
+    );
+    renderAt('/seller/menu/preview');
+    expect(await screen.findByText('Preview dish')).toBeInTheDocument();
+    expect(screen.getByText('Preview · not published yet')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to editing' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Publish' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add one Preview dish' })).toBeDisabled();
+    expect(screen.queryByText('Secret Chef')).not.toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Seller' })).not.toBeInTheDocument();
   });
 
   it('puts the theme switch and the share link in the seller settings', () => {

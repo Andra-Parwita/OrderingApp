@@ -7,6 +7,7 @@ import type {
   Chef,
   InboxEntry,
   Kitchen,
+  KitchenImages,
   KitchenSettings,
   Seller,
   MenuItem,
@@ -19,8 +20,28 @@ import type {
   StaffActor,
   Week,
 } from '../../shared/domain';
-import { AUDIT_MAX, INBOX_MAX } from '../../shared/limits';
+import { BACKUP_VERSION, type BackupFile } from '../../shared/backup';
+import { ordersToCsv } from '../../shared/csv';
+import { checkImageUpload, IMAGE_SLOTS, type ImageSlot } from '../../shared/imageSlots';
+import { AUDIT_MAX, INBOX_MAX, MAX_CHEFS, MAX_MENU_ITEMS, MAX_SETS } from '../../shared/limits';
 import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
+import {
+  applyRetention,
+  shiftDays,
+  summariseOrders,
+  toSummary,
+  type PastWeek,
+  type PastWeekSummary,
+} from '../../shared/pastWeeks';
+import type {
+  CreateItemRequest,
+  ImageStyleRequest,
+  SavedSet,
+  SavedSetView,
+  UpdateItemRequest,
+  UseSetRequest,
+  WeekSettingsRequest,
+} from '../../shared/setupContract';
 import type {
   CreateOrderRequest,
   CreateSellerOrderRequest,
@@ -65,6 +86,13 @@ function ok<T>(value: T): StoreResult<T> {
   return { ok: true, value };
 }
 
+/** A copy of the object without one key. */
+function without<T extends object, K extends keyof T>(source: T, key: K): Omit<T, K> {
+  const copy = { ...source } as Partial<T>;
+  delete copy[key];
+  return copy as Omit<T, K>;
+}
+
 /** mulberry32: small deterministic PRNG returning [0, 1). */
 function seededRandom(seed: number): () => number {
   let state = seed >>> 0;
@@ -104,6 +132,10 @@ export function createSellerStore(
   let items: Array<MenuItem> = structuredClone(fixture.items);
   let settings: KitchenSettings = structuredClone(fixture.settings);
   let orders: Array<Order> = [];
+  let sets: Array<SavedSet> = [];
+  let pastWeeks: Array<PastWeek> = [];
+  /** Orders whose details were dropped by retention: just the token and the week (D-044). */
+  let expiredOrders: Array<{ token: string; cookingDate: string }> = [];
 
   const nowIso = () => options.now().toISOString();
   const cutoffPassed = () => options.now().getTime() >= Date.parse(week.cutoffAt);
@@ -132,16 +164,63 @@ export function createSellerStore(
   }
 
   function sellerView(item: MenuItem): SellerMenuItemView {
+    const { soldOut: manual, ...rest } = item;
     const remaining =
       item.limit === undefined ? null : Math.max(0, item.limit - usedPortions(item.id));
-    return { ...item, remaining, soldOut: remaining === 0 };
+    return {
+      ...rest,
+      remaining,
+      soldOut: manual === true || remaining === 0,
+      ...(manual === true ? { manualSoldOut: true } : {}),
+    };
   }
 
-  /** The customer view: the chef is dropped here (D-012). */
+  /** The customer view: the chef (D-012) and the manual flag are dropped here. */
   function view(item: MenuItem): MenuItemView {
     const copy = sellerView(item);
     delete copy.chefId;
+    delete copy.manualSoldOut;
     return copy;
+  }
+
+  /** Any order that is not cancelled counts as "has orders" (D-020). */
+  function hasOrders(itemId: string): boolean {
+    return orders.some(
+      (order) => order.status !== 'cancelled' && order.lines.some((line) => line.itemId === itemId),
+    );
+  }
+
+  function images(): KitchenImages {
+    return kitchen.images ?? {};
+  }
+
+  function withImages(next: KitchenImages): void {
+    const rest = without(kitchen, 'images');
+    kitchen = Object.keys(next).length > 0 ? { ...rest, images: next } : rest;
+  }
+
+  /** Order details older than 4 weeks are dropped here, on every read (D-027 row 6). */
+  function pastNow(): Array<PastWeek> {
+    const now = options.now();
+    pastWeeks = pastWeeks.map((week) => {
+      const kept = applyRetention(week, now);
+      if (week.orders !== undefined && kept.orders === undefined) {
+        for (const order of week.orders) {
+          expiredOrders.push({ token: order.token, cookingDate: week.cookingDate });
+        }
+      }
+      return kept;
+    });
+    return pastWeeks;
+  }
+
+  function setView(set: SavedSet): SavedSetView {
+    return {
+      id: set.id,
+      name: set.name,
+      items: structuredClone(set.items),
+      imageSlots: IMAGE_SLOTS.filter((slot) => set.images[slot] !== undefined),
+    };
   }
 
   function publicMenu(): MenuResponse {
@@ -180,12 +259,16 @@ export function createSellerStore(
     for (const { itemId, qty } of requested) {
       const item = items.find((candidate) => candidate.id === itemId);
       if (!item) return fail('unknown_item', `Unknown item: ${itemId}`);
+      const previous = existing.find((line) => line.itemId === itemId);
+      // Manually sold out: no new portions (an order may keep what it already has).
+      if (item.soldOut === true && (!previous || qty > previous.qty)) {
+        return fail('sold_out', `${item.name.en} is sold out`);
+      }
       if (item.limit !== undefined) {
         const left = item.limit - usedPortions(itemId, exceptOrderId);
         if (left <= 0) return fail('sold_out', `${item.name.en} is sold out`);
         if (qty > left) return fail('exceeds_remaining', `Only ${left} left of ${item.name.en}`);
       }
-      const previous = existing.find((line) => line.itemId === itemId);
       lines.push(previous ? { ...previous, qty } : snapshot(item, qty));
     }
     return ok(lines);
@@ -334,6 +417,338 @@ export function createSellerStore(
     setSettings(next: KitchenSettings): KitchenSettings {
       settings = structuredClone(next);
       return structuredClone(settings);
+    },
+
+    // ---- Week (stage 6.1) ----
+
+    getWeek(): Week {
+      return structuredClone(week);
+    },
+
+    /** One pickup point for now (D-008); the ordering switch stays in the settings. */
+    updateWeek(input: WeekSettingsRequest): Week {
+      const point = input.pickupPoints[0];
+      week = {
+        ...week,
+        cookingDate: input.cookingDate,
+        cutoffAt: input.cutoffAt,
+        pickupPoints: [
+          {
+            id: point.id ?? week.pickupPoints[0]?.id ?? 'main',
+            place: point.place,
+            directions: { ...point.directions },
+            window: { ...point.window },
+          },
+        ],
+        delivery: { available: input.delivery.available, note: { ...input.delivery.note } },
+      };
+      return structuredClone(week);
+    },
+
+    publishWeek(): StoreResult<Week> {
+      if (items.length === 0) return fail('no_items', 'Add at least one item first');
+      week = { ...week, status: 'published' };
+      return ok(structuredClone(week));
+    },
+
+    unpublishWeek(): Week {
+      week = { ...week, status: 'draft' };
+      return structuredClone(week);
+    },
+
+    /**
+     * Archives the week (totals kept for good, orders for 4 weeks) and starts the next draft
+     * week 7 days later with the same items. Orders leave the live list.
+     */
+    closeWeek(): { week: Week; closed: PastWeekSummary } {
+      const closed: PastWeek = {
+        id: newId(),
+        cookingDate: week.cookingDate,
+        closedAt: nowIso(),
+        totals: summariseOrders(orders),
+        orders: structuredClone(orders),
+      };
+      pastWeeks = [closed, ...pastWeeks];
+      orders = [];
+      week = {
+        ...week,
+        cookingDate: shiftDays(week.cookingDate, 7),
+        cutoffAt: shiftDays(week.cutoffAt, 7),
+        status: 'draft',
+      };
+      items = items.map((item) => without(item, 'soldOut'));
+      const kept = pastNow().find((candidate) => candidate.id === closed.id) as PastWeek;
+      return { week: structuredClone(week), closed: toSummary(kept) };
+    },
+
+    listPastWeeks(): Array<PastWeekSummary> {
+      return pastNow().map(toSummary);
+    },
+
+    /**
+     * An order of a closed week by its private token (D-044): the order while its details are
+     * kept, then just the week's date, then nothing.
+     */
+    getArchivedByToken(
+      token: string,
+    ):
+      | { order: Order; cookingDate: string }
+      | { order?: undefined; cookingDate: string }
+      | undefined {
+      for (const past of pastNow()) {
+        const order = past.orders?.find((candidate) => candidate.token === token);
+        if (order) return { order: structuredClone(order), cookingDate: past.cookingDate };
+      }
+      const gone = expiredOrders.find((entry) => entry.token === token);
+      return gone ? { cookingDate: gone.cookingDate } : undefined;
+    },
+
+    getPastWeek(id: string): PastWeek | undefined {
+      const found = pastNow().find((week) => week.id === id);
+      return found ? structuredClone(found) : undefined;
+    },
+
+    // ---- Menu items (D-020: edits only touch new orders; snapshots live on the order lines) ----
+
+    addItem(input: CreateItemRequest): StoreResult<SellerMenuItemView> {
+      if (items.length >= MAX_MENU_ITEMS) {
+        return fail('limit_reached', `At most ${String(MAX_MENU_ITEMS)} items`);
+      }
+      if (input.chefId !== undefined && !chefs.some((chef) => chef.id === input.chefId)) {
+        return fail('unknown_chef', 'Unknown chef');
+      }
+      const item: MenuItem = {
+        id: newId(),
+        name: { ...input.name },
+        description: { ...(input.description ?? { en: '', id: '' }) },
+        size: { ...(input.size ?? { en: '', id: '' }) },
+        priceCents: input.priceCents,
+        ...(input.limit !== undefined ? { limit: input.limit } : {}),
+        ...(input.chefId !== undefined ? { chefId: input.chefId } : {}),
+      };
+      items = [...items, item];
+      return ok(sellerView(item));
+    },
+
+    patchItem(id: string, patch: UpdateItemRequest): StoreResult<SellerMenuItemView> {
+      const current = items.find((item) => item.id === id);
+      if (!current) return fail('not_found', 'Item not found');
+      if (typeof patch.chefId === 'string' && !chefs.some((chef) => chef.id === patch.chefId)) {
+        return fail('unknown_chef', 'Unknown chef');
+      }
+      const next: MenuItem = { ...current };
+      if (patch.name) next.name = { ...patch.name };
+      if (patch.description) next.description = { ...patch.description };
+      if (patch.size) next.size = { ...patch.size };
+      if (patch.priceCents !== undefined) next.priceCents = patch.priceCents;
+      if (patch.limit === null) delete next.limit;
+      else if (patch.limit !== undefined) next.limit = patch.limit;
+      if (patch.chefId === null) delete next.chefId;
+      else if (patch.chefId !== undefined) next.chefId = patch.chefId;
+      if (patch.soldOut === false) delete next.soldOut;
+      else if (patch.soldOut === true) next.soldOut = true;
+      items = items.map((item) => (item.id === id ? next : item));
+      return ok(sellerView(next));
+    },
+
+    /** `ids` must list every item once. */
+    reorderItems(ids: ReadonlyArray<string>): StoreResult<Array<SellerMenuItemView>> {
+      const same = ids.length === items.length && items.every((item) => ids.includes(item.id));
+      if (!same) return fail('invalid_request', 'List every item once');
+      items = ids.map((id) => items.find((item) => item.id === id) as MenuItem);
+      return ok(items.map(sellerView));
+    },
+
+    /** An item with a live (not cancelled) order can't be deleted; mark it sold out instead. */
+    removeItem(id: string): StoreResult<true> {
+      if (!items.some((item) => item.id === id)) return fail('not_found', 'Item not found');
+      if (hasOrders(id)) return fail('item_has_orders', 'This item has orders; mark it sold out');
+      items = items.filter((item) => item.id !== id);
+      return ok(true);
+    },
+
+    // ---- Chefs ----
+
+    listChefs(): Array<Chef> {
+      return structuredClone(chefs);
+    },
+
+    addChef(name: string): StoreResult<Chef> {
+      if (chefs.length >= MAX_CHEFS) return fail('limit_reached', 'Too many chefs');
+      const chef: Chef = { id: newId(), sellerId: seller.id, name };
+      chefs = [...chefs, chef];
+      return ok({ ...chef });
+    },
+
+    renameChef(id: string, name: string): StoreResult<Chef> {
+      const chef = chefs.find((candidate) => candidate.id === id);
+      if (!chef) return fail('not_found', 'Chef not found');
+      const renamed = { ...chef, name };
+      chefs = chefs.map((candidate) => (candidate.id === id ? renamed : candidate));
+      return ok({ ...renamed });
+    },
+
+    /** Deleting a chef unassigns their items (this week and in saved sets). */
+    removeChef(id: string): StoreResult<true> {
+      if (!chefs.some((chef) => chef.id === id)) return fail('not_found', 'Chef not found');
+      const unassign = <T extends { chefId?: string }>(item: T): T =>
+        item.chefId === id ? (without(item, 'chefId') as T) : item;
+      chefs = chefs.filter((chef) => chef.id !== id);
+      items = items.map(unassign);
+      sets = sets.map((set) => ({ ...set, items: set.items.map(unassign) }));
+      return ok(true);
+    },
+
+    // ---- Saved sets ----
+
+    listSets(): Array<SavedSetView> {
+      return sets.map(setView);
+    },
+
+    /** Saves the week's items and the current images. A 6th set needs `replaceSetId`. */
+    saveSet(name: string, replaceSetId?: string): StoreResult<SavedSetView> {
+      if (items.length === 0) return fail('no_items', 'Add at least one item first');
+      const target =
+        replaceSetId === undefined ? undefined : sets.find((set) => set.id === replaceSetId);
+      if (replaceSetId !== undefined && !target) return fail('not_found', 'Set not found');
+      if (!target && sets.length >= MAX_SETS) {
+        return fail('limit_reached', `At most ${String(MAX_SETS)} sets; replace one`);
+      }
+      const saved: SavedSet = {
+        id: target?.id ?? newId(),
+        name,
+        items: items.map((item) => structuredClone(without(without(item, 'id'), 'soldOut'))),
+        images: structuredClone(images()),
+      };
+      sets = target ? sets.map((set) => (set.id === saved.id ? saved : set)) : [...sets, saved];
+      return ok(setView(saved));
+    },
+
+    renameSet(id: string, name: string): StoreResult<SavedSetView> {
+      const set = sets.find((candidate) => candidate.id === id);
+      if (!set) return fail('not_found', 'Set not found');
+      const renamed = { ...set, name };
+      sets = sets.map((candidate) => (candidate.id === id ? renamed : candidate));
+      return ok(setView(renamed));
+    },
+
+    removeSet(id: string): StoreResult<true> {
+      if (!sets.some((set) => set.id === id)) return fail('not_found', 'Set not found');
+      sets = sets.filter((set) => set.id !== id);
+      return ok(true);
+    },
+
+    /**
+     * Replaces a draft week's items with the set's. Needs `confirm` when the week has items;
+     * refused while a current item has orders (D-020).
+     */
+    useSet(id: string, request: UseSetRequest): StoreResult<Array<SellerMenuItemView>> {
+      const set = sets.find((candidate) => candidate.id === id);
+      if (!set) return fail('not_found', 'Set not found');
+      if (week.status !== 'draft') return fail('week_not_draft', 'Unpublish the week first');
+      if (items.length > 0 && request.confirm !== true) {
+        return fail('confirm_required', 'This replaces the items of the week');
+      }
+      if (items.some((item) => hasOrders(item.id))) {
+        return fail('item_has_orders', 'Some items already have orders');
+      }
+      items = set.items.map((item) => {
+        const copy: MenuItem = { ...structuredClone(item), id: newId() };
+        const known = copy.chefId === undefined || chefs.some((chef) => chef.id === copy.chefId);
+        return known ? copy : without(copy, 'chefId');
+      });
+      if (request.applyImages === true) {
+        const alt = images().alt;
+        withImages({ ...structuredClone(set.images), ...(alt ? { alt } : {}) });
+      }
+      return ok(items.map(sellerView));
+    },
+
+    // ---- Images (D-038, D-040): data URLs kept in memory ----
+
+    getImages(): KitchenImages {
+      return structuredClone(images());
+    },
+
+    setImage(slot: ImageSlot, dataUrl: unknown): StoreResult<KitchenImages> {
+      const check = checkImageUpload(slot, dataUrl);
+      if (!check.ok) {
+        const message = {
+          image_type: 'Use a jpeg, png or webp image',
+          image_too_big: 'The image is over 600 KB',
+          image_ratio: 'The image has the wrong shape for this place',
+        }[check.error];
+        return fail(check.error, message);
+      }
+      withImages({ ...images(), [slot]: dataUrl as string });
+      return ok(structuredClone(images()));
+    },
+
+    removeImage(slot: ImageSlot): KitchenImages {
+      withImages(without(images(), slot));
+      return structuredClone(images());
+    },
+
+    /** Banner colour and alt text. */
+    setImageStyle(style: ImageStyleRequest): KitchenImages {
+      const current = images();
+      const slots = without(without(current, 'bannerBackground'), 'alt');
+      const colour =
+        style.bannerBackground === undefined ? current.bannerBackground : style.bannerBackground;
+      const alt = style.alt === undefined ? current.alt : style.alt;
+      const hasAlt = alt !== undefined && (alt.en !== '' || alt.id !== '');
+      withImages({
+        ...slots,
+        ...(colour ? { bannerBackground: colour } : {}),
+        ...(hasAlt ? { alt } : {}),
+      });
+      return structuredClone(images());
+    },
+
+    // ---- Backup and CSV ----
+
+    exportBackup(): BackupFile {
+      return structuredClone({
+        version: BACKUP_VERSION,
+        exportedAt: nowIso(),
+        seller: { slug: seller.slug, name: seller.name },
+        kitchen,
+        settings,
+        week,
+        items,
+        chefs,
+        sets,
+        orders,
+        pastWeeks: pastNow(),
+      });
+    },
+
+    /** Replaces this seller's data with an already validated backup; other sellers are not touched. */
+    restoreBackup(file: BackupFile): void {
+      const copy = structuredClone(file);
+      kitchen = { ...copy.kitchen, sellerId: seller.id };
+      settings = copy.settings;
+      week = copy.week;
+      chefs = copy.chefs.map((chef) => ({ ...chef, sellerId: seller.id }));
+      const known = new Set(chefs.map((chef) => chef.id));
+      const fixChef = <T extends { chefId?: string }>(item: T): T =>
+        item.chefId === undefined || known.has(item.chefId) ? item : (without(item, 'chefId') as T);
+      items = copy.items.map(fixChef);
+      sets = copy.sets.map((set) => ({ ...set, items: set.items.map(fixChef) }));
+      orders = copy.orders.map((order) => ({ ...order, sellerId: seller.id }));
+      expiredOrders = [];
+      pastWeeks = copy.pastWeeks.map((past) => ({
+        ...past,
+        ...(past.orders
+          ? { orders: past.orders.map((order) => ({ ...order, sellerId: seller.id })) }
+          : {}),
+      }));
+      pastNow();
+    },
+
+    /** Every order of the week, oldest first, as CSV with a BOM for Excel. */
+    ordersCsv(): string {
+      return ordersToCsv(orders);
     },
 
     /** Customer order: refused for a draft week, when closed by the seller, or after the cut-off. */
@@ -544,11 +959,19 @@ export function createSellerStore(
       items = structuredClone(fixture.items);
       settings = structuredClone(fixture.settings);
       orders = [];
+      sets = [];
+      pastWeeks = [];
+      expiredOrders = [];
     },
   };
 }
 
 export type SellerStore = ReturnType<typeof createSellerStore>;
+
+export type TokenLookup =
+  | { kind: 'live'; store: SellerStore; order: SellerOrder }
+  | { kind: 'archived'; store: SellerStore; order: SellerOrder; cookingDate: string }
+  | { kind: 'expired'; store: SellerStore; cookingDate: string };
 
 /**
  * All sellers of the mock. Seller endpoints get one seller's store by slug; only the global
@@ -572,6 +995,25 @@ export function createStore(options: StoreOptions) {
       for (const store of stores) {
         const order = store.getByToken(token);
         if (order) return { store, order };
+      }
+      return undefined;
+    },
+
+    /**
+     * Like `findByToken`, but also looks in each seller's closed weeks (D-044). A live order wins;
+     * an archived one carries its week's date; an expired one only the date.
+     */
+    lookupByToken(token: string): TokenLookup | undefined {
+      for (const store of stores) {
+        const order = store.getByToken(token);
+        if (order) return { kind: 'live', store, order };
+      }
+      for (const store of stores) {
+        const hit = store.getArchivedByToken(token);
+        if (!hit) continue;
+        return hit.order
+          ? { kind: 'archived', store, order: hit.order, cookingDate: hit.cookingDate }
+          : { kind: 'expired', store, cookingDate: hit.cookingDate };
       }
       return undefined;
     },

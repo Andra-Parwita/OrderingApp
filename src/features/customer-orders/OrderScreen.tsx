@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { CustomerOrder } from '../../../shared/domain';
+import type { ExpiredOrder } from '../../../shared/orderContract';
 import {
   formatCookingDate,
   formatCutoff,
@@ -139,10 +140,79 @@ function cancelErrorKey(code: FailureCode): string {
     case 'order_locked':
     case 'ordering_closed':
     case 'cutoff_passed':
+    case 'week_closed':
       return `order.errors.${code}`;
     default:
       return 'order.errors.other';
   }
+}
+
+const MenuLink = styled.a`
+  color: ${({ theme }) => theme.colour.text};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+`;
+
+/** A closed week's order (D-044): everything to read, nothing to change. */
+function ArchivedBody({ order }: Readonly<{ order: CustomerOrder }>) {
+  const { t } = useTranslation(ORDERS_NS);
+  const lang = useLang();
+  const date = order.cookingDate ? formatCookingDate(order.cookingDate, lang) : '';
+  const how = order.fulfilment === 'delivery' ? t('order.delivery') : t('order.pickup');
+  return (
+    <>
+      <Block>
+        <LockedBanner role="status">{t('order.weekClosed')}</LockedBanner>
+        <Centered>
+          {order.seller.name}
+          {date ? ` · ${date}` : ''}
+        </Centered>
+        <Code data-testid="order-code">{formatOrderCode(order.code)}</Code>
+        <Centered>
+          <Pill tone={toneOf(order.status)}>{t(`status.${order.status}`)}</Pill>
+        </Centered>
+      </Block>
+      <Block>
+        <Lines>
+          {order.lines.map((line) => (
+            <Line key={line.itemId}>
+              <span>
+                {line.qty}× {pickText(line.name, lang)}
+              </span>
+              <Strong>{formatMoney(line.priceCents * line.qty, lang)}</Strong>
+            </Line>
+          ))}
+          <Total>
+            <span>{t('order.total')}</span>
+            <span>{formatMoney(orderTotalCents(order), lang)}</span>
+          </Total>
+        </Lines>
+        <Muted>
+          <Strong>{how}</Strong>
+        </Muted>
+        {order.note ? <Muted>{t('order.note', { note: order.note })}</Muted> : null}
+      </Block>
+    </>
+  );
+}
+
+/** Past the 4 weeks the details are gone; only whose order it was and which week stays. */
+function ExpiredBody({ order }: Readonly<{ order: ExpiredOrder }>) {
+  const { t } = useTranslation(ORDERS_NS);
+  const lang = useLang();
+  return (
+    <Block>
+      <Strong>{t('order.expiredTitle')}</Strong>
+      <Muted>
+        {t('order.expiredBody', {
+          seller: order.seller.name,
+          date: formatCookingDate(order.cookingDate, lang),
+        })}
+      </Muted>
+      <MenuLink href={`/${encodeURIComponent(order.seller.slug)}`}>
+        {t('order.toSellerMenu', { seller: order.seller.name })}
+      </MenuLink>
+    </Block>
+  );
 }
 
 type BodyProps = Readonly<{
@@ -368,7 +438,13 @@ function OrderContent({ token, onBack, onChange }: Props) {
         trailing={<LanguageSwitch compact />}
       />
       {loadedOrder !== null ? (
-        <OrderBody order={loadedOrder} onChange={onChange} />
+        loadedOrder.archived === true ? (
+          <ArchivedBody order={loadedOrder} />
+        ) : (
+          <OrderBody order={loadedOrder} onChange={onChange} />
+        )
+      ) : page.status === 'expired' && page.order.token === token ? (
+        <ExpiredBody order={page.order} />
       ) : page.status === 'error' ? (
         <StateMessage alert text={t('order.loadError')} onRetry={load} />
       ) : (

@@ -9,6 +9,8 @@ export type PageHeaderProps = Readonly<{
   onBack?: () => void;
   /** Right-hand slot (for example a language switch). */
   trailing?: ReactNode;
+  /** The page's own content shows the title: render only the back arrow (and slot), no heading. */
+  titleHidden?: boolean;
 }>;
 
 const Bar = styled.header`
@@ -61,7 +63,7 @@ const Trailing = styled.div`
 `;
 
 /** The native-style top bar of a sub-page: optional back arrow, the title, an optional right slot. */
-export function PageHeader({ title, backLabel, onBack, trailing }: PageHeaderProps) {
+export function PageHeader({ title, backLabel, onBack, trailing, titleHidden }: PageHeaderProps) {
   return (
     <Bar>
       {onBack && backLabel ? (
@@ -69,7 +71,7 @@ export function PageHeader({ title, backLabel, onBack, trailing }: PageHeaderPro
           <Icon name="back" />
         </BackButton>
       ) : null}
-      <Heading>{title}</Heading>
+      {titleHidden ? null : <Heading>{title}</Heading>}
       {trailing ? <Trailing>{trailing}</Trailing> : null}
     </Bar>
   );

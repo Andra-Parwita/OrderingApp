@@ -5,7 +5,10 @@
   "language": {
     "label": "Language",
     "switchTo": "Switch language to {{name}}",
-    "name": { "en": "English", "id": "Indonesian" }
+    "name": {
+      "en": "English",
+      "id": "Indonesian"
+    }
   },
   "theme": {
     "label": "Appearance",
@@ -29,7 +32,23 @@
     "bannerImage": "Banner image",
     "collapse": "Collapse menu",
     "expand": "Expand menu",
-    "shareMenu": "Share menu to WhatsApp"
+    "shareMenu": "Share menu to WhatsApp",
+    "moreTitle": "More",
+    "settings": "Settings",
+    "weekSettings": "Week settings",
+    "images": "Pictures",
+    "chefs": "Chefs",
+    "labels": "Labels",
+    "pastWeeks": "Past weeks",
+    "backup": "Backup",
+    "backToMore": "Back to More",
+    "previewDraft": "Preview · not published yet",
+    "previewPublished": "Preview · published",
+    "backToEditing": "Back to editing",
+    "publish": "Publish",
+    "previewLoadError": "Could not load the preview.",
+    "retry": "Try again",
+    "previewPublishError": "Could not publish. Check the menu and try again."
   },
   "customerNav": {
     "label": "Customer",

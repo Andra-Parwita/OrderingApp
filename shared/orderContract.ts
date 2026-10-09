@@ -54,10 +54,29 @@ export type UpdateOrderRequest = {
   note?: string;
 };
 
+/**
+ * A closed-week order whose details were dropped after 4 weeks (D-044 / D-027 row 6): only whose
+ * and which week it was is left, enough to show "archived on <date> from <seller>".
+ */
+export type ExpiredOrder = {
+  archived: true;
+  expired: true;
+  token: string;
+  seller: SellerRef;
+  /** Local date (YYYY-MM-DD) of the closed week. */
+  cookingDate: string;
+};
+
 /** Customer endpoints (by token) that return one order. */
 export type CustomerOrderResponse = { order: CustomerOrder };
+/** GET /api/orders/:token: the order (maybe archived and read-only), or its expired summary. */
+export type FetchedOrderResponse = CustomerOrderResponse | { expired: ExpiredOrder };
 /** GET /api/orders?tokens=a,b (max 20); unknown tokens are omitted. */
-export type CustomerOrdersResponse = { orders: Array<CustomerOrder> };
+export type CustomerOrdersResponse = {
+  orders: Array<CustomerOrder>;
+  /** Tokens whose order details are gone but whose week is still known. */
+  expired?: Array<ExpiredOrder>;
+};
 /** Seller endpoints that return one order. */
 export type SellerOrderResponse = { order: SellerOrder };
 /** GET /api/seller/orders, newest first. */
@@ -80,6 +99,29 @@ export function toCustomerOrder(order: SellerOrder, seller: SellerRef): Customer
     inbox: order.inbox,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
+  };
+}
+
+/** The customer view of an order of a closed week: the same, marked read-only with its week's date. */
+export function toArchivedOrder(
+  order: SellerOrder,
+  seller: SellerRef,
+  cookingDate: string,
+): CustomerOrder {
+  return { ...toCustomerOrder(order, seller), archived: true, cookingDate };
+}
+
+export function toExpiredOrder(
+  token: string,
+  seller: SellerRef,
+  cookingDate: string,
+): ExpiredOrder {
+  return {
+    archived: true,
+    expired: true,
+    token,
+    seller: { slug: seller.slug, name: seller.name },
+    cookingDate,
   };
 }
 
@@ -258,7 +300,9 @@ function parseInboxEntry(input: unknown): InboxEntry | null {
   };
 }
 
-type CoreOrder = Omit<CustomerOrder, 'seller'>;
+type CoreOrder = Omit<CustomerOrder, 'seller' | 'archived' | 'cookingDate'>;
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseCoreFields(input: Record<string, unknown>): CoreOrder | null {
   const { id, code, token, firstName, language, fulfilment, note, status, locked } = input;
@@ -298,7 +342,29 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
   if (!isRecord(input)) return null;
   const core = parseCoreFields(input);
   const seller = parseSellerRef(input['seller']);
-  return core && seller ? { ...core, seller } : null;
+  if (!core || !seller) return null;
+  const { archived, cookingDate } = input;
+  if (archived === undefined && cookingDate === undefined) return { ...core, seller };
+  if (archived !== true || typeof cookingDate !== 'string' || !DATE.test(cookingDate)) return null;
+  return { ...core, seller, archived, cookingDate };
+}
+
+export function parseExpiredOrder(input: unknown): ExpiredOrder | null {
+  if (!isRecord(input)) return null;
+  const { archived, expired, token, cookingDate } = input;
+  const seller = parseSellerRef(input['seller']);
+  if (archived !== true || expired !== true || typeof token !== 'string' || !seller) return null;
+  if (typeof cookingDate !== 'string' || !DATE.test(cookingDate)) return null;
+  return { archived, expired, token, seller, cookingDate };
+}
+
+export function parseFetchedOrderResponse(input: unknown): FetchedOrderResponse | null {
+  if (!isRecord(input)) return null;
+  if (input['expired'] !== undefined) {
+    const expired = parseExpiredOrder(input['expired']);
+    return expired ? { expired } : null;
+  }
+  return parseCustomerOrderResponse(input);
 }
 
 export function parseOrder(input: unknown): SellerOrder | null {
@@ -337,7 +403,10 @@ export function parseCustomerOrderResponse(input: unknown): CustomerOrderRespons
 export function parseCustomerOrdersResponse(input: unknown): CustomerOrdersResponse | null {
   if (!isRecord(input)) return null;
   const orders = parseArray(input['orders'], parseCustomerOrder);
-  return orders ? { orders } : null;
+  if (!orders) return null;
+  if (input['expired'] === undefined) return { orders };
+  const expired = parseArray(input['expired'], parseExpiredOrder);
+  return expired ? { orders, expired } : null;
 }
 
 export function parseSellerOrderResponse(input: unknown): SellerOrderResponse | null {

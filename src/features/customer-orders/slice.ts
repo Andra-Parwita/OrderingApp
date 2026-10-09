@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { CustomerOrder } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
+import type { ExpiredOrder } from '../../../shared/orderContract';
 import type { SavedOrder } from '../../api/device/myOrders';
 import type { ApiFailure } from '../../api/http';
 
@@ -9,13 +10,20 @@ export type FailureCode = ApiFailure['error'];
 export type ListState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; orders: Array<CustomerOrder>; saved: Array<SavedOrder> }
+  | {
+      status: 'ready';
+      orders: Array<CustomerOrder>;
+      /** Closed-week orders whose details are gone (D-044): shown as a one-line entry. */
+      expired: Array<ExpiredOrder>;
+      saved: Array<SavedOrder>;
+    }
   | { status: 'error'; code: FailureCode };
 
 export type OrderPageState =
   | { status: 'idle' }
   | { status: 'loading' }
   | { status: 'ready'; order: CustomerOrder }
+  | { status: 'expired'; order: ExpiredOrder }
   | { status: 'error'; code: FailureCode };
 
 /**
@@ -52,9 +60,13 @@ const slice = createSlice({
     },
     listLoaded(
       state,
-      action: PayloadAction<{ orders: Array<CustomerOrder>; saved: Array<SavedOrder> }>,
+      action: PayloadAction<{
+        orders: Array<CustomerOrder>;
+        expired?: Array<ExpiredOrder>;
+        saved: Array<SavedOrder>;
+      }>,
     ) {
-      state.list = { status: 'ready', ...action.payload };
+      state.list = { status: 'ready', ...action.payload, expired: action.payload.expired ?? [] };
     },
     listFailed(state, action: PayloadAction<FailureCode>) {
       state.list = { status: 'error', code: action.payload };
@@ -86,6 +98,10 @@ const slice = createSlice({
       state.order = { status: 'ready', order: action.payload };
       state.cancel = { status: 'idle' };
     },
+    orderExpired(state, action: PayloadAction<ExpiredOrder>) {
+      state.order = { status: 'expired', order: action.payload };
+      state.cancel = { status: 'idle' };
+    },
     orderFailed(state, action: PayloadAction<FailureCode>) {
       state.order = { status: 'error', code: action.payload };
     },
@@ -110,6 +126,7 @@ export const {
   orderRequested,
   orderRefreshRequested,
   orderLoaded,
+  orderExpired,
   orderFailed,
   cancelRequested,
   cancelFailed,

@@ -12,6 +12,17 @@ export const API_ERROR_CODES = [
   'invalid_status',
   'order_locked',
   'ordering_closed',
+  'item_has_orders',
+  'limit_reached',
+  'no_items',
+  'confirm_required',
+  'week_not_draft',
+  'week_closed',
+  'unknown_chef',
+  'image_type',
+  'image_too_big',
+  'image_ratio',
+  'invalid_backup',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
