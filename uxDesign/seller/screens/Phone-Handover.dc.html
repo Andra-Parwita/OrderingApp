@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pickup and delivery · phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.i-l{width:22px;height:22px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em}
+.noscroll{scrollbar-width:none}
+.noscroll::-webkit-scrollbar{display:none}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; color: var(--text); background: var(--surf); {{vars}}">
+  <div style="padding: 16px 16px 10px">
+    <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">Pickup &amp; delivery</h1>
+    <span style="font-size: 13px; color: var(--muted)">Sat 17 Oct</span>
+  </div>
+  <div role="tablist" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 16px 8px; padding: 3px; border-radius: 12px; background: var(--surf2)">
+    <button role="tab" aria-selected="{{pS}}" onClick="{{toP}}" style="min-height: 40px; border-radius: 10px; text-align: center; font-size: 14px; {{pStyle}}">Pickup · <span class="tn">6</span></button>
+    <button role="tab" aria-selected="{{dS}}" onClick="{{toD}}" style="min-height: 40px; border-radius: 10px; text-align: center; font-size: 14px; {{dStyle}}">Delivery · <span class="tn">4</span></button>
+  </div>
+
+  <div class="noscroll" style="flex: 1; min-height: 0; overflow-y: auto">
+    <sc-if value="{{isP}}" hint-placeholder-val="{{ true }}">
+      <sc-for list="{{places}}" as="pl" hint-placeholder-count="2">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px 8px; border-bottom: 1px solid var(--line)">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 1px">
+            <span style="font-size: 17px; font-weight: 700">{{pl.place}} <span class="tn" style="font-size: 13px; font-weight: 500; color: var(--muted)">· {{pl.time}}</span></span>
+            <span class="tn" style="font-size: 12px; color: {{pl.lastColor}}">{{pl.last}}</span>
+          </div>
+          <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 22px; background: var(--surf2); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"></path></svg>Message {{pl.waiting}}</button>
+        </div>
+        <sc-for list="{{pl.rows}}" as="r" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 1px; padding: 10px 16px; border-bottom: 1px solid var(--line); {{r.style}}">
+            <span style="display: flex; gap: 10px; align-items: baseline"><span class="mono" style="font-size: 14px; font-weight: 600">{{r.code}}</span><span style="font-weight: 600; {{r.nameStyle}}">{{r.name}}</span><span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{r.payColor}}">{{r.pay}}</span></span>
+            <span style="font-size: 12px; color: var(--muted)">{{r.items}} <span style="color: {{r.sColor}}">· {{r.status}}</span></span>
+          </div>
+        </sc-for>
+      </sc-for>
+    </sc-if>
+    <sc-if value="{{isD}}" hint-placeholder-val="{{ false }}">
+      <p style="margin: 6px 16px 4px; font-size: 12px; color: var(--muted)">Addresses are in your WhatsApp chats. Each step notifies that customer.</p>
+      <sc-for list="{{deliveries}}" as="d" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); {{d.style}}">
+          <span style="display: flex; gap: 10px; align-items: baseline"><span style="font-weight: 600; font-size: 16px">{{d.name}}</span><span class="mono" style="font-size: 12px; color: var(--muted)">{{d.code}}</span><span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{d.payColor}}">{{d.pay}}</span></span>
+          <span style="font-size: 12px; color: var(--muted)">{{d.done}}</span>
+          <sc-if value="{{d.hasNext}}" hint-placeholder-val="{{ true }}">
+            <button style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 12px; background: var(--fill); color: var(--on); font-weight: 700">{{d.next}}</button>
+          </sc-if>
+        </div>
+      </sc-for>
+    </sc-if>
+  </div>
+
+  <nav aria-label="Main" style="flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--panel); border-top: 1px solid var(--line); padding: 4px 8px 20px">
+    <a href="Phone-Orders.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none">
+      <span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></span>Orders
+    </a>
+    <button aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 700; color: var(--atext)">
+      <span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px; border-radius: 15px; background: var(--tint)"><svg class="i i-l" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg></span>Pickup &amp; delivery
+    </button>
+    <a href="Phone-More.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none">
+      <span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></span>More
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"view":{"editor":"enum","options":["pickup","delivery"],"default":"pickup","section":"Layout"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = { dark: { text:'#F1EEE6', muted:'#A9AFA3', ctrl:'#6B7266', conf:'#7EC4B0', warn:'#E9B949' }, light:{ text:'#1C1F1A', muted:'#5D6358', ctrl:'#7F857A', conf:'#1F6B5C', warn:'#8A5A00' } };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const view = this.state.view ?? this.props.view ?? 'pickup';
+    const rowsOf = rows => rows.map(r => {
+      const done = r[3] === 'Collected';
+      return { code:r[1], name:r[0], items:r[2], status: done ? 'Collected ' + r[5] : r[3], pay:r[4],
+        sColor: done ? t.muted : r[3] === 'Ready' ? t.conf : t.text, payColor: r[4] === 'Paid' ? t.muted : t.warn,
+        style: done ? 'opacity: .55' : '', nameStyle: done ? 'text-decoration: line-through' : '' };
+    });
+    const places = [
+      { place:'Glenelg', time:'11:00–13:00', waiting:'3', last:'✓ Sent "Ready in 15 min" at 10:40', lastColor:t.conf,
+        rows: rowsOf([['Wulan','K7M2QX','2× Rendang · 1× Nasi Ayam Bali · 1× Onde onde','Ready','Not paid · $58'],['Dewi','Q2N6VS','2× Onde onde','Ready','Not paid · $30'],['Ketut','E3X5NR','4× Nasi Ayam Bali','Confirmed','Not paid · $62']]) },
+      { place:'Clayton', time:'10:00–12:00', waiting:'1', last:'✓ Sent "Ready for pickup" at 9:55', lastColor:t.conf,
+        rows: rowsOf([['Tom','W1L7HB','2× Sayur urab','Ready','Not paid · $17'],['Siti','B3R9TP','1× Nasi Ayam Bali · 1× Sayur urab','Collected','Paid','10:12'],['Rachel','R4G8YA','2× Rendang · 2× Onde onde','Collected','Paid','10:31']]) }
+    ];
+    const steps = ['Out for delivery','Arriving soon','Delivered'];
+    const deliveries = [['H8D4LM','Michael','Not paid · $71',2],['T5J1WC','Anastasia','Paid',1],['C6P2ZU','Putri','Not paid · $29',0],['Y8S2DF','Linh','Paid',3]].map(d => ({
+      code:d[0], name:d[1], pay:d[2], payColor: d[2] === 'Paid' ? t.muted : t.warn,
+      done: d[3] ? '✓ ' + steps.slice(0, d[3]).join(' · ✓ ') : 'Not started',
+      hasNext: d[3] < 3, next: d[3] < 3 ? steps[d[3]] : '', style: d[3] === 3 ? 'opacity: .55' : '' }));
+    const on = 'background: var(--surf); box-shadow: 0 1px 3px rgba(0,0,0,.2); font-weight: 700';
+    const off = 'color: var(--muted); font-weight: 600';
+    return { vars: Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';'), places, deliveries,
+      isP: view === 'pickup', isD: view === 'delivery', pS: view === 'pickup' ? 'true' : 'false', dS: view === 'delivery' ? 'true' : 'false',
+      pStyle: view === 'pickup' ? on : off, dStyle: view === 'delivery' ? on : off,
+      toP: () => this.setState({ view: 'pickup' }), toD: () => this.setState({ view: 'delivery' }) };
+  }
+}
+</script>
+</body>
+</html>

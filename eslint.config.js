@@ -84,6 +84,8 @@ export default tseslint.config(
       'scratch',
       'test-results',
       'playwright-report',
+      'uxDesign',
+      'temp',
     ],
   },
   js.configs.recommended,

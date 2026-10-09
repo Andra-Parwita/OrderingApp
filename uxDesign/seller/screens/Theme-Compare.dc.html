@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Theme comparison</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.i{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+</style>
+</helmet>
+<div style="width: 1780px; height: 1000px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; background: #0B0C0A; color: #F1EEE6; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px">
+  <div style="display: flex; align-items: baseline; gap: 16px">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Themes side by side</h1>
+    <span style="color: #A9AFA3; font-size: 14px">Same Orders screen. Only the accent and the tint of the backgrounds change.</span>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 32px">
+    <sc-for list="{{cells}}" as="c" hint-placeholder-count="6">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span style="font-size: 14px; font-weight: 700">{{c.label}} <span style="color: #A9AFA3; font-weight: 500">· {{c.mode}}</span></span>
+        <div style="height: 380px; border-radius: 12px; overflow: hidden; display: flex; border: 1px solid #2A2E27; background: {{c.t.bg}}; color: {{c.t.text}}">
+          <div style="width: 52px; flex: none; background: {{c.t.panel}}; border-right: 1px solid {{c.t.line}}; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 12px">
+            <span style="width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; background: {{c.t.fill}}; color: {{c.t.on}}">O</span>
+            <span style="width: 34px; height: 30px; border-radius: 8px; margin-top: 8px; display: flex; align-items: center; justify-content: center; background: {{c.t.tint}}; color: {{c.t.atext}}"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></span>
+            <span style="width: 34px; height: 30px; display: flex; align-items: center; justify-content: center; color: {{c.t.muted}}"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20"></path></svg></span>
+            <span style="width: 34px; height: 30px; display: flex; align-items: center; justify-content: center; color: {{c.t.muted}}"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5z"></path></svg></span>
+            <span style="width: 34px; height: 30px; display: flex; align-items: center; justify-content: center; color: {{c.t.muted}}"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg></span>
+          </div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; background: {{c.t.kbg}}">
+            <img src="/_blob/139c9225826686b89d154aeadf54b8f8" alt="" style="width: 100%; height: 70px; object-fit: cover; object-position: center 40%; display: block">
+            <div style="flex: 1; display: flex; flex-direction: column; background: {{c.t.surf}}; border-radius: 10px 10px 0 0">
+              <div style="padding: 10px 14px 0; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid {{c.t.line}}">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span style="font-size: 16px; font-weight: 700">Orders</span>
+                  <span style="font-size: 10px; font-weight: 600; color: {{c.t.atext}}">● Live</span>
+                  <span style="margin-left: auto; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 7px; background: {{c.t.fill}}; color: {{c.t.on}}">+ New order</span>
+                </div>
+                <span style="font-size: 10px; color: {{c.t.muted}}">Menu for Sat 17 Oct · Orders close Thu, 8:00 pm</span>
+                <div style="display: flex; gap: 12px; font-size: 11px">
+                  <span style="padding: 6px 0; border-bottom: 2px solid {{c.t.fill}}; font-weight: 700">All <span style="padding: 0 5px; border-radius: 6px; background: {{c.t.fill}}; color: {{c.t.on}}">11</span></span>
+                  <span style="padding: 6px 0; color: {{c.t.muted}}">Ordered 4</span>
+                  <span style="padding: 6px 0; color: {{c.t.muted}}">Confirmed 6</span>
+                  <span style="padding: 6px 0; color: {{c.t.muted}}">Cancelled 1</span>
+                </div>
+              </div>
+              <sc-for list="{{c.rows}}" as="r" hint-placeholder-count="5">
+                <div style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid {{c.t.line}}; {{r.sel}}">
+                  <span class="mono" style="font-size: 10px; color: {{c.t.muted}}">{{r.code}}</span>
+                  <span style="font-weight: 600">{{r.name}}</span>
+                  <span style="font-size: 10px; font-weight: 600; color: {{c.t.warn}}; opacity: {{r.changed}}">Changed</span>
+                  <span style="margin-left: auto; font-size: 11px; font-weight: 600; width: 74px; color: {{r.scol}}">{{r.status}}</span>
+                  <span class="tn" style="font-weight: 600; width: 50px; text-align: right">{{r.total}}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"themes":{"editor":"enum","options":["onde · bali · sumatra","onde · sunda · jawa","bali · sumatra · jawa"],"default":"onde · bali · sumatra"},"$preview":{"width":1780,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const N = {
+      dark: { text:'#F1EEE6', muted:'#A9AFA3', conf:'#7EC4B0', warn:'#E9B949', danger:'#EE8B78' },
+      light:{ text:'#1C1F1A', muted:'#5D6358', conf:'#1F6B5C', warn:'#8A5A00', danger:'#A93724' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const names = { onde:'Onde Onde · Daun', bali:'Bali · Laut', sumatra:'Sumatra · Songket', sunda:'Sunda · Nila', jawa:'Jawa · Sogan' };
+    const pick = (this.props.themes ?? 'onde · bali · sumatra').split(' · ');
+    const data = [
+      ['K7M2QX','Wulan','Ordered','$58.00',true,'text',true],
+      ['B3R9TP','Siti','Confirmed','$26.50',false,'conf',false],
+      ['H8D4LM','Michael','Confirmed','$71.00',false,'conf',false],
+      ['C6P2ZU','Putri','Ordered','$29.00',true,'text',false],
+      ['M9F3KE','Budi','Cancelled','$18.00',false,'danger',false]
+    ];
+    const cells = [];
+    ['dark','light'].forEach(m => pick.forEach(k => {
+      const t = Object.assign({}, N[m], B[k][m]);
+      const rows = data.map(r => ({ code:r[0], name:r[1], status:r[2], total:r[3], changed: r[4] ? '1' : '0', scol: t[r[5]], sel: r[6] ? 'background: ' + t.tint : '' }));
+      cells.push({ label: names[k], mode: m === 'dark' ? 'Dark' : 'Light', t, rows });
+    }));
+    return { cells };
+  }
+}
+</script>
+</body>
+</html>

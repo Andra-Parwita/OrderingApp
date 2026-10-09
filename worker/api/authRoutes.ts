@@ -246,6 +246,7 @@ export async function handleAdmin(
     string | undefined,
     string | undefined,
   ],
+  devTools = false,
 ): Promise<Response | null> {
   const method = request.method;
 
@@ -274,7 +275,11 @@ export async function handleAdmin(
         return error('slug_taken', 'That link is already taken');
       }
       return Response.json(
-        { seller: await store.addSeller(input.name, input.slug) } satisfies SellerResponse,
+        {
+          seller: await store.addSeller(input.name, input.slug, {
+            sampleImages: devTools,
+          }),
+        } satisfies SellerResponse,
         {
           status: 201,
         },

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input{font:inherit}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.06em}
+.kbg{background:var(--kbg) url(/_blob/9d66d22b795fcd89723161f5d44240c8) center/cover}
+input::placeholder{color:var(--muted)}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: {{w}}px; height: {{h}}px; display: flex; flex-direction: {{dir}}; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.45; color: var(--text); background: var(--surf); {{vars}}">
+  <div class="kbg" style="{{artStyle}}; display: flex; align-items: center; justify-content: center">
+    <img src="/_blob/acd48bfd8fe58ccb5848726b21276ba5" alt="Onde Onde, Indonesian homemade food" style="width: 100%; aspect-ratio: 3 / 1; object-fit: cover; object-position: center 40%; display: block">
+  </div>
+
+  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; padding: {{pad}}">
+    <div style="display: flex; justify-content: flex-end">
+      <div role="group" aria-label="Language" style="display: flex; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+        <button aria-pressed="true" style="min-width: 48px; min-height: 40px; text-align: center; font-weight: 700; font-size: 13px; background: var(--tint); color: var(--atext)">EN</button>
+        <button aria-pressed="false" style="min-width: 48px; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; color: var(--muted)">ID</button>
+      </div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px; max-width: 400px; width: 100%; margin: 0 auto">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <img src="/_blob/746b8d28ebdfff1101b66e7f1a47dc87" alt="" style="width: 48px; height: 48px; border-radius: 12px; object-fit: cover">
+        <span style="font-size: 18px; font-weight: 700">Onde Onde</span>
+      </div>
+
+      <!-- SIGN IN -->
+      <sc-if value="{{sSignin}}" hint-placeholder-val="{{ true }}">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Sign in</h1>
+        <button style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border-radius: 12px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 16px"><svg class="i" viewBox="0 0 24 24"><path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 0 0 5 0"></path></svg>Sign in with face or fingerprint</button>
+        <button onClick="{{toPassword}}" style="min-height: 48px; border-radius: 12px; border: 1px solid var(--ctrl); font-weight: 600; text-align: center">Use password instead</button>
+        <div style="height: 1px; background: var(--line); margin: 6px 0"></div>
+        <button onClick="{{toFirst}}" style="display: flex; align-items: center; gap: 10px; min-height: 48px; font-weight: 600; color: var(--atext)"><svg class="i" viewBox="0 0 24 24"><path d="M15 7a4 4 0 1 1-3.9 4.9L3 20v-3l1-1v-2h2l1.2-1.2"></path></svg>First time on this device? Use your invite key</button>
+        <span style="font-size: 13px; color: var(--muted)">Lost access? Ask the person who set you up for a new key.</span>
+      </sc-if>
+
+      <!-- PASSWORD -->
+      <sc-if value="{{sPassword}}" hint-placeholder-val="{{ false }}">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Sign in with password</h1>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Username<input value="ira" autocomplete="username" style="height: 48px; padding: 0 14px; border: 1px solid var(--ctrl); border-radius: 12px; background: none; color: var(--text); font-size: 16px"></label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Password
+          <span style="display: flex; align-items: center; height: 48px; padding: 0 4px 0 14px; border: 1px solid var(--ctrl); border-radius: 12px">
+            <input type="password" value="onde-onde-2026" autocomplete="current-password" style="flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--text); font-size: 16px">
+            <button style="min-height: 40px; padding: 0 10px; color: var(--atext); font-weight: 600; font-size: 13px">Show</button>
+          </span>
+        </label>
+        <button style="min-height: 52px; border-radius: 12px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 16px; text-align: center">Sign in</button>
+        <button onClick="{{toSignin}}" style="min-height: 44px; color: var(--atext); font-weight: 600; text-align: center">Use face or fingerprint instead</button>
+      </sc-if>
+
+      <!-- FIRST TIME -->
+      <sc-if value="{{sFirst}}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{toSignin}}" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; min-height: 40px; color: var(--atext); font-weight: 600"><svg class="i" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"></path></svg>Back</button>
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Join Onde Onde on this device</h1>
+        <div role="tablist" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; border-radius: 12px; background: var(--surf2)">
+          <button role="tab" aria-selected="{{keyS}}" onClick="{{byKey}}" style="min-height: 42px; border-radius: 10px; text-align: center; font-size: 14px; {{keyStyle}}">Invite key</button>
+          <button role="tab" aria-selected="{{codeS}}" onClick="{{byCode}}" style="min-height: 42px; border-radius: 10px; text-align: center; font-size: 14px; {{codeStyle}}">6-digit code</button>
+        </div>
+        <sc-if value="{{isKey}}" hint-placeholder-val="{{ true }}">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Invite key from the kitchen owner
+            <input value="DLV-8Z8R-3PHY-LYFD-LMZ5" class="mono" style="height: 52px; padding: 0 14px; border: 1.5px solid var(--fill); border-radius: 12px; background: none; color: var(--text); font-size: 17px; font-weight: 600; text-transform: uppercase">
+          </label>
+          <span style="font-size: 13px; color: var(--muted)">Paste it from WhatsApp. Dashes and lowercase are fine. A key works for 24 hours.</span>
+        </sc-if>
+        <sc-if value="{{isCode}}" hint-placeholder-val="{{ false }}">
+          <span style="font-size: 13px; font-weight: 600">Code shown on your other device</span>
+          <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+            <sc-for list="{{digits}}" as="d" hint-placeholder-count="6">
+              <span class="tn" style="height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; {{d.style}}">{{d.v}}</span>
+            </sc-for>
+          </div>
+          <span style="font-size: 13px; color: var(--muted)">On a device that's already signed in: Settings › Devices › Add a device.</span>
+        </sc-if>
+        <button onClick="{{toCreate}}" style="min-height: 52px; border-radius: 12px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 16px; text-align: center">Continue</button>
+      </sc-if>
+
+      <!-- CREATE PASSKEY OR PASSWORD -->
+      <sc-if value="{{sCreate}}" hint-placeholder-val="{{ false }}">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Welcome, Sari</h1>
+        <p style="margin: 0; color: var(--muted)">How do you want to sign in on this device from now on?</p>
+        <button style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1.5px solid var(--fill); background: var(--tint)">
+          <svg class="i" viewBox="0 0 24 24" style="width: 28px; height: 28px; color: var(--atext)"><path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 0 0 5 0"></path></svg>
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 700">Face or fingerprint</span><span style="font-size: 13px; color: var(--muted)">Recommended. Nothing to remember.</span></span>
+          <svg class="i" viewBox="0 0 24 24" style="color: var(--atext)"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+        <button style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--ctrl)">
+          <svg class="i" viewBox="0 0 24 24" style="width: 28px; height: 28px; color: var(--muted)"><path d="M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+          <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 700">Set a password</span><span style="font-size: 13px; color: var(--muted)">For devices without face or fingerprint.</span></span>
+          <svg class="i" viewBox="0 0 24 24" style="color: var(--muted)"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"device":{"editor":"enum","options":["tablet","phone"],"default":"tablet","section":"Layout"},"step":{"editor":"enum","options":["sign in","password","first time","create"],"default":"sign in","section":"Layout"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = { dark: { text:'#F1EEE6', muted:'#A9AFA3', ctrl:'#6B7266' }, light:{ text:'#1C1F1A', muted:'#5D6358', ctrl:'#7F857A' } };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const phone = (this.props.device ?? 'tablet') === 'phone';
+    const map = { 'sign in':'signin', 'password':'password', 'first time':'first', 'create':'create' };
+    const step = this.state.step ?? map[this.props.step ?? 'sign in'];
+    const by = this.state.by ?? 'key';
+    const on = 'background: var(--surf); box-shadow: 0 1px 3px rgba(0,0,0,.2); font-weight: 700';
+    const off = 'color: var(--muted); font-weight: 600';
+    const digits = ['4','8','2','','',''].map((v, i) => ({ v, style: i === 3 ? 'border: 2px solid var(--fill)' : v ? 'background: var(--surf2)' : 'border: 1px solid var(--ctrl)' }));
+    return { vars: Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';'),
+      w: phone ? 390 : 1180, h: phone ? 844 : 820, dir: phone ? 'column' : 'row',
+      artStyle: phone ? 'flex: none; height: 150px' : 'flex: 1; min-width: 0',
+      pad: phone ? '12px 20px 28px' : '20px 48px 40px',
+      sSignin: step === 'signin', sPassword: step === 'password', sFirst: step === 'first', sCreate: step === 'create',
+      isKey: by === 'key', isCode: by === 'code', keyS: by === 'key' ? 'true' : 'false', codeS: by === 'code' ? 'true' : 'false',
+      keyStyle: by === 'key' ? on : off, codeStyle: by === 'code' ? on : off, digits,
+      toPassword: () => this.setState({ step: 'password' }), toSignin: () => this.setState({ step: 'signin' }),
+      toFirst: () => this.setState({ step: 'first' }), toCreate: () => this.setState({ step: 'create' }),
+      byKey: () => this.setState({ by: 'key' }), byCode: () => this.setState({ by: 'code' }) };
+  }
+}
+</script>
+</body>
+</html>

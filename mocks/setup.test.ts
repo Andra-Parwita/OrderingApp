@@ -642,7 +642,11 @@ describe('seller setup', () => {
       for (const slot of ['desktopBanner', 'phoneBanner', 'railImage', 'bannerBackgroundImage']) {
         await call('DELETE', `/api/seller/images/${slot}`, B_);
       }
-      expect((await publicMenu(B)).kitchen.images).toBeUndefined();
+      // Dapur Demo starts with the sample colour and alt text (D-054); no picture is left.
+      expect(Object.keys((await publicMenu(B)).kitchen.images ?? {}).sort()).toEqual([
+        'alt',
+        'bannerBackground',
+      ]);
     });
 
     it('refuses the wrong type, shape and size, and unknown slots', async () => {

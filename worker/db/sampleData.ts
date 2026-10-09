@@ -1,4 +1,12 @@
-import type { Chef, Kitchen, KitchenSettings, MenuItem, Seller, Week } from '../../shared/domain';
+import type {
+  Chef,
+  Kitchen,
+  KitchenImages,
+  KitchenSettings,
+  MenuItem,
+  Seller,
+  Week,
+} from '../../shared/domain';
 import { comingSaturday, defaultCutoffAt } from '../../shared/dates';
 
 /** Everything one seller owns (D-036). */
@@ -16,24 +24,31 @@ export type SellerFixture = {
 export const ONDE_ID = 'seller-onde-onde';
 export const DEMO_ID = 'seller-dapur-demo';
 
-const ondeKitchen: Kitchen = {
-  sellerId: ONDE_ID,
-  name: 'Onde Onde',
-  tagline: { en: 'Indonesian homemade food', id: 'Masakan rumahan Indonesia' },
-  // Dev-only copies of the owner's five Onde Onde images (D-040): banners shown whole, never
-  // cropped; the blurred background image sits behind the wide banner, the brown is its fallback.
-  images: {
+/**
+ * Dev-only copies of the owner's five Onde Onde images (D-040, D-054): banners shown whole, never
+ * cropped; the blurred background image sits behind the wide banner, the brown is its fallback.
+ * `alt` names the kitchen the pictures are shown for.
+ */
+export function sampleImages(altEn: string, altId: string): KitchenImages {
+  return {
     desktopBanner: '/samples/banner-wide.jpg',
     phoneBanner: '/samples/banner-phone.jpg',
     railImage: '/samples/rail.png',
     railIcon: '/samples/rail-icon.png',
     bannerBackgroundImage: '/samples/banner-bg.jpg',
     bannerBackground: '#835937',
-    alt: {
-      en: 'Onde Onde — Indonesian homemade food',
-      id: 'Onde Onde — masakan rumahan Indonesia',
-    },
-  },
+    alt: { en: altEn, id: altId },
+  };
+}
+
+const ondeKitchen: Kitchen = {
+  sellerId: ONDE_ID,
+  name: 'Onde Onde',
+  tagline: { en: 'Indonesian homemade food', id: 'Masakan rumahan Indonesia' },
+  images: sampleImages(
+    'Onde Onde — Indonesian homemade food',
+    'Onde Onde — masakan rumahan Indonesia',
+  ),
 };
 
 // Dates are as given in the brief (cooking Sat 10 Oct 2026, cut-off Fri 9 Oct 21:00 Melbourne, AEDT = +11:00).
@@ -130,6 +145,7 @@ const demoKitchen: Kitchen = {
   sellerId: DEMO_ID,
   name: 'Dapur Demo',
   tagline: { en: 'A small second kitchen', id: 'Dapur kecil kedua' },
+  images: sampleImages('Dapur Demo — a small second kitchen', 'Dapur Demo — dapur kecil kedua'),
 };
 
 const demoWeek: Week = {
@@ -214,7 +230,11 @@ export const fixtureSellers: ReadonlyArray<SellerFixture> = [
  * week is the coming Saturday, with the sample default cut-off (the evening before, 21:00); the
  * pickup point, with its times, is the seller's to add. `createdAt` is the moment of creation.
  */
-export function blankFixture(seller: Seller, createdAt: string): SellerFixture {
+export function blankFixture(
+  seller: Seller,
+  createdAt: string,
+  sampleImagesOn = false,
+): SellerFixture {
   const cookingDate = comingSaturday(new Date(createdAt));
   const week: Week = {
     ...structuredClone((fixtureSellers[0] as SellerFixture).week),
@@ -227,7 +247,12 @@ export function blankFixture(seller: Seller, createdAt: string): SellerFixture {
   return {
     seller: { ...seller },
     createdAt,
-    kitchen: { sellerId: seller.id, name: seller.name, tagline: { en: '', id: '' } },
+    kitchen: {
+      sellerId: seller.id,
+      name: seller.name,
+      tagline: { en: '', id: '' },
+      ...(sampleImagesOn ? { images: sampleImages(seller.name, seller.name) } : {}),
+    },
     week,
     chefs: [],
     items: [],

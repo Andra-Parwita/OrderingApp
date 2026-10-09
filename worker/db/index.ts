@@ -163,10 +163,10 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
     },
 
     /** The caller has checked the slug (valid, unique). */
-    async addSeller(name, slug): Promise<AdminSeller> {
+    async addSeller(name, slug, opts): Promise<AdminSeller> {
       const seller: Seller = { id: `seller-${slug}`, slug, name };
       const createdAt = options.now().toISOString();
-      await db.batch(newSellerStatements(db, seller, createdAt));
+      await db.batch(newSellerStatements(db, seller, createdAt, opts?.sampleImages));
       return { ...seller, createdAt };
     },
 

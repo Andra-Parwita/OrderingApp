@@ -26,6 +26,11 @@ All colours, spacing and type come from design tokens, with no literal values in
 
 Mock-ups come before any UI build. The images in [briefs/mock](../../briefs/mock/) are for the owner's eye only, never a build source.
 
+## Briefs
+
+- [seller-ux-brief.md](seller-ux-brief.md): the seller app for the UX designer: screen catalog, what the seller does, the fixed two-panel layout, rules. Draft, 2026-10-09.
+- [customer-ux-brief.md](customer-ux-brief.md): the customer side for the UX designer: what customers do, screens and fields, rules. Standalone (no links). Draft, 2026-10-09.
+
 ## Flows
 
 - [workflow.html](workflow.html): the weekly cycle as a sequence diagram (customer, server, seller), with the WhatsApp hand-offs marked. Draft, 2026-10-07.

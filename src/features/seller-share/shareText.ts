@@ -110,6 +110,7 @@ function oneLanguage(
   settings: ShareSettings,
   lang: Language,
   origin: string,
+  slug: string,
 ): string {
   const words = WORDS[lang];
   const parts: Array<string> = [
@@ -119,7 +120,7 @@ function oneLanguage(
     [`${words.orderBefore} ${formatCutoff(menu.cutoffAt, lang)}`, ...pickupLines(menu, lang)].join(
       '\n',
     ),
-    `${words.orderHere}: ${origin}/`,
+    `${words.orderHere}: ${origin}/${slug}`,
     fillPhone(settings.postClosing[lang], settings.whatsappNumber),
   ];
   return parts.filter((part) => part !== '').join('\n\n');
@@ -130,13 +131,14 @@ export function buildShareText(
   settings: ShareSettings,
   post: PostLanguage,
   origin: string,
+  slug: string,
 ): string {
   if (post === 'both') {
     return [
-      oneLanguage(menu, settings, 'id', origin),
+      oneLanguage(menu, settings, 'id', origin, slug),
       SEPARATOR,
-      oneLanguage(menu, settings, 'en', origin),
+      oneLanguage(menu, settings, 'en', origin, slug),
     ].join('\n\n');
   }
-  return oneLanguage(menu, settings, post, origin);
+  return oneLanguage(menu, settings, post, origin, slug);
 }

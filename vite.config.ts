@@ -35,6 +35,13 @@ const persist = persistState();
 
 export default defineConfig({
   plugins: [react(), cloudflare(persist ? { persistState: persist } : {})],
-  server: { https, host: true, port, strictPort: true },
+  server: {
+    https,
+    host: true,
+    port,
+    strictPort: true,
+    // Non-code folders: watching them on Windows keeps them open and blocks renames.
+    watch: { ignored: ['**/uxDesign/**', '**/temp/**', '**/docs/**', '**/briefs/**'] },
+  },
   preview: { https, host: true, port, strictPort: true },
 });

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Order · phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.i-l{width:22px;height:22px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.02em}
+.noscroll{scrollbar-width:none}
+.noscroll::-webkit-scrollbar{display:none}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; color: var(--text); background: var(--surf); {{vars}}">
+  <div style="flex: none; display: flex; align-items: center; height: 52px; padding: 0 4px; border-bottom: 1px solid var(--line)">
+    <a href="Phone-Orders.dc.html" style="display: inline-flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 12px 0 6px; color: var(--atext); text-decoration: none; font-weight: 600; font-size: 16px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>Orders</a>
+    <span class="mono" style="flex: 1; text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); margin-right: 92px">K7M2QX</span>
+  </div>
+
+  <div class="noscroll" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: 16px 16px 20px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Wulan</h1>
+      <div style="display: flex; align-items: center; gap: 14px; font-size: 14px">
+        <span style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z"></path></svg>Ordered</span>
+        <span style="display: inline-flex; align-items: center; gap: 5px; color: var(--muted)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"></path></svg>Pickup</span>
+        <span style="color: var(--muted)">Not paid</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--warnTint)">
+      <svg class="i" viewBox="0 0 24 24" style="color: var(--warn); margin-top: 1px"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg>
+      <div style="display: flex; flex-direction: column; gap: 2px; font-size: 14px">
+        <strong style="font-weight: 600">Wulan changed this order · 12 min ago</strong>
+        <span style="color: var(--muted)">Added 6× Onde onde.</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column">
+      <div style="display: grid; grid-template-columns: 1fr auto auto; column-gap: 14px; font-size: 15px">
+        <span style="padding: 10px 0; border-bottom: 1px solid var(--line)">Rendang <span style="color: var(--muted)">· regular</span></span><span class="tn" style="padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--muted)">×2</span><span class="tn" style="padding: 10px 0; border-bottom: 1px solid var(--line); text-align: right">$36.00</span>
+        <span style="padding: 10px 0; border-bottom: 1px solid var(--line)">Nasi Ayam Bali <span style="color: var(--muted)">· 1 box</span></span><span class="tn" style="padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--muted)">×1</span><span class="tn" style="padding: 10px 0; border-bottom: 1px solid var(--line); text-align: right">$15.50</span>
+        <span style="padding: 10px 0; border-bottom: 1px solid var(--line)">Onde onde <span style="color: var(--muted)">· pack of 6</span></span><span class="tn" style="padding: 10px 0; border-bottom: 1px solid var(--line); color: var(--muted)">×1</span><span class="tn" style="padding: 10px 0; border-bottom: 1px solid var(--line); text-align: right">$6.50</span>
+        <span style="padding: 12px 0 0; font-weight: 700">Total</span><span></span><span class="tn" style="padding: 12px 0 0; text-align: right; font-weight: 700; font-size: 17px">$58.00</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 13px; color: var(--muted)">Note from Wulan</span>
+      <span>Less spicy for the rendang, please.</span>
+    </div>
+
+    <dl style="margin: 0; display: grid; grid-template-columns: 104px 1fr; row-gap: 8px; column-gap: 12px; font-size: 14px">
+      <dt style="color: var(--muted)">Pickup</dt><dd style="margin: 0">Glenelg · Sat 17 Oct, 10:00–12:00</dd>
+      <dt style="color: var(--muted)">Language</dt><dd style="margin: 0">Indonesian</dd>
+      <dt style="color: var(--muted)">WhatsApp</dt><dd style="margin: 0">Order number received</dd>
+      <dt style="color: var(--muted)">Customer</dt><dd style="margin: 0">Returning · 4th order</dd>
+    </dl>
+
+    <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line)">
+      <button style="display: flex; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--line)"><svg class="i" viewBox="0 0 24 24" style="color: var(--muted)"><path d="M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3"></path></svg><span style="flex: 1">Lock order</span><span style="font-size: 13px; color: var(--muted)">Stops changes</span></button>
+      <button style="display: flex; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--line)"><svg class="i" viewBox="0 0 24 24" style="color: var(--muted)"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"></path></svg><span style="flex: 1">Nudge on WhatsApp</span><span style="font-size: 13px; color: var(--muted)">Reminder</span></button>
+      <button style="display: flex; align-items: center; gap: 12px; min-height: 48px; color: var(--danger)"><svg class="i" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM9 9l6 6M15 9l-6 6"></path></svg><span style="flex: 1">Cancel order</span></button>
+    </div>
+  </div>
+
+  <div style="flex: none; padding: 12px 16px 24px; border-top: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; gap: 8px">
+    <button style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border-radius: 14px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 16px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5zM9 12l2 2 4-4"></path></svg>Confirm &amp; send on WhatsApp</button>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+      <button style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; border-radius: 12px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 14px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Confirm only</button>
+      <button style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; border-radius: 12px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 14px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"></path></svg>Mark paid</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = {
+      dark: { panel:'#0E100D', surf:'#181A16', line:'#2A2E27', ctrl:'#6B7266', text:'#F1EEE6', muted:'#A9AFA3', warn:'#E9B949', warnTint:'rgba(233,185,73,.10)', danger:'#EE8B78' },
+      light:{ panel:'#EFEADD', surf:'#FFFDF8', line:'#E4DED0', ctrl:'#7F857A', text:'#1C1F1A', muted:'#5D6358', warn:'#8A5A00', warnTint:'#FBF1D9', danger:'#A93724' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    return { vars: Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';') };
+  }
+}
+</script>
+</body>
+</html>

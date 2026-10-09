@@ -20,7 +20,7 @@ describe('ShareScreen', () => {
 
   function renderShare() {
     renderWithStore(
-      <ShareScreen origin="https://orders.example" />,
+      <ShareScreen origin="https://orders.example" slug="onde-onde" />,
       createTestStore({ saga: true }),
     );
   }
@@ -29,7 +29,7 @@ describe('ShareScreen', () => {
     renderShare();
     const text = await previewText();
     expect(text).toContain('Menu Sabtu, 10 Okt');
-    expect(text).toContain('Pesan di sini: https://orders.example/');
+    expect(text).toContain('Pesan di sini: https://orders.example/onde-onde');
     // Lemper has a chef (Chef Wati) in the mock menu; the post must not say so.
     expect(text).toContain('Lemper ayam');
     expect(text).not.toMatch(/wati/i);

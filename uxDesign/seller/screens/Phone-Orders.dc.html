@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orders · phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.i-l{width:22px;height:22px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.02em}
+.noscroll{scrollbar-width:none}
+.noscroll::-webkit-scrollbar{display:none}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; display: flex; flex-direction: column; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; color: var(--text); background: var(--kbg); {{vars}}">
+  <div style="height: {{bannerH}}px; flex: none; overflow: hidden">
+    <img src="/_blob/acd48bfd8fe58ccb5848726b21276ba5" alt="Onde Onde, Indonesian homemade food" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
+  </div>
+
+  <section aria-label="Orders" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0">
+    <div style="padding: 14px 16px 8px; display: flex; flex-direction: column; gap: 2px">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Orders</h1>
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--atext)"><svg viewBox="0 0 8 8" style="width: 8px; height: 8px" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="currentColor"></circle></svg>Live</span>
+        <a href="Phone-NewOrder.dc.html" style="margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 22px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 14px; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>New order</a>
+      </div>
+      <div style="font-size: 13px; color: var(--muted)">Sat 17 Oct · Orders close Thu, 8:00 pm</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 8px 8px 16px; border-bottom: 1px solid var(--line)">
+      <button aria-haspopup="dialog" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px 0 14px; border-radius: 22px; background: var(--surf2); font-size: 14px; font-weight: 600">
+        All orders<span class="tn" style="color: var(--muted); font-weight: 500">11</span>
+        <svg class="i i-s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--warn)"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg><span class="tn">2</span> changed</span>
+      <button aria-label="Search orders" style="margin-left: auto; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; color: var(--text)"><svg class="i i-l" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14zM20 20l-4-4"></path></svg></button>
+    </div>
+
+    <div class="noscroll" style="flex: 1; min-height: 0; overflow-y: auto">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+        <div style="display: flex; align-items: center; border-bottom: 1px solid var(--line)">
+          <a href="Phone-Order.dc.html" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 4px 10px 16px; color: inherit; text-decoration: none">
+            <span style="display: flex; align-items: baseline; gap: 8px">
+              <span style="font-size: 16px; font-weight: 600; {{r.nameStyle}}">{{r.name}}</span>
+              <span class="mono tn" style="font-size: 12px; color: var(--muted)">{{r.code}}</span>
+              <span class="tn" style="margin-left: auto; font-size: 15px; font-weight: 600; {{r.totalStyle}}">{{r.total}}</span>
+            </span>
+            <span style="font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.items}}</span>
+            <span style="display: flex; align-items: center; gap: 12px; font-size: 13px">
+              <span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: {{r.sColor}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="{{r.sD}}"></path></svg>{{r.sLabel}}</span>
+              <sc-if value="{{r.changed}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: var(--warn)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg>Changed</span></sc-if>
+              <span style="display: inline-flex; align-items: center; gap: 4px; color: var(--muted)"><svg class="i i-s" viewBox="0 0 24 24"><path d="{{r.fulD}}"></path></svg>{{r.ful}}</span>
+              <sc-if value="{{r.paid}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 3px; font-weight: 600; color: var(--conf)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Paid</span></sc-if>
+            </span>
+          </a>
+          <button aria-label="{{r.waLabel}}" style="width: 52px; align-self: stretch; display: flex; align-items: center; justify-content: center; flex: none; color: var(--atext)">
+            <span style="width: 40px; height: 40px; border-radius: 20px; background: var(--tint); display: flex; align-items: center; justify-content: center"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5zM9 10.5h6M9 13.5h4"></path></svg></span>
+          </button>
+        </div>
+      </sc-for>
+      <div style="padding: 14px 16px 20px; font-size: 12px; color: var(--muted)">11 orders · Total <span class="tn">$454.50</span></div>
+    </div>
+  </section>
+
+  <nav aria-label="Main" style="flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--panel); border-top: 1px solid var(--line); padding: 4px 8px 20px">
+    <button aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 700; color: var(--atext)">
+      <span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px; border-radius: 15px; background: var(--tint)"><svg class="i i-l" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></span>Orders
+    </button>
+    <button style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted)">
+      <span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg></span>Pickup &amp; delivery
+    </button>
+    <button style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted)">
+      <span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></span>More
+    </button>
+  </nav>
+
+  <!-- Filter bottom sheet -->
+  <sc-if value="{{sheet}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; flex-direction: column; justify-content: flex-end">
+      <div role="dialog" aria-label="Show orders" style="background: var(--surf); border-radius: 20px 20px 0 0; padding: 8px 0 28px">
+        <div aria-hidden="true" style="width: 36px; height: 4px; border-radius: 2px; background: var(--ctrl); margin: 0 auto 10px"></div>
+        <div style="display: flex; align-items: center; padding: 0 8px 4px 20px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700; flex: 1">Show orders</h2>
+          <button aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+        <sc-for list="{{opts}}" as="o" hint-placeholder-count="8">
+          <sc-if value="{{o.head}}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 12px 20px 4px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">{{o.label}}</div>
+          </sc-if>
+          <sc-if value="{{o.item}}" hint-placeholder-val="{{ true }}">
+            <button role="menuitemradio" aria-checked="{{o.sel}}" style="display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 20px; box-sizing: border-box; font-size: 16px; font-weight: {{o.weight}}">
+              <svg class="i" viewBox="0 0 24 24" style="color: {{o.iconColor}}"><path d="{{o.d}}"></path></svg>
+              <span style="flex: 1">{{o.label}}</span>
+              <span class="tn" style="color: var(--muted); font-size: 14px">{{o.n}}</span>
+              <svg class="i" viewBox="0 0 24 24" style="color: var(--atext); opacity: {{o.check}}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+            </button>
+          </sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"filterSheet":{"editor":"boolean","default":false,"section":"Layout"},"scrolled":{"editor":"boolean","default":false,"section":"Layout"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const scrolled = this.props.scrolled ?? false;
+    const N = {
+      dark: { bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', ctrl:'#6B7266', text:'#F1EEE6', muted:'#A9AFA3', kbg:'#1D2A1A', conf:'#7EC4B0', warn:'#E9B949', danger:'#EE8B78' },
+      light:{ bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F1ECE0', line:'#E4DED0', ctrl:'#7F857A', text:'#1C1F1A', muted:'#5D6358', kbg:'#E9E3CF', conf:'#1F6B5C', warn:'#8A5A00', danger:'#A93724' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+    const P = {
+      all:'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+      circle:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z',
+      check:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM8 12.5l2.5 2.5L16 9.5',
+      xc:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM9 9l6 6M15 9l-6 6',
+      bag:'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2',
+      truck:'M2 6h12v10H2zM14 10h4l3 3v3h-7zM5 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M15 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0',
+      pencil:'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
+      cash:'M3 7h18v10H3zM12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4z',
+      ready:'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2M9.5 14l2 2 3.5-3.5',
+      done:'M3 12l4 4 8-8M11 16l1 1 9-9'
+    };
+    const S = { ordered:{ label:'Ordered', d:P.circle, color:t.text }, confirmed:{ label:'Confirmed', d:P.check, color:t.conf }, cancelled:{ label:'Cancelled', d:P.xc, color:t.danger } };
+    const data = [
+      ['K7M2QX','Wulan','2× Rendang · 1× Nasi Ayam Bali · 6× Onde onde','$58.00','p','ordered',false,true],
+      ['C6P2ZU','Putri','1× Nasi Ayam Bali · 6× Onde onde','$29.00','d','ordered',false,true],
+      ['Q2N6VS','Dewi','12× Onde onde','$30.00','p','ordered',false,false],
+      ['E3X5NR','Ketut','4× Nasi Ayam Bali','$62.00','p','ordered',false,false],
+      ['B3R9TP','Siti','1× Nasi Ayam Bali · 1× Sayur urab','$26.50','p','confirmed',true,false],
+      ['H8D4LM','Michael','3× Rendang · 2× Sambal matah','$71.00','d','confirmed',false,false],
+      ['T5J1WC','Anastasia','2× Nasi Ayam Bali · 2× Sayur urab · 1× Sambal matah','$54.50','d','confirmed',true,false],
+      ['R4G8YA','Rachel','2× Rendang · 12× Onde onde','$66.00','p','confirmed',true,false],
+      ['W1L7HB','Tom','2× Sayur urab','$17.00','p','confirmed',false,false],
+      ['Y8S2DF','Linh','1× Rendang · 1× Sambal matah','$22.50','d','confirmed',true,false],
+      ['M9F3KE','Budi','1× Rendang','$18.00','p','cancelled',false,false]
+    ];
+    const rows = data.map(r => {
+      const s = S[r[5]]; const cx = r[5] === 'cancelled';
+      return { code:r[0], name:r[1], items:r[2], total:r[3], ful: r[4] === 'p' ? 'Pickup' : 'Delivery', fulD: r[4] === 'p' ? P.bag : P.truck,
+        sLabel:s.label, sD:s.d, sColor:s.color, paid:r[6], changed:r[7],
+        waLabel: 'Send ' + r[1] + ' a WhatsApp message',
+        nameStyle: cx ? 'color: var(--muted)' : '', totalStyle: cx ? 'color: var(--muted); text-decoration: line-through' : '' };
+    });
+    const od = [
+      ['i','All orders',11,P.all,t.muted,true],
+      ['h','Needs a look'], ['i','Changed by customer',2,P.pencil,t.warn], ['i','Not paid',6,P.cash,t.muted],
+      ['h','By status'], ['i','Ordered',4,P.circle,t.text], ['i','Confirmed',6,P.check,t.conf], ['i','Ready',0,P.ready,t.muted], ['i','Done',0,P.done,t.muted], ['i','Cancelled',1,P.xc,t.danger]
+    ];
+    const opts = od.map(o => o[0] === 'h'
+      ? { head:true, item:false, label:o[1] }
+      : { head:false, item:true, label:o[1], n:o[2], d:o[3], iconColor:o[4], sel: o[5] ? 'true' : 'false', check: o[5] ? '1' : '0', weight: o[5] ? '700' : '500' });
+    return { vars, rows, opts, sheet: this.props.filterSheet ?? false, bannerH: scrolled ? 36 : 130 };
+  }
+}
+</script>
+</body>
+</html>

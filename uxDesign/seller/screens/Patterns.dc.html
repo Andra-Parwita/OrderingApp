@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Layout and interaction patterns</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.fr{position:relative;height:190px;border-radius:10px;background:#121411;border:1px solid #2A2E27;overflow:hidden}
+.ln{height:6px;border-radius:3px;background:#3A3F37}
+.lt{height:6px;border-radius:3px;background:#2A2E27}
+.ab{position:absolute}
+ul.r{margin:0;padding:0 0 0 16px;display:flex;flex-direction:column;gap:3px}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1760px; box-sizing: border-box; padding: 44px 48px; display: flex; flex-direction: column; gap: 28px; background: #0E100D; color: #F1EEE6; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.45">
+  <div style="display: flex; align-items: flex-end; gap: 32px">
+    <div style="flex: 1">
+      <h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.02em">Patterns</h1>
+      <p style="margin: 6px 0 0; color: #A9AFA3; font-size: 15px; max-width: 760px">Every screen in the brief uses one of these patterns. Build the pattern once, then each screen is content inside it.</p>
+    </div>
+    <div style="display: flex; gap: 18px; color: #A9AFA3; font-size: 12px">
+      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 8px; border-radius: 2px; background: #8CC08A"></span>main action</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 8px; border-radius: 2px; background: #EE8B78"></span>danger</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 8px; border-radius: 2px; background: #2B3A26"></span>banner</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px 28px">
+
+    <!-- 1 List + side panel -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D; border-right: 1px solid #2A2E27"></div>
+        <div class="ab" style="left: 27px; top: 0; width: 160px; height: 32px; background: #2B3A26"></div>
+        <div class="ab" style="left: 27px; top: 32px; width: 160px; bottom: 0; background: #181A16; border-radius: 8px 8px 0 0; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 9px">
+          <div class="ln" style="width: 50%; height: 8px"></div>
+          <div class="lt" style="width: 100%"></div><div class="ln" style="width: 80%"></div>
+          <div class="lt" style="width: 100%; background: #33452F; height: 12px"></div>
+          <div class="ln" style="width: 70%"></div><div class="lt"></div><div class="ln" style="width: 85%"></div>
+        </div>
+        <div class="ab" style="right: 0; top: 0; bottom: 0; width: 120px; background: #181A16; border-left: 1px solid #2A2E27; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+          <div class="ln" style="width: 70%; height: 9px"></div><div class="lt" style="width: 50%"></div><div class="lt"></div><div class="lt" style="width: 80%"></div>
+          <div style="margin-top: auto; height: 18px; border-radius: 4px; background: #8CC08A"></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">1 · List + side panel</h2>
+      <span style="color: #A9AFA3">Orders, Past orders, Delivery list</span>
+      <ul class="r"><li>The list stays visible and keeps its scroll place.</li><li>Panel 384px, closes with ×. One main action pinned at the bottom.</li><li>Phone: the panel becomes a full screen with Back.</li></ul>
+    </div>
+
+    <!-- 2 Slide-over -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 36px; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 12px"><div class="ln" style="width: 30%; height: 9px"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+        <div class="ab" style="inset: 0; background: rgba(0,0,0,.55)"></div>
+        <div class="ab" style="right: 0; top: 0; bottom: 0; width: 160px; background: #181A16; border-left: 1px solid #2A2E27; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 7px">
+          <div class="ln" style="width: 55%; height: 9px"></div>
+          <div style="display: flex; gap: 5px"><div style="flex: 1; height: 16px; border: 1px solid #6B7266; border-radius: 4px"></div><div style="flex: 1; height: 16px; border: 1px solid #6B7266; border-radius: 4px"></div></div>
+          <div style="display: flex; gap: 5px"><div style="flex: 1; height: 24px; border: 1px solid #6B7266; border-radius: 4px"></div><div style="flex: 1; height: 24px; border: 1px solid #6B7266; border-radius: 4px"></div></div>
+          <div style="height: 16px; width: 50%; border: 1px solid #6B7266; border-radius: 4px"></div>
+          <div style="margin-top: auto; display: flex; gap: 5px"><div style="flex: 1; height: 18px; border-radius: 4px; border: 1px solid #6B7266"></div><div style="flex: 1; height: 18px; border-radius: 4px; background: #8CC08A"></div></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">2 · Slide-over editor</h2>
+      <span style="color: #A9AFA3">Edit dish, New order</span>
+      <ul class="r"><li>Opens over the list with a dim backdrop. EN | ID fields side by side.</li><li>Cancel + Save pinned at the bottom.</li><li>Closing with unsaved changes asks first.</li></ul>
+    </div>
+
+    <!-- 3a Settings in panes -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; bottom: 0; background: #181A16"></div>
+        <div class="ab" style="left: 26px; top: 0; bottom: 30px; width: 76px; border-right: 1px solid #2A2E27; padding: 12px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
+          <div style="height: 16px; border-radius: 4px; background: #33452F; display: flex; align-items: center; padding: 0 6px"><div style="height: 5px; width: 70%; border-radius: 3px; background: #93C590"></div></div>
+          <div style="height: 16px; display: flex; align-items: center; padding: 0 6px"><div class="ln" style="width: 60%; height: 5px"></div></div>
+          <div style="height: 16px; display: flex; align-items: center; padding: 0 6px"><div class="ln" style="width: 75%; height: 5px"></div></div>
+          <div style="height: 16px; display: flex; align-items: center; padding: 0 6px"><div class="ln" style="width: 50%; height: 5px"></div></div>
+          <div style="height: 16px; display: flex; align-items: center; padding: 0 6px"><div class="ln" style="width: 65%; height: 5px"></div></div>
+        </div>
+        <div class="ab" style="left: 114px; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 8px">
+          <div class="ln" style="width: 40%; height: 9px"></div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px">
+            <div style="display: flex; flex-direction: column; gap: 4px"><div class="lt" style="width: 50%"></div><div style="height: 16px; border: 1px solid #6B7266; border-radius: 4px"></div></div>
+            <div style="display: flex; flex-direction: column; gap: 4px"><div class="lt" style="width: 50%"></div><div style="height: 16px; border: 1px solid #6B7266; border-radius: 4px"></div></div>
+            <div style="display: flex; flex-direction: column; gap: 4px"><div class="lt" style="width: 40%"></div><div style="height: 16px; border: 1px solid #6B7266; border-radius: 4px"></div></div>
+            <div style="display: flex; flex-direction: column; gap: 4px"><div class="lt" style="width: 40%"></div><div style="height: 16px; border: 1px solid #6B7266; border-radius: 4px"></div></div>
+          </div>
+        </div>
+        <div class="ab" style="left: 26px; right: 0; bottom: 0; height: 30px; background: #20231E; border-top: 1px solid #2A2E27; display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 0 12px"><div class="lt" style="width: 60px"></div><div style="width: 56px; height: 16px; border-radius: 4px; background: #8CC08A"></div></div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">3a · Settings in panes</h2>
+      <span style="color: #A9AFA3">Settings, Menu settings, Pictures, Chefs, Devices, Backup</span>
+      <ul class="r"><li>Sections listed on the left; one section on screen at a time, so no long scroll.</li><li>Fields in 2 columns on tablet; EN | ID pairs share a row.</li><li>Save bar appears only after a change. Phone: section list, then the section.</li></ul>
+    </div>
+
+    <!-- 3b Wizard -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; bottom: 0; background: #181A16"></div>
+        <div class="ab" style="left: 44px; right: 20px; top: 14px; display: flex; align-items: center; gap: 6px">
+          <div style="width: 14px; height: 14px; border-radius: 7px; background: #33452F; flex: none"></div><div style="flex: 1; height: 2px; background: #8CC08A"></div>
+          <div style="width: 14px; height: 14px; border-radius: 7px; background: #8CC08A; flex: none"></div><div style="flex: 1; height: 2px; background: #2A2E27"></div>
+          <div style="width: 14px; height: 14px; border-radius: 7px; border: 1.5px solid #6B7266; box-sizing: border-box; flex: none"></div><div style="flex: 1; height: 2px; background: #2A2E27"></div>
+          <div style="width: 14px; height: 14px; border-radius: 7px; border: 1.5px solid #6B7266; box-sizing: border-box; flex: none"></div>
+        </div>
+        <div class="ab" style="left: 44px; right: 20px; top: 44px; display: flex; flex-direction: column; gap: 8px">
+          <div class="ln" style="width: 45%; height: 9px"></div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px">
+            <div style="height: 18px; border: 1px solid #6B7266; border-radius: 4px"></div><div style="height: 18px; border: 1px solid #6B7266; border-radius: 4px"></div>
+            <div style="height: 18px; border: 1px solid #6B7266; border-radius: 4px"></div><div style="height: 18px; border: 1px solid #6B7266; border-radius: 4px"></div>
+          </div>
+        </div>
+        <div class="ab" style="left: 26px; right: 0; bottom: 0; height: 34px; border-top: 1px solid #2A2E27; display: flex; align-items: center; justify-content: space-between; padding: 0 14px"><div style="width: 50px; height: 18px; border-radius: 4px; border: 1px solid #6B7266"></div><div style="width: 70px; height: 18px; border-radius: 4px; background: #8CC08A"></div></div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">3b · Wizard</h2>
+      <span style="color: #A9AFA3">First-time setup, Make a menu: Dishes → When &amp; where → Check → Publish &amp; share</span>
+      <ul class="r"><li>Each step fits one screen. Back and Next always in the same place.</li><li>Back never loses what was typed; done steps can be tapped to jump back.</li><li>Later edits of the same things use 3a panes.</li></ul>
+    </div>
+
+    <!-- 4 Focus task -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 90px; top: 0; bottom: 0; background: #181A16; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; box-sizing: border-box">
+          <div style="width: 90px; height: 22px; border-radius: 4px; background: #3A3F37"></div>
+          <div class="ln" style="width: 70px; height: 9px"></div>
+          <div class="lt" style="width: 110px"></div><div class="lt" style="width: 90px"></div>
+          <div style="width: 140px; height: 26px; border-radius: 6px; background: #8CC08A; margin-top: 6px"></div>
+        </div>
+        <div class="ab" style="right: 0; top: 0; bottom: 0; width: 90px; background: #121411; border-left: 1px solid #2A2E27; padding: 10px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+          <div class="lt" style="width: 60%"></div><div class="ln"></div><div class="ln" style="width: 80%"></div><div class="ln"></div><div class="ln" style="width: 70%"></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">4 · Focus task</h2>
+      <span style="color: #A9AFA3">Pickup, Kitchen count mode</span>
+      <ul class="r"><li>One order at a time in large type, read from arm's length.</li><li>One big action (Mark collected), then the next order comes up.</li><li>The queue stays visible, never hidden.</li></ul>
+    </div>
+
+    <!-- 5 Dialog -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 14px; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 12px"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+        <div class="ab" style="inset: 0; background: rgba(0,0,0,.6)"></div>
+        <div class="ab" style="left: 50%; top: 50%; width: 180px; transform: translate(-50%, -50%); background: #181A16; border: 1px solid #2A2E27; border-radius: 10px; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+          <div class="ln" style="width: 75%; height: 9px"></div><div class="lt"></div><div class="lt" style="width: 70%"></div>
+          <div style="display: flex; gap: 6px; margin-top: 6px"><div style="flex: 1; height: 18px; border-radius: 4px; border: 1px solid #6B7266"></div><div style="flex: 1; height: 18px; border-radius: 4px; background: #EE8B78"></div></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">5 · Confirm dialog</h2>
+      <span style="color: #A9AFA3">Cancel order, Use this set, Unpublish, Delete dish, Restore backup</span>
+      <ul class="r"><li>A warning, never a block: the seller can always go ahead.</li><li>Says who is affected: "3 people ordered Rendang. Their orders keep it."</li><li>Buttons say the outcome ("Keep order" / "Cancel order"), never Yes / No.</li></ul>
+    </div>
+
+    <!-- 6 Bottom sheet -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr" style="display: flex; justify-content: center; align-items: flex-end; background: #0E100D">
+        <div style="position: relative; width: 112px; height: 176px; border-radius: 14px 14px 0 0; border: 1px solid #2A2E27; border-bottom: 0; background: #181A16; overflow: hidden">
+          <div class="ab" style="left: 10px; right: 10px; top: 14px; display: flex; flex-direction: column; gap: 9px"><div class="ln" style="width: 50%; height: 8px"></div><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+          <div class="ab" style="inset: 0; background: rgba(0,0,0,.55)"></div>
+          <div class="ab" style="left: 0; right: 0; bottom: 0; height: 110px; background: #20231E; border-radius: 12px 12px 0 0; padding: 6px 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 9px">
+            <div style="width: 22px; height: 3px; border-radius: 2px; background: #6B7266; margin: 0 auto"></div>
+            <div class="ln" style="width: 50%; height: 8px"></div>
+            <div style="display: flex; justify-content: space-between"><div class="ln" style="width: 60%"></div><div style="width: 6px; height: 6px; border-radius: 3px; background: #8CC08A"></div></div>
+            <div class="ln" style="width: 70%"></div><div class="ln" style="width: 55%"></div><div class="ln" style="width: 65%"></div>
+          </div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">6 · Bottom sheet (phone)</h2>
+      <span style="color: #A9AFA3">Filter, More actions, Send an update, Switch person</span>
+      <ul class="r"><li>Handle plus a visible Close button; rows 48px tall.</li><li>Never needs swiping to close.</li><li>On tablet the same content opens as a small menu under its button.</li></ul>
+    </div>
+
+    <!-- 7 Toast + undo -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; bottom: 0; background: #181A16; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+          <div class="ln"></div><div class="ln" style="width: 80%"></div><div class="ln"></div><div class="ln" style="width: 70%"></div>
+        </div>
+        <div class="ab" style="left: 50%; bottom: 14px; transform: translateX(-40%); width: 170px; height: 30px; border-radius: 8px; background: #F1EEE6; display: flex; align-items: center; gap: 8px; padding: 0 10px; box-sizing: border-box">
+          <div style="flex: 1; height: 6px; border-radius: 3px; background: #5D6358"></div><div style="width: 30px; height: 6px; border-radius: 3px; background: #2F6B36"></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">7 · Toast with Undo</h2>
+      <span style="color: #A9AFA3">Confirm, Mark paid, Mark collected / delivered, Send</span>
+      <ul class="r"><li>Quick, reversible actions don't ask first.</li><li>"Wulan confirmed · Undo" for 6 seconds.</li><li>Announced to screen readers; never covers the main button.</li></ul>
+    </div>
+
+    <!-- 8 Hub -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; bottom: 0; background: #181A16; padding: 12px 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; gap: 8px"><div style="flex: 1; height: 46px; border-radius: 6px; background: #20231E; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px"><div style="width: 22px; height: 12px; border-radius: 3px; background: #3A3F37"></div><div class="lt" style="width: 60%"></div></div><div style="flex: 1; height: 46px; border-radius: 6px; background: #20231E; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px"><div style="width: 22px; height: 12px; border-radius: 3px; background: #3A3F37"></div><div class="lt" style="width: 60%"></div></div></div>
+          <div style="display: flex; align-items: center; gap: 8px; height: 22px; border-bottom: 1px solid #2A2E27"><div style="width: 10px; height: 10px; border-radius: 3px; background: #3A3F37"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 8px"></div></div>
+          <div style="display: flex; align-items: center; gap: 8px; height: 22px; border-bottom: 1px solid #2A2E27"><div style="width: 10px; height: 10px; border-radius: 3px; background: #3A3F37"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 8px"></div></div>
+          <div style="display: flex; align-items: center; gap: 8px; height: 22px"><div style="width: 10px; height: 10px; border-radius: 3px; background: #3A3F37"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 8px"></div></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">8 · Hub</h2>
+      <span style="color: #A9AFA3">Pickup &amp; delivery hub, More</span>
+      <ul class="r"><li>Counts first ("6 to collect · 4 to deliver"), then big rows.</li><li>Each row: icon, label, one-line hint, chevron.</li><li>Rows a chef can't use are not shown.</li></ul>
+    </div>
+
+    <!-- 9 Compose & send -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; bottom: 0; background: #181A16"></div>
+        <div class="ab" style="left: 40px; top: 14px; width: 150px; bottom: 14px; border-radius: 10px 10px 10px 2px; background: #20231E; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px">
+          <div class="ln" style="width: 60%"></div><div class="lt"></div><div class="lt" style="width: 85%"></div><div class="lt" style="width: 90%"></div><div class="lt" style="width: 70%"></div><div class="lt" style="width: 80%"></div><div style="height: 6px; width: 60%; border-radius: 3px; background: #93C590"></div>
+        </div>
+        <div class="ab" style="right: 14px; top: 14px; width: 104px; bottom: 14px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; height: 18px; border: 1px solid #6B7266; border-radius: 4px; overflow: hidden"><div style="flex: 1; background: #33452F"></div><div style="flex: 1"></div><div style="flex: 1"></div></div>
+          <div class="lt" style="width: 80%"></div>
+          <div style="margin-top: auto; height: 22px; border-radius: 5px; background: #8CC08A"></div>
+          <div style="height: 16px; border-radius: 4px; border: 1px solid #6B7266"></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">9 · Compose &amp; send</h2>
+      <span style="color: #A9AFA3">Share menu, Send an update, Paste a WhatsApp post</span>
+      <ul class="r"><li>Shows the exact text that will be sent.</li><li>Language: ID, EN or both.</li><li>One button, "Share to WhatsApp"; Copy text as the backup.</li></ul>
+    </div>
+
+    <!-- 10 Empty -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; height: 36px; background: #2B3A26"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 36px; bottom: 0; background: #181A16; border-radius: 8px 8px 0 0; padding: 14px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px">
+          <div class="ln" style="width: 55%; height: 9px"></div><div class="lt" style="width: 40%"></div>
+          <div style="display: flex; align-items: center; gap: 8px"><div style="width: 10px; height: 10px; border-radius: 5px; background: #33452F"></div><div class="ln" style="width: 50%"></div></div>
+          <div style="display: flex; align-items: center; gap: 8px"><div style="width: 10px; height: 10px; border-radius: 5px; border: 1px solid #6B7266"></div><div class="ln" style="width: 60%"></div></div>
+          <div style="display: flex; align-items: center; gap: 8px"><div style="width: 10px; height: 10px; border-radius: 5px; background: #8CC08A"></div><div class="ln" style="width: 45%"></div></div>
+          <div style="width: 70px; height: 18px; border-radius: 4px; background: #8CC08A; margin-left: 18px"></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">10 · Empty &amp; first run</h2>
+      <span style="color: #A9AFA3">No menu yet, No orders yet, Menu finished, empty lists</span>
+      <ul class="r"><li>Says why it's empty, in plain words.</li><li>Always one next step; never a dead end.</li><li>First run is a short checklist that remembers what's done.</li></ul>
+    </div>
+
+    <!-- 11 Pagination -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; bottom: 0; background: #181A16; display: flex; flex-direction: column">
+          <div style="height: 26px; border-bottom: 1px solid #2A2E27; display: flex; align-items: center; justify-content: space-between; padding: 0 12px"><div class="ln" style="width: 40%"></div><div class="lt" style="width: 18%"></div></div>
+          <div style="height: 26px; border-bottom: 1px solid #2A2E27; display: flex; align-items: center; justify-content: space-between; padding: 0 12px"><div class="ln" style="width: 35%"></div><div class="lt" style="width: 18%"></div></div>
+          <div style="height: 26px; border-bottom: 1px solid #2A2E27; display: flex; align-items: center; justify-content: space-between; padding: 0 12px"><div class="ln" style="width: 45%"></div><div class="lt" style="width: 18%"></div></div>
+          <div style="height: 26px; border-bottom: 1px solid #2A2E27; display: flex; align-items: center; justify-content: space-between; padding: 0 12px"><div class="ln" style="width: 30%"></div><div class="lt" style="width: 18%"></div></div>
+          <div style="margin-top: auto; height: 40px; display: flex; align-items: center; gap: 6px; padding: 0 12px">
+            <div class="lt" style="width: 60px"></div>
+            <div style="margin-left: auto; width: 34px; height: 20px; border-radius: 4px; border: 1px solid #6B7266"></div>
+            <div style="width: 20px; height: 20px; border-radius: 4px; background: #8CC08A"></div>
+            <div style="width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center"><div class="ln" style="width: 6px"></div></div>
+            <div style="width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center"><div class="ln" style="width: 6px"></div></div>
+            <div style="width: 34px; height: 20px; border-radius: 4px; border: 1px solid #6B7266"></div>
+          </div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">11 · Pages of 20</h2>
+      <span style="color: #A9AFA3">Past orders, a past menu's orders, Devices</span>
+      <ul class="r"><li>Lists over 20 items split into pages of 20.</li><li>"21–40 of 64", Previous / Next (44px); page numbers on tablet only.</li><li>Search and filters apply to all pages. A live menu's orders stay one list so search finds everyone.</li></ul>
+    </div>
+
+    <!-- 12 Reuse picker -->
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <div class="fr">
+        <div class="ab" style="left: 0; top: 0; bottom: 0; width: 26px; background: #0E100D"></div>
+        <div class="ab" style="left: 26px; right: 0; top: 0; bottom: 0; background: #181A16"></div>
+        <div class="ab" style="left: 38px; top: 12px; display: flex; border: 1px solid #6B7266; border-radius: 5px; overflow: hidden; height: 18px; width: 150px">
+          <div style="flex: 1; background: #33452F; display: flex; align-items: center; justify-content: center"><div style="width: 60%; height: 5px; border-radius: 3px; background: #93C590"></div></div>
+          <div style="flex: 1; display: flex; align-items: center; justify-content: center; border-left: 1px solid #6B7266"><div class="ln" style="width: 60%; height: 5px"></div></div>
+          <div style="flex: 1; display: flex; align-items: center; justify-content: center; border-left: 1px solid #6B7266"><div class="ln" style="width: 60%; height: 5px"></div></div>
+        </div>
+        <div class="ab" style="left: 38px; top: 40px; width: 160px; display: flex; flex-direction: column; gap: 0">
+          <div style="display: flex; align-items: center; gap: 7px; height: 22px; border-bottom: 1px solid #2A2E27"><div style="width: 10px; height: 10px; border-radius: 2px; background: #8CC08A"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 22px"></div></div>
+          <div style="display: flex; align-items: center; gap: 7px; height: 22px; border-bottom: 1px solid #2A2E27"><div style="width: 10px; height: 10px; border-radius: 2px; background: #8CC08A"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 22px"></div></div>
+          <div style="display: flex; align-items: center; gap: 7px; height: 22px; border-bottom: 1px solid #2A2E27"><div style="width: 10px; height: 10px; border-radius: 2px; border: 1px solid #6B7266; box-sizing: border-box"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 22px"></div></div>
+          <div style="display: flex; align-items: center; gap: 7px; height: 22px; border-bottom: 1px solid #2A2E27"><div style="width: 10px; height: 10px; border-radius: 2px; background: #8CC08A"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 22px"></div></div>
+          <div style="display: flex; align-items: center; gap: 7px; height: 22px"><div style="width: 10px; height: 10px; border-radius: 2px; border: 1px solid #6B7266; box-sizing: border-box"></div><div class="ln" style="flex: 1"></div><div class="lt" style="width: 22px"></div></div>
+        </div>
+        <div class="ab" style="right: 0; top: 0; bottom: 0; width: 82px; border-left: 1px solid #2A2E27; background: #121411; padding: 12px 8px; box-sizing: border-box; display: flex; flex-direction: column; gap: 7px">
+          <div class="ln" style="width: 70%; height: 8px"></div><div class="lt"></div><div class="lt" style="width: 80%"></div><div class="lt" style="width: 70%"></div>
+          <div style="margin-top: auto; height: 18px; border-radius: 4px; background: #8CC08A"></div>
+        </div>
+      </div>
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">12 · Reuse picker</h2>
+      <span style="color: #A9AFA3">Wizard step 1 "Dishes", Saved sets, Add dish</span>
+      <ul class="r"><li>Start from: Saved set · Past menu · Your dishes. Tick, mix freely.</li><li>Picked dishes stay listed on the right with a count; Next when ready.</li><li>"Save as set" is offered on every menu, and after publishing.</li></ul>
+    </div>
+
+    <!-- Global rules -->
+    <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 10px; padding: 20px 24px; border-radius: 12px; background: #181A16">
+      <h2 style="margin: 0; font-size: 16px; font-weight: 700">Rules every pattern follows</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 28px">
+        <span><strong>Touch</strong> · 44px targets, 8px apart; whole rows are tappable.</span>
+        <span><strong>Focus</strong> · 2px ring in the accent colour on everything.</span>
+        <span><strong>Status</strong> · always icon + word, never colour alone.</span>
+        <span><strong>Language</strong> · leave 30% extra for Indonesian; no fixed-width labels.</span>
+        <span><strong>One next step</strong> · one filled button per screen.</span>
+        <span><strong>No hidden gestures</strong> · every action has a visible button.</span>
+        <span><strong>Separation</strong> · spacing and 1px hairlines, not boxes.</span>
+        <span><strong>Banner</strong> · whole at rest; the sheet slides over it while working.</span>
+        <span><strong>Dates</strong> · the menu's cooking date, never "this week".</span>
+        <span><strong>Chefs</strong> · owner-only items are hidden, not greyed out.</span>
+        <span><strong>Warn, never block</strong> · the seller can always go ahead; warnings say who is affected.</span>
+        <span><strong>Less scrolling</strong> · split long forms into panes or steps; page long lists.</span>
+        <span><strong>Phone</strong> · native feel: no visible scrollbars, bottom bar, sheets.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1760}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

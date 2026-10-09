@@ -315,3 +315,117 @@ Format for each entry:
 **Decision:** the app's default name is **ShaggyBobo's Order**, held in one shared constant (`APP_NAME`). It is used for the page title, the passkey prompt's site name (`RP_NAME`), invite and recovery messages, the home page and the sign-in panel without a picture. "Delave" goes from every user-visible string. Code comments and past docs are corrected when touched, not in a sweep.
 **Trade-off:** passkeys already made keep showing "Delave" in Windows Hello; only new ones show the new name. They still work.
 **Revisit when:** the owner picks a different name, which is a one-constant change.
+
+## D-053 · Each developer's PC uses its own LAN IP; nothing is hard-coded (2026-10-09; owner; amends D-015)
+**Ruling:** "my son will work on that IP address while I am working on this IP address, so the IP address should be per user who is running it and not hard-coded".
+**Decision:** no repo file names a developer's IP. Each PC (today COVID-PC at `192.168.178.97` and ANDRAPC at `192.168.178.177`) makes its own certificate in its git-ignored `.certs/` for `localhost`, `127.0.0.1` and that PC's own LAN IP. Vite already listens on every address (`server.host: true`) and Playwright uses `localhost`, so no code changes.
+**Trade-off:** each PC has its own mkcert root, so a test phone installs the `rootCA.pem` of every PC it tests against.
+**Revisit when:** a PC's router reservation changes (regenerate that PC's certificate).
+
+## D-054 · In local dev, every kitchen gets the sample pictures (2026-10-09; owner; narrows D-051)
+**Ruling:** "A: Dev only" (to "ok so we can use that as default", asked: A dev only / B every seller / C keep as is).
+**Decision:** with `DEV_TOOLS=1`, the sample Dapur Demo kitchen and every seller the admin creates start with the five `public/samples/` pictures (and the Onde Onde background colour), so screens never look empty while working on the UI. Without `DEV_TOOLS` (production) a new seller still starts with no pictures, as D-051 says.
+**Trade-off:** in dev, the empty-picture fallback is no longer seen by default; to check it, remove a kitchen's pictures on the Pictures screen.
+**Revisit when:** the owner wants generic, unbranded default pictures for real sellers.
+
+## D-055 · Plans first; typecheck while building, the full gate at the end of a phase (2026-10-09; owner)
+**Ruling:** "let's do planning first for what I want to change .. we need to have a plans folder .. and each plan will have goal and stages and we will do that after end of phase .. so we don't waste time to test everything .. typecheck is okay .. eslint, test etc. can be done later".
+**Decision:** every change starts as a plan in `docs/plans/` (one file each: goal, stages, end-of-phase checklist; template in its README), approved by the owner before building. While building, only `typecheck` runs; lint, format:check, Vitest and the changed Playwright specs run once at the end of the phase. Amends the gate in CLAUDE.md and tech-stack.md, and convention §5's per-stage loop and §4's "serial stages get a cheap gate every 2nd–3rd stage".
+**Trade-off:** faster stages; a lint or test failure is found later and may touch several stages' work at once.
+**Revisit when:** end-of-phase gates keep turning up failures that are costly to unpick.
+
+## D-056 · A menu can be made any time, for any cooking day; the seller home depends on whether a menu is live (2026-10-09; owner)
+**Ruling:** "what the seller does can be weekly or any time they want .. is to create a menu .. this menu will be available to be picked up or delivered on any day .. usually Saturday and have a cut-off order time (customer can still send via WhatsApp if they want to order after the cut-off) and the seller will then publish it to customers .. once a menu is live .. and once the day is done .. the order is finished .. so the first page is .. past order list .. if none is live".
+**Decision:** the cycle is not tied to a weekday. The seller creates a menu, sets its cooking day (usually Saturday) and cut-off, and publishes it. After the cut-off, customers can still message the seller on WhatsApp, and the seller adds the order. When the cooking day is done, that menu's orders are finished. The seller's first page is the past orders list when no menu is live. While a menu is live, the first page is that menu's order list (cut-off time, "new order"), as the app does today: owner "A" (A live order list / B a summary page / C always past orders with the live menu pinned).
+**Trade-off:** the product overview and CLAUDE.md still describe a fixed "Wednesday menu, Saturday pickup" cycle; they are updated when this lands in a plan.
+**Revisit when:** the seller wants two menus live at the same time.
+
+## D-057 · Seller app: design for the tablet; the phone gets a small subset (2026-10-09; owner)
+**Ruling:** "this is only seller design, not customer phone design .. and we focus on tablet .. and in phone it may only have a subset of items .. like just active order list and ability to reply or confirm order or send if arrived at destination or pickup etc".
+**Decision:** the seller redesign targets the tablet (desktop shares the layout). On a phone the seller app offers only: the active order list and order detail (confirm, reply / send the WhatsApp link), hand-over (pickup, delivery, "arriving soon" and other updates), sign-in and a reduced More. The other screens are tablet/desktop only. Recorded in [seller-ux-brief.md](../design/seller-ux-brief.md).
+**Trade-off:** a seller away from the tablet can't edit the menu or settings on a phone.
+**Revisit when:** the seller needs a tablet-only task (e.g. mark sold out) while on the phone.
+
+## D-058 · "Hand-over" is called Delivery / Pengiriman (2026-10-09; owner)
+**Ruling:** "we call it .. delivery (pengiriman)".
+**Decision:** the cooking-day area (pickup, delivery run, updates; `/seller/hand-over` in code) is named **Delivery** in English and **Pengiriman** in Indonesian in the seller UI and the designer brief. It covers both pickup and drop-off. Brief updated now; code strings change in a later plan.
+**Trade-off:** the drop-off sub-screen ("Delivery run") now shares the word; it needs its own name (designer to propose).
+**Revisit when:** sellers find "Delivery" confusing for pickup orders.
+**Amended (2026-10-09, owner):** "pickup/delivery and serah terima is better" (to A Drop-off / B Delivery run / C designer proposes). The area is **Pickup / Delivery** (EN) / **Serah terima** (ID); its two screens are **Pickup** and **Delivery**. This replaces "Delivery / Pengiriman" above and removes the clash.
+**Amended (2026-10-09, owner):** "also in phone the action is the ability to send order or confirm order, since usually WhatsApp is on the phone and not on the tablet". The phone subset also has **New order**; confirming and sending the order link (WhatsApp) must work on the phone.
+
+## D-059 · Customer phone numbers (and delivery addresses) live on the seller's phone only (2026-10-09; owner)
+**Ruling:** "A" (to: A numbers only on the phone / B don't save numbers / C copy between devices by file or QR / D encrypted sync through the server), after "how do you then share phone between phone and tablet?".
+**Decision:** a customer's phone number, and the delivery address (as D-008), are saved only on the seller's phone, never on the tablet or the server. On the phone, a saved number makes "Send order link" / "Reply" open that customer's WhatsApp chat. Export / import to a file (on the phone) moves them to a new phone. The tablet never shows them. Address follows the same rule as phone (coordinator default from D-008, overrulable).
+**Trade-off:** a lost phone without an export loses the contacts; a chef's phone doesn't have the owner's contacts.
+**Revisit when:** more than one person needs the contacts, or the seller does WhatsApp on the tablet.
+
+## D-060 · One menu picture per menu; a picture per dish later (2026-10-09; owner)
+**Ruling:** "menu picture is per menu, that usually has multiple items of food in it .. note that .. we may need later to have ability to have image per order item .. but later".
+**Decision:** each menu has one picture (usually a collage of several dishes), uploaded by the seller and shown to customers at the top of that menu. A picture per dish is a later feature, not part of plan 001.
+**Trade-off:** customers can't see what a single dish looks like until per-dish pictures exist.
+**Revisit when:** the owner starts the per-dish pictures plan.
+
+## D-061 · Up to 5 saved pickup locations, each with its own time (2026-10-09; owner)
+**Ruling:** "we will need to plan to have multiple pickup times, each with its own time .. up to say 5 pickup locations .. this pickup is a setting and seller can choose where, or they can add, and if more than 5, need to delete 1".
+**Decision:** pickup locations are a seller setting: up to 5 saved, each with place, directions (EN + ID) and its own time window. Adding a 6th requires deleting one. Each menu picks which saved locations it uses, and customers choose one when ordering. Replaces "one pickup point for now" (D-008's limit). Planned as stage 7b of plan 001. Each location's time in Settings is the default; the seller can change it for one menu without changing the setting (owner "A": A default + per-menu change / B fixed in Settings).
+**Trade-off:** more for the seller to set up once; order labels and the pickup screen must show which location each order is for.
+**Revisit when:** a seller needs more than 5 locations.
+
+## D-062 · A live menu stays editable; warn, never block (2026-10-09; owner)
+**Ruling:** "even when live .. seller can still update whenever seller wants, we should not lock .. but we can show a warning if deleting a menu item that someone ordered already .. just warning. we never block".
+**Decision:** the seller can add, edit and remove dishes (and use a saved set) on a live menu at any time. Deleting or replacing a dish that already has orders shows a warning the seller can confirm; it is never blocked. Today's app blocks three cases, all to change in plan 001: deleting a dish with orders ("can't be deleted, mark it sold out"), using a saved set on a published menu ("Unpublish it first"), and replacing dishes that have orders.
+**Trade-off:** orders keep a snapshot of the dish as ordered (D-020), so an order stays readable after its dish is deleted; the cook list and labels must still count those orders.
+**Revisit when:** a deleted dish causes confusion at cooking or pickup.
+
+## D-063 · One menu at a time: live → done → next unpublished menu (2026-10-09; owner; extends D-056)
+**Ruling:** "A" (A: one menu at a time, the next one only after the live one is done / B: the next can be prepared while one is live), after "when seller creates a new menu for the next one, it should become the 'unpublished menu' on the main screen, so they can keep updating, add / remove dishes etc., so we can only have one inactive menu, and it can only be created when the current active menu is done".
+**Decision:** a seller has at most one menu at a time. The next menu can be created only when the live one is done (its cooking day is over). It starts unpublished, shows on the main screen and stays editable until published (and after, D-062). Main screen: a live menu → its order list; an unpublished menu → that menu to edit and publish; neither → past orders with a **New menu** button.
+**Trade-off:** the seller can't prepare next week's menu while this week's is still live.
+**Revisit when:** the seller wants to prepare the next menu before the current one is done.
+
+## D-064 · Colour themes come from the designer; the seller picks one, and their customer pages use it too (2026-10-09; owner)
+**Ruling:** "also we will generate theme colours from the UX designer .. and in seller can select their theme .. which means customer app will also use the same theme".
+**Decision:** the designer delivers a small set of colour themes (each meeting WCAG AA in light and dark). The seller picks one in Settings; the seller app and that seller's customer pages (menu, basket, order) both use it. Replaces the single fixed direction (Sogan, D-025) as the only option; Sogan can be one of the themes. Planned in plan 001.
+**Trade-off:** every theme must be checked for contrast on every screen, seller and customer.
+**Revisit when:** a seller wants a fully custom colour beyond the designer's set.
+
+## D-065 · No "More" page: Settings instead (2026-10-09; owner)
+**Ruling:** "now you have More, which is not good" (on the indicative Settings screenshot: nav Orders · Kitchen · Pickup & delivery · Menu · Settings, with Settings sections Kitchen, Ordering & WhatsApp, Pickup locations, Menu defaults, Appearance, Chefs, Devices, Backup).
+**Decision:** the seller app drops the "More" catch-all. The last nav item is **Settings**, organised in sections; switch person, language and sign out sit at the foot of the left panel; Past orders lives with Orders. The section list follows the owner's design drop (plan 001).
+**Trade-off:** none known; screens move, none are removed.
+**Revisit when:** the design drop says otherwise.
+
+## D-066 · Kitchen has Cook and Pack tabs; Pack ticks each customer's bag (2026-10-09; owner)
+**Ruling:** the owner's design note, kept verbatim in [uxDesign/kitchen-cook-and-pack.md](../../uxDesign/kitchen-cook-and-pack.md).
+**Decision:** the Kitchen area (today's cook list) gets two tabs: **Cook** (by dish) and **Pack** (by order). Pack lists bags (name, code, place, time, progress or "Packed"), sortable by pickup time, place or code; the open bag shows its items as tick rows and the customer's note; "Packed · next bag" marks it done and opens the next, warning (never blocking, D-062) if items are unticked; "Skip for now"; header "N of M bags packed" with Print labels. Packing is new: today there is no packed state. Planned in plan 001.
+**Trade-off:** a new saved state per order (packed, and which items are ticked).
+**Revisit when:** the design drop changes it.
+**Amended (2026-10-09, owner):** packing is separate from order status. "Packed" is its own flag on the order (next to status, paid and locked), saved with the order so every device sees it; it never changes the status and the customer never sees it. When all items are ticked the hint reads "All in. Packing doesn't change the order status; mark it ready in Pickup & delivery." Pickup & delivery shows a small "Packed" tag. The per-item ticks are saved on the server with the order too, so the owner and chefs on different devices see the same bag (owner: "save in server").
+**Amended again (2026-10-09, owner):** "the seller app on a phone (smaller screen) will only show live orders, and is used to send messages to customers and also mark if it's delivered or ready to be picked up .. that's what the phone is for .. also add new order". Phone = live orders (confirm), message the customer, mark ready / delivered, new order, plus sign-in and switch person / language. Nothing else.
+
+## D-067 · Phone seller app: same routes, adaptive by width (2026-10-09; owner; provisional)
+**Ruling:** "A is okay .. but you have to see later when you receive the UX design drop" (A: same routes, adaptive / B: a separate phone route / C: decide after the design).
+**Decision:** one set of seller routes; below a phone breakpoint (around 600 px, so tablets in either orientation get the full app) the app shows the phone subset (D-057), and tablet-only screens say "Open this on a tablet or computer". Provisional: re-checked against the design drop at plan 001 stage 1.
+**Trade-off:** the breakpoint must separate a large phone from a small tablet; today's 1024 px switch would give an upright tablet the phone view.
+**Revisit when:** the design drop arrives (stage 1), or a device lands on the wrong side of the breakpoint.
+
+## D-068 · Pickup & delivery is about notifying the customer (2026-10-09; owner)
+**Ruling:** "in reality .. the seller just needs to notify if the order is ready to be picked up, or will be delivered in say X minutes, and arrived".
+**Decision:** the core of Pickup & delivery is three notifications, one tap each (per order or for a group): **ready for pickup**; **arriving in X minutes** (delivery); **arrived** (delivery). Each also moves the order's status. Other steps on today's screens (typing a code to hand over, mark collected, out for delivery) are secondary and follow the design drop. With D-062, these screens warn rather than block (today they refuse, e.g. "Mark it ready first").
+**Trade-off:** less tracking of who has collected; the packed flag (D-066) and the status still show what's done.
+**Revisit when:** the design drop says otherwise.
+**Amended (2026-10-09, owner):** "Ready for pickup or Ready for pickup in X minutes". Pickup has two notifications: **ready for pickup** (now) and **ready for pickup in X minutes**.
+
+## D-069 · The seller design handoff is the spec for plan 001, with the owner's answers (2026-10-10; owner)
+**Ruling:** the design drop `uxDesign/seller/` (README + `docs/handoff.md`, boards, `theme/tokens.ts`) is the source of truth for the seller redesign; where a board and `handoff.md` disagree, the doc wins. The owner settled where it differed from earlier rulings or left questions open:
+- **Q1 customer phone numbers: "B: Keep D-059".** Numbers (and delivery addresses) stay on the seller's phone only; the design gets a phone field on the phone order screens. Overrides the handoff's "no phone numbers stored".
+- **Q2 editing a live menu: "A: Instant".** Changes reach customers as they are saved, with a Done button; no staged "Publish changes" banner.
+- **Q3 Ready: "A: Message sets Ready"** (asked twice, kept). Sending "Ready for pickup" to a pickup place also marks those orders Ready; "Ready in N min" changes nothing. Overrides the handoff's "messages don't change status" for this one message.
+- **Q4 collection: "B: Customer or seller".** The customer taps "I've collected it"; the seller also has a quiet "Mark collected" in the order detail (not on the pickup board); orders still open when the menu finishes close automatically.
+- **Q5 menu finished: "C: Auto + early finish".** A menu finishes automatically at midnight after its cooking day; the seller can also "Finish menu now".
+- **Q6 handoff open items: all three in plan 001**: a live Dishes panel on Orders (sold / limit / left, edit limit, sold out); New order on tablet as a slide-over with the phone form's fields; danger colour shifted toward orange-red under the Sumatra theme.
+- **Q7 web push: "A: Separate plan".** Plan 001 shows messages on the order page as today; push comes with the customer app redesign.
+**Trade-off:** plan 001 grows a server stage (menus, dish library, pickup places, packing, message log) before the screens.
+**Revisit when:** the customer design changes any of these.
+**Amended (2026-10-10, owner):** "but a push is very important and needs to be done". Web push is a must-have: plan 002, scheduled straight after plan 001 (not waiting for the customer redesign; its customer "Turn on updates" screen gets restyled later).

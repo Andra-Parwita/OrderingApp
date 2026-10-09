@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kitchen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.nav:hover{background:var(--surf2)}
+.kbg{background:var(--kbg) url(/_blob/9d66d22b795fcd89723161f5d44240c8) center/cover}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; position: relative; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); {{vars}}">
+
+  <nav aria-label="Main" style="width: 232px; flex: none; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 12px 12px; box-sizing: border-box; gap: 4px">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px 16px">
+      <img src="/_blob/746b8d28ebdfff1101b66e7f1a47dc87" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.01em">Onde Onde</div>
+    </div>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Orders</button>
+    <button class="nav" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--tint); color: var(--atext); font-weight: 600"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg>Kitchen</button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg>Pickup &amp; delivery</button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg>Menu</button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg>Settings</button>
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 0 4px">
+        <div aria-hidden="true" style="width: 32px; height: 32px; border-radius: 16px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none">WA</div>
+        <div style="display: flex; flex-direction: column; min-width: 0; flex: 1"><span style="font-weight: 600; font-size: 13px">Wati</span><span style="font-size: 12px; color: var(--muted)">Chef</span></div>
+        <button style="min-height: 44px; padding: 0 8px; color: var(--atext); font-size: 13px; font-weight: 600">Switch</button>
+      </div>
+      <div role="group" aria-label="Language" style="display: flex; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+        <button aria-pressed="true" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; background: var(--tint); color: var(--atext)">EN</button>
+        <button aria-pressed="false" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; color: var(--muted)">ID</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: 120px; flex: none; overflow: hidden">
+      <img src="/_blob/139c9225826686b89d154aeadf54b8f8" alt="Onde Onde, Indonesian homemade food" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
+    </div>
+    <section aria-label="Kitchen" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; overflow: hidden">
+      <div style="padding: 16px 28px 14px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--line)">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em">Kitchen · Sat 17 Oct</h1>
+            <span style="font-size: 13px; color: var(--muted)">From <span class="tn">10</span> orders. Cancelled orders aren't counted. Updates as orders change.</span>
+          </div>
+          <button onClick="{{openPrint}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600"><svg class="i" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"></path></svg>Print labels</button>
+        </div>
+        <div role="tablist" aria-label="Kitchen view" style="display: flex; gap: 4px; margin: -4px 0 -4px; border-bottom: 1px solid var(--line)">
+          <span role="tab" aria-selected="true" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; font-weight: 700; border-bottom: 2px solid var(--fill); margin-bottom: -1px">Cook <span style="font-size: 12px; font-weight: 500; color: var(--muted)">by dish</span></span>
+          <a href="Kitchen-Pack.dc.html" role="tab" aria-selected="false" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; color: var(--muted); font-weight: 500; text-decoration: none">Pack <span style="font-size: 12px">by order</span></a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <span style="font-size: 13px; font-weight: 600; color: var(--muted)">Group by</span>
+            <div role="group" aria-label="Group by" style="display: flex; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+              <button aria-pressed="{{gDishP}}" onClick="{{byDish}}" style="min-height: 42px; padding: 0 16px; font-weight: 600; font-size: 13px; {{gDishS}}">Dish</button>
+              <button aria-pressed="{{gChefP}}" onClick="{{byChef}}" style="min-height: 42px; padding: 0 16px; font-weight: 600; font-size: 13px; {{gChefS}}">Chef</button>
+            </div>
+          </div>
+          <button role="switch" aria-checked="{{countS}}" onClick="{{toggleCount}}" style="display: inline-flex; align-items: center; gap: 10px; min-height: 44px">
+            <span style="width: 40px; height: 24px; border-radius: 12px; position: relative; display: block; box-sizing: border-box; {{swTrack}}"><span style="position: absolute; top: 3px; width: 18px; height: 18px; border-radius: 9px; {{swKnob}}"></span></span>
+            <span style="font-weight: 600">Count mode</span>
+            <span style="font-size: 12px; color: var(--muted)">tick off as you cook</span>
+          </button>
+          <span class="tn" style="margin-left: auto; font-size: 13px; color: var(--muted)">{{progress}}</span>
+        </div>
+      </div>
+
+      <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 28px 20px">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="1">
+          <sc-if value="{{g.titled}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: baseline; gap: 10px; padding: 14px 0 4px; border-bottom: 1px solid var(--line)">
+              <h2 style="margin: 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted)">{{g.title}}</h2>
+              <span style="font-size: 12px; color: var(--muted)">{{g.sub}}</span>
+            </div>
+          </sc-if>
+          <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="6">
+            <div style="display: flex; align-items: center; gap: 14px; min-height: 48px; border-bottom: 1px solid var(--line); {{r.rowStyle}}">
+              <span class="tn" style="width: 32px; flex: none; font-size: 17px; font-weight: 700; text-align: right; {{r.numStyle}}">{{r.total}}</span>
+              <span style="flex: 1; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; {{r.nameStyle}}">{{r.name}} <span style="font-weight: 500; color: var(--muted); font-size: 13px">· {{r.size}}</span></span>
+              <span class="tn" style="font-size: 13px; color: var(--muted); flex: none">{{r.split}}</span>
+              <sc-if value="{{r.showChef}}" hint-placeholder-val="{{ true }}">
+                <span style="font-size: 13px; color: var(--muted); width: 96px; text-align: right; flex: none">{{r.chef}}</span>
+              </sc-if>
+              <sc-if value="{{r.counting}}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; align-items: center; gap: 8px; flex: none">
+                  <span class="tn" style="font-size: 13px; font-weight: 600; width: 44px; text-align: right">{{r.done}}/{{r.total}}</span>
+                  <span style="width: 64px; height: 4px; border-radius: 2px; background: var(--surf2); overflow: hidden; display: block"><span style="display: block; height: 100%; border-radius: 2px; background: var(--fill); width: {{r.pct}}%"></span></span>
+                  <button aria-label="{{r.minusLabel}}" onClick="{{r.minus}}" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--ctrl); display: flex; align-items: center; justify-content: center"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12h14"></path></svg></button>
+                  <button aria-label="{{r.plusLabel}}" onClick="{{r.plus}}" style="width: 52px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; {{r.plusStyle}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="{{r.plusIcon}}"></path></svg></button>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <!-- PRINT LABELS dialog -->
+  <sc-if value="{{printOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="Print labels" style="width: 620px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 48px rgba(0,0,0,.4); display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; padding: 16px 10px 8px 24px">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700">Print labels</h2>
+            <span class="tn" style="font-size: 13px; color: var(--muted)">10 labels, one per order bag. Cancelled orders are left out.</span>
+          </div>
+          <button onClick="{{closePrint}}" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+        <div role="radiogroup" aria-label="Label paper" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 8px 24px">
+          <sc-for list="{{papers}}" as="p" hint-placeholder-count="2">
+            <button role="radio" aria-checked="{{p.sel}}" onClick="{{p.pick}}" style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 12px; {{p.style}}">
+              <span style="display: flex; align-items: center; gap: 10px"><span style="width: 20px; height: 20px; border-radius: 10px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; {{p.ring}}"><span style="width: 10px; height: 10px; border-radius: 5px; background: var(--on); opacity: {{p.tick}}"></span></span><span style="font-weight: 700">{{p.name}}</span></span>
+              <span style="font-size: 12px; color: var(--muted)">{{p.hint}}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="padding: 10px 24px 4px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">Label preview</span>
+          <div style="align-self: flex-start; width: 300px; padding: 12px 14px; border-radius: 8px; background: #FFFFFF; color: #1C1F1A; border: 1px solid #D9D3C4; display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 16px; font-weight: 600">K7M2QX</span><span style="font-size: 18px; font-weight: 700">Wulan</span><span style="margin-left: auto; font-size: 12px; font-weight: 700; border: 1.5px solid #1C1F1A; border-radius: 4px; padding: 1px 6px">PICKUP</span></div>
+            <span style="font-size: 12px">2× Rendang · 1× Nasi Ayam Bali · 1× Onde onde (6)</span>
+            <span style="font-size: 11px; color: #5D6358">Glenelg · Sat 17 Oct, 11:00–13:00</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 16px 16px 16px 24px">
+          <span style="font-size: 12px; color: var(--muted); flex: 1">Your tablet's print screen opens next.</span>
+          <button onClick="{{closePrint}}" style="min-height: 48px; padding: 0 16px; border-radius: 10px; color: var(--muted); font-weight: 600">Cancel</button>
+          <button style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 22px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700"><svg class="i" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"></path></svg>Print 10 labels</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"groupBy":{"editor":"enum","options":["dish","chef"],"default":"dish","section":"Layout"},"countMode":{"editor":"boolean","default":true,"section":"Layout"},"printDialog":{"editor":"boolean","default":false,"section":"Layout"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = {
+      dark: { bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', ctrl:'#6B7266', text:'#F1EEE6', muted:'#A9AFA3', kbg:'#1D2A1A' },
+      light:{ bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', ctrl:'#7F857A', text:'#1C1F1A', muted:'#5D6358', kbg:'#E9E3CF' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+    const group = this.state.group ?? this.props.groupBy ?? 'dish';
+    const counting = this.state.counting ?? this.props.countMode ?? true;
+    const printOpen = this.state.print ?? this.props.printDialog ?? false;
+    const paper = this.state.paper ?? 'a4';
+    const dishes = [
+      ['Nasi Ayam Bali','1 box',10,'7 pickup · 3 delivery','Wati'],
+      ['Rendang','Regular',11,'6 pickup · 5 delivery','Wati'],
+      ['Onde onde','Pack of 6',5,'5 pickup','Ira'],
+      ['Sayur urab','Tub',5,'3 pickup · 2 delivery','Onde Onde'],
+      ['Sambal matah','Small jar',4,'1 pickup · 3 delivery','Onde Onde'],
+      ['Kue lapis','4 pieces',3,'3 pickup','Ira']
+    ];
+    const doneDefault = { 'Nasi Ayam Bali':10, 'Rendang':6, 'Onde onde':0, 'Sayur urab':5, 'Sambal matah':0, 'Kue lapis':0 };
+    const done = this.state.done ?? doneDefault;
+    const mk = (d, showChef) => {
+      const n = done[d[0]] ?? 0; const all = n >= d[2];
+      const set = v => this.setState({ done: Object.assign({}, done, { [d[0]]: Math.max(0, Math.min(d[2], v)) }) });
+      return { name:d[0], size:d[1], total:d[2], split:d[3], chef:d[4], showChef: showChef && !counting, counting,
+        done:n, pct: Math.round(n / d[2] * 100),
+        rowStyle: counting && all ? 'opacity: .55' : '',
+        nameStyle: counting && all ? 'text-decoration: line-through' : '',
+        numStyle: counting && all ? 'color: var(--muted)' : '',
+        plusIcon: all ? 'M5 12.5l4.5 4.5L19 7.5' : 'M12 5v14M5 12h14',
+        plusStyle: all ? 'background: var(--tint); color: var(--atext)' : 'background: var(--fill); color: var(--on)',
+        minusLabel:'One less ' + d[0], plusLabel: all ? d[0] + ' all cooked' : 'One more ' + d[0] + ' cooked',
+        minus: () => set(n - 1), plus: () => set(n + 1) };
+    };
+    let groups;
+    if (group === 'dish') {
+      groups = [{ titled:false, title:'', sub:'', rows: dishes.map(d => mk(d, true)) }];
+    } else {
+      groups = ['Wati','Ira','Onde Onde'].map(c => {
+        const rows = dishes.filter(d => d[4] === c).map(d => mk(d, false));
+        return { titled:true, title: c === 'Onde Onde' ? 'Onde Onde · whole kitchen' : c, sub: rows.length + ' dishes', rows };
+      });
+    }
+    const totalAll = dishes.reduce((a, d) => a + d[2], 0);
+    const doneAll = dishes.reduce((a, d) => a + Math.min(d[2], done[d[0]] ?? 0), 0);
+    const on = 'background: var(--fill); color: var(--on)';
+    const papers = [['a4','A4 sheet','Any home printer. 14 labels per sheet; cut along the lines.'],['roll','62 mm roll','Label printer, one label at a time. No cutting.']].map(p => {
+      const s = paper === p[0];
+      return { name:p[1], hint:p[2], sel: s ? 'true' : 'false', tick: s ? '1' : '0',
+        ring: s ? 'background: var(--fill)' : 'border: 1.5px solid var(--ctrl)',
+        style: s ? 'border: 1.5px solid var(--fill); background: var(--tint)' : 'border: 1px solid var(--ctrl)',
+        pick: () => this.setState({ paper: p[0] }) };
+    });
+    return { vars, groups, papers, printOpen,
+      progress: counting ? doneAll + ' of ' + totalAll + ' cooked' : totalAll + ' portions to cook',
+      gDishP: group === 'dish' ? 'true' : 'false', gChefP: group === 'chef' ? 'true' : 'false',
+      gDishS: group === 'dish' ? on : 'color: var(--text)', gChefS: group === 'chef' ? on : 'color: var(--text)',
+      byDish: () => this.setState({ group: 'dish' }), byChef: () => this.setState({ group: 'chef' }),
+      countS: counting ? 'true' : 'false',
+      swTrack: counting ? 'background: var(--fill)' : 'background: var(--surf2); border: 1px solid var(--ctrl)',
+      swKnob: counting ? 'left: 19px; background: var(--on)' : 'left: 3px; background: var(--muted)',
+      toggleCount: () => this.setState({ counting: !counting }),
+      openPrint: () => this.setState({ print: true }), closePrint: () => this.setState({ print: false }) };
+  }
+}
+</script>
+</body>
+</html>

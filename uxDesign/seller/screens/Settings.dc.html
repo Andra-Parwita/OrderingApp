@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input,textarea{font:inherit}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em}
+.nav:hover{background:var(--surf2)}
+.tab:hover{background:var(--surf2)}
+.kbg{background:var(--kbg) url(/_blob/9d66d22b795fcd89723161f5d44240c8) center/cover}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); {{vars}}">
+
+  <nav aria-label="Main" style="width: 232px; flex: none; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 12px 12px; box-sizing: border-box; gap: 4px">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px 16px">
+      <img src="/_blob/746b8d28ebdfff1101b66e7f1a47dc87" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.01em">Onde Onde</div>
+    </div>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Orders</button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg>Kitchen</button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg>Pickup &amp; delivery</button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg>Menu</button>
+    <button class="nav" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--tint); color: var(--atext); font-weight: 600"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg>Settings</button>
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 0 4px">
+        <div aria-hidden="true" style="width: 32px; height: 32px; border-radius: 16px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none">IR</div>
+        <div style="display: flex; flex-direction: column; min-width: 0; flex: 1"><span style="font-weight: 600; font-size: 13px">Ira</span><span style="font-size: 12px; color: var(--muted)">Owner</span></div>
+        <button style="min-height: 44px; padding: 0 8px; color: var(--atext); font-size: 13px; font-weight: 600">Switch</button>
+      </div>
+      <div role="group" aria-label="Language" style="display: flex; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+        <button aria-pressed="true" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; background: var(--tint); color: var(--atext)">EN</button>
+        <button aria-pressed="false" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; color: var(--muted)">ID</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: 40px; flex: none; overflow: hidden">
+      <img src="/_blob/139c9225826686b89d154aeadf54b8f8" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
+    </div>
+    <section aria-label="Settings" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; overflow: hidden">
+      <div style="padding: 16px 24px 14px; border-bottom: 1px solid var(--line)"><h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em">Settings</h1></div>
+      <div style="flex: 1; min-height: 0; display: flex">
+        <div role="tablist" aria-orientation="vertical" aria-label="Settings sections" style="width: 210px; flex: none; padding: 12px 10px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; overflow-y: auto">
+          <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="8">
+            <sc-if value="{{tb.gap}}" hint-placeholder-val="{{ false }}"><div style="height: 1px; background: var(--line); margin: 8px 6px"></div></sc-if>
+            <button class="tab" role="tab" aria-selected="{{tb.sel}}" onClick="{{tb.pick}}" style="display: flex; flex-direction: column; justify-content: center; min-height: 48px; padding: 4px 12px; border-radius: 10px; {{tb.style}}">
+              <span style="font-weight: 600">{{tb.label}}</span>
+              <span style="font-size: 12px; color: var(--muted)">{{tb.hint}}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div role="tabpanel" style="flex: 1; min-width: 0; padding: 20px 28px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto">
+
+          <!-- KITCHEN -->
+          <sc-if value="{{tKitchen}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700">Kitchen</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px">
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Kitchen name<input value="Onde Onde" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 15px"></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">WhatsApp number<input value="+61 4XX XXX XXX" class="tn" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 15px"><span style="font-size: 12px; font-weight: 500; color: var(--muted)">Customers send their order number here.</span></label>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <span style="font-size: 13px; font-weight: 600">Pictures</span>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+                <sc-for list="{{pics}}" as="p" hint-placeholder-count="5">
+                  <div style="display: flex; flex-direction: column; gap: 6px">
+                    <div style="height: 92px; border-radius: 10px; overflow: hidden; background: var(--surf2); display: flex; align-items: center; justify-content: center; {{p.boxStyle}}">
+                      <sc-if value="{{p.hasImg}}" hint-placeholder-val="{{ true }}"><img src="{{p.src}}" alt="{{p.name}}" style="max-width: 100%; max-height: 100%; aspect-ratio: {{p.ratio}}; object-fit: cover; display: block"></sc-if>
+                      <sc-if value="{{p.isColor}}" hint-placeholder-val="{{ false }}"><span class="mono" style="font-size: 12px; color: #F1EEE6">#1D2A1A</span></sc-if>
+                    </div>
+                    <span style="font-weight: 600; font-size: 13px">{{p.name}} <span style="font-weight: 500; color: var(--muted)">· {{p.shape}}</span></span>
+                    <span style="font-size: 12px; color: var(--muted)">{{p.use}}</span>
+                    <div style="display: flex; gap: 4px"><button style="min-height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 12px">Change</button><button style="min-height: 36px; padding: 0 8px; font-weight: 600; font-size: 12px; color: var(--muted)">Remove</button></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px">
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Picture description · English<input value="Four cooks serving Indonesian dishes" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)"></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Indonesian<input value="Empat juru masak menyajikan masakan Indonesia" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)"></label>
+            </div>
+            <span style="font-size: 12px; color: var(--muted); margin-top: -8px">Read aloud to customers who use a screen reader.</span>
+          </sc-if>
+
+          <!-- WHATSAPP POST -->
+          <sc-if value="{{tPost}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 20px; font-weight: 700">WhatsApp post</h2><span style="font-size: 13px; color: var(--muted)">The first and last lines of every menu post you share. The dishes, cut-off, pickup and link are filled in for you.</span></div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px">
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Greeting · English<textarea rows="2" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)">Hi everyone!</textarea></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Greeting · Indonesian<textarea rows="2" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)">Halo semua!</textarea></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Closing · English<textarea rows="2" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)">Thank you!</textarea></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Closing · Indonesian<textarea rows="2" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)">Terima kasih!</textarea></label>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">Preview</span>
+              <div style="align-self: flex-start; max-width: 420px; padding: 12px 14px; border-radius: 14px 14px 14px 4px; background: var(--surf2); font-size: 13px; white-space: pre-line">Halo semua!
+Menu Onde Onde untuk Sabtu, 24 Oktober:
+• Nasi Ayam Bali (1 kotak) $15.50
+• Rendang (biasa) $18.00 …
+Pesan di sini: [order link]
+Terima kasih!</div>
+            </div>
+          </sc-if>
+
+          <!-- PICKUP LOCATIONS -->
+          <sc-if value="{{tPickup}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: flex-end; gap: 16px">
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 20px; font-weight: 700">Pickup locations</h2><span style="color: var(--muted); font-size: 13px">Up to 5 places. Each menu picks which ones it uses, and customers choose one when they order.</span></div>
+              <span class="tn" style="font-size: 13px; color: var(--muted)">3 of 5</span>
+            </div>
+            <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line)">
+              <sc-for list="{{locs}}" as="l" hint-placeholder-count="3">
+                <div style="display: grid; grid-template-columns: 170px 110px 1fr 1fr 52px; align-items: center; column-gap: 16px; min-height: 60px; border-bottom: 1px solid var(--line)">
+                  <span style="font-weight: 600; font-size: 15px">{{l.place}}</span>
+                  <span class="tn" style="font-weight: 600">{{l.time}}</span>
+                  <span style="font-size: 13px"><span style="color: var(--muted); font-size: 11px; display: block">EN</span>{{l.dir}}</span>
+                  <span style="font-size: 13px"><span style="color: var(--muted); font-size: 11px; display: block">ID</span>{{l.dirId}}</span>
+                  <button aria-label="{{l.editLabel}}" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg></button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px">
+              <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Add a place</button>
+              <span style="font-size: 12px; color: var(--muted)">You can add 2 more. Editing opens in place, same as in the menu step.</span>
+            </div>
+          </sc-if>
+
+          <!-- MENU DEFAULTS -->
+          <sc-if value="{{tDefaults}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 4px"><h2 style="margin: 0; font-size: 20px; font-weight: 700">Menu defaults</h2><span style="font-size: 13px; color: var(--muted)">Filled in for every new menu. You can still change them per menu.</span></div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font-size: 13px; font-weight: 600">Orders close</span>
+                <div style="display: flex; gap: 8px; align-items: center">
+                  <input value="2" class="tn" aria-label="Days before cooking day" style="width: 64px; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 15px; box-sizing: border-box">
+                  <span>days before, at</span>
+                  <input value="8:00 pm" class="tn" aria-label="Cut-off time" style="width: 100px; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 15px; box-sizing: border-box">
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font-size: 13px; font-weight: 600">Pickup places ticked by default</span>
+                <span style="font-size: 14px">The places used on your last menu</span>
+              </div>
+            </div>
+            <div style="height: 1px; background: var(--line)"></div>
+            <div style="display: flex; align-items: center; gap: 12px"><span style="font-weight: 600; flex: 1">Offer delivery by default</span><span style="width: 44px; height: 26px; border-radius: 13px; background: var(--fill); position: relative; display: block"><span style="position: absolute; top: 3px; left: 21px; width: 20px; height: 20px; border-radius: 10px; background: var(--on)"></span></span></div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px">
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Delivery note · English<textarea rows="2" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)">Within 10 km. $5, paid with your order.</textarea></label>
+              <label style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600">Indonesian<textarea rows="2" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)">Dalam 10 km. $5, dibayar bersama pesanan.</textarea></label>
+            </div>
+          </sc-if>
+
+          <!-- APPEARANCE -->
+          <sc-if value="{{tLook}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700">Appearance</h2>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 13px; font-weight: 600">Light or dark</span>
+              <div role="group" aria-label="Light or dark" style="display: inline-flex; align-self: flex-start; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+                <button aria-pressed="false" style="min-height: 44px; padding: 0 18px; font-weight: 600">Light</button>
+                <button aria-pressed="true" style="min-height: 44px; padding: 0 18px; font-weight: 700; background: var(--fill); color: var(--on)">Dark</button>
+                <button aria-pressed="false" style="min-height: 44px; padding: 0 18px; font-weight: 600">Auto</button>
+              </div>
+              <span style="font-size: 12px; color: var(--muted)">Auto follows the tablet's own setting. Saved on this device.</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <span style="font-size: 13px; font-weight: 600">Colour theme</span>
+              <div role="radiogroup" aria-label="Colour theme" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+                <sc-for list="{{themes}}" as="th" hint-placeholder-count="5">
+                  <button role="radio" aria-checked="{{th.sel}}" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 12px; {{th.style}}">
+                    <span style="display: flex; height: 36px; border-radius: 8px; overflow: hidden"><span style="flex: 1; background: {{th.dbg}}"></span><span style="flex: 1; background: {{th.df}}"></span><span style="flex: 1; background: {{th.lf}}"></span><span style="flex: 1; background: {{th.lbg}}"></span></span>
+                    <span style="font-weight: 600; font-size: 13px">{{th.name}}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <span style="font-size: 12px; color: var(--muted)">Changes the accent and background tint for everyone in your kitchen, and on your customers' order pages.</span>
+            </div>
+          </sc-if>
+
+          <!-- CHEFS -->
+          <sc-if value="{{tChefs}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700">Chefs</h2>
+            <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line)">
+              <sc-for list="{{chefs}}" as="c" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; gap: 12px; min-height: 60px; border-bottom: 1px solid var(--line)">
+                  <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 15px">{{c.name}}</span><span style="font-size: 12px; color: var(--muted)">{{c.meta}}</span></span>
+                  <sc-if value="{{c.canInvite}}" hint-placeholder-val="{{ false }}"><button style="min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 13px">Invite to sign in</button></sc-if>
+                  <button style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px">Rename</button>
+                  <button style="min-height: 44px; padding: 0 10px; color: var(--danger); font-weight: 600; font-size: 13px">Delete</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center">
+              <input aria-label="New chef's name" placeholder="New chef's name" style="width: 260px; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text)">
+              <button style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600">Add chef</button>
+              <span style="font-size: 12px; color: var(--muted)">Deleting a chef moves their dishes to Onde Onde.</span>
+            </div>
+          </sc-if>
+
+          <!-- DEVICES -->
+          <sc-if value="{{tDevices}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; align-items: flex-end; gap: 12px">
+              <h2 style="margin: 0; font-size: 20px; font-weight: 700; flex: 1">Devices</h2>
+              <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Add a device</button>
+            </div>
+            <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line)">
+              <sc-for list="{{devices}}" as="d" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--line)">
+                  <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600">{{d.name}}</span><span style="font-size: 12px; color: var(--muted)">{{d.meta}}</span></span>
+                  <button style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px">Rename</button>
+                  <button style="min-height: 44px; padding: 0 10px; color: var(--danger); font-weight: 600; font-size: 13px">{{d.out}}</button>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font-size: 12px; color: var(--muted)">Add a device shows a 6-digit code. Type it on the new phone or tablet to sign it in.</span>
+          </sc-if>
+
+          <!-- BACKUP -->
+          <sc-if value="{{tBackup}}" hint-placeholder-val="{{ false }}">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700">Backup</h2>
+            <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line)">
+              <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid var(--line)"><span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600">Download backup</span><span style="font-size: 12px; color: var(--muted)">Everything: dishes, sets, menus, orders, settings. Last done Sat 10 Oct.</span></span><button style="min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700">Download</button></div>
+              <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid var(--line)"><span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600">Download orders (CSV)</span><span style="font-size: 12px; color: var(--muted)">Opens in Excel or Google Sheets.</span></span><button style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600">Download</button></div>
+              <div style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid var(--line)"><span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600">Restore a backup</span><span style="font-size: 12px; color: var(--muted)">Replaces what's here now with the backup. You'll see what changes and confirm first.</span></span><button style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; color: var(--danger)">Restore…</button></div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"tab":{"editor":"enum","options":["kitchen","post","pickup","defaults","look","chefs","devices","backup"],"default":"kitchen","section":"Layout"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = { dark: { text:'#F1EEE6', muted:'#A9AFA3', ctrl:'#6B7266', danger:'#EE8B78' }, light:{ text:'#1C1F1A', muted:'#5D6358', ctrl:'#7F857A', danger:'#A93724' } };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+    const tab = this.state.tab ?? this.props.tab ?? 'kitchen';
+    const tabDefs = [
+      ['kitchen','Kitchen','Name, WhatsApp, pictures'],
+      ['post','WhatsApp post','Greeting and closing'],
+      ['pickup','Pickup locations','3 of 5 places'],
+      ['defaults','Menu defaults','Cut-off, delivery'],
+      ['look','Appearance','Light / dark, theme'],
+      ['chefs','Chefs','3 chefs',true],
+      ['devices','Devices','3 devices'],
+      ['backup','Backup','Download or restore']
+    ];
+    const tabs = tabDefs.map(x => ({ label:x[1], hint:x[2], gap: !!x[3], sel: tab === x[0] ? 'true' : 'false',
+      style: tab === x[0] ? 'background: var(--tint); color: var(--atext)' : '', pick: () => this.setState({ tab: x[0] }) }));
+    const pics = [
+      ['Menu picture','2:1','Left panel and shared posts','/_blob/746b8d28ebdfff1101b66e7f1a47dc87','2 / 1'],
+      ['Small icon','Square','Collapsed menu and browser tab','/_blob/746b8d28ebdfff1101b66e7f1a47dc87','1 / 1'],
+      ['Wide banner','5:1','Top of tablet and computer screens','/_blob/139c9225826686b89d154aeadf54b8f8','5 / 1'],
+      ['Phone banner','3:1','Top of phone screens','/_blob/acd48bfd8fe58ccb5848726b21276ba5','3 / 1'],
+      ['Background','Picture or colour','Fills the space around banners','/_blob/9d66d22b795fcd89723161f5d44240c8','5 / 1'],
+      ['Background colour','Colour','Used when there\'s no picture','', '']
+    ].map(p => ({ name:p[0], shape:p[1], use:p[2], src:p[3], ratio:p[4], hasImg: !!p[3], isColor: !p[3], boxStyle: p[3] ? '' : 'background: #1D2A1A' }));
+    const locs = [['Clayton','Side gate, ring the bell','Gerbang samping, tekan bel','10:00–12:00'],['Glenelg','Front porch, blue door','Teras depan, pintu biru','11:00–13:00'],['Adelaide CBD','Rundle Mall fountain','Air mancur Rundle Mall','12:00–12:30']]
+      .map(l => ({ place:l[0], dir:l[1], dirId:l[2], time:l[3], editLabel:'Edit ' + l[0] }));
+    const themes = [['onde','Onde Onde'],['bali','Bali'],['sumatra','Sumatra'],['sunda','Sunda'],['jawa','Jawa']].map(x => ({
+      name:x[1], sel: brand === x[0] ? 'true' : 'false', dbg:B[x[0]].dark.bg, df:B[x[0]].dark.fill, lf:B[x[0]].light.fill, lbg:B[x[0]].light.surf,
+      style: brand === x[0] ? 'border: 2px solid var(--fill); background: var(--tint)' : 'border: 1px solid var(--line)' }));
+    const chefs = [['Wati','4 dishes · signed in on 1 device',false],['Sari','1 dish · not signed in on any device',true],['Dewi','0 dishes · signed in on 1 device',false]].map(c => ({ name:c[0], meta:c[1], canInvite:c[2] }));
+    const devices = [['Kitchen tablet','Last used today, 10:42 · this device','Sign out'],['Ira\'s phone','Last used today, 9:15','Sign out'],['Wati\'s phone','Last used Sat 10 Oct','Sign out']].map(d => ({ name:d[0], meta:d[1], out:d[2] }));
+    return { vars, tabs, pics, locs, themes, chefs, devices,
+      tKitchen: tab === 'kitchen', tPost: tab === 'post', tPickup: tab === 'pickup', tDefaults: tab === 'defaults', tLook: tab === 'look', tChefs: tab === 'chefs', tDevices: tab === 'devices', tBackup: tab === 'backup' };
+  }
+}
+</script>
+</body>
+</html>

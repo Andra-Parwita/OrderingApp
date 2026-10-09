@@ -106,7 +106,7 @@ describe('multi-seller', () => {
       expect(a?.kitchen.images?.desktopBanner).toBe('/samples/banner-wide.jpg');
       expect(a?.items).toHaveLength(6);
       expect(b?.kitchen.name).toBe('Dapur Demo');
-      expect(b?.kitchen.images).toBeUndefined();
+      expect(b?.kitchen.images?.desktopBanner).toBe('/samples/banner-wide.jpg');
       expect(b?.items.map((item) => item.id)).toEqual(['soto-ayam', 'martabak', 'es-teh']);
       expect(a?.seller.id).toBe(a?.kitchen.sellerId);
       expect(b?.seller.id).toBe(b?.kitchen.sellerId);

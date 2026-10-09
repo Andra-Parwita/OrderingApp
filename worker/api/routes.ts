@@ -321,7 +321,13 @@ export async function handleApiRequest(
   }
 
   if (area === 'auth') return handleAuth(store, request, [a, b]);
-  if (area === 'admin') return handleAdmin(store, request, [a, b, c, segments[5], segments[6]]);
+  if (area === 'admin')
+    return handleAdmin(
+      store,
+      request,
+      [a, b, c, segments[5], segments[6]],
+      context.devTools === true,
+    );
 
   if (pathname === LIVE_PATH) {
     if (method !== 'GET') return null;

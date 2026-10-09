@@ -21,7 +21,7 @@ The owner's minimum stack; it is required. No new dependency beyond this list wi
 
 ## Quality gate
 
-Green before anything is "done":
+While building a plan's stages, run only `typecheck` ([D-055](../decisions/README.md)). At the end of the phase, the full gate is green before it is "done":
 
 `typecheck` · `lint` (includes the cycle check) · `format:check` · `test` (Vitest) · the Playwright specs of anything changed.
 
@@ -31,10 +31,10 @@ The full Playwright suite runs only when the owner asks.
 
 **Dev always runs on HTTPS** with an mkcert certificate ([D-002](../decisions/README.md)), so Web Push, Home Screen install and camera QR scanning work on phones every day, the same as in production.
 
-- The dev server listens on the local network (`server.host: true`), so a phone on the same Wi-Fi opens `https://192.168.178.177:<port>`. The first time, Windows Firewall asks to allow Node on **private** networks; the owner allows it.
-- The certificate covers `localhost`, `127.0.0.1` and `192.168.178.177`. It's created with `mkcert` (installed with winget on ANDRAPC, [D-015](../decisions/README.md)) into the git-ignored `.certs/` folder. Vite reads it through `server.https`, so no npm plugin is needed. Playwright uses the same HTTPS address.
+- The dev server listens on the local network (`server.host: true`), so a phone on the same Wi-Fi opens `https://<this PC's LAN IP>:<port>`. The first time, Windows Firewall asks to allow Node on **private** networks; the developer allows it.
+- **Each PC makes its own certificate** ([D-053](../decisions/README.md)); no IP is hard-coded in the repo. Find the PC's IPv4 with `ipconfig`, then run `mkcert -install` once and `mkcert -cert-file .certs/dev.pem -key-file .certs/dev-key.pem localhost 127.0.0.1 <LAN IP>`. `.certs/` is git-ignored. Vite reads it through `server.https`, so no npm plugin is needed. Playwright uses `https://localhost`.
 - **One-time per phone:** install `rootCA.pem` (never `rootCA-key.pem`) and trust it. iPhone: AirDrop or email it, install the profile, then Settings → General → About → Certificate Trust Settings → full trust. Android: Settings → Security → Install certificate → CA certificate.
-- `192.168.178.177` is **reserved for the dev PC (ANDRAPC) in the router** ([D-015](../decisions/README.md)), so the certificate stays valid. If the reservation ever changes, regenerate the certificate.
+- Reserve each dev PC's IP in the router so its certificate stays valid. If the reservation changes, regenerate that PC's certificate.
 - **Never commit or share** the certificate keys or `rootCA-key.pem`.
 
 **Later, optional:** once Cloudflare is configured, a Cloudflare tunnel or a `workers.dev` preview deploy can replace this for testing away from home. A deploy is always the owner's step.

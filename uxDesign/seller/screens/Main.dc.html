@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Orders · tablet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input{font:inherit}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.02em}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.row:hover{background:var(--surf2)}
+.nav:hover{background:var(--surf2)}
+.kbg{background:var(--kbg) url(/_blob/9d66d22b795fcd89723161f5d44240c8) center/cover}
+input::placeholder{color:var(--muted)}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); {{vars}}">
+
+  <!-- LEFT PANEL · open -->
+  <sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+  <nav aria-label="Main" style="width: 232px; flex: none; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 12px 12px; box-sizing: border-box; gap: 4px">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px 16px">
+      <img src="/_blob/746b8d28ebdfff1101b66e7f1a47dc87" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.01em">Onde Onde</div>
+    </div>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--tint); color: var(--atext); font-weight: 600" aria-current="page">
+      <svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Orders<span class="tn" style="margin-left: auto; font-size: 12px; font-weight: 600">11</span>
+    </button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500">
+      <svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg>Kitchen
+    </button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500">
+      <svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg>Pickup &amp; delivery
+    </button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500">
+      <svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg>Menu
+    </button>
+    <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500">
+      <svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg>Settings
+    </button>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 0 4px">
+        <div aria-hidden="true" style="width: 32px; height: 32px; border-radius: 16px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none">IR</div>
+        <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+          <span style="font-weight: 600; font-size: 13px">Ira</span>
+          <span style="font-size: 12px; color: var(--muted)">Owner</span>
+        </div>
+        <button style="min-height: 44px; padding: 0 8px; color: var(--atext); font-size: 13px; font-weight: 600">Switch</button>
+      </div>
+      <div role="group" aria-label="Language" style="display: flex; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+        <button aria-pressed="true" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; background: var(--tint); color: var(--atext)">EN</button>
+        <button aria-pressed="false" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; color: var(--muted)">ID</button>
+      </div>
+      <button onClick="{{toggle}}" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; color: var(--muted); font-size: 13px; font-weight: 500">
+        <svg class="i" viewBox="0 0 24 24"><path d="M11 6l-6 6 6 6M19 6l-6 6 6 6"></path></svg>Collapse menu
+      </button>
+    </div>
+  </nav>
+  </sc-if>
+
+  <!-- LEFT PANEL · collapsed -->
+  <sc-if value="{{collapsed}}" hint-placeholder-val="{{ false }}">
+  <nav aria-label="Main" style="width: 72px; flex: none; display: flex; flex-direction: column; align-items: center; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 0 12px; box-sizing: border-box; gap: 4px">
+    <div aria-label="Onde Onde" style="width: 44px; height: 44px; border-radius: 12px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 16px">O</div>
+    <button aria-label="Orders" title="Orders" aria-current="page" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--tint); color: var(--atext)"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></button>
+    <button class="nav" aria-label="Kitchen" title="Kitchen" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg></button>
+    <button class="nav" aria-label="Pickup and delivery" title="Pickup &amp; delivery" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg></button>
+    <button class="nav" aria-label="Menu" title="Menu" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg></button>
+    <button class="nav" aria-label="Settings" title="Settings" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg></button>
+    <div style="margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <button aria-label="Language: English. Change to Indonesian" style="width: 48px; height: 44px; border-radius: 10px; text-align: center; font-weight: 700; font-size: 13px; color: var(--muted)">EN</button>
+      <button onClick="{{toggle}}" aria-label="Expand menu" title="Expand menu" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M13 6l6 6-6 6M5 6l6 6-6 6"></path></svg></button>
+    </div>
+  </nav>
+  </sc-if>
+
+  <!-- MAIN PANEL -->
+  <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: {{bannerH}}px; flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden">
+      <img src="/_blob/139c9225826686b89d154aeadf54b8f8" alt="Onde Onde, Indonesian homemade food" style="width: 100%; height: 100%; object-fit: {{bannerFit}}; object-position: center 35%; display: block">
+    </div>
+
+    <section aria-label="Orders" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; box-shadow: {{sheetShadow}}">
+      <!-- header (stays pinned while the list scrolls) -->
+      <div style="padding: 18px 24px 0; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--line)">
+        <div style="display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap">
+          <div style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 220px">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em">Orders</h1>
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--atext)"><svg viewBox="0 0 8 8" style="width: 8px; height: 8px" aria-hidden="true"><circle cx="4" cy="4" r="4" fill="currentColor"></circle></svg>Live</span>
+              <button role="switch" aria-checked="{{takingS}}" onClick="{{toggleTaking}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px 0 8px; margin: -10px 0">
+                <span style="width: 36px; height: 22px; border-radius: 11px; position: relative; display: block; box-sizing: border-box; {{tkTrack}}"><span style="position: absolute; top: 3px; width: 16px; height: 16px; border-radius: 8px; {{tkKnob}}"></span></span>
+                <span style="font-size: 13px; font-weight: 600; color: {{tkColor}}">{{tkLabel}}</span>
+              </button>
+            </div>
+            <div style="font-size: 13px; color: var(--muted)">Menu for <strong style="color: var(--text); font-weight: 600">Sat 17 Oct</strong> · {{tkSub}}</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 10px; color: var(--atext); font-weight: 600"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5M5 14v6h14v-6"></path></svg>Share menu</button>
+            <button style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 600"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>New order</button>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+          <label class="vh" for="find">Find an order by name or code</label>
+          <div style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; flex: 1; min-width: 180px; box-sizing: border-box; color: var(--muted)">
+            <svg class="i i-s" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14zM20 20l-4-4"></path></svg>
+            <input id="find" placeholder="Name or code" style="border: 0; background: none; outline: none; color: var(--text); min-width: 0; flex: 1; font-size: 14px">
+          </div>
+          <button aria-pressed="false" style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; flex: none"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--warn)"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg>Changed<span class="tn" style="color: var(--muted)">2</span></button>
+          <button aria-pressed="false" style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; font-size: 13px; font-weight: 600; flex: none"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="M3 7h18v10H3zM12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"></path></svg>Not paid<span class="tn" style="color: var(--muted)">6</span></button>
+        </div>
+
+        <div role="tablist" aria-label="Order status" style="display: flex; gap: 2px; overflow-x: auto; margin: 2px -10px -1px">
+          <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="6">
+            <button role="tab" aria-selected="{{tb.sel}}" style="flex: none; display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 10px; font-size: 14px; border-bottom: 2px solid {{tb.bar}}; color: {{tb.color}}; font-weight: {{tb.weight}}">{{tb.label}}<span class="tn" style="font-size: 12px; font-weight: 600; min-width: 22px; text-align: center; padding: 1px 6px; box-sizing: border-box; border-radius: 10px; background: {{tb.cbg}}; color: {{tb.ccolor}}">{{tb.n}}</span></button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- list -->
+      <div style="flex: 1; min-height: 0; overflow-y: auto">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+          <button class="row" onClick="{{r.open}}" aria-current="{{r.cur}}" style="display: flex; flex-direction: column; gap: 3px; width: 100%; box-sizing: border-box; padding: 10px 24px; border-bottom: 1px solid var(--line); min-height: 60px; {{r.rowStyle}}">
+            <span style="display: flex; align-items: center; gap: 10px; width: 100%">
+              <span class="mono tn" style="font-size: 13px; font-weight: 600; color: var(--muted); flex: none">{{r.code}}</span>
+              <span style="font-size: 15px; font-weight: 600; flex: none; {{r.nameStyle}}">{{r.name}}</span>
+              <sc-if value="{{r.changed}}" hint-placeholder-val="{{ false }}">
+                <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--warn); flex: none"><svg class="i i-s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg>Changed</span>
+              </sc-if>
+              <span style="display: inline-flex; gap: 6px; color: var(--muted); flex: none">
+                <sc-for list="{{r.flags}}" as="f" hint-placeholder-count="1">
+                  <svg class="i i-s" viewBox="0 0 24 24" role="img" aria-label="{{f.label}}"><title>{{f.label}}</title><path d="{{f.d}}"></path></svg>
+                </sc-for>
+              </span>
+              <span class="tn" style="margin-left: auto; font-size: 15px; font-weight: 600; flex: none; {{r.totalStyle}}">{{r.total}}</span>
+            </span>
+            <span style="display: flex; align-items: center; gap: 14px; width: 100%; font-size: 13px">
+              <span style="color: var(--muted); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.items}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; color: var(--muted); flex: none"><svg class="i i-s" viewBox="0 0 24 24"><path d="{{r.fulD}}"></path></svg>{{r.ful}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; flex: none; width: 96px; color: {{r.sColor}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="{{r.sD}}"></path></svg>{{r.sLabel}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 4px; flex: none; width: 48px; font-weight: 600; color: var(--conf)"><sc-if value="{{r.paid}}" hint-placeholder-val="{{ false }}"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Paid</sc-if></span>
+            </span>
+          </button>
+        </sc-for>
+        <div style="padding: 16px 24px 24px; font-size: 12px; color: var(--muted)">11 orders · 4 paid · Total <span class="tn">$454.50</span></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ORDER DETAIL (beside the list) -->
+  <sc-if value="{{detail}}" hint-placeholder-val="{{ true }}">
+  <aside aria-label="Order K7M2QX" style="width: 384px; flex: none; display: flex; flex-direction: column; background: var(--surf); border-left: 1px solid var(--line)">
+    <div style="display: flex; align-items: flex-start; gap: 8px; padding: 16px 12px 12px 24px; border-bottom: 1px solid var(--line)">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; align-items: baseline; gap: 10px">
+          <span class="mono" style="font-size: 15px; font-weight: 600; color: var(--muted)">K7M2QX</span>
+          <h2 style="margin: 0; font-size: 20px; font-weight: 700">Wulan</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; font-size: 13px">
+          <span style="display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--text)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z"></path></svg>Ordered</span>
+          <span style="display: inline-flex; align-items: center; gap: 5px; color: var(--muted)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"></path></svg>Pickup</span>
+          <span style="color: var(--muted)">Not paid</span>
+        </div>
+      </div>
+      <button onClick="{{close}}" aria-label="Close order" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+
+    <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--warnTint); color: var(--text)">
+        <svg class="i" viewBox="0 0 24 24" style="color: var(--warn); margin-top: 1px"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px; font-size: 13px">
+          <strong style="font-weight: 600">Wulan changed this order · 12 min ago</strong>
+          <span style="color: var(--muted)">Added 6× Onde onde. This note clears when you take the next step.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column">
+        <h3 style="margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">Items</h3>
+        <div style="display: grid; grid-template-columns: 1fr auto auto; column-gap: 16px; font-size: 14px">
+          <span style="padding: 8px 0; border-bottom: 1px solid var(--line)">Rendang <span style="color: var(--muted)">· regular</span></span><span class="tn" style="padding: 8px 0; border-bottom: 1px solid var(--line); color: var(--muted)">×2</span><span class="tn" style="padding: 8px 0; border-bottom: 1px solid var(--line); text-align: right">$36.00</span>
+          <span style="padding: 8px 0; border-bottom: 1px solid var(--line)">Nasi Ayam Bali <span style="color: var(--muted)">· 1 box</span></span><span class="tn" style="padding: 8px 0; border-bottom: 1px solid var(--line); color: var(--muted)">×1</span><span class="tn" style="padding: 8px 0; border-bottom: 1px solid var(--line); text-align: right">$15.50</span>
+          <span style="padding: 8px 0; border-bottom: 1px solid var(--line)">Onde onde <span style="color: var(--muted)">· pack of 6</span></span><span class="tn" style="padding: 8px 0; border-bottom: 1px solid var(--line); color: var(--muted)">×1</span><span class="tn" style="padding: 8px 0; border-bottom: 1px solid var(--line); text-align: right">$6.50</span>
+          <span style="padding: 10px 0 0; font-weight: 700">Total</span><span></span><span class="tn" style="padding: 10px 0 0; text-align: right; font-weight: 700; font-size: 16px">$58.00</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <h3 style="margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">Note from Wulan</h3>
+        <p style="margin: 0; font-size: 14px">Less spicy for the rendang, please.</p>
+      </div>
+
+      <dl style="margin: 0; display: grid; grid-template-columns: 112px 1fr; row-gap: 8px; column-gap: 12px; font-size: 13px">
+        <dt style="color: var(--muted)">Pickup</dt><dd style="margin: 0">Glenelg · Sat 17 Oct, 10:00–12:00</dd>
+        <dt style="color: var(--muted)">Language</dt><dd style="margin: 0">Indonesian</dd>
+        <dt style="color: var(--muted)">WhatsApp</dt><dd style="margin: 0">Order number received · Wed 7 Oct</dd>
+        <dt style="color: var(--muted)">Entered by</dt><dd style="margin: 0">Wulan, using the order link</dd>
+        <dt style="color: var(--muted)">Customer</dt><dd style="margin: 0">Returning · 4th order</dd>
+        <dt style="color: var(--muted)">Can change</dt><dd style="margin: 0">Yes, until you lock it</dd>
+      </dl>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <h3 style="margin: 0; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">Recent changes</h3>
+        <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px"><span>Wulan added 6× Onde onde</span><span style="color: var(--muted); flex: none">12 min ago</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px"><span>Ira sent the order link</span><span style="color: var(--muted); flex: none">Wed 7 Oct</span></div>
+        <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px"><span>Wulan placed the order</span><span style="color: var(--muted); flex: none">Wed 7 Oct</span></div>
+      </div>
+    </div>
+
+    <!-- actions: one obvious next step -->
+    <div style="padding: 12px 16px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+      <button style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 15px"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Confirm order</button>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <button style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"></path></svg>Send WhatsApp link</button>
+        <button style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M3 7h18v10H3zM12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"></path></svg>Mark paid</button>
+      </div>
+      <div style="display: flex; justify-content: space-between">
+        <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; color: var(--muted); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M6 11h12v9H6zM8 11V8a4 4 0 0 1 8 0v3"></path></svg>Lock</button>
+        <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; color: var(--muted); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"></path></svg>Nudge</button>
+        <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; color: var(--danger); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM9 9l6 6M15 9l-6 6"></path></svg>Cancel order</button>
+      </div>
+    </div>
+  </aside>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"panel":{"editor":"enum","options":["open","collapsed"],"default":"open","section":"Layout"},"scrolled":{"editor":"boolean","default":false,"section":"Layout"},"orderOpen":{"editor":"boolean","default":true,"section":"Layout"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const panel = this.state.panel ?? this.props.panel ?? 'open';
+    const detail = this.state.detail ?? this.props.orderOpen ?? true;
+    const scrolled = this.props.scrolled ?? false;
+    const N = {
+      dark: { bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', ctrl:'#6B7266', text:'#F1EEE6', muted:'#A9AFA3', kbg:'#1D2A1A', conf:'#7EC4B0', ready:'#8DB4E8', warn:'#E9B949', warnTint:'rgba(233,185,73,.10)', danger:'#EE8B78' },
+      light:{ bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', ctrl:'#7F857A', text:'#1C1F1A', muted:'#5D6358', kbg:'#E9E3CF', conf:'#1F6B5C', ready:'#2B5C9E', warn:'#8A5A00', warnTint:'#FBF1D9', danger:'#A93724' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+
+    const P = {
+      circle:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z',
+      check:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM8 12.5l2.5 2.5L16 9.5',
+      xc:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM9 9l6 6M15 9l-6 6',
+      bag:'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2',
+      truck:'M2 6h12v10H2zM14 10h4l3 3v3h-7zM5 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M15 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0',
+      chat:'M4 5h16v11H9l-5 4z',
+      repeat:'M4 11a7 7 0 0 1 12-4.5L18 8.5M18 4v4.5h-4.5M20 13a7 7 0 0 1-12 4.5L6 15.5M6 20v-4.5h4.5',
+      user:'M12 12a4 4 0 1 0 0-8a4 4 0 1 0 0 8zM4 21a8 8 0 0 1 16 0'
+    };
+    const S = {
+      ordered:{ label:'Ordered', d:P.circle, color:t.text },
+      confirmed:{ label:'Confirmed', d:P.check, color:t.conf },
+      cancelled:{ label:'Cancelled', d:P.xc, color:t.danger }
+    };
+    const F = { wa:{ d:P.chat, label:'WhatsApp received' }, ret:{ d:P.repeat, label:'Returning customer' }, staff:{ d:P.user, label:'Entered by staff' } };
+    const data = [
+      ['K7M2QX','Wulan','2× Rendang · 1× Nasi Ayam Bali · 6× Onde onde','$58.00','p','ordered',false,true,['wa','ret']],
+      ['B3R9TP','Siti','1× Nasi Ayam Bali · 1× Sayur urab','$26.50','p','confirmed',true,false,['wa','ret']],
+      ['H8D4LM','Michael','3× Rendang · 2× Sambal matah','$71.00','d','confirmed',false,false,['wa']],
+      ['Q2N6VS','Dewi','12× Onde onde','$30.00','p','ordered',false,false,[]],
+      ['T5J1WC','Anastasia','2× Nasi Ayam Bali · 2× Sayur urab · 1× Sambal matah','$54.50','d','confirmed',true,false,['staff']],
+      ['C6P2ZU','Putri','1× Nasi Ayam Bali · 6× Onde onde','$29.00','d','ordered',false,true,['wa']],
+      ['R4G8YA','Rachel','2× Rendang · 12× Onde onde','$66.00','p','confirmed',true,false,['wa','ret']],
+      ['W1L7HB','Tom','2× Sayur urab','$17.00','p','confirmed',false,false,['wa']],
+      ['E3X5NR','Ketut','4× Nasi Ayam Bali','$62.00','p','ordered',false,false,['staff']],
+      ['Y8S2DF','Linh','1× Rendang · 1× Sambal matah','$22.50','d','confirmed',true,false,[]],
+      ['M9F3KE','Budi','1× Rendang','$18.00','p','cancelled',false,false,[]]
+    ];
+    const rows = data.map((r, i) => {
+      const s = S[r[5]];
+      const sel = detail && i === 0;
+      const cx = r[5] === 'cancelled';
+      return {
+        code:r[0], name:r[1], items:r[2], total:r[3],
+        ful: r[4] === 'p' ? 'Pickup' : 'Delivery', fulD: r[4] === 'p' ? P.bag : P.truck,
+        sLabel:s.label, sD:s.d, sColor:s.color, paid:r[6], changed:r[7],
+        flags:r[8].map(k => F[k]),
+        cur: sel ? 'true' : 'false',
+        rowStyle: sel ? 'background: var(--tint)' : '',
+        nameStyle: cx ? 'color: var(--muted)' : '',
+        totalStyle: cx ? 'color: var(--muted); text-decoration: line-through' : '',
+        open: () => this.setState({ detail: true })
+      };
+    });
+    const tabDefs = [['All',11],['Ordered',4],['Confirmed',6],['Ready',0],['Done',0],['Cancelled',1]];
+    const tabs = tabDefs.map((c, i) => {
+      const sel = i === 0;
+      return { label:c[0], n:c[1], sel: sel ? 'true' : 'false',
+        bar: sel ? 'var(--fill)' : 'transparent',
+        color: sel ? 'var(--text)' : 'var(--muted)', weight: sel ? '700' : '500',
+        cbg: sel ? 'var(--fill)' : (c[1] ? 'var(--surf2)' : 'transparent'),
+        ccolor: sel ? 'var(--on)' : 'var(--muted)' };
+    });
+    const mainW = 1180 - (panel === 'open' ? 232 : 72) - (detail ? 384 : 0);
+    return {
+      vars, rows, tabs,
+      takingS: (this.state.taking ?? true) ? 'true' : 'false',
+      toggleTaking: () => this.setState({ taking: !(this.state.taking ?? true) }),
+      tkTrack: (this.state.taking ?? true) ? 'background: var(--fill)' : 'background: var(--surf2); border: 1px solid var(--ctrl)',
+      tkKnob: (this.state.taking ?? true) ? 'left: 17px; background: var(--on)' : 'left: 3px; background: var(--muted)',
+      tkColor: (this.state.taking ?? true) ? 'var(--text)' : 'var(--warn)',
+      tkLabel: (this.state.taking ?? true) ? 'Taking orders' : 'Orders paused',
+      tkSub: (this.state.taking ?? true) ? 'Orders close Thu 15 Oct, 8:00 pm' : 'Customers see "Not taking orders right now". You can still add orders yourself.',
+      open: panel === 'open', collapsed: panel !== 'open', detail,
+      bannerH: scrolled ? 44 : Math.round(mainW / 5),
+      bannerFit: scrolled ? 'cover' : 'contain',
+      sheetShadow: scrolled ? '0 -6px 16px rgba(0,0,0,.25)' : 'none',
+      toggle: () => this.setState({ panel: panel === 'open' ? 'collapsed' : 'open' }),
+      close: () => this.setState({ detail: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

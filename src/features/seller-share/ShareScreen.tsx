@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Segmented, Toast, type SegmentedOption } from '../../ui';
 import { SHARE_NS } from './i18n/register';
 import { loadRequested, type ShareRootState } from './shareSlice';
 import { buildShareText, type PostLanguage } from './shareText';
 
-/** Where the customer link points; the app shell passes `window.location.origin` by default. */
-export type ShareScreenProps = Readonly<{ origin?: string }>;
+/** Where the customer link points: `origin/slug`; defaults to the page origin and the signed-in seller. */
+export type ShareScreenProps = Readonly<{ origin?: string; slug?: string }>;
 
 const Page = styled.main`
   display: flex;
@@ -78,7 +79,10 @@ function shareText(text: string): void {
  * S5. Route-agnostic. Menu images (collage, up to 5) come with batch 3, so only the text is
  * shared here.
  */
-export function ShareScreen({ origin = window.location.origin }: ShareScreenProps) {
+export function ShareScreen({
+  origin = window.location.origin,
+  slug = currentSellerSlug(),
+}: ShareScreenProps) {
   const { t } = useTranslation(SHARE_NS);
   const dispatch = useDispatch();
   const state = useSelector((root: ShareRootState) => root.sellerShare);
@@ -91,8 +95,10 @@ export function ShareScreen({ origin = window.location.origin }: ShareScreenProp
 
   const text = useMemo(
     () =>
-      state.menu && state.settings ? buildShareText(state.menu, state.settings, post, origin) : '',
-    [state.menu, state.settings, post, origin],
+      state.menu && state.settings
+        ? buildShareText(state.menu, state.settings, post, origin, slug)
+        : '',
+    [state.menu, state.settings, post, origin, slug],
   );
   const options: ReadonlyArray<SegmentedOption<PostLanguage>> = POSTS.map((value) => ({
     value,

@@ -262,8 +262,11 @@ export type Repository = {
   /** Undefined for an unknown slug / id. */
   sellerBySlug(slug: string): Promise<SellerRepository | undefined>;
   sellerById(id: string): Promise<SellerRepository | undefined>;
-  /** The caller has checked the slug (valid, unique). */
-  addSeller(name: string, slug: string): Promise<AdminSeller>;
+  /**
+   * The caller has checked the slug (valid, unique). `sampleImages` (local dev only, D-054) starts
+   * the kitchen with the five sample pictures; absent means none.
+   */
+  addSeller(name: string, slug: string, options?: { sampleImages?: boolean }): Promise<AdminSeller>;
 
   /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */
   lookupByToken(token: string): Promise<TokenLookup | undefined>;

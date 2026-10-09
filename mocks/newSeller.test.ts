@@ -4,6 +4,31 @@
 import { describe, expect, it } from 'vitest';
 import { useWorld } from './impl';
 
+describe('a new seller pictures (D-054)', () => {
+  const create = useWorld('new-seller-images');
+
+  it('start with the five sample pictures when asked (local dev)', async () => {
+    const world = await create({ now: () => new Date('2026-10-11T23:00:00Z') });
+    await world.repo.addSeller('Kedai Gambar', 'kedai-gambar', { sampleImages: true });
+    const images = await (await world.repo.sellerBySlug('kedai-gambar'))?.getImages();
+    expect(images).toMatchObject({
+      desktopBanner: '/samples/banner-wide.jpg',
+      phoneBanner: '/samples/banner-phone.jpg',
+      railImage: '/samples/rail.png',
+      railIcon: '/samples/rail-icon.png',
+      bannerBackgroundImage: '/samples/banner-bg.jpg',
+      bannerBackground: '#835937',
+    });
+  });
+
+  it('start with none by default (production)', async () => {
+    const world = await create({ now: () => new Date('2026-10-11T23:00:00Z') });
+    await world.repo.addSeller('Kedai Kosong', 'kedai-kosong');
+    const images = await (await world.repo.sellerBySlug('kedai-kosong'))?.getImages();
+    expect(images).toEqual({});
+  });
+});
+
 describe('a new seller default week', () => {
   const create = useWorld('new-seller');
 

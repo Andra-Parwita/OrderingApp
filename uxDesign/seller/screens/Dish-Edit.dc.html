@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dish editor · slide-over</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input,textarea{font:inherit}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.ln{height:8px;border-radius:4px;background:var(--line)}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; position: relative; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); color-scheme: {{scheme}}; {{vars}}">
+  <!-- step 1 behind, simplified -->
+  <div aria-hidden="true" style="width: 72px; flex: none; background: var(--panel); border-right: 1px solid var(--line)"></div>
+  <div aria-hidden="true" style="flex: 1; display: flex; flex-direction: column; gap: 22px; padding: 70px 24px; background: var(--surf)">
+    <div class="ln" style="width: 30%; height: 14px"></div>
+    <div class="ln" style="width: 50%"></div>
+    <div class="ln"></div><div class="ln" style="width: 90%"></div><div class="ln"></div><div class="ln" style="width: 85%"></div><div class="ln"></div><div class="ln" style="width: 80%"></div><div class="ln"></div>
+  </div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,.55)"></div>
+
+  <!-- SLIDE-OVER -->
+  <div role="dialog" aria-label="{{title}}" style="position: absolute; top: 0; right: 0; bottom: 0; width: 560px; background: var(--surf); border-left: 1px solid var(--line); display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 14px 12px 14px 24px; border-bottom: 1px solid var(--line)">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+        <h1 style="margin: 0; font-size: 20px; font-weight: 700">{{title}}</h1>
+        <span style="font-size: 12px; color: var(--muted)">{{subtitle}}</span>
+      </div>
+      <button aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+
+    <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 18px 24px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">
+        <span>English</span><span>Indonesian</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 13px; font-weight: 600">Name <span style="color: var(--muted); font-weight: 500">· required</span></span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <input aria-label="Name in English" value="{{d.nameEn}}" placeholder="e.g. Yellow rice" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 15px; font-weight: 600; box-sizing: border-box; min-width: 0">
+          <input aria-label="Name in Indonesian" value="{{d.nameId}}" placeholder="mis. Nasi kuning" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 15px; font-weight: 600; box-sizing: border-box; min-width: 0">
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 13px; font-weight: 600">Description <span style="color: var(--muted); font-weight: 500">· optional</span></span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <textarea aria-label="Description in English" rows="3" placeholder="What's in it" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 14px; min-width: 0">{{d.descEn}}</textarea>
+          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <textarea aria-label="Description in Indonesian" rows="3" placeholder="Isinya apa" style="resize: none; padding: 10px 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 14px">{{d.descId}}</textarea>
+            <sc-if value="{{d.idEmpty}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: var(--muted)">Empty is fine: Indonesian customers will see the English text.</span></sc-if>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 13px; font-weight: 600">Size or portion</span>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <input aria-label="Size in English" value="{{d.sizeEn}}" placeholder="e.g. 1 box, 500 ml, 10 pcs" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 14px; box-sizing: border-box; min-width: 0">
+          <input aria-label="Size in Indonesian" value="{{d.sizeId}}" placeholder="mis. 1 kotak" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 14px; box-sizing: border-box; min-width: 0">
+        </div>
+        <span style="font-size: 12px; color: var(--muted)">One size per dish. To sell two sizes, add two dishes.</span>
+      </div>
+
+      <div style="height: 1px; background: var(--line)"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 12px">
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Price
+          <span style="display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; color: var(--muted); font-weight: 500">$<input value="{{d.price}}" class="tn" style="border: 0; background: none; outline: none; color: var(--text); font-size: 15px; font-weight: 600; width: 100%"></span>
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Limit <span style="display: none"></span>
+          <input value="{{d.limit}}" placeholder="No limit" class="tn" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 15px; box-sizing: border-box; min-width: 0">
+        </label>
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">
+          <span style="display: flex; align-items: center; height: 18px">Chef<button onClick="{{openChefs}}" style="margin-left: auto; min-height: 32px; padding: 0 2px; color: var(--atext); font-weight: 600; font-size: 12px">Edit chefs</button></span>
+          <label style="position: relative; display: flex; align-items: center; height: 44px; border: 1px solid var(--ctrl); border-radius: 10px; font-weight: 500">
+            <span class="vh" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Chef</span>
+            <select style="appearance: none; -webkit-appearance: none; width: 100%; height: 100%; padding: 0 34px 0 12px; border: 0; background: none; color: var(--text); font: inherit; font-size: 14px; cursor: pointer">
+              <sc-for list="{{chefs}}" as="c" hint-placeholder-count="4"><option value="{{c.name}}" selected="{{c.selB}}" style="background: var(--surf); color: var(--text)">{{c.name}}</option></sc-for>
+            </select>
+            <svg class="i i-s" viewBox="0 0 24 24" style="position: absolute; right: 12px; color: var(--muted); pointer-events: none"><path d="M6 9l6 6 6-6"></path></svg>
+          </label>
+        </div>
+      </div>
+      <span style="font-size: 12px; color: var(--muted); margin-top: -8px">Limit is optional. Customers see "N left" once 5 or fewer remain; the dish sells out at 0. Chef splits the Kitchen screen by person.</span>
+
+      <sc-if value="{{isEdit}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--surf2); font-size: 13px">
+          <span style="display: flex; gap: 8px"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--muted); margin-top: 1px"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 11v5M12 8h.01"></path></svg><span>Used on 4 menus, last on Sat 10 Oct. Changes apply here and to future menus. Past orders keep what was ordered.</span></span>
+          <label style="display: flex; align-items: center; gap: 10px; min-height: 40px; cursor: pointer">
+            <span style="width: 20px; height: 20px; border-radius: 5px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; flex: none"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+            <span>Also update this menu for Sat 24 Oct <span style="color: var(--muted)">(if it's live and people ordered it, you'll get a warning, never a block)</span></span>
+          </label>
+        </div>
+      </sc-if>
+      <sc-if value="{{isNew}}" hint-placeholder-val="{{ true }}">
+        <label style="display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-size: 14px">
+          <span style="width: 20px; height: 20px; border-radius: 5px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; flex: none"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+          <span>Add to this menu too <span style="color: var(--muted)">(it's saved in Your dishes either way)</span></span>
+        </label>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px; padding: 12px 16px 12px 24px; border-top: 1px solid var(--line)">
+      <sc-if value="{{isEdit}}" hint-placeholder-val="{{ false }}">
+        <button style="min-height: 44px; padding: 0 8px; color: var(--danger); font-weight: 600; font-size: 13px">Delete dish</button>
+      </sc-if>
+      <button style="margin-left: auto; min-height: 48px; padding: 0 16px; border-radius: 10px; color: var(--muted); font-weight: 600">Cancel</button>
+      <button style="min-height: 48px; padding: 0 22px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 15px">{{saveLabel}}</button>
+    </div>
+  </div>
+
+  <!-- CHEFS MODAL -->
+  <sc-if value="{{chefsOpen}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="Chefs" style="width: 440px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 48px rgba(0,0,0,.4); display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; padding: 14px 10px 6px 20px">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 700">Chefs</h2>
+            <span style="font-size: 12px; color: var(--muted)">Pick who cooks this dish. Add, rename or remove chefs here too.</span>
+          </div>
+          <button onClick="{{closeChefs}}" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+        <div role="radiogroup" aria-label="Chef for this dish" style="display: flex; flex-direction: column; padding: 4px 12px">
+          <sc-for list="{{chefRows}}" as="c" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 4px; min-height: 48px; border-bottom: 1px solid var(--line)">
+              <button role="radio" aria-checked="{{c.sel}}" onClick="{{c.pick}}" style="flex: 1; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 8px">
+                <span style="width: 20px; height: 20px; border-radius: 10px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex: none; {{c.ring}}"><span style="width: 10px; height: 10px; border-radius: 5px; background: var(--on); opacity: {{c.tick}}"></span></span>
+                <span style="display: flex; flex-direction: column"><span style="font-weight: 600; {{c.nameStyle}}">{{c.name}}</span><span style="font-size: 12px; color: var(--muted)">{{c.meta}}</span></span>
+              </button>
+              <sc-if value="{{c.canInvite}}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{c.invite}}" style="min-height: 44px; padding: 0 10px; color: var(--atext); font-weight: 600; font-size: 13px">Invite</button>
+              </sc-if>
+              <sc-if value="{{c.real}}" hint-placeholder-val="{{ true }}">
+                <button aria-label="{{c.renameLabel}}" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"></path></svg></button>
+                <button aria-label="{{c.removeLabel}}" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--danger)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"></path></svg></button>
+              </sc-if>
+            </div>
+            <sc-if value="{{c.showKey}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 8px; margin: 8px 0; padding: 12px 14px; border-radius: 10px; background: var(--surf2)">
+                <span style="font-weight: 600; font-size: 13px">Sign-in key for {{c.name}}</span>
+                <span style="align-self: flex-start; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 16px; font-weight: 600; letter-spacing: .06em; padding: 8px 12px; border-radius: 8px; background: var(--bg)">DLV-8Z8R-3PHY-LYFD-LMZ5</span>
+                <span style="font-size: 12px; color: var(--muted)">Valid for 24 hours, on up to 3 devices. Shown once, so copy or send it now.</span>
+                <div style="display: flex; gap: 8px">
+                  <button style="min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 13px">Send on WhatsApp</button>
+                  <button style="min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px">Copy</button>
+                  <button onClick="{{c.hideKey}}" style="margin-left: auto; min-height: 44px; padding: 0 10px; color: var(--muted); font-weight: 600; font-size: 13px">Done</button>
+                </div>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+        <div style="display: flex; gap: 8px; padding: 12px 20px 4px">
+          <input aria-label="New chef's name" placeholder="New chef's name" style="flex: 1; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: none; color: var(--text); font-size: 14px">
+          <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>Add</button>
+        </div>
+        <span style="font-size: 12px; color: var(--muted); padding: 6px 20px 0">Removing a chef moves their dishes to Onde Onde. Invite gives a chef their own sign-in key, same as in Settings › Chefs.</span>
+        <div style="display: flex; justify-content: flex-end; padding: 14px 16px 16px">
+          <button onClick="{{closeChefs}}" style="min-height: 48px; padding: 0 24px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"mode":{"editor":"enum","options":["new","edit"],"default":"new","section":"Layout"},"chefsModal":{"editor":"boolean","default":true,"section":"Layout"},"showInvite":{"editor":"boolean","default":false,"section":"Layout"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const mode = this.props.mode ?? 'new';
+    const N = {
+      dark: { bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', ctrl:'#6B7266', text:'#F1EEE6', muted:'#A9AFA3', danger:'#EE8B78' },
+      light:{ bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', ctrl:'#7F857A', text:'#1C1F1A', muted:'#5D6358', danger:'#A93724' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const isEdit = mode === 'edit';
+    const d = isEdit
+      ? { nameEn:'Rendang', nameId:'Rendang sapi', descEn:'Slow-cooked beef in coconut and spices, West Sumatran style.', descId:'', sizeEn:'Regular', sizeId:'Biasa', price:'18.00', limit:'', chef:'Wati', chefColor:'var(--text)', idEmpty:true }
+      : { nameEn:'', nameId:'', descEn:'', descId:'', sizeEn:'', sizeId:'', price:'', limit:'', chef:'No chef', chefColor:'var(--muted)', idEmpty:false };
+    const chefsOpen = this.state.chefsOpen ?? this.props.chefsModal ?? true;
+    const kitchen = 'Onde Onde';
+    const picked = this.state.chef ?? (isEdit ? 'Wati' : kitchen);
+    d.chefColor = 'var(--text)';
+    const meta = { 'Onde Onde':'Default · the whole kitchen', 'Wati':'4 dishes · signed in on 1 device', 'Ira':'Owner · 2 dishes', 'Sari':'1 dish · not signed in on any device' };
+    const names = [kitchen,'Wati','Ira','Sari'];
+    const chefs = names.map(n => ({ name:n, selB: n === picked }));
+    const inviting = this.state.inviting !== undefined ? this.state.inviting : (this.props.showInvite ? 'Sari' : null);
+    const chefRows = names.map(n => {
+      const s = n === picked;
+      return { name:n, meta:meta[n], real: n !== kitchen, sel: s ? 'true' : 'false', tick: s ? '1' : '0',
+        ring: s ? 'background: var(--fill)' : 'border: 1.5px solid var(--ctrl)',
+        nameStyle: '', canInvite: n === 'Sari' && inviting !== 'Sari', showKey: inviting === n,
+        renameLabel:'Rename ' + n, removeLabel:'Remove ' + n,
+        invite: () => this.setState({ inviting: n }), hideKey: () => this.setState({ inviting: null }),
+        pick: () => this.setState({ chef: n }) };
+    });
+    return { vars: Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';'), d, isEdit, isNew: !isEdit, chefs, chefRows, chefsOpen, scheme: theme,
+      openChefs: () => this.setState({ chefsOpen: true }), closeChefs: () => this.setState({ chefsOpen: false }),
+      title: isEdit ? 'Edit dish' : 'New dish',
+      subtitle: isEdit ? 'Rendang · in Your dishes' : 'Saved to Your dishes for next time',
+      saveLabel: isEdit ? 'Save changes' : 'Add dish' };
+  }
+}
+</script>
+</body>
+</html>

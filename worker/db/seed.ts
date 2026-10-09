@@ -63,8 +63,13 @@ export function sellerSeedStatements(db: Db, fixture: SellerFixture): Array<D1St
 }
 
 /** An empty kitchen for a seller the admin just created (the same shape as the sample kitchens). */
-export function newSellerStatements(db: Db, seller: Seller, createdAt: string): Array<D1Statement> {
-  return sellerSeedStatements(db, blankFixture(seller, createdAt));
+export function newSellerStatements(
+  db: Db,
+  seller: Seller,
+  createdAt: string,
+  sampleImages = false,
+): Array<D1Statement> {
+  return sellerSeedStatements(db, blankFixture(seller, createdAt, sampleImages));
 }
 
 /** The two sample kitchens (Onde Onde, Dapur Demo). */
