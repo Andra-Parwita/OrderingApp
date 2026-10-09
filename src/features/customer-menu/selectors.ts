@@ -60,3 +60,6 @@ export const selectRemainingById = createSelector(selectMenu, (menu) => {
 
 export const selectEdit = (state: CustomerRootState) => state.customer.edit;
 export const selectUpdate = (state: CustomerRootState) => state.customer.update;
+
+export const selectCheckout = (state: CustomerRootState) => state.customer.checkout;
+export const selectNotices = (state: CustomerRootState) => state.customer.notices;

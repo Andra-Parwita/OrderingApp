@@ -133,6 +133,7 @@ export type CustomerOrder = Pick<
   | 'updatedAt'
   | 'pickupPlaceId'
   | 'collectedAt'
+  | 'paid'
 > & {
   /** Customers are not seller-scoped: each order says whose it is (My orders spans sellers). */
   seller: SellerRef;

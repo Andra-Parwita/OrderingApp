@@ -56,8 +56,14 @@ import {
   type ItemResponse,
   type KitchenNameResponse,
   type OkResponse,
+  type RestoreResponse,
 } from '../../shared/setupContract';
 import { TOKENS_MAX } from '../../shared/limits';
+import {
+  parsePushSubscribeRequest,
+  parsePushUnsubscribeRequest,
+  type PublicKeyResponse,
+} from '../../shared/pushContract';
 import {
   parseCreateOrderRequest,
   parseCreateSellerOrderRequest,
@@ -192,6 +198,8 @@ export type RouteContext = {
    * /api/dev/* route then answer as if they did not exist.
    */
   devTools?: boolean;
+  /** The VAPID public key (env `VAPID_PUBLIC_KEY`); absent means web push is not set up. */
+  vapidPublicKey?: string | undefined;
 };
 
 /**
@@ -348,6 +356,21 @@ export async function handleApiRequest(
       );
       return customerResult(result, hit.sellerRepo.seller);
     }
+    // Plan 004 stage 6: web push for this order. The token is the auth; the browser's endpoint and
+    // keys are stored and never returned. The Origin check sits in worker/auth/origin.ts.
+    if (a && b === 'push' && !c && (method === 'POST' || method === 'DELETE')) {
+      const hit = await store.lookupByToken(a);
+      if (!hit) return error('not_found', 'Order not found');
+      if (hit.kind !== 'live') return weekClosed();
+      if (method === 'POST') {
+        const input = parsePushSubscribeRequest(await readJson(request));
+        if (!input) return bad();
+        return okResult(await hit.sellerRepo.subscribePush(a, input));
+      }
+      const input = parsePushUnsubscribeRequest(await readJson(request));
+      if (!input) return bad();
+      return okResult(await hit.sellerRepo.unsubscribePush(a, input.endpoint));
+    }
     if (a && b === 'cancel' && !c && method === 'POST') {
       const hit = await store.lookupByToken(a);
       if (!hit) return error('not_found', 'Order not found');
@@ -361,6 +384,13 @@ export async function handleApiRequest(
       return customerResult(result, hit.sellerRepo.seller);
     }
     return null;
+  }
+
+  // The VAPID public key a browser needs to subscribe. 404 when push is not set up on this server.
+  if (area === 'push' && a === 'public-key' && !b && method === 'GET') {
+    return context.vapidPublicKey
+      ? Response.json({ publicKey: context.vapidPublicKey } satisfies PublicKeyResponse)
+      : error('not_found', 'Notifications are not set up');
   }
 
   if (area === 'auth') return handleAuth(store, request, [a, b]);
@@ -469,6 +499,7 @@ async function dropUnusedImages(
   bucket: ImageBucket,
   store: SellerRepository,
   refs: ReadonlyArray<string | undefined>,
+  sellerId: string,
 ): Promise<void> {
   const backup = await store.exportBackup();
   const inUse = new Set<string>();
@@ -482,6 +513,7 @@ async function dropUnusedImages(
   await deleteImageRefs(
     bucket,
     refs.filter((ref) => ref !== undefined && !inUse.has(ref)),
+    sellerId,
   );
 }
 
@@ -630,7 +662,9 @@ async function handleSeller(
     if (!c && method === 'DELETE') {
       const result = await store.deleteMenu();
       if (!result.ok) return error(result.error, result.message);
-      if (context.images) await dropUnusedImages(context.images, store, [result.value.before]);
+      if (context.images) {
+        await dropUnusedImages(context.images, store, [result.value.before], sellerId);
+      }
       await menuChanged();
       return Response.json({ menu: result.value.view } satisfies MenuViewResponse);
     }
@@ -649,16 +683,20 @@ async function handleSeller(
         : null;
       const result = await store.setMenuPicture(input.dataUrl, stored?.ref);
       if (!result.ok) {
-        if (stored && context.images) await dropUnusedImages(context.images, store, [stored.ref]);
+        if (stored && context.images) {
+          await dropUnusedImages(context.images, store, [stored.ref], sellerId);
+        }
         return error(result.error, result.message);
       }
-      if (context.images) await dropUnusedImages(context.images, store, [result.value.before]);
+      if (context.images) {
+        await dropUnusedImages(context.images, store, [result.value.before], sellerId);
+      }
       await menuChanged();
       return Response.json({ menu: result.value.view } satisfies MenuViewResponse);
     }
     if (c === 'picture' && method === 'DELETE') {
       const removed = await store.removeMenuPicture();
-      if (context.images) await dropUnusedImages(context.images, store, [removed.before]);
+      if (context.images) await dropUnusedImages(context.images, store, [removed.before], sellerId);
       await menuChanged();
       return Response.json({ menu: removed.view } satisfies MenuViewResponse);
     }
@@ -829,16 +867,18 @@ async function handleSeller(
           : null;
         const result = await store.setImage(b, input.dataUrl, stored?.ref);
         if (!result.ok) {
-          if (stored && context.images) await dropUnusedImages(context.images, store, [stored.ref]);
+          if (stored && context.images) {
+            await dropUnusedImages(context.images, store, [stored.ref], sellerId);
+          }
           return error(result.error, result.message);
         }
-        if (context.images) await dropUnusedImages(context.images, store, [before[b]]);
+        if (context.images) await dropUnusedImages(context.images, store, [before[b]], sellerId);
         return Response.json({ images: result.value } satisfies ImagesResponse);
       }
       if (method === 'DELETE') {
         const before = await store.getImages();
         const images = await store.removeImage(b);
-        if (context.images) await dropUnusedImages(context.images, store, [before[b]]);
+        if (context.images) await dropUnusedImages(context.images, store, [before[b]], sellerId);
         return Response.json({ images } satisfies ImagesResponse);
       }
     }
@@ -854,10 +894,10 @@ async function handleSeller(
       if ([...owners.values()].some((owner) => owner !== store.seller.id)) {
         return error('invalid_backup', 'An order in this backup belongs to another kitchen');
       }
-      await store.restoreBackup(file);
+      const droppedImages = await store.restoreBackup(file);
       await signal(context, sellerId, 'order.changed');
       await menuChanged();
-      return Response.json({ ok: true } satisfies OkResponse);
+      return Response.json({ ok: true, droppedImages } satisfies RestoreResponse);
     }
     return null;
   }

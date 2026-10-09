@@ -77,6 +77,8 @@ export function* loadOrder(action: ReturnType<typeof orderRequested>) {
 export function* refreshOrder(action: ReturnType<typeof orderRefreshRequested>) {
   const result = (yield call(fetchOrderOrExpired, action.payload)) as Fetched;
   if (result.ok) yield* showFetched(result.data);
+  // Other failures keep what is on screen quietly; being offline is told (spec §8).
+  else if (result.error === 'network') yield put(orderFailed(result.error));
 }
 
 export function* cancel(action: ReturnType<typeof cancelRequested>) {

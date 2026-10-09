@@ -72,7 +72,7 @@ const SoldOut = styled.span`
   font-weight: 700;
   white-space: nowrap;
 `;
-const Round = styled.button`
+export const Round = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -90,13 +90,13 @@ const Round = styled.button`
     cursor: not-allowed;
   }
 `;
-const Group = styled.div`
+export const Group = styled.div`
   display: inline-flex;
   flex: none;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
 `;
-const Qty = styled.output`
+export const Qty = styled.output`
   min-width: 1.5rem;
   text-align: center;
   font-weight: 700;

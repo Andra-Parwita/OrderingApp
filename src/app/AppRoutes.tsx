@@ -12,12 +12,14 @@ import {
   useSearchParams,
 } from 'react-router';
 import { styled } from 'styled-components';
+import { lastKitchen } from '../api/device/lastKitchen';
 import { currentSellerSlug } from '../api/device/sellerContext';
 import { fetchPreferences } from '../api/menus';
 import { setKitchenBrand } from '../theme/kitchenBrand';
 import { useMediaQuery } from '../components/useMediaQuery';
 import {
   BasketScreen,
+  EditOrderFlow,
   DishesScreen as CustomerDishesScreen,
   HowItWorksScreen,
   MenuPreview,
@@ -25,9 +27,10 @@ import {
   OrderPlacedScreen,
   placeReset,
   selectKitchenMissing,
+  type CheckoutStep,
   type CustomerRootState,
 } from '../features/customer-menu';
-import { MyOrdersScreen, OrderScreen } from '../features/customer-orders';
+import { MyOrdersScreen, OrderQrScreen, OrderScreen } from '../features/customer-orders';
 import { CustomerSettingsScreen } from '../features/customer-settings';
 import { CookScreen } from '../features/seller-cook';
 import {
@@ -131,16 +134,26 @@ function HowItWorksRoute() {
   return <HowItWorksScreen slug={slug} onBack={back} onSeeDishes={toDishes} />;
 }
 
-function BasketRoute() {
+/** Back goes to where the customer came from; opened directly, it goes to `fallback`. */
+function useBackTo(fallback: string) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return useCallback(() => {
+    void (location.key === 'default' ? navigate(fallback, { replace: true }) : navigate(-1));
+  }, [navigate, location.key, fallback]);
+}
+
+/** The checkout pages: the basket, the pickup place and your name (spec §4.2). */
+function BasketRoute({ step }: Readonly<{ step: CheckoutStep }>) {
   const { slug = '' } = useParams();
   const missing = useKitchenMissing(slug);
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useDispatch();
-  // Back goes to where the customer came from; opened directly, it goes to the menu.
-  const back = useCallback(() => {
-    void (location.key === 'default' ? navigate(`/${slug}`, { replace: true }) : navigate(-1));
-  }, [navigate, location.key, slug]);
+  const base = `/${slug}/basket`;
+  // From the dishes (or the menu when opened directly); the pickup and name pages go back to the basket.
+  const back = useBackTo(step === 'basket' ? `/${slug}` : base);
+  const next = useCallback(() => void navigate(`${base}/name`), [navigate, base]);
+  const changePlace = useCallback(() => void navigate(`${base}/pickup`), [navigate, base]);
   const placed = useCallback(
     (token: string) => {
       // Replace, so Back from the confirmation does not return to a basket that is now empty.
@@ -151,7 +164,17 @@ function BasketRoute() {
     [navigate, dispatch],
   );
   if (!isValidSlug(slug) || missing) return <KitchenNotFoundPage />;
-  return <BasketScreen slug={slug} onBack={back} onPlaced={placed} />;
+  return (
+    <BasketScreen
+      slug={slug}
+      step={step}
+      onBack={back}
+      onNext={next}
+      onChangePlace={changePlace}
+      onToBasket={back}
+      onPlaced={placed}
+    />
+  );
 }
 
 /** "Order placed": the confirmation straight after ordering. Its only exit is the order page. */
@@ -159,8 +182,25 @@ function PlacedRoute() {
   const { token } = useParams();
   const navigate = useNavigate();
   const toOrder = useCallback(() => void navigate(`/o/${token ?? ''}`), [navigate, token]);
+  const toQr = useCallback(() => void navigate(`/o/${token ?? ''}/qr`), [navigate, token]);
   if (!token) return <NotFoundPage />;
-  return <OrderPlacedScreen key={token} token={token} onChange={toOrder} onBack={toOrder} />;
+  return (
+    <OrderPlacedScreen
+      key={token}
+      token={token}
+      onChange={toOrder}
+      onViewOrder={toOrder}
+      onShowQr={toQr}
+    />
+  );
+}
+
+/** The full-screen QR to show at pickup. */
+function QrRoute() {
+  const { token } = useParams();
+  const back = useBackTo(`/o/${token ?? ''}`);
+  if (!token) return <NotFoundPage />;
+  return <OrderQrScreen key={token} token={token} onBack={back} />;
 }
 
 /** The order page: status, updates, change or cancel. Opening the link adds it to My orders. */
@@ -169,29 +209,52 @@ function OrderRoute() {
   const navigate = useNavigate();
   const back = useCallback(() => void navigate('/my-orders'), [navigate]);
   const change = useCallback((next: string) => void navigate(`/o/${next}/edit`), [navigate]);
+  const showQr = useCallback((next: string) => void navigate(`/o/${next}/qr`), [navigate]);
+  const openMenu = useCallback((slug: string) => void navigate(`/${slug}`), [navigate]);
   if (!token) return <NotFoundPage />;
-  return <OrderScreen key={token} token={token} onBack={back} onChange={change} />;
+  return (
+    <OrderScreen
+      key={token}
+      token={token}
+      onBack={back}
+      onChange={change}
+      onShowQr={showQr}
+      onOpenMenu={openMenu}
+    />
+  );
 }
 
-function EditOrderRoute() {
+/** Change an order: the basket, then your name (the pickup place stays as ordered). */
+function EditOrderRoute({ step }: Readonly<{ step: 'basket' | 'name' }>) {
   const { token } = useParams();
   const navigate = useNavigate();
   const toOrder = useCallback(() => void navigate(`/o/${token ?? ''}`), [navigate, token]);
+  const toBasket = useBackTo(`/o/${token ?? ''}/edit`);
+  const toName = useCallback(() => void navigate(`/o/${token ?? ''}/edit/name`), [navigate, token]);
   if (!token) return <NotFoundPage />;
   return (
-    <BasketScreen
-      key={token}
-      editToken={token}
-      onBack={toOrder}
-      onPlaced={toOrder}
-      onUpdated={toOrder}
-    />
+    <EditOrderFlow token={token}>
+      <BasketScreen
+        key={token}
+        step={step}
+        editToken={token}
+        onBack={step === 'basket' ? toOrder : toBasket}
+        onNext={toName}
+        onToBasket={toBasket}
+        onPlaced={toOrder}
+        onUpdated={toOrder}
+      />
+    </EditOrderFlow>
   );
 }
 
 function MyOrdersRoute() {
   const navigate = useNavigate();
-  const back = useCallback(() => void navigate('/'), [navigate]);
+  // "Go to the menu": the last kitchen this phone visited, else the home page.
+  const back = useCallback(() => {
+    const slug = lastKitchen();
+    void navigate(slug === null ? '/' : `/${slug}`);
+  }, [navigate]);
   const open = useCallback((token: string) => void navigate(`/o/${token}`), [navigate]);
   return <MyOrdersScreen onBack={back} onOpenOrder={open} />;
 }
@@ -529,10 +592,14 @@ export function AppRoutes() {
           <Route path="/:slug" element={<MenuRoute />} />
           <Route path="/:slug/dishes" element={<DishesRoute />} />
           <Route path="/:slug/how-it-works" element={<HowItWorksRoute />} />
-          <Route path="/:slug/basket" element={<BasketRoute />} />
+          <Route path="/:slug/basket" element={<BasketRoute step="basket" />} />
+          <Route path="/:slug/basket/pickup" element={<BasketRoute step="pickup" />} />
+          <Route path="/:slug/basket/name" element={<BasketRoute step="name" />} />
           <Route path="/o/:token" element={<OrderRoute />} />
           <Route path="/o/:token/placed" element={<PlacedRoute />} />
-          <Route path="/o/:token/edit" element={<EditOrderRoute />} />
+          <Route path="/o/:token/qr" element={<QrRoute />} />
+          <Route path="/o/:token/edit" element={<EditOrderRoute step="basket" />} />
+          <Route path="/o/:token/edit/name" element={<EditOrderRoute step="name" />} />
           <Route path="/my-orders" element={<MyOrdersRoute />} />
           <Route path="/settings" element={<CustomerSettingsScreen />} />
         </Route>

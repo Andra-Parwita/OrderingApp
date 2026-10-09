@@ -49,12 +49,14 @@ import {
   parseImagesResponse,
   parseItemResponse,
   parseOkResponse,
+  parseRestoreResponse,
   type ChefResponse,
   type ChefsResponse,
   type ImagesResponse,
   type ImageStyleRequest,
   type ItemResponse,
   type OkResponse,
+  type RestoreResponse,
   type UpdateItemRequest,
 } from '../../shared/setupContract';
 import {
@@ -427,8 +429,8 @@ export function restoreBackup(
   file: BackupFile,
   actor?: StaffActor,
   seller?: string,
-): Promise<ApiResult<OkResponse>> {
-  return request('/api/seller/backup', parseOkResponse, {
+): Promise<ApiResult<RestoreResponse>> {
+  return request('/api/seller/backup', parseRestoreResponse, {
     method: 'POST',
     body: file,
     ...who(actor, seller),

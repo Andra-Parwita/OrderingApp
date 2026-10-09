@@ -619,7 +619,7 @@ describe('seller setup', () => {
       expect(await call('PUT', '/api/seller/images/railIcon', { ...A_, body: {} })).toMatchObject(
         ERR(400, 'invalid_request'),
       );
-      expect((await publicMenu(A)).kitchen.images?.railIcon).toBe('/samples/rail-icon.png');
+      expect((await publicMenu(A)).kitchen.images?.railIcon).toBe('/samples/icon-512.jpg');
     });
 
     it('sets the banner colour and the alt text in both languages, and clears them', async () => {

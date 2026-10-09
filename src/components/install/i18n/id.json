@@ -1,0 +1,141 @@
+{
+  "close": "Tutup",
+  "back": "Kembali",
+  "notNow": "Nanti saja",
+  "skip": "Lewati, saya cek halaman pesanan",
+  "fallbackKitchen": "aplikasi ini",
+  "orderLabel": "Pesanan {{code}}",
+  "ask": {
+    "title": "Dapat pesan saat pesanan siap",
+    "body": "Di iPhone, tambahkan dulu {{kitchen}} ke Layar Utama. 4 ketukan, sekitar semenit.",
+    "button": "Tunjukkan caranya",
+    "skip": "Nanti saja, saya cek halaman pesanan",
+    "sampleBody": "Pesanan Anda sudah siap",
+    "now": "sekarang"
+  },
+  "doneLast": "Selesai",
+  "copyHint": "Setelah diketuk: \"Tautan tersalin. Sekarang buka Safari.\"",
+  "stepOf": "Langkah {{n}} dari {{total}}",
+  "stepsAlt": "Kemajuan: langkah {{n}} dari {{total}}",
+  "done": "Sudah, langkah berikutnya",
+  "step1": {
+    "title": "Ketuk tombol •••",
+    "body": "Ada di kanan bawah layar.",
+    "older": "iPhone lama? Ketuk tombol Bagikan, lalu langsung ke langkah 3.",
+    "pointer": "Tombolnya ada di bawah sini"
+  },
+  "step2": {
+    "title": "Ketuk \"Bagikan\"",
+    "titleOther": "Ketuk tombol Bagikan",
+    "body": "Ada di menu yang baru terbuka.",
+    "bodyOther": "Ada di bilah browser Anda, kotak dengan panah ke atas."
+  },
+  "step3": {
+    "title": "Ketuk \"Tambah ke Layar Utama\"",
+    "body": "Tidak terlihat? Ketuk \"Lainnya\" atau gulir ke bawah."
+  },
+  "step4": {
+    "title": "Ketuk \"Tambah\"",
+    "body": "Di kanan atas. Biarkan \"Buka sebagai App Web\" tetap menyala."
+  },
+  "pictures": {
+    "copy": "Salin",
+    "readingList": "Tambah ke Daftar Bacaan",
+    "addHome": "Tambah ke Layar Utama",
+    "findOnPage": "Cari di Halaman",
+    "share": "Bagikan",
+    "add": "Tambah",
+    "cancel": "Batal",
+    "openAsApp": "Buka sebagai App Web"
+  },
+  "open": {
+    "added": "Sudah ditambahkan",
+    "title": "Sekarang buka {{kitchen}} dari Layar Utama",
+    "body": "Langsung terbuka di pesanan {{code}}. Nyalakan pemberitahuan di sana.",
+    "bodyNoCode": "Langsung terbuka di pesanan Anda. Nyalakan pemberitahuan di sana.",
+    "cantFind": "Ikonnya tidak ketemu",
+    "cantFindHelp": "Cari di halaman-halaman Layar Utama, atau geser ke bawah di Layar Utama lalu ketik {{kitchen}}.",
+    "stay": "Tetap di sini dan cek halaman pesanan"
+  },
+  "iosInApp": {
+    "title": "Buka dulu halaman ini di Safari",
+    "body": "Anda sedang di dalam {{app}}. Kabar pesanan hanya bisa lewat Safari di iPhone.",
+    "step1": "Ketuk <b>Salin tautan</b> di bawah",
+    "step2": "Buka <b>Safari</b>",
+    "step3": "Ketuk kolom alamat lalu <b>Tempel dan Buka</b>"
+  },
+  "androidInApp": {
+    "title": "Buka dulu halaman ini di Chrome",
+    "body": "Anda sedang di dalam {{app}}, yang tidak bisa mengirim kabar pesanan.",
+    "step1": "Ketuk <b>⋮</b> di kanan atas",
+    "step2": "Ketuk <b>Buka di Chrome</b>"
+  },
+  "inAppName": "aplikasi ini",
+  "copyLink": "Salin tautan",
+  "linkCopied": "Tautan tersalin. Sekarang buka Safari.",
+  "linkCopiedAndroid": "Tautan tersalin.",
+  "copyFailed": "Gagal menyalin. Tekan dan tahan kolom alamat untuk menyalinnya.",
+  "android": {
+    "allowBody": "Ketuk Izinkan saat ponsel bertanya.",
+    "waiting": "Menunggu jawaban Anda…"
+  },
+  "notify": {
+    "offTitle": "Langkah terakhir: nyalakan pemberitahuan",
+    "offBody": "Ponsel akan bertanya. Ketuk <b>Izinkan</b> dan kami kabari saat pesanan {{code}} siap.",
+    "offBodyNoCode": "Ponsel akan bertanya. Ketuk <b>Izinkan</b> dan kami kabari saat pesanan Anda siap.",
+    "offButton": "Nyalakan pemberitahuan",
+    "working": "Menyalakan…",
+    "onTitle": "Pemberitahuan menyala",
+    "onBody": "Kami akan kabari saat pesanan siap.",
+    "onButton": "Selesai",
+    "blockedTitle": "Pemberitahuan diblokir",
+    "blockedBody": "Ponsel Anda diatur untuk tidak menampilkannya. Nyalakan lagi di Pengaturan iPhone:",
+    "blockedBodyAndroid": "Ponsel atau browser Anda diatur untuk tidak menampilkannya. Anda bisa mengizinkannya lagi.",
+    "blockedBodyDesktop": "Browser ini diatur untuk tidak menampilkannya. Anda bisa mengizinkannya lagi.",
+    "blockedStep1": "Buka <b>Pengaturan</b>",
+    "blockedStep2": "Ketuk <b>Notifikasi</b>",
+    "blockedStep3": "Ketuk <b>{{kitchen}}</b>",
+    "blockedStep4": "Nyalakan <b>Izinkan Notifikasi</b>",
+    "blockedAndroid": "Di Android: di Chrome ketuk ⋮, lalu Setelan, Setelan situs, Notifikasi, dan izinkan {{domain}}.",
+    "blockedDesktop": "Klik ikon gembok atau pengaturan di samping alamat, lalu izinkan Notifikasi untuk {{domain}}.",
+    "stillBlocked": "Masih diblokir. Periksa pengaturannya, lalu ketuk lagi.",
+    "blockedDone": "Sudah saya nyalakan",
+    "notSetUpTitle": "Pemberitahuan belum disiapkan di server ini",
+    "notSetUpBody": "Ponsel Anda tidak bermasalah. Halaman pesanan selalu menampilkan yang terbaru.",
+    "failedTitle": "Pemberitahuan gagal dinyalakan",
+    "failedBody": "Periksa koneksi lalu coba lagi. Halaman pesanan selalu menampilkan yang terbaru.",
+    "tryAgain": "Coba lagi",
+    "unsupportedTitle": "Browser ini tidak bisa menerima pemberitahuan",
+    "unsupportedBody": "Halaman pesanan selalu menampilkan yang terbaru. Untuk menerima pesan, pakai Safari di iPhone (ditambahkan ke Layar Utama) atau Chrome di Android.",
+    "gotIt": "OK"
+  },
+  "line": {
+    "off": "Pemberitahuan mati",
+    "on": "Pemberitahuan menyala",
+    "blocked": "Pemberitahuan diblokir",
+    "desktop": "Dapat kabar di komputer ini",
+    "turnOn": "Nyalakan",
+    "howTo": "Cara menyalakan",
+    "working": "Menyalakan…"
+  },
+  "card": {
+    "title": "Dapat pesan saat pesanan siap",
+    "body": "Hanya semenit. Atau lewati dan cek halaman pesanan ini.",
+    "button": "Nyalakan pemberitahuan",
+    "onTitle": "Pemberitahuan menyala",
+    "onBody": "Kami akan kabari saat pesanan siap.",
+    "blockedTitle": "Pemberitahuan diblokir",
+    "blockedBody": "Nyalakan lagi di pengaturan ponsel agar dapat pesan saat pesanan siap.",
+    "blockedButton": "Cara menyalakannya"
+  },
+  "settings": {
+    "on": "Menyala",
+    "off": "Mati",
+    "blocked": "Diblokir di pengaturan ponsel",
+    "unsupported": "Tidak tersedia di browser ini",
+    "working": "Memproses…",
+    "homeInstall": "Pasang",
+    "homeShow": "Tunjukkan caranya",
+    "homeFallback": "Tidak ada tombol Pasang? Ketuk ⋮ di Chrome, lalu <b>Tambahkan ke layar utama</b>."
+  }
+}

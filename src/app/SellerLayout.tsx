@@ -6,6 +6,7 @@ import type { Kitchen } from '../../shared/domain';
 import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { fetchMenu } from '../api/client';
 import { currentSellerSlug } from '../api/device/sellerContext';
+import { cssUrl } from '../components/cssUrl';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { ImageSlot } from '../ui';
 import { BANNER_MAX_WIDTH, BANNER_STRIP_HEIGHT, DESKTOP_QUERY } from './layout';
@@ -54,7 +55,7 @@ const BannerStrip = styled.div<{ $background?: string; $image?: string }>`
   background-color: ${({ theme, $background }) => $background ?? theme.c.surf2};
   ${({ $image }) =>
     $image
-      ? `background-image: url("${$image}"); background-size: cover; background-position: center;`
+      ? `background-image: ${cssUrl($image)}; background-size: cover; background-position: center;`
       : ''}
 `;
 const BannerArea = styled.div`

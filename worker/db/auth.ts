@@ -175,6 +175,9 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     return ok(value);
   }
 
+  /** The add-device code lockout scope of a kitchen (`admin` for the admin's codes). */
+  const codeScope = (sellerId: string | null) => `codes:${sellerId ?? 'admin'}`;
+
   // ---- Accounts, sessions and devices ----
 
   const accountId = (role: Role, sellerId?: string, chefId?: string) =>
@@ -508,21 +511,66 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     },
 
     async redeemCode(code: string, deviceId: string) {
+      // A code is 6 digits, so the limit is per kitchen as well as per browser id: a wrong code
+      // cannot be tied to a seller, so it counts against every seller with a live code (they all
+      // move together, so the whole guess budget is 5 per window, however many ids are used).
+      // At 5 the sellers' live codes are invalidated and `locked_out` answers until the lock ends.
       const hash = await sha256Hex(code.replace(/\s/g, ''));
-      const record = await db.first<{ id: number; account_id: string }>(
-        'SELECT id, account_id FROM auth_codes WHERE code_hash = ? AND used = 0 AND expires_at > ? LIMIT 1',
+      const device = `device:${deviceId}`;
+      const record = await db.first<{ id: number; account_id: string; seller_id: string | null }>(
+        'SELECT id, account_id, seller_id FROM auth_codes WHERE code_hash = ? AND used = 0 AND expires_at > ? LIMIT 1',
         hash,
         iso(now()),
       );
-      const result = await guarded([`device:${deviceId}`], () => record);
-      if (!result.ok) return result;
-      const account = (await getAccount(result.value.account_id)) as AccountRow;
-      const session = await newSetupSession(account, 'code');
-      await db.batch([
-        db.stmt('UPDATE auth_codes SET used = 1 WHERE id = ?', result.value.id),
-        session.statement,
-      ]);
-      return ok({ token: session.token, me: await meOf(account, undefined, true) });
+      if (record) {
+        const scope = codeScope(record.seller_id);
+        const locked = await lockedSeconds([device, scope]);
+        if (locked > 0) return lockedFail(locked);
+        // Single use under a race: only the redemption that flips `used` goes ahead.
+        const taken = await db.first(
+          'UPDATE auth_codes SET used = 1 WHERE id = ? AND used = 0 AND expires_at > ? RETURNING id',
+          record.id,
+          iso(now()),
+        );
+        if (!taken) return INVALID;
+        await clearFailures([device]);
+        const account = (await getAccount(record.account_id)) as AccountRow;
+        const session = await newSetupSession(account, 'code');
+        await session.statement.run();
+        return ok({ token: session.token, me: await meOf(account, undefined, true) });
+      }
+      // Wrong, expired or used code. Stale counts (older than a code's life) and ended locks go first.
+      await db
+        .stmt(
+          `DELETE FROM auth_attempts WHERE scope LIKE 'codes:%'
+           AND ((locked_until IS NULL AND updated_at <= ?) OR (locked_until IS NOT NULL AND locked_until <= ?))`,
+          iso(now() - CODE_TTL_MINUTES * MINUTE),
+          iso(now()),
+        )
+        .run();
+      const lockedScopes = (
+        await db.all<{ scope: string }>(
+          "SELECT scope FROM auth_attempts WHERE scope LIKE 'codes:%' AND locked_until IS NOT NULL",
+        )
+      ).map((row) => row.scope);
+      const locked = await lockedSeconds([device, ...lockedScopes]);
+      if (locked > 0) return lockedFail(locked);
+      const live = await db.all<{ seller_id: string | null }>(
+        'SELECT DISTINCT seller_id FROM auth_codes WHERE used = 0 AND expires_at > ?',
+        iso(now()),
+      );
+      const scopes = [device, ...live.map((row) => codeScope(row.seller_id))];
+      const failed = await recordFailure(scopes);
+      if (failed.error === 'locked_out') {
+        await db
+          .stmt(
+            `UPDATE auth_codes SET used = 1 WHERE used = 0
+             AND 'codes:' || COALESCE(seller_id, 'admin') IN (
+               SELECT scope FROM auth_attempts WHERE scope LIKE 'codes:%' AND locked_until IS NOT NULL)`,
+          )
+          .run();
+      }
+      return failed;
     },
 
     // ---- Finishing setup, signing in ----

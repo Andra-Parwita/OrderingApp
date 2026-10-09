@@ -16,13 +16,15 @@ export type ListState =
       /** Closed-week orders whose details are gone (D-044): shown as a one-line entry. */
       expired: Array<ExpiredOrder>;
       saved: Array<SavedOrder>;
+      /** The last refresh failed (offline, say): what is shown is the last data that loaded. */
+      stale?: FailureCode;
     }
   | { status: 'error'; code: FailureCode };
 
 export type OrderPageState =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; order: CustomerOrder }
+  | { status: 'ready'; order: CustomerOrder; stale?: FailureCode }
   | { status: 'expired'; order: ExpiredOrder }
   | { status: 'error'; code: FailureCode };
 
@@ -74,7 +76,9 @@ const slice = createSlice({
       state.list = { status: 'ready', ...action.payload, expired: action.payload.expired ?? [] };
     },
     listFailed(state, action: PayloadAction<FailureCode>) {
-      state.list = { status: 'error', code: action.payload };
+      // Keep the last good list on screen (spec §8, offline); only a first load shows an error.
+      if (state.list.status === 'ready') state.list.stale = action.payload;
+      else state.list = { status: 'error', code: action.payload };
     },
     menuRequested: {
       reducer() {
@@ -86,8 +90,10 @@ const slice = createSlice({
       state.menus[action.payload.seller.slug] = action.payload;
     },
     orderRequested: {
-      reducer(state) {
-        state.order = { status: 'loading' };
+      reducer(state, action: PayloadAction<string>) {
+        // The same order, already on screen, stays there while it reloads.
+        const same = state.order.status === 'ready' && state.order.order.token === action.payload;
+        if (!same) state.order = { status: 'loading' };
         state.cancel = { status: 'idle' };
         state.collect = { status: 'idle' };
       },
@@ -110,7 +116,8 @@ const slice = createSlice({
       state.cancel = { status: 'idle' };
     },
     orderFailed(state, action: PayloadAction<FailureCode>) {
-      state.order = { status: 'error', code: action.payload };
+      if (state.order.status === 'ready') state.order.stale = action.payload;
+      else state.order = { status: 'error', code: action.payload };
     },
     cancelRequested: {
       reducer(state) {

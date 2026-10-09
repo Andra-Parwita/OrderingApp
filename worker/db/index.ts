@@ -4,6 +4,7 @@ import type { Seller, SellerOrder } from '../../shared/domain';
 import { keepsOrderDetails } from '../../shared/pastWeeks';
 import { generateOrderCode, generateToken } from '../../shared/orderCode';
 import type { Repository, SellerRepository, TokenLookup } from '../repo/Repository';
+import type { CustomerChange } from '../push/dispatch';
 import { createAuthRepository } from './auth';
 import { Db, marks, type D1Like } from './d1';
 import { assembleOrders, orderReadStatements } from './orders';
@@ -26,6 +27,8 @@ export type D1RepositoryOptions = {
    * orders. Off by default; only tests and local scratch databases set it.
    */
   devTools?: boolean;
+  /** Web push: called after a write that told customers something (worker/push/dispatch.ts `collect`). */
+  onCustomerChange?: (changes: Array<CustomerChange>) => void;
 };
 
 type SellerRow = { id: string; slug: string; name: string; created_at: string };
@@ -41,6 +44,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
     newToken: options.newToken ?? (() => generateToken()),
     seed: options.seed ?? 20261011,
     samples,
+    ...(options.onCustomerChange ? { onCustomerChange: options.onCustomerChange } : {}),
   };
 
   const internal = (row: Seller | undefined): SellerInternal | undefined =>

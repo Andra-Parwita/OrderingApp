@@ -89,13 +89,30 @@ export async function putUploadedImage(
   return { key, ref: refOfKey(key) };
 }
 
-/** Deletes the objects behind these refs, ignoring refs that are not R2 images. */
+const DATA_IMAGE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
+const SAMPLE = /^\/samples\/[\w./-]{1,200}$/;
+
+/**
+ * Whether a client-supplied ref may be stored for this seller: empty or absent; an R2 image under
+ * `sellers/<sellerId>/`; a static sample picture (`/samples/…`, app-served, never in R2); or a
+ * self-contained image data URL. Another seller's ref, an external URL or anything malformed is not.
+ */
+export function isOwnImageRef(ref: string | undefined, sellerId: string): boolean {
+  if (ref === undefined || ref === '') return true;
+  if (DATA_IMAGE.test(ref)) return true;
+  if (SAMPLE.test(ref) && !ref.includes('..')) return true;
+  const key = keyOfRef(ref);
+  return key !== undefined && key.startsWith(`sellers/${sellerId}/`);
+}
+
+/** Deletes the objects behind these refs that belong to this seller; every other ref is skipped. */
 export async function deleteImageRefs(
   bucket: ImageBucket,
   refs: ReadonlyArray<string | undefined>,
+  sellerId: string,
 ): Promise<void> {
   for (const ref of new Set(refs)) {
     const key = keyOfRef(ref);
-    if (key) await bucket.delete(key);
+    if (key && key.startsWith(`sellers/${sellerId}/`)) await bucket.delete(key);
   }
 }

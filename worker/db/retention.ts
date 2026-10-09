@@ -46,6 +46,13 @@ export async function dropExpiredDetails(
           week.seller_id,
           week.id,
         ),
+        // Push subscriptions go with the order (the cascade would too; this does not rely on it).
+        db.stmt(
+          'DELETE FROM push_subscriptions WHERE seller_id = ? AND order_id IN (SELECT id FROM orders WHERE seller_id = ? AND past_week_id = ?)',
+          week.seller_id,
+          week.seller_id,
+          week.id,
+        ),
         db.stmt(
           'DELETE FROM orders WHERE seller_id = ? AND past_week_id = ?',
           week.seller_id,

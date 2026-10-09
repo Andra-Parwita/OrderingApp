@@ -1,19 +1,22 @@
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import { Link, Outlet, useLocation, useNavigationType } from 'react-router';
 import { css, keyframes, styled } from 'styled-components';
 import { isValidSlug } from '../../shared/seller';
 import { lastKitchen } from '../api/device/lastKitchen';
-import { useUnseenUpdate } from '../features/customer-orders';
+import { manifestTarget, useManifestLinks } from '../components/install';
+import { selectMenu } from '../features/customer-menu';
+import { selectMenus, selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
 import { Icon, type IconName } from '../ui';
 
 // The customer app's bottom tab bar (D-039): Menu · My orders · Settings, fixed to the bottom,
 // icon above label, safe-area aware. Pages leave room for it through --customer-tabbar-height.
-type TabId = 'menu' | 'orders' | 'settings';
+export type TabId = 'menu' | 'orders' | 'settings';
 
 const TABS: ReadonlyArray<Readonly<{ id: TabId; href: string; icon: IconName }>> = [
   // Menu goes to the last seller menu this phone visited (D-037), else the home page.
   { id: 'menu', href: '/', icon: 'menu' },
-  { id: 'orders', href: '/my-orders', icon: 'list' },
+  { id: 'orders', href: '/my-orders', icon: 'bag' },
   { id: 'settings', href: '/settings', icon: 'gear' },
 ];
 
@@ -34,9 +37,16 @@ export function activeTab(pathname: string): TabId {
   return 'menu';
 }
 
-/** Checkout pages (the basket, also in change-order mode) hide the tab bar (spec §3). */
+/**
+ * Checkout pages (basket, pickup place, your name; also in change-order mode) hide the tab bar
+ * (spec §3). So does the full-screen QR page (`/o/{token}/qr`).
+ */
 export function hasTabBar(pathname: string): boolean {
-  return !/^\/[^/]+\/basket\/?$/.test(pathname) && !/^\/o\/[^/]+\/edit\/?$/.test(pathname);
+  return (
+    !/^\/[^/]+\/basket(\/(pickup|name))?\/?$/.test(pathname) &&
+    !/^\/o\/[^/]+\/edit(\/name)?\/?$/.test(pathname) &&
+    !/^\/o\/[^/]+\/qr\/?$/.test(pathname)
+  );
 }
 
 /** Root pages are the tabs' own pages; every other page is pushed on top of one. */
@@ -45,11 +55,12 @@ export function isRootPage(pathname: string): boolean {
 }
 
 const TAB_HEIGHT = '3.5rem';
+/** The space the bar takes at the bottom: pages leave it free. The fixtures page sets it too. */
+export const TAB_BAR_HEIGHT = `calc(${TAB_HEIGHT} + var(--sab, 0px))`;
 const MAX_WIDTH = '30rem'; // 480 px: phone width, centred on wider screens
 
 const Wrap = styled.div<{ $tabs: boolean }>`
-  --customer-tabbar-height: ${({ $tabs }) =>
-    $tabs ? `calc(${TAB_HEIGHT} + var(--sab, 0px))` : '0px'};
+  --customer-tabbar-height: ${({ $tabs }) => ($tabs ? TAB_BAR_HEIGHT : '0px')};
   max-width: ${MAX_WIDTH};
   margin: 0 auto;
   overflow-x: clip; /* the sliding page starts off-screen */
@@ -145,12 +156,68 @@ const Hidden = styled.span`
   white-space: nowrap;
 `;
 
+/** The bar itself; the shell and the fixtures page both show it. */
+export function CustomerTabBar({
+  active,
+  unseen,
+  menuHref,
+}: Readonly<{ active: TabId; unseen: boolean; menuHref: string }>) {
+  const { t } = useTranslation();
+  return (
+    <Bar aria-label={t('customerNav.label')}>
+      <List>
+        {TABS.map((tab) => (
+          <Item key={tab.id}>
+            <Tab
+              to={tab.id === 'menu' ? menuHref : tab.href}
+              $active={tab.id === active}
+              aria-current={tab.id === active ? 'page' : undefined}
+            >
+              <IconBox>
+                <Icon name={tab.icon} />
+                {tab.id === 'orders' && unseen ? <Dot aria-hidden="true" /> : null}
+              </IconBox>
+              <span>{t(`customerNav.${tab.id}`)}</span>
+              {tab.id === 'orders' && unseen ? (
+                <Hidden>{`, ${t('customerNav.newUpdate')}`}</Hidden>
+              ) : null}
+            </Tab>
+          </Item>
+        ))}
+      </List>
+    </Bar>
+  );
+}
+
+/**
+ * Points the page's web app manifest (and the iPhone icon) at the kitchen being shown, so "Add to
+ * Home Screen" installs that kitchen, opening on the page the customer is on (spec 6.4).
+ */
+function useShellManifest(pathname: string): void {
+  const orderPage = useSelector(selectOrderPage);
+  const orderMenus = useSelector(selectMenus);
+  const menu = useSelector(selectMenu);
+  const orderToken = /^\/o\/([^/]+)/.exec(pathname)?.[1];
+  const orderSlug =
+    orderPage.status === 'ready' && orderPage.order.token === orderToken
+      ? orderPage.order.seller.slug
+      : undefined;
+  const target = manifestTarget(pathname, { orderSlug, lastSlug: lastKitchen() });
+  const slug = target?.slug;
+  const icon =
+    slug === undefined
+      ? undefined
+      : menu.status === 'ready' && menu.data.seller.slug === slug
+        ? menu.data.kitchen.images?.railIcon
+        : orderMenus[slug]?.kitchen.images?.railIcon;
+  useManifestLinks(target, icon !== undefined && icon !== '');
+}
+
 /** Wraps the customer pages with the tab bar. */
 export function CustomerShell() {
-  const { t } = useTranslation();
   const { pathname } = useLocation();
-  const active = activeTab(pathname);
   const unseen = useUnseenUpdate(pathname);
+  useShellManifest(pathname);
   const navigationType = useNavigationType();
   const tabs = hasTabBar(pathname);
   return (
@@ -159,28 +226,11 @@ export function CustomerShell() {
         <Outlet />
       </Slide>
       {tabs ? (
-        <Bar aria-label={t('customerNav.label')}>
-          <List>
-            {TABS.map((tab) => (
-              <Item key={tab.id}>
-                <Tab
-                  to={tab.id === 'menu' ? menuTabHref(pathname) : tab.href}
-                  $active={tab.id === active}
-                  aria-current={tab.id === active ? 'page' : undefined}
-                >
-                  <IconBox>
-                    <Icon name={tab.icon} />
-                    {tab.id === 'orders' && unseen ? <Dot aria-hidden="true" /> : null}
-                  </IconBox>
-                  <span>{t(`customerNav.${tab.id}`)}</span>
-                  {tab.id === 'orders' && unseen ? (
-                    <Hidden>{`, ${t('customerNav.newUpdate')}`}</Hidden>
-                  ) : null}
-                </Tab>
-              </Item>
-            ))}
-          </List>
-        </Bar>
+        <CustomerTabBar
+          active={activeTab(pathname)}
+          unseen={unseen}
+          menuHref={menuTabHref(pathname)}
+        />
       ) : null}
     </Wrap>
   );

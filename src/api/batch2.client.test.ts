@@ -54,10 +54,11 @@ describe('menu chef data (D-012)', () => {
 describe('batch 2 endpoints', () => {
   it('returns the customer view without seller-only fields', async () => {
     const { order } = data(await placeOrder(DEFAULT_SELLER_SLUG, { ...base, returning: true }));
-    for (const key of ['audit', 'paid', 'waReceived', 'returning', 'enteredBy', 'changed']) {
+    for (const key of ['audit', 'waReceived', 'returning', 'enteredBy', 'changed']) {
       expect(order).not.toHaveProperty(key);
     }
-    expect(order).toMatchObject({ locked: false, status: 'ordered' });
+    // `paid` is the one money fact the customer sees (the Paid pill, plan 004 stage 6).
+    expect(order).toMatchObject({ locked: false, status: 'ordered', paid: false });
     expect(order.inbox).toHaveLength(1);
     const raw = (await (await fetch(`/api/orders/${order.token}`)).json()) as {
       order: Record<string, unknown>;

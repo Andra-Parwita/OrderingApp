@@ -27,6 +27,14 @@ export function parseOkResponse(input: unknown): OkResponse | null {
   return isRecord(input) && input['ok'] === true ? { ok: true } : null;
 }
 
+/** The restore reply: how many image refs were dropped because they were not this seller's own. */
+export type RestoreResponse = { ok: true; droppedImages?: number };
+export function parseRestoreResponse(input: unknown): RestoreResponse | null {
+  if (!isRecord(input) || input['ok'] !== true) return null;
+  const dropped = input['droppedImages'];
+  return isInt(dropped, 0, 100000) ? { ok: true, droppedImages: dropped } : { ok: true };
+}
+
 // ---- Week ------------------------------------------------------------------------------------
 
 /** One pickup point for now (D-008); `id` is optional and kept from the current point if absent. */

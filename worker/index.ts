@@ -16,7 +16,8 @@ type Env = Omit<ApiEnv, 'DB' | 'IMAGES' | 'SELLER_LIVE'> & {
 };
 
 export default {
-  fetch: (request: Request, env: Env): Promise<Response> => handleWorkerRequest(request, env),
+  fetch: (request: Request, env: Env, ctx: ExecutionContext): Promise<Response> =>
+    handleWorkerRequest(request, env, ctx),
   // The crons in wrangler.jsonc. Every run finishes the menus whose cooking day has ended (hourly);
   // the Monday 03:00 UTC run also does retention for every seller.
   scheduled: async (controller: ScheduledController, env: Env): Promise<void> => {

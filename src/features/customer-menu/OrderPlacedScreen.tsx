@@ -2,184 +2,289 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import type { CustomerOrder, OrderStatus } from '../../../shared/domain';
+import type { CustomerOrder, Language } from '../../../shared/domain';
+import type { MenuResponse } from '../../../shared/menuContract';
+import { formatCookingDate, formatWindow } from '../../../shared/dates';
+import { formatOrderCode } from '../../../shared/orderCode';
 import { isReturningCustomer } from '../../api/device/myOrders';
 import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
-import { formatMoney } from '../../../shared/money';
-import { formatOrderCode } from '../../../shared/orderCode';
-import { pickText } from '../../../shared/text';
+import { PageTopBar } from '../../components/CustomerPage';
+import {
+  InstallOverlay,
+  UpdatesCard,
+  useOrderInstall,
+  type InstallOverride,
+} from '../../components/install';
+import { OrderQr } from '../../components/OrderQr';
+import { orderCodeLabel } from '../../components/orderCodeLabel';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
-import type { StatusTone } from '../../theme/tokens';
-import { Button, PageHeader, Pill } from '../../ui';
+import { Icon } from '../../ui';
 import { menuRequested, orderRequested } from './customerSlice';
-import { formatCookingDate, formatWindow } from '../../../shared/dates';
-import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { CUSTOMER_NS } from './i18n/register';
-import { Block, Muted, Page, StateMessage, Strong, useLang } from './layout';
+import { Page, StateMessage, useLang } from './layout';
+import { MenuIcon } from './menuIcons';
+import { MainButton } from './menuParts';
 import { ScreenBoundary } from './ScreenBoundary';
 import { selectMenu, selectMenuSlug, selectOrder } from './selectors';
 
-const Code = styled.p`
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.lg};
-  text-align: center;
-  font-size: ${({ theme }) => theme.type.size.xl};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  letter-spacing: ${({ theme }) => theme.spacing.xs};
-`;
+// "Order placed" (spec §4.3): the code with a small QR, Send on WhatsApp, the optional updates
+// card and two links. The full-screen QR and the order page are separate routes.
 
-const Qr = styled.div`
-  align-self: center;
+const Body = styled.div`
   display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.lg}
+    calc(var(--customer-tabbar-height, 0rem) + var(--sab) + ${({ theme }) => theme.spacing.xl});
+`;
+const Heading = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  text-align: center;
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: ${({ theme }) => theme.spacing.sm};
+    margin: 0;
+    font-size: ${({ theme }) => theme.type.size.xl};
+    line-height: 1.2;
+    font-weight: 700;
+    color: ${({ theme }) => theme.c.conf};
+  }
+  p {
+    margin: 0;
+    color: ${({ theme }) => theme.c.muted};
+  }
+`;
+const Tick = styled.span`
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: calc(${({ theme }) => theme.minTapTarget} * 3);
-  height: calc(${({ theme }) => theme.minTapTarget} * 3);
-  background: ${({ theme }) => theme.colour.surface};
-  color: ${({ theme }) => theme.colour.textMuted};
-  font-size: ${({ theme }) => theme.type.size.sm};
-  text-align: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: ${({ theme }) => theme.border.focus} solid currentColor;
+  border-radius: 50%;
 `;
+const CodeCard = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.lg};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border-radius: 1.25rem;
+  background: ${({ theme }) => theme.c.surf};
+  color: ${({ theme }) => theme.c.text};
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 
-const Lines = styled.ul`
+  svg {
+    border-radius: ${({ theme }) => theme.radius.sm};
+  }
+`;
+const CodeText = styled.span`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+
+  small {
+    color: ${({ theme }) => theme.c.muted};
+    font-size: ${({ theme }) => theme.type.size.sm};
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  b {
+    font-family: ${({ theme }) => theme.font.mono};
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+  }
+  span {
+    display: inline-flex;
+    align-items: center;
+    color: ${({ theme }) => theme.c.atext};
+    font-weight: 700;
+  }
+`;
+const Help = styled.p`
   margin: 0;
-  padding: 0;
-  list-style: none;
+  text-align: center;
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.md};
 `;
-
-const Line = styled.li`
+const Links = styled.div`
   display: flex;
   justify-content: space-between;
-  padding: ${({ theme }) => theme.spacing.xs} 0;
+`;
+const LinkButton = styled.button<{ $quiet?: boolean }>`
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: ${({ theme, $quiet }) => ($quiet ? theme.c.muted : theme.c.atext)};
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 `;
 
-const Total = styled(Line)`
-  margin-top: ${({ theme }) => theme.spacing.sm};
-  padding-top: ${({ theme }) => theme.spacing.md};
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.outline};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-`;
+type ViewProps = Readonly<{
+  order: CustomerOrder;
+  /** The kitchen's menu once loaded; the page works without it. */
+  menu: MenuResponse | undefined;
+  /** A customer who has ordered before can skip the WhatsApp message (D-027). */
+  returning: boolean;
+  onWhatsApp: () => void;
+  onShowQr: () => void;
+  onViewOrder: () => void;
+  onChange: () => void;
+  /** Fixtures and tests: fix what the install and notification flow detects. */
+  install?: InstallOverride;
+}>;
 
-const Centered = styled(Muted)`
-  text-align: center;
-`;
-
-function toneOf(status: OrderStatus): StatusTone {
-  switch (status) {
-    case 'ordered':
-      return 'ordered';
-    case 'confirmed':
-      return 'confirmed';
-    case 'ready_for_pickup':
-      return 'ready';
-    case 'out_for_delivery':
-      return 'outForDelivery';
-    case 'collected':
-    case 'delivered':
-      return 'done';
-    case 'cancelled':
-      return 'cancelled';
-    default: {
-      const unreachable: never = status;
-      return unreachable;
-    }
-  }
+export function OrderPlacedView({
+  order,
+  menu,
+  returning,
+  onWhatsApp,
+  onShowQr,
+  onViewOrder,
+  onChange,
+  install: installOverride,
+}: ViewProps) {
+  const { t } = useTranslation(CUSTOMER_NS);
+  const install = useOrderInstall(order.token, installOverride);
+  const cook = menu?.seller.name ?? order.seller.name;
+  const code = formatOrderCode(order.code);
+  return (
+    <>
+      <PageTopBar
+        kitchenName={menu?.kitchen.name ?? order.seller.name}
+        logoSrc={menu?.kitchen.images?.railImage ?? undefined}
+      />
+      <Body>
+        <Heading>
+          <h1>
+            <Tick>
+              <Icon name="check" />
+            </Tick>
+            {t('placed.title')}
+          </h1>
+          <p>{t('placed.thanks', { name: order.firstName, cook })}</p>
+        </Heading>
+        <CodeCard type="button" onClick={onShowQr} data-testid="code-card">
+          <CodeText>
+            <small>{t('placed.orderNumber')}</small>
+            <b role="img" aria-label={orderCodeLabel(order.code)} data-testid="order-code">
+              {code}
+            </b>
+            <span>{t('placed.showQr')} ›</span>
+          </CodeText>
+          <OrderQr code={order.code} size={88} label={t('placed.qrAlt', { code })} />
+        </CodeCard>
+        <div>
+          <MainButton type="button" onClick={onWhatsApp}>
+            <MenuIcon name="chat" />
+            {t('placed.whatsapp', { cook })}
+          </MainButton>
+          <Help>{returning ? t('placed.optional') : t('placed.whatsappHelp')}</Help>
+        </div>
+        <UpdatesCard controller={install} />
+        <Links>
+          <LinkButton type="button" onClick={onViewOrder}>
+            {t('placed.viewOrder')}
+          </LinkButton>
+          <LinkButton type="button" $quiet onClick={onChange}>
+            {t('placed.change')}
+          </LinkButton>
+        </Links>
+        <Help>{t('placed.saved')}</Help>
+      </Body>
+      <InstallOverlay
+        controller={install}
+        kitchenName={menu?.kitchen.name ?? order.seller.name}
+        iconSrc={menu?.kitchen.images?.railIcon}
+        code={code}
+        backLabel={t('placed.title')}
+      />
+    </>
+  );
 }
 
 type Props = Readonly<{
   /** The order's private token (from the order link, or from placing the order). */
   token: string;
-  /** Opens "Change or cancel" (batch 2); a no-op until then. */
+  /** Opens "Change or cancel": the order page, where both live. */
   onChange: () => void;
-  /** Back to the order page. Without it (the dev harness) the header has no back arrow. */
+  /** Opens the order page ("View order details"). */
+  onViewOrder?: () => void;
+  /** Opens the full-screen QR. */
+  onShowQr?: () => void;
+  /** Kept for the old route wiring; the placed page has no back arrow (spec §4.3). */
   onBack?: () => void;
 }>;
 
-function PlacedBody({ order, onChange }: Readonly<{ order: CustomerOrder; onChange: () => void }>) {
-  const { t, i18n } = useTranslation(CUSTOMER_NS);
-  const lang = useLang();
+function PlacedBody({
+  order,
+  onChange,
+  onViewOrder,
+  onShowQr,
+}: Readonly<{
+  order: CustomerOrder;
+  onChange: () => void;
+  onViewOrder: () => void;
+  onShowQr: () => void;
+}>) {
+  const { i18n } = useTranslation(CUSTOMER_NS);
+  const lang: Language = useLang();
   const loadedMenu = useSelector(selectMenu);
   // Another seller's menu (still on screen from before) must not give this order its pickup.
   const menu =
-    loadedMenu.status === 'ready' && loadedMenu.data.seller.slug !== order.seller.slug
-      ? ({ status: 'idle' } as const)
-      : loadedMenu;
+    loadedMenu.status === 'ready' && loadedMenu.data.seller.slug === order.seller.slug
+      ? loadedMenu.data
+      : undefined;
 
   // The kitchen's colours (D-064).
-  const theme = menu.status === 'ready' ? (menu.data.theme ?? 'onde') : undefined;
+  const theme = menu ? (menu.theme ?? 'onde') : undefined;
   useEffect(() => {
     if (theme !== undefined) setKitchenBrand(theme);
   }, [theme]);
 
-  const whatsappNumber = menu.status === 'ready' ? menu.data.kitchen.whatsappNumber : undefined;
-  const points = menu.status === 'ready' ? menu.data.week.pickupPoints : [];
+  const points = menu?.week.pickupPoints ?? [];
   // The place the customer chose; an order without one counts as the menu's first.
   const pickup = points.find((point) => point.id === order.pickupPlaceId) ?? points[0];
-  const dayText =
-    menu.status === 'ready' ? formatCookingDate(menu.data.week.cookingDate, lang) : null;
+  const dayText = menu ? formatCookingDate(menu.week.cookingDate, lang) : null;
   const when =
     dayText && pickup
       ? `${dayText}, ${formatWindow(pickup.window.start, pickup.window.end, lang)}`
       : null;
   // The message is in the customer's language (the one the order was placed in).
   const waText = buildWhatsAppText(order, i18n.getFixedT(order.language, CUSTOMER_NS), when);
+  const whatsappNumber = menu?.kitchen.whatsappNumber;
   const openWhatsApp = useCallback(() => {
     window.open(whatsAppUrl(waText, whatsappNumber), '_blank', 'noopener,noreferrer');
   }, [waText, whatsappNumber]);
-  // A customer who has collected before can skip the WhatsApp message (D-027).
   const [returning] = useState(() => isReturningCustomer(order.seller.slug));
 
-  const totalCents = order.lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0);
-  const how = order.fulfilment === 'delivery' ? t('placed.delivery') : t('placed.pickup');
-
   return (
-    <>
-      <Block>
-        <Centered>{t('placed.yourNumber')}</Centered>
-        <Code data-testid="order-code">{formatOrderCode(order.code)}</Code>
-        <Qr>{t('placed.qrLabel')}</Qr>
-      </Block>
-      <Block>
-        <Lines>
-          {order.lines.map((line) => (
-            <Line key={line.itemId}>
-              <span>
-                {line.qty}× {pickText(line.name, lang)}
-              </span>
-              <Strong>{formatMoney(line.priceCents * line.qty, lang)}</Strong>
-            </Line>
-          ))}
-          <Total>
-            <span>{t('placed.total')}</span>
-            <span>{formatMoney(totalCents, lang)}</span>
-          </Total>
-        </Lines>
-        <Muted>
-          {[how, when, order.fulfilment === 'pickup' ? pickup?.place : undefined]
-            .filter(Boolean)
-            .join(' · ')}{' '}
-          · <Pill tone={toneOf(order.status)}>{t(`status.${order.status}`)}</Pill>
-        </Muted>
-        {order.note ? <Muted>{t('placed.note', { note: order.note })}</Muted> : null}
-      </Block>
-      <Block>
-        <Button variant="primary" fullWidth onClick={openWhatsApp}>
-          {t('placed.whatsapp')}
-        </Button>
-        {returning ? <Centered>{t('placed.optional')}</Centered> : null}
-        <Button fullWidth disabled>
-          {t('placed.updates')} ({t('placed.comingSoon')})
-        </Button>
-        <Centered>{t('placed.saved')}</Centered>
-        <Button variant="quiet" fullWidth onClick={onChange}>
-          {t('placed.change')}
-        </Button>
-      </Block>
-    </>
+    <OrderPlacedView
+      order={order}
+      menu={menu}
+      returning={returning}
+      onWhatsApp={openWhatsApp}
+      onShowQr={onShowQr}
+      onViewOrder={onViewOrder}
+      onChange={onChange}
+    />
   );
 }
 
-function PlacedContent({ token, onChange, onBack }: Props) {
+function PlacedContent({ token, onChange, onViewOrder, onShowQr }: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const dispatch = useDispatch();
   const order = useSelector(selectOrder);
@@ -201,14 +306,13 @@ function PlacedContent({ token, onChange, onBack }: Props) {
 
   return (
     <Page>
-      <PageHeader
-        title={t('placed.title')}
-        backLabel={t('common.back')}
-        onBack={onBack}
-        trailing={<LanguageSwitch compact />}
-      />
       {order.status === 'ready' && loaded ? (
-        <PlacedBody order={order.order} onChange={onChange} />
+        <PlacedBody
+          order={order.order}
+          onChange={onChange}
+          onViewOrder={onViewOrder ?? onChange}
+          onShowQr={onShowQr ?? onChange}
+        />
       ) : order.status === 'error' ? (
         <StateMessage alert text={t('placed.loadError')} onRetry={load} />
       ) : (

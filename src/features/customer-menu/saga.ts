@@ -38,6 +38,19 @@ export function* loadMenu(action: ReturnType<typeof menuRequested>) {
   }
 }
 
+/** The stock or the cut-off moved: load the menu again so the basket is trimmed and the banner can say what changed. */
+export function* refreshMenuAfter(code: string, slug: string | null) {
+  if (slug === null) return;
+  if (
+    code === 'sold_out' ||
+    code === 'exceeds_remaining' ||
+    code === 'cutoff_passed' ||
+    code === 'ordering_closed'
+  ) {
+    yield put(menuRequested(slug));
+  }
+}
+
 export function* placeOrder(action: ReturnType<typeof placeRequested>) {
   const basket = (yield select((state: CustomerRootState) => selectBasket(state))) as Record<
     string,
@@ -66,6 +79,7 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     yield put(placeSucceeded(result.data.order));
   } else {
     yield put(placeFailed({ code: result.error, message: result.message }));
+    yield call(refreshMenuAfter, result.error, slug);
   }
 }
 
@@ -104,6 +118,8 @@ export function* saveEdit(action: ReturnType<typeof updateRequested>) {
     yield put(updateSucceeded(result.data.order));
   } else {
     yield put(updateFailed({ code: result.error, message: result.message }));
+    const slug = (yield select((state: CustomerRootState) => state.customer.slug)) as string | null;
+    yield call(refreshMenuAfter, result.error, slug);
   }
 }
 

@@ -436,13 +436,14 @@ describe('menus and dishes', () => {
       expect(await runAutoFinish({ DB: world.db.d1 }, now, (l) => lines.push(l))).toEqual({
         menus: 0,
         orders: 0,
+        failed: 0,
       });
       expect((await currentMenu()).menu.state).toBe('live');
 
       now = JUST_AFTER_MIDNIGHT;
       const counts = await runAutoFinish({ DB: world.db.d1 }, now, (l) => lines.push(l));
       // Both sample kitchens cook on 10 Oct.
-      expect(counts).toEqual({ menus: 2, orders: 1 });
+      expect(counts).toEqual({ menus: 2, orders: 1, failed: 0 });
       expect((await currentMenu()).menu.state).toBe('finished');
       expect((await currentMenu(B)).menu.state).toBe('finished');
       expect((await call('GET', '/api/seller/orders')).body.orders).toEqual([]);
@@ -455,7 +456,7 @@ describe('menus and dishes', () => {
       await runAutoFinish({ DB: world.db.d1 }, now, () => undefined);
       const weeks = await world.db.first<{ n: number }>('SELECT COUNT(*) AS n FROM past_weeks');
       const again = await runAutoFinish({ DB: world.db.d1 }, now, () => undefined);
-      expect(again).toEqual({ menus: 0, orders: 0 });
+      expect(again).toEqual({ menus: 0, orders: 0, failed: 0 });
       expect(await world.db.first('SELECT COUNT(*) AS n FROM past_weeks')).toEqual(weeks);
       expect((await call('GET', '/api/seller/past-weeks')).body.weeks).toHaveLength(1);
     });
@@ -464,8 +465,47 @@ describe('menus and dishes', () => {
       await call('POST', '/api/seller/menus/current/unpublish');
       now = JUST_AFTER_MIDNIGHT;
       const counts = await runAutoFinish({ DB: world.db.d1 }, now, () => undefined);
-      expect(counts).toEqual({ menus: 1, orders: 0 }); // only the other kitchen was live
+      expect(counts).toEqual({ menus: 1, orders: 0, failed: 0 }); // only the other kitchen was live
       expect((await currentMenu()).menu.state).toBe('not_published');
+    });
+
+    it('keeps going when one menu fails: the others finish and the failure is only counted', async () => {
+      // A third live kitchen, and a clash on the second one's past-week row so its finish throws.
+      await world.db.batch([
+        world.db.stmt(
+          "INSERT INTO sellers (id, slug, name, created_at) VALUES ('third', 'third', 'Third', '2026-10-01T00:00:00Z')",
+        ),
+        world.db.stmt(
+          `INSERT INTO menus (seller_id, id, state, cooking_date, cutoff_at, delivery_available)
+           SELECT 'third', 'menu-third', 'live', cooking_date, cutoff_at, 0 FROM menus WHERE seller_id = (SELECT id FROM sellers WHERE slug = ?)`,
+          A,
+        ),
+      ]);
+      const poisoned = await world.db.first<{ id: string; seller_id: string }>(
+        'SELECT id, seller_id FROM menus WHERE seller_id = (SELECT id FROM sellers WHERE slug = ?)',
+        B,
+      );
+      await world.db.batch([
+        world.db.stmt(
+          `INSERT INTO past_weeks (seller_id, id, cooking_date, closed_at, orders_count, cancelled_count,
+             income_cents, paid_cents, unpaid_cents) VALUES (?, ?, '2026-10-10', '2026-10-01T00:00:00Z', 0, 0, 0, 0, 0)`,
+          poisoned?.seller_id,
+          poisoned?.id,
+        ),
+      ]);
+      const lines: Array<string> = [];
+      now = JUST_AFTER_MIDNIGHT;
+      const counts = await runAutoFinish({ DB: world.db.d1 }, now, (l) => lines.push(l));
+      expect(counts).toEqual({ menus: 2, orders: 0, failed: 1 });
+      expect((await currentMenu(A)).menu.state).toBe('finished');
+      expect((await currentMenu(B)).menu.state).toBe('live');
+      expect(await world.db.first('SELECT state FROM menus WHERE seller_id = ?', 'third')).toEqual({
+        state: 'finished',
+      });
+      expect(lines).toEqual([
+        'auto-finish: 2 menu(s) finished, 0 open order(s) closed',
+        'auto-finish: 1 menu(s) failed, retried at the next run',
+      ]);
     });
   });
 

@@ -15,7 +15,7 @@ describe('a new seller pictures (D-054)', () => {
       desktopBanner: '/samples/banner-wide.jpg',
       phoneBanner: '/samples/banner-phone.jpg',
       railImage: '/samples/rail.png',
-      railIcon: '/samples/rail-icon.png',
+      railIcon: '/samples/icon-512.jpg',
       bannerBackgroundImage: '/samples/banner-bg.jpg',
       bannerBackground: '#835937',
     });

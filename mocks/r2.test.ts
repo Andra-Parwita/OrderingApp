@@ -71,7 +71,7 @@ describe('local R2 bucket', () => {
     );
     expect(cached?.status).toBe(304);
 
-    await deleteImageRefs(bucket, [stored.ref]);
+    await deleteImageRefs(bucket, [stored.ref], 'seller-test');
     expect(
       (await serveImage(bucket, new Request(`https://delave.test${stored.ref}`)))?.status,
     ).toBe(404);

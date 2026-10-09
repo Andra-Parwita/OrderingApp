@@ -72,3 +72,9 @@ export function inboxText(entry: InboxEntry): InboxText {
     return { kind: 'key', key: `inbox.status.${entry.status}`, minutes };
   return { kind: 'key', key: 'inbox.other', minutes };
 }
+
+/** Order details are kept for 4 weeks after the cooking date (D-044): that date, as YYYY-MM-DD. */
+export function keptUntil(cookingDate: string): string {
+  const [year = 1970, month = 1, day = 1] = cookingDate.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day + 28)).toISOString().slice(0, 10);
+}

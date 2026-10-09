@@ -6,6 +6,7 @@ import type { Kitchen } from '../../shared/domain';
 import { bannerAlt } from '../../shared/kitchenImages';
 import { fetchMenu } from '../api/client';
 import { lastKitchen } from '../api/device/lastKitchen';
+import { cssUrl } from '../components/cssUrl';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { SPLIT_QUERY } from './layout';
@@ -57,7 +58,7 @@ const Panel = styled.div<{
   background-color: ${({ theme, $background }) => $background ?? theme.c.surf2};
   ${({ $image }) =>
     $image
-      ? `background-image: url("${$image}"); background-size: cover; background-position: center;`
+      ? `background-image: ${cssUrl($image)}; background-size: cover; background-position: center;`
       : ''}
 `;
 const Picture = styled.img`

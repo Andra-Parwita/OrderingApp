@@ -4,7 +4,10 @@
 import type { HealthResponse } from '../../shared/health';
 import { checkOrigin } from '../auth/origin';
 import { createD1Repository } from '../db';
-import type { D1Like } from '../db/d1';
+import { Db, type D1Like } from '../db/d1';
+import { createPushDispatcher } from '../push/dispatch';
+import { createWebPushSender, realVapidValue, vapidFromEnv, type PushSender } from '../push/sender';
+import { handleKitchenRequest } from './kitchenRoutes';
 import type { ImageBucket } from '../images/r2';
 import { serveImage } from '../images/serve';
 import { createLiveNotifier, type RoomNamespace } from '../live/notifier';
@@ -19,13 +22,30 @@ export type ApiEnv = {
   ADMIN_SETUP_KEY?: string;
   /** "1" turns every dev-only path on. Set only in `.dev.vars`; absent is production. */
   DEV_TOOLS?: string;
+  /** Web push (plan 004 stage 6): the VAPID key pair and contact. Without them push is off. */
+  VAPID_PUBLIC_KEY?: string;
+  /** Secret. */
+  VAPID_PRIVATE_KEY?: string;
+  /** A `mailto:` or https URL the push services can reach the operator at. */
+  VAPID_SUBJECT?: string;
 };
+
+/** Where the Worker hands work that may finish after the answer (`ExecutionContext`). */
+export type WaitUntil = { waitUntil(promise: Promise<unknown>): void };
+
+/** Test seams: a stand-in push sender. */
+export type WorkerDeps = { pushSender?: PushSender };
 
 export function devToolsOn(env: Pick<ApiEnv, 'DEV_TOOLS'>): boolean {
   return env.DEV_TOOLS === '1';
 }
 
-export async function handleWorkerRequest(request: Request, env: ApiEnv): Promise<Response> {
+export async function handleWorkerRequest(
+  request: Request,
+  env: ApiEnv,
+  ctx?: WaitUntil,
+  deps: WorkerDeps = {},
+): Promise<Response> {
   // The Origin check sits at the door, so every route behind it is covered.
   const refused = checkOrigin(request);
   if (refused) return refused;
@@ -39,16 +59,31 @@ export async function handleWorkerRequest(request: Request, env: ApiEnv): Promis
   // Seller images stream from R2: public, content-hashed, cached for a year (stage 8.3).
   const image = await serveImage(env.IMAGES, request);
   if (image) return image;
+  // Web push: writes that tell customers something are collected, then sent after the answer is
+  // ready (never inside the D1 write). Without VAPID keys nothing is sent.
+  const vapid = vapidFromEnv(env);
+  const dispatcher = createPushDispatcher({
+    db: new Db(env.DB),
+    sender: deps.pushSender ?? (vapid ? createWebPushSender(vapid) : undefined),
+  });
   const repo = createD1Repository(env.DB, {
     now: () => new Date(),
     // A missing secret must never become a key anyone can guess: use one nobody knows.
     adminSetupKey: env.ADMIN_SETUP_KEY ?? crypto.randomUUID(),
     devTools,
+    onCustomerChange: dispatcher.collect,
   });
+  // The kitchen's manifest and icons (public, cacheable).
+  const kitchenFile = await handleKitchenRequest(repo, request, { images: env.IMAGES });
+  if (kitchenFile) return kitchenFile;
   const response = await handleApiRequest(repo, request, {
     live: createLiveNotifier(env.SELLER_LIVE),
     images: env.IMAGES,
     devTools,
+    vapidPublicKey: realVapidValue(env.VAPID_PUBLIC_KEY),
   });
+  const sending = dispatcher.flush();
+  if (ctx) ctx.waitUntil(sending);
+  else await sending;
   return response ?? new Response('Not found', { status: 404 });
 }

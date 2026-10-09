@@ -453,3 +453,12 @@ Format for each entry:
 - The owner's `imgs/OndeOndeIcon.jpg` becomes the sample kitchen's small icon, cropped to full bleed at 512 × 512.
 **Trade-off:** two more dependencies to keep updated.
 **Revisit when:** a package becomes unmaintained or adds weight beyond its use.
+
+## D-073 · Review and security fixes; the 6-digit code lock is global (2026-10-10; builder)
+**Ruling:** "A" (plan 005 for the 3 correctness findings), "Fix the security issues raised and follow through with the recommended outcomes" (plan 006), "A" (plan 007 for the two lower-scored auth points), "A" (keep the global code lock).
+**Decision:**
+- Plans 005–007 are done. Auto-finish isolates failures, customer collect needs Ready, and place messages are safe to retry. R2 deletes only own keys, restore drops foreign image refs, and refs reach CSS only via `cssUrl()`.
+- Add-device codes lock after 5 wrong tries counted per device **and per kitchen with a live code**, which, since a wrong code has no kitchen, means all kitchens with live codes for 15 minutes.
+- A code redeems once (a conditional update).
+**Trade-off:** anyone can block add-device codes for 15 minutes; password and passkey sign-in are unaffected.
+**Revisit when:** the lock is abused (then add a kitchen field to the code screen).

@@ -343,6 +343,78 @@ describe('live events and images', () => {
       expect(r2.objects.size).toBe(0);
     });
 
+    // Plan 006: image refs stay with their seller.
+    const FOREIGN = `/images/sellers/${B_ID}/railIcon-aaaaaaaaaaaaaaaa.png`;
+    const FOREIGN_KEY = FOREIGN.slice('/images/'.length);
+    const putForeignObject = () =>
+      r2.bucket.put(FOREIGN_KEY, new Uint8Array([1, 2, 3]), {
+        httpMetadata: { contentType: 'image/png' },
+      });
+    const backupOf = async () =>
+      (await call('GET', '/api/seller/backup', { seller: A })).body as {
+        kitchen: { images: Record<string, string> };
+        sets: Array<{ images: Record<string, string> }>;
+        menu?: { pictureRef?: string };
+      };
+
+    it('never deletes another seller object on delete or replace, even from its own row', async () => {
+      await putForeignObject();
+      const pointAtForeign = () =>
+        world.db.batch([
+          world.db.stmt(
+            "UPDATE kitchen_images SET ref = ? WHERE seller_id = ? AND slot = 'railIcon'",
+            FOREIGN,
+            A_ID,
+          ),
+        ]);
+      await pointAtForeign();
+      expect(
+        await call('PUT', '/api/seller/images/railIcon', {
+          seller: A,
+          body: { dataUrl: png('railIcon') },
+        }),
+      ).toMatchObject({ status: 200 });
+      expect(r2.objects.has(FOREIGN_KEY)).toBe(true);
+      await pointAtForeign();
+      await call('DELETE', '/api/seller/images/railIcon', { seller: A });
+      expect(r2.objects.has(FOREIGN_KEY)).toBe(true);
+    });
+
+    it('a restore drops foreign, external and malformed refs, and says how many', async () => {
+      const backup = await backupOf();
+      backup.kitchen.images['railIcon'] = FOREIGN;
+      backup.kitchen.images['desktopBanner'] = 'https://evil.test/x.png';
+      backup.sets = [
+        { ...(backup.sets[0] ?? {}), images: { phoneBanner: 'javascript:alert(1)' } },
+      ] as typeof backup.sets;
+      backup.menu = { ...backup.menu, pictureRef: FOREIGN };
+      const restored = await call('POST', '/api/seller/backup', { seller: A, body: backup });
+      expect(restored.body).toMatchObject({ ok: true, droppedImages: 4 });
+      const after = await backupOf();
+      expect(after.kitchen.images).not.toHaveProperty('railIcon');
+      expect(after.kitchen.images).not.toHaveProperty('desktopBanner');
+      expect(after.sets.flatMap((set) => Object.values(set.images))).toEqual([]);
+      expect(after.menu?.pictureRef).toBeUndefined();
+      expect(JSON.stringify(after)).not.toContain(FOREIGN);
+    });
+
+    it('own refs (bucket, menu picture, samples) survive a backup round trip', async () => {
+      const icon = imagesOf(await put('railIcon', { dataUrl: png('railIcon') })).railIcon as string;
+      const picture = await call('PUT', '/api/seller/menus/current/picture', {
+        seller: A,
+        body: { dataUrl: png('menuPicture') },
+      });
+      expect(picture.status).toBe(200);
+      const before = await backupOf();
+      expect(before.menu?.pictureRef).toMatch(/^\/images\/sellers\/seller-onde-onde\//);
+      const restored = await call('POST', '/api/seller/backup', { seller: A, body: before });
+      expect(restored.body).toMatchObject({ ok: true, droppedImages: 0 });
+      const after = await backupOf();
+      expect(after.kitchen.images['railIcon']).toBe(icon);
+      expect(after.kitchen.images['desktopBanner']).toBe('/samples/banner-wide.jpg');
+      expect(after.menu?.pictureRef).toBe(before.menu?.pictureRef);
+    });
+
     it('leaves dev fixtures (/samples/...) alone and works without a bucket', async () => {
       const menu = await call('GET', `/api/s/${A}/menu`);
       expect(JSON.stringify(menu.body)).toContain('/samples/');
@@ -399,13 +471,16 @@ describe('serving images', () => {
   it('only deletes refs that are bucket images', async () => {
     const { bucket, objects } = fakeBucket();
     const stored = await putUploadedImage(bucket, 'seller-x', 'railIcon', png('railIcon'));
-    await deleteImageRefs(bucket, [
-      '/samples/banner-wide.jpg',
-      'data:image/png;base64,AA',
-      undefined,
-    ]);
+    await deleteImageRefs(
+      bucket,
+      ['/samples/banner-wide.jpg', 'data:image/png;base64,AA', undefined],
+      'seller-x',
+    );
     expect(objects.size).toBe(1);
-    await deleteImageRefs(bucket, [stored?.ref]);
+    // Another seller's ref is skipped; the owner's own ref goes.
+    await deleteImageRefs(bucket, [stored?.ref], 'seller-y');
+    expect(objects.size).toBe(1);
+    await deleteImageRefs(bucket, [stored?.ref], 'seller-x');
     expect(objects.size).toBe(0);
   });
 });

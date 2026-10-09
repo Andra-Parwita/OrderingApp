@@ -27,6 +27,7 @@ import type {
   StaffActor,
 } from '../../shared/domain';
 import type { BackupFile } from '../../shared/backup';
+import type { PushSubscribeRequest } from '../../shared/pushContract';
 import type { ImageSlot } from '../../shared/imageSlots';
 import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
 import type {
@@ -186,7 +187,8 @@ export type SellerRepository = {
   // Backup and CSV
   exportBackup(): Promise<BackupFile>;
   /** Replaces this seller's data with an already validated backup. */
-  restoreBackup(file: BackupFile): Promise<void>;
+  /** Returns how many image refs were dropped because they were not this seller's own. */
+  restoreBackup(file: BackupFile): Promise<number>;
   ordersCsv(): Promise<string>;
 
   // Orders: customer side
@@ -250,6 +252,12 @@ export type SellerRepository = {
   ): Promise<StoreResult<SellerOrder>>;
   /** The customer's "I've collected it", by order token (`collectedBy = 'customer'`). Idempotent. */
   customerCollected(token: string): Promise<StoreResult<SellerOrder>>;
+
+  // Web push (plan 004 stage 6): a subscription belongs to an order, reached by its token.
+  /** Idempotent per (order, endpoint); only live orders. Never returns the endpoint or keys. */
+  subscribePush(token: string, request: PushSubscribeRequest): Promise<StoreResult<true>>;
+  /** Removes one browser's subscription from the order. Idempotent. */
+  unsubscribePush(token: string, endpoint: string): Promise<StoreResult<true>>;
 };
 
 /** Where an order token leads (D-044): a live order, an archived one, or just its week's date. */

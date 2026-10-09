@@ -489,6 +489,49 @@ describe('sign-in', () => {
       expect(errorOf(again)?.error).toBe('invalid_credentials');
     });
 
+    it('allows 5 wrong codes per kitchen however the device id changes, then the real code is dead', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      const code = parseCodeResponse((await call('POST', '/api/auth/device-codes', full)).body);
+      const wrong = code?.code === '000000' ? '000001' : '000000';
+      const answers: Array<string | undefined> = [];
+      for (let i = 0; i < 5; i++) {
+        const reply = await call('POST', '/api/auth/code', {
+          body: { code: wrong, deviceId: `rotating-device-${String(i)}` },
+        });
+        answers.push(errorOf(reply)?.error);
+      }
+      expect(answers).toEqual([
+        'invalid_credentials',
+        'invalid_credentials',
+        'invalid_credentials',
+        'invalid_credentials',
+        'locked_out',
+      ]);
+      const real = await call('POST', '/api/auth/code', {
+        body: { code: code?.code, deviceId: 'rotating-device-fresh' },
+      });
+      expect(errorOf(real)?.error).toBe('locked_out');
+      // Once the lock ends the old code is still gone, and a new one works.
+      nowMs = START + 16 * MIN;
+      const old = await call('POST', '/api/auth/code', {
+        body: { code: code?.code, deviceId: 'rotating-device-fresh' },
+      });
+      expect(errorOf(old)?.error).toBe('invalid_credentials');
+    });
+
+    it('lets exactly one of two concurrent redemptions of the same code through', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      const code = parseCodeResponse((await call('POST', '/api/auth/device-codes', full)).body);
+      const replies = await Promise.all(
+        ['racer-0001-aaaa', 'racer-0002-bbbb'].map((deviceId) =>
+          call('POST', '/api/auth/code', { body: { code: code?.code, deviceId } }),
+        ),
+      );
+      expect(replies.filter((reply) => reply.status === 200).length).toBe(1);
+      const lost = replies.find((reply) => reply.status !== 200);
+      expect(lost && errorOf(lost)?.error).toBe('invalid_credentials');
+    });
+
     it('expires after 10 minutes', async () => {
       const { full } = await sellerSignedIn(A_ID);
       const code = parseCodeResponse((await call('POST', '/api/auth/device-codes', full)).body);

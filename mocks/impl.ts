@@ -13,6 +13,7 @@ import { applyMigrations } from '../worker/db/migrate';
 import { trackWrites } from './dirtyTables';
 import { countQueries, type QueryCounter } from './queryCount';
 import { handleApiRequest, type RouteContext } from '../worker/api/routes';
+import type { CustomerChange } from '../worker/push/dispatch';
 import type { Repository } from '../worker/repo/Repository';
 
 /** The admin setup key tests use (the repository is given it as the `ADMIN_SETUP_KEY` secret). */
@@ -24,6 +25,8 @@ export type TestOptions = {
   newToken?: () => string;
   newCode?: () => string;
   seed?: number;
+  /** Web push: `dispatcher.collect` of a test's own dispatcher (worker/push/dispatch.ts). */
+  onCustomerChange?: (changes: Array<CustomerChange>) => void;
 };
 
 /** One fresh world (the two sample kitchens, no orders, no accounts) for one test. */

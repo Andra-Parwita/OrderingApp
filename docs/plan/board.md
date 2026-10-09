@@ -268,6 +268,18 @@ Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-n
 
 ## Start here (next session)
 
+**Now (10 Oct, 07:45):** the plans live in [docs/plans/](../plans/README.md); per-plan progress is in each plan's Notes.
+- **Done:** plans 001 (seller redesign, gate green 05:23), 003, 005 (review fixes), 006 (security: image refs), 007 (6-digit code hardening).
+- **Plan 004 (customer redesign + web push):** all 7 stages built (checkpoint 3, 07:38). **Next: its end-of-phase gate** (many older customer tests and specs to update), then the pre-Cloudflare compliance check, `/code-review` and security review the builder asked for.
+- **Open for the owner/builder:**
+  - try it on a tablet, a phone and the PC;
+  - delete the retired screens (needs OK);
+  - contacts per customer (D-059 design question);
+  - the iPhone PNG default icon gap;
+  - Cloudflare prerequisites (account, D1, R2, secrets including VAPID).
+- **Last commit:** `6d6384b` (06:06). A message for the work since is in `scratch/commit-message.txt`.
+- **Local DB:** `pnpm db:migrate:local` for `0005_push.sql`.
+
 **Resumed (10 Oct, 00:43):**
 - The pull brought two commits from the owner on COVID-PC: the seller design drop, plans 001/002, and D-053…D-069. Reviewed; the unit gate is green, 1130/1130.
 - The user on this PC is the owner's son, who builds the plans.

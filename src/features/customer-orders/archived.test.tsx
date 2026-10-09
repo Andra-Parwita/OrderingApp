@@ -33,6 +33,7 @@ const archived: CustomerOrder = {
   fulfilment: 'pickup',
   status: 'collected',
   locked: false,
+  paid: false,
   inbox: [],
   createdAt: '2026-10-05T10:00:00Z',
   updatedAt: '2026-10-10T10:00:00Z',
@@ -65,10 +66,13 @@ describe('archived order page', () => {
   it('is read-only in English: status, items, total, seller, date, a closed note', async () => {
     answerOrder(archived.token, { order: archived });
     renderWithStore(<OrderScreen token={archived.token} onBack={noop} onChange={noop} />);
-    expect(await screen.findByText('This menu is closed')).toBeVisible();
+    expect(
+      await screen.findByText('This menu is closed. You can still see what you ordered.'),
+    ).toBeVisible();
     expect(screen.getByTestId('order-code')).toHaveTextContent(/ABC.?D23/);
     expect(screen.getByText('Collected')).toBeVisible();
-    expect(screen.getByText('3× Thin battered tempeh')).toBeVisible();
+    expect(screen.getByText('3 × Thin battered tempeh')).toBeVisible();
+    expect(screen.getByText('Details kept until Sat 7 Nov')).toBeVisible();
     expect(screen.getAllByText('$30.00')).toHaveLength(2); // the line and the total
     expect(screen.getByText(/Onde Onde · Sat 10 Oct/)).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
@@ -80,8 +84,10 @@ describe('archived order page', () => {
     await i18n.changeLanguage('id');
     answerOrder(archived.token, { order: { ...archived, status: 'ordered' } });
     renderWithStore(<OrderScreen token={archived.token} onBack={noop} onChange={noop} />);
-    expect(await screen.findByText('Menu ini sudah ditutup')).toBeVisible();
-    expect(screen.getByText('3× Tempe mendoan')).toBeVisible();
+    expect(
+      await screen.findByText('Menu ini sudah ditutup. Anda masih bisa melihat pesanan Anda.'),
+    ).toBeVisible();
+    expect(screen.getByText('3 × Tempe mendoan')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Ubah pesanan' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Batalkan pesanan' })).not.toBeInTheDocument();
   });
@@ -96,7 +102,7 @@ describe('archived order page', () => {
     );
     answerOrder(archived.token, { order: archived });
     renderWithStore(<OrderScreen token={archived.token} onBack={noop} onChange={noop} />);
-    await screen.findByText('This menu is closed');
+    await screen.findByText('This menu is closed. You can still see what you ordered.');
     expect(menuHit).not.toHaveBeenCalled();
   });
 });
@@ -104,14 +110,23 @@ describe('archived order page', () => {
 describe('expired order page', () => {
   it('says it has been archived, with seller, date and a link to the menu (EN)', async () => {
     answerOrder(expired.token, { expired });
-    renderWithStore(<OrderScreen token={expired.token} onBack={noop} onChange={noop} />);
-    expect(await screen.findByText('This order has been archived')).toBeVisible();
-    expect(screen.getByText(/Onde Onde · Sat 5 Sep/)).toBeVisible();
-    expect(screen.getByRole('link', { name: 'See the Onde Onde menu' })).toHaveAttribute(
-      'href',
-      '/onde-onde',
+    const onOpenMenu = vi.fn();
+    renderWithStore(
+      <OrderScreen token={expired.token} onBack={noop} onChange={noop} onOpenMenu={onOpenMenu} />,
     );
+    expect(await screen.findByText('This order has been archived')).toBeVisible();
+    expect(screen.getByText('Onde Onde')).toBeVisible();
+    expect(screen.getByText(/· Sat 5 Sep/)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'See the current menu' }));
+    expect(onOpenMenu).toHaveBeenCalledWith('onde-onde');
     expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
+  });
+
+  it('shows the code saved on this phone, read out character by character', async () => {
+    saveEntry(expired.token, 'ZZZ222');
+    answerOrder(expired.token, { expired });
+    renderWithStore(<OrderScreen token={expired.token} onBack={noop} onChange={noop} />);
+    expect(await screen.findByTestId('order-code')).toHaveAttribute('aria-label', 'Z Z Z, 2 2 2');
   });
 
   it('says it in Indonesian too', async () => {
@@ -119,7 +134,7 @@ describe('expired order page', () => {
     answerOrder(expired.token, { expired });
     renderWithStore(<OrderScreen token={expired.token} onBack={noop} onChange={noop} />);
     expect(await screen.findByText('Pesanan ini sudah diarsipkan')).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Lihat menu Onde Onde' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Lihat menu saat ini' })).toBeVisible();
   });
 
   it('keeps the saved order on this phone', async () => {
@@ -158,17 +173,18 @@ describe('My orders grouping', () => {
     );
   }
 
-  it('puts archived orders under "Earlier orders", the expired one as a one-line entry', async () => {
+  it('puts archived orders under "Earlier", the expired one as a one-line entry', async () => {
     answerList();
     const onOpenOrder = vi.fn();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={onOpenOrder} />);
-    expect(await screen.findByText('Earlier orders')).toBeVisible();
-    expect(screen.queryByText('Current orders')).not.toBeInTheDocument();
+    expect(await screen.findByText('Earlier')).toBeVisible();
+    expect(screen.queryByText('Current')).not.toBeInTheDocument();
     const full = screen.getByRole('button', { name: /ABC.*Onde Onde/ });
-    expect(full).toHaveTextContent('3× Thin battered tempeh');
     expect(full).toHaveTextContent('Sat 10 Oct');
+    expect(full).toHaveTextContent('$30.00');
     const line = screen.getByRole('button', { name: /ZZZ.*Onde Onde/ });
-    expect(line).toHaveTextContent('Archived · Sat 5 Sep');
+    expect(line).toHaveTextContent('Sat 5 Sep');
+    expect(line).toHaveTextContent('Archived');
     expect(line).not.toHaveTextContent('$');
     fireEvent.click(line);
     expect(onOpenOrder).toHaveBeenCalledWith('tok-expired');
@@ -180,7 +196,7 @@ describe('My orders grouping', () => {
       http.get('*/api/orders', () => HttpResponse.json({ orders: [], expired: [expired] })),
     );
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    expect(await screen.findByText('Earlier orders')).toBeVisible();
+    expect(await screen.findByText('Earlier')).toBeVisible();
     expect(screen.queryByText(/Your orders will appear here/)).not.toBeInTheDocument();
   });
 
@@ -188,7 +204,7 @@ describe('My orders grouping', () => {
     await i18n.changeLanguage('id');
     answerList();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    expect(await screen.findByText('Pesanan sebelumnya')).toBeVisible();
-    await waitFor(() => expect(screen.getByText(/Diarsipkan · /)).toBeVisible());
+    expect(await screen.findByText('Sebelumnya')).toBeVisible();
+    await waitFor(() => expect(screen.getByText('Diarsipkan')).toBeVisible());
   });
 });

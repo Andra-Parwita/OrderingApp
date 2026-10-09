@@ -10,6 +10,7 @@ import type { Language } from '../../../shared/domain';
 import rootEn from '../../i18n/en.json';
 import rootId from '../../i18n/id.json';
 import { lightTheme } from '../../theme/themes';
+import { registerInstallI18n } from '../../components/install';
 import { registerCustomerOrdersI18n } from './i18n/register';
 import { customerOrdersSaga } from './saga';
 import { customerOrdersReducer } from './slice';
@@ -35,6 +36,7 @@ export async function setupI18n(lng: Language): Promise<void> {
     });
   }
   registerCustomerOrdersI18n();
+  registerInstallI18n();
   await i18n.changeLanguage(lng);
 }
 

@@ -9,6 +9,7 @@ import { placeOrder, nudgeOrder, setOrderLocked, setOrderStatus } from '../../ap
 import { MY_ORDERS_KEY, readMyOrders, saveMyOrder } from '../../api/device/myOrders';
 import { MyOrdersScreen } from './MyOrdersScreen';
 import { OrderScreen } from './OrderScreen';
+import { listFailed } from './slice';
 import { renderWithStore, setupI18n } from './testSupport';
 import { DEFAULT_SELLER_SLUG } from '../../../shared/seller';
 
@@ -59,26 +60,22 @@ describe('MyOrdersScreen', () => {
   it('shows the empty state with a way back to the menu', async () => {
     const onBack = vi.fn();
     renderWithStore(<MyOrdersScreen onBack={onBack} onOpenOrder={noop} />);
-    expect(
-      await screen.findByText(
-        'Your orders will appear here. Pick something from the current menu to get started.',
-      ),
-    ).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'See the current menu' }));
+    expect(await screen.findByText('Your orders will appear here')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Go to the menu' }));
     expect(onBack).toHaveBeenCalled();
   });
 
-  it('lists a saved order in "Current orders" with status, summary, fulfilment and total', async () => {
+  it('lists a saved order in "Current" with status, summary, fulfilment and total', async () => {
     const placed = await place();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    expect(await screen.findByText('Current orders')).toBeVisible();
+    expect(await screen.findByText('Current')).toBeVisible();
     const row = screen.getByRole('button', { name: new RegExp(placed.code.slice(0, 3)) });
     expect(row).toHaveTextContent('Ordered');
     expect(row).toHaveTextContent('3× Thin battered tempeh');
     await waitFor(() => expect(row).toHaveTextContent('Sat 10 Oct · Pickup')); // after the menu loads
     expect(row).toHaveTextContent('$30.00');
-    expect(screen.getByText('Saved on this phone only. No account.')).toBeVisible();
-    expect(screen.queryByText('Earlier orders')).not.toBeInTheDocument();
+    expect(screen.getByText(/Saved on this phone only. No account./)).toBeVisible();
+    expect(screen.queryByText('Earlier')).not.toBeInTheDocument();
   });
 
   it('shows the seller name on each order across sellers', async () => {
@@ -92,7 +89,7 @@ describe('MyOrdersScreen', () => {
     if (!demo.ok) throw new Error('could not place the sample order');
     saveMyOrder(demo.data.order);
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    await screen.findByText('Current orders');
+    await screen.findByText('Current');
     expect(
       screen.getByRole('button', { name: new RegExp(`${onde.code.slice(0, 3)}.*Onde Onde`) }),
     ).toBeVisible();
@@ -133,7 +130,20 @@ describe('MyOrdersScreen', () => {
     const onOpenOrder = vi.fn();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={onOpenOrder} />);
     fireEvent.change(await screen.findByLabelText('Order code'), { target: { value: 'ZZZ-ZZZ' } });
-    expect(await screen.findByText(/not saved on this phone/)).toBeVisible();
+    expect(await screen.findByText(/Not saved on this phone/)).toBeVisible();
+    expect(onOpenOrder).not.toHaveBeenCalled();
+  });
+
+  it('opens a saved code with the Open button, and says so for one that is not valid', async () => {
+    const placed = await place();
+    const onOpenOrder = vi.fn();
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={onOpenOrder} />);
+    const field = await screen.findByLabelText('Order code');
+    fireEvent.change(field, { target: { value: 'k7' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    expect(await screen.findByText(/Not saved on this phone/)).toBeVisible();
+    fireEvent.change(field, { target: { value: placed.code.slice(0, 5) } });
+    expect(screen.queryByText(/Not saved on this phone/)).not.toBeInTheDocument();
     expect(onOpenOrder).not.toHaveBeenCalled();
   });
 
@@ -175,7 +185,19 @@ describe('MyOrdersScreen', () => {
     );
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
-    expect(await screen.findByText('Current orders')).toBeVisible();
+    expect(await screen.findByText('Current')).toBeVisible();
+  });
+
+  it('keeps the last loaded orders and says "You\'re offline" when a refresh fails', async () => {
+    await place();
+    const { store } = renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    expect(await screen.findByText('Current')).toBeVisible();
+    store.dispatch(listFailed('network'));
+    expect(await screen.findByText("You're offline.")).toBeVisible();
+    expect(screen.getByText('Current')).toBeVisible();
+    // Try again loads them afresh and the note goes.
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByText("You're offline.")).not.toBeInTheDocument());
   });
 });
 
@@ -187,14 +209,19 @@ describe('OrderScreen', () => {
     expect(await screen.findByTestId('order-code')).toHaveTextContent(
       `${placed.code.slice(0, 3)}-${placed.code.slice(3)}`,
     );
-    expect(screen.getByText('QR code (coming later)')).toBeVisible();
+    expect(screen.getByTestId('order-code')).toHaveAttribute(
+      'aria-label',
+      `${placed.code.slice(0, 3).split('').join(' ')}, ${placed.code.slice(3).split('').join(' ')}`,
+    );
+    expect(screen.getByRole('button', { name: 'Show QR code' })).toBeVisible();
     const timeline = screen.getByTestId('timeline');
-    expect(timeline).toHaveTextContent('Ordered (now)');
-    expect(timeline).toHaveTextContent('Ready for pickup');
-    expect(screen.getByText('3× Thin battered tempeh')).toBeVisible();
+    expect(within(timeline).getByText('Ordered')).toHaveAttribute('aria-current', 'step');
+    expect(within(timeline).getByText('Ready')).not.toHaveAttribute('aria-current');
+    expect(screen.getByText('3 × Thin battered tempeh')).toBeVisible();
     expect(screen.getAllByText('$30.00')).toHaveLength(2);
-    expect(screen.getByText(/Sat 10 Oct, 2–5 pm · Glen Waverley/)).toBeVisible();
-    expect(screen.getByText('Note: No chilli')).toBeVisible();
+    expect(screen.getByText('Glen Waverley · 2–5 pm')).toBeVisible();
+    expect(screen.getByText('No chilli')).toBeVisible();
+    expect(screen.getByText('Rina')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Change order' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Cancel order' })).toBeVisible();
   });
@@ -208,7 +235,10 @@ describe('OrderScreen', () => {
       await setOrderStatus(placed.code, 'confirmed');
       await vi.advanceTimersByTimeAsync(15_100);
       await waitFor(() =>
-        expect(screen.getByTestId('timeline')).toHaveTextContent('Confirmed (now)'),
+        expect(within(screen.getByTestId('timeline')).getByText('Confirmed')).toHaveAttribute(
+          'aria-current',
+          'step',
+        ),
       );
     } finally {
       vi.useRealTimers();
@@ -243,45 +273,27 @@ describe('OrderScreen', () => {
     const updates = await screen.findByTestId('updates');
     expect(updates).toHaveTextContent('Sending it on WhatsApp is optional');
     expect(updates).toHaveTextContent('See you at 2!');
-    expect(updates).toHaveTextContent('Your food will be ready in about 20 minutes.');
+    expect(updates).toHaveTextContent('Ready in 20 min');
     expect(updates).toHaveTextContent('Update from the seller');
   });
 
   const SATURDAY_KEYS: ReadonlyArray<{ key: string; minutes?: number; en: string; id: string }> = [
+    { key: 'readyIn', minutes: 15, en: 'Ready in 15 min', id: 'Siap dalam 15 menit' },
     {
-      key: 'readyIn',
-      minutes: 15,
-      en: 'Your food will be ready in about 15 minutes.',
-      id: 'Makanan Anda siap sekitar 15 menit lagi.',
+      key: 'ready',
+      en: 'Ready for pickup at Glen Waverley',
+      id: 'Siap diambil di Glen Waverley',
     },
-    { key: 'ready', en: 'Your food is ready for pickup.', id: 'Makanan Anda sudah siap diambil.' },
     {
       key: 'arrived',
       en: 'The seller has arrived at the pickup point.',
       id: 'Penjual sudah tiba di tempat pengambilan.',
     },
-    {
-      key: 'arrivingIn',
-      minutes: 20,
-      en: 'Your delivery will arrive in about 20 minutes.',
-      id: 'Pesanan Anda tiba sekitar 20 menit lagi.',
-    },
-    {
-      key: 'arrivingSoon',
-      en: 'Your delivery is arriving soon.',
-      id: 'Pesanan Anda hampir tiba.',
-    },
-    {
-      key: 'outForDelivery',
-      en: 'Your order is out for delivery.',
-      id: 'Pesanan Anda sedang diantar.',
-    },
-    {
-      key: 'delivered',
-      en: 'Your order has been delivered.',
-      id: 'Pesanan Anda sudah diantar.',
-    },
-    { key: 'collected', en: 'Your order has been collected.', id: 'Pesanan Anda sudah diambil.' },
+    { key: 'arrivingIn', minutes: 20, en: 'Arriving in 20 min', id: 'Tiba dalam 20 menit' },
+    { key: 'arrivingSoon', en: 'Arriving soon', id: 'Segera tiba' },
+    { key: 'outForDelivery', en: 'Out for delivery', id: 'Sedang diantar' },
+    { key: 'delivered', en: 'Delivered', id: 'Sudah diterima' },
+    { key: 'collected', en: 'Collected', id: 'Sudah diambil' },
   ];
 
   it.each(['en', 'id'] as const)(
@@ -335,16 +347,14 @@ describe('OrderScreen', () => {
     ).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Cancel order' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Send to seller on WhatsApp' })).toBeVisible();
+    expect(screen.getByRole('button', { name: /Message .* on WhatsApp/ })).toBeVisible();
   });
 
   it('shows "Changes closed at the cut-off" instead of Change and Cancel when ordering is closed', async () => {
     await useMenu({ ordering: { open: false, reason: 'cutoff_passed' } });
     const placed = await place();
     renderOrder(placed.token);
-    expect(
-      await screen.findByRole('button', { name: 'Changes closed at the cut-off' }),
-    ).toBeDisabled();
+    expect(await screen.findByText('Changes closed at the cut-off.')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
   });
 
@@ -353,25 +363,30 @@ describe('OrderScreen', () => {
     await setOrderStatus(placed.code, 'confirmed');
     await setOrderStatus(placed.code, 'ready_for_pickup');
     renderOrder(placed.token);
-    expect(await screen.findByText(/Ready! Pick up Sat 10 Oct, 2–5 pm/)).toBeVisible();
+    expect(await screen.findByText(/Ready! Pick up at Glen Waverley/)).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
   });
 
-  it('offers "I\'ve collected it" only when ready, with a confirm step, then shows Collected', async () => {
+  it('offers "I\'ve collected my order" only when ready, asks once, then moves to Collected', async () => {
     const placed = await place();
     renderOrder(placed.token);
     await screen.findByTestId('order-code');
-    expect(screen.queryByRole('button', { name: "I've collected it" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: "I've collected my order" }),
+    ).not.toBeInTheDocument();
     cleanup();
     await setOrderStatus(placed.code, 'confirmed');
     await setOrderStatus(placed.code, 'ready_for_pickup');
     renderOrder(placed.token);
-    const button = await screen.findByRole('button', { name: "I've collected it" });
-    fireEvent.click(button);
-    expect(await screen.findByText('Tap again to confirm you collected it')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Tap again to confirm you collected it' }));
-    expect(await screen.findByText('You collected this order.')).toBeVisible();
-    expect(screen.queryByRole('button', { name: "I've collected it" })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: "I've collected my order" }));
+    expect(await screen.findByText('Mark as collected?')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, I collected it' }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('button', { name: "I've collected my order" }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.getAllByText(/Collected/).length).toBeGreaterThan(0);
   });
 
   it('hands the token to the Change callback', async () => {
@@ -382,13 +397,18 @@ describe('OrderScreen', () => {
     expect(onChange).toHaveBeenCalledWith(placed.token);
   });
 
-  it('cancels on the second tap only', async () => {
+  it('asks in a sheet first, and cancels only on "Yes, cancel my order"', async () => {
     const placed = await place();
     renderOrder(placed.token);
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel order' }));
-    expect(screen.getByTestId('timeline')).not.toHaveTextContent('Cancelled');
-    fireEvent.click(screen.getByRole('button', { name: 'Tap again to cancel' }));
-    await waitFor(() => expect(screen.getByTestId('timeline')).toHaveTextContent('Cancelled'));
+    const sheet = screen.getByRole('dialog');
+    expect(sheet).toHaveTextContent("You can't undo this.");
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my order' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByTestId('timeline')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, cancel my order' }));
+    expect(await screen.findByText('This order was cancelled.')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
     expect(readMyOrders()[0]?.lastStatus).toBe('cancelled');
   });
@@ -402,7 +422,7 @@ describe('OrderScreen', () => {
     );
     renderOrder(placed.token);
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel order' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Tap again to cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, cancel my order' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('The seller has locked this order');
   });
 
@@ -424,7 +444,7 @@ describe('OrderScreen', () => {
       const open = vi.spyOn(window, 'open').mockReturnValue(null);
       const placed = await place('en');
       renderOrder(placed.token);
-      fireEvent.click(await screen.findByRole('button', { name: 'Send to seller on WhatsApp' }));
+      fireEvent.click(await screen.findByRole('button', { name: /Message .* on WhatsApp/ }));
       const url = decodeURIComponent(String(open.mock.calls[0]?.[0]));
       expect(url.startsWith(`https://wa.me/${NUMBER}?text=Hi, my order is `)).toBe(true);
       expect(url).toContain('3× Thin battered tempeh');
@@ -435,21 +455,20 @@ describe('OrderScreen', () => {
       const open = vi.spyOn(window, 'open').mockReturnValue(null);
       const placed = await place('id');
       renderOrder(placed.token);
-      fireEvent.click(await screen.findByRole('button', { name: 'Send to seller on WhatsApp' }));
+      fireEvent.click(await screen.findByRole('button', { name: /Message .* on WhatsApp/ }));
       const url = decodeURIComponent(String(open.mock.calls[0]?.[0]));
       expect(url.startsWith('https://wa.me/?text=Halo, pesanan saya ')).toBe(true);
       expect(url).toContain('3× Tempe mendoan');
     });
 
-    it('speaks Indonesian when the language is switched', async () => {
+    it('speaks Indonesian when the phone language is Indonesian', async () => {
       const placed = await place('id');
+      await i18n.changeLanguage('id');
       renderOrder(placed.token);
-      await screen.findByTestId('order-code');
-      fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
       expect(
-        await screen.findByRole('button', { name: 'Kirim ke penjual lewat WhatsApp' }),
+        await screen.findByRole('button', { name: /Kirim pesan ke .* lewat WhatsApp/ }),
       ).toBeVisible();
-      expect(screen.getByText('Kabar terbaru')).toBeVisible();
+      expect(screen.getByText('Kabar dari penjual')).toBeVisible();
     });
   });
 });

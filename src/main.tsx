@@ -15,6 +15,7 @@ import { registerSellerMenuI18n } from './features/seller-menu';
 import { registerSettingsI18n } from './features/seller-settings';
 import { registerSellerSetupI18n } from './features/seller-setup';
 import { registerShareI18n } from './features/seller-share';
+import { registerInstallI18n, startInstallSupport } from './components/install';
 import { initI18n } from './i18n/init';
 
 const container = document.getElementById('root');
@@ -46,6 +47,8 @@ const harness = import.meta.env.DEV
 void initI18n().then(async () => {
   registerCustomerI18n();
   registerCustomerOrdersI18n();
+  registerInstallI18n();
+  startInstallSupport();
   registerSellerI18n();
   registerCookI18n();
   registerShareI18n();

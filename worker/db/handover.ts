@@ -82,6 +82,15 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
   const { db } = deps;
   const nowIso = () => deps.now().toISOString();
 
+  /** After the write: lets the Worker push what the customers were just told (never inside the write). */
+  const tell = (changes: ReadonlyArray<OrderChange>): void => {
+    deps.notify?.(
+      changes
+        .filter((change) => change.inboxes.length > 0)
+        .map((change) => ({ order: change.order, entries: change.inboxes })),
+    );
+  };
+
   // ---- Small pure helpers on a draft change ----
 
   const draft = (order: SellerOrder): OrderChange => ({
@@ -208,6 +217,10 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
     if (by === 'customer' && order.fulfilment !== 'pickup') {
       return fail('invalid_status', 'Only pickup orders can be collected');
     }
+    // The customer has no force: only a Ready order can be picked up (a stray tap must not close it).
+    if (by === 'customer' && order.status !== 'ready_for_pickup' && order.status !== target) {
+      return fail('invalid_status', 'This order is not ready for pickup yet');
+    }
     if (by === 'seller' && !force) {
       if (order.fulfilment !== 'pickup') {
         return warn('invalid_status', { code: 'not_pickup' }, 'This is a delivery order');
@@ -237,6 +250,8 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
     if (!change.ok) return change;
     if (change.value.order.collectedAt === order.collectedAt) return ok(order);
     await db.batch(changeStatements(db, change.value));
+    // The customer's own "I've collected it" needs no push; the seller's mark does.
+    if (by === 'seller') tell([change.value]);
     return ok(change.value.order);
   }
 
@@ -346,8 +361,23 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
         sid,
         "o.past_week_id IS NULL AND o.fulfilment = 'pickup'",
       );
+      // A retry after a partial failure: an order the earlier run already readied (a Ready line in
+      // its inbox within the repeat window) is not told twice.
+      const since = new Date(deps.now().getTime() - REPEAT_WINDOW_MINUTES * 60_000).toISOString();
+      const alreadyTold = (order: SellerOrder) =>
+        request.type === 'ready_now' &&
+        order.status === 'ready_for_pickup' &&
+        order.inbox.some(
+          (entry) =>
+            entry.at >= since &&
+            ((entry.kind === 'status' && entry.status === 'ready_for_pickup') ||
+              (entry.kind === 'message' && entry.textKey === 'ready')),
+        );
       const targets = orders.filter(
-        (order) => !isFinalStatus(order.status) && (order.pickupPlaceId ?? first) === placeId,
+        (order) =>
+          !isFinalStatus(order.status) &&
+          (order.pickupPlaceId ?? first) === placeId &&
+          !alreadyTold(order),
       );
       if (targets.length === 0 && request.force !== true) {
         return warn(
@@ -383,12 +413,16 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
         ...(request.type === 'custom' ? { text: request.text } : {}),
       });
       const entryAt: MessageLogEntry = { ...entry, at };
+      // The log row goes in the last batch, so a failure in any batch leaves no row and a retry
+      // is not flagged as a repeat.
+      const last = Math.floor(Math.max(drafts.length - 1, 0) / BATCH_ORDERS) * BATCH_ORDERS;
       for (let from = 0; from < Math.max(drafts.length, 1); from += BATCH_ORDERS) {
         await db.batch([
-          ...(from === 0 ? logStatements(entryAt) : []),
           ...drafts.slice(from, from + BATCH_ORDERS).flatMap((d) => changeStatements(db, d)),
+          ...(from === last ? logStatements(entryAt) : []),
         ]);
       }
+      tell(drafts);
       return ok({ message: entryAt, sent: targets.length, readied });
     },
 
@@ -438,6 +472,7 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
         at,
       };
       await db.batch([...logStatements(entry), ...changeStatements(db, d)]);
+      tell([d]);
       return ok({ order: d.order, message: entry });
     },
 

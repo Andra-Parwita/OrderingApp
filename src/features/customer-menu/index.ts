@@ -1,6 +1,7 @@
-export { BasketScreen } from './BasketScreen';
+export { BasketScreen, EditOrderFlow, type CheckoutStep } from './BasketScreen';
+export { BasketView, EmptyBasketView, PickupPlaceView, YourNameView } from './CheckoutViews';
 export { DishesScreen, HowItWorksScreen, MenuPreview, MenuScreen } from './MenuScreen';
-export { OrderPlacedScreen } from './OrderPlacedScreen';
+export { OrderPlacedScreen, OrderPlacedView } from './OrderPlacedScreen';
 export { DishesView } from './DishesView';
 export { FullPictureViewer } from './FullPictureViewer';
 export { HowItWorksView } from './HowItWorksView';
@@ -17,4 +18,4 @@ export {
 } from './customerSlice';
 export { registerCustomerI18n } from './i18n/register';
 export { customerSaga } from './saga';
-export { selectKitchenMissing, selectPlace } from './selectors';
+export { selectKitchenMissing, selectMenu, selectPlace } from './selectors';

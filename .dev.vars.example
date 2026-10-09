@@ -9,3 +9,14 @@ DEV_TOOLS=1
 # The key that creates the first admin (the setup screen asks for it). In production this is a
 # Cloudflare secret (`wrangler secret put ADMIN_SETUP_KEY`), a long random value nobody else knows.
 ADMIN_SETUP_KEY=DLV-DEVA-DMIN-SETU-PKEY
+
+# Web push (plan 004 stage 6). Without these three the server sends no notifications (the rest works).
+# Make a real pair with `node scripts/vapid-keys.mjs` and paste it into your own `.dev.vars`. Left
+# empty, push is off and the app says "Notifications aren't set up on this server yet" (a value that
+# starts with `replace-` counts as empty too). In production set them as Cloudflare secrets
+# (`wrangler secret put VAPID_PRIVATE_KEY`, and the other two). Never commit real keys. Keep the pair:
+# a new one makes every existing subscription useless. The subject is a contact the push services can
+# reach: `mailto:you@example.com` or an https URL.
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=

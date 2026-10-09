@@ -1,6 +1,6 @@
 # 005 · Code-review fixes (plan 001 server)
 
-**Status:** approved by the builder (2026-10-10, "A"); runs after plan 004's stage-2 checkpoint.
+**Status:** approved by the builder (2026-10-10, "A"); **done** (06:11). The 3 fixes are in, each with a test that fails without it. The coordinator re-ran the 4 server test files (85/85) and `eslint worker mocks` (clean). The full gate runs with plan 004's end-of-phase gate (plan 004 is mid-phase).
 **Goal:** fix the 3 correctness findings from the code review of the plan 001 work (`/code-review`, high, 10 Oct 05:49), so one bad menu, a stray tap or a retry can't leave orders in the wrong state.
 
 ## Stages
@@ -21,3 +21,4 @@
   - Contacts are keyed per order, so a repeat customer's number isn't reused. That's a design question for the owner (D-059).
   - A place message reads every live order (efficiency, low).
   - The retired screens left as aliases or dead code (`SendUpdateScreen.tsx`, the old `SettingsScreen` and its test, the old phone `OrdersScreen` and `OrderRow`) need the owner's OK to delete.
+- Deviation (accepted): a `ready_now` retry also skips an order the seller readied on its own in the last 10 minutes; it already got its Ready line.

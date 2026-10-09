@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { ApiFailure } from '../../api/http';
-import type { Fulfilment, Language, CustomerOrder } from '../../../shared/domain';
+import type { Fulfilment, Language, CustomerOrder, LocalText } from '../../../shared/domain';
 import { MAX_QTY } from '../../../shared/limits';
 import type { MenuResponse } from '../../../shared/menuContract';
 
@@ -43,12 +43,35 @@ export type UpdateState =
   | { status: 'done' }
   | { status: 'failed'; code: FailureCode; message: string };
 
+/**
+ * What the checkout pages (basket, pickup place, your name) share. `null` = not picked yet: an
+ * edited order then shows its own fulfilment and note.
+ */
+export type CheckoutState = {
+  fulfilment: Fulfilment | null;
+  pickupPlaceId: string | null;
+  firstName: string;
+  note: string | null;
+};
+
+/** A basket line the new stock could not cover: it was removed (`sold_out`) or lowered (`fewer`). */
+export type BasketNotice = {
+  kind: 'sold_out' | 'fewer';
+  itemId: string;
+  name: LocalText;
+  /** The quantity the basket holds now (0 when removed). */
+  qty: number;
+};
+
 export type CustomerState = {
   /** The seller whose menu is loaded or loading (D-037). */
   slug: string | null;
   menu: MenuState;
   /** itemId to quantity; items at 0 are removed. */
   basket: Record<string, number>;
+  checkout: CheckoutState;
+  /** What changed in the basket when a refreshed menu could not cover it; shown as a banner. */
+  notices: Array<BasketNotice>;
   place: PlaceState;
   order: OrderState;
   edit: EditState;
@@ -67,10 +90,19 @@ export type PlaceRequest = {
 
 export type UpdateRequest = { fulfilment: Fulfilment; note: string };
 
+const emptyCheckout: CheckoutState = {
+  fulfilment: null,
+  pickupPlaceId: null,
+  firstName: '',
+  note: null,
+};
+
 const initialState: CustomerState = {
   slug: null,
   menu: { status: 'idle' },
   basket: {},
+  checkout: emptyCheckout,
+  notices: [],
   place: { status: 'idle' },
   order: { status: 'idle' },
   edit: { status: 'idle' },
@@ -100,6 +132,8 @@ const customerSlice = createSlice({
           state.slug = action.payload;
           state.menu = { status: 'loading' };
           if (state.edit.status === 'idle') state.basket = {};
+          state.checkout = emptyCheckout;
+          state.notices = [];
         } else if (state.menu.status !== 'ready') {
           // Keep showing the old menu while it refreshes.
           state.menu = { status: 'loading' };
@@ -110,11 +144,19 @@ const customerSlice = createSlice({
     menuLoaded(state, action: PayloadAction<MenuResponse>) {
       state.menu = { status: 'ready', data: action.payload };
       // Drop or trim basket lines the new stock can no longer cover.
+      const notices: Array<BasketNotice> = [];
       for (const [itemId, qty] of Object.entries(state.basket)) {
         const max = maxFor(state, itemId);
-        if (max === 0) delete state.basket[itemId];
-        else if (qty > max) state.basket[itemId] = max;
+        const item = action.payload.items.find((candidate) => candidate.id === itemId);
+        if (max === 0) {
+          delete state.basket[itemId];
+          if (item) notices.push({ kind: 'sold_out', itemId, name: item.name, qty: 0 });
+        } else if (qty > max) {
+          state.basket[itemId] = max;
+          if (item) notices.push({ kind: 'fewer', itemId, name: item.name, qty: max });
+        }
       }
+      if (notices.length > 0) state.notices = notices;
     },
     menuFailed(state, action: PayloadAction<FailureCode>) {
       state.menu = { status: 'error', code: action.payload };
@@ -124,6 +166,12 @@ const customerSlice = createSlice({
       const next = Math.max(0, Math.min(Math.floor(qty), maxFor(state, itemId)));
       if (next === 0) delete state.basket[itemId];
       else state.basket[itemId] = next;
+      // The customer has acted on what the banner said.
+      state.notices = [];
+    },
+    /** Checkout fields the pages share (fulfilment, pickup place, first name, note). */
+    checkoutSet(state, action: PayloadAction<Partial<CheckoutState>>) {
+      state.checkout = { ...state.checkout, ...action.payload };
     },
     placeRequested: {
       reducer(state) {
@@ -136,17 +184,23 @@ const customerSlice = createSlice({
       state.place = { status: 'placed', token: action.payload.token };
       state.order = { status: 'ready', order: action.payload };
       state.basket = {};
+      state.checkout = emptyCheckout;
+      state.notices = [];
     },
     placeFailed(state, action: PayloadAction<{ code: FailureCode; message: string }>) {
       state.place = { status: 'failed', ...action.payload };
     },
+    /** Clears a failed place or update, so an old error does not greet the next try. */
     placeReset(state) {
       state.place = { status: 'idle' };
+      if (state.update.status === 'failed') state.update = { status: 'idle' };
     },
     editRequested: {
       reducer(state) {
         state.edit = { status: 'loading' };
         state.update = { status: 'idle' };
+        state.checkout = emptyCheckout;
+        state.notices = [];
       },
       prepare: (token: string) => ({ payload: token }),
     },
@@ -162,6 +216,8 @@ const customerSlice = createSlice({
     /** Leaving the edit screen: the basket is emptied so it cannot leak into a new order. */
     editCleared(state) {
       if (state.edit.status !== 'idle') state.basket = {};
+      state.checkout = emptyCheckout;
+      state.notices = [];
       state.edit = { status: 'idle' };
       state.update = { status: 'idle' };
     },
@@ -198,6 +254,7 @@ export const {
   menuLoaded,
   menuFailed,
   quantitySet,
+  checkoutSet,
   placeRequested,
   placeSucceeded,
   placeFailed,

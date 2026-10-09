@@ -3,7 +3,7 @@
 // midnight after its cooking day). Every query filters by `seller_id` (D-036). Rules that write
 // several rows send them as one batch, which D1 runs as one transaction.
 import { comingSaturday, cutoffAtFor, menuFinishesAt } from '../../shared/dates';
-import type { PickupPoint } from '../../shared/domain';
+import type { InboxEntry, PickupPoint, SellerOrder } from '../../shared/domain';
 import { MAX_DISHES, MAX_MENU_ITEMS, MAX_PICKUP_PLACES, MAX_SETS } from '../../shared/limits';
 import type { FinishMenuResponse, MenuView, Preferences } from '../../shared/menusContract';
 import { summariseOrders } from '../../shared/pastWeeks';
@@ -31,7 +31,19 @@ import {
 } from './rows';
 import { dishStatement, itemStatement, menuStatements, setStatements } from './write';
 
-export type MenuDeps = { db: Db; now: () => Date; newId: () => string };
+/** What the seller just told a customer: the order as it now is, and the inbox entries added (oldest first). */
+export type CustomerNotice = { order: SellerOrder; entries: Array<InboxEntry> };
+
+export type MenuDeps = {
+  db: Db;
+  now: () => Date;
+  newId: () => string;
+  /**
+   * Called once a write that told customers something has finished (never inside it), so the Worker
+   * can send web pushes afterwards (worker/push/dispatch.ts). Absent in most tests.
+   */
+  notify?: (notices: Array<CustomerNotice>) => void;
+};
 
 /** The repository methods this file implements. */
 export type MenuOps = Pick<
@@ -152,6 +164,8 @@ export async function planFinish(
             ),
           ]
         : []),
+      // The week is over: its orders have nothing more to push (cascade deletes the rest later).
+      db.stmt('DELETE FROM push_subscriptions WHERE seller_id = ?', sellerId),
       db.stmt(
         'UPDATE orders SET past_week_id = ? WHERE seller_id = ? AND past_week_id IS NULL',
         row.id,
@@ -195,7 +209,7 @@ export async function finishMenu(
 export async function finishDueMenus(
   db: Db,
   now: Date,
-): Promise<{ menus: number; orders: number }> {
+): Promise<{ menus: number; orders: number; failed: number }> {
   const live = await db.all<{ seller_id: string; cooking_date: string }>(
     "SELECT seller_id, cooking_date FROM menus WHERE state = 'live'",
   );
@@ -206,14 +220,20 @@ export async function finishDueMenus(
     .slice(0, MAX_FINISH_PER_RUN);
   let menus = 0;
   let orders = 0;
+  let failed = 0;
   for (const menu of due) {
-    const done = await finishMenu(db, menu.seller_id, now);
-    if (done.finished) {
-      menus++;
-      orders += done.closedOrders;
+    // One bad menu must not stop the others; it is still due at the next hourly run.
+    try {
+      const done = await finishMenu(db, menu.seller_id, now);
+      if (done.finished) {
+        menus++;
+        orders += done.closedOrders;
+      }
+    } catch {
+      failed++;
     }
   }
-  return { menus, orders };
+  return { menus, orders, failed };
 }
 
 // ---- The operations ------------------------------------------------------------------------

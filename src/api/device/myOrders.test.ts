@@ -32,6 +32,7 @@ function order(patch: Partial<CustomerOrder> = {}): CustomerOrder {
     fulfilment: 'pickup',
     status: 'ordered',
     locked: false,
+    paid: false,
     inbox: [{ at: '2026-10-07T10:00:00.000Z', kind: 'status', status: 'ordered' }],
     createdAt: '2026-10-07T10:00:00.000Z',
     updatedAt: '2026-10-07T10:00:00.000Z',

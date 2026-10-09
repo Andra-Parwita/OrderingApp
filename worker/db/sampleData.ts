@@ -86,7 +86,9 @@ export function sampleImages(altEn: string, altId: string): KitchenImages {
     desktopBanner: '/samples/banner-wide.jpg',
     phoneBanner: '/samples/banner-phone.jpg',
     railImage: '/samples/rail.png',
-    railIcon: '/samples/rail-icon.png',
+    // The small icon (512 x 512, full-bleed art): the seller rail's tile and the home-screen icon
+    // (plan 004 stage 6). public/samples/rail-icon.png stays for reference.
+    railIcon: '/samples/icon-512.jpg',
     bannerBackgroundImage: '/samples/banner-bg.jpg',
     bannerBackground: '#835937',
     alt: { en: altEn, id: altId },

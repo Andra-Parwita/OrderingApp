@@ -96,6 +96,10 @@ describe('customer tab bar', () => {
   it('hides the tab bar on checkout pages and shows it elsewhere', () => {
     expect(hasTabBar('/onde-onde/basket')).toBe(false);
     expect(hasTabBar('/o/abc/edit')).toBe(false);
+    expect(hasTabBar('/onde-onde/basket/pickup')).toBe(false);
+    expect(hasTabBar('/onde-onde/basket/name')).toBe(false);
+    expect(hasTabBar('/o/abc/edit/name')).toBe(false);
+    expect(hasTabBar('/o/abc/qr')).toBe(false);
     expect(hasTabBar('/onde-onde')).toBe(true);
     expect(hasTabBar('/o/abc')).toBe(true);
     expect(hasTabBar('/o/abc/placed')).toBe(true);
@@ -302,18 +306,16 @@ describe('customer sub-page headers', () => {
   }
 
   const where = () => screen.getByTestId('where');
-  const back = () => screen.getByRole('button', { name: 'Back' });
   const languageSwitch = () => screen.getByRole('radiogroup', { name: 'Language' });
 
   it('puts the viewport under the notch', () => {
     expect(indexHtml).toMatch(/<meta name="viewport"[^>]*viewport-fit=cover/);
   });
 
-  it('basket: back goes to the menu, and the language switch works', async () => {
+  it('basket: back goes to the menu', async () => {
     renderAt('/onde-onde/basket');
     expect(await screen.findByRole('heading', { name: 'Your basket' })).toBeVisible();
-    fireEvent.click(within(languageSwitch()).getByRole('radio', { name: 'ID' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Kembali' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to Dishes' }));
     await waitFor(() => expect(where()).toHaveTextContent(/^\/onde-onde$/));
   });
 
@@ -344,21 +346,18 @@ describe('customer sub-page headers', () => {
     expect(where()).not.toHaveTextContent('placed');
   });
 
-  it('edit basket: back goes to the order page, and the language switch works', async () => {
+  it('edit basket: back goes to the order page', async () => {
     const token = await savedToken();
     renderAt(`/o/${token}/edit`);
     expect(await screen.findByRole('heading', { name: 'Change your order' })).toBeVisible();
-    fireEvent.click(within(languageSwitch()).getByRole('radio', { name: 'ID' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Kembali' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to Order' }));
     await waitFor(() => expect(where()).toHaveTextContent(new RegExp(`^/o/${token}$`)));
   });
 
-  it('keeps one back button and one language switch per page', async () => {
+  it('keeps one back button per checkout page', async () => {
     renderAt('/onde-onde/basket');
     await screen.findByRole('heading', { name: 'Your basket' });
-    expect(screen.getAllByRole('button', { name: 'Back' })).toHaveLength(1);
-    expect(back()).toBeVisible();
-    expect(screen.getAllByRole('radiogroup', { name: 'Language' })).toHaveLength(1);
+    expect(await screen.findAllByRole('button', { name: /^Back to/ })).toHaveLength(1);
   });
 });
 

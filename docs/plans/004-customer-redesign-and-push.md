@@ -90,3 +90,64 @@
     - the Prettier check fails on the copied JSON.
     **To fix at the end gate:** customer e2e specs (the first visit now redirects to how-it-works; steppers moved to `/:slug/dishes`), seller preview specs, and AppRoutes/CustomerShell tests.
 - **Checkpoint 1 (after stage 2), 06:04:** the coordinator compared menu-home and menu-dishes with the design. Dishes matches closely. Menu home matches the structure, but the 3:1 banner is drawn small inside a black band instead of filling the width (clearly off; fixed in stage 3), and the fixture page has no tab bar.
+- Builder: "let's continue with the next plan" (06:08). Plan 005 and plan 004 stage 3 (basket and checkout, plus the checkpoint-1 banner fix) run as a wave of 2, started 06:08.
+  - Stage 3 ✅ landed ~06:22, typecheck clean:
+    - basket → pickup place → your name (three pages, tab bar hidden) and placing;
+    - the inline banners name the dish that sold out or dropped and give the new total; paused and cut-off block Next with a banner;
+    - change-order mode ("Update order", first name fixed);
+    - the menu-home banner is full width (the fixture uses a 3:1 crop; real uploads are 3:1);
+    - 5 screens wired into fixtures.
+    Deviations: the edit back label is "Order"; no language switch on the checkout pages; old `basket.*` strings left unused.
+    **To fix at the end gate:** `customerSlice` and saga tests (new `checkout`/`notices` state); the customer e2e specs (single-page basket gone).
+    Lint debt carried: the AppRoutes harness import, the FixturesPage default export, and px in CustomerShell.
+- Plan 006 (security fix: image refs) and plan 004 stage 4 (order placed, QR, order page; adds the approved QR package) run as a wave of 2, started 06:24.
+- Plan 006 ✅ done 06:30 (see plan 006). Plan 007 (add-device code hardening) approved, after checkpoint 2.
+  - Stage 4 ✅ landed ~06:41, typecheck clean (coordinator re-checked at 06:42):
+    - order placed (code card → QR, Send on WhatsApp, the updates card, links);
+    - QR page `/o/:token/qr` (lean-qr 2.7.4, dark on white, encodes the code);
+    - order page: header with QR, 4-step progress, the ready / delivery banner, "I've collected my order" with one inline confirm, seller updates, the notifications line, details, Change/Cancel with the cancel sheet, locked and after-cut-off texts;
+    - earlier and archived views;
+    - codes read out character by character, live regions;
+    - 7 screens in fixtures.
+    Deviations:
+    - **`CustomerOrder` has no `paid`**, so the Paid pill shows only in fixtures (add `paid` to the customer contract in stage 6);
+    - the archived code comes from My orders on the phone;
+    - a "‹ My orders" top bar on the order page;
+    - the ready banner shows the date, not "Today until";
+    - the inbox copy was shortened to the spec.
+    Process slips: node and shell heredocs used for a few patches (no stray processes); prettier run over all of customer-orders (formatting only).
+    **To fix at the end gate:** the customer-orders and customer-menu screen tests; e2e customer-batch1/2, order-flow, native-customer; the `src/harness/customer.tsx` placed screen.
+- **Checkpoint 2 (after stage 4), 06:42:** the coordinator compared order-ready and order-qr with the design. Both match closely (banner, progress, updates, notifications line; QR card, code, details, brightness hint). The fixture page still lacks the tab bar.
+- Builder: "A" (continue). Plan 007 and plan 004 stage 5 (My orders, Settings, offline basics, tab bar on fixture root screens) run as a wave of 2, started 06:45.
+- Plan 007 ✅ done 06:49 (see plan 007; one trade-off open for the builder).
+  - Stage 5 ✅ landed ~06:52, typecheck clean:
+    - My orders (code field + Open, Current and Earlier rows, footnote, empty state);
+    - Settings (Language, Appearance, an Order-updates placeholder, a home-screen placeholder);
+    - offline: the last good data marked stale, with Try again (in memory only until the stage 7 service worker);
+    - `CustomerTabBar` extracted and shown on fixture root screens.
+    Deviations: Settings uses inline controls instead of drill-in rows; Paid still only in fixtures (stage 6); dark mode not compared.
+    **To fix at the end gate:** e2e multi-seller and customer-batch2 look for "Current orders".
+- Stage 6 (server: push, manifests, icons, `paid` for customers, Onde Onde sample icon): started 06:57 (builder · sonnet, alone).
+  - Stage 6 ✅ landed ~07:14, typecheck clean; the coordinator re-ran the push, retention and manifest tests (33/33). The builder ran `mocks` at 361/361.
+    - push library `@block65/webcrypto-web-push@2.0.0` (WebCrypto + fetch; not yet run on Workers);
+    - migration 0005: `push_subscriptions` per order, max 5 per order, deleted on cancel, finish and retention;
+    - routes: `POST/DELETE /api/orders/:token/push` (Origin checked), `GET /api/push/public-key`, `/k/:slug/manifest.webmanifest` and `icon-{180,192,512}.{png,svg}`;
+    - sending happens after the write through `ctx.waitUntil`; 404 and 410 prune; counts-only logs;
+    - `paid` reaches customers;
+    - Onde Onde sample icon `public/samples/icon-512.jpg` (cropped full bleed).
+    Gaps:
+    - a kitchen without an upload has an **SVG-only default icon** (no PNG without a font renderer), so iOS uses a screenshot until the seller uploads one;
+    - the VAPID placeholders in `.dev.vars.example` count as set (stage 7 treats them as unset);
+    - `e2e/banners.spec.ts:117` still expects `rail-icon.png`.
+    Process slips: two `node -e` edits and an empty heredoc (no stray processes).
+    **Builder's local DB:** run `pnpm db:migrate:local`; for real push locally, run `node scripts/vapid-keys.mjs` and put the keys in `.dev.vars`.
+- Stage 7 (client: service worker, install guides, notifications, manifest link, first open from the home screen, placeholder VAPID treated as unset): started 07:16 (builder · sonnet, alone).
+  - Stage 7 ✅ landed ~07:37, typecheck clean (coordinator re-checked at 07:38); `pnpm build` OK with `dist/client/sw.js`:
+    - `public/sw.js` (push, notification click, network-first offline for the menu, orders and shell; never seller, auth, admin or push; production only, dev with `VITE_SW=1`);
+    - install flows in `src/components/install/` (iOS ask, 4 steps, open from home; inside WhatsApp; Android allow; notify off, on and blocked; desktop line);
+    - Settings: a real Order-updates switch and an Install card;
+    - the manifest link is set per kitchen and order; `apple-touch-icon` only with an uploaded icon;
+    - placeholder or empty VAPID keys count as unset (404, then "not set up on this server").
+    Deviations: install code in `src/components/install/` (feature-boundary lint); success closes the sheet instead of showing a separate notify-on screen; sheets opened from Settings use the app name.
+    **To fix at the end gate:** `src/i18n/en.json` still has the app name "Weekly Menu" (it should be APP_NAME, D-052); CustomerShell and AppRoutes tests need `registerInstallI18n()`; e2e customer specs; `banners.spec.ts:117`.
+- **Checkpoint 3 (after stage 7), 07:38:** all 7 stages built. Next: the end-of-phase gate, then the queued pre-Cloudflare compliance check, `/code-review` and security review.

@@ -114,6 +114,8 @@ export function toCustomerOrder(order: SellerOrder, seller: SellerRef): Customer
     ...(order.note !== undefined ? { note: order.note } : {}),
     status: order.status,
     locked: order.locked,
+    // The Paid pill on the customer's order page (stage 6); the seller sets it.
+    paid: order.paid,
     inbox: order.inbox,
     ...(order.pickupPlaceId !== undefined ? { pickupPlaceId: order.pickupPlaceId } : {}),
     ...(order.collectedAt !== undefined ? { collectedAt: order.collectedAt } : {}),
@@ -338,7 +340,7 @@ function parseInboxEntry(input: unknown): InboxEntry | null {
   };
 }
 
-type CoreOrder = Omit<CustomerOrder, 'seller' | 'archived' | 'cookingDate'>;
+type CoreOrder = Omit<CustomerOrder, 'seller' | 'archived' | 'cookingDate' | 'paid'>;
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -382,6 +384,9 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
   const seller = parseSellerRef(input['seller']);
   if (!core || !seller) return null;
   const { archived, cookingDate, pickupPlaceId, collectedAt } = input;
+  // Optional so an older server's answer still parses: no `paid` means not paid.
+  if (input['paid'] !== undefined && typeof input['paid'] !== 'boolean') return null;
+  const paid = input['paid'] === true;
   if (pickupPlaceId !== undefined && (typeof pickupPlaceId !== 'string' || pickupPlaceId === '')) {
     return null;
   }
@@ -390,9 +395,11 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
     ...(pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
     ...(collectedAt !== undefined ? { collectedAt } : {}),
   };
-  if (archived === undefined && cookingDate === undefined) return { ...core, ...extra, seller };
+  if (archived === undefined && cookingDate === undefined) {
+    return { ...core, ...extra, paid, seller };
+  }
   if (archived !== true || typeof cookingDate !== 'string' || !DATE.test(cookingDate)) return null;
-  return { ...core, ...extra, seller, archived, cookingDate };
+  return { ...core, ...extra, paid, seller, archived, cookingDate };
 }
 
 export function parseExpiredOrder(input: unknown): ExpiredOrder | null {

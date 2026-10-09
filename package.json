@@ -4,10 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
+    "@block65/webcrypto-web-push": "2.0.0",
     "@reduxjs/toolkit": "^2.13.0",
     "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^14.0.3",
     "i18next": "^26.4.2",
+    "lean-qr": "2.7.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-i18next": "^17.0.15",

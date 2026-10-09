@@ -45,7 +45,20 @@
     "changeUntil": { "en": "You can change or cancel until {dateTime}.", "id": "Anda bisa mengubah atau membatalkan sampai {dateTime}." },
     "placeOrder": { "en": "Place order · {total}", "id": "Pesan · {total}" },
     "placing": { "en": "Placing your order…", "id": "Mengirim pesanan…" },
-    "err.soldOut": { "en": "{dish} just sold out. We took it out of your basket. Your total is now {total}.", "id": "{dish} baru saja habis. Kami keluarkan dari keranjang. Total sekarang {total}." }
+    "err.soldOut": { "en": "{dish} just sold out. We took it out of your basket. Your total is now {total}.", "id": "{dish} baru saja habis. Kami keluarkan dari keranjang. Total sekarang {total}." },
+    "err.fewer": { "en": "Only {n} {dish} left. We lowered it in your basket. Your total is now {total}.", "id": "Sisa {dish} hanya {n}. Kami kurangi jumlahnya di keranjang. Total sekarang {total}." },
+    "err.paused": { "en": "Ordering is paused. {cook} isn't taking orders right now. Your basket is kept. Check back soon, or message them on WhatsApp.", "id": "Pemesanan sedang dihentikan. {cook} belum menerima pesanan saat ini. Keranjang Anda tetap tersimpan. Cek lagi nanti, atau kirim pesan lewat WhatsApp." },
+    "err.closed": { "en": "Orders for {date} are closed. The cut-off was {dateTime}. {cook} may still fit you in. Message them on WhatsApp.", "id": "Pesanan untuk {date} sudah ditutup. Batas pesan {dateTime}. Mungkin {cook} masih bisa menerima. Kirim pesan lewat WhatsApp." },
+    "note.label": { "en": "Note", "id": "Catatan" },
+    "optional": { "en": "(optional)", "id": "(opsional)" },
+    "pickupSub": { "en": "All on {date}. Pick the one that suits you.", "id": "Semua pada {date}. Pilih yang paling cocok." },
+    "change": { "en": "Change", "id": "Ubah" },
+    "done": { "en": "Done", "id": "Selesai" },
+    "directions": { "en": "Directions to {place}", "id": "Petunjuk arah ke {place}" },
+    "nameTitle": { "en": "Your name", "id": "Nama Anda" },
+    "deliveryShort": { "en": "Address on WhatsApp", "id": "Alamat lewat WhatsApp" },
+    "editTitle": { "en": "Change your order", "id": "Ubah pesanan Anda" },
+    "update": { "en": "Update order · {total}", "id": "Ubah pesanan · {total}" }
   },
   "placed": {
     "title": { "en": "Order placed", "id": "Pesanan terkirim" },

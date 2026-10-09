@@ -54,10 +54,11 @@ import {
   type SendUpdatesRequest,
   type UpdateResult,
 } from '../../shared/updateContract';
+import { isOwnImageRef } from '../images/r2';
 import type { SellerRepository, StoreResult } from '../repo/Repository';
 import { marks, type Db, type D1Statement } from './d1';
 import { MENU_PLACES_SQL, sellerView, USED_SQL } from './menuView';
-import { createMenuOps, type MenuDeps } from './menus';
+import { createMenuOps, type CustomerNotice, type MenuDeps } from './menus';
 import {
   changeStatements,
   insertOrderStatements,
@@ -66,6 +67,8 @@ import {
   type OrderChange,
 } from './orders';
 import { createHandoverOps } from './handover';
+import { createPushOps } from './push';
+import type { CustomerChange } from '../push/dispatch';
 import { dropExpiredDetails } from './retention';
 import {
   chefOf,
@@ -109,6 +112,8 @@ export type Deps = {
   seed: number;
   /** Per seller: the deterministic source behind the dev sample orders. */
   samples: Map<string, SampleState>;
+  /** Web push (plan 004 stage 6): called after a write that told customers something. */
+  onCustomerChange?: (changes: Array<CustomerChange>) => void;
 };
 export type SampleState = { random: () => number; fill: FillRandom; counter: number };
 
@@ -207,9 +212,28 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   const { db } = deps;
   const sid = seller.id;
   const nowIso = () => deps.now().toISOString();
-  const menuDeps: MenuDeps = { db, now: deps.now, newId: deps.newId };
+  const { onCustomerChange } = deps;
+  const notify = onCustomerChange
+    ? (notices: Array<CustomerNotice>): void => {
+        onCustomerChange(
+          notices.map((notice) => ({
+            ...notice,
+            sellerId: sid,
+            slug: seller.slug,
+            kitchenName: seller.name,
+          })),
+        );
+      }
+    : undefined;
+  const menuDeps: MenuDeps = {
+    db,
+    now: deps.now,
+    newId: deps.newId,
+    ...(notify ? { notify } : {}),
+  };
   const menuOps = createMenuOps(menuDeps, sid);
   const handover = createHandoverOps(menuDeps, sid);
+  const pushOps = createPushOps(db, deps.now, sid);
 
   // ---- Reading ----
 
@@ -622,7 +646,13 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     const order = await readLiveOrder(db, sid, 'code', code);
     if (!order) return fail('not_found', 'Order not found');
     const result = change(order);
-    return result.ok ? ok(await commit(result.value)) : result;
+    if (!result.ok) return result;
+    const committed = await commit(result.value);
+    // The seller's changes tell the customer something (a status, a message); push it afterwards.
+    if (result.value.inboxes.length > 0) {
+      notify?.([{ order: committed, entries: result.value.inboxes }]);
+    }
+    return ok(committed);
   }
 
   // ---- Past weeks ----
@@ -787,6 +817,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   const repo: SellerRepository = {
     seller,
     ...handover,
+    ...pushOps,
 
     async getMenu() {
       return publicMenu(await loadState());
@@ -1057,8 +1088,35 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     },
 
     /** Replaces this seller's data with an already validated backup; other sellers are not touched. */
-    async restoreBackup(file: BackupFile) {
+    async restoreBackup(file: BackupFile): Promise<number> {
       const copy = structuredClone(file);
+      // Image refs in the file are client-supplied: only this seller's own (or static samples) get
+      // in; a foreign, external or malformed ref leaves its slot empty and is counted.
+      let droppedImages = 0;
+      const cleanImages = (images: KitchenImages | undefined): void => {
+        if (!images) return;
+        for (const slot of IMAGE_SLOTS) {
+          const ref = images[slot];
+          if (ref === undefined) continue;
+          if (ref === '' || !isOwnImageRef(ref, sid)) {
+            delete images[slot];
+            droppedImages += 1;
+          }
+        }
+      };
+      cleanImages(copy.kitchen.images);
+      for (const set of copy.sets) cleanImages(set.images);
+      if (
+        copy.kitchen.bannerImageUrl !== undefined &&
+        !isOwnImageRef(copy.kitchen.bannerImageUrl, sid)
+      ) {
+        delete copy.kitchen.bannerImageUrl;
+        droppedImages += 1;
+      }
+      if (copy.menu?.pictureRef !== undefined && !isOwnImageRef(copy.menu.pictureRef, sid)) {
+        delete copy.menu.pictureRef;
+        droppedImages += 1;
+      }
       const at = nowIso();
       const chefs = copy.chefs.map((chef) => ({ ...chef, sellerId: sid }));
       const known = new Set(chefs.map((chef) => chef.id));
@@ -1245,6 +1303,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         statements.push(...insertOrderStatements(db, forMe(order), null));
       }
       await db.batch(statements);
+      return droppedImages;
     },
 
     /** Every live order, oldest first, as CSV with a BOM for Excel. */
@@ -1299,15 +1358,18 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         kind: 'status',
         status: 'cancelled',
       });
-      return ok(
-        await commit(
-          addAudit(cancelled, {
-            by: { role: 'customer', name: order.firstName },
-            what: 'status',
-            detail: 'cancelled',
-          }),
-        ),
+      const done = await commit(
+        addAudit(cancelled, {
+          by: { role: 'customer', name: order.firstName },
+          what: 'status',
+          detail: 'cancelled',
+        }),
       );
+      // A cancelled order has nothing more to push.
+      await db
+        .stmt('DELETE FROM push_subscriptions WHERE seller_id = ? AND order_id = ?', sid, order.id)
+        .run();
+      return ok(done);
     },
 
     // ---- Orders: seller and chef side ----
@@ -1458,6 +1520,11 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       for (let from = 0; from < drafts.length; from += 50) {
         await db.batch(drafts.slice(from, from + 50).flatMap((d) => changeStatements(db, d)));
       }
+      notify?.(
+        drafts
+          .filter((d) => d.inboxes.length > 0)
+          .map((d) => ({ order: d.order, entries: d.inboxes })),
+      );
       return results;
     },
   };

@@ -74,6 +74,58 @@ export function StateMessage({
   );
 }
 
+const OfflineBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  margin: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md}
+    ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.lg};
+  border-radius: ${({ theme }) => theme.size.radiusSheet}px;
+  background: ${({ theme }) => theme.c.warnTint};
+  color: ${({ theme }) => theme.c.text};
+  font-size: ${({ theme }) => theme.type.size.md};
+`;
+const OfflineLink = styled.button`
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.sm};
+  border: 0;
+  background: none;
+  color: ${({ theme }) => theme.c.atext};
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+/**
+ * Shown above data from the last good load when a refresh failed (spec §8): "You're offline" (or
+ * the load error when the phone is online) and Try again. Never a blank page.
+ */
+export function OfflineNote({
+  offline,
+  onRetry,
+}: Readonly<{ offline: boolean; onRetry: () => void }>) {
+  const { t } = useTranslation(ORDERS_NS);
+  return (
+    <OfflineBar role="status">
+      <span>
+        <Strong>{offline ? t('common.offline') : t('common.refreshFailed')}</Strong>{' '}
+        {t('common.offlineBody')}
+      </span>
+      <OfflineLink type="button" onClick={onRetry}>
+        {t('common.retry')}
+      </OfflineLink>
+    </OfflineBar>
+  );
+}
+
+/** True when the failed request was for want of a network (phone offline, or no response). */
+export function isOffline(code: string | undefined): boolean {
+  return code === 'network' || (typeof navigator !== 'undefined' && !navigator.onLine);
+}
+
 function Fallback({ onRetry }: Readonly<{ onRetry: () => void }>) {
   const { t } = useTranslation(ORDERS_NS);
   return <StateMessage alert text={t('common.errorBody')} onRetry={onRetry} />;

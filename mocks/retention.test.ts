@@ -80,6 +80,27 @@ describe('weekly retention cron', () => {
     expect(await count('orders')).toBe(1);
   });
 
+  it('deletes the push subscriptions of the orders it drops', async () => {
+    await closedWeekWith('onde-onde', ['Rina']);
+    // Finishing the menu already cleared the week's subscriptions; one is put back so retention's
+    // own cleanup is what is proved.
+    const order = await world.db.first<{ seller_id: string; id: string }>(
+      'SELECT seller_id, id FROM orders',
+    );
+    await world.db
+      .stmt(
+        "INSERT INTO push_subscriptions (seller_id, order_id, endpoint, p256dh, auth, created_at) VALUES (?, ?, 'https://push.example/x', 'k', 'a', ?)",
+        order?.seller_id,
+        order?.id,
+        PLACED.toISOString(),
+      )
+      .run();
+    expect(await count('push_subscriptions')).toBe(1);
+    await runRetention({ DB: world.db.d1 }, MONDAY_AFTER, () => undefined);
+    expect(await count('orders')).toBe(0);
+    expect(await count('push_subscriptions')).toBe(0);
+  });
+
   it('does not touch the live week', async () => {
     await closedWeekWith('onde-onde', ['Rina']);
     const seller = await world.repo.sellerBySlug('onde-onde');

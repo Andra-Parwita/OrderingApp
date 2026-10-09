@@ -282,6 +282,56 @@ describe('orders, packing and messages', () => {
       expect((await message('nowhere', { type: 'ready_now' })).status).toBe(404);
     });
 
+    it('is safe to retry: a failed later batch leaves no log row, and the retry reaches the rest only', async () => {
+      const total = 52; // two batches of orders (50 + 2)
+      for (let n = 0; n < total; n++) {
+        const reply = await call('POST', '/api/s/onde-onde/orders', {
+          firstName: `Cust${String(n)}`,
+          language: 'en',
+          fulfilment: 'pickup',
+          lines: [{ itemId: 'pesmol', qty: 1 }],
+        });
+        expect(reply.status).toBe(201);
+      }
+      // The second batch that writes orders throws; everything else goes through.
+      const d1 = world.db.d1;
+      const realBatch = d1.batch.bind(d1);
+      let writes = 0;
+      d1.batch = (statements) => {
+        const sqls = statements.map((s) => (s as unknown as { sql?: string }).sql ?? '');
+        if (sqls.some((sql) => sql.startsWith('UPDATE orders SET status')) && ++writes === 2) {
+          return Promise.reject(new Error('batch failed'));
+        }
+        return realBatch(statements);
+      };
+      try {
+        await message('glen-waverley', { type: 'ready_now' }).catch(() => null);
+      } finally {
+        d1.batch = realBatch;
+      }
+      expect(writes).toBe(2);
+      expect(
+        parseMessagesResponse((await call('GET', '/api/seller/messages')).body)?.messages,
+      ).toEqual([]);
+
+      const retry = await message('glen-waverley', { type: 'ready_now' });
+      expect(retry.status).toBe(200);
+      expect(parseMessagePlaceResponse(retry.body)).toMatchObject({ sent: 2, readied: 2 });
+      const log = parseMessagesResponse((await call('GET', '/api/seller/messages')).body);
+      expect(log?.messages).toHaveLength(1);
+      const orders = parseSellerOrdersResponse((await call('GET', '/api/seller/orders')).body);
+      expect(orders?.orders).toHaveLength(total);
+      for (const order of orders?.orders ?? []) {
+        expect(order.status).toBe('ready_for_pickup');
+        const readyLines = order.inbox.filter(
+          (entry) =>
+            (entry.kind === 'status' && entry.status === 'ready_for_pickup') ||
+            entry.textKey === 'ready',
+        );
+        expect(readyLines).toHaveLength(1);
+      }
+    }, 60_000);
+
     it('takes no phone number or address in a message body', async () => {
       await place('pickup', 'Ana');
       for (const extra of [{ phone: '+61400000000' }, { address: '1 Main St' }]) {
@@ -391,6 +441,23 @@ describe('orders, packing and messages', () => {
       const quiet = await call('POST', `/api/seller/orders/${order.code}/collected`);
       expect(quiet.status).toBe(200);
       expect((await orderOf(order.code)).collectedBy).toBe('customer');
+    });
+
+    it('refuses the customer until the order is Ready, and leaves the order unchanged', async () => {
+      const order = await place('pickup');
+      for (const to of ['ordered', 'confirmed']) {
+        if (to === 'confirmed') await move(order.code, 'confirmed');
+        const before = await orderOf(order.code);
+        const refused = await call('POST', `/api/orders/${order.token}/collected`);
+        expect(refused.status).toBe(409);
+        expect(parseApiError(refused.body)?.error).toBe('invalid_status');
+        expect(await orderOf(order.code)).toEqual(before);
+      }
+      await move(order.code, 'ready_for_pickup');
+      expect((await call('POST', `/api/orders/${order.token}/collected`)).status).toBe(200);
+      expect((await orderOf(order.code)).status).toBe('collected');
+      // A second tap is idempotent, not refused.
+      expect((await call('POST', `/api/orders/${order.token}/collected`)).status).toBe(200);
     });
 
     it('refuses the customer on a delivery or a cancelled order, and 404s an unknown token', async () => {

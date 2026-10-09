@@ -142,6 +142,7 @@ describe('customerReducer', () => {
       fulfilment: 'pickup' as const,
       status: 'ordered' as const,
       locked: false,
+      paid: false,
       inbox: [],
       createdAt: '2026-10-07T10:00:00.000Z',
       updatedAt: '2026-10-07T10:00:00.000Z',

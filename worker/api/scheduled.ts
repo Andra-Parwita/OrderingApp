@@ -42,12 +42,15 @@ export async function runAutoFinish(
   log: (line: string) => void = (line) => {
     console.log(line);
   },
-): Promise<{ menus: number; orders: number }> {
+): Promise<{ menus: number; orders: number; failed: number }> {
   const counts = await finishDueMenus(new Db(env.DB), now);
   if (counts.menus > 0) {
     log(
       `auto-finish: ${String(counts.menus)} menu(s) finished, ${String(counts.orders)} open order(s) closed`,
     );
+  }
+  if (counts.failed > 0) {
+    log(`auto-finish: ${String(counts.failed)} menu(s) failed, retried at the next run`);
   }
   return counts;
 }

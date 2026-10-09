@@ -12,14 +12,16 @@ import {
 } from '../../features/customer-menu';
 import logoWide from '../../../uxDesign/customer/design/assets/logo-wide.png?url';
 import menuPicture from '../../../uxDesign/customer/design/assets/menu-picture.jpg?url';
-import phoneBanner from '../../../uxDesign/customer/design/assets/phone-banner.jpg?url';
+// The design's banner file is 2:1 with blurred bands; real uploads are 3:1, so the fixture uses a
+// centre crop of it at 3:1 (1080 x 360) and the banner fills the width like a real one.
+import phoneBanner from './phone-banner-3x1.jpg?url';
 import type { FixtureProps } from './types';
 
 // The menu screens (plan 004 stage 2) fed from fixtures.json: the fixtures are turned into the
 // same MenuResponse the real API serves, then handed to the real presentational views. No network.
 // The design's pictures are used straight from uxDesign/ (this page is dev only).
 
-function menuFrom({ data, state }: FixtureProps): MenuResponse {
+export function menuFrom({ data, state }: FixtureProps): MenuResponse {
   const { kitchen, menu } = data;
   const paused = state['menu.takingOrders'] === false || !menu.takingOrders;
   const now = typeof state['now'] === 'string' ? Date.parse(state['now']) : null;
