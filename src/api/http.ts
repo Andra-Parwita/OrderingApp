@@ -1,11 +1,15 @@
 import { parseApiError, type ApiErrorCode } from '../../shared/apiError';
 import type { StaffActor } from '../../shared/domain';
-import { clearSessionToken, getSessionToken } from './device/session';
+import { dropLegacySessionToken, setSessionHint } from './device/session';
 
 export type ApiFailure = {
   ok: false;
-  /** `network`: no response; `bad_response`: a body that does not match the contract. */
-  error: ApiErrorCode | 'network' | 'bad_response';
+  /**
+   * `network`: no response; `bad_response`: a body that does not match the contract;
+   * `passkey_cancelled`: the person closed (or let time out) the browser's passkey prompt;
+   * `passkey_failed`: the browser could not make or use a passkey.
+   */
+  error: ApiErrorCode | 'network' | 'bad_response' | 'passkey_cancelled' | 'passkey_failed';
   status: number;
   message: string;
   /** On `invalid_credentials`: tries left before the lockout. */
@@ -29,18 +33,19 @@ async function send(
   path: string,
   { method = 'GET', body, actor, seller }: RequestOptions,
 ): Promise<{ response: Response } | ApiFailure> {
+  // Before stage 8.2 the session token sat in localStorage. It is not used any more: forget it.
+  dropLegacySessionToken();
   const headers: Record<string, string> = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (actor) headers['X-Actor'] = `${actor.role}:${actor.name}`;
   if (seller) headers['X-Seller'] = seller;
-  // A stored session is sent on every call; the dev mock lets the headers above stand in for it
-  // until stage 7.3, but a session always wins over them.
-  const token = getSessionToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
   try {
+    // The session is an HttpOnly cookie the browser sends by itself (same site only); a session
+    // always wins over the dev headers above.
     const response = await fetch(path, {
       method,
       headers,
+      credentials: 'same-origin',
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
     return { response };
@@ -57,9 +62,8 @@ async function failureOf(response: Response): Promise<ApiFailure> {
     json = undefined;
   }
   const apiError = parseApiError(json);
-  // A token the server no longer knows (expired, signed out, mock reset) is dropped, so the next
-  // call is not refused for it again.
-  if (apiError?.error === 'unauthorized') clearSessionToken();
+  // The server no longer knows this session (expired, signed out elsewhere, revoked): forget the hint.
+  if (apiError?.error === 'unauthorized') setSessionHint(false);
   return apiError
     ? {
         ok: false,

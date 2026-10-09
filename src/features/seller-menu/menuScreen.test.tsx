@@ -8,9 +8,9 @@ import { MenuScreen } from './MenuScreen';
 import { emptyMenu, fillMenu, renderWithStore, setupI18n } from './testSupport';
 
 beforeAll(setupI18n);
-beforeEach(() => {
-  mockStore.reset();
-  mockStore.setWeek({ status: 'draft' });
+beforeEach(async () => {
+  await mockStore.reset();
+  await mockStore.setWeek({ status: 'draft' });
 });
 
 function renderMenu(desktop: boolean) {
@@ -65,7 +65,7 @@ describe('MenuScreen layout', () => {
   });
 
   it('turns Add item off at 10 items and says why', async () => {
-    fillMenu();
+    await fillMenu();
     renderMenu(false);
     expect(await screen.findByRole('button', { name: '+ Add item' })).toBeDisabled();
     expect(screen.getByText('Max 10 items')).toBeInTheDocument();
@@ -96,14 +96,14 @@ describe('publishing', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Publish' }));
     expect(await screen.findByRole('button', { name: 'Unpublish' })).toBeInTheDocument();
     expect(screen.getByText('Published')).toBeInTheDocument();
-    expect(mockStore.getWeek().status).toBe('published');
+    expect((await mockStore.getWeek()).status).toBe('published');
     fireEvent.click(screen.getByRole('button', { name: 'Unpublish' }));
     expect(await screen.findByRole('button', { name: 'Publish' })).toBeInTheDocument();
-    expect(mockStore.getWeek().status).toBe('draft');
+    expect((await mockStore.getWeek()).status).toBe('draft');
   });
 
   it('disables Publish with a reason when there are no items', async () => {
-    emptyMenu();
+    await emptyMenu();
     renderMenu(false);
     const publish = await screen.findByRole('button', { name: 'Publish' });
     expect(publish).toBeDisabled();
@@ -136,16 +136,16 @@ describe('reordering', () => {
     await screen.findByRole('table');
     expect(screen.getByRole('button', { name: 'Move Chicken lemper up' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'Move Lime-leaf mixed rice down' }));
-    await waitFor(() =>
-      expect(
-        mockStore
-          .getSellerMenu()
-          .items.map((item) => item.id)
-          .slice(0, 2),
-      ).toEqual(['pesmol', 'nasi-campur']),
+    await waitFor(async () =>
+      expect((await mockStore.getSellerMenu()).items.map((item) => item.id).slice(0, 2)).toEqual([
+        'pesmol',
+        'nasi-campur',
+      ]),
     );
     expect(JSON.stringify(bodies[0])).toContain('"pesmol","nasi-campur"');
-    expect(screen.getByRole('button', { name: 'Move Lime-leaf mixed rice up' })).toBeEnabled();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Move Lime-leaf mixed rice up' })).toBeEnabled(),
+    );
   });
 
   it('cannot move the first item up or the last item down', async () => {
@@ -159,7 +159,9 @@ describe('reordering', () => {
   it('does not open the editor when a move button is used', async () => {
     const handlers = renderMenu(true);
     fireEvent.click(await screen.findByRole('button', { name: 'Move Tilapia pesmol up' }));
-    await waitFor(() => expect(mockStore.getSellerMenu().items[0]?.id).toBe('pesmol'));
+    await waitFor(async () =>
+      expect((await mockStore.getSellerMenu()).items[0]?.id).toBe('pesmol'),
+    );
     expect(handlers.onEditItem).not.toHaveBeenCalled();
   });
 });

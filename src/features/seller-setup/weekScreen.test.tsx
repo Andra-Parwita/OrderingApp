@@ -39,8 +39,8 @@ describe('WeekSettingsScreen', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'No' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Saved')).toBeInTheDocument();
-    await waitFor(() => {
-      const week = mockStore.getWeek();
+    await waitFor(async () => {
+      const week = await mockStore.getWeek();
       expect(week.pickupPoints[0]?.directions.en).toBe('Ring the bell at the side gate');
       expect(week.cutoffAt).toBe('2026-10-09T18:30:00+11:00');
       expect(week.delivery.available).toBe(false);
@@ -57,7 +57,7 @@ describe('WeekSettingsScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Write the pickup place.')).toBeInTheDocument();
     expect(screen.getByText('Pickup must end after it starts.')).toBeInTheDocument();
-    expect(mockStore.getWeek().pickupPoints[0]?.place).toBe('Glen Waverley');
+    expect((await mockStore.getWeek()).pickupPoints[0]?.place).toBe('Glen Waverley');
   });
 
   it('refuses a cut-off after the cooking day', async () => {
@@ -75,7 +75,7 @@ describe('WeekSettingsScreen', () => {
     await i18n.changeLanguage('id');
     renderWithStore(<WeekSettingsScreen />, createTestStore());
     expect(await screen.findByText('Pengaturan minggu ini')).toBeInTheDocument();
-    expect(screen.getByLabelText('Tempat ambil')).toHaveValue('Glen Waverley');
+    expect(await screen.findByLabelText('Tempat ambil')).toHaveValue('Glen Waverley');
     expect(screen.getByRole('button', { name: 'Simpan' })).toBeInTheDocument();
     expect(screen.getByText(/^Pemesanan tutup otomatis pada /)).toBeInTheDocument();
   });

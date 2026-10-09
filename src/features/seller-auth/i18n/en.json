@@ -7,7 +7,9 @@
     "locked_other": "Too many tries. Try again in {{count}} minutes.",
     "network": "Cannot reach the server. Check your connection and try again.",
     "setupExpired": "Your setup timed out. Start again with a new key.",
-    "generic": "Something went wrong. Try again."
+    "generic": "Something went wrong. Try again.",
+    "passkeyCancelled": "The passkey prompt was closed. Try again, or use a password.",
+    "passkeyFailed": "This device could not use a passkey. Try again, or use a password."
   },
   "deviceName": {
     "label": "Name of this device",
@@ -18,7 +20,6 @@
     "android": "Android",
     "computer": "Computer"
   },
-  "prototypeNote": "Prototype: passkey is simulated",
   "key": {
     "title": "Set up your sign-in",
     "label": "Enter the key you were sent",
@@ -68,7 +69,8 @@
     },
     "submit": "Create passkey",
     "working": "Creating…",
-    "usePassword": "My phone can't do this → set a password instead"
+    "usePassword": "My phone can't do this → set a password instead",
+    "unavailable": "Passkeys do not work on this web address (it is an IP address). Set a password instead."
   },
   "password": {
     "title": "Set a password",
@@ -96,7 +98,8 @@
     "submit": "Sign in",
     "working": "Signing in…",
     "empty": "Type your password.",
-    "lost": "Lost access? Ask the person who set you up for a new key"
+    "lost": "Lost access? Ask the person who set you up for a new key",
+    "noPasskeysHere": "Passkeys do not work on this web address (it is an IP address). Use your password."
   },
   "devices": {
     "title": "Devices",

@@ -1,4 +1,4 @@
-// Mock API routes on standard Request/Response; shared by the dev Worker and the MSW handlers.
+// API routes on standard Request/Response; shared by the Worker and the MSW handlers.
 import { parseSampleOrdersRequest, type DevSellersResponse } from '../../shared/devContract';
 import { parseBackupFile } from '../../shared/backup';
 import type {
@@ -9,7 +9,7 @@ import type {
   SellerRef,
   StaffActor,
 } from '../../shared/domain';
-import { isImageSlot } from '../../shared/imageSlots';
+import { IMAGE_SLOTS, isImageSlot } from '../../shared/imageSlots';
 import type { PastWeekResponse, PastWeeksResponse } from '../../shared/pastWeeks';
 import {
   parseChefNameRequest,
@@ -60,10 +60,18 @@ import {
   type SettingsResponse,
 } from '../../shared/sellerContract';
 import { parseChefInviteRequest, type KeyResponse } from '../../shared/authContract';
-import { parseSendUpdatesRequest, type SendUpdatesResponse } from '../../shared/updateContract';
+import {
+  parseSendUpdatesRequest,
+  type SendUpdatesResponse,
+  type UpdateResult,
+} from '../../shared/updateContract';
+import { LIVE_PATH, type LiveEventType } from '../../shared/liveContract';
+import { deleteImageRefs, putUploadedImage, type ImageBucket } from '../images/r2';
+import type { LiveNotifier } from '../live/hub';
 import { chefAccess, handleAdmin, handleAuth } from './authRoutes';
-import { bearerOf, error, readJson } from './respond';
-import type { MockStore, SellerStore, StoreResult } from './store';
+import { sessionTokenOf } from '../auth/cookie';
+import { error, readJson } from './respond';
+import type { Repository, SellerRepository, StoreResult } from '../repo/Repository';
 
 const noSeller = () => error('seller_not_found', 'Seller not found');
 const weekClosed = () => error('week_closed', 'This week is closed');
@@ -71,10 +79,7 @@ const weekClosed = () => error('week_closed', 'This week is closed');
 /** Header `X-Actor: seller:Bu Ani` or `chef:Wati`. */
 const DEFAULT_ACTOR: StaffActor = { role: 'seller', name: 'Bu Ani' };
 
-/**
- * No auth yet (phase 4): the seller's identity comes from the X-Actor header, only so the audit
- * has someone to show. Replace with the real session in phase 4.
- */
+/** DEV_TOOLS only: the audit name comes from the X-Actor header when there is no session. */
 function actorOf(request: Request): StaffActor {
   const raw = request.headers.get('X-Actor');
   const index = raw?.indexOf(':') ?? -1;
@@ -86,10 +91,8 @@ function actorOf(request: Request): StaffActor {
 }
 
 /**
- * Which seller a seller-side request is for: the `X-Seller` slug header. No auth yet: phase 4
- * replaces this with the signed-in session (the seller then comes from the session, never from a
- * header). Without the header the dev default is used, so the single-seller app keeps working
- * until stage 5.2 adds the dev seller picker.
+ * DEV_TOOLS only: which seller a request without a session is for, from the `X-Seller` slug
+ * header (the dev seller picker). A session always decides the seller, never a header.
  */
 function sellerSlugOf(request: Request): string {
   const raw = request.headers.get('X-Seller')?.trim();
@@ -147,10 +150,83 @@ function customerResult(
   return Response.json(body, { status });
 }
 
-/** Returns null when no mock route matches, so the caller can fall through. */
-export async function handleMockRequest(
-  store: MockStore,
+/** What the hosting Worker offers the routes. Both are optional: unit tests run without them. */
+export type RouteContext = {
+  /** The seller's live room (Durable Object, stage 8.3). */
+  live?: LiveNotifier;
+  /** Seller images in R2 (stage 8.3). Without it a seller's image stays a data URL in the store. */
+  images?: ImageBucket;
+  /**
+   * Dev tools (the Worker var DEV_TOOLS === "1", set only in .dev.vars). Off or absent is how
+   * production runs: the X-Seller / X-Actor override, the live-socket slug fallback and every
+   * /api/dev/* route then answer as if they did not exist.
+   */
+  devTools?: boolean;
+};
+
+/**
+ * Tells a seller's live room that something changed, after the write has succeeded. Never throws
+ * and never delays the answer for long: a missed nudge is covered by the screens' fallback polling.
+ */
+async function signal(
+  context: RouteContext,
+  sellerId: string,
+  type: LiveEventType,
+  code?: string,
+): Promise<void> {
+  if (!context.live) return;
+  try {
+    await context.live.notify(sellerId, code === undefined ? { type } : { type, code });
+  } catch {
+    // see above
+  }
+}
+
+/** Signals after a customer or seller order write that succeeded; passes the result through. */
+async function afterOrderWrite(
+  context: RouteContext,
+  sellerId: string,
+  type: 'order.created' | 'order.changed',
+  result: StoreResult<SellerOrder>,
+): Promise<StoreResult<SellerOrder>> {
+  if (result.ok) await signal(context, sellerId, type, result.value.code);
+  return result;
+}
+
+/**
+ * The seller behind a live socket. Same rules as the seller routes: a session wins (a seller or a
+ * chef, never an admin or a half-set-up account); without one, DEV_TOOLS falls back to the
+ * X-Seller header or a `?seller=` slug (a browser WebSocket cannot set headers).
+ *
+ * The real gate is the HttpOnly cookie session (stage 8.2), which a browser sends with the upgrade
+ * request on its own. The slug fallback exists only with DEV_TOOLS. Events carry no customer data
+ * either way.
+ */
+async function liveSeller(
+  store: Repository,
   request: Request,
+  searchParams: URLSearchParams,
+  devTools: boolean,
+): Promise<{ sellerId: string } | Response> {
+  if (sessionTokenOf(request) !== undefined) {
+    const caller = await store.auth.resolve(sessionTokenOf(request));
+    if (!caller || caller.setup) return error('unauthorized', 'Sign in first');
+    if (caller.role === 'admin') return error('forbidden', 'Admins have no order data');
+    const sellerStore = caller.sellerId ? await store.sellerById(caller.sellerId) : undefined;
+    if (!sellerStore) return error('unauthorized', 'Sign in first');
+    return { sellerId: sellerStore.seller.id };
+  }
+  if (!devTools) return error('unauthorized', 'Sign in first');
+  const slug = request.headers.get('X-Seller')?.trim() || searchParams.get('seller')?.trim();
+  const sellerStore = await store.sellerBySlug(slug || DEFAULT_SELLER_SLUG);
+  return sellerStore ? { sellerId: sellerStore.seller.id } : noSeller();
+}
+
+/** Returns null when no route matches, so the caller can fall through. */
+export async function handleApiRequest(
+  store: Repository,
+  request: Request,
+  context: RouteContext = {},
 ): Promise<Response | null> {
   const { pathname, searchParams } = new URL(request.url);
   const method = request.method;
@@ -162,14 +238,19 @@ export async function handleMockRequest(
   // Public, per seller (D-037). The old unscoped GET /api/menu and POST /api/orders are gone:
   // they fall through (404).
   if (area === 's' && a) {
-    const sellerStore = store.seller(a);
+    const sellerStore = await store.sellerBySlug(a);
     if (!sellerStore) return noSeller();
-    if (b === 'menu' && !c && method === 'GET') return Response.json(sellerStore.getMenu());
+    if (b === 'menu' && !c && method === 'GET') return Response.json(await sellerStore.getMenu());
     if (b === 'orders' && !c && method === 'POST') {
       const input = parseCreateOrderRequest(await readJson(request));
-      return input
-        ? customerResult(sellerStore.createOrder(input), sellerStore.seller, 201)
-        : bad();
+      if (!input) return bad();
+      const result = await afterOrderWrite(
+        context,
+        sellerStore.seller.id,
+        'order.created',
+        await sellerStore.createOrder(input),
+      );
+      return customerResult(result, sellerStore.seller, 201);
     }
     return null;
   }
@@ -185,28 +266,28 @@ export async function handleMockRequest(
       const orders: Array<CustomerOrder> = [];
       const expired: Array<ExpiredOrder> = [];
       for (const token of tokens) {
-        const hit = store.lookupByToken(token);
+        const hit = await store.lookupByToken(token);
         if (!hit) continue;
-        if (hit.kind === 'live') orders.push(toCustomerOrder(hit.order, hit.store.seller));
+        if (hit.kind === 'live') orders.push(toCustomerOrder(hit.order, hit.sellerRepo.seller));
         else if (hit.kind === 'archived') {
-          orders.push(toArchivedOrder(hit.order, hit.store.seller, hit.cookingDate));
-        } else expired.push(toExpiredOrder(token, hit.store.seller, hit.cookingDate));
+          orders.push(toArchivedOrder(hit.order, hit.sellerRepo.seller, hit.cookingDate));
+        } else expired.push(toExpiredOrder(token, hit.sellerRepo.seller, hit.cookingDate));
       }
       const body: CustomerOrdersResponse = { orders, ...(expired.length > 0 ? { expired } : {}) };
       return Response.json(body);
     }
     if (a && !b) {
-      const hit = store.lookupByToken(a);
+      const hit = await store.lookupByToken(a);
       if (method === 'GET') {
         if (!hit) return error('not_found', 'Order not found');
         if (hit.kind === 'live') {
-          return customerResult({ ok: true, value: hit.order }, hit.store.seller);
+          return customerResult({ ok: true, value: hit.order }, hit.sellerRepo.seller);
         }
         if (hit.kind === 'archived') {
-          const order = toArchivedOrder(hit.order, hit.store.seller, hit.cookingDate);
+          const order = toArchivedOrder(hit.order, hit.sellerRepo.seller, hit.cookingDate);
           return Response.json({ order } satisfies CustomerOrderResponse);
         }
-        const expired = toExpiredOrder(a, hit.store.seller, hit.cookingDate);
+        const expired = toExpiredOrder(a, hit.sellerRepo.seller, hit.cookingDate);
         return Response.json({ expired } satisfies FetchedOrderResponse);
       }
       if (method === 'PATCH') {
@@ -214,14 +295,26 @@ export async function handleMockRequest(
         if (!patch) return bad();
         if (!hit) return error('not_found', 'Order not found');
         if (hit.kind !== 'live') return weekClosed();
-        return customerResult(hit.store.updateOrder(a, patch), hit.store.seller);
+        const result = await afterOrderWrite(
+          context,
+          hit.sellerRepo.seller.id,
+          'order.changed',
+          await hit.sellerRepo.updateOrder(a, patch),
+        );
+        return customerResult(result, hit.sellerRepo.seller);
       }
     }
     if (a && b === 'cancel' && !c && method === 'POST') {
-      const hit = store.lookupByToken(a);
+      const hit = await store.lookupByToken(a);
       if (!hit) return error('not_found', 'Order not found');
       if (hit.kind !== 'live') return weekClosed();
-      return customerResult(hit.store.cancelOrder(a), hit.store.seller);
+      const result = await afterOrderWrite(
+        context,
+        hit.sellerRepo.seller.id,
+        'order.changed',
+        await hit.sellerRepo.cancelOrder(a),
+      );
+      return customerResult(result, hit.sellerRepo.seller);
     }
     return null;
   }
@@ -229,18 +322,29 @@ export async function handleMockRequest(
   if (area === 'auth') return handleAuth(store, request, [a, b]);
   if (area === 'admin') return handleAdmin(store, request, [a, b, c, segments[5], segments[6]]);
 
+  if (pathname === LIVE_PATH) {
+    if (method !== 'GET') return null;
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      return new Response('Expected a WebSocket', { status: 426 });
+    }
+    if (!context.live) return error('not_found', 'Live updates are not available here');
+    const who = await liveSeller(store, request, searchParams, context.devTools === true);
+    if (who instanceof Response) return who;
+    return context.live.connect(who.sellerId);
+  }
+
   if (area === 'seller') {
-    const caller = store.auth.resolve(bearerOf(request));
+    const caller = await store.auth.resolve(sessionTokenOf(request));
     // A session wins over everything else: the seller (and the audit name) come from it, and a
     // different X-Seller / X-Actor header is ignored, so seller A can never act as seller B.
-    if (request.headers.has('Authorization')) {
+    if (sessionTokenOf(request) !== undefined) {
       if (!caller || caller.setup) return error('unauthorized', 'Sign in first');
       if (caller.role === 'admin') return error('forbidden', 'Admins have no order data');
-      const sellerStore = caller.sellerId ? store.sellerById(caller.sellerId) : undefined;
+      const sellerStore = caller.sellerId ? await store.sellerById(caller.sellerId) : undefined;
       if (!sellerStore) return error('unauthorized', 'Sign in first');
       const chefName =
         caller.role === 'chef' && caller.chefId
-          ? sellerStore.listChefs().find((chef) => chef.id === caller.chefId)?.name
+          ? (await sellerStore.listChefs()).find((chef) => chef.id === caller.chefId)?.name
           : undefined;
       if (caller.role === 'chef' && !chefName) return error('unauthorized', 'Sign in first');
       const actor: StaffActor =
@@ -250,28 +354,31 @@ export async function handleMockRequest(
       if (caller.role === 'chef' && chefMayNot(request.method, a)) {
         return error('forbidden', 'Chefs cannot do this');
       }
-      return handleSeller(store, sellerStore, request, [a, b, c], bad, actor);
+      return handleSeller(store, sellerStore, request, [a, b, c], bad, actor, context);
     }
-    // DEV ONLY, until stage 7.3 moves the screens to sessions: without a session the old
-    // X-Seller / X-Actor headers still choose the seller and the audit name, with full seller
-    // rights (no chef limits). Phase 4 deletes this branch.
-    const sellerStore = store.seller(sellerSlugOf(request));
+    // DEV_TOOLS only: without a session the X-Seller / X-Actor headers choose the seller and the
+    // audit name, with full seller rights (no chef limits). Production answers 401.
+    if (context.devTools !== true) return error('unauthorized', 'Sign in first');
+    const sellerStore = await store.sellerBySlug(sellerSlugOf(request));
     if (!sellerStore) return noSeller();
-    return handleSeller(store, sellerStore, request, [a, b, c], bad, actorOf(request));
+    return handleSeller(store, sellerStore, request, [a, b, c], bad, actorOf(request), context);
   }
 
-  if (area === 'dev') {
+  if (area === 'dev' && context.devTools === true) {
     if (a === 'sellers' && !b && method === 'GET') {
-      return Response.json({ sellers: store.sellers() } satisfies DevSellersResponse);
+      return Response.json({ sellers: await store.listSellers() } satisfies DevSellersResponse);
     }
     if (method === 'POST' && a === 'sample-orders') {
-      const sellerStore = store.seller(sellerSlugOf(request));
+      const sellerStore = await store.sellerBySlug(sellerSlugOf(request));
       if (!sellerStore) return noSeller();
       const input = parseSampleOrdersRequest(await readJson(request));
-      return input ? Response.json({ added: sellerStore.addSampleOrders(input.count) }) : bad();
+      if (!input) return bad();
+      const added = await store.dev.addSampleOrders(sellerStore.seller.id, input.count);
+      if (added > 0) await signal(context, sellerStore.seller.id, 'order.created');
+      return Response.json({ added });
     }
     if (method === 'POST' && a === 'reset') {
-      store.reset();
+      await store.dev.reset();
       return Response.json({ ok: true });
     }
   }
@@ -290,26 +397,54 @@ function chefMayNot(method: string, a: string | undefined): boolean {
   return closed.includes(a ?? '') && method !== 'GET';
 }
 
+/**
+ * Deletes the R2 objects behind these refs unless something still shows them: the kitchen's
+ * slots, or a saved set (sets keep their own copy of the refs, and "use set" copies them back).
+ */
+async function dropUnusedImages(
+  bucket: ImageBucket,
+  store: SellerRepository,
+  refs: ReadonlyArray<string | undefined>,
+): Promise<void> {
+  const backup = await store.exportBackup();
+  const inUse = new Set<string>();
+  for (const images of [backup.kitchen.images, ...backup.sets.map((set) => set.images)]) {
+    for (const slot of IMAGE_SLOTS) {
+      const ref = images?.[slot];
+      if (ref !== undefined) inUse.add(ref);
+    }
+  }
+  await deleteImageRefs(
+    bucket,
+    refs.filter((ref) => ref !== undefined && !inUse.has(ref)),
+  );
+}
+
 /** Everything under /api/seller/*, for the one seller the request is scoped to. */
 async function handleSeller(
-  mock: MockStore,
-  store: SellerStore,
+  repo: Repository,
+  store: SellerRepository,
   request: Request,
   [a, b, c]: [string | undefined, string | undefined, string | undefined],
   bad: () => Response,
   actor: StaffActor,
+  context: RouteContext,
 ): Promise<Response | null> {
   const method = request.method;
-  if (a === 'menu' && !b && method === 'GET') return Response.json(store.getSellerMenu());
+  const sellerId = store.seller.id;
+  const changed = (result: StoreResult<SellerOrder>) =>
+    afterOrderWrite(context, sellerId, 'order.changed', result);
+  const menuChanged = () => signal(context, sellerId, 'menu.changed');
+  if (a === 'menu' && !b && method === 'GET') return Response.json(await store.getSellerMenu());
 
   // Chefs can't invite people (D-013); the seller invites a chef from the chefs list.
   if (a === 'chef-invites' && !b && method === 'POST') {
     const input = parseChefInviteRequest(await readJson(request));
     if (!input) return bad();
-    if (!store.listChefs().some((chef) => chef.id === input.chefId)) {
+    if (!(await store.listChefs()).some((chef) => chef.id === input.chefId)) {
       return error('unknown_chef', 'Unknown chef');
     }
-    const key = await mock.auth.createKey(
+    const key = await repo.auth.createKey(
       { role: 'chef', sellerId: store.seller.id, chefId: input.chefId },
       'invite',
     );
@@ -318,7 +453,7 @@ async function handleSeller(
 
   // How many devices each chef has signed in (the chefs screen shows it next to the invite).
   if (a === 'chef-devices' && !b && method === 'GET') {
-    return Response.json(chefAccess(mock, store));
+    return Response.json(await chefAccess(repo, store));
   }
 
   // Bulk updates to customers' inboxes (Saturday tools).
@@ -328,7 +463,10 @@ async function handleSeller(
     const { codes, ...update } = input;
     // Forgiving codes ("k7f-2qx") are normalised first, so the same order is not sent twice.
     const unique = [...new Set(codes.map((code) => parseOrderCode(code) ?? code))];
-    const results = unique.map((code) => store.sendUpdate(code, update, actor));
+    const results: Array<UpdateResult> = [];
+    for (const code of unique) results.push(await store.sendUpdate(code, update, actor));
+    for (const entry of results)
+      if (entry.ok) await signal(context, sellerId, 'order.changed', entry.code);
     return Response.json({
       results,
       sent: results.filter((entry) => entry.ok).length,
@@ -338,12 +476,16 @@ async function handleSeller(
   if (a === 'settings' && !b) {
     const sellerId = store.seller.id;
     if (method === 'GET') {
-      return Response.json({ sellerId, settings: store.getSettings() } satisfies SettingsResponse);
+      const settings = await store.getSettings();
+      return Response.json({ sellerId, settings } satisfies SettingsResponse);
     }
     if (method === 'PUT') {
       const input = parseSettingsRequest(await readJson(request));
       return input
-        ? Response.json({ sellerId, settings: store.setSettings(input) } satisfies SettingsResponse)
+        ? Response.json({
+            sellerId,
+            settings: await store.setSettings(input),
+          } satisfies SettingsResponse)
         : bad();
     }
     return null;
@@ -351,34 +493,41 @@ async function handleSeller(
 
   if (a === 'week') {
     if (!b && method === 'GET')
-      return Response.json({ week: store.getWeek() } satisfies WeekResponse);
+      return Response.json({ week: await store.getWeek() } satisfies WeekResponse);
     if (!b && method === 'PUT') {
       const input = parseWeekSettingsRequest(await readJson(request));
-      return input
-        ? Response.json({ week: store.updateWeek(input) } satisfies WeekResponse)
-        : bad();
+      if (!input) return bad();
+      const week = await store.updateWeek(input);
+      await menuChanged();
+      return Response.json({ week } satisfies WeekResponse);
     }
     if (b === 'publish' && !c && method === 'POST') {
-      const result = store.publishWeek();
-      return result.ok
-        ? Response.json({ week: result.value } satisfies WeekResponse)
-        : error(result.error, result.message);
+      const result = await store.publishWeek();
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json({ week: result.value } satisfies WeekResponse);
     }
     if (b === 'unpublish' && !c && method === 'POST') {
-      return Response.json({ week: store.unpublishWeek() } satisfies WeekResponse);
+      const week = await store.unpublishWeek();
+      await menuChanged();
+      return Response.json({ week } satisfies WeekResponse);
     }
     if (b === 'close' && !c && method === 'POST') {
-      return Response.json(store.closeWeek() satisfies CloseWeekResponse);
+      const closed = await store.closeWeek();
+      // The live orders were archived and a new draft week began: both screens refetch.
+      await signal(context, sellerId, 'order.changed');
+      await menuChanged();
+      return Response.json(closed satisfies CloseWeekResponse);
     }
     return null;
   }
 
   if (a === 'past-weeks') {
     if (!b && method === 'GET') {
-      return Response.json({ weeks: store.listPastWeeks() } satisfies PastWeeksResponse);
+      return Response.json({ weeks: await store.listPastWeeks() } satisfies PastWeeksResponse);
     }
     if (b && !c && method === 'GET') {
-      const week = store.getPastWeek(b);
+      const week = await store.getPastWeek(b);
       return week
         ? Response.json({ week } satisfies PastWeekResponse)
         : error('not_found', 'Week not found');
@@ -389,39 +538,49 @@ async function handleSeller(
   if (a === 'menu' && b === 'items') {
     if (!c && method === 'POST') {
       const input = parseCreateItemRequest(await readJson(request));
-      return input ? itemResult(store.addItem(input), 201) : bad();
+      if (!input) return bad();
+      const result = await store.addItem(input);
+      if (result.ok) await menuChanged();
+      return itemResult(result, 201);
     }
     if (c && method === 'PATCH') {
       const input = parseUpdateItemRequest(await readJson(request));
-      return input ? itemResult(store.patchItem(c, input)) : bad();
+      if (!input) return bad();
+      const result = await store.patchItem(c, input);
+      if (result.ok) await menuChanged();
+      return itemResult(result);
     }
-    if (c && method === 'DELETE') return okResult(store.removeItem(c));
+    if (c && method === 'DELETE') {
+      const result = await store.removeItem(c);
+      if (result.ok) await menuChanged();
+      return okResult(result);
+    }
     return null;
   }
   if (a === 'menu' && b === 'order' && !c && method === 'PUT') {
     const input = parseReorderItemsRequest(await readJson(request));
     if (!input) return bad();
-    const result = store.reorderItems(input.ids);
-    return result.ok
-      ? Response.json({ items: result.value } satisfies ItemsResponse)
-      : error(result.error, result.message);
+    const result = await store.reorderItems(input.ids);
+    if (!result.ok) return error(result.error, result.message);
+    await menuChanged();
+    return Response.json({ items: result.value } satisfies ItemsResponse);
   }
 
   if (a === 'chefs') {
     if (!b && method === 'GET') {
-      return Response.json({ chefs: store.listChefs() } satisfies ChefsResponse);
+      return Response.json({ chefs: await store.listChefs() } satisfies ChefsResponse);
     }
     if (!b && method === 'POST') {
       const input = parseChefNameRequest(await readJson(request));
-      return input ? chefResult(store.addChef(input.name), 201) : bad();
+      return input ? chefResult(await store.addChef(input.name), 201) : bad();
     }
     if (b && method === 'PATCH') {
       const input = parseChefNameRequest(await readJson(request));
-      return input ? chefResult(store.renameChef(b, input.name)) : bad();
+      return input ? chefResult(await store.renameChef(b, input.name)) : bad();
     }
     if (b && method === 'DELETE') {
-      const removed = store.removeChef(b);
-      if (removed.ok) mock.auth.revokeChef(store.seller.id, b);
+      const removed = await store.removeChef(b);
+      if (removed.ok) await repo.auth.revokeChef(store.seller.id, b);
       return okResult(removed);
     }
     return null;
@@ -429,37 +588,37 @@ async function handleSeller(
 
   if (a === 'sets') {
     if (!b && method === 'GET') {
-      return Response.json({ sets: store.listSets() } satisfies SetsResponse);
+      return Response.json({ sets: await store.listSets() } satisfies SetsResponse);
     }
     if (!b && method === 'POST') {
       const input = parseSaveSetRequest(await readJson(request));
-      return input ? setResult(store.saveSet(input.name, input.replaceSetId), 201) : bad();
+      return input ? setResult(await store.saveSet(input.name, input.replaceSetId), 201) : bad();
     }
     if (b && !c && method === 'PATCH') {
       const input = parseRenameSetRequest(await readJson(request));
-      return input ? setResult(store.renameSet(b, input.name)) : bad();
+      return input ? setResult(await store.renameSet(b, input.name)) : bad();
     }
-    if (b && !c && method === 'DELETE') return okResult(store.removeSet(b));
+    if (b && !c && method === 'DELETE') return okResult(await store.removeSet(b));
     if (b && c === 'use' && method === 'POST') {
       const text = await request.text();
       const input = parseUseSetRequest(text === '' ? undefined : safeParse(text));
       if (!input) return bad();
-      const result = store.useSet(b, input);
-      return result.ok
-        ? Response.json({ items: result.value } satisfies ItemsResponse)
-        : error(result.error, result.message);
+      const result = await store.useSet(b, input);
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json({ items: result.value } satisfies ItemsResponse);
     }
     return null;
   }
 
   if (a === 'images') {
     if (!b && method === 'GET') {
-      return Response.json({ images: store.getImages() } satisfies ImagesResponse);
+      return Response.json({ images: await store.getImages() } satisfies ImagesResponse);
     }
     if (!b && method === 'PUT') {
       const input = parseImageStyleRequest(await readJson(request));
       return input
-        ? Response.json({ images: store.setImageStyle(input) } satisfies ImagesResponse)
+        ? Response.json({ images: await store.setImageStyle(input) } satisfies ImagesResponse)
         : bad();
     }
     if (b && !c) {
@@ -467,38 +626,53 @@ async function handleSeller(
       if (method === 'PUT') {
         const input = parseUploadImageRequest(await readJson(request));
         if (!input) return bad();
-        const result = store.setImage(b, input.dataUrl);
-        return result.ok
-          ? Response.json({ images: result.value } satisfies ImagesResponse)
-          : error(result.error, result.message);
+        const before = await store.getImages();
+        // With a bucket the bytes go to R2 and the store keeps the path; an invalid upload is not
+        // stored there, and the store answers it with the usual error.
+        const stored = context.images
+          ? await putUploadedImage(context.images, sellerId, b, input.dataUrl)
+          : null;
+        const result = await store.setImage(b, input.dataUrl, stored?.ref);
+        if (!result.ok) {
+          if (stored && context.images) await dropUnusedImages(context.images, store, [stored.ref]);
+          return error(result.error, result.message);
+        }
+        if (context.images) await dropUnusedImages(context.images, store, [before[b]]);
+        return Response.json({ images: result.value } satisfies ImagesResponse);
       }
       if (method === 'DELETE') {
-        return Response.json({ images: store.removeImage(b) } satisfies ImagesResponse);
+        const before = await store.getImages();
+        const images = await store.removeImage(b);
+        if (context.images) await dropUnusedImages(context.images, store, [before[b]]);
+        return Response.json({ images } satisfies ImagesResponse);
       }
     }
     return null;
   }
 
   if (a === 'backup' && !b) {
-    if (method === 'GET') return Response.json(store.exportBackup());
+    if (method === 'GET') return Response.json(await store.exportBackup());
     if (method === 'POST') {
       const file = parseBackupFile(await readJson(request));
       if (!file) return error('invalid_backup', 'This is not a valid backup file');
-      const taken = file.orders.some((order) => {
-        const hit = mock.findByToken(order.token);
-        return hit !== undefined && hit.store.seller.id !== store.seller.id;
-      });
+      let taken = false;
+      for (const order of file.orders) {
+        const owner = await repo.liveOrderOwner(order.token);
+        if (owner !== undefined && owner !== store.seller.id) taken = true;
+      }
       if (taken) {
         return error('invalid_backup', 'An order in this backup belongs to another kitchen');
       }
-      store.restoreBackup(file);
+      await store.restoreBackup(file);
+      await signal(context, sellerId, 'order.changed');
+      await menuChanged();
       return Response.json({ ok: true } satisfies OkResponse);
     }
     return null;
   }
 
   if (a === 'orders.csv' && !b && method === 'GET') {
-    return new Response(store.ordersCsv(), {
+    return new Response(await store.ordersCsv(), {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="orders-${store.seller.slug}.csv"`,
@@ -508,15 +682,22 @@ async function handleSeller(
 
   if (a === 'orders') {
     if (!b && method === 'GET') {
-      return Response.json({ orders: store.listOrders() } satisfies SellerOrdersResponse);
+      return Response.json({ orders: await store.listOrders() } satisfies SellerOrdersResponse);
     }
     if (!b && method === 'POST') {
       const input = parseCreateSellerOrderRequest(await readJson(request));
-      return input ? sellerResult(store.createSellerOrder(input, actor), 201) : bad();
+      if (!input) return bad();
+      const result = await afterOrderWrite(
+        context,
+        sellerId,
+        'order.created',
+        await store.createSellerOrder(input, actor),
+      );
+      return sellerResult(result, 201);
     }
     const code = b ? parseOrderCode(b) : null;
     if (b && !c && method === 'GET') {
-      const order = code ? store.getByCode(code) : undefined;
+      const order = code ? await store.getByCode(code) : undefined;
       return order
         ? Response.json({ order } satisfies SellerOrderResponse)
         : error('not_found', 'Order not found');
@@ -525,36 +706,40 @@ async function handleSeller(
       const input = parseSetStatusRequest(await readJson(request));
       if (!input) return bad();
       return code
-        ? sellerResult(store.setStatus(code, input.to, actor))
+        ? sellerResult(await changed(await store.setStatus(code, input.to, actor)))
         : error('not_found', 'Order not found');
     }
     if (b && c === 'paid' && method === 'POST') {
       const input = parseSetPaidRequest(await readJson(request));
       if (!input) return bad();
       return code
-        ? sellerResult(store.setPaid(code, input.paid, actor))
+        ? sellerResult(await changed(await store.setPaid(code, input.paid, actor)))
         : error('not_found', 'Order not found');
     }
     if (b && c === 'lock' && method === 'POST') {
       const input = parseSetLockedRequest(await readJson(request));
       if (!input) return bad();
       return code
-        ? sellerResult(store.setLocked(code, input.locked))
+        ? sellerResult(await changed(await store.setLocked(code, input.locked)))
         : error('not_found', 'Order not found');
     }
     if (b && c === 'wa-received' && method === 'POST') {
       const input = parseSetWaReceivedRequest(await readJson(request));
       if (!input) return bad();
       return code
-        ? sellerResult(store.setWaReceived(code, input.received))
+        ? sellerResult(await changed(await store.setWaReceived(code, input.received)))
         : error('not_found', 'Order not found');
     }
     if (b && c === 'arriving-soon' && method === 'POST') {
-      return code ? sellerResult(store.arrivingSoon(code)) : error('not_found', 'Order not found');
+      return code
+        ? sellerResult(await changed(await store.arrivingSoon(code)))
+        : error('not_found', 'Order not found');
     }
     if (b && (c === 'nudge' || c === 'seen') && method === 'POST') {
       if (!code) return error('not_found', 'Order not found');
-      return sellerResult(c === 'nudge' ? store.nudge(code) : store.markSeen(code));
+      return sellerResult(
+        await changed(c === 'nudge' ? await store.nudge(code) : await store.markSeen(code)),
+      );
     }
   }
   return null;

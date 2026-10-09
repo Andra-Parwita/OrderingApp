@@ -4,7 +4,10 @@ import {
   checkPassword,
   parseChefAccessResponse,
   parseKeySignInRequest,
+  parsePasskeyOptionsRequest,
+  parsePasskeySignInRequest,
   parsePasswordSignInRequest,
+  passkeysAvailable,
   parseRegisterRequest,
   parseSellerResponse,
   parseSellersResponse,
@@ -68,10 +71,16 @@ describe('auth contract', () => {
   });
 
   it('parses registration: passkey, or a password of 10+ characters', () => {
-    expect(parseRegisterRequest({ kind: 'passkey', deviceName: 'Phone' })).toEqual({
+    const response = { id: 'cred-1', rawId: 'cred-1', type: 'public-key' };
+    expect(parseRegisterRequest({ kind: 'passkey', deviceName: 'Phone', response })).toEqual({
       kind: 'passkey',
       deviceName: 'Phone',
+      response,
     });
+    expect(parseRegisterRequest({ kind: 'passkey', deviceName: 'Phone' })).toBeNull();
+    expect(
+      parseRegisterRequest({ kind: 'passkey', deviceName: 'Phone', response: { id: '' } }),
+    ).toBeNull();
     expect(
       parseRegisterRequest({ kind: 'password', password: 'short', deviceName: 'Phone' }),
     ).toBeNull();
@@ -82,12 +91,36 @@ describe('auth contract', () => {
   });
 
   it('checks a session response', () => {
-    expect(parseSessionResponse({ token: 't', me: { role: 'admin', stage: 'full' } })).toEqual({
-      token: 't',
+    expect(parseSessionResponse({ me: { role: 'admin', stage: 'full' } })).toEqual({
       me: { role: 'admin', stage: 'full' },
     });
-    expect(parseSessionResponse({ token: '', me: { role: 'admin', stage: 'full' } })).toBeNull();
-    expect(parseSessionResponse({ token: 't', me: { role: 'owner', stage: 'full' } })).toBeNull();
+    expect(parseSessionResponse({ me: { role: 'owner', stage: 'full' } })).toBeNull();
+    expect(
+      parseSessionResponse({ me: { role: 'admin', stage: 'full' }, credentialId: 5 }),
+    ).toBeNull();
+  });
+
+  it('parses passkey options and sign-in requests', () => {
+    expect(parsePasskeyOptionsRequest({ deviceId })).toEqual({ deviceId });
+    expect(parsePasskeyOptionsRequest({ deviceId, credentialId: 'abc' })).toEqual({
+      deviceId,
+      credentialId: 'abc',
+    });
+    expect(parsePasskeyOptionsRequest({ deviceId, credentialId: '' })).toBeNull();
+    expect(parsePasskeyOptionsRequest({ credentialId: 'abc' })).toBeNull();
+    expect(parsePasskeySignInRequest({ deviceId, response: { id: 'abc' } })?.response.id).toBe(
+      'abc',
+    );
+    expect(parsePasskeySignInRequest({ deviceId, credentialId: 'abc' })).toBeNull();
+  });
+
+  it('allows passkeys on names and localhost, never on an IP address (D-046)', () => {
+    expect(passkeysAvailable('localhost')).toBe(true);
+    expect(passkeysAvailable('delave.example.com')).toBe(true);
+    expect(passkeysAvailable('192.168.1.20')).toBe(false);
+    expect(passkeysAvailable('[::1]')).toBe(false);
+    expect(passkeysAvailable('::1')).toBe(false);
+    expect(passkeysAvailable('')).toBe(false);
   });
 
   it('keeps tries left and the lockout time on API errors', () => {

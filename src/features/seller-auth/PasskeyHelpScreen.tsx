@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { registerDevice } from '../../api/auth';
+import { passkeysSupported, registerDevice } from '../../api/auth';
 import type { Me } from '../../../shared/authContract';
 import { Button, Segmented } from '../../ui';
 import { guessDevice, helpTabFor, failureMessage, type HelpTab } from './authText';
@@ -16,7 +16,6 @@ import {
   SectionTitle,
   Steps,
   Title,
-  isDevBuild,
   useDeviceName,
 } from './parts';
 
@@ -31,9 +30,13 @@ export type PasskeyHelpScreenProps = Readonly<{
 
 const TABS: ReadonlyArray<HelpTab> = ['iphone', 'android', 'computer'];
 
-/** A2: how to make a passkey on this kind of device, then the button that makes it. */
+/**
+ * A2: how to make a passkey on this kind of device, then the button that makes it. On an
+ * IP-address web address passkeys cannot work (D-046), so this only offers the password.
+ */
 export function PasskeyHelpScreen({ name, onDone, onUsePassword }: PasskeyHelpScreenProps) {
   const { t } = useTranslation(AUTH_NS);
+  const supported = passkeysSupported();
   const [tab, setTab] = useState<HelpTab>(() => helpTabFor(guessDevice()));
   const device = useDeviceName();
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +57,23 @@ export function PasskeyHelpScreen({ name, onDone, onUsePassword }: PasskeyHelpSc
     if (result.ok) onDone(result.data.me);
     else setError(failureMessage(t, result));
   }, [device.name, onDone, t]);
+
+  if (!supported) {
+    return (
+      <Page>
+        <Title>{t('passkey.title')}</Title>
+        <Body>
+          {name ? <Hint>{t('passkey.greeting', { name })}</Hint> : null}
+          <Hint>{t('passkey.unavailable')}</Hint>
+          <Actions>
+            <Button variant="primary" fullWidth onClick={onUsePassword}>
+              {t('password.title')}
+            </Button>
+          </Actions>
+        </Body>
+      </Page>
+    );
+  }
 
   return (
     <Page>
@@ -90,7 +110,6 @@ export function PasskeyHelpScreen({ name, onDone, onUsePassword }: PasskeyHelpSc
               {t('passkey.usePassword')}
             </Button>
           </Actions>
-          {isDevBuild ? <Hint>{t('prototypeNote')}</Hint> : null}
         </Section>
       </Body>
     </Page>

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Seller } from '../../shared/domain';
 import { fetchDevSellers } from '../api/client';
+import { useDevTools } from '../api/devTools';
 import { chooseSeller, currentSellerSlug } from '../api/device/sellerContext';
 
 const Dev = styled.div`
@@ -40,17 +41,17 @@ function reload() {
 }
 
 /**
- * Dev only: which seller the seller screens act for. Phase 4 replaces this with the signed-in
- * session (the seller then comes from the session, never from a picker); it is not in production
- * builds.
+ * Dev only: which seller the seller screens act for without signing in. Shown only when the server
+ * runs with DEV_TOOLS; production never shows it (the seller then comes from the session).
  */
 export function SellerPicker({ onChosen = reload }: Readonly<{ onChosen?: () => void }>) {
   const { t } = useTranslation();
   const [sellers, setSellers] = useState<ReadonlyArray<Seller>>([]);
   const [current, setCurrent] = useState(currentSellerSlug);
+  const devTools = useDevTools();
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return undefined;
+    if (devTools !== true) return undefined;
     let live = true;
     void fetchDevSellers().then((result) => {
       if (live && result.ok) setSellers(result.data.sellers);
@@ -58,7 +59,7 @@ export function SellerPicker({ onChosen = reload }: Readonly<{ onChosen?: () => 
     return () => {
       live = false;
     };
-  }, []);
+  }, [devTools]);
 
   const onChange = useCallback(
     (event: ChangeEvent<HTMLSelectElement>) => {
@@ -69,7 +70,7 @@ export function SellerPicker({ onChosen = reload }: Readonly<{ onChosen?: () => 
     [onChosen],
   );
 
-  if (!import.meta.env.DEV || sellers.length === 0) return null;
+  if (devTools !== true || sellers.length === 0) return null;
   return (
     <Dev>
       <Caption>{t('sellerNav.devNoSignIn')}</Caption>

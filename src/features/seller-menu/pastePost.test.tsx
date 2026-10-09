@@ -6,9 +6,9 @@ import { PastePostScreen } from './PastePostScreen';
 import { emptyMenu, renderWithStore, setupI18n } from './testSupport';
 
 beforeAll(setupI18n);
-beforeEach(() => {
-  mockStore.reset();
-  mockStore.setWeek({ status: 'draft' });
+beforeEach(async () => {
+  await mockStore.reset();
+  await mockStore.setWeek({ status: 'draft' });
 });
 
 // The brief's post (briefs/food-ordering-concept-brief.md): six items, a greeting and a closing.
@@ -43,7 +43,7 @@ describe('PastePostScreen', () => {
   });
 
   it('shows the items it read and the lines it did not', async () => {
-    emptyMenu();
+    await emptyMenu();
     renderPaste();
     await read(POST);
     expect(screen.getByText('Found 6 items')).toBeInTheDocument();
@@ -70,12 +70,12 @@ describe('PastePostScreen', () => {
   });
 
   it('adds the items as new menu items in Indonesian and reports the count', async () => {
-    emptyMenu();
+    await emptyMenu();
     const { onDone } = renderPaste();
     await read(POST);
     fireEvent.click(screen.getByRole('button', { name: 'Use these 6 items' }));
     await waitFor(() => expect(onDone).toHaveBeenCalledWith(6));
-    const items = mockStore.getSellerMenu().items;
+    const items = (await mockStore.getSellerMenu()).items;
     expect(items).toHaveLength(6);
     expect(items[2]).toMatchObject({
       name: { en: '', id: 'Lemper ayam' },
@@ -96,12 +96,12 @@ describe('PastePostScreen', () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Use these 4 items' }));
     await waitFor(() => expect(onDone).toHaveBeenCalledWith(4));
-    expect(mockStore.getSellerMenu().items).toHaveLength(10);
+    expect((await mockStore.getSellerMenu()).items).toHaveLength(10);
   });
 
   it('adds nothing when the menu is already full', async () => {
-    while (mockStore.getSellerMenu().items.length < 10) {
-      mockStore.addItem({ name: { en: 'x', id: '' }, priceCents: 100 });
+    while ((await mockStore.getSellerMenu()).items.length < 10) {
+      await mockStore.addItem({ name: { en: 'x', id: '' }, priceCents: 100 });
     }
     renderPaste();
     await read(POST);
@@ -113,7 +113,7 @@ describe('PastePostScreen', () => {
 
   it('speaks Indonesian', async () => {
     await i18n.changeLanguage('id');
-    emptyMenu();
+    await emptyMenu();
     renderPaste();
     fireEvent.change(await screen.findByLabelText('Tempel postingan WhatsApp kamu'), {
       target: { value: POST },

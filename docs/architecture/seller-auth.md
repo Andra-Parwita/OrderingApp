@@ -35,7 +35,7 @@
 | phishing / reuse risk | none: bound to this site, nothing to type or reuse | a reused or weak password is the main risk | low |
 | forgotten login | passkeys sync via iCloud / Google, so a new phone usually just works; otherwise a new invite key | a new invite key | handled by email |
 | works in the iPhone Home Screen app | yes (iOS 16+) | yes | awkward: the Access redirect can break out of the Home Screen app |
-| local dev on this PC | yes (WebAuthn works on HTTPS localhost and the LAN IP) | yes | no; needs a dev-only bypass |
+| local dev on this PC | on `https://localhost` only — **not** on the LAN IP: WebAuthn refuses an IP address as the site's identity, so phones on `https://192.168.178.177` can't make passkeys (correction 2026-10-09; see D-046) | yes | no; needs a dev-only bypass |
 | new dependency | yes: `@simplewebauthn/server` + `@simplewebauthn/browser` (well-maintained, runs on Workers); hand-rolling WebAuthn checks is a security risk | none (PBKDF2 via the Workers WebCrypto API) | none in code; set up in the Cloudflare dashboard |
 | private data in the cloud | none (a public key only) | a password hash | the seller's email address, in Cloudflare |
 | effort | medium | low | low code, more outside-repo config |

@@ -1,9 +1,11 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import i18n from 'i18next';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { browserPasskeys } from '../../../mocks/browserPasskeys';
+import { clearCookies, installCookieJar, sessionCookie } from '../../../mocks/cookieJar';
 import { MOCK_NOW, mockStores } from '../../../mocks/handlers';
 import { createDeviceCode, fetchMe } from '../../api/auth';
-import { getCredentialId, getSessionToken } from '../../api/device/session';
+import { getCredentialId } from '../../api/device/session';
 import { cleanCode, cleanKey, guessDevice } from './authText';
 import { DevicesScreen } from './DevicesScreen';
 import { PasskeyHelpScreen } from './PasskeyHelpScreen';
@@ -20,14 +22,30 @@ import {
   startSetup,
 } from './testSupport';
 
-beforeAll(setupI18n);
+// The browser's passkey prompt is a software authenticator; the server's checks are the real ones.
+vi.mock(
+  '@simplewebauthn/browser',
+  async () => (await import('../../../mocks/browserPasskeys')).browserMock,
+);
+
+let restoreFetch: () => void;
+beforeAll(async () => {
+  restoreFetch = installCookieJar();
+  await setupI18n();
+});
+afterAll(() => {
+  restoreFetch();
+});
 afterEach(async () => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
   await i18n.changeLanguage('en');
 });
-beforeEach(() => {
-  mockStores.reset();
+beforeEach(async () => {
+  await mockStores.reset();
   localStorage.clear();
+  clearCookies();
+  browserPasskeys.reset();
 });
 
 const type = (label: string | RegExp, value: string) =>
@@ -54,7 +72,7 @@ describe('SetupKeyScreen', () => {
     press('Continue');
     await waitFor(() => expect(onSession).toHaveBeenCalledTimes(1));
     expect(onSession.mock.calls[0]?.[0]).toMatchObject({ role: 'seller', stage: 'setup' });
-    expect(getSessionToken()).toBeTruthy();
+    expect(sessionCookie()).toBeTruthy();
   });
 
   it('asks for a key when the field is empty', () => {
@@ -80,7 +98,7 @@ describe('SetupKeyScreen', () => {
     press('Continue');
     expect(await screen.findByText('Too many tries. Try again in 15 minutes.')).toBeInTheDocument();
     expect(onSession).not.toHaveBeenCalled();
-    expect(getSessionToken()).toBeNull();
+    expect(sessionCookie()).toBeNull();
   });
 
   it('switches to the code screen', () => {
@@ -96,7 +114,7 @@ describe('DeviceCodeScreen', () => {
     await signInAsSeller('password');
     const code = await createDeviceCode();
     if (!code.ok) throw new Error('no code');
-    localStorage.removeItem('session');
+    clearCookies(); // the other device has no session yet
     const onSession = vi.fn();
     renderScreen(<DeviceCodeScreen onSession={onSession} onUseKey={vi.fn()} />);
     type('6-digit code', `${code.data.code.slice(0, 3)} ${code.data.code.slice(3)}`);
@@ -119,12 +137,12 @@ describe('DeviceCodeScreen', () => {
 });
 
 describe('PasskeyHelpScreen', () => {
-  it('shows steps per device and creates a passkey (simulated)', async () => {
+  it('shows steps per device and creates a real passkey', async () => {
     await startSetup();
     const onDone = vi.fn();
     renderScreen(<PasskeyHelpScreen name="Dapur Demo" onDone={onDone} onUsePassword={vi.fn()} />);
     expect(screen.getByText('Hi Dapur Demo')).toBeInTheDocument();
-    expect(screen.getByText('Prototype: passkey is simulated')).toBeInTheDocument();
+    expect(screen.queryByText(/simulated/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Name of this device')).toHaveValue('Computer');
 
     fireEvent.click(screen.getByRole('radio', { name: 'iPhone' }));
@@ -139,6 +157,41 @@ describe('PasskeyHelpScreen', () => {
     expect(getCredentialId()).toBeTruthy();
     const me = await fetchMe();
     expect(me.ok && me.data.me.stage).toBe('full');
+  });
+
+  it('says so when the passkey prompt is closed or fails, and can be tried again', async () => {
+    await startSetup();
+    const onDone = vi.fn();
+    renderScreen(<PasskeyHelpScreen onDone={onDone} onUsePassword={vi.fn()} />);
+    browserPasskeys.failNext('cancel');
+    press('Create passkey');
+    expect(
+      await screen.findByText('The passkey prompt was closed. Try again, or use a password.'),
+    ).toBeInTheDocument();
+    browserPasskeys.failNext('fail');
+    press('Create passkey');
+    expect(
+      await screen.findByText('This device could not use a passkey. Try again, or use a password.'),
+    ).toBeInTheDocument();
+    expect(onDone).not.toHaveBeenCalled();
+    press('Create passkey');
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+  });
+
+  it('offers only the password on an IP-address web address (D-046)', () => {
+    vi.stubGlobal('location', { ...window.location, hostname: '192.168.1.20' });
+    const onUsePassword = vi.fn();
+    renderScreen(<PasskeyHelpScreen onDone={vi.fn()} onUsePassword={onUsePassword} />);
+    expect(screen.queryByRole('button', { name: 'Create passkey' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Passkeys do not work on this web address/)).toBeInTheDocument();
+    press('Set a password');
+    expect(onUsePassword).toHaveBeenCalled();
+  });
+
+  it('offers only the password where the browser has no WebAuthn', () => {
+    browserPasskeys.setSupported(false);
+    renderScreen(<PasskeyHelpScreen onDone={vi.fn()} onUsePassword={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Create passkey' })).not.toBeInTheDocument();
   });
 
   it('needs a device name, and offers the password way out', async () => {
@@ -209,7 +262,7 @@ describe('SignInScreen', () => {
     ).toBeInTheDocument();
     press('Sign in with passkey');
     await waitFor(() => expect(onSignedIn).toHaveBeenCalledTimes(1));
-    expect(getSessionToken()).toBeTruthy();
+    expect(sessionCookie()).toBeTruthy();
   });
 
   it('opens the password box when there is no passkey on this device', () => {
@@ -219,9 +272,28 @@ describe('SignInScreen', () => {
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
   });
 
+  it('hides the passkey button on an IP-address web address and shows the password', () => {
+    vi.stubGlobal('location', { ...window.location, hostname: '192.168.1.20' });
+    renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Sign in with passkey' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Passkeys do not work on this web address/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+  });
+
+  it('says so when the passkey prompt is closed', async () => {
+    await signInAsSeller('passkey');
+    await signOut();
+    renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
+    browserPasskeys.failNext('cancel');
+    press('Sign in with passkey');
+    expect(
+      await screen.findByText('The passkey prompt was closed. Try again, or use a password.'),
+    ).toBeInTheDocument();
+  });
+
   it('signs in with a password, and counts wrong tries', async () => {
     await signInAsSeller('password');
-    localStorage.removeItem('session');
+    clearCookies();
     const onSignedIn = vi.fn();
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={onSignedIn} />);
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
@@ -239,7 +311,7 @@ describe('SignInScreen', () => {
 
   it('locks after five wrong passwords', async () => {
     await signInAsSeller('password');
-    localStorage.removeItem('session');
+    clearCookies();
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
     press('Use password instead');
     type('Password', 'nope nope nope');
@@ -303,7 +375,7 @@ describe('DevicesScreen', () => {
     expect(onSignedOut).not.toHaveBeenCalled();
     press('Tap again to sign out');
     await waitFor(() => expect(onSignedOut).toHaveBeenCalledTimes(1));
-    expect(getSessionToken()).toBeNull();
+    expect(sessionCookie()).toBeNull();
   });
 
   it('shows an add-device code with a countdown that ends', async () => {

@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { browserPasskeys } from '../../../mocks/browserPasskeys';
+import { clearCookies, installCookieJar } from '../../../mocks/cookieJar';
 import { DEV_ADMIN_SETUP_KEY, mockStores } from '../../../mocks/handlers';
 import { adminSetup, registerDevice } from '../../api/auth';
 import { initI18n } from '../../i18n/init';
@@ -19,61 +21,49 @@ async function signInAsAdmin() {
   expect((await registerDevice({ kind: 'passkey', deviceName: 'Test PC' })).ok).toBe(true);
 }
 
-/** A seller device, set up with a real key and a bearer token that is not stored in the browser. */
-async function addSellerDevice(deviceName: string) {
-  const issued = await mockStores.auth.createKey(
-    { role: 'seller', sellerId: 'seller-onde-onde' },
-    'invite',
-  );
-  const post = async (path: string, body: unknown, token?: string) => {
-    const response = await fetch(path, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body),
+/**
+ * Devices for an account, set up straight in the mock store (a key, then a password): no browser
+ * session is touched, so the admin stays signed in.
+ */
+async function addDevices(
+  target: { role: 'seller'; sellerId: string } | { role: 'chef'; sellerId: string; chefId: string },
+  names: Array<string>,
+) {
+  const issued = await mockStores.auth.createKey(target, 'invite');
+  for (const [index, deviceName] of names.entries()) {
+    const started = await mockStores.auth.redeemKey(issued.key, `dev-${String(index)}-abcd-efgh`);
+    if (!started.ok) throw new Error(started.error);
+    const done = await mockStores.auth.register(started.value.token, {
+      kind: 'password',
+      password: 'long enough password',
+      deviceName,
     });
-    return (await response.json()) as { token: string };
-  };
-  const started = await post('/api/auth/invite', {
-    key: issued.key,
-    deviceId: `dev-${deviceName}-1234`,
-  });
-  await post('/api/auth/register', { kind: 'passkey', deviceName }, started.token);
-}
-
-/** A chef of Onde Onde signed in on `count` devices; the bearer tokens are not stored. */
-async function addChefDevices(chefId: string, count: number) {
-  const issued = await mockStores.auth.createKey(
-    { role: 'chef', sellerId: 'seller-onde-onde', chefId },
-    'invite',
-  );
-  const post = async (path: string, body: unknown, token?: string) => {
-    const response = await fetch(path, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body),
-    });
-    return (await response.json()) as { token: string };
-  };
-  for (let n = 1; n <= count; n++) {
-    const started = await post('/api/auth/invite', {
-      key: issued.key,
-      deviceId: `chef-dev-${String(n)}-abcd`,
-    });
-    await post(
-      '/api/auth/register',
-      { kind: 'passkey', deviceName: `Chef phone ${String(n)}` },
-      started.token,
-    );
+    if (!done.ok) throw new Error(done.error);
   }
 }
 
+const addSellerDevice = (deviceName: string) =>
+  addDevices({ role: 'seller', sellerId: 'seller-onde-onde' }, [deviceName]);
+
+const addChefDevices = (chefId: string, count: number) =>
+  addDevices(
+    { role: 'chef', sellerId: 'seller-onde-onde', chefId },
+    Array.from({ length: count }, (_, n) => `Chef phone ${String(n + 1)}`),
+  );
+
+// The browser's passkey prompt is a software authenticator; the server's checks are the real ones.
+vi.mock(
+  '@simplewebauthn/browser',
+  async () => (await import('../../../mocks/browserPasskeys')).browserMock,
+);
+
+let restoreFetch: () => void;
+afterAll(() => {
+  restoreFetch();
+});
+
 beforeAll(async () => {
+  restoreFetch = installCookieJar();
   window.matchMedia = (query: string) =>
     ({
       matches: false,
@@ -85,8 +75,10 @@ beforeAll(async () => {
   registerAdminI18n();
 });
 beforeEach(async () => {
-  mockStores.reset();
+  await mockStores.reset();
   localStorage.clear();
+  clearCookies();
+  browserPasskeys.reset();
   await i18n.changeLanguage('en');
 });
 afterEach(() => {
@@ -113,6 +105,7 @@ describe('AdminSetupScreen', () => {
 
     // The admin now exists: the page refuses, in plain words.
     localStorage.clear();
+    clearCookies();
     renderThemed(<AdminSetupScreen onDone={onDone} />);
     const keys = screen.getAllByLabelText('Setup key');
     fireEvent.change(keys[keys.length - 1] as HTMLElement, {
@@ -134,6 +127,24 @@ describe('AdminSignInScreen', () => {
     expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Sign in with passkey' }));
     await waitFor(() => expect(onSignedIn).toHaveBeenCalledTimes(1));
+  });
+
+  it('says the admin needs a web address, not an IP address, for a passkey', () => {
+    vi.stubGlobal('location', { ...window.location, hostname: '192.168.1.20' });
+    renderThemed(<AdminSignInScreen onSignedIn={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Sign in with passkey' })).not.toBeInTheDocument();
+    expect(screen.getByText(/Passkeys do not work on an IP address/)).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it('says so when the passkey prompt is closed', async () => {
+    await signInAsAdmin();
+    renderThemed(<AdminSignInScreen onSignedIn={vi.fn()} />);
+    browserPasskeys.failNext('cancel');
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with passkey' }));
+    expect(
+      await screen.findByText('The passkey prompt was closed. Try again.'),
+    ).toBeInTheDocument();
   });
 
   it('says so when this device has no admin passkey', async () => {
@@ -204,7 +215,7 @@ describe('AdminHomeScreen', () => {
     expect(within(table).getByRole('row', { name: /Warung Baru/ })).toHaveTextContent(
       '/warung-baru',
     );
-    expect(mockStores.seller('warung-baru')).toBeDefined();
+    expect(await mockStores.sellerBySlug('warung-baru')).toBeDefined();
   });
 
   it('shows an invite key once, with the 24 hour rule, Copy and a WhatsApp link without a number', async () => {

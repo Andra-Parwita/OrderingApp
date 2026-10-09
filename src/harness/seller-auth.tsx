@@ -35,7 +35,7 @@ const SCREENS: ReadonlyArray<ScreenName> = [
   'devices',
 ];
 const DEMO_SLUG = 'dapur-demo';
-// The dev mock's admin setup key (worker/mock/auth.ts); phase 4 reads a real secret instead.
+// The dev admin setup key (.dev.vars.example); production reads a real secret instead.
 const DEV_ADMIN_SETUP_KEY = 'DLV-DEVA-DMIN-SETU-PKEY';
 
 const Panel = styled.aside`

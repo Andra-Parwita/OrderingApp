@@ -45,7 +45,7 @@ describe('ImagesScreen', () => {
     expect(screen.getByText('Best size 128 × 128 px')).toBeInTheDocument();
     expect(screen.getByAltText(`Preview of ${ICON}`)).toHaveAttribute(
       'src',
-      mockStore.getImages().railIcon,
+      (await mockStore.getImages()).railIcon,
     );
     expect(screen.getByAltText('Preview of Phone banner')).toBeInTheDocument();
   });
@@ -60,7 +60,7 @@ describe('ImagesScreen', () => {
     });
     await renderImages(resize);
     pick(ICON);
-    await waitFor(() => expect(mockStore.getImages().railIcon).toBe(dataUrl));
+    await waitFor(async () => expect((await mockStore.getImages()).railIcon).toBe(dataUrl));
     expect(resize).toHaveBeenCalledWith(expect.any(File), 'railIcon', '#835937');
     await waitFor(() => expect(screen.getByAltText(ICON)).toHaveAttribute('src', dataUrl));
     expect(screen.getByAltText(`Preview of ${ICON}`)).toHaveAttribute('src', dataUrl);
@@ -75,19 +75,19 @@ describe('ImagesScreen', () => {
       sourceHeight: 1000,
     });
     await renderImages(resize);
-    const before = mockStore.getImages().phoneBanner;
+    const before = (await mockStore.getImages()).phoneBanner;
     pick('Phone banner');
     expect(await screen.findByText('This picture is a different shape')).toBeInTheDocument();
     expect(screen.getByText(/Your picture is 1000 × 1000 px/)).toBeInTheDocument();
-    expect(mockStore.getImages().phoneBanner).toBe(before);
+    expect((await mockStore.getImages()).phoneBanner).toBe(before);
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByText('This picture is a different shape')).not.toBeInTheDocument();
-    expect(mockStore.getImages().phoneBanner).toBe(before);
+    expect((await mockStore.getImages()).phoneBanner).toBe(before);
 
     pick('Phone banner');
     fireEvent.click(await screen.findByRole('button', { name: 'Use this picture' }));
-    await waitFor(() => expect(mockStore.getImages().phoneBanner).toBe(dataUrl));
+    await waitFor(async () => expect((await mockStore.getImages()).phoneBanner).toBe(dataUrl));
   });
 
   it('shows a too-big refusal from the server in plain words', async () => {
@@ -99,14 +99,14 @@ describe('ImagesScreen', () => {
         sourceHeight: 128,
       });
     await renderImages(resize);
-    const before = mockStore.getImages().railIcon;
+    const before = (await mockStore.getImages()).railIcon;
     pick(ICON);
     expect(
       await within(card(ICON)).findByText(
         'That picture is too big, even after making it smaller. Try a simpler picture.',
       ),
     ).toBeInTheDocument();
-    expect(mockStore.getImages().railIcon).toBe(before);
+    expect((await mockStore.getImages()).railIcon).toBe(before);
   });
 
   it('shows a wrong-shape refusal and an unreadable file in plain words', async () => {
@@ -137,11 +137,11 @@ describe('ImagesScreen', () => {
 
   it('removes a picture only on the second tap', async () => {
     await renderImages(vi.fn());
-    expect(mockStore.getImages().railIcon).toBeDefined();
+    expect((await mockStore.getImages()).railIcon).toBeDefined();
     fireEvent.click(within(card(ICON)).getByRole('button', { name: 'Remove' }));
-    expect(mockStore.getImages().railIcon).toBeDefined();
+    expect((await mockStore.getImages()).railIcon).toBeDefined();
     fireEvent.click(within(card(ICON)).getByRole('button', { name: 'Tap again to remove' }));
-    await waitFor(() => expect(mockStore.getImages().railIcon).toBeUndefined());
+    await waitFor(async () => expect((await mockStore.getImages()).railIcon).toBeUndefined());
     expect(within(card(ICON)).getByText('No picture yet')).toBeInTheDocument();
     expect(within(card(ICON)).getByRole('button', { name: 'Upload' })).toBeInTheDocument();
   });
@@ -152,15 +152,17 @@ describe('ImagesScreen', () => {
     fireEvent.change(hex, { target: { value: 'red' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save colour and text' }));
     expect(await screen.findByText('Write a colour like #835937.')).toBeInTheDocument();
-    expect(mockStore.getImages().bannerBackground).toBe('#835937');
+    expect((await mockStore.getImages()).bannerBackground).toBe('#835937');
 
     fireEvent.change(hex, { target: { value: '#112233' } });
     fireEvent.change(screen.getByLabelText('Picture text (English)'), {
       target: { value: 'Our kitchen' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save colour and text' }));
-    await waitFor(() => expect(mockStore.getImages().bannerBackground).toBe('#112233'));
-    expect(mockStore.getImages().alt?.en).toBe('Our kitchen');
+    await waitFor(async () =>
+      expect((await mockStore.getImages()).bannerBackground).toBe('#112233'),
+    );
+    expect((await mockStore.getImages()).alt?.en).toBe('Our kitchen');
   });
 
   it('speaks Indonesian', async () => {

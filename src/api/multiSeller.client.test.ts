@@ -27,8 +27,8 @@ const demoOrder: CreateOrderRequest = {
   lines: [{ itemId: 'soto-ayam', qty: 1 }],
 };
 
-beforeEach(() => {
-  mockStores.reset();
+beforeEach(async () => {
+  await mockStores.reset();
 });
 
 describe('multi-seller client', () => {

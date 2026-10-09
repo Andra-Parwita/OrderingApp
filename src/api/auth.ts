@@ -1,13 +1,22 @@
-// Sign-in, devices and admin calls (stage 7.1). A call that returns a session stores its token
-// (and, for a passkey, the credential id) on this device; `request` then sends the token as
-// `Authorization: Bearer` on every call. Passkeys are simulated until phase 4 (D-045).
+// Sign-in, devices and admin calls (stage 7.1, real passkeys in 8.2). A call that returns a session
+// sets the HttpOnly session cookie (the browser keeps and sends it; scripts never see it). Passkeys
+// are WebAuthn: the server makes options, the browser's own prompt signs, the server checks.
+import {
+  startAuthentication,
+  startRegistration,
+  browserSupportsWebAuthn,
+  type PublicKeyCredentialCreationOptionsJSON,
+  type PublicKeyCredentialRequestOptionsJSON,
+} from '@simplewebauthn/browser';
 import {
   parseChefAccessResponse,
   parseCodeResponse,
   parseDevicesResponse,
   parseKeyResponse,
   parseMeResponse,
+  parsePasskeyOptionsResponse,
   parseSellerResponse,
+  passkeysAvailable,
   parseSellersResponse,
   parseSessionResponse,
   type ChefAccessResponse,
@@ -15,7 +24,6 @@ import {
   type DevicesResponse,
   type KeyResponse,
   type MeResponse,
-  type RegisterRequest,
   type SellerResponse,
   type SellersResponse,
   type SessionResponse,
@@ -23,25 +31,50 @@ import {
 import { parseOkResponse, type OkResponse } from '../../shared/setupContract';
 import {
   clearCredentialId,
-  clearSessionToken,
   getCredentialId,
   getDeviceId,
   setCredentialId,
-  setSessionToken,
+  setSessionHint,
 } from './device/session';
 import { request, type ApiResult } from './http';
 
 const enc = encodeURIComponent;
 
+/** The credential id of a new passkey is kept (public data) to ask for sign-in options later. */
 async function keepSession(
   call: Promise<ApiResult<SessionResponse>>,
 ): Promise<ApiResult<SessionResponse>> {
   const result = await call;
   if (result.ok) {
-    setSessionToken(result.data.token);
+    setSessionHint(true);
     if (result.data.credentialId) setCredentialId(result.data.credentialId);
   }
   return result;
+}
+
+/**
+ * Whether this page can use passkeys: a real domain name (or localhost), not an IP address, in a
+ * browser that has WebAuthn. On the home Wi-Fi IP address of a phone test it is false, and the
+ * sign-in screens offer the password only (D-046).
+ */
+export function passkeysSupported(): boolean {
+  return passkeysAvailable(location.hostname) && browserSupportsWebAuthn();
+}
+
+/** Runs the browser's passkey prompt; a closed prompt and a real failure are told apart. */
+async function ceremony<T>(run: () => Promise<T>): Promise<ApiResult<T>> {
+  try {
+    return { ok: true, data: await run() };
+  } catch (cause) {
+    const name = cause instanceof Error ? cause.name : '';
+    const cancelled = name === 'NotAllowedError' || name === 'AbortError';
+    return {
+      ok: false,
+      error: cancelled ? 'passkey_cancelled' : 'passkey_failed',
+      status: 0,
+      message: cause instanceof Error ? cause.message : 'Passkey failed',
+    };
+  }
 }
 
 const post = (path: string, body: unknown) =>
@@ -57,9 +90,31 @@ export function signInWithCode(code: string): Promise<ApiResult<SessionResponse>
   return post('/api/auth/code', { code, deviceId: getDeviceId() });
 }
 
-/** Finishes setup: the simulated passkey or a password (10+ characters); a full session follows. */
-export function registerDevice(input: RegisterRequest): Promise<ApiResult<SessionResponse>> {
-  return post('/api/auth/register', input);
+export type RegisterInput =
+  | { kind: 'passkey'; deviceName: string }
+  | { kind: 'password'; password: string; deviceName: string };
+
+/**
+ * Finishes setup: a passkey (options from the server, the browser's prompt, then the server checks
+ * it) or a password (10+ characters). A full session follows.
+ */
+export async function registerDevice(input: RegisterInput): Promise<ApiResult<SessionResponse>> {
+  if (input.kind === 'password') return post('/api/auth/register', input);
+  const asked = await request('/api/auth/register/options', parsePasskeyOptionsResponse, {
+    method: 'POST',
+  });
+  if (!asked.ok) return asked;
+  const made = await ceremony(() =>
+    startRegistration({
+      optionsJSON: asked.data.options as unknown as PublicKeyCredentialCreationOptionsJSON,
+    }),
+  );
+  if (!made.ok) return made;
+  return post('/api/auth/register', {
+    kind: 'passkey',
+    deviceName: input.deviceName,
+    response: made.data,
+  });
 }
 
 export function signInWithPassword(input: {
@@ -71,22 +126,35 @@ export function signInWithPassword(input: {
   return post('/api/auth/password', { ...input, deviceId: getDeviceId() });
 }
 
-/** Uses the credential id this device kept at registration; 401 `invalid_credentials` without one. */
-export function signInWithPasskey(): Promise<ApiResult<SessionResponse>> {
-  return post('/api/auth/passkey', {
-    credentialId: getCredentialId() ?? 'none',
-    deviceId: getDeviceId(),
+/**
+ * Signs in with this device's passkey: options for the credential id kept at registration (or any
+ * passkey the browser holds for this site), the browser's prompt, then the server checks the answer.
+ */
+export async function signInWithPasskey(): Promise<ApiResult<SessionResponse>> {
+  const credentialId = getCredentialId();
+  const deviceId = getDeviceId();
+  const asked = await request('/api/auth/passkey/options', parsePasskeyOptionsResponse, {
+    method: 'POST',
+    body: { deviceId, ...(credentialId ? { credentialId } : {}) },
   });
+  if (!asked.ok) return asked;
+  const made = await ceremony(() =>
+    startAuthentication({
+      optionsJSON: asked.data.options as unknown as PublicKeyCredentialRequestOptionsJSON,
+    }),
+  );
+  if (!made.ok) return made;
+  return post('/api/auth/passkey', { deviceId, response: made.data });
 }
 
 export function fetchMe(): Promise<ApiResult<MeResponse>> {
   return request('/api/auth/me', parseMeResponse);
 }
 
-/** Ends this session (the device stays in the list); forgets the token either way. */
+/** Ends this session (the device stays in the list); the server clears the cookie. */
 export async function signOut(): Promise<ApiResult<OkResponse>> {
   const result = await request('/api/auth/sign-out', parseOkResponse, { method: 'POST' });
-  clearSessionToken();
+  setSessionHint(false);
   return result;
 }
 

@@ -1,5 +1,6 @@
-// Sign-in contract (stage 7.1; D-011, D-013, D-027 row 1, D-045). The passkey step is simulated in
-// the dev mock; phase 4 keeps these shapes and swaps in WebAuthn, D1 sessions and rate limits.
+// Sign-in contract (stage 7.1, real passkeys in 8.2; D-011, D-013, D-014, D-027 row 1, D-045,
+// D-046). The session token never appears in a body: it travels only in the HttpOnly `__Host-`
+// cookie. Passkeys are WebAuthn: options come from the server, the browser signs, the server checks.
 import type { Seller } from './domain';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray } from './parse';
 import { parseSeller } from './seller';
@@ -20,10 +21,29 @@ export const SETUP_SESSION_MINUTES = 60;
 /** 5 failed tries (per device, and per seller) lock sign-in for 15 minutes (D-027 row 1). */
 export const MAX_FAILED_ATTEMPTS = 5;
 export const LOCKOUT_MINUTES = 15;
+/** A WebAuthn challenge is good for 5 minutes and for one check. */
+export const CHALLENGE_TTL_MINUTES = 5;
+/** At most this many requests to /api/auth/* (and /api/admin/setup) per browser id per window. */
+export const AUTH_RATE_MAX = 30;
+export const AUTH_RATE_WINDOW_SECONDS = 60;
+/** The name passkeys show to the person ("Delave" in the browser's own prompt). */
+export const RP_NAME = 'Delave';
 export const PASSWORD_MIN = 10;
 export const PASSWORD_MAX = 200;
 export const DEVICE_NAME_MAX = 40;
 export const SELLER_NAME_MAX = 60;
+
+/**
+ * Passkeys are tied to a domain name, and browsers refuse them on a bare IP address (D-046), such
+ * as the home Wi-Fi address used to test on a phone. On those hosts the sign-in screens hide the
+ * passkey button and offer the password. `localhost` is fine.
+ */
+export function passkeysAvailable(hostname: string): boolean {
+  const host = hostname.replace(/^\[|\]$/g, '');
+  if (host === '') return false;
+  if (host.includes(':')) return false; // IPv6
+  return !/^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+}
 
 export type PasswordStrength = 'ok' | 'too_short' | 'too_long';
 export function checkPassword(password: string): PasswordStrength {
@@ -72,9 +92,13 @@ export type PasswordSignInRequest = DeviceIdField & {
   password: string;
   deviceName: string;
 };
-export type PasskeySignInRequest = DeviceIdField & { credentialId: string };
+/** What the browser's WebAuthn call returned, as JSON; the server checks its contents. */
+export type WebAuthnResponse = Record<string, unknown> & { id: string };
+/** Asks for passkey sign-in options; `credentialId` is the one this browser kept, if any. */
+export type PasskeyOptionsRequest = DeviceIdField & { credentialId?: string };
+export type PasskeySignInRequest = DeviceIdField & { response: WebAuthnResponse };
 export type RegisterRequest =
-  | { kind: 'passkey'; deviceName: string }
+  | { kind: 'passkey'; deviceName: string; response: WebAuthnResponse }
   | { kind: 'password'; password: string; deviceName: string };
 export type RenameDeviceRequest = { name: string };
 export type CreateSellerRequest = { name: string; slug: string };
@@ -82,8 +106,14 @@ export type ChefInviteRequest = { chefId: string };
 
 // ---- Responses ----
 
-/** `credentialId` comes back from a passkey registration; the device keeps it to sign in later. */
-export type SessionResponse = { token: string; me: Me; credentialId?: string };
+/**
+ * A sign-in answer. The session itself is in the `Set-Cookie` header, not here. `credentialId`
+ * comes back from a passkey registration; the browser keeps it (public data) to ask for sign-in
+ * options later.
+ */
+export type SessionResponse = { me: Me; credentialId?: string };
+/** The options JSON for `startRegistration` / `startAuthentication` (SimpleWebAuthn's shapes). */
+export type PasskeyOptionsResponse = { options: Record<string, unknown> };
 export type MeResponse = { me: Me };
 export type DevicesResponse = { devices: Array<DeviceView> };
 export type KeyResponse = { key: string; expiresAt: string; maxDevices: number };
@@ -132,11 +162,29 @@ export function parseCodeSignInRequest(input: unknown): CodeSignInRequest | null
   return deviceId && code ? { deviceId, code } : null;
 }
 
+function webAuthnResponseOf(value: unknown): WebAuthnResponse | null {
+  if (!isRecord(value) || typeof value['id'] !== 'string') return null;
+  if (value['id'] === '' || value['id'].length > 1400) return null;
+  if (JSON.stringify(value).length > 20_000) return null;
+  return value as WebAuthnResponse;
+}
+
+export function parsePasskeyOptionsRequest(input: unknown): PasskeyOptionsRequest | null {
+  if (!isRecord(input)) return null;
+  const deviceId = deviceIdOf(input);
+  if (!deviceId) return null;
+  const { credentialId } = input;
+  if (credentialId === undefined) return { deviceId };
+  return typeof credentialId === 'string' && credentialId.length >= 1 && credentialId.length <= 1400
+    ? { deviceId, credentialId }
+    : null;
+}
+
 export function parsePasskeySignInRequest(input: unknown): PasskeySignInRequest | null {
   if (!isRecord(input)) return null;
   const deviceId = deviceIdOf(input);
-  const credentialId = text(input['credentialId'], 200);
-  return deviceId && credentialId ? { deviceId, credentialId } : null;
+  const response = webAuthnResponseOf(input['response']);
+  return deviceId && response ? { deviceId, response } : null;
 }
 
 /** The password is not trimmed; only its length is bounded at sign-in (no hints about strength). */
@@ -159,7 +207,10 @@ export function parseRegisterRequest(input: unknown): RegisterRequest | null {
   if (!isRecord(input)) return null;
   const deviceName = text(input['deviceName'], DEVICE_NAME_MAX);
   if (!deviceName) return null;
-  if (input['kind'] === 'passkey') return { kind: 'passkey', deviceName };
+  if (input['kind'] === 'passkey') {
+    const response = webAuthnResponseOf(input['response']);
+    return response ? { kind: 'passkey', deviceName, response } : null;
+  }
   const { password } = input;
   if (input['kind'] === 'password' && typeof password === 'string') {
     return checkPassword(password) === 'ok' ? { kind: 'password', password, deviceName } : null;
@@ -209,10 +260,15 @@ export function parseMe(input: unknown): Me | null {
 export function parseSessionResponse(input: unknown): SessionResponse | null {
   if (!isRecord(input)) return null;
   const me = parseMe(input['me']);
-  const { token, credentialId } = input;
-  if (!me || typeof token !== 'string' || token === '') return null;
+  const { credentialId } = input;
+  if (!me) return null;
   if (credentialId !== undefined && typeof credentialId !== 'string') return null;
-  return { token, me, ...(credentialId !== undefined ? { credentialId } : {}) };
+  return { me, ...(credentialId !== undefined ? { credentialId } : {}) };
+}
+
+export function parsePasskeyOptionsResponse(input: unknown): PasskeyOptionsResponse | null {
+  if (!isRecord(input) || !isRecord(input['options'])) return null;
+  return { options: input['options'] };
 }
 
 export function parseMeResponse(input: unknown): MeResponse | null {

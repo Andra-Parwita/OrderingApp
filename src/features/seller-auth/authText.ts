@@ -42,6 +42,10 @@ export function failureMessage(t: TFunction, failure: ApiFailure): string {
         : `${t('errors.wrong')} ${t('errors.triesLeft', { count: failure.triesLeft })}`;
     case 'unauthorized':
       return t('errors.setupExpired');
+    case 'passkey_cancelled':
+      return t('errors.passkeyCancelled');
+    case 'passkey_failed':
+      return t('errors.passkeyFailed');
     default:
       return t('errors.generic');
   }

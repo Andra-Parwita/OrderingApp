@@ -1,4 +1,6 @@
-import { all, call, delay, put, race, take, takeLatest } from 'redux-saga/effects';
+import type { EventChannel } from 'redux-saga';
+import { all, call, put, race, take, takeLatest } from 'redux-saga/effects';
+import { liveRefreshLoop, type LiveMessage } from '../../api/live';
 import type { ApiResult } from '../../api/http';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
@@ -6,7 +8,8 @@ import type { SellerMenuResponse } from '../../../shared/menuContract';
 import type { SellerOrdersResponse } from '../../../shared/orderContract';
 import { loaded, loadFailed, pollingStarted, pollingStopped, refreshRequested } from './cookSlice';
 
-export const COOK_POLL_MS = 15000;
+/** How often the screen reloads while the live socket is down (the fallback). */
+export const COOK_POLL_MS = 60_000;
 
 export function* loadCook() {
   const [orders, menu] = (yield all([
@@ -30,22 +33,26 @@ export function* loadCook() {
   }
 }
 
-// Phase 4 live: the Durable Object connection replaces this polling.
-function* pollLoop(pollMs: number) {
-  while (true) {
-    yield call(loadCook);
-    yield delay(pollMs);
-  }
-}
-
-function* watchPolling(pollMs: number) {
+// Live updates (stage 8.3): reload when the seller's Durable Object reports an order or menu
+// change (api/live.ts); every `pollMs` while the socket is down.
+function* watchPolling(pollMs: number, channel?: () => EventChannel<LiveMessage>) {
   while (true) {
     yield take(pollingStarted.type);
-    yield race({ poll: call(pollLoop, pollMs), stop: take(pollingStopped.type) });
+    yield race({
+      poll: call(liveRefreshLoop, {
+        load: loadCook,
+        fallbackMs: pollMs,
+        ...(channel ? { channel } : {}),
+      }),
+      stop: take(pollingStopped.type),
+    });
   }
 }
 
-export function* cookSaga(pollMs: number = COOK_POLL_MS) {
+export function* cookSaga(
+  pollMs: number = COOK_POLL_MS,
+  channel?: () => EventChannel<LiveMessage>,
+) {
   yield takeLatest(refreshRequested.type, loadCook);
-  yield call(watchPolling, pollMs);
+  yield call(watchPolling, pollMs, channel);
 }

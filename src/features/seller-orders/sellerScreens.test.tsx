@@ -163,7 +163,7 @@ describe('seller screens', () => {
     });
 
     it('needs a second tap to cancel, then cancels on the server', async () => {
-      const created = mockStore.createOrder({
+      const created = await mockStore.createOrder({
         firstName: 'Rina',
         language: 'en',
         lines: [{ itemId: 'nasi-campur', qty: 1 }],
@@ -178,11 +178,11 @@ describe('seller screens', () => {
       expect(
         await screen.findByRole('button', { name: 'Tap again to cancel' }),
       ).toBeInTheDocument();
-      expect(mockStore.getByCode(created.value.code)?.status).toBe('ordered');
+      expect((await mockStore.getByCode(created.value.code))?.status).toBe('ordered');
 
       fireEvent.click(screen.getByRole('button', { name: 'Tap again to cancel' }));
       expect(await screen.findByText('Cancelled')).toBeInTheDocument();
-      expect(mockStore.getByCode(created.value.code)?.status).toBe('cancelled');
+      expect((await mockStore.getByCode(created.value.code))?.status).toBe('cancelled');
     });
   });
 });

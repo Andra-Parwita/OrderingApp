@@ -1,6 +1,6 @@
 import type { Chef, Kitchen, KitchenSettings, MenuItem, Seller, Week } from '../../shared/domain';
 
-/** Everything one seller owns in the mock (D-036). */
+/** Everything one seller owns (D-036). */
 export type SellerFixture = {
   seller: Seller;
   /** When the admin added the seller (ISO); the admin list shows it. */

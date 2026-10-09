@@ -4,8 +4,9 @@ import { Link, Navigate } from 'react-router';
 import { styled } from 'styled-components';
 import type { Me } from '../../shared/authContract';
 import { adminSetup } from '../api/auth';
+import { useDevTools } from '../api/devTools';
 import { lastSignedIn } from '../api/device/sellerContext';
-import { getCredentialId, getSessionToken } from '../api/device/session';
+import { getCredentialId, hasSessionHint } from '../api/device/session';
 import { isStaff, useSession } from './session';
 
 // Route guards. Each asks the server who this is once, when its area is entered (a sign-in, a
@@ -15,12 +16,12 @@ import { isStaff, useSession } from './session';
 function useEntryCheck(): { done: boolean; me: Me | null } {
   const { refresh } = useSession();
   const [state, setState] = useState<{ done: boolean; me: Me | null }>({
-    // No token, nothing to ask: the answer is known at once.
-    done: getSessionToken() === null,
+    // Never signed in on this device, nothing to ask: the answer is known at once.
+    done: !hasSessionHint(),
     me: null,
   });
   useEffect(() => {
-    if (getSessionToken() === null) return undefined;
+    if (!hasSessionHint()) return undefined;
     let live = true;
     void refresh().then((me) => {
       if (live) setState({ done: true, me });
@@ -33,14 +34,18 @@ function useEntryCheck(): { done: boolean; me: Me | null } {
 }
 
 /**
- * Seller and chef pages need a finished sign-in. Dev builds without any session keep the seller
- * picker (the old dev override); a production build always asks for a sign-in.
+ * Seller and chef pages need a finished sign-in. A server running with DEV_TOOLS keeps the seller
+ * picker for a device without any session (the dev override); production always asks for a sign-in.
  */
 export function SellerGuard({ children }: Readonly<{ children: ReactNode }>) {
   const { done, me } = useEntryCheck();
+  const devTools = useDevTools();
   if (!done) return null;
   if (isStaff(me)) return <>{children}</>;
-  if (import.meta.env.DEV && me === null && getSessionToken() === null) return <>{children}</>;
+  if (me === null && !hasSessionHint()) {
+    if (devTools === undefined) return null; // the server has not said yet
+    if (devTools) return <>{children}</>;
+  }
   return <Navigate to={lastSignedIn() ? '/seller/sign-in' : '/seller/setup'} replace />;
 }
 

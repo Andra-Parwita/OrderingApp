@@ -15,7 +15,7 @@ describe('ChefsScreen', () => {
     renderWithStore(<ChefsScreen />, createTestStore());
     await screen.findByText('Chef Wati');
   }
-  const names = () => mockStore.listChefs().map((chef) => chef.name);
+  const names = async () => (await mockStore.listChefs()).map((chef) => chef.name);
 
   it('lists chefs with their items this week and the notes', async () => {
     await renderChefs();
@@ -32,7 +32,7 @@ describe('ChefsScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add chef' }));
     expect(await screen.findByText('Chef Budi')).toBeInTheDocument();
     expect(screen.getByText('0 items this week')).toBeInTheDocument();
-    expect(names()).toContain('Chef Budi');
+    expect(await names()).toContain('Chef Budi');
   });
 
   it('renames a chef', async () => {
@@ -43,15 +43,15 @@ describe('ChefsScreen', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save name' }));
     expect(await screen.findByText('Chef Wati S')).toBeInTheDocument();
-    expect(names()).toEqual(['Chef Wati S']);
+    expect(await names()).toEqual(['Chef Wati S']);
   });
 
   it('deletes a chef only on the second tap', async () => {
     await renderChefs();
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(names()).toEqual(['Chef Wati']);
+    expect(await names()).toEqual(['Chef Wati']);
     fireEvent.click(screen.getByRole('button', { name: 'Tap again to delete' }));
-    await waitFor(() => expect(names()).toEqual([]));
+    await waitFor(async () => expect(await names()).toEqual([]));
     expect(await screen.findByText('No chefs yet. Add the first one below.')).toBeInTheDocument();
   });
 
@@ -86,27 +86,15 @@ describe('ChefsScreen', () => {
       { role: 'chef', sellerId: 'seller-onde-onde', chefId: 'wati' },
       'invite',
     );
-    const post = async (path: string, body: unknown, token?: string) => {
-      const response = await fetch(path, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(body),
-      });
-      return (await response.json()) as { token: string };
-    };
+    // Straight in the store (a key, then a password): no browser session is involved.
     for (const n of ['1', '2']) {
-      const started = await post('/api/auth/invite', {
-        key: issued.key,
-        deviceId: `chef-dev-${n}-abcd`,
+      const started = await mockStores.auth.redeemKey(issued.key, `chef-dev-${n}-abcd`);
+      if (!started.ok) throw new Error(started.error);
+      await mockStores.auth.register(started.value.token, {
+        kind: 'password',
+        password: 'long enough password',
+        deviceName: `Phone ${n}`,
       });
-      await post(
-        '/api/auth/register',
-        { kind: 'passkey', deviceName: `Phone ${n}` },
-        started.token,
-      );
     }
     await renderChefs();
     expect(await screen.findByText('Signed in on 2 devices')).toBeInTheDocument();

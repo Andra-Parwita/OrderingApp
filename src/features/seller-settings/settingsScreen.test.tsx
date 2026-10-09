@@ -25,7 +25,7 @@ describe('SettingsScreen', () => {
     expect(screen.getByText('Closes automatically at Fri 9 Oct, 9 pm')).toBeInTheDocument();
     expect(number()).toHaveValue('');
     expect(screen.getByLabelText('Greeting (English)')).toHaveValue(
-      mockStore.getSettings().postGreeting.en,
+      (await mockStore.getSettings()).postGreeting.en,
     );
     expect(screen.getAllByText('{phone} is replaced with your number')).toHaveLength(2);
     expect(screen.getAllByText(/^\d+\/500$/)).toHaveLength(4);
@@ -74,7 +74,7 @@ describe('SettingsScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Saved')).toBeInTheDocument();
     await waitFor(() => expect(number()).toHaveValue('+61 412 345 678'));
-    expect(mockStore.getSettings()).toMatchObject({
+    expect(await mockStore.getSettings()).toMatchObject({
       whatsappNumber: '61412345678',
       orderingOpen: false,
     });
@@ -82,12 +82,15 @@ describe('SettingsScreen', () => {
   });
 
   it('removes the number when the field is emptied', async () => {
-    mockStore.setSettings({ ...mockStore.getSettings(), whatsappNumber: '61412345678' });
+    await mockStore.setSettings({
+      ...(await mockStore.getSettings()),
+      whatsappNumber: '61412345678',
+    });
     await renderSettings();
     expect(number()).toHaveValue('+61 412 345 678');
     fireEvent.change(number(), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await screen.findByText('Saved');
-    expect(mockStore.getSettings().whatsappNumber).toBeUndefined();
+    expect((await mockStore.getSettings()).whatsappNumber).toBeUndefined();
   });
 });

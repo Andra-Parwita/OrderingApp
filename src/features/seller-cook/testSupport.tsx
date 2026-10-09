@@ -3,7 +3,8 @@ import { render } from '@testing-library/react';
 import i18n from 'i18next';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
-import createSagaMiddleware from 'redux-saga';
+import createSagaMiddleware, { type EventChannel } from 'redux-saga';
+import type { LiveMessage } from '../../api/live';
 import type { Order, OrderLine, SellerMenuItemView } from '../../../shared/domain';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
@@ -119,13 +120,18 @@ export function sampleOrders(): Array<Order> {
   ];
 }
 
-export function createTestStore(options: { saga: boolean; pollMs?: number }) {
+export function createTestStore(options: {
+  saga: boolean;
+  pollMs?: number;
+  /** A fake live channel (api/live.ts); without it the saga finds no socket and only polls. */
+  channel?: () => EventChannel<LiveMessage>;
+}) {
   const sagaMiddleware = createSagaMiddleware();
   const store = configureStore({
     reducer: { sellerCook: cookReducer },
     middleware: (getDefault) => getDefault({ thunk: false }).concat(sagaMiddleware),
   });
-  if (options.saga) sagaMiddleware.run(cookSaga, options.pollMs);
+  if (options.saga) sagaMiddleware.run(cookSaga, options.pollMs, options.channel);
   return store;
 }
 export type TestStore = ReturnType<typeof createTestStore>;

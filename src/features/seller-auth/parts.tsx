@@ -176,6 +176,3 @@ export function PasswordField({
     </FieldRow>
   );
 }
-
-/** True in the dev build only: the prototype passkey note shows nowhere else. */
-export const isDevBuild = import.meta.env.DEV;

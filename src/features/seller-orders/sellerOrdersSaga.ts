@@ -1,13 +1,4 @@
-import {
-  call,
-  delay,
-  put,
-  race,
-  take,
-  takeEvery,
-  takeLatest,
-  takeLeading,
-} from 'redux-saga/effects';
+import { call, put, race, take, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
 import type { ApiResult } from '../../api/http';
 import {
@@ -24,6 +15,8 @@ import {
   setOrderStatus,
   setOrderWaReceived,
 } from '../../api/client';
+import { liveRefreshLoop, type LiveMessage } from '../../api/live';
+import type { EventChannel } from 'redux-saga';
 import type { MenuResponse, SellerMenuResponse } from '../../../shared/menuContract';
 import type { SellerOrderResponse, SellerOrdersResponse } from '../../../shared/orderContract';
 import {
@@ -51,7 +44,8 @@ import {
 } from './sellerOrdersSlice';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 
-export const POLL_MS = 5000;
+/** How often the list reloads while the live socket is down (the fallback). */
+export const POLL_MS = 60_000;
 
 export function* loadOrders() {
   const result = (yield call(
@@ -68,20 +62,26 @@ function* loadWeek() {
   if (result.ok) yield put(weekLoaded({ cookingDate: result.data.week.cookingDate }));
 }
 
-// Phase 4 replaces this polling with the Durable Object live connection (the "Live" indicator
-// then reflects the socket instead of the last poll).
-function* pollLoop(pollMs: number) {
+// Live updates (stage 8.3): while a seller screen is shown the list reloads when the seller's
+// Durable Object says something changed (api/live.ts), and every `pollMs` while the socket is down.
+// Phase 5 note: the "Live" dot still shows whether the last load worked; the socket's own status
+// (`Reconnecting…`) can drive it once the screens are reworked.
+function* refresh() {
   yield call(loadWeek);
-  while (true) {
-    yield call(loadOrders);
-    yield delay(pollMs);
-  }
+  yield call(loadOrders);
 }
 
-function* watchPolling(pollMs: number) {
+function* watchPolling(pollMs: number, channel?: () => EventChannel<LiveMessage>) {
   while (true) {
     yield take(pollingStarted.type);
-    yield race({ poll: call(pollLoop, pollMs), stop: take(pollingStopped.type) });
+    yield race({
+      poll: call(liveRefreshLoop, {
+        load: refresh,
+        fallbackMs: pollMs,
+        ...(channel ? { channel } : {}),
+      }),
+      stop: take(pollingStopped.type),
+    });
   }
 }
 
@@ -195,7 +195,10 @@ export function* devReset() {
   yield call(loadOrders);
 }
 
-export function* sellerOrdersSaga(pollMs: number = POLL_MS) {
+export function* sellerOrdersSaga(
+  pollMs: number = POLL_MS,
+  channel?: () => EventChannel<LiveMessage>,
+) {
   yield takeLatest(refreshRequested.type, loadOrders);
   yield takeEvery(statusChangeRequested.type, changeStatus);
   yield takeEvery(paidChangeRequested.type, changePaid);
@@ -205,9 +208,8 @@ export function* sellerOrdersSaga(pollMs: number = POLL_MS) {
   yield takeEvery(seenRequested.type, markSeen);
   yield takeLatest(menuRequested.type, loadSellerMenu);
   yield takeLeading(createOrderRequested.type, createOrder);
-  if (import.meta.env.DEV) {
-    yield takeLatest(devSampleOrdersRequested.type, devSampleOrders);
-    yield takeLatest(devResetRequested.type, devReset);
-  }
-  yield call(watchPolling, pollMs);
+  // Only the dev buttons dispatch these, and they show only when the server has DEV_TOOLS on.
+  yield takeLatest(devSampleOrdersRequested.type, devSampleOrders);
+  yield takeLatest(devResetRequested.type, devReset);
+  yield call(watchPolling, pollMs, channel);
 }

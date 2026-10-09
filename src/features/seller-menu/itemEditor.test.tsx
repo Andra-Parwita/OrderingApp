@@ -8,9 +8,9 @@ import { ItemEditor } from './ItemEditor';
 import { fillMenu, orderThenDraft, renderWithStore, setupI18n } from './testSupport';
 
 beforeAll(setupI18n);
-beforeEach(() => {
-  mockStore.reset();
-  mockStore.setWeek({ status: 'draft' });
+beforeEach(async () => {
+  await mockStore.reset();
+  await mockStore.setWeek({ status: 'draft' });
 });
 
 function renderEditor(itemId: string | null, desktop = false) {
@@ -19,8 +19,8 @@ function renderEditor(itemId: string | null, desktop = false) {
   return onClose;
 }
 const field = (name: string) => screen.getByLabelText(name);
-const item = (id: string) =>
-  mockStore.getSellerMenu().items.find((candidate) => candidate.id === id);
+const item = async (id: string) =>
+  (await mockStore.getSellerMenu()).items.find((candidate) => candidate.id === id);
 
 describe('ItemEditor', () => {
   it('fills the form from the item, with the helpers', async () => {
@@ -71,7 +71,7 @@ describe('ItemEditor', () => {
     fireEvent.change(field('Chef'), { target: { value: 'wati' } });
     fireEvent.click(screen.getByRole('button', { name: 'Add item' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    const added = mockStore.getSellerMenu().items.at(-1);
+    const added = (await mockStore.getSellerMenu()).items.at(-1);
     expect(added).toMatchObject({
       name: { en: '', id: 'Sate ayam' },
       priceCents: 1050,
@@ -89,7 +89,7 @@ describe('ItemEditor', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Sold out' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save item' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    const saved = item('lemper');
+    const saved = await item('lemper');
     expect(saved?.priceCents).toBe(1100);
     expect(saved?.limit).toBeUndefined();
     expect(saved?.chefId).toBeUndefined();
@@ -106,7 +106,7 @@ describe('ItemEditor', () => {
   });
 
   it('hides Delete for a new item, and stops adding at 10 items', async () => {
-    fillMenu();
+    await fillMenu();
     renderEditor(null);
     expect(await screen.findByRole('button', { name: 'Add item' })).toBeDisabled();
     expect(screen.getByText('The menu already has 10 items.')).toBeInTheDocument();
@@ -116,26 +116,26 @@ describe('ItemEditor', () => {
   it('deletes with a second tap', async () => {
     const onClose = renderEditor('pesmol');
     fireEvent.click(await screen.findByRole('button', { name: 'Delete item' }));
-    expect(item('pesmol')).toBeDefined();
+    expect(await item('pesmol')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Tap again to delete' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(item('pesmol')).toBeUndefined();
+    expect(await item('pesmol')).toBeUndefined();
   });
 
   it('explains an item with orders and marks it sold out in one tap', async () => {
-    mockStore.setWeek({ status: 'published' });
-    orderThenDraft('pesmol');
+    await mockStore.setWeek({ status: 'published' });
+    await orderThenDraft('pesmol');
     const onClose = renderEditor('pesmol');
     fireEvent.click(await screen.findByRole('button', { name: 'Delete item' }));
     fireEvent.click(screen.getByRole('button', { name: 'Tap again to delete' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "This item has orders, so it can't be deleted. Mark it sold out instead.",
     );
-    expect(item('pesmol')).toBeDefined();
+    expect(await item('pesmol')).toBeDefined();
     expect(onClose).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Mark sold out' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(item('pesmol')).toMatchObject({ soldOut: true, manualSoldOut: true });
+    expect(await item('pesmol')).toMatchObject({ soldOut: true, manualSoldOut: true });
   });
 
   it('speaks Indonesian', async () => {

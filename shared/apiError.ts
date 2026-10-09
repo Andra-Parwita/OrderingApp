@@ -34,6 +34,8 @@ export const API_ERROR_CODES = [
   'locked_out',
   'slug_taken',
   'admin_exists',
+  /** A state-changing call whose `Origin` is missing or is not this site (stage 8.2). */
+  'bad_origin',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

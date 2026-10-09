@@ -32,8 +32,8 @@ const base: CreateOrderRequest = {
   lines: [{ itemId: 'pesmol', qty: 1 }],
 };
 
-beforeEach(() => {
-  mockStore.reset();
+beforeEach(async () => {
+  await mockStore.reset();
 });
 
 describe('menu chef data (D-012)', () => {

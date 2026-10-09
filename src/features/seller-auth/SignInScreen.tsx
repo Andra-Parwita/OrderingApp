@@ -1,6 +1,6 @@
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { signInWithPasskey, signInWithPassword } from '../../api/auth';
+import { passkeysSupported, signInWithPasskey, signInWithPassword } from '../../api/auth';
 import { getCredentialId } from '../../api/device/session';
 import type { Me } from '../../../shared/authContract';
 import { Button } from '../../ui';
@@ -20,10 +20,14 @@ export type SignInScreenProps = Readonly<{
   footer?: ReactNode;
 }>;
 
-/** A3: sign in with the passkey this device kept, or with a password. */
+/**
+ * A3: sign in with the passkey this device kept, or with a password. On an IP-address web address
+ * (the home Wi-Fi test of a phone) passkeys cannot work (D-046): only the password shows.
+ */
 export function SignInScreen({ slug, kitchenName, chefId, onSignedIn, footer }: SignInScreenProps) {
   const { t } = useTranslation(AUTH_NS);
-  const [showPassword, setShowPassword] = useState(false);
+  const passkeys = passkeysSupported();
+  const [showPassword, setShowPassword] = useState(!passkeys);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,18 +74,22 @@ export function SignInScreen({ slug, kitchenName, chefId, onSignedIn, footer }: 
       <Title>{kitchenName ?? t('signIn.title')}</Title>
       <Body>
         {kitchenName ? <Hint>{t('signIn.title')}</Hint> : null}
-        <Actions>
-          <Button variant="primary" fullWidth disabled={busy} onClick={() => void withPasskey()}>
-            {t('signIn.passkey')}
-          </Button>
-          <Button
-            fullWidth
-            aria-expanded={showPassword}
-            onClick={() => setShowPassword((current) => !current)}
-          >
-            {showPassword ? t('signIn.hidePassword') : t('signIn.usePassword')}
-          </Button>
-        </Actions>
+        {passkeys ? (
+          <Actions>
+            <Button variant="primary" fullWidth disabled={busy} onClick={() => void withPasskey()}>
+              {t('signIn.passkey')}
+            </Button>
+            <Button
+              fullWidth
+              aria-expanded={showPassword}
+              onClick={() => setShowPassword((current) => !current)}
+            >
+              {showPassword ? t('signIn.hidePassword') : t('signIn.usePassword')}
+            </Button>
+          </Actions>
+        ) : (
+          <Hint>{t('signIn.noPasskeysHere')}</Hint>
+        )}
         {showPassword ? (
           <Section as="form" onSubmit={(event: FormEvent) => void withPassword(event)} noValidate>
             <PasswordField

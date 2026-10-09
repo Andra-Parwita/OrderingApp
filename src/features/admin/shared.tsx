@@ -70,6 +70,10 @@ export function failureText(t: TFunction, failure: ApiFailure): string {
       return t('error.unauthorized');
     case 'forbidden':
       return t('error.forbidden');
+    case 'passkey_cancelled':
+      return t('error.passkeyCancelled');
+    case 'passkey_failed':
+      return t('error.passkeyFailed');
     default:
       return t('error.generic');
   }

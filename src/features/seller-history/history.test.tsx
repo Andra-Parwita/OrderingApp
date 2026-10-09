@@ -100,7 +100,7 @@ beforeAll(async () => {
   registerSellerHistoryI18n();
 });
 beforeEach(async () => {
-  mockStore.reset();
+  await mockStore.reset();
   localStorage.clear();
   await i18n.changeLanguage('en');
 });

@@ -1,7 +1,8 @@
-// What this browser keeps for sign-in (dev mock, stage 7.1): the session token, a random device
-// id the server counts lockouts on, and the simulated passkey's credential id. Phase 4 keeps the
-// token in an HttpOnly cookie instead and the passkey in the platform.
-const TOKEN_KEY = 'session';
+// What this browser keeps for sign-in: a random id the server counts lockouts on, and the
+// credential id of this device's passkey (public data; the key itself stays in the platform).
+// The session is NOT kept here: since stage 8.2 it is an HttpOnly `__Host-session` cookie that
+// scripts cannot read.
+const LEGACY_TOKEN_KEY = 'session';
 const DEVICE_KEY = 'deviceId';
 const CREDENTIAL_KEY = 'passkeyCredential';
 
@@ -22,9 +23,15 @@ function write(key: string, value: string | null): void {
   }
 }
 
-export const getSessionToken = (): string | null => read(TOKEN_KEY);
-export const setSessionToken = (token: string): void => write(TOKEN_KEY, token);
-export const clearSessionToken = (): void => write(TOKEN_KEY, null);
+/** Deletes the session token an older version left in localStorage (it is no longer used). */
+export const dropLegacySessionToken = (): void => write(LEGACY_TOKEN_KEY, null);
+
+// The cookie is invisible to scripts, so this device keeps a plain hint that a sign-in happened
+// (nothing secret: "1"). It only saves a pointless `/api/auth/me` call, and the sign-in screen
+// for a device that never signed in. The server always has the last word: a 401 clears the hint.
+const HINT_KEY = 'signedIn';
+export const hasSessionHint = (): boolean => read(HINT_KEY) === '1';
+export const setSessionHint = (on: boolean): void => write(HINT_KEY, on ? '1' : null);
 
 export const getCredentialId = (): string | null => read(CREDENTIAL_KEY);
 export const setCredentialId = (id: string): void => write(CREDENTIAL_KEY, id);

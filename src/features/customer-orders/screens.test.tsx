@@ -75,7 +75,7 @@ describe('MyOrdersScreen', () => {
     const row = screen.getByRole('button', { name: new RegExp(placed.code.slice(0, 3)) });
     expect(row).toHaveTextContent('Ordered');
     expect(row).toHaveTextContent('3× Thin battered tempeh');
-    expect(row).toHaveTextContent('Sat 10 Oct · Pickup');
+    await waitFor(() => expect(row).toHaveTextContent('Sat 10 Oct · Pickup')); // after the menu loads
     expect(row).toHaveTextContent('$30.00');
     expect(screen.getByText('Saved on this phone only. No account.')).toBeVisible();
     expect(screen.queryByText('Earlier orders')).not.toBeInTheDocument();

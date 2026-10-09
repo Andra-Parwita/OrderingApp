@@ -11,7 +11,9 @@
     "lockedOut": "Too many tries. Try again in {{minutes}} minutes.",
     "noPasskey": "This device has no admin passkey.",
     "unauthorized": "Sign in as admin to see this page.",
-    "forbidden": "Only the admin can open this page."
+    "forbidden": "Only the admin can open this page.",
+    "passkeyCancelled": "The passkey prompt was closed. Try again.",
+    "passkeyFailed": "This device could not use a passkey. Try again."
   },
   "setup": {
     "title": "Set up the admin",
@@ -24,17 +26,17 @@
     "deviceLabel": "Name of this device",
     "deviceDefault": "My computer",
     "create": "Create admin passkey",
-    "simulated": "The passkey is simulated for now.",
     "doneTitle": "The admin is ready",
     "doneText": "This device can now sign in as admin.",
     "open": "Open the admin page",
-    "closes": "This page stops working once an admin exists."
+    "closes": "This page stops working once an admin exists.",
+    "noPasskeysHere": "Passkeys do not work on an IP address. Open this page from a web address, such as https://localhost, to set up the admin."
   },
   "signIn": {
     "title": "Admin sign-in",
     "text": "Sign in with the passkey on this device.",
     "button": "Sign in with passkey",
-    "simulated": "The passkey is simulated for now."
+    "noPasskeysHere": "Passkeys do not work on an IP address. Open this page from a web address, such as https://localhost."
   },
   "home": {
     "title": "Admin",

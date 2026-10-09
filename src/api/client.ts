@@ -75,8 +75,7 @@ const enc = encodeURIComponent;
 
 /**
  * Seller calls end with `(actor?, seller?)`: the audit name, then the seller's slug for the dev
- * `X-Seller` header. Without a slug the mock uses its default seller; phase 4 replaces the
- * header with the signed-in session.
+ * `X-Seller` header. The server uses it only with DEV_TOOLS on; a session always wins.
  */
 function who(actor?: StaffActor, seller?: string) {
   return { ...(actor ? { actor } : {}), ...(seller ? { seller } : {}) };

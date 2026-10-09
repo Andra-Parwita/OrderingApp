@@ -169,8 +169,8 @@ describe('seller batch 2: detail actions (MSW)', () => {
   beforeAll(setupI18n);
   beforeEach(() => mockStore.reset());
 
-  function customerOrder() {
-    const result = mockStore.createOrder({
+  async function customerOrder() {
+    const result = await mockStore.createOrder({
       firstName: 'Lisa',
       language: 'en',
       lines: [{ itemId: 'nasi-campur', qty: 1 }],
@@ -181,40 +181,42 @@ describe('seller batch 2: detail actions (MSW)', () => {
   }
 
   it('marks WhatsApp received, nudges with a toast, locks and unlocks', async () => {
-    const order = customerOrder();
+    const order = await customerOrder();
     const store = createTestStore({ saga: true });
     renderWithStore(<OrderDetailScreen code={order.code} onBack={noop} />, store);
 
     fireEvent.click(await screen.findByRole('button', { name: 'Mark WhatsApp received' }));
-    await waitFor(() => expect(mockStore.getByCode(order.code)?.waReceived).toBe(true));
+    await waitFor(async () =>
+      expect((await mockStore.getByCode(order.code))?.waReceived).toBe(true),
+    );
     expect(await screen.findByText('You can confirm.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Nudge customer' }));
     expect(await screen.findByText('Reminder sent to the customer')).toBeInTheDocument();
-    expect(mockStore.getByCode(order.code)?.inbox[0]?.kind).toBe('nudge');
+    expect((await mockStore.getByCode(order.code))?.inbox[0]?.kind).toBe('nudge');
 
     fireEvent.click(screen.getByRole('button', { name: 'Lock order' }));
     expect(await screen.findByRole('button', { name: 'Unlock order' })).toBeInTheDocument();
-    expect(mockStore.getByCode(order.code)?.locked).toBe(true);
+    expect((await mockStore.getByCode(order.code))?.locked).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Unlock order' }));
     expect(await screen.findByRole('button', { name: 'Lock order' })).toBeInTheDocument();
   });
 
   it('marks a changed order as seen', async () => {
-    const order = customerOrder();
-    const edited = mockStore.updateOrder(order.token, { note: 'Less spicy' });
+    const order = await customerOrder();
+    const edited = await mockStore.updateOrder(order.token, { note: 'Less spicy' });
     if (!edited.ok) throw new Error(edited.message);
-    expect(mockStore.getByCode(order.code)?.changed).toBe(true);
+    expect((await mockStore.getByCode(order.code))?.changed).toBe(true);
     const store = createTestStore({ saga: true });
     renderWithStore(<OrderDetailScreen code={order.code} onBack={noop} />, store);
     fireEvent.click(await screen.findByRole('button', { name: 'Seen' }));
-    await waitFor(() => expect(mockStore.getByCode(order.code)?.changed).toBe(false));
+    await waitFor(async () => expect((await mockStore.getByCode(order.code))?.changed).toBe(false));
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Seen' })).toBeNull());
   });
 
   it('disables lock and offers no nudge on a cancelled order', async () => {
-    const order = customerOrder();
-    mockStore.setStatus(order.code, 'cancelled', { role: 'seller', name: 'Bu Ani' });
+    const order = await customerOrder();
+    await mockStore.setStatus(order.code, 'cancelled', { role: 'seller', name: 'Bu Ani' });
     const store = createTestStore({ saga: true });
     renderWithStore(<OrderDetailScreen code={order.code} onBack={noop} />, store);
     expect(await screen.findByRole('button', { name: 'Lock order' })).toBeDisabled();
@@ -262,7 +264,7 @@ describe('seller batch 2: new order', () => {
   });
 
   it('shows the running total and "N left" only at 5 or fewer', async () => {
-    mockStore.updateItem('pesmol', { limit: 4 });
+    await mockStore.patchItem('pesmol', { limit: 4 });
     await renderNew();
     more('Lime-leaf mixed rice', 2);
     expect(screen.getByText('$30.00', { selector: 'span' })).toBeInTheDocument();

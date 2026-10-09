@@ -1,0 +1,11 @@
+# Local development only. Copy to `.dev.vars` (git-ignored; wrangler never uploads it):
+#   copy .dev.vars.example .dev.vars
+#
+# DEV_TOOLS=1 turns on every dev-only path: the X-Seller override, the live-socket slug fallback,
+# /api/dev/* (seller list, sample orders, reset) and the dev seller picker and buttons in the app.
+# Leave it out and the server runs as production does. Never set it as a Cloudflare variable.
+DEV_TOOLS=1
+
+# The key that creates the first admin (the setup screen asks for it). In production this is a
+# Cloudflare secret (`wrangler secret put ADMIN_SETUP_KEY`), a long random value nobody else knows.
+ADMIN_SETUP_KEY=DLV-DEVA-DMIN-SETU-PKEY

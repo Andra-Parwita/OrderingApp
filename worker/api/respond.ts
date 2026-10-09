@@ -1,6 +1,6 @@
-// Shared by the mock route files: error bodies with their HTTP status, and JSON body reading.
+// Shared by the API route files: error bodies with their HTTP status, and JSON body reading.
 import type { ApiErrorBody, ApiErrorCode } from '../../shared/apiError';
-import type { AuthFail } from './auth';
+import type { AuthFail } from '../repo/Repository';
 
 const STATUS: Record<ApiErrorCode, number> = {
   invalid_request: 400,
@@ -31,6 +31,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   locked_out: 429,
   slug_taken: 409,
   admin_exists: 409,
+  bad_origin: 403,
 };
 
 export function error(
@@ -58,10 +59,4 @@ export async function readJson(request: Request): Promise<unknown> {
   } catch {
     return undefined;
   }
-}
-
-/** The token of an `Authorization: Bearer <token>` header; undefined without one. */
-export function bearerOf(request: Request): string | undefined {
-  const header = request.headers.get('Authorization');
-  return header?.startsWith('Bearer ') ? header.slice(7).trim() : undefined;
 }

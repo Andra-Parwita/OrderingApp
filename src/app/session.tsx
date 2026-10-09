@@ -1,16 +1,18 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { Me } from '../../shared/authContract';
 import { fetchMe, signOut } from '../api/auth';
-import { getSessionToken } from '../api/device/session';
+import { hasSessionHint } from '../api/device/session';
 import { rememberSignedIn, setSessionSeller } from '../api/device/sellerContext';
 
 // Who is signed in on this device. The server decides (`GET /api/auth/me`); the guards ask it
-// when a seller or admin area is entered. The token itself lives in api/device/session.ts.
+// when a seller or admin area is entered. The session is an HttpOnly cookie: scripts cannot see
+// it, so the only way to know is to ask (a plain hint in api/device/session.ts saves asking a
+// device that never signed in).
 
 export type SessionValue = Readonly<{
   /** The last answer from the server; null when signed out or not asked yet. */
   me: Me | null;
-  /** Asks the server who this is (no request when the device holds no token). */
+  /** Asks the server who this is (no request when this device never signed in). */
   refresh: () => Promise<Me | null>;
   /** Takes a person who just signed in. */
   adopt: (me: Me | null) => void;
@@ -57,7 +59,7 @@ export function SessionProvider({ children }: Readonly<{ children: ReactNode }>)
   }, []);
 
   const refresh = useCallback(async () => {
-    if (getSessionToken() === null) {
+    if (!hasSessionHint()) {
       adopt(null);
       return null;
     }

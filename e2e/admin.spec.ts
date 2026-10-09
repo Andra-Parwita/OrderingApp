@@ -4,7 +4,8 @@ import { collectErrors } from './sellerHelpers';
 
 // Admin setup screen, sign-in, a new seller and an invite key, through the dev harness. The admin
 // is made once per run by global-setup.ts, so setup is refused and this spec signs in with the
-// passkey that setup left for it. It adds its own seller with a unique link.
+// passkey that setup left for it: a real WebAuthn credential, held by Chrome's virtual
+// authenticator, checked by the server. It adds its own seller with a unique link.
 
 test('admin sets up or signs in, adds a seller and sees an invite key once', async ({
   page,

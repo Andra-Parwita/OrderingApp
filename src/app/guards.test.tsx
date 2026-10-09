@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import i18n from 'i18next';
+import { forgetDevTools } from '../api/devTools';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import { SellerGuard, SellerOnly } from './guards';
@@ -20,8 +21,8 @@ beforeAll(async () => {
 });
 
 afterEach(() => {
+  forgetDevTools();
   vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
   localStorage.clear();
 });
 
@@ -39,7 +40,7 @@ function stubMe(me: Record<string, unknown> | null) {
 }
 
 function renderSeller() {
-  localStorage.setItem('session', 'tok');
+  localStorage.setItem('signedIn', '1'); // the hint a sign-in leaves; the session itself is a cookie
   return render(
     <AppThemeProvider>
       <MemoryRouter initialEntries={['/seller/menu']}>
@@ -79,8 +80,8 @@ describe('route guards', () => {
     expect(await screen.findByRole('heading', { name: 'Not available for chefs' })).toBeVisible();
   });
 
-  it('sends a rejected token to setup in a production build (device never signed in)', async () => {
-    vi.stubEnv('DEV', false);
+  it('sends a rejected token to setup when the server has no dev tools (production)', async () => {
+    forgetDevTools(); // the stubbed server below answers /api/health with a 401: dev tools are off
     stubMe(null);
     renderSeller();
     expect(await screen.findByText('setup page')).toBeInTheDocument();

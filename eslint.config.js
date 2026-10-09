@@ -123,6 +123,6 @@ export default tseslint.config(
     ignores: ['src/theme/**'],
     rules: { 'no-restricted-syntax': ['error', ...literalValueRules] },
   },
-  { files: ['**/*.js'], extends: [tseslint.configs.disableTypeChecked] },
+  { files: ['**/*.js', '**/*.mjs'], extends: [tseslint.configs.disableTypeChecked] },
   prettier,
 );

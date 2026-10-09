@@ -124,11 +124,17 @@ test('pictures: upload a small icon and see it in the preview', async ({
       buffer: solidPng(128, 128, [200, 90, 40]),
     });
     const preview = page.getByAltText('Preview of Small icon (closed menu)', { exact: true });
-    await expect(preview).toHaveAttribute('src', /^data:image\/(jpeg|png);base64,/);
-    await expect(page.getByAltText('Small icon (closed menu)', { exact: true })).toHaveAttribute(
-      'src',
-      /^data:image\//,
-    );
+    const imageSrc = /^\/images\/sellers\/[^/]+\/railIcon-[0-9a-f]{16}\.(jpg|png)$/;
+    await expect(preview).toHaveAttribute('src', imageSrc);
+    const railIcon = page.getByAltText('Small icon (closed menu)', { exact: true });
+    await expect(railIcon).toHaveAttribute('src', imageSrc);
+    const src = (await preview.getAttribute('src')) as string;
+    const served = await page.request.get(src);
+    expect(served.status()).toBe(200);
+    expect(served.headers()['content-type']).toMatch(/^image\//);
+    await expect
+      .poll(() => preview.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
     await page.screenshot({
       path: `captures/seller-setup-images-${testInfo.project.name}.png`,
       fullPage: true,

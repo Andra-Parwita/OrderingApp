@@ -1,6 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = 5181;
+// The run's own database (never `.wrangler/state`, the owner's dev data on port 5173): scratch-server.mjs
+// deletes it, migrates it and seeds the sample kitchens before the server starts, then the server
+// persists there (vite.config.ts, DELAVE_PERSIST_DIR). global-setup.ts asserts the same path.
+const DB_DIR = 'scratch/e2e-d1';
+const ORIGIN = `https://localhost:${PORT}`;
 
 // Specs that change server-wide settings (they close ordering for a moment) cannot run beside
 // specs that place orders. They live in `seller-settings*.spec.ts`, which the main projects skip;
@@ -28,11 +33,14 @@ export default defineConfig({
   fullyParallel: true,
   // 30 s is Playwright's default; webkit runs after the chromium projects so it is not starved.
   timeout: 30_000,
-  // Registers the dev admin (and one passkey per auth spec) once per run.
+  // Registers the dev admin (and one passkey per auth spec) once per run, after checking that the
+  // server runs on the run's own scratch database.
   globalSetup: './e2e/global-setup.ts',
   reporter: 'list',
   use: {
-    baseURL: `https://localhost:${PORT}`,
+    baseURL: ORIGIN,
+    // The server rejects writes without a same-site Origin (D-048); browsers send it, API calls do not.
+    extraHTTPHeaders: { Origin: ORIGIN },
     ignoreHTTPSErrors: false,
     trace: 'retain-on-failure',
   },
@@ -103,8 +111,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
-    env: { PORT: String(PORT) },
+    command: `node scripts/scratch-server.mjs --port ${String(PORT)} --dir ${DB_DIR}`,
     url: `https://localhost:${PORT}/api/health`,
     ignoreHTTPSErrors: true,
     reuseExistingServer: false,

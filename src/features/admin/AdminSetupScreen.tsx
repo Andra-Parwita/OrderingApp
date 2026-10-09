@@ -1,6 +1,6 @@
 import { useCallback, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminSetup, registerDevice } from '../../api/auth';
+import { adminSetup, passkeysSupported, registerDevice } from '../../api/auth';
 import { Button, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { failureText, FormSection, Message, Muted, Narrow, Section, Sub, Title } from './shared';
@@ -12,7 +12,7 @@ export type AdminSetupScreenProps = Readonly<{
 
 type Step = 'key' | 'passkey' | 'done';
 
-/** First-time admin setup: the setup key, then a (simulated) passkey. Route-agnostic. */
+/** First-time admin setup: the setup key, then a passkey. Route-agnostic. */
 export function AdminSetupScreen({ onDone }: AdminSetupScreenProps) {
   const { t } = useTranslation(ADMIN_NS);
   const [step, setStep] = useState<Step>('key');
@@ -70,7 +70,13 @@ export function AdminSetupScreen({ onDone }: AdminSetupScreenProps) {
           <Muted>{t('setup.closes')}</Muted>
         </FormSection>
       ) : null}
-      {step === 'passkey' ? (
+      {step === 'passkey' && !passkeysSupported() ? (
+        <Section>
+          <Sub>{t('setup.passkeyTitle')}</Sub>
+          <Message $bad>{t('setup.noPasskeysHere')}</Message>
+        </Section>
+      ) : null}
+      {step === 'passkey' && passkeysSupported() ? (
         <FormSection onSubmit={(event) => void createPasskey(event)}>
           <Sub>{t('setup.passkeyTitle')}</Sub>
           <Muted>{t('setup.passkeyText')}</Muted>
@@ -84,7 +90,6 @@ export function AdminSetupScreen({ onDone }: AdminSetupScreenProps) {
           <Button type="submit" variant="primary" disabled={busy || deviceName.trim() === ''}>
             {t('setup.create')}
           </Button>
-          <Muted>{t('setup.simulated')}</Muted>
         </FormSection>
       ) : null}
       {step === 'done' ? (

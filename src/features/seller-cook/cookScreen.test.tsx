@@ -155,8 +155,8 @@ describe('cook polling', () => {
   beforeEach(() => mockStore.reset());
 
   it('loads orders and menu, polls while shown and stops when not', async () => {
-    const order = (firstName: string) => {
-      const result = mockStore.createOrder({
+    const order = async (firstName: string) => {
+      const result = await mockStore.createOrder({
         firstName,
         language: 'en',
         lines: [{ itemId: 'lemper', qty: 1 }],
@@ -164,7 +164,7 @@ describe('cook polling', () => {
       });
       if (!result.ok) throw new Error(result.message);
     };
-    order('Rina');
+    await order('Rina');
     const store = createTestStore({ saga: true, pollMs: 20 });
     store.dispatch(pollingStarted());
     await waitFor(() => store.getState().sellerCook.list.status === 'ready');
@@ -172,11 +172,11 @@ describe('cook polling', () => {
     expect(store.getState().sellerCook.orders).toHaveLength(1);
 
     // A new order shows up on the next poll.
-    order('Tom');
+    await order('Tom');
     await waitFor(() => store.getState().sellerCook.orders.length === 2);
     store.dispatch(pollingStopped());
     await sleep(60); // let an in-flight request finish
-    order('Dewi');
+    await order('Dewi');
     await sleep(100);
     expect(store.getState().sellerCook.orders).toHaveLength(2);
   });

@@ -6,4 +6,25 @@
   "assets": {
     "not_found_handling": "single-page-application",
   },
+  // Variables and secrets are NOT set here: `.dev.vars` locally (see .dev.vars.example) and Cloudflare
+  // secrets in production. Never put DEV_TOOLS in this file: only a local `.dev.vars` may turn it on.
+  //
+  // Local D1 only for now (stage 8.1b). Phase 5 replaces "local-only" with the real database id
+  // (the owner's step); never run --remote before that.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "delave",
+      "database_id": "local-only",
+      "migrations_dir": "migrations",
+    },
+  ],
+  // Live updates (stage 8.3): one Durable Object per seller. The free plan only allows SQLite-backed
+  // classes, hence "new_sqlite_classes". Change a class later with a new migration tag, never edit v1.
+  "durable_objects": {
+    "bindings": [{ "name": "SELLER_LIVE", "class_name": "SellerLive" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SellerLive"] }],
+  // Seller images (stage 8.3). Locally this is a simulated bucket; phase 5 creates the real one.
+  "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "delave-images" }],
 }

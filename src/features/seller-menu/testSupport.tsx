@@ -48,27 +48,26 @@ export function renderWithStore(ui: ReactNode, store: TestStore = createTestStor
 }
 
 /** A customer order for `itemId` (the week must be published), then back to a draft week. */
-export function orderThenDraft(itemId: string): void {
-  const placed = mockStore.createOrder({
+export async function orderThenDraft(itemId: string): Promise<void> {
+  const placed = await mockStore.createOrder({
     firstName: 'Rina',
     language: 'en',
     lines: [{ itemId, qty: 1 }],
     fulfilment: 'pickup',
   });
   if (!placed.ok) throw new Error(placed.error);
-  mockStore.setWeek({ status: 'draft' });
+  await mockStore.setWeek({ status: 'draft' });
 }
 
 /** Fills the menu to the 10-item limit. */
-export function fillMenu(): void {
-  while (mockStore.getSellerMenu().items.length < 10) {
-    mockStore.addItem({
-      name: { en: `Extra ${String(mockStore.getSellerMenu().items.length)}`, id: '' },
-      priceCents: 500,
-    });
+export async function fillMenu(): Promise<void> {
+  let count = (await mockStore.getSellerMenu()).items.length;
+  while (count < 10) {
+    await mockStore.addItem({ name: { en: `Extra ${String(count)}`, id: '' }, priceCents: 500 });
+    count += 1;
   }
 }
 
-export function emptyMenu(): void {
-  for (const item of mockStore.getSellerMenu().items) mockStore.removeItem(item.id);
+export async function emptyMenu(): Promise<void> {
+  for (const item of (await mockStore.getSellerMenu()).items) await mockStore.removeItem(item.id);
 }

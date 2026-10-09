@@ -260,3 +260,26 @@ Format for each entry:
 **Ruling:** "A" (the batch 4 stage table in the [roadmap](../plan/roadmap.md#phase-3--batch-4-sign-in-admin-saturday-stage-table): 7.1 domain + mock → wave 7.2a sign-in ∥ 7.2b admin ∥ 7.2c Saturday tools → 7.3 shell).
 **Trade-off:** the whole sign-in, admin and Saturday flow is clickable now on the dev mock; the passkey step is simulated and sessions are mock-only until phase 4 (real WebAuthn, D1 sessions, rate limits); real QR codes and camera scanning wait for phase 5 and a dependency OK, so hand-over uses typed order codes.
 **Revisit when:** phase 4 starts (replace the simulation), or the owner wants QR before phase 5.
+
+## D-046 · Phase 4 plan approved, with the coordinator's plan-review changes (2026-10-09)
+**Ruling:** "Let's check compliance … and check over the plan first", then "lets get started with phase 4 after that" (the UI will be reworked later).
+**Plan-review changes (coordinator, overrulable):**
+1. **Sessions in an HttpOnly `__Host-` cookie** (question 45 option A, as designed in seller-auth.md).
+2. **Passkeys can't be tested on phones over the LAN IP:** WebAuthn refuses an IP address as the site identity. On this PC passkeys are tested on `https://localhost` (and with Playwright's virtual authenticator); phones use the password fallback until phase 5 gives a real domain (`*.workers.dev`). seller-auth.md corrected. Alternative later: a local hostname (e.g. `andrapc.local`) with a new mkcert certificate — only if the owner wants passkeys on phones before phase 5.
+3. **Stage 8.1 split** into 8.1a (data model doc + schema + repository interface, behaviour-preserving) and 8.1b (D1 implementation + seed script), so the data model is reviewed before code depends on it.
+4. **Durable Objects on the free plan must be SQLite-backed** (`new_sqlite_classes` migration in wrangler config); noted for 8.3.
+5. Schema changes in a wave apply to every scratch database used (conventions §4).
+**Trade-off:** one more round (four instead of three) for a reviewed data model; no passkeys on phones during phase 4.
+**Revisit when:** the owner wants phone passkeys before phase 5 (local hostname), or prefers fewer rounds.
+
+## D-047 · One home for business rules: the D1 repository; the in-memory store retires (2026-10-09; coordinator decision, overrulable)
+**Context:** the 8.1a builder made the `Repository` interface operation-level ("place an order", "redeem a key") and kept the 1 100-line in-memory store behind it, noting that a D1 implementation would then re-implement every business rule next to the SQL, with contract tests the only guard against drift. Data model reviewed by the coordinator: accepted as written ([data-model.md](../architecture/data-model.md)).
+**Decision:** 8.1b ports the business rules once into the D1 repository (atomic D1 batches per operation); the shared contract tests run against **both** implementations during the transition; in 8.4 the in-memory store is removed and unit/MSW tests run against a local D1 through wrangler's `getPlatformProxy` (wrangler is already installed — no new package), each test file on its own scratch persist directory. From 8.4 there is one implementation of the rules.
+**Trade-off:** no long-lived duplicate rule set; tests get slower (local SQLite per file) and need scratch-DB discipline (conventions §6).
+**Revisit when:** D1-backed unit tests prove too slow (then keep a thin in-memory adapter for pure-logic tests only).
+
+## D-048 · Writes need a same-site Origin; tests send it, the server stays strict (2026-10-09; owner: A)
+**Context:** 8.2 added an Origin check: POST/PUT/PATCH/DELETE to `/api/seller/*`, `/api/admin/*` and `/api/auth/*` without an `Origin` equal to the request's own origin get 403 `bad_origin`. Browsers always send it; Playwright's direct API calls in about six specs do not.
+**Decision:** the server rule stays strict (no exception for requests without `Origin`). Playwright sends the test site's own origin as an `Origin` header on all requests (`extraHTTPHeaders` in `playwright.config.ts`).
+**Trade-off:** the header also goes on any cross-origin request a spec makes (none today); a spec that needs a different origin overrides it per request.
+**Revisit when:** a non-browser client (script, integration) needs to write to seller endpoints.

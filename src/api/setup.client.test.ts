@@ -42,8 +42,8 @@ function data<T>(result: ApiResult<T>): T {
 const text = (en: string, id = '') => ({ en, id });
 const B = 'dapur-demo';
 
-beforeEach(() => {
-  mockStores.reset();
+beforeEach(async () => {
+  await mockStores.reset();
 });
 
 describe('seller setup client', () => {

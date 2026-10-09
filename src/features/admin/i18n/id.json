@@ -11,7 +11,9 @@
     "lockedOut": "Terlalu banyak percobaan. Coba lagi dalam {{minutes}} menit.",
     "noPasskey": "Perangkat ini tidak punya passkey admin.",
     "unauthorized": "Masuk sebagai admin untuk melihat halaman ini.",
-    "forbidden": "Hanya admin yang bisa membuka halaman ini."
+    "forbidden": "Hanya admin yang bisa membuka halaman ini.",
+    "passkeyCancelled": "Permintaan passkey ditutup. Coba lagi.",
+    "passkeyFailed": "Perangkat ini tidak bisa memakai passkey. Coba lagi."
   },
   "setup": {
     "title": "Siapkan admin",
@@ -24,17 +26,17 @@
     "deviceLabel": "Nama perangkat ini",
     "deviceDefault": "Komputer saya",
     "create": "Buat passkey admin",
-    "simulated": "Passkey masih simulasi.",
     "doneTitle": "Admin siap",
     "doneText": "Perangkat ini sekarang bisa masuk sebagai admin.",
     "open": "Buka halaman admin",
-    "closes": "Halaman ini berhenti berfungsi setelah admin dibuat."
+    "closes": "Halaman ini berhenti berfungsi setelah admin dibuat.",
+    "noPasskeysHere": "Passkey tidak bisa dipakai di alamat IP. Buka halaman ini dari alamat web, misalnya https://localhost, untuk menyiapkan admin."
   },
   "signIn": {
     "title": "Masuk admin",
     "text": "Masuk dengan passkey di perangkat ini.",
     "button": "Masuk dengan passkey",
-    "simulated": "Passkey masih simulasi."
+    "noPasskeysHere": "Passkey tidak bisa dipakai di alamat IP. Buka halaman ini dari alamat web, misalnya https://localhost."
   },
   "home": {
     "title": "Admin",

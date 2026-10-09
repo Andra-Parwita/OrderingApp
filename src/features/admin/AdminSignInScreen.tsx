@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { forgetPasskey, signInWithPasskey, signOut } from '../../api/auth';
+import { forgetPasskey, passkeysSupported, signInWithPasskey, signOut } from '../../api/auth';
+import { getCredentialId } from '../../api/device/session';
 import { Button } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { failureText, Message, Muted, Narrow, Section, Title } from './shared';
@@ -9,15 +10,20 @@ export type AdminSignInScreenProps = Readonly<{
   onSignedIn: () => void;
 }>;
 
-/** Admin sign-in: the (simulated) passkey only; admins have no password (D-011). */
+/** Admin sign-in: the passkey only; admins have no password (D-011). */
 export function AdminSignInScreen({ onSignedIn }: AdminSignInScreenProps) {
   const { t } = useTranslation(ADMIN_NS);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
 
   const signIn = useCallback(async () => {
-    setBusy(true);
     setProblem(null);
+    // The admin's passkey id is kept on the device that registered it; without it there is nothing to offer.
+    if (getCredentialId() === null) {
+      setProblem(t('error.noPasskey'));
+      return;
+    }
+    setBusy(true);
     const result = await signInWithPasskey();
     if (result.ok && result.data.me.role === 'admin') {
       setBusy(false);
@@ -43,10 +49,13 @@ export function AdminSignInScreen({ onSignedIn }: AdminSignInScreenProps) {
       <Section>
         <Muted>{t('signIn.text')}</Muted>
         {problem ? <Message $bad>{problem}</Message> : null}
-        <Button variant="primary" disabled={busy} onClick={() => void signIn()}>
-          {t('signIn.button')}
-        </Button>
-        <Muted>{t('signIn.simulated')}</Muted>
+        {passkeysSupported() ? (
+          <Button variant="primary" disabled={busy} onClick={() => void signIn()}>
+            {t('signIn.button')}
+          </Button>
+        ) : (
+          <Message $bad>{t('signIn.noPasskeysHere')}</Message>
+        )}
       </Section>
     </Narrow>
   );

@@ -7,7 +7,9 @@
     "locked_other": "Terlalu banyak percobaan. Coba lagi dalam {{count}} menit.",
     "network": "Tidak bisa terhubung ke server. Periksa koneksi lalu coba lagi.",
     "setupExpired": "Waktu penyiapan habis. Mulai lagi dengan kunci baru.",
-    "generic": "Terjadi kesalahan. Coba lagi."
+    "generic": "Terjadi kesalahan. Coba lagi.",
+    "passkeyCancelled": "Permintaan passkey ditutup. Coba lagi, atau pakai kata sandi.",
+    "passkeyFailed": "Perangkat ini tidak bisa memakai passkey. Coba lagi, atau pakai kata sandi."
   },
   "deviceName": {
     "label": "Nama perangkat ini",
@@ -18,7 +20,6 @@
     "android": "Android",
     "computer": "Komputer"
   },
-  "prototypeNote": "Prototipe: passkey hanya simulasi",
   "key": {
     "title": "Siapkan cara masukmu",
     "label": "Masukkan kunci yang kamu terima",
@@ -68,7 +69,8 @@
     },
     "submit": "Buat passkey",
     "working": "Membuat…",
-    "usePassword": "Ponselku tidak bisa → atur kata sandi saja"
+    "usePassword": "Ponselku tidak bisa → atur kata sandi saja",
+    "unavailable": "Passkey tidak bisa dipakai di alamat web ini (alamat IP). Buat kata sandi saja."
   },
   "password": {
     "title": "Atur kata sandi",
@@ -96,7 +98,8 @@
     "submit": "Masuk",
     "working": "Masuk…",
     "empty": "Ketik kata sandimu.",
-    "lost": "Tidak bisa masuk? Minta kunci baru ke orang yang menyiapkan akunmu"
+    "lost": "Tidak bisa masuk? Minta kunci baru ke orang yang menyiapkan akunmu",
+    "noPasskeysHere": "Passkey tidak bisa dipakai di alamat web ini (alamat IP). Pakai kata sandimu."
   },
   "devices": {
     "title": "Perangkat",

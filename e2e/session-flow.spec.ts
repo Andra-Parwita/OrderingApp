@@ -23,10 +23,7 @@ async function setUpWithKey(page: Page, key: string, password: string, device: s
   await expect(page).toHaveURL(/\/seller$/);
 }
 
-test('admin invites, seller sets up and signs in again, chef has no menu', async ({
-  page,
-  request,
-}) => {
+test('admin invites, seller sets up and signs in again, chef has no menu', async ({ page }) => {
   const errors = collectErrors(page);
 
   // Admin: /admin has no session, so it leads to the admin sign-in.
@@ -42,7 +39,6 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   expect(key.length).toBeGreaterThan(8);
 
   // Seller: the key, then a password; lands in the seller area as Dapur Demo, no picker.
-  await page.evaluate(() => localStorage.removeItem('session'));
   await setUpWithKey(page, key, PASSWORD, 'E2E session flow');
   await expect(page.getByText('Signed in as Dapur Demo')).toBeVisible();
   await expect(page.getByLabel('Seller (dev only)')).toHaveCount(0);
@@ -55,17 +51,14 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await expect(page.getByText('E2E session flow', { exact: true })).toBeVisible();
   await expect(page.getByText('Active now')).toBeVisible();
 
-  // Chef: made over the API with the seller's session, invited, and set up on this device.
-  const token = await page.evaluate(() => localStorage.getItem('session'));
-  const auth = { Authorization: `Bearer ${token ?? ''}` };
-  const made = await request.post('/api/seller/chefs', {
-    headers: auth,
+  // Chef: made over the API with the seller's session (the page's own cookie, which this spec
+  // cannot read), invited, and set up on this device.
+  const made = await page.request.post('/api/seller/chefs', {
     data: { name: 'Rudi' },
   });
   expect(made.ok()).toBe(true);
   const { chef } = (await made.json()) as { chef: { id: string } };
-  const invited = await request.post('/api/seller/chef-invites', {
-    headers: auth,
+  const invited = await page.request.post('/api/seller/chef-invites', {
     data: { chefId: chef.id },
   });
   expect(invited.ok()).toBe(true);
