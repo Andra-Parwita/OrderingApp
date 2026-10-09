@@ -1,0 +1,112 @@
+{
+  "common": {
+    "loading": "Memuat pesanan…",
+    "loadError": "Pesanan tidak bisa dimuat.",
+    "retry": "Coba lagi",
+    "paid": "Lunas ✓",
+    "notPaid": "Belum lunas",
+    "note": "Catatan: {{note}}",
+    "pickup": "Ambil sendiri",
+    "delivery": "Antar",
+    "actionFailed": "Belum berhasil. Silakan coba lagi."
+  },
+  "status": {
+    "ordered": "Dipesan",
+    "confirmed": "Dikonfirmasi",
+    "ready_for_pickup": "Siap diambil",
+    "out_for_delivery": "Sedang diantar",
+    "collected": "Sudah diambil",
+    "delivered": "Sudah diantar",
+    "cancelled": "Dibatalkan"
+  },
+  "handover": {
+    "title": "Ambil sendiri · {{date}}",
+    "titleNoDate": "Ambil sendiri",
+    "counts": "Siap {{ready}} · Diambil {{collected}}",
+    "countsLabel": "Jumlah pesanan ambil sendiri",
+    "cardLabel": "Pesanan {{code}}",
+    "codeLabel": "Ketik kode pesanan",
+    "codeHelp": "Spasi, tanda hubung, dan huruf kecil boleh. Pesanan dicari setelah karakter ke-6.",
+    "lookingUp": "Mencari…",
+    "notFound": "Tidak ada pesanan dengan kode itu. Cek labelnya bersama pelanggan.",
+    "badCode": "Itu bukan kode pesanan. Kode terdiri dari 6 huruf dan angka, tanpa O, 0, I, atau 1.",
+    "isDelivery": "Ini pesanan antar. Gunakan Pengantaran.",
+    "markCollected": "Tandai sudah diambil",
+    "collectedDone": "Pesanan {{name}} {{code}} sudah diambil.",
+    "next": "Pesanan berikutnya",
+    "scan": "Pindai label",
+    "scanNote": "Pemindaian menyusul. Untuk sekarang, ketik kode pesanan.",
+    "reason": {
+      "early": "Belum siap diambil. Tandai siap dulu.",
+      "collected": "Sudah diambil.",
+      "cancelled": "Pesanan ini dibatalkan."
+    }
+  },
+  "delivery": {
+    "title": "Pengantaran · {{date}}",
+    "titleNoDate": "Pengantaran",
+    "count_one": "{{count}} pesanan",
+    "count_other": "{{count}} pesanan",
+    "empty": "Belum ada pesanan antar.",
+    "addresses": "Alamat ada di chat WhatsApp Anda, bukan di aplikasi (D-007).",
+    "out": "Sedang diantar",
+    "soon": "Hampir tiba",
+    "delivered": "Tandai sudah diantar",
+    "sentOut": "Pesanan {{name}} sedang diantar.",
+    "sentSoon": "Kabar “hampir tiba” terkirim ke {{name}}.",
+    "sentDelivered": "Pesanan {{name}} sudah diantar.",
+    "reason": {
+      "confirmFirst": "Konfirmasi pesanan dulu.",
+      "afterOut": "Bisa setelah pesanan sedang diantar.",
+      "alreadyOut": "Sudah sedang diantar.",
+      "delivered": "Sudah diantar.",
+      "cancelled": "Pesanan ini dibatalkan."
+    }
+  },
+  "update": {
+    "title": "Kirim kabar",
+    "messageTitle": "Pesan",
+    "template": {
+      "readyIn": "Siap dalam…",
+      "ready": "Siap diambil",
+      "arrived": "Sudah tiba di tempat ambil",
+      "arrivingIn": "Tiba dalam…",
+      "outForDelivery": "Sedang diantar",
+      "delivered": "Sudah diantar",
+      "collected": "Sudah diambil",
+      "custom": "Pesan sendiri"
+    },
+    "minutesTitle": "Menit",
+    "minutes": "{{count}} mnt",
+    "customLabel": "Pesan Anda",
+    "customHelp": "Pelanggan membaca persis seperti yang Anda tulis. Jangan menulis data pribadi.",
+    "alsoStatus": "Ubah juga status pesanan",
+    "alsoStatusHelp": "Memindahkan setiap pesanan ke “{{status}}” jika bisa.",
+    "recipientsTitle": "Kirim ke",
+    "groupsLabel": "Kelompok",
+    "group": {
+      "open": "Semua yang aktif",
+      "pickup": "Ambil sendiri",
+      "delivery": "Antar",
+      "notDone": "Belum diambil atau diantar",
+      "clear": "Hapus semua"
+    },
+    "listLabel": "Pelanggan",
+    "none": "Tidak ada pesanan aktif untuk dikabari.",
+    "pickNone": "Pilih minimal satu pelanggan.",
+    "send": "Kirim ke {{count}}",
+    "sending": "Mengirim…",
+    "info": "Setiap pelanggan melihatnya di pesanannya. Pelanggan yang mengaktifkan pemberitahuan juga mendapat notifikasi.",
+    "resultTitle": "Hasil",
+    "resultSent": "Terkirim ke {{sent}} dari {{total}} pelanggan.",
+    "resultStatus": "Status berubah untuk {{moved}}; {{kept}} tetap seperti semula.",
+    "resultSkipped": "Tidak terkirim:",
+    "skipped": "{{name}} ({{code}}): {{reason}}",
+    "skip": {
+      "not_found": "tidak ada pesanan dengan kode itu",
+      "invalid_status": "pesanan dibatalkan",
+      "other": "tidak bisa dikirim"
+    },
+    "failed": "Gagal mengirim. Tidak ada yang terkirim. Silakan coba lagi."
+  }
+}

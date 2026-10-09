@@ -50,6 +50,7 @@ export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty, closed = 
   const onChange = useCallback((next: number) => onQty(item.id, next), [onQty, item.id]);
   const name = pickText(item.name, lang);
   const description = pickText(item.description, lang);
+  const size = pickText(item.size, lang);
   return (
     <Row $soldOut={item.soldOut}>
       <Text>
@@ -57,7 +58,8 @@ export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty, closed = 
         {description ? <Muted>{description}</Muted> : null}
         <Meta>
           <span>
-            {pickText(item.size, lang)} · <Strong>{formatMoney(item.priceCents, lang)}</Strong>
+            {size ? `${size} · ` : null}
+            <Strong>{formatMoney(item.priceCents, lang)}</Strong>
           </span>
           {item.soldOut ? (
             <Pill tone="done">{t('menu.soldOut')}</Pill>

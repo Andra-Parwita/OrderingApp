@@ -1,5 +1,6 @@
 import { parseApiError, type ApiErrorCode } from '../../shared/apiError';
 import type { StaffActor } from '../../shared/domain';
+import { clearSessionToken, getSessionToken } from './device/session';
 
 export type ApiFailure = {
   ok: false;
@@ -7,6 +8,10 @@ export type ApiFailure = {
   error: ApiErrorCode | 'network' | 'bad_response';
   status: number;
   message: string;
+  /** On `invalid_credentials`: tries left before the lockout. */
+  triesLeft?: number;
+  /** On `locked_out`: seconds until sign-in works again. */
+  retryAfterSeconds?: number;
 };
 
 export type ApiResult<T> = { ok: true; data: T } | ApiFailure;
@@ -28,6 +33,10 @@ async function send(
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (actor) headers['X-Actor'] = `${actor.role}:${actor.name}`;
   if (seller) headers['X-Seller'] = seller;
+  // A stored session is sent on every call; the dev mock lets the headers above stand in for it
+  // until stage 7.3, but a session always wins over them.
+  const token = getSessionToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   try {
     const response = await fetch(path, {
       method,
@@ -48,8 +57,20 @@ async function failureOf(response: Response): Promise<ApiFailure> {
     json = undefined;
   }
   const apiError = parseApiError(json);
+  // A token the server no longer knows (expired, signed out, mock reset) is dropped, so the next
+  // call is not refused for it again.
+  if (apiError?.error === 'unauthorized') clearSessionToken();
   return apiError
-    ? { ok: false, error: apiError.error, status: response.status, message: apiError.message }
+    ? {
+        ok: false,
+        error: apiError.error,
+        status: response.status,
+        message: apiError.message,
+        ...(apiError.triesLeft !== undefined ? { triesLeft: apiError.triesLeft } : {}),
+        ...(apiError.retryAfterSeconds !== undefined
+          ? { retryAfterSeconds: apiError.retryAfterSeconds }
+          : {}),
+      }
     : {
         ok: false,
         error: 'bad_response',

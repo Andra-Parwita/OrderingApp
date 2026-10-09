@@ -48,7 +48,21 @@
     "publish": "Publish",
     "previewLoadError": "Could not load the preview.",
     "retry": "Try again",
-    "previewPublishError": "Could not publish. Check the menu and try again."
+    "previewPublishError": "Could not publish. Check the menu and try again.",
+    "devNoSignIn": "Dev: no sign-in",
+    "devices": "Devices",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {{name}}",
+    "signedInChef": "Chef {{name}}",
+    "notForChefs": "Not available for chefs",
+    "notForChefsBody": "The seller looks after this part. You can still see and update orders.",
+    "toOrders": "Go to orders",
+    "firstTime": "First time here? Use your invite key",
+    "saturday": "Saturday",
+    "pickup": "Hand-over",
+    "delivery": "Delivery run",
+    "updates": "Send an update",
+    "backToSaturday": "Back to Hand-over"
   },
   "customerNav": {
     "label": "Customer",

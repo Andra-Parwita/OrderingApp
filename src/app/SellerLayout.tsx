@@ -6,6 +6,7 @@ import type { Kitchen } from '../../shared/domain';
 import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { fetchMenu } from '../api/client';
 import { currentSellerSlug } from '../api/device/sellerContext';
+import { useSession } from './session';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { SellerPicker } from '../components/SellerPicker';
 import { useMediaQuery } from '../components/useMediaQuery';
@@ -13,15 +14,15 @@ import { Icon, ImageSlot, TabBar, Tooltip, type IconName, type TabBarItem } from
 import { BANNER_MAX_WIDTH, DESKTOP_QUERY, RAIL_WIDTH, RAIL_WIDTH_COLLAPSED } from './layout';
 import { useRailCollapsed } from './railPreference';
 
-// Seller navigation: a bottom tab bar on a phone, a left rail on a desktop. Hand-over arrives
-// with a later batch and stays inert until then.
+// Seller navigation: a bottom tab bar on a phone, a left rail on a desktop. A chef gets no Menu
+// (D-013).
 const NAV_IDS = ['orders', 'cook', 'handover', 'menu', 'more'] as const;
 type NavId = (typeof NAV_IDS)[number];
 
 const HREF: Readonly<Record<NavId, string>> = {
   orders: '/seller',
   cook: '/seller/cook',
-  handover: '/seller',
+  handover: '/seller/hand-over',
   menu: '/seller/menu',
   more: '/seller/more',
 };
@@ -32,7 +33,6 @@ const ICON: Readonly<Record<NavId, IconName>> = {
   menu: 'menu',
   more: 'dots',
 };
-const INERT: ReadonlySet<NavId> = new Set(['handover']);
 
 // Every page reached from More keeps the More tab current.
 const MORE_PATHS = [
@@ -45,10 +45,14 @@ const MORE_PATHS = [
   '/seller/labels',
   '/seller/past-weeks',
   '/seller/backup',
+  '/seller/devices',
 ];
 
 function activeNav(pathname: string): NavId {
   if (pathname.startsWith('/seller/cook')) return 'cook';
+  if (pathname.startsWith('/seller/hand-over') || pathname.startsWith('/seller/updates')) {
+    return 'handover';
+  }
   if (pathname.startsWith('/seller/menu')) return 'menu';
   if (MORE_PATHS.some((path) => pathname.startsWith(path))) return 'more';
   return 'orders';
@@ -88,6 +92,10 @@ const Rail = styled.nav<{ $collapsed: boolean }>`
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.lg}
     ${({ $collapsed, theme }) => ($collapsed ? theme.spacing.xs : theme.spacing.md)};
+`;
+// The column fills the full height of the shell, so the rail's background never stops short on a
+// tall page; the rail inside stays pinned to the viewport.
+const RailColumn = styled.div`
   border-right: ${({ theme }) => theme.border.hairline} solid
     ${({ theme }) => theme.colour.hairline};
   background: ${({ theme }) => theme.colour.surface};
@@ -139,17 +147,6 @@ const RailItem = styled(Link)<{ $active: boolean; $collapsed: boolean }>`
     background: ${({ theme }) => theme.colour.accent};
   }
 `;
-const RailInert = styled.span<{ $collapsed: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: ${({ $collapsed }) => ($collapsed ? 'center' : 'flex-start')};
-  gap: ${({ theme }) => theme.spacing.md};
-  min-height: 3rem;
-  padding: 0 ${({ theme, $collapsed }) => ($collapsed ? '0' : theme.spacing.md)};
-  white-space: nowrap;
-  color: ${({ theme }) => theme.colour.textMuted};
-  opacity: 0.7;
-`;
 const RailFoot = styled.div<{ $collapsed: boolean }>`
   display: flex;
   flex-direction: column;
@@ -188,12 +185,31 @@ const RailButton = styled.button<{ $collapsed: boolean }>`
     background: ${({ theme }) => theme.colour.surfaceAlt};
   }
 `;
+// The collapsed language button hugs its 44 px target and sits centred like the nav icons.
+const CompactButton = styled(RailButton)`
+  width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+`;
+// The expanded rail stretches its children; the EN / ID switch keeps its content width instead.
+const ExpandedLanguage = styled.div`
+  align-self: flex-start;
+`;
 const Chevron = styled.span`
   width: 1.25rem;
   flex: none;
   font-size: ${({ theme }) => theme.type.size.lg};
   line-height: 1;
   text-align: center;
+`;
+const Who = styled.p`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid
+    ${({ theme }) => theme.colour.hairline};
+  color: ${({ theme }) => theme.colour.textMuted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+  text-align: right;
 `;
 const Main = styled.div`
   flex: 1;
@@ -250,14 +266,14 @@ function CompactLanguage() {
   const change = useCallback(() => void i18n.changeLanguage(next), [i18n, next]);
   const name = t(`language.name.${next}`);
   return (
-    <RailButton
+    <CompactButton
       type="button"
       $collapsed
       onClick={change}
       aria-label={`${t('language.label')}: ${isId ? 'ID' : 'EN'}. ${t('language.switchTo', { name })}`}
     >
       {isId ? 'ID' : 'EN'}
-    </RailButton>
+    </CompactButton>
   );
 }
 
@@ -276,12 +292,24 @@ function useKitchen(): Kitchen | null {
   return kitchen;
 }
 
-// Seller routes have no sign-in until phase 4 (D-011); anyone with the link can open them.
+/** The signed-in person as the header shows them: the seller's kitchen, or "Chef Wati". */
+function useWho(): string | null {
+  const { t } = useTranslation();
+  const { me } = useSession();
+  if (me === null) return null;
+  if (me.role === 'chef') return t('sellerNav.signedInChef', { name: me.chefName ?? '' });
+  return me.sellerName ?? null;
+}
+
+// The guard in front of this layout has already checked the sign-in (see guards.tsx).
 export function SellerLayout() {
   const { t, i18n } = useTranslation();
   const desktop = useMediaQuery(DESKTOP_QUERY);
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { me } = useSession();
+  const who = useWho();
+  const navIds = useMemo(() => NAV_IDS.filter((id) => id !== 'menu' || me?.role !== 'chef'), [me]);
   const active = activeNav(pathname);
   const kitchen = useKitchen();
   const lang = i18n.language.startsWith('id') ? 'id' : 'en';
@@ -296,19 +324,8 @@ export function SellerLayout() {
 
   const label = (id: NavId) => t(`sellerNav.${id}`);
   const tabs = useMemo<Array<TabBarItem>>(
-    () =>
-      NAV_IDS.map((id) =>
-        INERT.has(id)
-          ? {
-              id,
-              label: t(`sellerNav.${id}`),
-              href: HREF[id],
-              disabled: true,
-              hint: t('sellerNav.comingSoon'),
-            }
-          : { id, label: t(`sellerNav.${id}`), href: HREF[id] },
-      ),
-    [t],
+    () => navIds.map((id) => ({ id, label: t(`sellerNav.${id}`), href: HREF[id] })),
+    [navIds, t],
   );
 
   // The tab bar renders plain links; keep them inside the single-page app.
@@ -326,51 +343,40 @@ export function SellerLayout() {
   return (
     <Shell $desktop={desktop}>
       {desktop ? (
-        <Rail aria-label={t('sellerNav.label')} $collapsed={collapsed}>
-          {collapsed ? (
-            <RailIconBox>
-              {kitchen?.images?.railIcon ? (
+        <RailColumn>
+          <Rail aria-label={t('sellerNav.label')} $collapsed={collapsed}>
+            {collapsed ? (
+              <RailIconBox>
+                {kitchen?.images?.railIcon ? (
+                  <ImageSlot
+                    aspectRatio="1 / 1"
+                    width="2.5rem"
+                    round
+                    src={kitchen.images.railIcon}
+                    alt={kitchenName}
+                    placeholder=""
+                  />
+                ) : (
+                  <Initial role="img" aria-label={kitchenName}>
+                    <span aria-hidden="true">{initialOf(kitchenName)}</span>
+                  </Initial>
+                )}
+              </RailIconBox>
+            ) : (
+              <RailImageBox>
                 <ImageSlot
-                  aspectRatio="1 / 1"
-                  width="2.5rem"
-                  round
-                  src={kitchen.images.railIcon}
-                  alt={kitchenName}
-                  placeholder=""
+                  aspectRatio="2 / 1"
+                  src={kitchen?.images?.railImage}
+                  alt={`${kitchenName} — ${t('sellerNav.railImage')}`}
+                  placeholder={t('sellerNav.railImageSoon')}
                 />
-              ) : (
-                <Initial role="img" aria-label={kitchenName}>
-                  <span aria-hidden="true">{initialOf(kitchenName)}</span>
-                </Initial>
-              )}
-            </RailIconBox>
-          ) : (
-            <RailImageBox>
-              <ImageSlot
-                aspectRatio="2 / 1"
-                src={kitchen?.images?.railImage}
-                alt={`${kitchenName} — ${t('sellerNav.railImage')}`}
-                placeholder={t('sellerNav.railImageSoon')}
-              />
-            </RailImageBox>
-          )}
-          {collapsed ? null : <Kitchen>{kitchenName}</Kitchen>}
-          <RailList>
-            {NAV_IDS.map((id) => (
-              <li key={id}>
-                <Tooltip text={collapsed ? label(id) : undefined}>
-                  {INERT.has(id) ? (
-                    <RailInert
-                      role="link"
-                      tabIndex={collapsed ? 0 : undefined}
-                      aria-disabled="true"
-                      aria-label={`${label(id)}, ${t('sellerNav.comingSoon')}`}
-                      $collapsed={collapsed}
-                    >
-                      <Icon name={ICON[id]} />
-                      {collapsed ? null : label(id)}
-                    </RailInert>
-                  ) : (
+              </RailImageBox>
+            )}
+            {collapsed ? null : <Kitchen>{kitchenName}</Kitchen>}
+            <RailList>
+              {navIds.map((id) => (
+                <li key={id}>
+                  <Tooltip text={collapsed ? label(id) : undefined}>
                     <RailItem
                       to={HREF[id]}
                       $active={id === active}
@@ -380,30 +386,37 @@ export function SellerLayout() {
                       <Icon name={ICON[id]} />
                       {collapsed ? <Hidden>{label(id)}</Hidden> : label(id)}
                     </RailItem>
-                  )}
-                </Tooltip>
-              </li>
-            ))}
-          </RailList>
-          <RailFoot $collapsed={collapsed}>
-            {collapsed ? null : <SellerPicker />}
-            {collapsed ? <CompactLanguage /> : <LanguageSwitch />}
-            <Tooltip text={collapsed ? collapseLabel : undefined}>
-              <RailButton
-                type="button"
-                $collapsed={collapsed}
-                aria-expanded={!collapsed}
-                aria-label={collapseLabel}
-                onClick={toggleCollapsed}
-              >
-                <Chevron aria-hidden="true">{collapsed ? '»' : '«'}</Chevron>
-                {collapsed ? null : collapseLabel}
-              </RailButton>
-            </Tooltip>
-          </RailFoot>
-        </Rail>
+                  </Tooltip>
+                </li>
+              ))}
+            </RailList>
+            <RailFoot $collapsed={collapsed}>
+              {collapsed || me !== null ? null : <SellerPicker />}
+              {collapsed ? (
+                <CompactLanguage />
+              ) : (
+                <ExpandedLanguage>
+                  <LanguageSwitch compact />
+                </ExpandedLanguage>
+              )}
+              <Tooltip text={collapsed ? collapseLabel : undefined}>
+                <RailButton
+                  type="button"
+                  $collapsed={collapsed}
+                  aria-expanded={!collapsed}
+                  aria-label={collapseLabel}
+                  onClick={toggleCollapsed}
+                >
+                  <Chevron aria-hidden="true">{collapsed ? '»' : '«'}</Chevron>
+                  {collapsed ? null : collapseLabel}
+                </RailButton>
+              </Tooltip>
+            </RailFoot>
+          </Rail>
+        </RailColumn>
       ) : null}
       <Main>
+        {who ? <Who>{t('sellerNav.signedInAs', { name: who })}</Who> : null}
         {desktop ? (
           <BannerStrip $background={background} $image={backgroundImage}>
             <BannerArea>

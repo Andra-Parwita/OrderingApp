@@ -5,6 +5,16 @@ import type { Seller } from '../../shared/domain';
 import { fetchDevSellers } from '../api/client';
 import { chooseSeller, currentSellerSlug } from '../api/device/sellerContext';
 
+const Dev = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+const Caption = styled.span`
+  font-size: ${({ theme }) => theme.type.size.sm};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+  color: ${({ theme }) => theme.colour.textMuted};
+`;
 const Wrap = styled.label`
   display: flex;
   flex-direction: column;
@@ -61,15 +71,18 @@ export function SellerPicker({ onChosen = reload }: Readonly<{ onChosen?: () => 
 
   if (!import.meta.env.DEV || sellers.length === 0) return null;
   return (
-    <Wrap>
-      {t('sellerNav.devSeller')}
-      <Select value={current} onChange={onChange}>
-        {sellers.map((seller) => (
-          <option key={seller.slug} value={seller.slug}>
-            {seller.name}
-          </option>
-        ))}
-      </Select>
-    </Wrap>
+    <Dev>
+      <Caption>{t('sellerNav.devNoSignIn')}</Caption>
+      <Wrap>
+        {t('sellerNav.devSeller')}
+        <Select value={current} onChange={onChange}>
+          {sellers.map((seller) => (
+            <option key={seller.slug} value={seller.slug}>
+              {seller.name}
+            </option>
+          ))}
+        </Select>
+      </Wrap>
+    </Dev>
   );
 }

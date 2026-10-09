@@ -31,7 +31,10 @@ const StepButton = styled.button`
   cursor: pointer;
 
   &:disabled {
-    opacity: 0.5;
+    background: ${({ theme }) => theme.colour.surfaceAlt};
+    color: ${({ theme }) => theme.colour.textMuted};
+    border-color: ${({ theme }) => theme.colour.hairline};
+    opacity: 0.6;
     cursor: not-allowed;
   }
 `;

@@ -1,0 +1,128 @@
+{
+  "errors": {
+    "wrong": "That did not work. Check it and try again.",
+    "triesLeft_one": "{{count}} try left.",
+    "triesLeft_other": "{{count}} tries left.",
+    "locked_one": "Too many tries. Try again in {{count}} minute.",
+    "locked_other": "Too many tries. Try again in {{count}} minutes.",
+    "network": "Cannot reach the server. Check your connection and try again.",
+    "setupExpired": "Your setup timed out. Start again with a new key.",
+    "generic": "Something went wrong. Try again."
+  },
+  "deviceName": {
+    "label": "Name of this device",
+    "helper": "So you can tell your devices apart",
+    "empty": "Write a name for this device.",
+    "iphone": "iPhone",
+    "ipad": "iPad",
+    "android": "Android",
+    "computer": "Computer"
+  },
+  "prototypeNote": "Prototype: passkey is simulated",
+  "key": {
+    "title": "Set up your sign-in",
+    "label": "Enter the key you were sent",
+    "helper": "Valid for 24 hours. Spaces, dashes and small letters are fine.",
+    "empty": "Type the key you were sent.",
+    "submit": "Continue",
+    "checking": "Checking…",
+    "useCode": "I have a 6-digit code from another device"
+  },
+  "code": {
+    "title": "Use a code from another device",
+    "label": "6-digit code",
+    "helper": "On your other device, open Devices and tap Add a device. The code works for 10 minutes.",
+    "empty": "Type the 6-digit code.",
+    "submit": "Continue",
+    "useKey": "I have a key instead"
+  },
+  "passkey": {
+    "title": "Create a passkey",
+    "greeting": "Hi {{name}}",
+    "deviceLabel": "Your device",
+    "deviceGroup": "Your device type",
+    "iphone": "iPhone",
+    "android": "Android",
+    "computer": "Windows / Mac",
+    "steps": {
+      "iphone": {
+        "1": "Make sure your phone has a screen lock (Settings → Face ID & Passcode)",
+        "2": "Tap Create passkey below",
+        "3": "Confirm with Face ID or your passcode"
+      },
+      "android": {
+        "1": "Make sure your phone has a screen lock (Settings → Security → Screen lock)",
+        "2": "Tap Create passkey below",
+        "3": "Confirm with your fingerprint or screen PIN"
+      },
+      "computer": {
+        "1": "Make sure Windows Hello or Touch ID is set up (Settings → Sign-in options)",
+        "2": "Tap Create passkey below",
+        "3": "Confirm with Windows Hello, Touch ID or your computer PIN"
+      }
+    },
+    "note": {
+      "iphone": "Your passkey stays on your phone and syncs with iCloud Keychain. Nothing to remember.",
+      "android": "Your passkey stays on your phone and syncs with Google Password Manager. Nothing to remember.",
+      "computer": "Your passkey stays on this computer. No Windows Hello or Touch ID? Use your phone, or set a password."
+    },
+    "submit": "Create passkey",
+    "working": "Creating…",
+    "usePassword": "My phone can't do this → set a password instead"
+  },
+  "password": {
+    "title": "Set a password",
+    "banner": "Your device can't make a passkey, so set a password",
+    "label": "New password",
+    "confirm": "Confirm password",
+    "helper": "At least 10 characters",
+    "tooShort": "Use at least 10 characters.",
+    "tooLong": "Use at most 200 characters.",
+    "mismatch": "The two passwords are not the same.",
+    "show": "Show",
+    "hide": "Hide",
+    "submit": "Save password",
+    "working": "Saving…",
+    "later": "You can switch to a passkey later from a newer device.",
+    "usePasskey": "Try a passkey instead"
+  },
+  "signIn": {
+    "title": "Sign in",
+    "passkey": "Sign in with passkey",
+    "noPasskey": "This device has no passkey yet. Use your password, or ask for a new key.",
+    "usePassword": "Use password instead",
+    "hidePassword": "Hide password",
+    "passwordLabel": "Password",
+    "submit": "Sign in",
+    "working": "Signing in…",
+    "empty": "Type your password.",
+    "lost": "Lost access? Ask the person who set you up for a new key"
+  },
+  "devices": {
+    "title": "Devices",
+    "loading": "Loading…",
+    "loadFailed": "Could not load your devices.",
+    "retry": "Try again",
+    "thisDevice": "This device",
+    "others": "Other devices",
+    "none": "No other devices yet.",
+    "lastUsed": "Last used {{when}}",
+    "activeNow": "Active now",
+    "rename": "Rename",
+    "renameField": "New name for {{name}}",
+    "saveName": "Save name",
+    "cancel": "Cancel",
+    "signOutDevice": "Sign out",
+    "signOutDeviceConfirm": "Tap again to sign out",
+    "add": "Add a device",
+    "addHelp": "Type this code on the new device. It works once.",
+    "codeLabel": "Your code",
+    "expiresIn": "Expires in {{time}}",
+    "expired": "This code has expired.",
+    "newCode": "Make a new code",
+    "hideCode": "Done",
+    "signOutHere": "Sign out of this device",
+    "signOutHereConfirm": "Tap again to sign out",
+    "signOutHereHint": "You will need your passkey or password to sign in again."
+  }
+}

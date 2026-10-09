@@ -48,9 +48,21 @@ import type {
   RequestedLine,
   UpdateOrderRequest,
 } from '../../shared/orderContract';
-import { generateOrderCode, generateToken, type FillRandom } from '../../shared/orderCode';
+import {
+  generateOrderCode,
+  generateToken,
+  parseOrderCode,
+  type FillRandom,
+} from '../../shared/orderCode';
 import { isFinalStatus, nextStatuses } from '../../shared/status';
-import { fixtureSellers, type SellerFixture } from './fixture';
+import {
+  statusOfTemplate,
+  type SendUpdatesRequest,
+  type UpdateResult,
+} from '../../shared/updateContract';
+import type { AdminSeller } from '../../shared/authContract';
+import { createAuthStore } from './auth';
+import { blankFixture, fixtureSellers, type SellerFixture } from './fixture';
 
 type Order = SellerOrder;
 
@@ -399,6 +411,7 @@ export function createSellerStore(
 
   return {
     seller,
+    createdAt: fixture.createdAt,
 
     getMenu(): MenuResponse {
       return publicMenu();
@@ -863,6 +876,63 @@ export function createSellerStore(
       });
     },
 
+    /** "Arriving soon" for one delivery order: an inbox entry only (no status change). */
+    arrivingSoon(code: string): StoreResult<Order> {
+      return changeByCode(code, (order) => {
+        if (order.fulfilment !== 'delivery') {
+          return fail('invalid_status', 'Only delivery orders can be arriving soon');
+        }
+        if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
+        return ok({
+          ...withInbox(order, { kind: 'message', textKey: 'arrivingSoon' }),
+          updatedAt: nowIso(),
+        });
+      });
+    },
+
+    /**
+     * One bulk update (stage 7.1) for one order. Cancelled orders get nothing. The message goes to
+     * the inbox as a `message` entry (`textKey` = the template, `minutes`, or the custom `text`);
+     * with `alsoSetStatus` the status moves too, but only where nextStatuses allows it. When the
+     * template is the plain twin of the status it moved to (ready, outForDelivery, delivered,
+     * collected), the status entry already says it, so no second message is added.
+     */
+    sendUpdate(
+      rawCode: string,
+      update: Omit<SendUpdatesRequest, 'codes'>,
+      actor: StaffActor,
+    ): UpdateResult {
+      const code = parseOrderCode(rawCode);
+      const order = code ? findByCode(code) : undefined;
+      if (!code || !order) return { code: rawCode, ok: false, error: 'not_found' };
+      if (order.status === 'cancelled') return { code, ok: false, error: 'invalid_status' };
+      const wanted = update.alsoSetStatus === true ? statusOfTemplate(update.template) : null;
+      const target = wanted !== null && nextStatuses(order).includes(wanted) ? wanted : null;
+      const allowed = target !== null;
+      const twin = ['ready', 'outForDelivery', 'delivered', 'collected'].includes(update.template);
+      let current = order;
+      if (!(allowed && twin)) {
+        current = replace({
+          ...withInbox(order, {
+            kind: 'message',
+            ...(update.template === 'custom'
+              ? { text: update.text ?? '' }
+              : { textKey: update.template }),
+            ...(update.minutes !== undefined ? { minutes: update.minutes } : {}),
+          }),
+          updatedAt: nowIso(),
+        });
+      }
+      if (target !== null) {
+        const moved = withInbox(
+          { ...current, status: target, changed: false },
+          { kind: 'status', status: target },
+        );
+        replace(withAudit(moved, { by: actor, what: 'status', detail: target }));
+      }
+      return { code, ok: true, statusChanged: allowed };
+    },
+
     /** The seller has seen the customer's change. */
     markSeen(code: string): StoreResult<Order> {
       return changeByCode(code, (order) => ok({ ...order, changed: false }));
@@ -979,10 +1049,40 @@ export type TokenLookup =
  */
 export function createStore(options: StoreOptions) {
   const stores = fixtureSellers.map((fixture, index) => createSellerStore(options, fixture, index));
+  const auth = createAuthStore(options, {
+    sellerById: (id) => stores.find((store) => store.seller.id === id)?.seller,
+    sellerBySlug: (slug) => stores.find((store) => store.seller.slug === slug)?.seller,
+    chefName: (sellerId, chefId) =>
+      stores
+        .find((store) => store.seller.id === sellerId)
+        ?.listChefs()
+        .find((chef) => chef.id === chefId)?.name,
+  });
 
   return {
+    /** Sign-in state: accounts, devices, sessions, keys, codes, lockouts (stage 7.1). */
+    auth,
+
+    /** Undefined for an unknown seller id. */
+    sellerById(id: string): SellerStore | undefined {
+      return stores.find((store) => store.seller.id === id);
+    },
+
+    /** The admin creates a seller (D-037); the caller has checked the slug (valid, unique). */
+    addSeller(name: string, slug: string): AdminSeller {
+      const seller: Seller = { id: `seller-${slug}`, slug, name };
+      const createdAt = options.now().toISOString();
+      stores.push(createSellerStore(options, blankFixture(seller, createdAt), stores.length));
+      return { ...seller, createdAt };
+    },
+
     sellers(): Array<Seller> {
       return stores.map((store) => ({ ...store.seller }));
+    },
+
+    /** Sellers with the date they were added, for the admin list. */
+    adminSellers(): Array<AdminSeller> {
+      return stores.map((store) => ({ ...store.seller, createdAt: store.createdAt }));
     },
 
     /** Undefined for an unknown slug. */
@@ -1020,7 +1120,9 @@ export function createStore(options: StoreOptions) {
 
     /** Resets every seller in place (existing `seller()` references stay valid). */
     reset(): void {
+      stores.length = fixtureSellers.length; // sellers the admin added are dropped
       for (const store of stores) store.reset();
+      auth.reset();
     },
   };
 }

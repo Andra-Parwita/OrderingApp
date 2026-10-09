@@ -121,9 +121,9 @@ describe('AppRoutes', () => {
     const phone = renderAt('/seller');
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('href', '/seller/more');
-    expect(screen.getByRole('link', { name: 'Hand-over, coming soon' })).toHaveAttribute(
-      'aria-disabled',
-      'true',
+    expect(screen.getByRole('link', { name: 'Hand-over' })).toHaveAttribute(
+      'href',
+      '/seller/hand-over',
     );
     phone.unmount();
 
@@ -150,7 +150,7 @@ describe('AppRoutes', () => {
     const orders = within(rail).getByRole('link', { name: 'Orders' });
     expect(orders).toHaveAttribute('aria-current', 'page');
     expect(within(rail).getByRole('link', { name: 'Cook list' })).toBeInTheDocument();
-    expect(within(rail).getByRole('link', { name: 'Hand-over, coming soon' })).toBeInTheDocument();
+    expect(within(rail).getByRole('link', { name: 'Hand-over' })).toBeInTheDocument();
     expect(within(rail).queryByRole('radiogroup')).not.toBeInTheDocument();
     expect(within(rail).getByRole('button', { name: /Language: EN/ })).toBeInTheDocument();
     expect(within(rail).queryByText('Orders', { selector: '[aria-hidden]' })).toBeNull();

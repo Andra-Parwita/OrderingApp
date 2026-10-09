@@ -255,3 +255,8 @@ Format for each entry:
 **Ruling:** first "C" (drop them from My orders), then "Nvm, do A" — the owner's final answer is **A**.
 **Trade-off:** when a seller closes a week, its orders leave the seller's live list but stay **readable, read-only** through the customer's order link (`/o/<token>`, My orders) for the same 4 weeks the order details are kept (D-027 row 6): status, items, total, seller and date, with no change/cancel and a note "This week is closed". After 4 weeks the link shows "This order has been archived" with its seller and date, and My orders shows it under "Earlier" without details. Network errors never remove anything. Cost: the global token lookup must also search archived weeks (and respect retention). Built after the 6.2 wave, together with the webkit reload fix.
 **Revisit when:** customers want older orders kept longer, or storage grows.
+
+## D-045 · Batch 4 plan approved: simulated sign-in, hand-over by typed code (2026-10-09)
+**Ruling:** "A" (the batch 4 stage table in the [roadmap](../plan/roadmap.md#phase-3--batch-4-sign-in-admin-saturday-stage-table): 7.1 domain + mock → wave 7.2a sign-in ∥ 7.2b admin ∥ 7.2c Saturday tools → 7.3 shell).
+**Trade-off:** the whole sign-in, admin and Saturday flow is clickable now on the dev mock; the passkey step is simulated and sessions are mock-only until phase 4 (real WebAuthn, D1 sessions, rate limits); real QR codes and camera scanning wait for phase 5 and a dependency OK, so hand-over uses typed order codes.
+**Revisit when:** phase 4 starts (replace the simulation), or the owner wants QR before phase 5.

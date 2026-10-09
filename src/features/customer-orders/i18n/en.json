@@ -74,7 +74,14 @@
   "inbox": {
     "nudge": "The seller is waiting for your order number on WhatsApp.",
     "nudgeReturning": "Your order is in. Sending it on WhatsApp is optional, but it helps the seller confirm faster.",
-    "readyIn": "Ready in about {{minutes}} minutes.",
+    "readyIn": "Your food will be ready in about {{minutes}} minutes.",
+    "ready": "Your food is ready for pickup.",
+    "arrived": "The seller has arrived at the pickup point.",
+    "arrivingIn": "Your delivery will arrive in about {{minutes}} minutes.",
+    "arrivingSoon": "Your delivery is arriving soon.",
+    "outForDelivery": "Your order is out for delivery.",
+    "delivered": "Your order has been delivered.",
+    "collected": "Your order has been collected.",
     "other": "Update from the seller",
     "status": {
       "ordered": "Order placed",

@@ -4,6 +4,9 @@ import { handleMockRequest } from '../worker/mock/routes';
 import { DEFAULT_SELLER_SLUG } from '../shared/seller';
 import { createStore, type MockStore, type SellerStore } from '../worker/mock/store';
 
+/** The dev admin setup key, for tests. */
+export { DEV_ADMIN_SETUP_KEY } from '../worker/mock/auth';
+
 export const healthFixture: HealthResponse = { status: 'ok', time: '2026-10-07T10:00:00.000Z' };
 
 /** A fixed clock: Wed 7 Oct 2026, before the cut-off. */

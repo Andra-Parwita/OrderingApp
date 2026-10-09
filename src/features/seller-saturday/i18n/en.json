@@ -1,0 +1,112 @@
+{
+  "common": {
+    "loading": "Loading orders…",
+    "loadError": "Could not load the orders.",
+    "retry": "Try again",
+    "paid": "Paid ✓",
+    "notPaid": "Not paid",
+    "note": "Note: {{note}}",
+    "pickup": "Pickup",
+    "delivery": "Delivery",
+    "actionFailed": "That did not work. Please try again."
+  },
+  "status": {
+    "ordered": "Ordered",
+    "confirmed": "Confirmed",
+    "ready_for_pickup": "Ready for pickup",
+    "out_for_delivery": "Out for delivery",
+    "collected": "Collected",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "handover": {
+    "title": "Pickup · {{date}}",
+    "titleNoDate": "Pickup",
+    "counts": "Ready {{ready}} · Collected {{collected}}",
+    "countsLabel": "Pickup counts",
+    "cardLabel": "Order {{code}}",
+    "codeLabel": "Type order code",
+    "codeHelp": "Spaces, dashes and lowercase are fine. It looks up after the 6th character.",
+    "lookingUp": "Looking up…",
+    "notFound": "No order has that code. Check the label with the customer.",
+    "badCode": "That is not an order code. Codes have 6 letters and numbers, no O, 0, I or 1.",
+    "isDelivery": "This is a delivery order. Use the Delivery run.",
+    "markCollected": "Mark collected",
+    "collectedDone": "{{name}}'s order {{code}} is collected.",
+    "next": "Next order",
+    "scan": "Scan label",
+    "scanNote": "Scanning is coming later. For now, type the order code.",
+    "reason": {
+      "early": "Not ready for pickup yet. Mark it ready first.",
+      "collected": "Already collected.",
+      "cancelled": "This order is cancelled."
+    }
+  },
+  "delivery": {
+    "title": "Delivery · {{date}}",
+    "titleNoDate": "Delivery",
+    "count_one": "{{count}} order",
+    "count_other": "{{count}} orders",
+    "empty": "No delivery orders yet.",
+    "addresses": "Addresses are in your WhatsApp chats, not in the app (D-007).",
+    "out": "Out for delivery",
+    "soon": "Arriving soon",
+    "delivered": "Mark delivered",
+    "sentOut": "{{name}}'s order is out for delivery.",
+    "sentSoon": "Sent “arriving soon” to {{name}}.",
+    "sentDelivered": "{{name}}'s order is delivered.",
+    "reason": {
+      "confirmFirst": "Confirm the order first.",
+      "afterOut": "Available once it is out for delivery.",
+      "alreadyOut": "Already out for delivery.",
+      "delivered": "Already delivered.",
+      "cancelled": "This order is cancelled."
+    }
+  },
+  "update": {
+    "title": "Send an update",
+    "messageTitle": "Message",
+    "template": {
+      "readyIn": "Ready in…",
+      "ready": "Ready for pickup",
+      "arrived": "Arrived at pickup",
+      "arrivingIn": "Arriving in…",
+      "outForDelivery": "Out for delivery",
+      "delivered": "Delivered",
+      "collected": "Collected",
+      "custom": "Custom message"
+    },
+    "minutesTitle": "Minutes",
+    "minutes": "{{count}} min",
+    "customLabel": "Your message",
+    "customHelp": "Customers read this as written. Please do not add private details.",
+    "alsoStatus": "Also update the order status",
+    "alsoStatusHelp": "Moves each order to “{{status}}” where it can.",
+    "recipientsTitle": "Send to",
+    "groupsLabel": "Groups",
+    "group": {
+      "open": "All open",
+      "pickup": "Pickup",
+      "delivery": "Delivery",
+      "notDone": "Not collected or delivered",
+      "clear": "Clear all"
+    },
+    "listLabel": "Customers",
+    "none": "There are no open orders to update.",
+    "pickNone": "Choose at least one customer.",
+    "send": "Send to {{count}}",
+    "sending": "Sending…",
+    "info": "Every customer sees it in their order. Customers with updates on also get a notification.",
+    "resultTitle": "Result",
+    "resultSent": "Sent to {{sent}} of {{total}} customers.",
+    "resultStatus": "Status moved for {{moved}}; {{kept}} stayed as they were.",
+    "resultSkipped": "Not sent:",
+    "skipped": "{{name}} ({{code}}): {{reason}}",
+    "skip": {
+      "not_found": "no order with that code",
+      "invalid_status": "the order is cancelled",
+      "other": "it could not be sent"
+    },
+    "failed": "Could not send. Nothing was sent. Please try again."
+  }
+}

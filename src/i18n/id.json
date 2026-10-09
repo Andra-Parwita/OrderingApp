@@ -48,7 +48,21 @@
     "publish": "Publikasikan",
     "previewLoadError": "Pratinjau tidak bisa dimuat.",
     "retry": "Coba lagi",
-    "previewPublishError": "Tidak bisa mempublikasikan. Periksa menu lalu coba lagi."
+    "previewPublishError": "Tidak bisa mempublikasikan. Periksa menu lalu coba lagi.",
+    "devNoSignIn": "Dev: tanpa masuk",
+    "devices": "Perangkat",
+    "signOut": "Keluar",
+    "signedInAs": "Masuk sebagai {{name}}",
+    "signedInChef": "Chef {{name}}",
+    "notForChefs": "Tidak tersedia untuk chef",
+    "notForChefsBody": "Bagian ini diurus penjual. Anda tetap bisa melihat dan memperbarui pesanan.",
+    "toOrders": "Ke pesanan",
+    "firstTime": "Pertama kali? Pakai kunci undangan",
+    "saturday": "Sabtu",
+    "pickup": "Serah terima",
+    "delivery": "Antar pesanan",
+    "updates": "Kirim kabar",
+    "backToSaturday": "Kembali ke Serah terima"
   },
   "customerNav": {
     "label": "Pelanggan",

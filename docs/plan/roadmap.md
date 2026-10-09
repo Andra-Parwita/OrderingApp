@@ -165,3 +165,35 @@ Approved 2026-10-09 ([D-043](../decisions/README.md)). Scope = wireframe batch 3
 **Timeline:** 6.1 → [6.2a ∥ 6.2b ∥ 6.2c] → 6.3 — three rounds, gate after each.
 **Mock-ups:** the approved batch 3 wireframes + the owner's reference prototype + the desktop A1 style (D-031); no separate mock-up round unless the owner asks (question 41).
 
+
+## Phase 3 · Batch 4 (sign-in, admin, Saturday) stage table
+
+Approved 2026-10-09 ([D-045](../decisions/README.md)); **done 15:36** — remaining polish on the board. Scope = wireframe batch 4 ([batch-4.html](../design/wireframes/batch-4.html)) + D-011/D-013/D-014 (passkeys, password fallback, chefs), D-027 row 1 (device names, 3 devices per key, 6-digit add-device code, 5 tries → 15-min lockout), D-036/D-037 (admin creates sellers and slugs), D-027 (bulk updates). **Prototype level:** sign-in runs against the dev mock (no real WebAuthn — the passkey button is simulated); real passkeys, sessions in D1 and rate limits arrive in phase 4. Real QR codes and camera scanning need new packages (owner's OK) — left for phase 5; hand-over here works by typed code.
+
+| stage | what | files owned | proof |
+|---|---|---|---|
+| 7.1 | **Domain + mock**: roles admin / seller / chef; mock sessions (cookie-like token per device, role, seller id); admin bootstrap with a dev setup key; sellers CRUD with slug rules (D-037); invite keys (one-time, 24 h, up to 3 devices, hash only); add-device codes (6 digits, 10 min); devices list + sign out; lockout (5 tries → 15 min); chef invites by the seller; chef permissions (no menu, chefs list, invites); bulk updates to customers' inboxes (templates + custom, recipient groups); "arriving soon" per order; hand-over lookup by code | `shared/`, `worker/mock/`, `mocks/`, `src/api/` | unit + isolation + permission tests |
+| 7.2a | **Sign-in screens**: setup key, passkey help (iPhone / Android / Windows-Mac), simulated "Create passkey", password fallback, sign in, devices, add a device (code), lockout message (EN/ID) | `src/features/seller-auth/` (new) | component tests; e2e desktop + Android |
+| 7.2b | **Admin page** (desktop-first, EN): admin setup, sellers list + create (name, slug), invite / recovery keys, each seller's devices with sign out, own devices | `src/features/admin/` (new) | component tests; e2e desktop |
+| 7.2c | **Saturday tools**: hand-over (type code → order card → Mark collected), delivery run (Out for delivery / Arriving soon / Delivered), **send an update** to many customers (templates "Ready in N min", "Arrived", "Arriving in N min", custom; groups) | `src/features/seller-saturday/` (new) | component tests; e2e desktop + Android |
+| 7.3 | **Shell**: routes (`/seller/setup`, `/seller/sign-in`, `/admin…`), route guards by role, the seller comes from the session (dev picker kept as a dev-only override), chef restrictions in rail/tabs/More, Hand-over tab enabled | `src/app/`, `src/main.tsx`, e2e | changed specs green; owner tries it |
+
+**Overlap:** 7.1 first. 7.2a/b/c are new disjoint folders → one wave of 3. 7.3 last.
+**Timeline:** 7.1 → [7.2a ∥ 7.2b ∥ 7.2c] → 7.3 (3 rounds).
+**Mock-ups:** batch 4 wireframes are approved; no separate mock-up round unless asked.
+
+## Phase 4 · Real backend on this PC (stage table)
+
+Draft 2026-10-09, waiting on question 45. Goal: replace the in-memory dev mock with the real Cloudflare stack **running locally** through `@cloudflare/vite-plugin` (Miniflare): D1 for data, R2 for images, a Durable Object for live updates, real passkeys (D-014) and sessions — same typed contracts, so the screens barely change. Nothing touches Cloudflare's servers until phase 5 (owner's deploy).
+
+| stage | what | files owned | proof |
+|---|---|---|---|
+| 8.1 | **D1 schema + repository layer**: SQL migrations (`migrations/`) for sellers, kitchens/settings, image refs, weeks, items, chefs, saved sets, orders + lines (snapshots, D-020), audit (last 4), inbox, past-week totals + expired-order summaries (D-044), auth (accounts, devices, sessions, hashed keys/codes, lockouts); one `Repository` interface with a **D1 implementation** and the existing in-memory one kept **for unit tests only**; a **seed script** for local dev data that refuses to run without an explicit `--local` target (conventions §6) | `migrations/`, `worker/db/`, `worker/repo/`, `scripts/seed-local.mjs` | contract tests run against both implementations; migrations apply cleanly to a scratch local D1 |
+| 8.2 | **Real sign-in**: WebAuthn with `@simplewebauthn/server` + `/browser` (D-014) for admin, seller and chef; password fallback (PBKDF2) kept; sessions in D1 delivered as an **HttpOnly `__Host-` cookie** (per [seller-auth.md](../architecture/seller-auth.md)) instead of the prototype's bearer token; `Origin` check on writes; lockout + rate limits in D1 | `worker/auth/`, `src/api/` (auth client), `src/features/seller-auth/` + `admin/` (real passkey calls) | unit tests incl. replayed/forged assertions rejected; passkey e2e with Playwright's virtual authenticator |
+| 8.3 | **Live updates + images**: one Durable Object per seller (WebSocket Hibernation API) pushing order changes to signed-in seller devices; seller orders + cook list switch from 15 s polling to the live connection (polling kept as fallback); images stored in **R2** (local), served through the Worker with cache headers; upload path keeps the server-side checks | `worker/live/`, `worker/images/`, seller-orders + seller-cook sagas | unit tests for the DO; e2e: an order placed on one page appears on the seller page within 2 s |
+| 8.4 | **Switch over + retention**: Worker routes use the D1 repository; the dev mock and `/api/dev/*` are removed (D-021), except a dev-only reset/seed route against the local DB; **cron trigger** for weekly retention (4 weeks → totals); e2e runs on a **scratch local D1** created per run (asserted in the same command); docs: architecture overview, data model, API | `worker/`, `src/`, `e2e/`, `playwright.config.ts`, `docs/architecture/` | full gate; changed specs green on scratch D1; owner tries it on this PC |
+
+**Overlap:** 8.1 first (schema + repository). 8.2 (auth) and 8.3 (live + images) touch different folders → a wave of 2. 8.4 last.
+**Timeline:** 8.1 → [8.2 ∥ 8.3] → 8.4 (3 rounds).
+**Packages:** `@simplewebauthn/server` and `@simplewebauthn/browser` are already approved (D-014); nothing else new.
+**Data safety:** every DB-backed test uses a scratch D1, asserted in the same command; nothing ever points at a remote database in phase 4.

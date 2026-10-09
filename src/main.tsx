@@ -4,6 +4,9 @@ import { App } from './app/App';
 import { createAppStore } from './app/store';
 import { registerCustomerI18n } from './features/customer-menu';
 import { registerCustomerOrdersI18n } from './features/customer-orders';
+import { registerAdminI18n } from './features/admin';
+import { registerSellerAuthI18n } from './features/seller-auth';
+import { registerSellerSaturdayI18n } from './features/seller-saturday';
 import { registerCookI18n } from './features/seller-cook';
 import { registerSellerI18n } from './features/seller-orders';
 import { registerSellerHistoryI18n } from './features/seller-history';
@@ -51,6 +54,9 @@ void initI18n().then(async () => {
   registerSellerSetupI18n();
   registerSellerLabelsI18n();
   registerSellerHistoryI18n();
+  registerSellerAuthI18n();
+  registerAdminI18n();
+  registerSellerSaturdayI18n();
   if (harness) {
     const module = await harness.loader();
     const component = module[harness.component];

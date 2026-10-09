@@ -44,8 +44,19 @@ import {
 } from '../features/seller-menu';
 import { SettingsScreen } from '../features/seller-settings';
 import { ChefsScreen, ImagesScreen, WeekSettingsScreen } from '../features/seller-setup';
+import { DevicesScreen } from '../features/seller-auth';
+import { DeliveryRunScreen, HandOverScreen, SendUpdateScreen } from '../features/seller-saturday';
 import { ShareScreen } from '../features/seller-share';
-import { ListRow, PageHeader } from '../ui';
+import { Button, ListRow, PageHeader } from '../ui';
+import {
+  AdminHomeRoute,
+  AdminSetupRoute,
+  AdminSignInRoute,
+  SellerSetupRoute,
+  SellerSignInRoute,
+} from './AuthRoutes';
+import { AdminGuard, SellerGuard, SellerOnly } from './guards';
+import { SessionProvider, useSession } from './session';
 import { CustomerShell } from './CustomerShell';
 import { DESKTOP_QUERY } from './layout';
 import { isValidSlug } from '../../shared/seller';
@@ -255,12 +266,13 @@ const ShareLink = styled(Link)`
 
 function SettingsRoute() {
   const { t } = useTranslation();
+  const { me } = useSession();
   return (
     <SettingsScreen>
       <MoreBlock>
         <FooterLabel>{t('theme.label')}</FooterLabel>
         <ThemeSwitch />
-        <SellerPicker />
+        {me === null ? <SellerPicker /> : null}
         <ShareLink to="/seller/share">{t('sellerNav.shareMenu')}</ShareLink>
       </MoreBlock>
     </SettingsScreen>
@@ -338,16 +350,48 @@ const MORE_LINKS = [
   ['pastWeeks', '/seller/past-weeks'],
   ['backup', '/seller/backup'],
   ['shareMenu', '/seller/share'],
+  ['devices', '/seller/devices'],
 ] as const;
+// What the server closes to a chef (D-013); the chef does not see these.
+const CHEF_HIDDEN: ReadonlySet<string> = new Set([
+  'settings',
+  'weekSettings',
+  'images',
+  'chefs',
+  'backup',
+]);
+
+function DevicesRoute() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { adopt } = useSession();
+  const signedOut = useCallback(() => {
+    adopt(null);
+    void navigate('/seller/sign-in', { replace: true });
+  }, [adopt, navigate]);
+  return (
+    <MorePage title={t('sellerNav.devices')}>
+      <DevicesScreen onSignedOut={signedOut} />
+    </MorePage>
+  );
+}
 
 function MoreRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { me, end } = useSession();
+  const links = MORE_LINKS.filter(
+    ([key]) => (me?.role !== 'chef' || !CHEF_HIDDEN.has(key)) && (key !== 'devices' || me !== null),
+  );
+  const signOutNow = useCallback(async () => {
+    await end();
+    void navigate('/seller/sign-in', { replace: true });
+  }, [end, navigate]);
   return (
     <>
       <PageHeader title={t('sellerNav.moreTitle')} />
       <nav aria-label={t('sellerNav.moreTitle')}>
-        {MORE_LINKS.map(([key, to]) => (
+        {links.map(([key, to]) => (
           <ListRow
             key={key}
             primary={t(`sellerNav.${key}`)}
@@ -356,6 +400,71 @@ function MoreRoute() {
           />
         ))}
       </nav>
+      {me === null ? null : (
+        <MoreBlock>
+          <Button onClick={() => void signOutNow()}>{t('sellerNav.signOut')}</Button>
+        </MoreBlock>
+      )}
+    </>
+  );
+}
+
+// ---- Saturday: the hub and the three tools (stage 7.3) ----
+
+const HubList = styled.nav`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.lg};
+
+  a {
+    display: flex;
+    align-items: center;
+    min-height: 4.5rem;
+    padding: 0 ${({ theme }) => theme.spacing.lg};
+    border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.outline};
+    border-radius: ${({ theme }) => theme.radius.md};
+    background: ${({ theme }) => theme.colour.surface};
+    color: ${({ theme }) => theme.colour.text};
+    font-size: ${({ theme }) => theme.type.size.lg};
+    font-weight: ${({ theme }) => theme.type.weight.strong};
+    text-decoration: none;
+  }
+`;
+const HubTitle = styled.h1`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg} 0;
+  font-size: ${({ theme }) => theme.type.size.lg};
+`;
+
+function HandOverHubRoute() {
+  const { t } = useTranslation();
+  return (
+    <>
+      <HubTitle>{t('sellerNav.handover')}</HubTitle>
+      <HubList aria-label={t('sellerNav.saturday')}>
+        <Link to="/seller/hand-over/pickup">{t('sellerNav.pickup')}</Link>
+        <Link to="/seller/hand-over/delivery">{t('sellerNav.delivery')}</Link>
+        <Link to="/seller/updates">{t('sellerNav.updates')}</Link>
+      </HubList>
+    </>
+  );
+}
+
+/** A Saturday tool under a header whose back arrow returns to the hub (the tool has its own title). */
+function SaturdayPage({ children }: Readonly<{ children: ReactNode }>) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const back = useCallback(() => void navigate('/seller/hand-over'), [navigate]);
+  return (
+    <>
+      <PageHeader
+        title={t('sellerNav.handover')}
+        titleHidden
+        backLabel={t('sellerNav.backToSaturday')}
+        onBack={back}
+      />
+      {children}
     </>
   );
 }
@@ -406,41 +515,160 @@ function PastePostRoute() {
 
 export function AppRoutes() {
   return (
-    <Routes>
-      {/* Customer pages share the bottom tab bar (D-039). */}
-      <Route element={<CustomerShell />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/:slug" element={<MenuRoute />} />
-        <Route path="/:slug/basket" element={<BasketRoute />} />
-        <Route path="/o/:token" element={<OrderRoute />} />
-        <Route path="/o/:token/placed" element={<PlacedRoute />} />
-        <Route path="/o/:token/edit" element={<EditOrderRoute />} />
-        <Route path="/my-orders" element={<MyOrdersRoute />} />
-        <Route path="/settings" element={<CustomerSettingsScreen />} />
-      </Route>
-      {/* Seller routes have no sign-in until phase 4 (D-011); anyone with the link can open them. */}
-      <Route path="/seller" element={<SellerLayout />}>
-        <Route index element={<OrdersWorkspace />} />
-        <Route path="orders/:code" element={<OrdersWorkspace />} />
-        <Route path="new" element={<NewOrderRoute />} />
-        <Route path="cook" element={<CookRoute />} />
-        <Route path="share" element={<ShareScreen />} />
-        <Route path="settings" element={<SettingsRoute />} />
-        <Route path="menu" element={<MenuWorkspace />} />
-        <Route path="menu/items/:id" element={<MenuWorkspace />} />
-        <Route path="menu/sets" element={<SavedSetsRoute />} />
-        <Route path="menu/paste" element={<PastePostRoute />} />
-        <Route path="more" element={<MoreRoute />} />
-        <Route path="week" element={<WeekRoute />} />
-        <Route path="images" element={<ImagesRoute />} />
-        <Route path="chefs" element={<ChefsRoute />} />
-        <Route path="labels" element={<LabelsRoute />} />
-        <Route path="past-weeks" element={<PastWeeksRoute />} />
-        <Route path="backup" element={<BackupRoute />} />
-      </Route>
-      {/* The preview is the customer's screen, so it sits outside the seller shell. */}
-      <Route path="/seller/menu/preview" element={<SellerPreview />} />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    <SessionProvider>
+      <Routes>
+        {/* Customer pages share the bottom tab bar (D-039). */}
+        <Route element={<CustomerShell />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/:slug" element={<MenuRoute />} />
+          <Route path="/:slug/basket" element={<BasketRoute />} />
+          <Route path="/o/:token" element={<OrderRoute />} />
+          <Route path="/o/:token/placed" element={<PlacedRoute />} />
+          <Route path="/o/:token/edit" element={<EditOrderRoute />} />
+          <Route path="/my-orders" element={<MyOrdersRoute />} />
+          <Route path="/settings" element={<CustomerSettingsScreen />} />
+        </Route>
+        {/* Sign-in and setup sit outside the seller shell; the shell needs a finished sign-in. */}
+        <Route path="/seller/setup" element={<SellerSetupRoute />} />
+        <Route path="/seller/sign-in" element={<SellerSignInRoute />} />
+        <Route path="/admin/setup" element={<AdminSetupRoute />} />
+        <Route path="/admin/sign-in" element={<AdminSignInRoute />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminGuard>
+              <AdminHomeRoute />
+            </AdminGuard>
+          }
+        />
+        <Route
+          path="/seller"
+          element={
+            <SellerGuard>
+              <SellerLayout />
+            </SellerGuard>
+          }
+        >
+          <Route index element={<OrdersWorkspace />} />
+          <Route path="orders/:code" element={<OrdersWorkspace />} />
+          <Route path="new" element={<NewOrderRoute />} />
+          <Route path="cook" element={<CookRoute />} />
+          <Route path="share" element={<ShareScreen />} />
+          <Route
+            path="settings"
+            element={
+              <SellerOnly>
+                <SettingsRoute />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="menu"
+            element={
+              <SellerOnly>
+                <MenuWorkspace />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="menu/items/:id"
+            element={
+              <SellerOnly>
+                <MenuWorkspace />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="menu/sets"
+            element={
+              <SellerOnly>
+                <SavedSetsRoute />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="menu/paste"
+            element={
+              <SellerOnly>
+                <PastePostRoute />
+              </SellerOnly>
+            }
+          />
+          <Route path="more" element={<MoreRoute />} />
+          <Route
+            path="week"
+            element={
+              <SellerOnly>
+                <WeekRoute />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="images"
+            element={
+              <SellerOnly>
+                <ImagesRoute />
+              </SellerOnly>
+            }
+          />
+          <Route
+            path="chefs"
+            element={
+              <SellerOnly>
+                <ChefsRoute />
+              </SellerOnly>
+            }
+          />
+          <Route path="labels" element={<LabelsRoute />} />
+          <Route path="past-weeks" element={<PastWeeksRoute />} />
+          <Route
+            path="backup"
+            element={
+              <SellerOnly>
+                <BackupRoute />
+              </SellerOnly>
+            }
+          />
+          <Route path="devices" element={<DevicesRoute />} />
+          <Route path="hand-over" element={<HandOverHubRoute />} />
+          <Route
+            path="hand-over/pickup"
+            element={
+              <SaturdayPage>
+                <HandOverScreen />
+              </SaturdayPage>
+            }
+          />
+          <Route
+            path="hand-over/delivery"
+            element={
+              <SaturdayPage>
+                <DeliveryRunScreen />
+              </SaturdayPage>
+            }
+          />
+          <Route
+            path="updates"
+            element={
+              <SaturdayPage>
+                <SendUpdateScreen />
+              </SaturdayPage>
+            }
+          />
+        </Route>
+        {/* The preview is the customer's screen, so it sits outside the seller shell. */}
+        <Route
+          path="/seller/menu/preview"
+          element={
+            <SellerGuard>
+              <SellerOnly>
+                <SellerPreview />
+              </SellerOnly>
+            </SellerGuard>
+          }
+        />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </SessionProvider>
   );
 }

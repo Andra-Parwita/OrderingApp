@@ -74,7 +74,14 @@
   "inbox": {
     "nudge": "Penjual menunggu nomor pesanan Anda lewat WhatsApp.",
     "nudgeReturning": "Pesanan Anda sudah masuk. Mengirimnya lewat WhatsApp bersifat opsional, tetapi membantu penjual mengonfirmasi lebih cepat.",
-    "readyIn": "Siap dalam sekitar {{minutes}} menit.",
+    "readyIn": "Makanan Anda siap sekitar {{minutes}} menit lagi.",
+    "ready": "Makanan Anda sudah siap diambil.",
+    "arrived": "Penjual sudah tiba di tempat pengambilan.",
+    "arrivingIn": "Pesanan Anda tiba sekitar {{minutes}} menit lagi.",
+    "arrivingSoon": "Pesanan Anda hampir tiba.",
+    "outForDelivery": "Pesanan Anda sedang diantar.",
+    "delivered": "Pesanan Anda sudah diantar.",
+    "collected": "Pesanan Anda sudah diambil.",
     "other": "Kabar dari penjual",
     "status": {
       "ordered": "Pesanan diterima",

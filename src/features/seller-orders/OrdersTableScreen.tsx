@@ -20,7 +20,13 @@ import {
 import { SELLER_NS } from './i18n/register';
 import { attentionFlag, type AttentionFlag } from './customerKind';
 import { STATUS_FILTERS } from './orderStatus';
-import { DevTools, FilterChip, useOrdersPolling, useVisibleOrders } from './ordersShared';
+import {
+  DevTools,
+  FilterChip,
+  useOrdersPolling,
+  useShowDevTools,
+  useVisibleOrders,
+} from './ordersShared';
 import type { OrdersScreenProps } from './OrdersScreen';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
 import { toneOf } from './orderStatus';
@@ -200,6 +206,7 @@ function OrdersTableContent({
   const visible = useVisibleOrders(filter, query);
   const cookingDate = useSelector(selectCookingDate);
   useOrdersPolling();
+  const showDev = useShowDevTools();
 
   const onQuery = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onQueryChange(event.target.value),
@@ -304,7 +311,7 @@ function OrdersTableContent({
           {visible.length === 0 ? <Message>{t('orders.empty')}</Message> : null}
         </>
       ) : null}
-      {import.meta.env.DEV ? (
+      {showDev ? (
         <Bottom>
           <DevTools />
         </Bottom>

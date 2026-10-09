@@ -64,6 +64,11 @@ import {
   type WeekResponse,
   type WeekSettingsRequest,
 } from '../../shared/setupContract';
+import {
+  parseSendUpdatesResponse,
+  type SendUpdatesRequest,
+  type SendUpdatesResponse,
+} from '../../shared/updateContract';
 import { request, requestText, type ApiResult } from './http';
 
 const enc = encodeURIComponent;
@@ -546,4 +551,31 @@ export function restoreBackup(
 /** The week's orders as CSV text (UTF-8 with a BOM, for Excel). */
 export function fetchOrdersCsv(actor?: StaffActor, seller?: string): Promise<ApiResult<string>> {
   return requestText('/api/seller/orders.csv', who(actor, seller));
+}
+
+// Saturday tools (stage 7.1).
+
+/** "Arriving soon" for one delivery order (409 `invalid_status` for pickup or closed orders). */
+export function sendArrivingSoon(
+  code: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<SellerOrderResponse>> {
+  return request(`/api/seller/orders/${enc(code)}/arriving-soon`, parseSellerOrderResponse, {
+    method: 'POST',
+    ...who(actor, seller),
+  });
+}
+
+/** A bulk update to many customers' inboxes; the answer says what happened per order. */
+export function sendUpdates(
+  input: SendUpdatesRequest,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<SendUpdatesResponse>> {
+  return request('/api/seller/updates', parseSendUpdatesResponse, {
+    method: 'POST',
+    body: input,
+    ...who(actor, seller),
+  });
 }

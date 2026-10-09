@@ -237,9 +237,72 @@ describe('OrderScreen', () => {
     const updates = await screen.findByTestId('updates');
     expect(updates).toHaveTextContent('Sending it on WhatsApp is optional');
     expect(updates).toHaveTextContent('See you at 2!');
-    expect(updates).toHaveTextContent('Ready in about 20 minutes.');
+    expect(updates).toHaveTextContent('Your food will be ready in about 20 minutes.');
     expect(updates).toHaveTextContent('Update from the seller');
   });
+
+  const SATURDAY_KEYS: ReadonlyArray<{ key: string; minutes?: number; en: string; id: string }> = [
+    {
+      key: 'readyIn',
+      minutes: 15,
+      en: 'Your food will be ready in about 15 minutes.',
+      id: 'Makanan Anda siap sekitar 15 menit lagi.',
+    },
+    { key: 'ready', en: 'Your food is ready for pickup.', id: 'Makanan Anda sudah siap diambil.' },
+    {
+      key: 'arrived',
+      en: 'The seller has arrived at the pickup point.',
+      id: 'Penjual sudah tiba di tempat pengambilan.',
+    },
+    {
+      key: 'arrivingIn',
+      minutes: 20,
+      en: 'Your delivery will arrive in about 20 minutes.',
+      id: 'Pesanan Anda tiba sekitar 20 menit lagi.',
+    },
+    {
+      key: 'arrivingSoon',
+      en: 'Your delivery is arriving soon.',
+      id: 'Pesanan Anda hampir tiba.',
+    },
+    {
+      key: 'outForDelivery',
+      en: 'Your order is out for delivery.',
+      id: 'Pesanan Anda sedang diantar.',
+    },
+    {
+      key: 'delivered',
+      en: 'Your order has been delivered.',
+      id: 'Pesanan Anda sudah diantar.',
+    },
+    { key: 'collected', en: 'Your order has been collected.', id: 'Pesanan Anda sudah diambil.' },
+  ];
+
+  it.each(['en', 'id'] as const)(
+    'shows every Saturday message and a custom text as written (%s)',
+    async (lang) => {
+      const placed = await place();
+      const order: CustomerOrder = {
+        ...placed,
+        inbox: [
+          { at: '2026-10-10T11:00:00.000Z', kind: 'message', text: 'Parking is behind the shop' },
+          ...SATURDAY_KEYS.map((entry, index) => ({
+            at: `2026-10-10T10:0${String(index)}:00.000Z`,
+            kind: 'message' as const,
+            textKey: entry.key,
+            ...(entry.minutes !== undefined ? { minutes: entry.minutes } : {}),
+          })),
+        ],
+      };
+      server.use(http.get('*/api/orders/:token', () => HttpResponse.json({ order })));
+      await i18n.changeLanguage(lang);
+      renderOrder(placed.token);
+      const updates = await screen.findByTestId('updates');
+      expect(updates).toHaveTextContent('Parking is behind the shop');
+      for (const entry of SATURDAY_KEYS) expect(updates).toHaveTextContent(entry[lang]);
+      expect(updates).not.toHaveTextContent(/Update from the seller|Kabar dari penjual/);
+    },
+  );
 
   it('marks the inbox as seen on view', async () => {
     const placed = await place();

@@ -161,8 +161,10 @@ describe('PastWeeksScreen', () => {
     servePastWeeks();
     renderThemed(<PastWeeksScreen />);
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Pekan lalu');
-    expect(screen.getByText(/Rincian pesanan disimpan 4 pekan/)).toBeInTheDocument();
-    const row = screen.getAllByRole('button')[0];
+    expect(await screen.findByText(/Rincian pesanan disimpan 4 pekan/)).toBeInTheDocument();
+    // The heading shows before the weeks load, so wait for the list of weeks.
+    const list = await screen.findByRole('list', { name: 'Pekan lalu' });
+    const row = within(list).getAllByRole('button')[0];
     expect(row).toHaveTextContent('2 pesanan');
     expect(row).toHaveTextContent('Belum lunas');
   });

@@ -1,0 +1,128 @@
+{
+  "errors": {
+    "wrong": "Tidak berhasil. Periksa lagi lalu coba lagi.",
+    "triesLeft_one": "Sisa {{count}} kesempatan.",
+    "triesLeft_other": "Sisa {{count}} kesempatan.",
+    "locked_one": "Terlalu banyak percobaan. Coba lagi dalam {{count}} menit.",
+    "locked_other": "Terlalu banyak percobaan. Coba lagi dalam {{count}} menit.",
+    "network": "Tidak bisa terhubung ke server. Periksa koneksi lalu coba lagi.",
+    "setupExpired": "Waktu penyiapan habis. Mulai lagi dengan kunci baru.",
+    "generic": "Terjadi kesalahan. Coba lagi."
+  },
+  "deviceName": {
+    "label": "Nama perangkat ini",
+    "helper": "Supaya kamu bisa membedakan perangkatmu",
+    "empty": "Tulis nama untuk perangkat ini.",
+    "iphone": "iPhone",
+    "ipad": "iPad",
+    "android": "Android",
+    "computer": "Komputer"
+  },
+  "prototypeNote": "Prototipe: passkey hanya simulasi",
+  "key": {
+    "title": "Siapkan cara masukmu",
+    "label": "Masukkan kunci yang kamu terima",
+    "helper": "Berlaku 24 jam. Spasi, tanda hubung, dan huruf kecil boleh.",
+    "empty": "Ketik kunci yang kamu terima.",
+    "submit": "Lanjut",
+    "checking": "Memeriksa…",
+    "useCode": "Saya punya kode 6 angka dari perangkat lain"
+  },
+  "code": {
+    "title": "Pakai kode dari perangkat lain",
+    "label": "Kode 6 angka",
+    "helper": "Di perangkat lainmu, buka Perangkat lalu ketuk Tambah perangkat. Kode berlaku 10 menit.",
+    "empty": "Ketik kode 6 angka.",
+    "submit": "Lanjut",
+    "useKey": "Saya punya kunci"
+  },
+  "passkey": {
+    "title": "Buat passkey",
+    "greeting": "Halo {{name}}",
+    "deviceLabel": "Perangkatmu",
+    "deviceGroup": "Jenis perangkatmu",
+    "iphone": "iPhone",
+    "android": "Android",
+    "computer": "Windows / Mac",
+    "steps": {
+      "iphone": {
+        "1": "Pastikan ponselmu punya kunci layar (Pengaturan → Face ID & Kode Sandi)",
+        "2": "Ketuk Buat passkey di bawah",
+        "3": "Konfirmasi dengan Face ID atau kode sandimu"
+      },
+      "android": {
+        "1": "Pastikan ponselmu punya kunci layar (Setelan → Keamanan → Kunci layar)",
+        "2": "Ketuk Buat passkey di bawah",
+        "3": "Konfirmasi dengan sidik jari atau PIN layarmu"
+      },
+      "computer": {
+        "1": "Pastikan Windows Hello atau Touch ID sudah diatur (Setelan → Opsi masuk)",
+        "2": "Ketuk Buat passkey di bawah",
+        "3": "Konfirmasi dengan Windows Hello, Touch ID, atau PIN komputermu"
+      }
+    },
+    "note": {
+      "iphone": "Passkey tersimpan di ponselmu dan tersinkron lewat iCloud Keychain. Tidak ada yang perlu diingat.",
+      "android": "Passkey tersimpan di ponselmu dan tersinkron lewat Google Password Manager. Tidak ada yang perlu diingat.",
+      "computer": "Passkey tersimpan di komputer ini. Tidak ada Windows Hello atau Touch ID? Pakai ponselmu, atau atur kata sandi."
+    },
+    "submit": "Buat passkey",
+    "working": "Membuat…",
+    "usePassword": "Ponselku tidak bisa → atur kata sandi saja"
+  },
+  "password": {
+    "title": "Atur kata sandi",
+    "banner": "Perangkatmu tidak bisa membuat passkey, jadi atur kata sandi",
+    "label": "Kata sandi baru",
+    "confirm": "Ulangi kata sandi",
+    "helper": "Minimal 10 karakter",
+    "tooShort": "Pakai minimal 10 karakter.",
+    "tooLong": "Pakai maksimal 200 karakter.",
+    "mismatch": "Kedua kata sandi tidak sama.",
+    "show": "Tampilkan",
+    "hide": "Sembunyikan",
+    "submit": "Simpan kata sandi",
+    "working": "Menyimpan…",
+    "later": "Kamu bisa beralih ke passkey nanti dari perangkat yang lebih baru.",
+    "usePasskey": "Coba passkey saja"
+  },
+  "signIn": {
+    "title": "Masuk",
+    "passkey": "Masuk dengan passkey",
+    "noPasskey": "Perangkat ini belum punya passkey. Pakai kata sandi, atau minta kunci baru.",
+    "usePassword": "Pakai kata sandi saja",
+    "hidePassword": "Sembunyikan kata sandi",
+    "passwordLabel": "Kata sandi",
+    "submit": "Masuk",
+    "working": "Masuk…",
+    "empty": "Ketik kata sandimu.",
+    "lost": "Tidak bisa masuk? Minta kunci baru ke orang yang menyiapkan akunmu"
+  },
+  "devices": {
+    "title": "Perangkat",
+    "loading": "Memuat…",
+    "loadFailed": "Perangkatmu tidak bisa dimuat.",
+    "retry": "Coba lagi",
+    "thisDevice": "Perangkat ini",
+    "others": "Perangkat lain",
+    "none": "Belum ada perangkat lain.",
+    "lastUsed": "Terakhir dipakai {{when}}",
+    "activeNow": "Sedang dipakai",
+    "rename": "Ganti nama",
+    "renameField": "Nama baru untuk {{name}}",
+    "saveName": "Simpan nama",
+    "cancel": "Batal",
+    "signOutDevice": "Keluarkan",
+    "signOutDeviceConfirm": "Ketuk lagi untuk keluarkan",
+    "add": "Tambah perangkat",
+    "addHelp": "Ketik kode ini di perangkat baru. Kode hanya berlaku sekali.",
+    "codeLabel": "Kodemu",
+    "expiresIn": "Berakhir dalam {{time}}",
+    "expired": "Kode ini sudah kedaluwarsa.",
+    "newCode": "Buat kode baru",
+    "hideCode": "Selesai",
+    "signOutHere": "Keluar dari perangkat ini",
+    "signOutHereConfirm": "Ketuk lagi untuk keluar",
+    "signOutHereHint": "Kamu perlu passkey atau kata sandi untuk masuk lagi."
+  }
+}

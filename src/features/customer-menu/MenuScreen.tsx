@@ -1,11 +1,12 @@
 import { useCallback, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
 import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
+import { formatPhone } from '../../../shared/phone';
 import { pickText } from '../../../shared/text';
 import { whatsAppUrl } from '../../api/device/whatsapp';
 import { Button, ImageSlot } from '../../ui';
@@ -34,6 +35,11 @@ const Week = styled.dl`
     margin: 0;
     font-weight: ${({ theme }) => theme.type.weight.strong};
   }
+`;
+
+const PreviewNote = styled(Muted)`
+  display: block;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg} 0;
 `;
 
 const Items = styled.ul`
@@ -119,11 +125,25 @@ function WeekBlock({ data, lang }: Readonly<{ data: MenuResponse; lang: Language
           </dd>
         </>
       ) : null}
-      <dt>{t('menu.deliveryAvailable')}</dt>
-      <dd>{week.delivery.available ? t('menu.deliveryNote') : t('menu.noDelivery')}</dd>
+      {week.delivery.available ? (
+        <>
+          <dt>{t('menu.deliveryAvailable')}</dt>
+          <dd>{t('menu.deliveryNote')}</dd>
+        </>
+      ) : (
+        <>
+          <dt>{t('menu.deliveryLabel')}</dt>
+          <dd>{t('menu.noDelivery')}</dd>
+        </>
+      )}
     </Week>
   );
 }
+
+// The seller's number stays on one line; it never wraps mid-number.
+const NoWrap = styled.span`
+  white-space: nowrap;
+`;
 
 function HowItWorks({ kitchen }: Readonly<{ kitchen: MenuResponse['kitchen'] }>) {
   const { t } = useTranslation(CUSTOMER_NS);
@@ -134,9 +154,16 @@ function HowItWorks({ kitchen }: Readonly<{ kitchen: MenuResponse['kitchen'] }>)
         <li>{t('menu.how1')}</li>
         <li>{t('menu.how2')}</li>
         <li>
-          {kitchen.whatsappNumber
-            ? t('menu.how3', { kitchen: kitchen.name, number: `+${kitchen.whatsappNumber}` })
-            : t('menu.how3Generic')}
+          {kitchen.whatsappNumber ? (
+            <Trans
+              t={t}
+              i18nKey="menu.how3"
+              values={{ kitchen: kitchen.name, number: formatPhone(kitchen.whatsappNumber) }}
+              components={{ num: <NoWrap /> }}
+            />
+          ) : (
+            t('menu.how3Generic')
+          )}
         </li>
       </Steps>
     </Block>
@@ -206,6 +233,7 @@ function MenuContent({ slug, onViewBasket, preview }: Props) {
           </NameRow>
           {menu.data.ordering.open || preview ? null : <ClosedBlock data={menu.data} />}
           <WeekBlock data={menu.data} lang={lang} />
+          {preview ? <PreviewNote>{t('menu.previewOff')}</PreviewNote> : null}
           <Items>
             {menu.data.items.map((item) => (
               <ItemRow

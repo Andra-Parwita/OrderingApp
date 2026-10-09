@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
+import { getSessionToken } from '../../api/device/session';
 import { Button, ConfirmButton } from '../../ui';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
 import { SELLER_NS } from './i18n/register';
@@ -66,7 +67,12 @@ const DevBar = styled.div`
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
 `;
 
-// Dev only: sample data and a reset of the mock store. Rendered only when `import.meta.env.DEV`.
+/** Dev tools show only in a dev build with no real session (the dev-override mode); never to a chef or a signed-in seller. */
+export function useShowDevTools(): boolean {
+  return import.meta.env.DEV && getSessionToken() === null;
+}
+
+// Dev only: sample data and a reset of the mock store.
 export function DevTools() {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();

@@ -1,6 +1,5 @@
 // Mock API routes on standard Request/Response; shared by the dev Worker and the MSW handlers.
 import { parseSampleOrdersRequest, type DevSellersResponse } from '../../shared/devContract';
-import type { ApiErrorBody, ApiErrorCode } from '../../shared/apiError';
 import { parseBackupFile } from '../../shared/backup';
 import type {
   Chef,
@@ -60,37 +59,11 @@ import {
   parseSettingsRequest,
   type SettingsResponse,
 } from '../../shared/sellerContract';
+import { parseChefInviteRequest, type KeyResponse } from '../../shared/authContract';
+import { parseSendUpdatesRequest, type SendUpdatesResponse } from '../../shared/updateContract';
+import { chefAccess, handleAdmin, handleAuth } from './authRoutes';
+import { bearerOf, error, readJson } from './respond';
 import type { MockStore, SellerStore, StoreResult } from './store';
-
-const STATUS: Record<ApiErrorCode, number> = {
-  invalid_request: 400,
-  unknown_item: 400,
-  not_found: 404,
-  seller_not_found: 404,
-  cutoff_passed: 409,
-  week_not_published: 409,
-  sold_out: 409,
-  exceeds_remaining: 409,
-  invalid_status: 409,
-  order_locked: 409,
-  ordering_closed: 409,
-  item_has_orders: 409,
-  limit_reached: 409,
-  no_items: 409,
-  confirm_required: 409,
-  week_not_draft: 409,
-  week_closed: 409,
-  unknown_chef: 400,
-  image_type: 400,
-  image_too_big: 400,
-  image_ratio: 400,
-  invalid_backup: 400,
-};
-
-function error(code: ApiErrorCode, message: string): Response {
-  const body: ApiErrorBody = { error: code, message };
-  return Response.json(body, { status: STATUS[code] });
-}
 
 const noSeller = () => error('seller_not_found', 'Seller not found');
 const weekClosed = () => error('week_closed', 'This week is closed');
@@ -121,15 +94,6 @@ function actorOf(request: Request): StaffActor {
 function sellerSlugOf(request: Request): string {
   const raw = request.headers.get('X-Seller')?.trim();
   return raw ? raw : DEFAULT_SELLER_SLUG;
-}
-
-async function readJson(request: Request): Promise<unknown> {
-  try {
-    const body: unknown = await request.json();
-    return body;
-  } catch {
-    return undefined;
-  }
 }
 
 /** Seller endpoints return the full order. */
@@ -262,10 +226,38 @@ export async function handleMockRequest(
     return null;
   }
 
+  if (area === 'auth') return handleAuth(store, request, [a, b]);
+  if (area === 'admin') return handleAdmin(store, request, [a, b, c, segments[5], segments[6]]);
+
   if (area === 'seller') {
+    const caller = store.auth.resolve(bearerOf(request));
+    // A session wins over everything else: the seller (and the audit name) come from it, and a
+    // different X-Seller / X-Actor header is ignored, so seller A can never act as seller B.
+    if (request.headers.has('Authorization')) {
+      if (!caller || caller.setup) return error('unauthorized', 'Sign in first');
+      if (caller.role === 'admin') return error('forbidden', 'Admins have no order data');
+      const sellerStore = caller.sellerId ? store.sellerById(caller.sellerId) : undefined;
+      if (!sellerStore) return error('unauthorized', 'Sign in first');
+      const chefName =
+        caller.role === 'chef' && caller.chefId
+          ? sellerStore.listChefs().find((chef) => chef.id === caller.chefId)?.name
+          : undefined;
+      if (caller.role === 'chef' && !chefName) return error('unauthorized', 'Sign in first');
+      const actor: StaffActor =
+        caller.role === 'chef'
+          ? { role: 'chef', name: chefName as string }
+          : { role: 'seller', name: sellerStore.seller.name };
+      if (caller.role === 'chef' && chefMayNot(request.method, a)) {
+        return error('forbidden', 'Chefs cannot do this');
+      }
+      return handleSeller(store, sellerStore, request, [a, b, c], bad, actor);
+    }
+    // DEV ONLY, until stage 7.3 moves the screens to sessions: without a session the old
+    // X-Seller / X-Actor headers still choose the seller and the audit name, with full seller
+    // rights (no chef limits). Phase 4 deletes this branch.
     const sellerStore = store.seller(sellerSlugOf(request));
     if (!sellerStore) return noSeller();
-    return handleSeller(store, sellerStore, request, [a, b, c], bad);
+    return handleSeller(store, sellerStore, request, [a, b, c], bad, actorOf(request));
   }
 
   if (area === 'dev') {
@@ -286,6 +278,18 @@ export async function handleMockRequest(
   return null;
 }
 
+/**
+ * What a chef may not do (D-013): the chef gets everything the seller has except changes to the
+ * menu (items, order, saved sets), the chefs list, images, week settings (incl. publish and
+ * close), settings, backup and restore, and invites. Reading those is allowed (the order screens
+ * need the menu, chefs and settings); backup is closed in both directions.
+ */
+function chefMayNot(method: string, a: string | undefined): boolean {
+  if (a === 'backup' || a === 'chef-invites' || a === 'chef-devices') return true;
+  const closed = ['menu', 'chefs', 'sets', 'images', 'week', 'settings'];
+  return closed.includes(a ?? '') && method !== 'GET';
+}
+
 /** Everything under /api/seller/*, for the one seller the request is scoped to. */
 async function handleSeller(
   mock: MockStore,
@@ -293,9 +297,43 @@ async function handleSeller(
   request: Request,
   [a, b, c]: [string | undefined, string | undefined, string | undefined],
   bad: () => Response,
+  actor: StaffActor,
 ): Promise<Response | null> {
   const method = request.method;
   if (a === 'menu' && !b && method === 'GET') return Response.json(store.getSellerMenu());
+
+  // Chefs can't invite people (D-013); the seller invites a chef from the chefs list.
+  if (a === 'chef-invites' && !b && method === 'POST') {
+    const input = parseChefInviteRequest(await readJson(request));
+    if (!input) return bad();
+    if (!store.listChefs().some((chef) => chef.id === input.chefId)) {
+      return error('unknown_chef', 'Unknown chef');
+    }
+    const key = await mock.auth.createKey(
+      { role: 'chef', sellerId: store.seller.id, chefId: input.chefId },
+      'invite',
+    );
+    return Response.json(key satisfies KeyResponse, { status: 201 });
+  }
+
+  // How many devices each chef has signed in (the chefs screen shows it next to the invite).
+  if (a === 'chef-devices' && !b && method === 'GET') {
+    return Response.json(chefAccess(mock, store));
+  }
+
+  // Bulk updates to customers' inboxes (Saturday tools).
+  if (a === 'updates' && !b && method === 'POST') {
+    const input = parseSendUpdatesRequest(await readJson(request));
+    if (!input) return bad();
+    const { codes, ...update } = input;
+    // Forgiving codes ("k7f-2qx") are normalised first, so the same order is not sent twice.
+    const unique = [...new Set(codes.map((code) => parseOrderCode(code) ?? code))];
+    const results = unique.map((code) => store.sendUpdate(code, update, actor));
+    return Response.json({
+      results,
+      sent: results.filter((entry) => entry.ok).length,
+    } satisfies SendUpdatesResponse);
+  }
 
   if (a === 'settings' && !b) {
     const sellerId = store.seller.id;
@@ -381,7 +419,11 @@ async function handleSeller(
       const input = parseChefNameRequest(await readJson(request));
       return input ? chefResult(store.renameChef(b, input.name)) : bad();
     }
-    if (b && method === 'DELETE') return okResult(store.removeChef(b));
+    if (b && method === 'DELETE') {
+      const removed = store.removeChef(b);
+      if (removed.ok) mock.auth.revokeChef(store.seller.id, b);
+      return okResult(removed);
+    }
     return null;
   }
 
@@ -465,7 +507,6 @@ async function handleSeller(
   }
 
   if (a === 'orders') {
-    const actor = actorOf(request);
     if (!b && method === 'GET') {
       return Response.json({ orders: store.listOrders() } satisfies SellerOrdersResponse);
     }
@@ -507,6 +548,9 @@ async function handleSeller(
       return code
         ? sellerResult(store.setWaReceived(code, input.received))
         : error('not_found', 'Order not found');
+    }
+    if (b && c === 'arriving-soon' && method === 'POST') {
+      return code ? sellerResult(store.arrivingSoon(code)) : error('not_found', 'Order not found');
     }
     if (b && (c === 'nudge' || c === 'seen') && method === 'POST') {
       if (!code) return error('not_found', 'Order not found');

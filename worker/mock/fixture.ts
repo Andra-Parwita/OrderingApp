@@ -3,6 +3,8 @@ import type { Chef, Kitchen, KitchenSettings, MenuItem, Seller, Week } from '../
 /** Everything one seller owns in the mock (D-036). */
 export type SellerFixture = {
   seller: Seller;
+  /** When the admin added the seller (ISO); the admin list shows it. */
+  createdAt: string;
   kitchen: Kitchen;
   week: Week;
   chefs: Array<Chef>;
@@ -188,6 +190,7 @@ const demoSettings: KitchenSettings = {
 export const fixtureSellers: ReadonlyArray<SellerFixture> = [
   {
     seller: { id: ONDE_ID, slug: 'onde-onde', name: 'Onde Onde' },
+    createdAt: '2026-08-15T09:00:00.000Z',
     kitchen: ondeKitchen,
     week: ondeWeek,
     chefs: ondeChefs,
@@ -196,6 +199,7 @@ export const fixtureSellers: ReadonlyArray<SellerFixture> = [
   },
   {
     seller: { id: DEMO_ID, slug: 'dapur-demo', name: 'Dapur Demo' },
+    createdAt: '2026-09-20T09:00:00.000Z',
     kitchen: demoKitchen,
     week: demoWeek,
     chefs: demoChefs,
@@ -203,3 +207,26 @@ export const fixtureSellers: ReadonlyArray<SellerFixture> = [
     settings: demoSettings,
   },
 ];
+
+/** An empty kitchen for a seller the admin just created (stage 7.1): no items, no chefs. */
+export function blankFixture(seller: Seller, createdAt: string): SellerFixture {
+  const week: Week = {
+    ...structuredClone((fixtureSellers[0] as SellerFixture).week),
+    status: 'draft',
+    pickupPoints: [],
+    delivery: { available: false, note: { en: '', id: '' } },
+  };
+  return {
+    seller: { ...seller },
+    createdAt,
+    kitchen: { sellerId: seller.id, name: seller.name, tagline: { en: '', id: '' } },
+    week,
+    chefs: [],
+    items: [],
+    settings: {
+      postGreeting: { en: '', id: '' },
+      postClosing: { en: '', id: '' },
+      orderingOpen: true,
+    },
+  };
+}

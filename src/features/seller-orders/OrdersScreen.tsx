@@ -7,7 +7,13 @@ import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { SELLER_NS } from './i18n/register';
 import { formatDay } from '../../../shared/dates';
 import { STATUS_FILTERS, type StatusFilter } from './orderStatus';
-import { DevTools, FilterChip, useOrdersPolling, useVisibleOrders } from './ordersShared';
+import {
+  DevTools,
+  FilterChip,
+  useOrdersPolling,
+  useShowDevTools,
+  useVisibleOrders,
+} from './ordersShared';
 import { useLang } from './orderText';
 import { OrderRow } from './OrderRow';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
@@ -101,6 +107,7 @@ function OrdersContent({
   const cookingDate = useSelector(selectCookingDate);
 
   useOrdersPolling();
+  const showDev = useShowDevTools();
 
   const onQuery = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onQueryChange(event.target.value),
@@ -175,7 +182,7 @@ function OrdersContent({
           ? visible.map((order) => <OrderRow key={order.id} order={order} onOpen={onOpenOrder} />)
           : null}
       </Grow>
-      {import.meta.env.DEV ? <DevTools /> : null}
+      {showDev ? <DevTools /> : null}
     </Page>
   );
 }

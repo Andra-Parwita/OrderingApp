@@ -58,9 +58,12 @@ describe('How ordering works', () => {
     renderWithStore(<MenuScreen slug="onde-onde" onViewBasket={noop} />);
     await screen.findByText('How ordering works');
     expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(3);
-    expect(
-      screen.getByText('Send that number to Onde Onde on WhatsApp (+61412345678).'),
-    ).toBeVisible();
+    const number = screen.getByText('+61 412 345 678');
+    expect(number.closest('li')).toHaveTextContent(
+      'Send that number to Onde Onde on WhatsApp (+61 412 345 678).',
+    );
+    // The number never wraps mid-number.
+    expect(number).toHaveStyle({ whiteSpace: 'nowrap' });
   });
 
   it('falls back to "the seller" without a number, and speaks Indonesian', async () => {

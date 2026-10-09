@@ -115,6 +115,40 @@ Note: the times written at 04:46–05:12 for D-044, 6.3 and 6.4 ran ahead of the
 | 6.2b Seller setup: week settings, images editor (5 slots, client resize, live preview, colour, alt), chefs (wave) | builder · sonnet | 03:12 | ~04:00 | | `seller-setup/` (new, ~19 files) + harness + e2e; 23 tests | ✅ landed ~03:25 (waiting for the wave gate); added a rule: cut-off not after cooking date |
 | 6.2c Labels (A4 2×7 / 62 mm, note ≤ 70) + past weeks + backup/CSV/restore (wave) | builder · sonnet | 03:12 | ~04:00 | | `seller-labels/`, `seller-history/` (new) + harness + e2e; 23 tests | ✅ landed ~03:30 (waiting for the wave gate); no store/saga (local state); native checkbox (kit has none); roll label 62 × 40 mm assumed |
 
+## Round 6 · Polish (9 Oct, afternoon)
+
+Starting point: owner's commit `45a252d` (clean tree). Owner's dev server running on 5173 (PID 7796) — leave it.
+
+| item | agent · tier | started | ETA | landed | diff | state |
+|---|---|---|---|---|---|---|
+| 6.5 Polish: collapsed-rail language button width (owner, 14:41), preview steppers clearly disabled, "Pickup only" wording, formatted seller number, no leading "·" without a size | builder · sonnet | 14:43 | ~15:10 | | `SellerLayout`, `src/ui/Stepper` (stronger disabled style), `customer-menu/`; tests 818 → 821 | ✅ landed ~14:47; coordinator gate 14:48: no stray processes (owner's 5173 left), typecheck/lint/format, unit 821/821, changed specs (seller-rail, customer-batch2, seller-batch3) green; collapsed-rail capture looked at (tight centred EN button) |
+
+## Phase 3 · Batch 4 (round 7) — 9 Oct
+
+Plan approved (D-045). Snapshot `scratch/checkpoints/pre-7.1.tar` (14:50; 11 uncommitted files = 6.5 polish + docs).
+
+| item | agent · tier | started | ETA | landed | diff | state |
+|---|---|---|---|---|---|---|
+| 7.1 Domain + mock: roles, mock sessions, admin setup + sellers, invite/recovery keys (hashed), add-device codes, lockout, chef invites + 403s, bulk updates, arriving soon | builder · sonnet | 14:50 | ~15:40 | ~15:05 | `shared/` (+authContract, updateContract), `worker/mock/` (+auth, authRoutes, respond), `src/api/` (+auth, device/session); tests 821 → 877 | ✅ coordinator gate 15:07: no stray processes, unit 877/877, core specs 5/5; mock + dev keys absent from the build. ⚠️ builder ran `python -` once despite the rule (it hung; it killed both PIDs itself — reported honestly) |
+| 7.2a Sign-in screens: key / code, passkey help + simulated passkey, password fallback, sign in, devices + add-device code (wave) | builder · sonnet | 15:08 | ~15:50 | 15:16 | `seller-auth/` (new) + harness + e2e; 24 tests | ✅ |
+| Wave 7.2 gate | coordinator | 15:16 | | 15:17 | — | ✅ no stray processes, no CRLF; typecheck/lint/format; unit **928/928**; new specs: saturday 2/2, seller-auth 2/2, admin 1/1 (each run on its own — together they'd race for the single admin → 7.3 adds a global setup) |
+| 7.3 Shell: sign-in/admin/hand-over routes, guards by role, seller from session (dev picker only without a session), chef restrictions, Playwright global admin setup, session-flow e2e | builder · sonnet | 15:18 | ~16:10 | | `src/app/` (+session, guards, AuthRoutes), `src/main.tsx`, `sellerContext`, `SellerPicker`, `playwright.config.ts` (global admin setup; auth-mobile → auth-desktop → session-flow chain), e2e (+session-flow); unit 928 → 932 | ✅ landed 15:33; coordinator gate 15:36: no stray processes, unit 932/932, auth-mobile 2, auth-desktop 3, session-flow 1, dev-override check 4 — all green; chef capture looked at. ⚠️ builder ran `python -` once more (stopped via TaskStop; none left) |
+
+| 7.4a Polish: rail full height, dev buttons hidden from chefs/sessions, sign-in "First time?" link placement, number nowrap, flaky history test fixed (10-run proof) | builder · sonnet | 16:02 | ~16:30 | | `SellerLayout` (RailColumn full height), `AuthRoutes` + `SignInScreen` footer prop, `useShowDevTools()` (dev + no session only), how3 `nowrap`, history test race fixed (awaits the list; 10/10 twice) | ✅ landed 16:06 (waiting for the round gate) |
+| 7.4c Compact EN/ID switch in the expanded rail (owner, 16:05) | builder · sonnet | 16:07 | ~16:25 | 16:09 | `SellerLayout` (+9 lines) | ✅ 184 → 91 px wide, aligned with the footer; expanded capture looked at |
+| Round 7.4 gate | coordinator | 16:09 | | 16:10 | — | ✅ no stray processes, no CRLF; unit **942/942**; auth-mobile 2, auth-desktop 3, session-flow 1, rail/customer specs 4 — all green |
+| 7.4b Polish: admin "Created" column + Chefs section (sign out all), chef invites from the Chefs screen | builder · sonnet | 16:02 | ~16:30 | | `shared/authContract` (+AdminSeller, ChefAccess), `worker/mock/` (createdAt, chef devices, sign out all), `src/api/auth.ts`, admin (Created column, Chefs section), seller-setup (ChefKeyBox, invite per chef); +10 tests | ✅ landed 16:08 (waiting for the round gate); KeyBox duplicated in seller-setup (features can't share) → candidate for `src/components` |
+
+Queued after 7.4a (it owns `SellerLayout`): **expanded rail's EN/ID switch stretches the full rail width** (owner screenshot, 16:05) → make it compact (content width, left-aligned with the nav items), same compact style as the collapsed button and the customer sub-page headers.
+
+Snapshot before 7.4: `scratch/checkpoints/pre-7.4.tar` (16:01; batch 4 not yet committed by the owner).
+
+**Batch 4 done (15:36).** Findings from the chef capture and the 7.3 report (low): the desktop rail's background stops at ~720 px instead of running full height; a chef (and anyone in dev) sees the dev "Add 5 sample orders / Reset" buttons; the "First time? Use your invite key" link sits at the very bottom of the sign-in screen; the admin probe can count one failed setup attempt on a fresh mock; chef invites are API-only (Chefs screen still says "Invites for chefs come later").
+| 7.2b Admin page: setup, sign in, sellers + slugs, invite/recovery keys shown once, devices (wave) | builder · sonnet | 15:08 | ~15:50 | | `admin/` (new) + harness + e2e; 8 tests | ✅ landed 15:12 (waiting for the wave gate); no "Created" column (Seller has no date), Chefs section of A4 not built (not in brief), devices count = 1 call per seller |
+| 7.2c Saturday tools: hand-over by code, delivery run, send an update; customer inbox strings for the new keys (wave) | builder · sonnet | 15:08 | ~15:50 | | `seller-saturday/` (new) + harness + e2e, `customer-orders/` i18n (8 inbox keys); 19 new tests | ✅ landed 15:14 (waiting for the wave gate); local state, no slice; "Also update status" off by default |
+
+Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-number at phone width (add `white-space: nowrap`); `seller-history` "speaks Indonesian" unit test failed once more under load (2nd time) → investigate, don't ignore (lesson 10); the expanded-rail collapse button's tooltip may clip (seen mid-transition only).
+
 ## Findings
 
 - **Batch 3 polish list** (coordinator, preview capture 04:54; low): preview steppers look enabled even though ordering is off; "Delivery available: Pickup only" reads oddly; the seller's WhatsApp number shows raw (`+61400000002`) in "How ordering works"; items without a size show a leading "· $9.00"; e2e leaves "B3 dish"/"Spec dish" items in Dapur Demo's in-memory menu (gone on server restart).
