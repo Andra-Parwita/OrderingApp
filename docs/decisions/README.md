@@ -429,3 +429,14 @@ Format for each entry:
 **Trade-off:** plan 001 grows a server stage (menus, dish library, pickup places, packing, message log) before the screens.
 **Revisit when:** the customer design changes any of these.
 **Amended (2026-10-10, owner):** "but a push is very important and needs to be done". Web push is a must-have: plan 002, scheduled straight after plan 001 (not waiting for the customer redesign; its customer "Turn on updates" screen gets restyled later).
+
+## D-070 · Customer design drop and plan 002 (2026-10-10; owner)
+**Ruling:** the customer design drop `uxDesign/customer/` (README, `SPEC.md`, boards, `data/`, tokens) is the spec for plan 002; SPEC wins over the customer brief, and this decision wins over SPEC. The owner's answers:
+- **Q1 "A": merge.** Plan 002 is "Customer app redesign + web push" (PWA, install guide, notifications), built once.
+- **Q2 "A": keep D-069.** Sending "Ready for pickup" to a place marks those orders Ready (shows the customer's "Ready!" banner); every other message changes nothing. Overrides SPEC §7 "messages don't change order status" for that one message.
+- **Q3 "A":** the drop's own `CLAUDE.md` is renamed `HANDOFF-AGENT.md`, so it isn't loaded as instructions; use its viewing tips, not its checking depth (the speed rule applies).
+- **Q4 "C":** the owner moves the zip out of the project.
+- **Q5 "A":** plan 002 starts after plan 001 is finished (one builder, no merge conflicts).
+- **Q6 "A": two new packages approved**: a small QR code generator and a Workers-compatible web-push sender (VAPID + aes128gcm). The builder names the exact packages in the plan notes before installing.
+**Trade-off:** the customer redesign waits for the whole seller plan.
+**Revisit when:** plan 001 slips badly and the customer side is needed sooner.

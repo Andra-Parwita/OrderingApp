@@ -13,7 +13,7 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 | # | plan | status |
 |---|---|---|
 | 001 | [Seller app UX redesign](001-seller-ux-redesign.md) | approved, ready to build |
-| 002 | [Web push notifications](002-web-push.md) | placeholder; **must be done before going live** |
+| 002 | [Customer app redesign + web push](002-web-push.md) | approved; starts after 001; **must be done before going live** |
 
 ## Template
 

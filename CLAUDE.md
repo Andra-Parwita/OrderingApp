@@ -6,9 +6,8 @@ A home cook publishes a menu whenever they like, for pickup or delivery on its c
 
 - **The app is built and runs locally** (seller, customer, admin; Cloudflare Worker with local D1/R2). Not deployed yet.
 - **Now: [plan 001 · Seller app UX redesign](docs/plans/001-seller-ux-redesign.md)**, built by the owner's son from the design in [uxDesign/seller/](uxDesign/seller/README.md). The plan lists setup, the rulings it relies on and 12 stages in order.
-- **Next: [plan 002 · Web push](docs/plans/002-web-push.md).** **Before any deploy to Cloudflare, remind the owner (or their son) that web push must be done first.**
-- **Design references:** each design drop in `uxDesign/<app>/` (now `seller/`; `customer/` will follow) has a `capture.mjs`. Its screenshots are not in git, so on a new PC, or after a design update, run `node uxDesign/seller/capture.mjs` (and later `node uxDesign/customer/capture.mjs`) once before comparing the app with the design.
-- The owner is designing the customer app ([customer brief](docs/design/customer-ux-brief.md)); its drop will go in `uxDesign/customer/` and get its own plan.
+- **Next: [plan 002 · Customer app redesign + web push](docs/plans/002-web-push.md)**, from [uxDesign/customer/](uxDesign/customer/README.md), after plan 001 is finished. **Before any deploy to Cloudflare, remind the owner (or their son) that web push must be done first.**
+- **Design references:** each design drop in `uxDesign/<app>/` (`seller/`, `customer/`) has, or will have, a `capture.mjs`. Its screenshots are not in git, so on a new PC, or after a design update, run `node uxDesign/seller/capture.mjs` (and `node uxDesign/customer/capture.mjs` once plan 002 stage 1 has created it) once before comparing the app with the design.
 - Each developer's PC uses its own LAN IP for the dev certificate; nothing is hard-coded ([D-053](docs/decisions/README.md)).
 
 ## Read when needed (not all at once)

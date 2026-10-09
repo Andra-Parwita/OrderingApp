@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add to Home Screen, iPhone Safari</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+.th{--text:#1C1F1A;--muted:#5D6358;--edge:#7F857A;--ok:#1F6B5C;--warn:#8A5A00;--danger:#A93724;--onfill:#FFFFFF;--disabled:#A9AFA3;--okbg:color-mix(in srgb,var(--ok) 12%,var(--surface));--warnbg:#FBF1D9;--ready:#2B5C9E;--kbg:#E9E3CF;--dangerline:color-mix(in srgb,var(--danger) 40%,var(--surface))}
+.th.dark{--text:#F1EEE6;--muted:#A9AFA3;--edge:#6B7266;--ok:#7EC4B0;--warn:#E9B949;--danger:#EE8B78;--disabled:#5E6459;--warnbg:rgba(233,185,73,.10);--ready:#8DB4E8;--kbg:#1D2A1A;color-scheme:dark}
+.th.ondeonde{--fill:#2F6B36;--acc:#2A5F30;--tint:#E5EFE2;--bg:#F6F2E8;--panel:#EFEADD;--surface:#FFFDF8;--s2:#F4F0E6;--line:#E4DED0}
+.th.ondeonde.dark{--fill:#8CC08A;--onfill:#0F1E10;--acc:#93C590;--tint:color-mix(in srgb,#8CC08A 15%,#121411);--bg:#121411;--panel:#0E100D;--surface:#181A16;--s2:#20231E;--line:#2A2E27}
+.th.bali{--fill:#1D5C73;--acc:#1A5469;--tint:#E0EDF1;--bg:#F1F4F4;--panel:#E7EDEE;--surface:#FCFEFE;--s2:#EEF3F4;--line:#DAE2E4}
+.th.bali.dark{--fill:#84C3D6;--onfill:#0B2129;--acc:#8CC6D8;--tint:color-mix(in srgb,#84C3D6 15%,#101417);--bg:#101417;--panel:#0C1013;--surface:#161B1F;--s2:#1E2429;--line:#283037}
+.th.sumatra{--fill:#8A2232;--acc:#7E1F2E;--tint:#F5E1E3;--bg:#F7F0EE;--panel:#F0E6E3;--surface:#FFFBFA;--s2:#F6EEEC;--line:#E6D9D6}
+.th.sumatra.dark{--fill:#EBA0AA;--onfill:#2B0A10;--acc:#EDA6AF;--tint:color-mix(in srgb,#EBA0AA 15%,#161112);--bg:#161112;--panel:#110D0E;--surface:#1C1617;--s2:#251D1F;--line:#322729}
+.th.sunda{--fill:#3A4C96;--acc:#34448A;--tint:#E4E7F4;--bg:#F2F2F7;--panel:#E9EAF2;--surface:#FDFDFF;--s2:#F0F1F7;--line:#DDDFEA}
+.th.sunda.dark{--fill:#A9B6EC;--onfill:#121A3A;--acc:#AEBBEE;--tint:color-mix(in srgb,#A9B6EC 15%,#111219);--bg:#111219;--panel:#0D0E14;--surface:#17181F;--s2:#1F2029;--line:#2A2C37}
+.th.jawa{--fill:#7A4A1E;--acc:#6E431B;--tint:#F2E7DA;--bg:#F6F0E6;--panel:#EEE5D7;--surface:#FFFBF4;--s2:#F5EEE2;--line:#E5DACA}
+.th.jawa.dark{--fill:#D9AE7E;--onfill:#2A1A08;--acc:#DDB38A;--tint:color-mix(in srgb,#D9AE7E 15%,#15120E);--bg:#15120E;--panel:#100E0B;--surface:#1B1813;--s2:#24201A;--line:#312B23}
+body{margin:0;background:#ECE7E1}
+a{color:var(--acc)}a:hover{color:var(--acc)}
+.cap{height:32px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;color:#2B2420}
+.cap span{font-weight:500;color:#6B5F55}
+.dev{width:418px;height:872px;border-radius:60px;background:#1C1C1E;padding:14px;box-sizing:border-box;box-shadow:inset 0 0 0 2px #48484A,0 24px 48px rgba(40,30,20,.22)}
+.scr{width:390px;height:844px;border-radius:47px;overflow:hidden;position:relative;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45}
+.sb{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 46px;font-size:16px;font-weight:600;z-index:5;color:var(--text)}
+.di{position:absolute;top:11px;left:50%;margin-left:-62px;width:124px;height:36px;border-radius:18px;background:#000;z-index:6}
+.hi{position:absolute;bottom:8px;left:50%;margin-left:-67px;width:134px;height:5px;border-radius:3px;background:#1C1C1E;z-index:12}
+.m{color:var(--muted)}
+.top{display:flex;align-items:center;justify-content:space-between;height:48px;padding:54px 8px 0 20px}
+.dots{display:flex;gap:6px;align-items:center}
+.dots i{width:8px;height:8px;border-radius:4px;background:var(--line)}
+.dots i.on{width:24px;background:var(--acc)}
+.x{width:44px;height:44px;border:0;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.ttl{padding:6px 20px 0}
+.ttl .n{font-size:14px;font-weight:700;color:var(--acc)}
+.ttl h2{margin:2px 0 0;font-size:25px;line-height:1.2}
+.ttl p{margin:8px 0 0;font-size:16px;color:var(--muted)}
+.ill{margin:18px 16px 0;height:300px;border-radius:20px;background:var(--panel);position:relative;overflow:hidden}
+.foot{position:absolute;left:16px;right:16px;bottom:100px;display:flex;flex-direction:column;gap:4px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;border-radius:27px;background:var(--fill);color:var(--onfill);font-weight:700;font-size:17px;text-decoration:none;border:0;font-family:inherit}
+.ghost{display:flex;align-items:center;justify-content:center;min-height:46px;color:var(--acc);font-weight:600;font-size:15.5px;text-decoration:none}
+.saf{position:absolute;left:0;right:0;bottom:0;height:88px;background:rgba(242,241,239,.97);display:flex;gap:10px;padding:10px 14px 0;box-sizing:border-box;z-index:8}
+.addr{flex:1;height:46px;border-radius:23px;background:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;color:#1C1C1E;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.sbtn{flex:none;width:46px;height:46px;border-radius:23px;background:#fff;display:flex;align-items:center;justify-content:center;color:#1C1C1E;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.ring{position:absolute;border:3px solid var(--warn);border-radius:16px;box-shadow:0 0 0 6px rgba(154,98,0,.2);z-index:9}
+.light{position:absolute;background:#F7F6F4;color:#1C1C1E;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.lrow{display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 16px;border-top:1px solid #E2DFDA;font-size:15.5px}
+.icon{width:60px;height:60px;border-radius:14px;background:#FBF3E4;object-fit:cover;display:block}
+</style>
+</helmet>
+<div class="th {{brandKey}} {{modeKey}}" style="width: 3262px; height: 920px; display: flex; gap: 56px; font-family: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif">
+
+  <!-- 0 Ask -->
+  <div>
+    <div class="cap">0 · The ask <span>· right after Turn on updates</span></div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:45</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="top"><span class="m" style="font-size: 14px">Order K7F-2QX</span><button class="x" aria-label="Not now"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div class="ill" style="margin-top: 6px; background: #2A2119">
+        <div style="position: absolute; top: 28px; left: 0; right: 0; text-align: center; color: var(--surface)"><div style="font-size: 56px; font-weight: 300; line-height: 1">2:05</div><div style="font-size: 14px; color: #D6CFC7">Saturday 17 October</div></div>
+        <div style="position: absolute; left: 18px; right: 18px; top: 140px; padding: 12px 14px; border-radius: 20px; background: rgba(255,255,255,.92); display: flex; gap: 12px">
+          <img class="icon" src="assets/home-icon.jpg" alt="" style="width: 40px; height: 40px; border-radius: 10px">
+          <div style="flex: 1; font-size: 14.5px"><div style="display: flex; justify-content: space-between"><strong>Onde Onde</strong><span class="m" style="font-size: 12.5px">now</span></div><div>Ready for pickup at Glen Waverley</div><div class="m">Order K7F-2QX</div></div>
+        </div>
+      </div>
+      <div class="ttl"><h2>Get a message when your order is ready</h2><p>On iPhone, first add Onde Onde to your Home Screen. 4 quick taps, about a minute.</p></div>
+      <div class="foot"><a href="#" class="btn">Show me how</a><a href="#" class="ghost">Not now, I&#39;ll check the order page</a></div>
+      <div class="saf"><span class="sbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></span><span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>ondeonde.app</span><span class="sbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 1 ••• -->
+  <div>
+    <div class="cap">1 · Tap ••• <span>· points at Safari&#39;s real button</span></div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:45</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="top"><div class="dots" aria-label="Step 1 of 4"><i class="on"></i><i></i><i></i><i></i></div><button class="x" aria-label="Close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div class="ttl"><div class="n">Step 1 of 4</div><h2>Tap the ••• button</h2><p>It&#39;s at the bottom right of the screen.</p></div>
+      <div class="ill" style="height: 330px; display: flex; align-items: center; justify-content: center">
+        <div style="width: 120px; height: 120px; border-radius: 60px; background: #F7F6F4; color: #1C1C1E; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 10px rgba(154,98,0,.2)"><svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></div>
+        <svg style="position: absolute; right: 26px; bottom: -6px; color: var(--warn)" width="80" height="120" viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6c30 20 44 54 44 100"></path><path d="M50 92l14 16 12-18"></path></svg>
+      </div>
+      <p class="m" style="margin: 14px 20px 0; font-size: 14.5px">Older iPhone? Tap the Share button <svg style="vertical-align: -3px" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M8 7l4-4 4 4"></path><path d="M6 11H5v10h14V11h-1"></path></svg> instead, then skip to step 3.</p>
+      <div class="foot" style="bottom: 96px"><a href="#" class="ghost">Done, next step</a></div>
+      <div class="saf"><span class="sbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></span><span class="addr">ondeonde.app</span><span class="sbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span></div>
+      <div class="ring" style="right: 8px; bottom: 26px; width: 56px; height: 56px; border-radius: 28px"></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 2 Share -->
+  <div>
+    <div class="cap">2 · Tap Share <span>· text stays at the top, above Safari&#39;s menu</span></div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:45</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="top"><div class="dots" aria-label="Step 2 of 4"><i></i><i class="on"></i><i></i><i></i></div><button class="x" aria-label="Close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div class="ttl"><div class="n">Step 2 of 4</div><h2>Tap &quot;Share&quot;</h2><p>It&#39;s in the menu that just opened.</p></div>
+      <div class="ill" style="height: 330px">
+        <div class="light" style="left: 70px; right: 24px; top: 30px">
+          <div class="lrow" style="border-top: 0; font-weight: 700">Share<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M8 7l4-4 4 4"></path><path d="M6 11H5v10h14V11h-1"></path></svg></div>
+          <div class="lrow">Add to Bookmarks<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v16l-6-4-6 4z"></path></svg></div>
+          <div class="lrow">New Tab<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></div>
+          <div class="lrow">Reload<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.7L20 8M20 3v5h-5"></path></svg></div>
+        </div>
+        <div class="ring" style="left: 62px; right: 16px; top: 22px; height: 58px"></div>
+      </div>
+      <div class="foot" style="bottom: 96px"><a href="#" class="ghost">Done, next step</a><a href="#" class="ghost" style="color: var(--muted)">Back</a></div>
+      <div class="saf"><span class="sbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></span><span class="addr">ondeonde.app</span><span class="sbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 3 Add to Home Screen -->
+  <div>
+    <div class="cap">3 · Add to Home Screen</div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:46</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="top"><div class="dots" aria-label="Step 3 of 4"><i></i><i></i><i class="on"></i><i></i></div><button class="x" aria-label="Close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div class="ttl"><div class="n">Step 3 of 4</div><h2>Tap &quot;Add to Home Screen&quot;</h2><p>Don&#39;t see it? Tap &quot;More&quot; or scroll down.</p></div>
+      <div class="ill" style="height: 330px">
+        <div class="light" style="left: 18px; right: 18px; top: 26px; bottom: -20px">
+          <div style="display: flex; align-items: center; gap: 10px; height: 58px; padding: 0 16px"><img class="icon" src="assets/home-icon.jpg" alt="" style="width: 36px; height: 36px; border-radius: 8px"><div style="font-size: 14px"><strong>Onde Onde</strong><div style="color: #6B6B70; font-size: 12.5px">ondeonde.app</div></div></div>
+          <div class="lrow">Copy<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V5a1 1 0 0 1 1-1h9"></path></svg></div>
+          <div class="lrow">Add to Reading List<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="12" r="3"></circle><circle cx="17" cy="12" r="3"></circle></svg></div>
+          <div class="lrow" style="font-weight: 700">Add to Home Screen<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"></rect><path d="M12 8v8M8 12h8"></path></svg></div>
+          <div class="lrow">Find on Page<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg></div>
+        </div>
+        <div class="ring" style="left: 10px; right: 10px; top: 198px; height: 52px"></div>
+      </div>
+      <div class="foot" style="bottom: 96px"><a href="#" class="ghost">Done, next step</a><a href="#" class="ghost" style="color: var(--muted)">Back</a></div>
+      <div class="saf"><span class="sbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></span><span class="addr">ondeonde.app</span><span class="sbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 4 Add -->
+  <div>
+    <div class="cap">4 · Tap Add</div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:46</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="top"><div class="dots" aria-label="Step 4 of 4"><i></i><i></i><i></i><i class="on"></i></div><button class="x" aria-label="Close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div class="ttl"><div class="n">Step 4 of 4</div><h2>Tap &quot;Add&quot;</h2><p>Top right. Leave &quot;Open as Web App&quot; switched on.</p></div>
+      <div class="ill" style="height: 330px">
+        <div class="light" style="left: 18px; right: 18px; top: 26px; bottom: -20px; background: #EFEEEC">
+          <div style="display: flex; justify-content: space-between; align-items: center; height: 52px; padding: 0 16px; font-size: 15.5px"><span style="color: #0A60D0">Cancel</span><strong>Add to Home Screen</strong><span style="color: #0A60D0; font-weight: 700">Add</span></div>
+          <div style="margin: 6px 14px; padding: 12px; border-radius: 12px; background: #fff; display: flex; gap: 12px; align-items: center"><img class="icon" src="assets/home-icon.jpg" alt="Onde Onde icon"><div style="flex: 1; font-size: 15px"><div style="border-bottom: 1px solid #E2DFDA; padding-bottom: 6px">Onde Onde</div><div style="color: #6B6B70; font-size: 12.5px; padding-top: 6px">ondeonde.app/o/K7F2QX</div></div></div>
+          <div style="margin: 8px 14px; padding: 0 12px; height: 48px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: space-between; font-size: 15px">Open as Web App<span style="width: 50px; height: 30px; border-radius: 15px; background: #34A853; position: relative"><span style="position: absolute; right: 2px; top: 2px; width: 26px; height: 26px; border-radius: 13px; background: #fff"></span></span></div>
+        </div>
+        <div class="ring" style="right: 22px; top: 32px; width: 58px; height: 42px"></div>
+      </div>
+      <div class="foot" style="bottom: 96px"><a href="#" class="ghost">Done</a><a href="#" class="ghost" style="color: var(--muted)">Back</a></div>
+      <div class="saf"><span class="sbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></span><span class="addr">ondeonde.app</span><span class="sbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 5 Open it -->
+  <div>
+    <div class="cap">5 · Open it from the Home Screen</div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:47</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="top"><span style="font-size: 14px; font-weight: 700; color: var(--ok)">Added</span><button class="x" aria-label="Close"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div class="ttl"><h2>Now open Onde Onde from your Home Screen</h2><p>It opens straight to order K7F-2QX. Turn on notifications there.</p></div>
+      <div class="ill" style="height: 300px; background: #2A3340; display: flex; align-items: center; justify-content: center">
+        <div style="display: grid; grid-template-columns: repeat(4, 60px); gap: 22px 18px">
+          <div class="icon" style="background: #4A5666"></div><div class="icon" style="background: #4A5666"></div><div class="icon" style="background: #4A5666"></div><div class="icon" style="background: #4A5666"></div>
+          <div class="icon" style="background: #4A5666"></div><div class="icon" style="background: #4A5666"></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 5px"><img class="icon" src="assets/home-icon.jpg" alt="Onde Onde icon" style="outline: 3px solid var(--warn); outline-offset: 5px"><span style="font-size: 12px; color: #fff; white-space: nowrap">Onde Onde</span></div>
+          <div class="icon" style="background: #4A5666"></div>
+        </div>
+      </div>
+      <div class="foot" style="bottom: 96px"><a href="#" class="ghost">I can&#39;t find the icon</a><a href="#" class="ghost" style="color: var(--muted)">Stay here and check the order page</a></div>
+      <div class="saf"><span class="sbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></span><span class="addr">ondeonde.app</span><span class="sbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- ID -->
+  <div>
+    <div class="cap">1 · in Indonesian <span>· longest copy, same layout</span></div>
+    <div class="dev"><div class="scr" lang="id">
+      <div class="sb"><span>12:45</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="top"><div class="dots" aria-label="Langkah 1 dari 4"><i class="on"></i><i></i><i></i><i></i></div><button class="x" aria-label="Tutup"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div class="ttl"><div class="n">Langkah 1 dari 4</div><h2>Ketuk tombol •••</h2><p>Ada di kanan bawah layar.</p></div>
+      <div class="ill" style="height: 330px; display: flex; align-items: center; justify-content: center">
+        <div style="width: 120px; height: 120px; border-radius: 60px; background: #F7F6F4; color: #1C1C1E; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 10px rgba(154,98,0,.2)"><svg width="56" height="56" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></div>
+        <svg style="position: absolute; right: 26px; bottom: -6px; color: var(--warn)" width="80" height="120" viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6c30 20 44 54 44 100"></path><path d="M50 92l14 16 12-18"></path></svg>
+      </div>
+      <p class="m" style="margin: 14px 20px 0; font-size: 14.5px">iPhone lama? Ketuk tombol Bagikan, lalu langsung ke langkah 3.</p>
+      <div class="foot" style="bottom: 96px"><a href="#" class="ghost">Sudah, langkah berikutnya</a></div>
+      <div class="saf"><span class="sbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"></path></svg></span><span class="addr">ondeonde.app</span><span class="sbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg></span></div>
+      <div class="ring" style="right: 8px; bottom: 26px; width: 56px; height: 56px; border-radius: 28px"></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"brand": {"editor": "enum", "options": ["Onde Onde", "Bali", "Sumatra", "Sunda", "Jawa"], "default": "Onde Onde", "section": "Seller theme"}, "mode": {"editor": "enum", "options": ["Light", "Dark"], "default": "Light", "section": "Seller theme"}, "$preview": {"width": 3262, "height": 920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const brands = { 'Onde Onde': 'ondeonde', 'Bali': 'bali', 'Sumatra': 'sumatra', 'Sunda': 'sunda', 'Jawa': 'jawa' };
+    const b = brands[this.props.brand ?? 'Onde Onde'] ?? 'ondeonde';
+    const d = (this.props.mode ?? 'Light') === 'Dark' ? 'dark' : 'light';
+    return { brandKey: b, modeKey: d };
+  }
+}
+</script>
+</body>
+</html>
