@@ -75,5 +75,8 @@ export async function keepAdminPasskey(page: Page, label: AdminLabel): Promise<v
   const credential = adminCredential(label);
   await addCredential(page, credential, startCounter());
   const credentialId = Buffer.from(credential.credentialId, 'base64').toString('base64url');
-  await page.addInitScript((id) => localStorage.setItem('passkeyCredential', id), credentialId);
+  await page.addInitScript(
+    (id) => localStorage.setItem('passkeyCredential.admin', id),
+    credentialId,
+  );
 }

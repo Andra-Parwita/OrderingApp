@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mockStore } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 import { createFakeLive } from '../../api/liveTestSupport';
+import { staffSignedOut } from '../../api/staffSignedOut';
 import {
   refreshRequested,
   paidChangeRequested,
@@ -195,5 +196,22 @@ describe('sellerOrdersSaga live updates', () => {
     store.dispatch(pollingStopped());
     await waitFor(() => live.open() === 0);
     expect(live.opened()).toBe(1);
+  });
+
+  it('issues no seller fetch and closes the socket once staff sign out', async () => {
+    const counter = ordersRequests();
+    const live = createFakeLive();
+    const store = createTestStore({ saga: true, pollMs: 20, channel: live.channel });
+    store.dispatch(pollingStarted());
+    await waitFor(() => store.getState().sellerOrders.list.status === 'ready');
+    live.status('live');
+    await sleep(60); // the connect reload settles
+    store.dispatch(staffSignedOut());
+    await waitFor(() => live.open() === 0);
+    const atSignOut = counter.count;
+    live.event('order.changed', 'ABCDEF'); // a late event must not refetch
+    await sleep(120); // several fallback periods
+    expect(counter.count).toBe(atSignOut);
+    server.events.removeAllListeners();
   });
 });

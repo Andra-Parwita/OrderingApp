@@ -54,9 +54,14 @@
     "signOut": "Keluar",
     "signedInAs": "Masuk sebagai {{name}}",
     "signedInChef": "Chef {{name}}",
+    "signedInLabel": "Masuk sebagai",
+    "personChef": "{{name}} · chef",
+    "personSeller": "{{name}} · penjual",
+    "switchPerson": "Ganti orang",
     "notForChefs": "Tidak tersedia untuk chef",
     "notForChefsBody": "Bagian ini diurus penjual. Anda tetap bisa melihat dan memperbarui pesanan.",
     "toOrders": "Ke pesanan",
+    "alreadySetUp": "Sudah diatur? Masuk",
     "firstTime": "Pertama kali? Pakai kunci undangan",
     "saturday": "Sabtu",
     "pickup": "Serah terima",
@@ -97,7 +102,7 @@
     "home": "Ke menu"
   },
   "home": {
-    "title": "Delave · Pesanan masakan rumahan mingguan",
+    "title": "{{app}} · Pesanan masakan rumahan mingguan",
     "body": "Juru masak rumahan menerbitkan menu setiap minggu. Anda memesan lewat tautan juru masaknya, lalu memantau pesanan di sini.",
     "hint": "Buka tautan penjual Anda dari WhatsApp."
   },

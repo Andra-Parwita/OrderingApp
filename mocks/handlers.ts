@@ -28,6 +28,10 @@ export const MOCK_NOW = new Date('2026-10-07T10:00:00.000Z');
 
 let opening: Promise<{ database: Database; world: World }> | undefined;
 let closing = false;
+// API requests being answered now; closing the database waits for them (a late request from an
+// unmounted screen must not find the database gone halfway).
+let inflight = 0;
+let drained: (() => void) | undefined;
 const NOW = () => MOCK_NOW;
 
 /** One short directory name per test file, e.g. "seller-menu-itemEditor.test.tsx". */
@@ -76,6 +80,12 @@ export async function closeWorld(): Promise<void> {
   const pending = opening;
   opening = undefined;
   closing = true;
+  if (inflight > 0) {
+    await new Promise<void>((resolve) => {
+      drained = resolve;
+      setTimeout(resolve, 5_000);
+    });
+  }
   if (pending) await (await pending).database.close();
 }
 
@@ -85,9 +95,15 @@ export const apiHandlers = [
   http.all('*/api/*', async ({ request }) => {
     // The file is done and its database is closing: a late request from an unmounted screen.
     if (closing) return new HttpResponse(null, { status: 503 });
-    const { repo } = await openWorld();
-    const response = await handleApiRequest(repo, request.clone(), { devTools: true });
-    return response ?? undefined;
+    inflight++;
+    try {
+      const { repo } = await openWorld();
+      const response = await handleApiRequest(repo, request.clone(), { devTools: true });
+      return response ?? undefined;
+    } finally {
+      inflight--;
+      if (inflight === 0) drained?.();
+    }
   }),
 ];
 

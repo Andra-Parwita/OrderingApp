@@ -1,4 +1,4 @@
-import { useCallback, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useCallback, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { signInWithCode, signInWithKey } from '../../api/auth';
 import type { Me } from '../../../shared/authContract';
@@ -13,10 +13,12 @@ export type SetupKeyScreenProps = Readonly<{
   onSession: (me: Me) => void;
   /** Switch to the 6-digit code from another device. */
   onUseCode: () => void;
+  /** A link under the buttons ("Already set up? Sign in"). */
+  footer?: ReactNode;
 }>;
 
 /** A1: "Enter the key you were sent". */
-export function SetupKeyScreen({ onSession, onUseCode }: SetupKeyScreenProps) {
+export function SetupKeyScreen({ onSession, onUseCode, footer }: SetupKeyScreenProps) {
   const { t } = useTranslation(AUTH_NS);
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +66,7 @@ export function SetupKeyScreen({ onSession, onUseCode }: SetupKeyScreenProps) {
             {t('key.useCode')}
           </Button>
         </Actions>
+        {footer}
       </Body>
     </Page>
   );
@@ -73,10 +76,11 @@ export type DeviceCodeScreenProps = Readonly<{
   onSession: (me: Me) => void;
   /** Switch back to the key. */
   onUseKey: () => void;
+  footer?: ReactNode;
 }>;
 
 /** A1, other way in: the 6-digit code made by "Add a device" on a signed-in device. */
-export function DeviceCodeScreen({ onSession, onUseKey }: DeviceCodeScreenProps) {
+export function DeviceCodeScreen({ onSession, onUseKey, footer }: DeviceCodeScreenProps) {
   const { t } = useTranslation(AUTH_NS);
   const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +126,7 @@ export function DeviceCodeScreen({ onSession, onUseKey }: DeviceCodeScreenProps)
             {t('code.useKey')}
           </Button>
         </Actions>
+        {footer}
       </Body>
     </Page>
   );

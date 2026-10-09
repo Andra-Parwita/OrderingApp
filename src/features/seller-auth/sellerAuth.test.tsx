@@ -4,7 +4,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { browserPasskeys } from '../../../mocks/browserPasskeys';
 import { clearCookies, installCookieJar, sessionCookie } from '../../../mocks/cookieJar';
 import { MOCK_NOW, mockStores } from '../../../mocks/handlers';
-import { createDeviceCode, fetchMe } from '../../api/auth';
+import { createDeviceCode, fetchMe, registerDevice, signInWithKey } from '../../api/auth';
+import { fetchMenu, fetchMyOrders, fetchSellerOrders, placeOrder } from '../../api/client';
 import { getCredentialId } from '../../api/device/session';
 import { cleanCode, cleanKey, guessDevice } from './authText';
 import { DevicesScreen } from './DevicesScreen';
@@ -14,8 +15,10 @@ import { DeviceCodeScreen, SetupKeyScreen } from './SetupKeyScreen';
 import { SignInScreen } from './SignInScreen';
 import {
   PASSWORD,
+  adminPasskeyOnThisBrowser,
   inviteKey,
   renderScreen,
+  sellerId,
   setupI18n,
   signInAsSeller,
   signOut,
@@ -154,7 +157,8 @@ describe('PasskeyHelpScreen', () => {
     press('Create passkey');
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
     expect(onDone.mock.calls[0]?.[0]).toMatchObject({ stage: 'full', deviceName: 'Bu Ani phone' });
-    expect(getCredentialId()).toBeTruthy();
+    expect(getCredentialId('staff')).toBeTruthy();
+    expect(getCredentialId('admin')).toBeNull();
     const me = await fetchMe();
     expect(me.ok && me.data.me.stage).toBe('full');
   });
@@ -238,7 +242,7 @@ describe('PasswordSetupScreen', () => {
     press('Save password');
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
     expect(onDone.mock.calls[0]?.[0]).toMatchObject({ role: 'seller', stage: 'full' });
-    expect(getCredentialId()).toBeNull();
+    expect(getCredentialId('staff')).toBeNull();
   });
 
   it('tells the person a passkey can come later', () => {
@@ -265,11 +269,75 @@ describe('SignInScreen', () => {
     expect(sessionCookie()).toBeTruthy();
   });
 
-  it('opens the password box when there is no passkey on this device', () => {
+  it('switch person: signs out, then opens the passkey picker at once, wiping nothing else', async () => {
+    await signInAsSeller('passkey');
+    const keep = () =>
+      JSON.stringify(
+        Object.entries(localStorage)
+          .filter(([key]) => key !== 'signedIn')
+          .sort(),
+      );
+    const kept = keep();
+    expect(getCredentialId('staff')).not.toBeNull();
+    await signOut(); // what the Switch person button does first
+    expect(sessionCookie()).toBeNull();
+    expect(keep()).toBe(kept); // only the signed-in hint goes: device, passkey and kitchen stay
+    const get = vi.spyOn(browserPasskeys.authenticator, 'get');
+    const onSignedIn = vi.fn();
+    renderScreen(<SignInScreen slug="dapur-demo" switchPerson onSignedIn={onSignedIn} />);
+    // No button was pressed: the prompt opened by itself, listing every passkey (discoverable).
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalledTimes(1));
+    expect(get).toHaveBeenCalledTimes(1);
+    const options = get.mock.calls[0]?.[0] as { allowCredentials?: Array<unknown> };
+    expect(options.allowCredentials ?? []).toHaveLength(0);
+    expect(sessionCookie()).toBeTruthy();
+  });
+
+  it('switch person: a closed prompt leaves the normal sign-in with the password box', async () => {
+    await signInAsSeller('passkey');
+    await signOut();
+    browserPasskeys.failNext('cancel');
+    renderScreen(
+      <SignInScreen
+        slug="dapur-demo"
+        switchPerson
+        onSignedIn={vi.fn()}
+        footer={<a href="/seller/setup">First time? Use your invite key</a>}
+      />,
+    );
+    expect(await screen.findByText(/The passkey prompt was closed/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByText('First time? Use your invite key')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in with passkey' })).toBeEnabled();
+  });
+
+  it('opens the password box when the browser has no passkey to offer', async () => {
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
     press('Sign in with passkey');
-    expect(screen.getByText(/has no passkey yet/)).toBeInTheDocument();
+    expect(await screen.findByText(/The passkey prompt was closed/)).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
+  });
+
+  it('signs in with nothing stored (discoverable), and refuses the admin passkey here', async () => {
+    await signInAsSeller('passkey');
+    await signOut();
+    localStorage.clear();
+    const onSignedIn = vi.fn();
+    renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={onSignedIn} />);
+    press('Sign in with passkey');
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalledTimes(1));
+    await signOut();
+
+    // An admin passkey made after the seller's one is the browser's newest: picking it here is refused.
+    await adminPasskeyOnThisBrowser();
+    await signOut();
+    localStorage.removeItem('passkeyCredential.staff'); // no hint: the browser offers all, newest first
+    onSignedIn.mockClear();
+    press('Sign in with passkey');
+    expect(await screen.findByText(/belongs to the admin/)).toBeInTheDocument();
+    expect(onSignedIn).not.toHaveBeenCalled();
+    expect(sessionCookie()).toBeNull();
+    expect(getCredentialId('admin')).not.toBeNull();
   });
 
   it('hides the passkey button on an IP-address web address and shows the password', () => {
@@ -441,5 +509,62 @@ describe('Indonesian', () => {
       expect(screen.getByRole('heading', { name: 'Buat passkey' })).toBeInTheDocument();
       expect(screen.getAllByRole('listitem')).toHaveLength(3);
     });
+  });
+});
+
+describe('ordering while signed in as a seller', () => {
+  it('a signed-in Onde Onde seller orders at Dapur Demo as a plain customer', async () => {
+    // Signed in as Onde Onde's seller, with a session cookie on every request.
+    const made = await mockStores.auth.createKey(
+      { role: 'seller', sellerId: await sellerId('onde-onde') },
+      'invite',
+    );
+    const started = await signInWithKey(made.key);
+    if (!started.ok) throw new Error(started.error);
+    const done = await registerDevice({
+      kind: 'password',
+      password: PASSWORD,
+      deviceName: 'Rina tablet',
+    });
+    if (!done.ok) throw new Error(done.error);
+    expect(sessionCookie()).toBeTruthy();
+
+    const dapur = await mockStores.sellerBySlug('dapur-demo');
+    const ondeBefore = JSON.stringify(await fetchSellerOrders());
+    const dapurBefore = (await dapur?.listOrders())?.length ?? 0;
+
+    const menu = await fetchMenu('dapur-demo');
+    if (!menu.ok) throw new Error(menu.error);
+    const item = menu.data.items.find((candidate) => !candidate.soldOut);
+    if (!item) throw new Error('Dapur Demo has no item to order');
+    const placed = await placeOrder('dapur-demo', {
+      firstName: 'Ayu',
+      language: 'en',
+      fulfilment: 'pickup',
+      lines: [{ itemId: item.id, qty: 1 }],
+    });
+    if (!placed.ok) throw new Error(placed.error);
+    expect(placed.data.order.seller.slug).toBe('dapur-demo');
+
+    // It shows in that customer's My orders.
+    const mine = await fetchMyOrders([placed.data.order.token]);
+    expect(mine.ok && mine.data.orders.map((order) => order.code)).toEqual([
+      placed.data.order.code,
+    ]);
+
+    // It is a normal customer order in Dapur Demo's list: no staff identity.
+    const theirs = (await dapur?.listOrders()) ?? [];
+    expect(theirs).toHaveLength(dapurBefore + 1);
+    const stored = theirs.find((order) => order.code === placed.data.order.code);
+    expect(stored).toBeDefined();
+    expect(stored?.enteredBy).toBeUndefined();
+    // Its audit says the customer made it, like any other customer order: no seller or chef.
+    expect(stored?.audit.map((entry) => [entry.what, entry.by])).toEqual([
+      ['created', { name: 'Ayu', role: 'customer' }],
+    ]);
+    expect(stored?.firstName).toBe('Ayu');
+
+    // Onde Onde's own orders are unchanged.
+    expect(JSON.stringify(await fetchSellerOrders())).toBe(ondeBefore);
   });
 });

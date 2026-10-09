@@ -62,7 +62,8 @@ describe('sign-in client', () => {
     expect(JSON.stringify(localStorage)).not.toContain(sessionCookie() ?? 'no-cookie');
     expect(localStorage.getItem('signedIn')).toBe('1'); // a plain hint, nothing secret
     data(await registerDevice({ kind: 'passkey', deviceName: 'Laptop' }));
-    expect(getCredentialId()).toBeTruthy();
+    expect(getCredentialId('admin')).toBeTruthy();
+    expect(getCredentialId('staff')).toBeNull();
     expect(data(await fetchMe()).me.role).toBe('admin');
 
     const created = data(await createSeller('Warung Baru', 'warung-baru')).seller;
@@ -105,7 +106,7 @@ describe('sign-in client', () => {
 
     // The passkey kept on this device signs the tablet in again after a sign-out.
     await signOut();
-    expect(data(await signInWithPasskey()).me.role).toBe('seller');
+    expect(data(await signInWithPasskey('staff')).me.role).toBe('seller');
     await signOut();
     const again = data(
       await signInWithPassword({
@@ -154,7 +155,7 @@ describe('sign-in client', () => {
   it('keeps the credential id (public data) but never the session in localStorage', async () => {
     data(await adminSetup(DEV_ADMIN_SETUP_KEY));
     data(await registerDevice({ kind: 'passkey', deviceName: 'Laptop' }));
-    expect(getCredentialId()).toBe(browserPasskeys.authenticator.lastId);
+    expect(getCredentialId('admin')).toBe(browserPasskeys.authenticator.lastId);
     expect(localStorage.getItem('session')).toBeNull();
   });
 
@@ -183,7 +184,7 @@ describe('sign-in client', () => {
     // Capture the browser's answer, send it, then send the very same answer again.
     const answers: Array<unknown> = [];
     const spy = vi.spyOn(globalThis, 'fetch');
-    data(await signInWithPasskey());
+    data(await signInWithPasskey('admin'));
     for (const [url, init] of spy.mock.calls) {
       if (typeof url === 'string' && url.endsWith('/api/auth/passkey')) answers.push(init?.body);
     }
@@ -194,6 +195,52 @@ describe('sign-in client', () => {
       body: answers[0] as string,
     });
     expect(replay.status).toBe(401);
+  });
+
+  it('keeps an admin and a seller passkey side by side in one browser (regression)', async () => {
+    data(await adminSetup(DEV_ADMIN_SETUP_KEY));
+    data(await registerDevice({ kind: 'passkey', deviceName: 'PC' }));
+    const adminId = browserPasskeys.authenticator.lastId;
+    const seller = data(await createSeller('Warung Baru', 'warung-baru')).seller;
+    const invite = data(await createInviteKey(seller.id));
+    await signOut();
+    data(await signInWithKey(invite.key));
+    data(await registerDevice({ kind: 'passkey', deviceName: 'PC seller' }));
+    const sellerId = browserPasskeys.authenticator.lastId;
+    await signOut();
+
+    expect(sellerId).not.toBe(adminId);
+    expect(getCredentialId('admin')).toBe(adminId); // the seller's id did not overwrite it
+    expect(getCredentialId('staff')).toBe(sellerId);
+    expect(data(await signInWithPasskey('admin')).me.role).toBe('admin');
+    await signOut();
+    expect(data(await signInWithPasskey('staff')).me.role).toBe('seller');
+    await signOut();
+    // A wrong-role pick signs in as that role; the screens sign out again and forget nothing.
+    expect(getCredentialId('admin')).toBe(adminId);
+    expect(getCredentialId('staff')).toBe(sellerId);
+  });
+
+  it('signs the admin in with nothing stored (discoverable, no allowCredentials)', async () => {
+    data(await adminSetup(DEV_ADMIN_SETUP_KEY));
+    data(await registerDevice({ kind: 'passkey', deviceName: 'PC' }));
+    await signOut();
+    localStorage.removeItem('passkeyCredential.admin');
+    expect(getCredentialId('admin')).toBeNull();
+    const spy = vi.spyOn(globalThis, 'fetch');
+    expect(data(await signInWithPasskey('admin')).me.role).toBe('admin');
+    const optionsCall = spy.mock.calls.find(
+      ([url]) => typeof url === 'string' && url.endsWith('/api/auth/passkey/options'),
+    );
+    expect(JSON.parse(optionsCall?.[1]?.body as string)).not.toHaveProperty('credentialId');
+    spy.mockRestore();
+  });
+
+  it('reads the old single credential key once, as a staff hint', () => {
+    localStorage.setItem('passkeyCredential', 'old-id');
+    expect(getCredentialId('admin')).toBeNull();
+    expect(getCredentialId('staff')).toBe('old-id');
+    expect(localStorage.getItem('passkeyCredential')).toBeNull();
   });
 
   it('sends Saturday calls', async () => {

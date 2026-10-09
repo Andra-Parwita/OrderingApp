@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -139,17 +139,23 @@ describe('MyOrdersScreen', () => {
 
   it('shows an unseen-update dot with text only when the inbox is newer than last seen', async () => {
     const placed = await place();
-    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    await screen.findByText('This week');
-    expect(screen.queryByText('New update')).not.toBeInTheDocument();
+    // Look at this order's own row: a request still in flight from an earlier test can add rows.
+    const rowName = new RegExp(`${placed.code.slice(0, 3)}-${placed.code.slice(3)}`);
+    const first = renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    const before = await within(first.container).findByRole('button', { name: rowName });
+    expect(before).not.toHaveTextContent('New update');
     // The mock clock is fixed, so serve an inbox entry from later than the one the phone saw.
     const nudged: CustomerOrder = {
       ...placed,
       inbox: [{ at: '2026-10-08T09:00:00.000Z', kind: 'nudge', textKey: 'nudge' }, ...placed.inbox],
     };
     server.use(http.get('*/api/orders', () => HttpResponse.json({ orders: [nudged] })));
-    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
-    expect(await screen.findByText('New update')).toBeInTheDocument();
+    const second = renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    await waitFor(() =>
+      expect(within(second.container).getByRole('button', { name: rowName })).toHaveTextContent(
+        'New update',
+      ),
+    );
   });
 
   it('shows a lock with a text label for a locked order, and updates the last status', async () => {

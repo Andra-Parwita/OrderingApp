@@ -42,6 +42,7 @@ import {
   waReceivedRequested,
   weekLoaded,
 } from './sellerOrdersSlice';
+import { staffSignedOut } from '../../api/staffSignedOut';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 
 /** How often the list reloads while the live socket is down (the fallback). */
@@ -80,7 +81,7 @@ function* watchPolling(pollMs: number, channel?: () => EventChannel<LiveMessage>
         fallbackMs: pollMs,
         ...(channel ? { channel } : {}),
       }),
-      stop: take(pollingStopped.type),
+      stop: take([pollingStopped.type, staffSignedOut.type]),
     });
   }
 }

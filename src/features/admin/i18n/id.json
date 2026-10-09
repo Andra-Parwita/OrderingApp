@@ -9,7 +9,8 @@
     "triesLeft_one": "Sisa {{count}} percobaan.",
     "triesLeft_other": "Sisa {{count}} percobaan.",
     "lockedOut": "Terlalu banyak percobaan. Coba lagi dalam {{minutes}} menit.",
-    "noPasskey": "Perangkat ini tidak punya passkey admin.",
+    "noPasskey": "Tidak ada passkey admin yang dipakai. Kalau perangkat ini belum punya, siapkan dulu.",
+    "sellerPasskey": "Passkey itu milik penjual. Coba lagi dan pilih passkey admin.",
     "unauthorized": "Masuk sebagai admin untuk melihat halaman ini.",
     "forbidden": "Hanya admin yang bisa membuka halaman ini.",
     "passkeyCancelled": "Permintaan passkey ditutup. Coba lagi.",
@@ -89,7 +90,7 @@
       "copied": "Tersalin",
       "copyFailed": "Gagal menyalin. Pilih kuncinya lalu salin sendiri.",
       "whatsapp": "Kirim lewat WhatsApp",
-      "message": "Kunci masuk Delave Anda: {{key}} (berlaku 24 jam, bisa dipakai di maksimal 3 perangkat)",
+      "message": "Kunci masuk {{app}} Anda: {{key}} (berlaku 24 jam, bisa dipakai di maksimal 3 perangkat)",
       "done": "Selesai"
     },
     "mine": {

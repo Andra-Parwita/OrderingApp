@@ -1,8 +1,8 @@
 import { render } from '@testing-library/react';
 import i18n from 'i18next';
 import type { ReactNode } from 'react';
-import { mockStores } from '../../../mocks/handlers';
-import { registerDevice, signInWithKey, signOut } from '../../api/auth';
+import { DEV_ADMIN_SETUP_KEY, mockStores } from '../../../mocks/handlers';
+import { adminSetup, registerDevice, signInWithKey, signOut } from '../../api/auth';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { registerSellerAuthI18n } from './i18n/register';
@@ -55,6 +55,14 @@ export async function signInAsSeller(
       ? { kind: 'password', password: PASSWORD, deviceName }
       : { kind: 'passkey', deviceName },
   );
+  if (!done.ok) throw new Error(done.error);
+}
+
+/** This browser also gets an admin passkey (after the seller's one), and is signed in as admin. */
+export async function adminPasskeyOnThisBrowser(): Promise<void> {
+  const started = await adminSetup(DEV_ADMIN_SETUP_KEY);
+  if (!started.ok) throw new Error(started.error);
+  const done = await registerDevice({ kind: 'passkey', deviceName: 'Admin PC' });
   if (!done.ok) throw new Error(done.error);
 }
 

@@ -138,7 +138,12 @@ export class SoftAuthenticator {
     const credential = [...this.credentials]
       .reverse()
       .find((item) => !allowed || allowed.includes(b64u(item.id)));
-    if (!credential) throw new Error('No passkey on this software authenticator');
+    if (!credential) {
+      // What a real browser reports when it holds no matching passkey (or the person closes the prompt).
+      const none = new Error('No passkey on this software authenticator');
+      none.name = 'NotAllowedError';
+      throw none;
+    }
     credential.counter = extra.counter ?? credential.counter + 1;
     const counter = Buffer.alloc(4);
     counter.writeUInt32BE(credential.counter);

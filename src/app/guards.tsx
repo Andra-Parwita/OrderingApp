@@ -68,7 +68,7 @@ export function AdminGuard({ children }: Readonly<{ children: ReactNode }>) {
   useEffect(() => {
     if (!done || allowed) return undefined;
     let live = true;
-    const known = getCredentialId() !== null;
+    const known = getCredentialId('admin') !== null;
     void (known ? Promise.resolve(true) : adminExists()).then((exists) => {
       if (live) setTarget(exists ? '/admin/sign-in' : '/admin/setup');
     });

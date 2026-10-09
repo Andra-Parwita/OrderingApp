@@ -35,6 +35,7 @@ import {
   getDeviceId,
   setCredentialId,
   setSessionHint,
+  type CredentialRole,
 } from './device/session';
 import { request, type ApiResult } from './http';
 
@@ -47,7 +48,12 @@ async function keepSession(
   const result = await call;
   if (result.ok) {
     setSessionHint(true);
-    if (result.data.credentialId) setCredentialId(result.data.credentialId);
+    if (result.data.credentialId) {
+      setCredentialId(
+        result.data.me.role === 'admin' ? 'admin' : 'staff',
+        result.data.credentialId,
+      );
+    }
   }
   return result;
 }
@@ -127,11 +133,15 @@ export function signInWithPassword(input: {
 }
 
 /**
- * Signs in with this device's passkey: options for the credential id kept at registration (or any
- * passkey the browser holds for this site), the browser's prompt, then the server checks the answer.
+ * Signs in with a passkey: the browser's prompt, then the server checks the answer (it finds the
+ * device by the credential id in the answer). The id kept for `role` is only a hint that narrows
+ * the list; with `discoverable` (or no kept id) the browser offers every passkey for this site.
  */
-export async function signInWithPasskey(): Promise<ApiResult<SessionResponse>> {
-  const credentialId = getCredentialId();
+export async function signInWithPasskey(
+  role: CredentialRole,
+  discoverable = false,
+): Promise<ApiResult<SessionResponse>> {
+  const credentialId = discoverable ? null : getCredentialId(role);
   const deviceId = getDeviceId();
   const asked = await request('/api/auth/passkey/options', parsePasskeyOptionsResponse, {
     method: 'POST',
@@ -180,9 +190,9 @@ export function createDeviceCode(): Promise<ApiResult<CodeResponse>> {
   return request('/api/auth/device-codes', parseCodeResponse, { method: 'POST' });
 }
 
-/** Forgets a stored passkey on this device (sign-out of a revoked device). */
-export function forgetPasskey(): void {
-  clearCredentialId();
+/** Forgets the kept passkey hint of one kind of account (sign-out of a revoked device). */
+export function forgetPasskey(role: CredentialRole): void {
+  clearCredentialId(role);
 }
 
 // ---- Admin ----

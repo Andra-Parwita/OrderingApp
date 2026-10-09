@@ -54,9 +54,14 @@
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{name}}",
     "signedInChef": "Chef {{name}}",
+    "signedInLabel": "Signed in as",
+    "personChef": "{{name}} · chef",
+    "personSeller": "{{name}} · seller",
+    "switchPerson": "Switch person",
     "notForChefs": "Not available for chefs",
     "notForChefsBody": "The seller looks after this part. You can still see and update orders.",
     "toOrders": "Go to orders",
+    "alreadySetUp": "Already set up? Sign in",
     "firstTime": "First time here? Use your invite key",
     "saturday": "Saturday",
     "pickup": "Hand-over",
@@ -97,7 +102,7 @@
     "home": "Go to the menu"
   },
   "home": {
-    "title": "Delave · Weekly home-cooked orders",
+    "title": "{{app}} · Weekly home-cooked orders",
     "body": "Home cooks publish a menu each week. You order from the cook's own link, then follow your order here.",
     "hint": "Open your seller's link from WhatsApp."
   },

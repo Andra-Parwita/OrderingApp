@@ -112,7 +112,7 @@
     "inviteCopied": "Copied",
     "inviteCopyFailed": "Could not copy. Select the key and copy it by hand.",
     "inviteWhatsapp": "Send on WhatsApp",
-    "inviteMessage": "Your Delave sign-in key: {{key}} (valid for 24 hours, works on up to 3 devices)",
+    "inviteMessage": "Your {{app}} sign-in key: {{key}} (valid for 24 hours, works on up to 3 devices)",
     "inviteDone": "Done",
     "inviteFailed": "Could not make a key. Please try again.",
     "nameEmpty": "Write a name.",

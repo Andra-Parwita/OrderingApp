@@ -2,15 +2,17 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import i18n from 'i18next';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { browserPasskeys } from '../../../mocks/browserPasskeys';
-import { clearCookies, installCookieJar } from '../../../mocks/cookieJar';
+import { clearCookies, installCookieJar, sessionCookie } from '../../../mocks/cookieJar';
 import { DEV_ADMIN_SETUP_KEY, mockStores } from '../../../mocks/handlers';
-import { adminSetup, registerDevice } from '../../api/auth';
+import { adminSetup, registerDevice, signInWithKey, signOut } from '../../api/auth';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { AdminHomeScreen } from './AdminHomeScreen';
 import { AdminSetupScreen } from './AdminSetupScreen';
 import { AdminSignInScreen } from './AdminSignInScreen';
 import { registerAdminI18n } from './i18n/register';
+
+const NO_ADMIN_PASSKEY = 'No admin passkey was used. If this device has none, set it up first.';
 
 function renderThemed(ui: React.ReactNode) {
   return render(<AppThemeProvider>{ui}</AppThemeProvider>);
@@ -142,15 +144,50 @@ describe('AdminSignInScreen', () => {
     renderThemed(<AdminSignInScreen onSignedIn={vi.fn()} />);
     browserPasskeys.failNext('cancel');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in with passkey' }));
-    expect(
-      await screen.findByText('The passkey prompt was closed. Try again.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(NO_ADMIN_PASSKEY)).toBeInTheDocument();
   });
 
-  it('says so when this device has no admin passkey', async () => {
+  it('says so when the browser has no admin passkey to offer', async () => {
     renderThemed(<AdminSignInScreen onSignedIn={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Sign in with passkey' }));
-    expect(await screen.findByText('This device has no admin passkey.')).toBeInTheDocument();
+    expect(await screen.findByText(NO_ADMIN_PASSKEY)).toBeInTheDocument();
+  });
+
+  it('signs in with nothing stored (discoverable passkey)', async () => {
+    await signInAsAdmin();
+    localStorage.clear();
+    clearCookies();
+    const onSignedIn = vi.fn();
+    renderThemed(<AdminSignInScreen onSignedIn={onSignedIn} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with passkey' }));
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalledTimes(1));
+  });
+
+  it('a seller passkey picked here is refused with a clear message, and nothing is forgotten', async () => {
+    await signInAsAdmin();
+    const invite = await mockStores.auth.createKey(
+      { role: 'seller', sellerId: 'seller-onde-onde' },
+      'invite',
+    );
+    await signOut();
+    expect((await signInWithKey(invite.key)).ok).toBe(true);
+    expect((await registerDevice({ kind: 'passkey', deviceName: 'Seller PC' })).ok).toBe(true);
+    await signOut();
+    // The admin hint is gone, so the browser offers all passkeys and the newest is the seller's.
+    localStorage.removeItem('passkeyCredential.admin');
+    const staffHint = localStorage.getItem('passkeyCredential.staff');
+    expect(staffHint).not.toBeNull();
+    const onSignedIn = vi.fn();
+    renderThemed(<AdminSignInScreen onSignedIn={onSignedIn} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in with passkey' }));
+    expect(
+      await screen.findByText(
+        'That passkey belongs to a seller. Try again and pick the admin passkey.',
+      ),
+    ).toBeInTheDocument();
+    expect(onSignedIn).not.toHaveBeenCalled();
+    expect(sessionCookie()).toBeNull();
+    expect(localStorage.getItem('passkeyCredential.staff')).toBe(staffHint);
   });
 });
 

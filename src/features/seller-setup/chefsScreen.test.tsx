@@ -71,7 +71,7 @@ describe('ChefsScreen', () => {
     const link = within(box).getByRole('link', { name: 'Send on WhatsApp' });
     const href = link.getAttribute('href') ?? '';
     expect(href.startsWith('https://wa.me/?text=')).toBe(true);
-    expect(decodeURIComponent(href)).toContain(`Your Delave sign-in key: ${key}`);
+    expect(decodeURIComponent(href)).toContain(`Your ShaggyBobo's Order sign-in key: ${key}`);
 
     fireEvent.click(within(box).getByRole('button', { name: 'Copy' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(key));

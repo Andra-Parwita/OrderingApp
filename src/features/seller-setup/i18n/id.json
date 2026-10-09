@@ -112,7 +112,7 @@
     "inviteCopied": "Tersalin",
     "inviteCopyFailed": "Gagal menyalin. Pilih kuncinya lalu salin sendiri.",
     "inviteWhatsapp": "Kirim lewat WhatsApp",
-    "inviteMessage": "Kunci masuk Delave Anda: {{key}} (berlaku 24 jam, bisa dipakai di maksimal 3 perangkat)",
+    "inviteMessage": "Kunci masuk {{app}} Anda: {{key}} (berlaku 24 jam, bisa dipakai di maksimal 3 perangkat)",
     "inviteDone": "Selesai",
     "inviteFailed": "Tidak bisa membuat kunci. Coba lagi.",
     "nameEmpty": "Tulis nama.",

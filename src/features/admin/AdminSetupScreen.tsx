@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { adminSetup, passkeysSupported, registerDevice } from '../../api/auth';
 import { Button, TextField } from '../../ui';
@@ -8,12 +8,14 @@ import { failureText, FormSection, Message, Muted, Narrow, Section, Sub, Title }
 export type AdminSetupScreenProps = Readonly<{
   /** The admin passkey exists and this device is signed in. */
   onDone: () => void;
+  /** A link under the key form ("Already set up? Sign in"). */
+  footer?: ReactNode;
 }>;
 
 type Step = 'key' | 'passkey' | 'done';
 
 /** First-time admin setup: the setup key, then a passkey. Route-agnostic. */
-export function AdminSetupScreen({ onDone }: AdminSetupScreenProps) {
+export function AdminSetupScreen({ onDone, footer }: AdminSetupScreenProps) {
   const { t } = useTranslation(ADMIN_NS);
   const [step, setStep] = useState<Step>('key');
   const [key, setKey] = useState('');
@@ -68,6 +70,7 @@ export function AdminSetupScreen({ onDone }: AdminSetupScreenProps) {
             {t('setup.continue')}
           </Button>
           <Muted>{t('setup.closes')}</Muted>
+          {footer}
         </FormSection>
       ) : null}
       {step === 'passkey' && !passkeysSupported() ? (

@@ -61,6 +61,29 @@ async function warmUp(baseURL: string): Promise<void> {
   }
 }
 
+/**
+ * The first requests after the scratch server starts sometimes fail while the worker and vite
+ * settle. One public menu GET plus one dev-tools seller GET must succeed before any spec runs.
+ */
+async function waitForRoundTrip(baseURL: string): Promise<void> {
+  const api = await request.newContext({ baseURL, ignoreHTTPSErrors: true });
+  try {
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const menu = await api.get('/api/s/onde-onde/menu');
+        const sellers = await api.get('/api/dev/sellers');
+        if (menu.ok() && sellers.ok()) return;
+      } catch {
+        // fetch failed: the server is not ready yet
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    throw new Error('The e2e server did not answer a menu and a dev-tools request after 3 tries');
+  } finally {
+    await api.dispose();
+  }
+}
+
 /** Registration options → software authenticator → the server's own verification. */
 async function registerPasskey(
   api: APIRequestContext,
@@ -84,6 +107,7 @@ export default async function globalSetup(): Promise<void> {
   const baseURL = `https://localhost:${process.env['PORT'] ?? '5181'}`;
   await assertScratchDatabase(baseURL);
   await warmUp(baseURL);
+  await waitForRoundTrip(baseURL);
   const contexts: Array<APIRequestContext> = [];
   const open = async () => {
     const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });

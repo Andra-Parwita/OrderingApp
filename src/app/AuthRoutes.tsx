@@ -15,6 +15,8 @@ import { isValidSlug } from '../../shared/seller';
 import { lastSignedIn } from '../api/device/sellerContext';
 import { PageHeader } from '../ui';
 import { useSession } from './session';
+import { SignInFrame } from './SignInFrame';
+import { SWITCH_SIGN_IN } from './SwitchPerson';
 
 // Sign-in, setup and admin pages: outside the seller shell, each under a bar with the language
 // switch. Where each screen leads is decided here.
@@ -42,24 +44,34 @@ type SetupStep = 'key' | 'code' | 'passkey' | 'password';
 export function SellerSetupRoute() {
   const navigate = useNavigate();
   const { refresh } = useSession();
+  const { t } = useTranslation();
   const [step, setStep] = useState<SetupStep>('key');
   const toPasskey = useCallback(() => setStep('passkey'), []);
   const done = useCallback(() => {
     void refresh().then(() => navigate('/seller', { replace: true }));
   }, [navigate, refresh]);
+  const alreadySetUp = <FootLink to={SWITCH_SIGN_IN}>{t('sellerNav.alreadySetUp')}</FootLink>;
   return (
-    <AuthFrame>
+    <SignInFrame>
       {step === 'key' ? (
-        <SetupKeyScreen onSession={toPasskey} onUseCode={() => setStep('code')} />
+        <SetupKeyScreen
+          onSession={toPasskey}
+          onUseCode={() => setStep('code')}
+          footer={alreadySetUp}
+        />
       ) : null}
       {step === 'code' ? (
-        <DeviceCodeScreen onSession={toPasskey} onUseKey={() => setStep('key')} />
+        <DeviceCodeScreen
+          onSession={toPasskey}
+          onUseKey={() => setStep('key')}
+          footer={alreadySetUp}
+        />
       ) : null}
       {step === 'passkey' ? (
         <PasskeyHelpScreen onDone={done} onUsePassword={() => setStep('password')} />
       ) : null}
       {step === 'password' ? <PasswordSetupScreen onDone={done} onUsePasskey={toPasskey} /> : null}
-    </AuthFrame>
+    </SignInFrame>
   );
 }
 
@@ -81,38 +93,46 @@ export function SellerSignInRoute() {
     },
     [adopt, navigate],
   );
-  if (!slug) return <Navigate to="/seller/setup" replace />;
-  const kitchenName = slug === last?.slug ? last.kitchenName : undefined;
+  const switching = params.get('switch') === '1';
+  // No kitchen known: set-up, unless the person came to pick a passkey this device already holds.
+  if (!slug && !switching) return <Navigate to="/seller/setup" replace />;
+  const kitchenName = last && slug === last.slug ? last.kitchenName : undefined;
   return (
-    <AuthFrame>
+    <SignInFrame>
       <SignInScreen
-        slug={slug}
+        {...(slug ? { slug } : {})}
         {...(kitchenName ? { kitchenName } : {})}
         {...(chefId ? { chefId } : {})}
         onSignedIn={signedIn}
+        switchPerson={switching}
         footer={<FootLink to="/seller/setup">{t('sellerNav.firstTime')}</FootLink>}
       />
-    </AuthFrame>
+    </SignInFrame>
   );
 }
 
 export function AdminSetupRoute() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const done = useCallback(() => void navigate('/admin', { replace: true }), [navigate]);
   return (
-    <AuthFrame>
-      <AdminSetupScreen onDone={done} />
-    </AuthFrame>
+    <SignInFrame>
+      <AdminSetupScreen
+        onDone={done}
+        footer={<FootLink to="/admin/sign-in?switch=1">{t('sellerNav.alreadySetUp')}</FootLink>}
+      />
+    </SignInFrame>
   );
 }
 
 export function AdminSignInRoute() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const done = useCallback(() => void navigate('/admin', { replace: true }), [navigate]);
   return (
-    <AuthFrame>
-      <AdminSignInScreen onSignedIn={done} />
-    </AuthFrame>
+    <SignInFrame>
+      <AdminSignInScreen onSignedIn={done} autoStart={params.get('switch') === '1'} />
+    </SignInFrame>
   );
 }
 

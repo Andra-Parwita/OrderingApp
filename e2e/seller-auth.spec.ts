@@ -58,7 +58,7 @@ test('a real passkey: create it, sign out, sign back in with it', async ({
   expect(made).toHaveLength(1);
   expect(made[0]?.rpId).toBe('localhost');
   const stored = await page.evaluate(() => ({
-    credential: localStorage.getItem('passkeyCredential'),
+    credential: localStorage.getItem('passkeyCredential.staff'),
     session: localStorage.getItem('session'),
   }));
   expect(stored.session).toBeNull();
@@ -134,6 +134,119 @@ test('key, password, devices and add-device code, then sign out and back in', as
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Devices', exact: true })).toBeVisible();
   await expect(page.getByText('Active now')).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
+
+/** Setup with a key and a real passkey, on the real route; lands on the seller home. */
+async function setUpWithPasskey(page: Page, key: string, device: string) {
+  await page.goto('/seller/setup');
+  await page.getByLabel('Enter the key you were sent').fill(key);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Create a passkey' })).toBeVisible();
+  await page.getByLabel('Name of this device').fill(device);
+  await page.getByRole('button', { name: 'Create passkey' }).click();
+  await expect(page).toHaveURL(/\/seller$/);
+}
+
+/** D-050: the rail button on a tablet or desktop, the top of the More tab on a phone. */
+async function switchPerson(page: Page) {
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    await page
+      .getByRole('navigation', { name: 'Seller' })
+      .getByRole('button', { name: /Switch person/ })
+      .click();
+  } else {
+    await page.getByRole('link', { name: 'More' }).click();
+    await page.getByRole('button', { name: /Switch person/ }).click();
+  }
+  // Sign out, then the passkey picker opens by itself and signs the chosen person in.
+  await expect(page).toHaveURL(/\/seller$/);
+}
+
+test('two staff passkeys on one device: Switch person goes between them', async ({
+  page,
+  request,
+}, testInfo) => {
+  const errors = collectErrors(page);
+  const project = testInfo.project.name;
+  const chefName = `Switchy ${project}`;
+  const wide = (page.viewportSize()?.width ?? 0) >= 1024;
+  const authenticator = await virtualAuthenticator(page);
+
+  // The seller, then a chef, each make a passkey on this one device.
+  await setUpWithPasskey(page, await inviteKeyFor(request, project), `E2E seller ${project}`);
+  await expect(
+    page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
+  ).toBeVisible();
+  const made = await page.request.post('/api/seller/chefs', { data: { name: chefName } });
+  expect(made.ok()).toBe(true);
+  const { chef } = (await made.json()) as { chef: { id: string } };
+  const invited = await page.request.post('/api/seller/chef-invites', {
+    data: { chefId: chef.id },
+  });
+  expect(invited.ok()).toBe(true);
+  const chefKey = ((await invited.json()) as { key: string }).key;
+  await setUpWithPasskey(page, chefKey, `E2E chef ${project}`);
+  await expect(
+    page.getByText(`Signed in as Chef ${chefName}`).or(page.getByText(`${chefName} · chef`)),
+  ).toBeVisible();
+  if (wide) {
+    await expect(page.getByRole('navigation', { name: 'Seller' })).toContainText(
+      `${chefName} · chef`,
+    );
+  }
+
+  const both = await credentialsOf(authenticator);
+  expect(both).toHaveLength(2);
+  const chefId = await page.evaluate(() => localStorage.getItem('passkeyCredential.staff'));
+  const chefKeyPair = both.find(
+    (item) => Buffer.from(item.credentialId, 'base64').toString('base64url') === chefId,
+  );
+  const sellerKeyPair = both.find((item) => item !== chefKeyPair);
+  if (!chefKeyPair || !sellerKeyPair) throw new Error('could not tell the two passkeys apart');
+
+  // The browser offers every passkey and picks one by itself here (no one to click), so to choose
+  // who signs in, the other passkey is held back while the picker opens, then put back.
+  // Held back with its current sign count, so that putting it back does not look like a replay.
+  const hide = async (item: typeof chefKeyPair) => {
+    const now = (await credentialsOf(authenticator)).find(
+      (candidate) => candidate.credentialId === item.credentialId,
+    );
+    if (!now) throw new Error('passkey is not on the authenticator');
+    await authenticator.cdp.send('WebAuthn.removeCredential', {
+      authenticatorId: authenticator.authenticatorId,
+      credentialId: item.credentialId,
+    });
+    return now;
+  };
+  const restore = (item: typeof chefKeyPair) =>
+    authenticator.cdp.send('WebAuthn.addCredential', {
+      authenticatorId: authenticator.authenticatorId,
+      credential: item,
+    });
+
+  const heldChef = await hide(chefKeyPair);
+  await switchPerson(page); // chef -> seller
+  await expect(
+    page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
+  ).toBeVisible();
+  await restore(heldChef);
+
+  const heldSeller = await hide(sellerKeyPair);
+  await switchPerson(page); // seller -> chef
+  await expect(
+    page.getByText(`Signed in as Chef ${chefName}`).or(page.getByText(`${chefName} · chef`)),
+  ).toBeVisible();
+  await restore(heldSeller);
+
+  // With both on the device the picker still opens and someone is signed in, no password screen.
+  await switchPerson(page);
+  await expect(
+    page.getByText(/^Signed in as /).or(page.getByText(/ · (seller|chef)$/)),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use password instead' })).toHaveCount(0);
+  expect(await credentialsOf(authenticator)).toHaveLength(2);
 
   expect(errors).toEqual([]);
 });

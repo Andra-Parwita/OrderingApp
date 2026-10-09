@@ -4,6 +4,7 @@
 // mocks/softAuthenticator.ts), cookie sessions and the request limiter. Everything runs on an
 // injected clock, against a local D1; see mocks/impl.ts.
 import { beforeEach, describe, expect, it } from 'vitest';
+import { APP_NAME } from '../shared/appName';
 import { parseApiError } from '../shared/apiError';
 import {
   parseChefAccessResponse,
@@ -617,7 +618,7 @@ describe('sign-in', () => {
       const asked = await call('POST', '/api/auth/register/options', setup);
       expect(asked.status).toBe(200);
       const options = optionsOf(asked);
-      expect(options['rp']).toEqual({ name: 'Delave', id: 'delave.test' });
+      expect(options['rp']).toEqual({ name: APP_NAME, id: 'delave.test' });
       expect(options.challenge.length).toBeGreaterThan(20);
       expect(options['excludeCredentials']).toEqual([]);
       // Once the admin has a passkey, a second setup (add-device) must not offer the same one again.

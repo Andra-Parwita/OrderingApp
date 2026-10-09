@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { APP_NAME } from '../../../shared/appName';
 import { Button } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { Message, Muted, Row } from './shared';
@@ -57,7 +58,11 @@ const WhatsApp = styled.a`
 export function KeyBox({ title, keyText, onDone }: KeyBoxProps) {
   const { t } = useTranslation(ADMIN_NS);
   const [note, setNote] = useState<{ text: string; bad: boolean } | null>(null);
-  const message = t('home.key.message', { key: keyText, interpolation: { escapeValue: false } });
+  const message = t('home.key.message', {
+    key: keyText,
+    app: APP_NAME,
+    interpolation: { escapeValue: false },
+  });
 
   const copy = useCallback(async () => {
     try {

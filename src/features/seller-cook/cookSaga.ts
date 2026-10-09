@@ -2,6 +2,7 @@ import type { EventChannel } from 'redux-saga';
 import { all, call, put, race, take, takeLatest } from 'redux-saga/effects';
 import { liveRefreshLoop, type LiveMessage } from '../../api/live';
 import type { ApiResult } from '../../api/http';
+import { staffSignedOut } from '../../api/staffSignedOut';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
@@ -44,7 +45,7 @@ function* watchPolling(pollMs: number, channel?: () => EventChannel<LiveMessage>
         fallbackMs: pollMs,
         ...(channel ? { channel } : {}),
       }),
-      stop: take(pollingStopped.type),
+      stop: take([pollingStopped.type, staffSignedOut.type]),
     });
   }
 }

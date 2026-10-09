@@ -63,6 +63,7 @@ import { isValidSlug } from '../../shared/seller';
 import { HomePage, KitchenNotFoundPage, NotFoundPage } from './pages';
 import { SellerLayout } from './SellerLayout';
 import { SellerPreview } from './SellerPreview';
+import { MoreSwitchPerson } from './SwitchPerson';
 
 // Route wrappers: the screens only get callbacks; where they lead is decided here.
 
@@ -256,6 +257,14 @@ const MoreBlock = styled.div`
   padding-top: ${({ theme }) => theme.spacing.lg};
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
 `;
+// The sign-out button at the foot of More: padded on every side so it clears the tab bar.
+const SignOutBlock = styled(MoreBlock)`
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg}
+    ${({ theme }) => theme.spacing.xl};
+`;
+const PhoneWho = styled.div`
+  padding: 0 ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.md};
+`;
 const ShareLink = styled(Link)`
   display: inline-flex;
   align-items: center;
@@ -380,6 +389,7 @@ function MoreRoute() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { me, end } = useSession();
+  const desktop = useMediaQuery(DESKTOP_QUERY);
   const links = MORE_LINKS.filter(
     ([key]) => (me?.role !== 'chef' || !CHEF_HIDDEN.has(key)) && (key !== 'devices' || me !== null),
   );
@@ -390,6 +400,11 @@ function MoreRoute() {
   return (
     <>
       <PageHeader title={t('sellerNav.moreTitle')} />
+      {desktop ? null : (
+        <PhoneWho>
+          <MoreSwitchPerson />
+        </PhoneWho>
+      )}
       <nav aria-label={t('sellerNav.moreTitle')}>
         {links.map(([key, to]) => (
           <ListRow
@@ -401,9 +416,9 @@ function MoreRoute() {
         ))}
       </nav>
       {me === null ? null : (
-        <MoreBlock>
+        <SignOutBlock>
           <Button onClick={() => void signOutNow()}>{t('sellerNav.signOut')}</Button>
-        </MoreBlock>
+        </SignOutBlock>
       )}
     </>
   );

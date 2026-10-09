@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { ReactReduxContext } from 'react-redux';
 import type { Me } from '../../shared/authContract';
+import { staffSignedOut } from '../api/staffSignedOut';
 import { fetchMe, signOut } from '../api/auth';
 import { hasSessionHint } from '../api/device/session';
 import { rememberSignedIn, setSessionSeller } from '../api/device/sellerContext';
@@ -69,10 +71,14 @@ export function SessionProvider({ children }: Readonly<{ children: ReactNode }>)
     return next;
   }, [adopt]);
 
+  // The store is optional: some test trees have a session but no store.
+  const redux = useContext(ReactReduxContext);
   const end = useCallback(async () => {
+    // Stop the seller sagas and the live socket first, so nothing asks the API once the cookie goes.
+    redux?.store.dispatch(staffSignedOut());
     await signOut();
     adopt(null);
-  }, [adopt]);
+  }, [adopt, redux]);
 
   const value = useMemo(() => ({ me, refresh, adopt, end }), [me, refresh, adopt, end]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -13,6 +13,7 @@ import { useMediaQuery } from '../components/useMediaQuery';
 import { Icon, ImageSlot, TabBar, Tooltip, type IconName, type TabBarItem } from '../ui';
 import { BANNER_MAX_WIDTH, DESKTOP_QUERY, RAIL_WIDTH, RAIL_WIDTH_COLLAPSED } from './layout';
 import { useRailCollapsed } from './railPreference';
+import { RailSwitchPerson } from './SwitchPerson';
 
 // Seller navigation: a bottom tab bar on a phone, a left rail on a desktop. A chef gets no Menu
 // (D-013).
@@ -71,6 +72,7 @@ const Shell = styled.div<{ $desktop: boolean }>`
 const Bottom = styled.footer`
   position: sticky;
   bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
   background: ${({ theme }) => theme.colour.bg};
 `;
 const Rail = styled.nav<{ $collapsed: boolean }>`
@@ -321,6 +323,9 @@ export function SellerLayout() {
   const background = kitchen?.images?.bannerBackground;
   const backgroundImage = kitchen?.images?.bannerBackgroundImage;
   const [collapsed, toggleCollapsed] = useRailCollapsed();
+  // The Switch person block already names the signed-in person: in the expanded rail, and at the
+  // top of the More tab on a phone. Everywhere else the bar is the only place the name appears.
+  const nameShownElsewhere = desktop ? !collapsed : pathname === '/seller/more';
 
   const label = (id: NavId) => t(`sellerNav.${id}`);
   const tabs = useMemo<Array<TabBarItem>>(
@@ -392,6 +397,7 @@ export function SellerLayout() {
             </RailList>
             <RailFoot $collapsed={collapsed}>
               {collapsed || me !== null ? null : <SellerPicker />}
+              <RailSwitchPerson collapsed={collapsed} />
               {collapsed ? (
                 <CompactLanguage />
               ) : (
@@ -416,7 +422,7 @@ export function SellerLayout() {
         </RailColumn>
       ) : null}
       <Main>
-        {who ? <Who>{t('sellerNav.signedInAs', { name: who })}</Who> : null}
+        {who && !nameShownElsewhere ? <Who>{t('sellerNav.signedInAs', { name: who })}</Who> : null}
         {desktop ? (
           <BannerStrip $background={background} $image={backgroundImage}>
             <BannerArea>

@@ -294,3 +294,24 @@ Format for each entry:
 - A new seller's first week is the coming Saturday, with the cut-off Friday 21:00 Melbourne time.
 **Trade-off:** the guard relies on a deliberate SQLite error to roll the batch back, which is less obvious than a DO-serialised write but costs no extra round trip.
 **Revisit when:** Cloudflare counts batch statements one by one (then split bulk routes into chunks per request), or orders arrive fast enough to need the DO to serialise them.
+
+## D-050 · Chefs use their own phones and may share a kitchen tablet (2026-10-09; owner: "A and B are possible")
+**Context:** a big seller such as Onde Onde has several chefs (4). After the per-role passkey fix, several people can keep passkeys on one device and pick theirs in the system prompt.
+**Decision:** both are supported. Each chef can sign in on their own phone, and several chefs (and the seller) can share one kitchen tablet. On a shared device, switching person must be one step. A "Switch person" control signs out and opens the passkey picker straight away; its placement is shown as a mock-up before it is built. Every order change stays recorded under the signed-in person (D-013).
+**Trade-off:** on a shared tablet anyone who can unlock it can use any passkey on it, so the audit is only as honest as people picking their own name.
+**Revisit when:** a kitchen wants a PIN per chef on the shared tablet.
+
+## D-051 · Sign-in pages show the seller's phone banner (2026-10-09; owner)
+**Context:** the owner wants a nicer sign-in page with an image. Before sign-in the page doesn't know the seller.
+**Decision:**
+- The seller and admin sign-in pages use a split layout on tablet and desktop (image left, form right) and the image on top on a phone (mock-up approved in chat).
+- The image is the **phone banner the seller uploaded** (the 1080×540 slot, D-038/D-040), taken from the last kitchen this device used. It is shown whole, never cropped (as D-038), with the seller's background colour filling the rest.
+- Coordinator default, overrulable: on a device with no last kitchen, or for a seller with no phone banner, show a plain tinted panel with the app name (D-052) and no picture. The sample Onde Onde image would wrongly brand other sellers.
+**Trade-off:** a shared device shows the last kitchen used, which is the right one for a kitchen tablet.
+**Revisit when:** sellers want a dedicated sign-in picture.
+
+## D-052 · The app is called "ShaggyBobo's Order"; "Delave" was only a sample seller name (2026-10-09; owner)
+**Context:** the coordinator had used "Delave" as the app's name in UI strings, the passkey prompt, invite messages and docs. The owner: "there is no Delave .. Delave is just sample seller .. by default we call it ShaggyBobo's Order".
+**Decision:** the app's default name is **ShaggyBobo's Order**, held in one shared constant (`APP_NAME`). It is used for the page title, the passkey prompt's site name (`RP_NAME`), invite and recovery messages, the home page and the sign-in panel without a picture. "Delave" goes from every user-visible string. Code comments and past docs are corrected when touched, not in a sweep.
+**Trade-off:** passkeys already made keep showing "Delave" in Windows Hello; only new ones show the new name. They still work.
+**Revisit when:** the owner picks a different name, which is a one-constant change.

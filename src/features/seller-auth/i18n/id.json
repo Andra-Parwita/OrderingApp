@@ -92,6 +92,7 @@
     "title": "Masuk",
     "passkey": "Masuk dengan passkey",
     "noPasskey": "Perangkat ini belum punya passkey. Pakai kata sandi, atau minta kunci baru.",
+    "adminPasskey": "Passkey itu milik admin. Admin masuk lewat halaman admin. Pilih passkey milikmu, atau pakai kata sandi.",
     "usePassword": "Pakai kata sandi saja",
     "hidePassword": "Sembunyikan kata sandi",
     "passwordLabel": "Kata sandi",

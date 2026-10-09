@@ -60,7 +60,7 @@ test('two sellers: orders at each link, My orders across both, the seller side p
   // The home page: no list of sellers.
   await page.goto('/');
   await expect(
-    page.getByRole('heading', { name: 'Delave · Weekly home-cooked orders' }),
+    page.getByRole('heading', { name: "ShaggyBobo's Order · Weekly home-cooked orders" }),
   ).toBeVisible();
   await expect(page.getByText("Open your seller's link from WhatsApp.")).toBeVisible();
   await expect(page.getByText('Dapur Demo')).toHaveCount(0);

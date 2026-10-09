@@ -72,7 +72,7 @@ async function makeDemoInvite(): Promise<{ key: string } | { problem: string }> 
     const registered = await registerDevice({ kind: 'passkey', deviceName: 'Harness admin' });
     if (!registered.ok) return { problem: `Admin setup failed: ${registered.error}` };
   } else if (setup.error === 'admin_exists') {
-    const signedIn = await signInWithPasskey();
+    const signedIn = await signInWithPasskey('admin');
     if (!signedIn.ok) {
       return { problem: 'An admin already exists and this browser has no admin passkey.' };
     }

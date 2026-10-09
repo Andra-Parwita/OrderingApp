@@ -9,7 +9,8 @@
     "triesLeft_one": "{{count}} try left.",
     "triesLeft_other": "{{count}} tries left.",
     "lockedOut": "Too many tries. Try again in {{minutes}} minutes.",
-    "noPasskey": "This device has no admin passkey.",
+    "noPasskey": "No admin passkey was used. If this device has none, set it up first.",
+    "sellerPasskey": "That passkey belongs to a seller. Try again and pick the admin passkey.",
     "unauthorized": "Sign in as admin to see this page.",
     "forbidden": "Only the admin can open this page.",
     "passkeyCancelled": "The passkey prompt was closed. Try again.",
@@ -90,7 +91,7 @@
       "copied": "Copied",
       "copyFailed": "Could not copy. Select the key and copy it by hand.",
       "whatsapp": "Send on WhatsApp",
-      "message": "Your Delave sign-in key: {{key}} (valid for 24 hours, works on up to 3 devices)",
+      "message": "Your {{app}} sign-in key: {{key}} (valid for 24 hours, works on up to 3 devices)",
       "done": "Done"
     },
     "mine": {

@@ -168,6 +168,19 @@ Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-n
 
 ## Findings
 
+- **`saturday.test.tsx` HandOverScreen heading flaky under full-suite load** (low, 20:20): it passes alone 3 of 3; probably a `findBy` default timeout on D1-backed fetches. Raise that test's wait or the global `asyncUtilTimeout`.
+- **Sign-out on the Devices screen ("sign out here") and the admin sign-out don't dispatch `staffSignedOut`** (low). The admin has no polling; the Devices path could race the same way. Route it through `useSession().end()`.
+- **The cook saga's stop-on-sign-out has no test of its own** (low).
+
+- **First e2e run after a server start sometimes fails on a Miniflare "fetch failed"** (medium; 3 times on 9 Oct: 8.4a gate, Switch person builder, coordinator gate 19:29). The warm-up in global-setup doesn't cover it. Fix: global-setup waits for one full API round trip (a menu fetch plus a seller call) before tests, and retries once.
+- **Name shows twice on the phone More tab** (low): the old "Signed in as" top bar plus the new Switch person block. Remove one in the sign-in round.
+- **Passkey slot fix has no proof that its test fails without the fix** (low, lesson 6). Ask for it in the next round.
+- **Visible changes not yet captured and looked at** (conventions §5): LiveDot, sign-in messages, Switch person. Captured 19:42 (haiku) and looked at by the coordinator: rail expanded/collapsed, More tab, Live dot fine, 0 console errors. Seen: a fresh device's sign-in lands on the key screen with no way to passkey sign-in (medium); the More tab's last item sits under the tab bar (low). Both in the sign-in round. The capture helper listed the owner's 5173 server (PID 35984, restarted by the owner at 19:34 — confirmed) as "its orphan". It didn't kill it; the coordinator checked by port and parent chain.
+
+- **Admin locked out after a seller passkey on the same PC** (high, owner, reported before 18:59): the browser kept one passkey id per site; the seller passkey replaced the admin one, and the admin screen then forgot it ("This device has no admin passkey"). Admin passkey is fine in Windows Hello and D1. Fix (sonnet) running: discoverable sign-in when no id is stored, ids per role, a clear wrong-role message. Not caught because no test registered both roles in one browser. → fixed 19:06 (sonnet): per-role hints, discoverable sign-in, wrong-role message. Coordinator gate 19:07–19:10: auth-mobile 3 (+1 skip), auth-desktop 4, session-flow 1; unit 1114/1115: `customer-orders/screens.test.tsx` "unseen-update dot" fails every run (multiple "New update"), plus a Miniflare poisoned-stub log. Probably unrelated to the fix, cause unknown.
+- **Switch person + seller-orders-elsewhere check + the failing screens test** (builder · sonnet, started 19:10, ~19:50). ✅ landed 19:28. Gate 19:29–19:36: unit 88 files / 1124 (no poisoned-stub log); auth-mobile 4 (+1 skip), session-flow 1, desktop-chromium 22 (+3 skip); auth-desktop failed 3 on the first run after a Miniflare "fetch failed" at server start, then 5/5 twice alone. Snapshot `switch-person-green.tar`. Seller ordering at another kitchen proven (normal customer order). Screens test fixed (test counted the whole page). D-050: rail bottom on tablet/desktop (main use), More tab on phone. Owner noted the seller app is mainly tablet/desktop; the phone 3-tab idea is the customer app (already Menu · My orders · Settings).
+- **Sign-in round** (builder · sonnet, started 19:43, ~20:40): the seller's phone banner on sign-in and set-up pages (D-051), the rename to ShaggyBobo's Order via `APP_NAME` (D-052), the duplicate name removed, an "Already set up? Sign in" link, More tab bottom padding, an e2e first-request wait, and proof that the passkey-slot test fails without the fix. ✅ landed ~20:01. Captures looked at by the coordinator (banner panel, plain panel with the app name, set-up link). Gate 20:03–20:09: unit 89 files / 1127; auth-mobile 4 (+1 skip), session-flow 1, desktop-chromium 22 (+3 skip); auth-desktop: the Switch person spec failed on a 401 console error (2nd time). A real race: an orders request fires after sign-out → fixer (sonnet) started 20:09. ✅ landed ~20:16: sign-out dispatches `staffSignedOut` first, which stops the orders and cook refresh loops and closes the socket. Its test fails without the fix. Gate 20:17–20:23: auth-mobile 4 (+1 skip), auth-desktop 5, session-flow 1; unit 1127/1128, the 1 being `seller-saturday/saturday.test.tsx` "shows the date and counts" (heading not found under load), which passed 3 of 3 alone → logged. Snapshot `day-end-green.tar`. Same round: rename the app to "ShaggyBobo's Order" (D-052) in one `APP_NAME` constant: title, passkey RP name, invite messages, home page.
+
 - **For phase 5** (from phase 4, 18:43):
   - D1 free plan allows 50 queries per Worker invocation. Cloudflare's limits page doesn't say whether each statement in a `batch()` counts. 8.4b counted a batch as one, so "send an update" to 100 orders and backup restore rely on that. Verify on Cloudflare with 100 orders before relying on it.
   - The cron only runs once deployed; locally, trigger it with `/cdn-cgi/handler/scheduled`.
@@ -255,7 +268,15 @@ Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-n
 
 ## Start here (next session)
 
-**Where things stand (9 Oct 2026, 18:43):** phases 0–4 done.
+**Update (9 Oct, 20:25):** after phase 4, these landed and passed the gate:
+- the admin-lockout fix (passkeys per role);
+- Switch person (D-050);
+- sign-in pages with the seller's phone banner (D-051);
+- the rename to "ShaggyBobo's Order" (D-052);
+- the sign-out race fix.
+Decisions now run to D-052. Unit 1128 (1 load flake logged). Snapshot `day-end-green.tar`. Still uncommitted, with one message for everything in `scratch/commit-message.txt`. Low findings are open on the Findings list.
+
+**Where things stood (9 Oct 2026, 18:43):** phases 0–4 done.
 - The app runs on a real local backend: D1 via the repository in `worker/db/`, routes in `worker/api/`, real passkeys and `__Host-` cookie sessions, an Origin check, live updates through the `SellerLive` Durable Object, R2 images, and a weekly retention cron.
 - Dev-only paths are behind `DEV_TOOLS` in `.dev.vars`.
 - Tests use scratch D1 directories only (`mocks/impl.ts`, `scripts/scratch-server.mjs`).

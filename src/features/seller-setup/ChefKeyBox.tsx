@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { APP_NAME } from '../../../shared/appName';
 import { Button } from '../../ui';
 import { SETUP_NS } from './i18n/register';
 import { Actions, Hint } from './parts';
@@ -58,7 +59,11 @@ export function ChefKeyBox({ chefName, keyText, onDone }: ChefKeyBoxProps) {
   const { t } = useTranslation(SETUP_NS);
   const [note, setNote] = useState<string | null>(null);
   const title = t('chefs.inviteTitle', { name: chefName });
-  const message = t('chefs.inviteMessage', { key: keyText, interpolation: { escapeValue: false } });
+  const message = t('chefs.inviteMessage', {
+    key: keyText,
+    app: APP_NAME,
+    interpolation: { escapeValue: false },
+  });
 
   const copy = useCallback(async () => {
     try {

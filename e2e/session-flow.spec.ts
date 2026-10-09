@@ -40,7 +40,9 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
 
   // Seller: the key, then a password; lands in the seller area as Dapur Demo, no picker.
   await setUpWithKey(page, key, PASSWORD, 'E2E session flow');
-  await expect(page.getByText('Signed in as Dapur Demo')).toBeVisible();
+  await expect(
+    page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
+  ).toBeVisible();
   await expect(page.getByLabel('Seller (dev only)')).toHaveCount(0);
   await page.screenshot({ path: 'captures/session-flow-seller.png', fullPage: true });
 
@@ -75,14 +77,18 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/seller$/);
-  await expect(page.getByText('Signed in as Dapur Demo')).toBeVisible();
+  await expect(
+    page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
+  ).toBeVisible();
 
   // More > Sign out, then the chef sets up.
   await page.getByRole('link', { name: 'More' }).click();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/\/seller\/sign-in$/);
   await setUpWithKey(page, chefKey, CHEF_PASSWORD, 'E2E chef flow');
-  await expect(page.getByText('Signed in as Chef Rudi')).toBeVisible();
+  await expect(
+    page.getByText('Signed in as Chef Rudi').or(page.getByText('Rudi · chef')),
+  ).toBeVisible();
   const rail = page.getByRole('navigation', { name: 'Seller' });
   await expect(rail.getByRole('link', { name: 'Orders' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Hand-over' })).toBeVisible();

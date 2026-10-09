@@ -301,10 +301,10 @@ describe('customer sub-page headers', () => {
 });
 
 describe('customer routes per seller (D-037)', () => {
-  it('shows a simple Delave page at / with no list of sellers', () => {
+  it('shows a simple home page at / with no list of sellers', () => {
     renderAt('/');
     expect(
-      screen.getByRole('heading', { name: 'Delave · Weekly home-cooked orders' }),
+      screen.getByRole('heading', { name: "ShaggyBobo's Order · Weekly home-cooked orders" }),
     ).toBeVisible();
     expect(screen.getByText("Open your seller's link from WhatsApp.")).toBeVisible();
     expect(screen.queryByText('Onde Onde')).toBeNull();

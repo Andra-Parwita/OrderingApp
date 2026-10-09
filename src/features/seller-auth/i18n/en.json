@@ -92,6 +92,7 @@
     "title": "Sign in",
     "passkey": "Sign in with passkey",
     "noPasskey": "This device has no passkey yet. Use your password, or ask for a new key.",
+    "adminPasskey": "That passkey belongs to the admin. Admins sign in on the admin page. Pick your own passkey, or use your password.",
     "usePassword": "Use password instead",
     "hidePassword": "Hide password",
     "passwordLabel": "Password",

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { styled } from 'styled-components';
+import { APP_NAME } from '../../shared/appName';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 
 const Page = styled.main`
@@ -53,7 +54,7 @@ const ShellPage = styled(Page)`
   min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
 `;
 
-/** `/`: what Delave is. Customers arrive through a seller's own link, so no list of sellers. */
+/** `/`: what the app is. Customers arrive through a seller's own link, so no list of sellers. */
 export function HomePage() {
   const { t } = useTranslation();
   return (
@@ -61,7 +62,7 @@ export function HomePage() {
       <Bar>
         <LanguageSwitch />
       </Bar>
-      <Title>{t('home.title')}</Title>
+      <Title>{t('home.title', { app: APP_NAME })}</Title>
       <Text>{t('home.body')}</Text>
       <Text>{t('home.hint')}</Text>
     </ShellPage>

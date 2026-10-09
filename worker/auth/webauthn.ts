@@ -16,6 +16,7 @@ import {
   type RegistrationResponseJSON,
 } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
+import { APP_NAME } from '../../shared/appName';
 import { passkeysAvailable, RP_NAME, type Me } from '../../shared/authContract';
 import { fromHex, sha256Hex } from '../db/crypto';
 import type {
@@ -54,9 +55,9 @@ async function userHandle(accountId: string): Promise<Uint8Array<ArrayBuffer>> {
 }
 
 function labelOf(me: Me): string {
-  if (me.role === 'admin') return 'Delave admin';
-  if (me.role === 'chef') return `${me.chefName ?? 'Chef'} (${me.sellerName ?? 'Delave'})`;
-  return me.sellerName ?? me.slug ?? 'Delave';
+  if (me.role === 'admin') return `${APP_NAME} admin`;
+  if (me.role === 'chef') return `${me.chefName ?? 'Chef'} (${me.sellerName ?? APP_NAME})`;
+  return me.sellerName ?? me.slug ?? APP_NAME;
 }
 
 // ---- Registration ----

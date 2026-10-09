@@ -1,6 +1,7 @@
 // Sign-in contract (stage 7.1, real passkeys in 8.2; D-011, D-013, D-014, D-027 row 1, D-045,
 // D-046). The session token never appears in a body: it travels only in the HttpOnly `__Host-`
 // cookie. Passkeys are WebAuthn: options come from the server, the browser signs, the server checks.
+import { APP_NAME } from './appName';
 import type { Seller } from './domain';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray } from './parse';
 import { parseSeller } from './seller';
@@ -26,8 +27,8 @@ export const CHALLENGE_TTL_MINUTES = 5;
 /** At most this many requests to /api/auth/* (and /api/admin/setup) per browser id per window. */
 export const AUTH_RATE_MAX = 30;
 export const AUTH_RATE_WINDOW_SECONDS = 60;
-/** The name passkeys show to the person ("Delave" in the browser's own prompt). */
-export const RP_NAME = 'Delave';
+/** The name passkeys show to the person (the browser's own prompt). */
+export const RP_NAME = APP_NAME;
 export const PASSWORD_MIN = 10;
 export const PASSWORD_MAX = 200;
 export const DEVICE_NAME_MAX = 40;

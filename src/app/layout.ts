@@ -7,3 +7,6 @@ export const RAIL_WIDTH = '14rem';
 export const RAIL_WIDTH_COLLAPSED = '3.5rem';
 // The seller banner image area never grows past this; wider screens show the seller's colour.
 export const BANNER_MAX_WIDTH = '1600px';
+// Sign-in pages (D-051): from this width the kitchen picture sits left of the form, below it above.
+export const SPLIT_MIN_PX = 768;
+export const SPLIT_QUERY = `(min-width: ${SPLIT_MIN_PX}px)`;

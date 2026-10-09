@@ -33,9 +33,26 @@ const HINT_KEY = 'signedIn';
 export const hasSessionHint = (): boolean => read(HINT_KEY) === '1';
 export const setSessionHint = (on: boolean): void => write(HINT_KEY, on ? '1' : null);
 
-export const getCredentialId = (): string | null => read(CREDENTIAL_KEY);
-export const setCredentialId = (id: string): void => write(CREDENTIAL_KEY, id);
-export const clearCredentialId = (): void => write(CREDENTIAL_KEY, null);
+// One passkey id hint per kind of account: this browser can hold an admin passkey and a seller or
+// chef passkey side by side, and one must never overwrite the other. A hint only narrows the
+// browser's list (`allowCredentials`); sign-in works without it (discoverable passkey).
+export type CredentialRole = 'admin' | 'staff';
+const keyOf = (role: CredentialRole): string => `${CREDENTIAL_KEY}.${role}`;
+
+/** The single id an older version kept for the whole site: read once as a staff hint, then removed. */
+function migrateLegacyCredential(): void {
+  const legacy = read(CREDENTIAL_KEY);
+  if (legacy === null) return;
+  if (read(keyOf('staff')) === null) write(keyOf('staff'), legacy);
+  write(CREDENTIAL_KEY, null);
+}
+
+export const getCredentialId = (role: CredentialRole): string | null => {
+  migrateLegacyCredential();
+  return read(keyOf(role));
+};
+export const setCredentialId = (role: CredentialRole, id: string): void => write(keyOf(role), id);
+export const clearCredentialId = (role: CredentialRole): void => write(keyOf(role), null);
 
 let memoryId: string | undefined;
 
