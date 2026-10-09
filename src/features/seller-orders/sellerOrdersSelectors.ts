@@ -76,6 +76,7 @@ export const selectCurrent = (state: SellerOrdersRootState) => state.sellerOrder
 export const selectPast = (state: SellerOrdersRootState) => state.sellerOrders.past;
 export const selectWarned = (state: SellerOrdersRootState) => state.sellerOrders.warned;
 export const selectToast = (state: SellerOrdersRootState) => state.sellerOrders.toast;
+export const selectDevSampling = (state: SellerOrdersRootState) => state.sellerOrders.devSampling;
 
 /** Portions sold per menu item id (not cancelled), for the live Dishes panel. */
 export const selectSoldByItem = createSelector([selectOrders], (orders) => {

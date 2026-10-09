@@ -93,7 +93,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  let payload = null;
+  let payload;
   try {
     payload = event.data ? event.data.json() : null;
   } catch {

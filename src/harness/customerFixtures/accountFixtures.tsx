@@ -107,6 +107,9 @@ function Orders({ props, empty }: Readonly<{ props: FixtureProps; empty: boolean
       stale={false}
       offline={false}
       findToken={() => undefined}
+      onFind={() => Promise.resolve('not_found')}
+      hasKitchen
+      kitchenName={null}
       onOpenOrder={noop}
       onOpenMenu={noop}
       onRetry={noop}

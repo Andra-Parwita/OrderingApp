@@ -13,7 +13,7 @@
     "paid": "✓ Paid",
     "note": "✎ Note",
     "enteredBy": "entered by {{name}}",
-    "devSample": "Add 5 sample orders",
+    "devSample": "Add 50 sample orders",
     "devReset": "Reset",
     "devResetConfirm": "Tap again to reset",
     "share": "Share menu",
@@ -301,7 +301,12 @@
     "confirmed": "{{name}} confirmed",
     "paid": "{{name}} marked paid",
     "cancelled": "{{name}} cancelled",
-    "collected": "{{name}} marked collected"
+    "collected": "{{name}} marked collected",
+    "sampleAdded": "Added {{name}}",
+    "samplePartial": "Added {{name}}; the rest are sold out",
+    "sampleNone": "Nothing added: every dish is sold out",
+    "sampleNoMenu": "Make a menu first",
+    "sampleFailed": "Couldn't add samples"
   },
   "dishes": {
     "title": "Dishes",

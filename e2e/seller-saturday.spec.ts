@@ -76,9 +76,7 @@ test('message a pickup place, and walk a delivery through its steps', async ({
 
   // The customer sees it in Updates.
   await page.goto(`/o/${pickup.token}`);
-  await expect(page.getByTestId('updates')).toContainText(
-    `Your food will be ready in about ${minutes} minutes.`,
-  );
+  await expect(page.getByTestId('updates')).toContainText(`Ready in ${minutes} min`);
 
   // Delivery: Arriving soon (no time) is one tap and reaches the customer.
   await page.goto('/seller/hand-over');
@@ -94,7 +92,7 @@ test('message a pickup place, and walk a delivery through its steps', async ({
   await page.screenshot({ path: `captures/saturday-delivery-${project}.png`, fullPage: true });
 
   await page.goto(`/o/${delivery.token}`);
-  await expect(page.getByTestId('updates')).toContainText('Your delivery is arriving soon.');
+  await expect(page.getByTestId('updates')).toContainText('Arriving soon');
 
   expect(errors).toEqual([]);
 });

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import type { Fulfilment } from '../../../shared/domain';
+import { savedFirstName } from '../../api/device/firstName';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
 import { PageHeader } from '../../ui';
 import {
@@ -150,6 +151,17 @@ function BasketContent({
   useEffect(() => {
     if (wantedSlug !== undefined && wantedSlug !== menuSlug) dispatch(menuRequested(wantedSlug));
   }, [dispatch, wantedSlug, menuSlug]);
+
+  // A repeat customer doesn't retype their name: prefill it once from this phone (D-075). Only once
+  // this kitchen's checkout is the live one, because opening a kitchen's menu empties the checkout.
+  const prefilled = useRef(false);
+  const typedName = checkout.firstName;
+  useEffect(() => {
+    if (prefilled.current || editing || menuSlug === null || menuSlug !== wantedSlug) return;
+    prefilled.current = true;
+    const saved = savedFirstName();
+    if (saved !== '' && typedName === '') dispatch(checkoutSet({ firstName: saved }));
+  }, [dispatch, editing, menuSlug, wantedSlug, typedName]);
 
   const placedToken = place.status === 'placed' ? place.token : null;
   useEffect(() => {

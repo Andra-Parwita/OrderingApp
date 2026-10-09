@@ -82,9 +82,18 @@ describe('push contract and texts', () => {
     expect(parsePushSubscribeRequest(null)).toBeNull();
   });
 
-  it('says nothing for a nudge or a placed order, and prefers the seller message', () => {
+  it('says the inbox words for a nudge, nothing for a placed order, and prefers the seller message', () => {
     const at = '2026-10-07T10:00:00.000Z';
-    expect(pushBodyOf({ at, kind: 'nudge', textKey: 'nudge' }, 'en')).toBeUndefined();
+    expect(pushBodyOf({ at, kind: 'nudge', textKey: 'nudge' }, 'en')).toBe(
+      'The seller is waiting for your order number on WhatsApp.',
+    );
+    expect(pushBodyOf({ at, kind: 'nudge', textKey: 'nudge' }, 'id')).toBe(
+      'Penjual menunggu nomor pesanan Anda lewat WhatsApp.',
+    );
+    expect(pushBodyOf({ at, kind: 'nudge', textKey: 'nudgeReturning' }, 'en')).toMatch(
+      /^Your order is in\./,
+    );
+    expect(pushBodyOf({ at, kind: 'nudge' }, 'en')).toBeUndefined();
     expect(pushBodyOf({ at, kind: 'status', status: 'ordered' }, 'en')).toBeUndefined();
     expect(pushBodyOf({ at, kind: 'message', textKey: 'readyAt' }, 'id')).toBe('Siap diambil');
     expect(pushBodyOf({ at, kind: 'message', text: 'Hello' }, 'id')).toBe('Hello');

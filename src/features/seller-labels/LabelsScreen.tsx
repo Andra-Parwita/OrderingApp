@@ -6,6 +6,7 @@ import { formatDay } from '../../../shared/dates';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
 import { currentSellerSlug } from '../../api/device/sellerContext';
+import { OrderQr } from '../../components/OrderQr';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { LABELS_NS } from './i18n/register';
 import {
@@ -172,22 +173,24 @@ const Code = styled.div`
     font-size: 17pt;
   }
 `;
+/** The QR is a vector SVG, so it scales to the box and stays crisp; it carries its own white quiet zone. */
 const Qr = styled.div`
   grid-area: qr;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 4.5rem;
   height: 4.5rem;
-  border: ${({ theme }) => theme.border.hairline} dashed ${({ theme }) => theme.colour.outline};
-  color: ${({ theme }) => theme.colour.textMuted};
-  font-weight: ${({ theme }) => theme.type.weight.strong};
+  line-height: 0;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
 
   @media print {
-    width: 15mm;
-    height: 15mm;
-    border-color: black;
-    color: black;
+    width: 16mm;
+    height: 16mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 `;
 const Name = styled.div`
@@ -238,8 +241,8 @@ const Label = memo(function Label({ order, paper, day }: LabelProps) {
   return (
     <LabelBox $paper={paper} aria-label={code}>
       <Code>{code}</Code>
-      <Qr role="img" aria-label={t('label.qrName')}>
-        {t('label.qr')}
+      <Qr>
+        <OrderQr code={order.code} size={72} label={t('label.qrName')} />
       </Qr>
       <Name>{order.firstName}</Name>
       <Items>

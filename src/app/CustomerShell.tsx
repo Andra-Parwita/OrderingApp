@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import { Link, Outlet, useLocation, useNavigationType } from 'react-router';
+import { Link, NavigationType, Outlet, useLocation, useNavigationType } from 'react-router';
 import { css, keyframes, styled } from 'styled-components';
 import { isValidSlug } from '../../shared/seller';
 import { lastKitchen } from '../api/device/lastKitchen';
@@ -89,7 +89,7 @@ const Bar = styled.nav`
   width: 100%;
   max-width: ${MAX_WIDTH};
   margin: 0 auto;
-  padding-bottom: var(--sab, 0px);
+  padding-bottom: var(--sab, 0rem);
   background: ${({ theme }) => theme.colour.bg};
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
 `;
@@ -124,8 +124,8 @@ const Tab = styled(Link)<{ $active: boolean }>`
     position: absolute;
     top: 0;
     width: 2rem;
-    height: 3px;
-    border-radius: 0 0 3px 3px;
+    height: 0.1875rem;
+    border-radius: 0 0 0.1875rem 0.1875rem;
     background: ${({ theme, $active }) => ($active ? theme.c.atext : 'transparent')};
   }
 
@@ -222,7 +222,7 @@ export function CustomerShell() {
   const tabs = hasTabBar(pathname);
   return (
     <Wrap $tabs={tabs}>
-      <Slide key={pathname} $push={navigationType === 'PUSH' && !isRootPage(pathname)}>
+      <Slide key={pathname} $push={navigationType === NavigationType.Push && !isRootPage(pathname)}>
         <Outlet />
       </Slide>
       {tabs ? (

@@ -16,6 +16,15 @@
     "codePlaceholder": "Have an order code? e.g. K7F-2QX",
     "open": "Open",
     "codeNotFound": "Not saved on this phone. Open the link the kitchen sent you, or ask them for it.",
+    "findHint": "Not saved on this phone. Enter the first name on the order to find it.",
+    "findIn": "Searching in {{kitchen}}.",
+    "findNoKitchen": "Open your kitchen's link first, then try again.",
+    "nameLabel": "First name on the order",
+    "namePlaceholder": "First name on the order",
+    "find": "Find my order",
+    "find_not_found": "No order found for that code and name. Check both and try again.",
+    "find_locked": "Too many tries. Please wait 15 minutes and try again.",
+    "find_error": "Could not look it up. Check your connection and try again.",
     "thisWeek": "Current",
     "earlier": "Earlier",
     "emptyTitle": "Your orders will appear here",
@@ -142,6 +151,7 @@
     "pickup": "Pickup",
     "pickupWhen": "Pickup {{when}}",
     "delivery": "Delivery",
+    "link": "My order: {{link}}",
     "addAddress": "My address:"
   }
 }

@@ -15,10 +15,13 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 | 001 | [Seller app UX redesign](001-seller-ux-redesign.md) | done (2026-10-10); owner check pending |
 | 002 | [Web push notifications](002-web-push.md) | replaced by 004 (builder: "A", 2026-10-10) |
 | 003 | [Phase 4 follow-ups](003-phase4-followups.md) | done (2026-10-10) |
-| 004 | [Customer app redesign and web push](004-customer-redesign-and-push.md) | approved, building; **must be done before going live** |
+| 004 | [Customer app redesign and web push](004-customer-redesign-and-push.md) | done (08:46); device checks pending |
 | 005 | [Code-review fixes](005-review-fixes.md) | done (06:11) |
 | 006 | [Security fix: image refs stay with their seller](006-security-image-refs.md) | done (06:30) |
 | 007 | [Harden the 6-digit add-device code](007-auth-code-hardening.md) | done (06:49) |
+| 008 | [Seller orders: 50 samples, only the list scrolls](008-seller-list-scroll.md) | done (09:06) |
+| 009 | [Customer: lost order back, remembered name, kitchen icon](009-order-recovery-name-icon.md) | done (09:23) |
+| 010 | [Order lookup: review fixes before Cloudflare](010-order-lookup-fixes.md) | done (09:58) |
 
 ## Template
 

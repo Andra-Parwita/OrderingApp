@@ -22,8 +22,7 @@
   "previewTitle": "Preview · {{paper}}",
   "previewEmpty": "No labels to print for this choice.",
   "label": {
-    "qr": "QR",
-    "qrName": "QR code (coming soon)",
+    "qrName": "Order QR code",
     "pickup": "Pickup · {{day}}",
     "delivery": "Delivery · {{day}}"
   }

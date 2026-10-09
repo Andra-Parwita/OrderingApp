@@ -1,6 +1,6 @@
 # 004 · Customer app redesign and web push
 
-**Status:** approved by the builder (2026-10-10, "A"); building. Replaces the placeholder plan 002 (builder: "A", one plan for both).
+**Status:** approved by the builder (2026-10-10, "A"); **done** (08:46; end-of-phase gate green but 1 stale e2e line fixed in plan 008). Owner device checks pending. Replaces the placeholder plan 002 (builder: "A", one plan for both).
 **Goal:** the customer side looks and works like the design in `uxDesign/customer/`. That covers the menu home with the picture and info sheet, dishes, basket and checkout, order placed with a QR, the order page with seller updates, My orders and Settings. Customers can add it to their home screen and get **web push** for seller messages (a must before going live, D-069).
 
 ## Before you start
@@ -151,3 +151,11 @@
     Deviations: install code in `src/components/install/` (feature-boundary lint); success closes the sheet instead of showing a separate notify-on screen; sheets opened from Settings use the app name.
     **To fix at the end gate:** `src/i18n/en.json` still has the app name "Weekly Menu" (it should be APP_NAME, D-052); CustomerShell and AppRoutes tests need `registerInstallI18n()`; e2e customer specs; `banners.spec.ts:117`.
 - **Checkpoint 3 (after stage 7), 07:38:** all 7 stages built. Next: the end-of-phase gate, then the queued pre-Cloudflare compliance check, `/code-review` and security review.
+- **End of phase: gate run 1** (07:55–08:06, `scratch/gate-plan004-1.log`): typecheck ✅; lint 7 errors; Prettier 2 files; unit 28 of 1441 failing in 9 files; e2e 15 failing across archived, seller-saturday (×2), limits, banners, customer-batch1 (×6), customer-batch2 (×2), multi-seller and native-customer; session-flow and settings green. Fixers started 08:07: U (unit, lint, format, app name; no Playwright) and E (e2e specs plus the dark and Bali compares; the only one running Playwright).
+- Gate fixer U ✅ (~08:25): unit tests pass (one push test flaked on a port clash with the e2e run, passes alone); lint and format clean; the app name is "ShaggyBobo's Order" in EN and ID. **Real bug fixed:** Change/Cancel showed after Ready or out for delivery (now only Ordered or Confirmed). The fixtures route moved to `main.tsx` (layer rule). Slip: `sed -i` used.
+- **D-074 (builder, 08:28):** the EN/ID switch goes only in Settings, removed from menu home and the state screens. Queued until fixer E finishes, so the e2e run isn't disturbed.
+- Gate fixer E ✅ (~08:30): all 8 e2e projects green alone (auth-mobile 4+1 skip, auth-desktop 5, session-flow 1, limits 1, archived 1, settings 4, desktop 24+3 skip, mobile 11+16 skip); no app bugs; new `e2e/customerHelpers.ts`. Spec cuts: old layout checks in native-customer; the placed-page note line. The customer compare now shoots light, dark and Bali: 105/105 loaded, 0 console errors. The coordinator looked at order-ready (dark), basket (dark) and dishes (Bali); all render correctly with the right theme colours.
+- D-074 fix (EN/ID switch only in Settings): started 08:31 (sonnet, alone).
+- Builder: "A" (a real QR on the seller labels). Fix started 08:33 (sonnet), alongside D-074; it doesn't run Playwright. The labels use `OrderQr` (the order code, black on white).
+- D-074 ✅ (EN/ID only in Settings) and labels QR ✅ (`OrderQr` at 16 mm in print).
+- **✅ Final gate 08:35–08:46 (coordinator, quiet tree, 0 CRLF):** typecheck ✅ · lint ✅ · format ✅ · unit **1441/1441** · e2e alone: auth-mobile 4 (+1), auth-desktop 5, session-flow 1, limits 1, archived 1, settings 4, mobile 11 (+16), desktop 23 (+3) with **1 failure**: `seller-history.spec.ts:43` expects the old label placeholder name (stale after the labels QR); fixed inside plan 008. Plan 004 is **done**, apart from that one line and the owner's device checks. Snapshot `plan004-done.tar`.

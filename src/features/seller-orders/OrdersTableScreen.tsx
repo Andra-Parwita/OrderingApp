@@ -1,4 +1,4 @@
-import { useCallback, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
@@ -60,14 +60,29 @@ export type OrdersTableScreenProps = OrdersScreenProps &
     onCloseNewOrder?: () => void;
   }>;
 
+// Plan 008: the layout gives the page one screen of height, so Head stays put and only the order
+// list (inside OrdersBoard) and the order panel scroll. Other states scroll inside Scroll.
 const Page = styled.main`
   display: flex;
+  flex: 1;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: 0;
   font-size: 0.9375rem;
+`;
+const Scroll = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+`;
+const Board = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 `;
 const Head = styled.header`
   display: flex;
+  flex: none;
   flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
@@ -209,6 +224,7 @@ const Toggle = styled.button<{ $on: boolean }>`
 `;
 const Tabs = styled.div`
   display: flex;
+  flex: none;
   gap: ${({ theme }) => theme.spacing.lg};
   overflow-x: auto;
   padding: 0 ${({ theme }) => theme.size.pagePadTablet}px;
@@ -253,6 +269,7 @@ const ErrorBox = styled.div`
   padding: ${({ theme }) => theme.size.pagePadTablet}px;
 `;
 const Bottom = styled.div`
+  flex: none;
   margin-top: auto;
 `;
 
@@ -304,8 +321,21 @@ function OrdersBoard({
   const noOrdersAtAll = list.status === 'ready' && counts.all === 0;
   const raw = selectedCode ? (parseOrderCode(selectedCode) ?? selectedCode) : undefined;
 
-  const listNode = (
-    <div>
+  // Bring the open order's row into view inside the list when the page opens on it (a link, a reload).
+  useEffect(() => {
+    if (!raw || list.status !== 'ready') return;
+    const rows = document.querySelectorAll<HTMLElement>('[data-row-id]');
+    for (const row of rows) {
+      if (row.dataset['rowId'] === raw) {
+        row.scrollIntoView?.({ block: 'nearest' });
+        break;
+      }
+    }
+  }, [raw, list.status]);
+
+  // Fixed above the list: search, toggles and status tabs.
+  const listHeader = (
+    <>
       <Filters role="search">
         <Search>
           <Icon name="list" />
@@ -354,6 +384,13 @@ function OrdersBoard({
           </Tab>
         ))}
       </Tabs>
+    </>
+  );
+  // The scrolling part: the Dishes panel (one collapsed line until opened, so it scrolls away with
+  // the list), then the orders.
+  const listNode = (
+    <>
+      {readOnly ? null : <DishesPanel />}
       {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
       {list.status === 'error' ? (
         <ErrorBox role="alert">
@@ -389,7 +426,7 @@ function OrdersBoard({
             />
           ))
         : null}
-    </div>
+    </>
   );
 
   let panel = null;
@@ -404,15 +441,15 @@ function OrdersBoard({
       );
   }
   return (
-    <>
-      {readOnly ? null : <DishesPanel />}
+    <Board>
       <ListWithPanel
+        listHeader={listHeader}
         list={listNode}
         panel={panel}
         panelLabel={t('detail.panelLabel', { code: raw ?? '' })}
         panelAction={selected ? <OrderPanelActions order={selected} /> : undefined}
       />
-    </>
+    </Board>
   );
 }
 
@@ -505,7 +542,7 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
           </Tools>
         ) : null}
       </Head>
-      {body}
+      {kind === 'live' ? body : <Scroll>{body}</Scroll>}
       {props.newOrderOpen && view ? (
         <NewOrderPanel onClose={props.onCloseNewOrder ?? (() => undefined)} />
       ) : null}

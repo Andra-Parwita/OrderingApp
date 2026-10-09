@@ -8,7 +8,12 @@
 //     leaves a stub so its old link says "archived".
 import { Db, type D1Like } from '../db/d1';
 import { finishDueMenus } from '../db/menus';
-import { dropExpiredDetails, type RetentionCounts } from '../db/retention';
+import { dropExpiredDetails, dropStaleFindAttempts, type RetentionCounts } from '../db/retention';
+
+/** Hourly: forgets old wrong tries of "find my order" (D-075). Returns how many rows went. */
+export function runAttemptSweep(env: { DB: D1Like }, now: Date): Promise<number> {
+  return dropStaleFindAttempts(new Db(env.DB), now);
+}
 
 /** The cron entry (in wrangler.jsonc) that runs retention. The hourly entry only finishes menus. */
 export const RETENTION_CRON = '0 3 * * 1';

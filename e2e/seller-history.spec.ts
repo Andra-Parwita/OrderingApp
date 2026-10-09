@@ -40,7 +40,10 @@ test('labels show the order with its note cut to 70 characters', async ({
   await expect(label).toBeVisible();
   await expect(label).toContainText(/Nasi campur/);
   await expect(label).toContainText(/Pickup · /);
-  await expect(label.getByRole('img', { name: 'QR code (coming soon)' })).toBeVisible();
+  // The real QR: an SVG with drawn modules, not a placeholder.
+  const qr = label.getByRole('img', { name: 'Order QR code' });
+  await expect(qr).toBeVisible();
+  await expect(qr.locator('path')).toHaveAttribute('d', /.{20,}/);
   // The note is cut: the stamp starts the note, so only its first 70 characters are shown.
   const noteLine = label.getByText(/…$/);
   await expect(noteLine).toBeVisible();

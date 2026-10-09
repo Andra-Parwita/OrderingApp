@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -79,12 +79,6 @@ import { SellerLayout } from './SellerLayout';
 import { MoreSwitchPerson } from './SwitchPerson';
 
 // Route wrappers: the screens only get callbacks; where they lead is decided here.
-
-// Dev only (dropped from a production build): /__fixtures/:screenId renders a customer design
-// screen from fixtures, for the design-compare check.
-const FixturesPage = import.meta.env.DEV
-  ? lazy(() => import('../harness/customerFixtures/FixturesPage'))
-  : null;
 
 /** True when the server said this kitchen does not exist. */
 function useKitchenMissing(slug: string): boolean {
@@ -576,16 +570,6 @@ export function AppRoutes() {
   return (
     <SessionProvider>
       <Routes>
-        {FixturesPage ? (
-          <Route
-            path="/__fixtures/:screenId"
-            element={
-              <Suspense fallback={null}>
-                <FixturesPage />
-              </Suspense>
-            }
-          />
-        ) : null}
         {/* Customer pages share the bottom tab bar (D-039). */}
         <Route element={<CustomerShell />}>
           <Route path="/" element={<HomePage />} />

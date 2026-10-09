@@ -24,6 +24,8 @@ describe('push texts', () => {
     ] as const) {
       expect(texts[key]).toBe(inbox[key]);
     }
+    expect(texts.nudge).toBe(inbox.nudge);
+    expect(texts.nudgeReturning).toBe(inbox.nudgeReturning);
     expect(texts.status).toEqual(inbox.status);
   });
 });

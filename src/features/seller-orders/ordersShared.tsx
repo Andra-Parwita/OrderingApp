@@ -8,7 +8,12 @@ import { Button, ConfirmButton } from '../../ui';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
 import { SELLER_NS } from './i18n/register';
 import type { StatusFilter } from './orderStatus';
-import { selectOrders, visibleOrders, type ListToggles } from './sellerOrdersSelectors';
+import {
+  selectDevSampling,
+  selectOrders,
+  visibleOrders,
+  type ListToggles,
+} from './sellerOrdersSelectors';
 import { pollingStarted, pollingStopped } from './sellerOrdersSlice';
 
 // Pieces the phone list (OrdersScreen) and the desktop table (OrdersTableScreen) both use.
@@ -82,11 +87,14 @@ export function useShowDevTools(): boolean {
 export function DevTools() {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
+  const busy = useSelector(selectDevSampling);
   const addSamples = useCallback(() => dispatch(devSampleOrdersRequested()), [dispatch]);
   const reset = useCallback(() => dispatch(devResetRequested()), [dispatch]);
   return (
     <DevBar>
-      <Button onClick={addSamples}>{t('orders.devSample')}</Button>
+      <Button onClick={addSamples} disabled={busy}>
+        {t('orders.devSample')}
+      </Button>
       <ConfirmButton
         variant="quiet"
         label={t('orders.devReset')}

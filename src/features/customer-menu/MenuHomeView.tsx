@@ -6,7 +6,6 @@ import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/d
 import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
-import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { ImageSlot } from '../../ui';
 import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
@@ -30,14 +29,6 @@ const BannerBox = styled.div`
 const BannerTop = styled.div<{ $background?: string }>`
   padding-top: var(--sat);
   background: ${({ theme, $background }) => $background ?? theme.c.surf2};
-`;
-const Corner = styled.div`
-  position: absolute;
-  top: calc(var(--sat) + ${({ theme }) => theme.spacing.sm});
-  right: ${({ theme }) => theme.spacing.md};
-  z-index: 2;
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.c.surf};
 `;
 const Hero = styled.div`
   position: relative;
@@ -221,11 +212,7 @@ const BigIcon = styled.span`
 
 const bold = { b: <b /> };
 
-function Banner({
-  kitchen,
-  lang,
-  withSwitch,
-}: Readonly<{ kitchen: Kitchen; lang: Language; withSwitch: boolean }>) {
+function Banner({ kitchen, lang }: Readonly<{ kitchen: Kitchen; lang: Language }>) {
   const { t } = useTranslation(CUSTOMER_NS);
   return (
     <BannerBox>
@@ -238,11 +225,6 @@ function Banner({
           placeholder={t('menu.bannerImage')}
         />
       </BannerTop>
-      {withSwitch ? (
-        <Corner>
-          <LanguageSwitch compact />
-        </Corner>
-      ) : null}
     </BannerBox>
   );
 }
@@ -303,12 +285,9 @@ export function MenuHomeView({
             <Hero style={{ flex: 'none', minHeight: '16rem', paddingTop: 'var(--sat)' }}>
               <HeroImage src={pictureUrl} alt={t('home.menuFor', { date })} />
             </Hero>
-            <Corner>
-              <LanguageSwitch compact />
-            </Corner>
           </BannerBox>
         ) : (
-          <Banner kitchen={kitchen} lang={lang} withSwitch />
+          <Banner kitchen={kitchen} lang={lang} />
         )}
         <Heading>
           <Name>{kitchen.name}</Name>
@@ -422,14 +401,14 @@ export function MenuHomeView({
   if (!pictureUrl) {
     return (
       <Screen>
-        <Banner kitchen={kitchen} lang={lang} withSwitch />
+        <Banner kitchen={kitchen} lang={lang} />
         <PlainSheet $glass={false}>{sheetBody}</PlainSheet>
       </Screen>
     );
   }
   return (
     <Screen>
-      <Banner kitchen={kitchen} lang={lang} withSwitch={false} />
+      <Banner kitchen={kitchen} lang={lang} />
       <Hero>
         <HeroImage src={pictureUrl} alt={t('home.menuFor', { date })} />
         <PictureTap
@@ -437,9 +416,6 @@ export function MenuHomeView({
           aria-label={t('home.seeFullPicture')}
           onClick={() => setViewing(true)}
         />
-        <Corner>
-          <LanguageSwitch compact />
-        </Corner>
         <FullPictureButton type="button" onClick={() => setViewing(true)}>
           <MenuIcon name="expand" size="1.125rem" />
           {t('home.seeFullPicture')}
@@ -468,17 +444,13 @@ export function NotPublishedView({
   const who = cook || t('states.theSeller');
   return (
     <Screen>
-      {kitchen ? <Banner kitchen={kitchen} lang={lang} withSwitch /> : null}
-      <Heading>
-        {kitchen ? (
-          <>
-            <Name>{kitchen.name}</Name>
-            <Sub>{pickText(kitchen.tagline, lang)}</Sub>
-          </>
-        ) : (
-          <LanguageSwitch compact />
-        )}
-      </Heading>
+      {kitchen ? <Banner kitchen={kitchen} lang={lang} /> : null}
+      {kitchen ? (
+        <Heading>
+          <Name>{kitchen.name}</Name>
+          <Sub>{pickText(kitchen.tagline, lang)}</Sub>
+        </Heading>
+      ) : null}
       <Centered role="status">
         <BigIcon>
           <MenuIcon name="calendar" size="2rem" />

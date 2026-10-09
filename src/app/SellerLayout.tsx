@@ -16,6 +16,7 @@ import { SellerRail } from './SellerRail';
 import {
   activeNav,
   activePhoneNav,
+  fixesPage,
   hidesPhoneBar,
   isTabletOnly,
   isTaskScreen,
@@ -28,17 +29,26 @@ import { useSession } from './session';
 // One shell for both layouts: the page (Outlet) keeps the same place in the tree, so crossing the
 // 600 px breakpoint (a rotated tablet, a resized window) does not remount it and lose a
 // half-filled form.
-const Shell = styled.div<{ $tablet: boolean }>`
+// $fixed (plan 008, Orders home): the shell is exactly one screen tall and does not scroll; the
+// screen inside scrolls its own list. min-height: 0 down the chain lets that inner area shrink.
+const Shell = styled.div<{ $tablet: boolean; $fixed: boolean }>`
   display: ${({ $tablet }) => ($tablet ? 'grid' : 'flex')};
   grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: ${({ $fixed }) => ($fixed ? 'minmax(0, 1fr)' : 'auto')};
   flex-direction: column;
   min-height: 100dvh;
+  ${({ $fixed }) => ($fixed ? 'height: 100dvh; overflow: hidden;' : '')}
   font-size: ${({ $tablet }) => ($tablet ? '0.875rem' : '0.9375rem')};
 `;
-const Main = styled.div<{ $tablet: boolean }>`
+const Main = styled.div<{ $tablet: boolean; $fixed: boolean }>`
   flex: 1;
   min-width: 0;
   background: ${({ $tablet, theme }) => ($tablet ? theme.c.panel : theme.c.bg)};
+  ${({ $fixed }) => ($fixed ? 'display: flex; flex-direction: column; min-height: 0;' : '')}
+`;
+// The banners and the signed-in line keep their height while the sheet below shrinks.
+const Top = styled.div`
+  flex: none;
 `;
 const Who = styled.p`
   margin: 0;
@@ -67,9 +77,10 @@ const TaskStrip = styled(BannerStrip)`
   height: ${BANNER_STRIP_HEIGHT};
 `;
 // The content sheet: 16 px top corners that overlap the banner above.
-const Sheet = styled.div<{ $tablet: boolean }>`
+const Sheet = styled.div<{ $tablet: boolean; $fixed: boolean }>`
   position: relative;
-  min-height: 60dvh;
+  min-height: ${({ $fixed }) => ($fixed ? '0' : '60dvh')};
+  ${({ $fixed }) => ($fixed ? 'flex: 1; display: flex; flex-direction: column;' : '')}
   margin-top: ${({ $tablet, theme }) => ($tablet ? `-${theme.size.radiusSheet}px` : '0')};
   border-radius: ${({ $tablet, theme }) =>
     $tablet ? `${theme.size.radiusSheet}px ${theme.size.radiusSheet}px 0 0` : '0'};
@@ -126,9 +137,10 @@ export function SellerLayout() {
   const tabletOnlyHere = !tablet && isTabletOnly(pathname);
   // Phone: the 3:1 banner belongs to the Orders list only; other phone screens have none.
   const phoneBanner = !tablet && pathname === '/seller';
+  const fixed = fixesPage(pathname, tablet);
 
   return (
-    <Shell $tablet={tablet}>
+    <Shell $tablet={tablet} $fixed={fixed}>
       {tablet ? (
         <SellerRail
           ids={navIds}
@@ -140,34 +152,40 @@ export function SellerLayout() {
           showPicker={me === null}
         />
       ) : null}
-      <Main $tablet={tablet}>
-        {who && !nameShownElsewhere ? <Who>{t('sellerNav.signedInAs', { name: who })}</Who> : null}
-        {tablet && isTaskScreen(pathname) ? (
-          <TaskStrip $background={background} $image={backgroundImage} aria-hidden="true" />
-        ) : null}
-        {tablet && !isTaskScreen(pathname) ? (
-          <BannerStrip $background={background} $image={backgroundImage}>
-            <BannerArea>
-              <ImageSlot
-                aspectRatio="5 / 1"
-                background={background}
-                src={kitchen?.images?.desktopBanner}
-                alt={bannerText}
-                placeholder={placeholder}
-              />
-            </BannerArea>
-          </BannerStrip>
-        ) : null}
-        {phoneBanner ? (
-          <ImageSlot
-            aspectRatio="3 / 1"
-            background={background}
-            src={phoneBannerSrc(kitchen?.images)}
-            alt={bannerText}
-            placeholder={placeholder}
-          />
-        ) : null}
-        <Sheet $tablet={tablet}>{tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}</Sheet>
+      <Main $tablet={tablet} $fixed={fixed}>
+        <Top>
+          {who && !nameShownElsewhere ? (
+            <Who>{t('sellerNav.signedInAs', { name: who })}</Who>
+          ) : null}
+          {tablet && isTaskScreen(pathname) ? (
+            <TaskStrip $background={background} $image={backgroundImage} aria-hidden="true" />
+          ) : null}
+          {tablet && !isTaskScreen(pathname) ? (
+            <BannerStrip $background={background} $image={backgroundImage}>
+              <BannerArea>
+                <ImageSlot
+                  aspectRatio="5 / 1"
+                  background={background}
+                  src={kitchen?.images?.desktopBanner}
+                  alt={bannerText}
+                  placeholder={placeholder}
+                />
+              </BannerArea>
+            </BannerStrip>
+          ) : null}
+          {phoneBanner ? (
+            <ImageSlot
+              aspectRatio="3 / 1"
+              background={background}
+              src={phoneBannerSrc(kitchen?.images)}
+              alt={bannerText}
+              placeholder={placeholder}
+            />
+          ) : null}
+        </Top>
+        <Sheet $tablet={tablet} $fixed={fixed}>
+          {tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}
+        </Sheet>
       </Main>
       {tablet || hidesPhoneBar(pathname) ? null : <PhoneBar activeId={activePhoneNav(pathname)} />}
     </Shell>

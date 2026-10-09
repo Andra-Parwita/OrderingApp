@@ -6,6 +6,7 @@ import type { CustomerOrder } from '../../../shared/domain';
 import { quantitySet } from './customerSlice';
 import { OrderPlacedScreen } from './OrderPlacedScreen';
 import { CheckoutFlow, createTestStore, renderWithStore, setupI18n } from './testSupport';
+import { FIRST_NAME_KEY } from '../../api/device/firstName';
 import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import i18n from 'i18next';
 
@@ -13,6 +14,7 @@ const noop = () => undefined;
 
 beforeAll(() => setupI18n('en'));
 afterEach(async () => {
+  localStorage.removeItem(FIRST_NAME_KEY);
   vi.restoreAllMocks();
   await i18n.changeLanguage('en');
 });
@@ -56,6 +58,16 @@ describe('BasketScreen', () => {
     expect(screen.getByText('Only your first name or a nickname')).toBeInTheDocument();
     expect(screen.getByText("Don't write your address or phone number here.")).toBeInTheDocument();
     expect(screen.getByText('0/200')).toBeInTheDocument();
+  });
+
+  it('prefills the first name saved on this phone, still editable', async () => {
+    localStorage.setItem(FIRST_NAME_KEY, 'Lenny');
+    await basketStore();
+    toName();
+    const input = screen.getByLabelText('First name');
+    expect(input).toHaveValue('Lenny');
+    fireEvent.change(input, { target: { value: '' } });
+    expect(input).toHaveValue('');
   });
 
   it('requires a first name and does not call the API without one', async () => {

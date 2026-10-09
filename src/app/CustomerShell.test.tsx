@@ -11,9 +11,14 @@ import indexHtml from '../../index.html?raw';
 import { placeOrder } from '../api/client';
 import { saveMyOrder } from '../api/device/myOrders';
 import { placeRequested, quantitySet, registerCustomerI18n } from '../features/customer-menu';
+import { registerInstallI18n } from '../components/install';
 import { registerCustomerOrdersI18n } from '../features/customer-orders';
 import { initI18n } from '../i18n/init';
+import { renderToString } from 'react-dom/server';
+import { ServerStyleSheet, ThemeProvider } from 'styled-components';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
+import { GlobalStyle } from '../theme/GlobalStyle';
+import { lightTheme } from '../theme/themes';
 import { AppRoutes } from './AppRoutes';
 import { CustomerPage } from '../components/CustomerPage';
 import { activeTab, hasTabBar, isRootPage } from './CustomerShell';
@@ -58,6 +63,7 @@ beforeAll(async () => {
   await initI18n();
   registerCustomerI18n();
   registerCustomerOrdersI18n();
+  registerInstallI18n();
   await i18n.changeLanguage('en');
 });
 
@@ -65,6 +71,25 @@ afterEach(async () => {
   localStorage.clear();
   await i18n.changeLanguage('en');
 });
+
+/**
+ * All the CSS: the page's style text plus the app's global style, rendered on its own (jsdom does
+ * not keep the global rules in the document's style tags).
+ */
+function pageCss(): string {
+  const text = Array.from(document.querySelectorAll('style')).map((style) => style.textContent);
+  const sheet = new ServerStyleSheet();
+  renderToString(
+    sheet.collectStyles(
+      <ThemeProvider theme={lightTheme}>
+        <GlobalStyle />
+      </ThemeProvider>,
+    ),
+  );
+  const global = sheet.getStyleTags();
+  sheet.seal();
+  return [...text, global].join('');
+}
 
 const tabBar = () => screen.getByRole('navigation', { name: /^(Customer|Pelanggan)$/ });
 
@@ -119,9 +144,7 @@ describe('customer tab bar', () => {
 
   it('is at least 44 px tall and pads for the bottom safe area', () => {
     renderAt('/settings');
-    const css = Array.from(document.querySelectorAll('style'))
-      .map((style) => style.textContent)
-      .join('');
+    const css = pageCss();
     // Tab height 3.5rem = 56 px, above the 44 px minimum.
     const height = /min-height:\s*([\d.]+)rem/.exec(css);
     expect(parseFloat(height?.[1] ?? '0') * 16).toBeGreaterThanOrEqual(44);
@@ -189,26 +212,9 @@ describe('customer pushed pages', () => {
     renderAt('/settings');
     act(() => void navigateTo('/onde-onde/basket'));
     await screen.findByRole('heading', { name: 'Your basket' });
-    const css = Array.from(document.querySelectorAll('style'))
-      .map((style) => style.textContent)
-      .join('');
+    const css = pageCss();
     expect(css).toMatch(/translateX\(100%\)/);
-    expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*animation:\s*none !important/);
-  });
-});
-
-describe('customer fixtures mode', () => {
-  it('renders a placeholder for a screen that is not built yet, in the chosen language', async () => {
-    renderAt('/__fixtures/order-qr?brand=bali&mode=dark');
-    expect(await screen.findByRole('heading', { name: 'Not built yet: order-qr' })).toBeVisible();
-    await act(() => i18n.changeLanguage('id'));
-    expect(screen.getByRole('heading', { name: 'Belum dibuat: order-qr' })).toBeVisible();
-  });
-
-  it('renders an existing screen from fixtures, without the shell', async () => {
-    renderAt('/__fixtures/my-orders-empty');
-    expect(await screen.findByRole('heading', { name: 'My orders' })).toBeVisible();
-    expect(screen.queryByRole('navigation', { name: 'Customer' })).toBeNull();
+    expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*animation:\s*none\s*!important/);
   });
 });
 
@@ -228,39 +234,35 @@ describe('customer Settings', () => {
     expect(localStorage.getItem('theme')).toBe('dark');
     fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
     expect(localStorage.getItem('theme')).toBe('light');
-    fireEvent.click(screen.getByRole('radio', { name: 'Match device' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Auto' }));
     expect(localStorage.getItem('theme')).toBe('auto');
   });
 
-  it('offers "Turn on updates" as disabled, saying it is coming soon', () => {
+  it('shows Order updates as a disabled switch where the browser cannot get notifications', () => {
+    // jsdom has no PushManager, as with an old browser.
     renderAt('/settings');
-    const button = screen.getByRole('button', { name: 'Turn on updates' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAccessibleDescription('Coming soon');
+    const updates = screen.getByRole('switch', { name: 'Order updates' });
+    expect(updates).toBeDisabled();
+    expect(updates).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText('Not available in this browser')).toBeVisible();
   });
 
-  it('explains Add to Home Screen for iPhone and Android, in both languages', async () => {
+  it('offers the home-screen card on a phone only, not on a desktop browser', () => {
+    // The card itself (iPhone guide, Android Install) is covered in CustomerSettingsView.test.
     renderAt('/settings');
-    expect(screen.getByRole('heading', { name: 'Add to Home Screen' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'iPhone (Safari)' })).toBeInTheDocument();
-    expect(screen.getByText('Tap the Share button.')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Android (Chrome)' })).toBeInTheDocument();
-    expect(screen.getByText('Tap the three-dot menu.')).toBeInTheDocument();
-    await act(() => i18n.changeLanguage('id'));
-    expect(screen.getByText('Ketuk tombol Bagikan.')).toBeInTheDocument();
-    expect(screen.getByText('Ketuk menu tiga titik.')).toBeInTheDocument();
+    expect(screen.queryByText('Put it on your home screen')).toBeNull();
   });
 });
 
 describe('customer menu as a native app', () => {
-  it('starts with the banner, then the name with the EN / ID toggle beside it', async () => {
+  it('starts with the banner and no EN / ID toggle (Settings only), then the name', async () => {
     const { container } = renderAt('/onde-onde');
     const heading = await screen.findByRole('heading', { name: 'Onde Onde' });
+    const banner = screen.getByRole('img', { name: /Onde Onde/ });
     const first = container.querySelector('img, h1, button, a, [role="radiogroup"], nav');
-    expect(first).toBe(screen.getByRole('img', { name: /Onde Onde/ }));
-    const toggle = within(screen.getByRole('main')).getByRole('radiogroup', { name: 'Language' });
-    // Same row as the name: the toggle's parent holds the name's wrapper.
-    expect(toggle.parentElement).toBe(heading.parentElement?.parentElement);
+    expect(first).toBe(banner);
+    expect(screen.queryByRole('radiogroup', { name: 'Language' })).toBeNull();
+    expect(banner.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(
       within(screen.getByRole('main')).queryByRole('button', { name: 'My orders' }),
     ).toBeNull();
@@ -306,42 +308,43 @@ describe('customer sub-page headers', () => {
   }
 
   const where = () => screen.getByTestId('where');
-  const languageSwitch = () => screen.getByRole('radiogroup', { name: 'Language' });
 
   it('puts the viewport under the notch', () => {
     expect(indexHtml).toMatch(/<meta name="viewport"[^>]*viewport-fit=cover/);
   });
 
   it('basket: back goes to the menu', async () => {
+    // A first-timer is sent to "How ordering works" from the menu; this phone has seen it.
+    localStorage.setItem('howItWorksSeen', '1');
     renderAt('/onde-onde/basket');
     expect(await screen.findByRole('heading', { name: 'Your basket' })).toBeVisible();
     fireEvent.click(await screen.findByRole('button', { name: 'Back to Dishes' }));
     await waitFor(() => expect(where()).toHaveTextContent(/^\/onde-onde$/));
   });
 
-  it('My orders: no back arrow (tab root), language switch present', async () => {
+  it('My orders: no back arrow (tab root); the language switch lives in Settings only', async () => {
     renderAt('/my-orders');
     expect(await screen.findByRole('heading', { name: 'My orders' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
-    expect(languageSwitch()).toBeVisible();
+    expect(screen.queryByRole('radiogroup', { name: 'Language' })).toBeNull();
   });
 
-  it('order page: back goes to My orders, and the language switch works', async () => {
+  it('order page: back goes to My orders, named in the chosen language', async () => {
     const token = await savedToken();
     renderAt(`/o/${token}`);
-    expect(await screen.findByRole('heading', { name: 'Your order' })).toBeVisible();
-    fireEvent.click(within(languageSwitch()).getByRole('radio', { name: 'ID' }));
-    expect(await screen.findByRole('button', { name: 'Kembali' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Kembali' }));
+    expect(await screen.findByRole('button', { name: 'Back to My orders' })).toBeVisible();
+    await act(() => i18n.changeLanguage('id'));
+    const back = await screen.findByRole('button', { name: /^Kembali ke/ });
+    fireEvent.click(back);
     await waitFor(() => expect(where()).toHaveTextContent('/my-orders'));
   });
 
-  it('order placed: back goes to the order page, and the language switch works', async () => {
+  it('order placed: no back arrow; View order details goes to the order page', async () => {
     const token = await savedToken();
     renderAt(`/o/${token}/placed`);
     expect(await screen.findByRole('heading', { name: 'Order placed' })).toBeVisible();
-    fireEvent.click(within(languageSwitch()).getByRole('radio', { name: 'ID' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Kembali' }));
+    expect(screen.queryByRole('button', { name: /^Back/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'View order details' }));
     await waitFor(() => expect(where()).toHaveTextContent(`/o/${token}`));
     expect(where()).not.toHaveTextContent('placed');
   });
@@ -357,7 +360,9 @@ describe('customer sub-page headers', () => {
   it('keeps one back button per checkout page', async () => {
     renderAt('/onde-onde/basket');
     await screen.findByRole('heading', { name: 'Your basket' });
-    expect(await screen.findAllByRole('button', { name: /^Back to/ })).toHaveLength(1);
+    // One back arrow in the top bar; the empty basket's own "Back to the menu" button is a
+    // separate action in the page body.
+    expect(await screen.findAllByRole('button', { name: 'Back to Dishes' })).toHaveLength(1);
   });
 });
 

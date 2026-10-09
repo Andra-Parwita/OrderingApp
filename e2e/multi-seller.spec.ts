@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { goToName, markHowItWorksSeen } from './customerHelpers';
 import { collectErrors, orderRow, searchBox } from './sellerHelpers';
 
 // Stage 5.2 (D-036, D-037): one app, many sellers. Orders are placed at two sellers' own links,
@@ -7,6 +8,7 @@ import { collectErrors, orderRow, searchBox } from './sellerHelpers';
 // orders are found by unique names. Only unlimited items are ordered (pesmol, Iced sweet tea).
 test('two sellers: orders at each link, My orders across both, the seller side per seller', async ({
   page,
+  context,
   browser,
 }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'one run, on the desktop project');
@@ -17,25 +19,27 @@ test('two sellers: orders at each link, My orders across both, the seller side p
   const demoName = `Demo-${stamp}`;
 
   async function order(path: string, add: string, firstName: string): Promise<void> {
-    await page.goto(path);
+    await page.goto(`${path}/dishes`);
     await page.getByRole('button', { name: add }).click();
-    await page.getByRole('button', { name: /View basket/ }).click();
-    await expect(page).toHaveURL(new RegExp(`${path}/basket$`));
-    await page.getByLabel('Your first name').fill(firstName);
+    await goToName(page);
+    await expect(page).toHaveURL(new RegExp(`${path}/basket/name$`));
+    await page.getByLabel('First name').fill(firstName);
     await page.getByRole('button', { name: /^Place order/ }).click();
     await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
   }
 
+  await markHowItWorksSeen(context);
   await order('/onde-onde', 'Add one Tilapia pesmol', ondeName);
   await order('/dapur-demo', 'Add one Iced sweet tea', demoName);
 
   // Dapur Demo has its own items and, in dev, the sample pictures.
   await page.goto('/dapur-demo');
   await expect(page.getByRole('heading', { name: 'Dapur Demo' })).toBeVisible();
-  await expect(page.getByText('Chicken soto')).toBeVisible();
-  await expect(page.getByText('Tilapia pesmol')).toHaveCount(0);
   await expect(page.getByText('Kitchen photo')).toHaveCount(0);
   await expect(page.getByRole('img', { name: /Dapur Demo/ }).first()).toBeVisible();
+  await page.goto('/dapur-demo/dishes');
+  await expect(page.getByText('Chicken soto')).toBeVisible();
+  await expect(page.getByText('Tilapia pesmol')).toHaveCount(0);
   // The Menu tab remembers the last seller menu this phone visited.
   await page.goto('/settings');
   await expect(
@@ -44,7 +48,7 @@ test('two sellers: orders at each link, My orders across both, the seller side p
 
   // My orders: one list, each card names its seller.
   await page.goto('/my-orders');
-  await expect(page.getByText('Current orders').first()).toBeVisible();
+  await expect(page.getByText('Current', { exact: true }).first()).toBeVisible();
   const ondeCard = page.getByRole('button', { name: /Onde Onde/ }).filter({ hasText: 'pesmol' });
   const demoCard = page.getByRole('button', { name: /Dapur Demo/ }).filter({ hasText: 'tea' });
   await expect(ondeCard.first()).toBeVisible();

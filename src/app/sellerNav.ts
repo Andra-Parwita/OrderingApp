@@ -95,6 +95,16 @@ export function isTaskScreen(pathname: string): boolean {
   return activeNav(pathname) !== 'orders';
 }
 
+/**
+ * Plan 008: on the Orders home the page itself does not scroll, only the order list (and, on a
+ * tablet, the order beside it). The phone has this on the list route only; one order and New order
+ * are pages of their own there.
+ */
+export function fixesPage(pathname: string, tablet: boolean): boolean {
+  if (pathname === '/seller') return true;
+  return tablet && (under(pathname, '/seller/new') || pathname.startsWith('/seller/orders/'));
+}
+
 /** Phone: one order and New order are full-screen tasks with their own pinned buttons, so the tab bar steps aside. */
 export function hidesPhoneBar(pathname: string): boolean {
   return under(pathname, '/seller/new') || pathname.startsWith('/seller/orders/');

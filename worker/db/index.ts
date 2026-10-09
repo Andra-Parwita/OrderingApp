@@ -214,7 +214,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
       async addSampleOrders(sellerId, count) {
         requireDevTools();
         const row = await byId(sellerId);
-        return (await internal(row)?.addSampleOrders(count)) ?? 0;
+        return (await internal(row)?.addSampleOrders(count)) ?? { added: 0, reason: 'no_menu' };
       },
       async reset() {
         requireDevTools();

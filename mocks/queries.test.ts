@@ -174,7 +174,7 @@ describe('D1 queries per route, 100 orders in the week', () => {
     });
     // No portion limits, so 100 sample orders all fit.
     await world.db.stmt('UPDATE menu_items SET portion_limit = NULL').run();
-    expect(await world.repo.dev.addSampleOrders(SELLER_ID, 100)).toBe(100);
+    expect(await world.repo.dev.addSampleOrders(SELLER_ID, 100)).toEqual({ added: 100 });
     const listed = await devApi(
       world.repo,
       new Request('https://delave.test/api/seller/orders', {

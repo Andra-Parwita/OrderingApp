@@ -50,7 +50,17 @@ export type Warned = { call: WarnedCall; warning: ApiWarning; name: string };
 /** How to take a quick action back (only where the API allows it). */
 export type UndoAction =
   { kind: 'status'; code: string; to: OrderStatus } | { kind: 'paid'; code: string; paid: boolean };
-export type ToastKind = 'confirmed' | 'paid' | 'cancelled' | 'collected';
+export type ToastKind =
+  | 'confirmed'
+  | 'paid'
+  | 'cancelled'
+  | 'collected'
+  // Dev "add sample orders" answers; `name` carries the count.
+  | 'sampleAdded'
+  | 'samplePartial'
+  | 'sampleNone'
+  | 'sampleNoMenu'
+  | 'sampleFailed';
 /** What just happened, for the toast; undo is null where no Undo exists; id restarts the 6 s timer. */
 export type ActionToast = { id: number; kind: ToastKind; name: string; undo: UndoAction | null };
 
@@ -77,6 +87,8 @@ export type SellerOrdersState = {
   past: PastMenusState;
   warned: Warned | null;
   toast: ActionToast | null;
+  /** Dev only: a sample-orders request is running (the button waits). */
+  devSampling: boolean;
 };
 export type SellerOrdersRootState = { sellerOrders: SellerOrdersState };
 
@@ -92,6 +104,7 @@ const initialState: SellerOrdersState = {
   past: { status: 'idle' },
   warned: null,
   toast: null,
+  devSampling: false,
 };
 
 let toastId = 0;
@@ -193,6 +206,9 @@ const sellerOrdersSlice = createSlice({
     toastCleared(state) {
       state.toast = null;
     },
+    devSamplingChanged(state, action: PayloadAction<boolean>) {
+      state.devSampling = action.payload;
+    },
     currentRequested(state) {
       if (state.current.status === 'error') state.current = { status: 'loading' };
     },
@@ -283,6 +299,7 @@ export const {
   warningDismissed,
   toastShown,
   toastCleared,
+  devSamplingChanged,
   currentRequested,
   currentLoaded,
   currentFailed,

@@ -30,6 +30,7 @@ import {
 } from '../../api/client';
 import { liveRefreshLoop, type LiveMessage } from '../../api/live';
 import type { EventChannel } from 'redux-saga';
+import type { SampleOrdersResponse } from '../../../shared/devContract';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
 import type { MenuViewResponse, UpdateMenuResponse } from '../../../shared/menusContract';
 import type { PastWeeksResponse } from '../../../shared/pastWeeks';
@@ -49,7 +50,9 @@ import {
   pastLoaded,
   pastRequested,
   takingOrdersRequested,
+  devSamplingChanged,
   toastShown,
+  type ToastKind,
   warningConfirmed,
   warningRaised,
   type SellerOrdersRootState,
@@ -361,9 +364,34 @@ export function* patchDish(action: ReturnType<typeof dishPatchRequested>) {
 }
 
 // Dev only: the Worker has these routes only in dev.
+const DEV_SAMPLE_COUNT = 50;
+
 export function* devSampleOrders() {
-  yield call(addSampleOrders, 5, currentSellerSlug());
-  yield call(loadOrders);
+  yield put(devSamplingChanged(true));
+  try {
+    const result = (yield call(
+      addSampleOrders,
+      DEV_SAMPLE_COUNT,
+      currentSellerSlug(),
+    )) as ApiResult<SampleOrdersResponse>;
+    if (result.ok) {
+      const { added, reason } = result.data;
+      const kind: ToastKind =
+        reason === 'no_menu'
+          ? 'sampleNoMenu'
+          : added === 0
+            ? 'sampleNone'
+            : reason === 'sold_out'
+              ? 'samplePartial'
+              : 'sampleAdded';
+      yield put(toastShown({ kind, name: String(added), undo: null }));
+    } else {
+      yield put(toastShown({ kind: 'sampleFailed', name: '', undo: null }));
+    }
+    yield call(loadOrders);
+  } finally {
+    yield put(devSamplingChanged(false));
+  }
 }
 
 export function* devReset() {
@@ -391,7 +419,7 @@ export function* sellerOrdersSaga(
   yield takeLatest(menuRequested.type, loadSellerMenu);
   yield takeLeading(createOrderRequested.type, createOrder);
   // Only the dev buttons dispatch these, and they show only when the server has DEV_TOOLS on.
-  yield takeLatest(devSampleOrdersRequested.type, devSampleOrders);
+  yield takeLeading(devSampleOrdersRequested.type, devSampleOrders);
   yield takeLatest(devResetRequested.type, devReset);
   yield call(watchPolling, pollMs, channel);
 }

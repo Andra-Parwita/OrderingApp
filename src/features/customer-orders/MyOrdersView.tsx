@@ -2,6 +2,7 @@ import { memo, useCallback, useState, type ChangeEvent, type FormEvent } from 'r
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Language, OrderStatus } from '../../../shared/domain';
+import { FIRST_NAME_MAX } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode, parseOrderCode } from '../../../shared/orderCode';
 import { Icon } from '../../ui';
@@ -58,6 +59,15 @@ const CodeInput = styled.input`
 const OpenButton = styled(OutlineButton)`
   width: auto;
   min-height: 3rem;
+`;
+const FindForm = styled(CodeForm)`
+  flex-wrap: wrap;
+`;
+const FindHint = styled.p`
+  flex-basis: 100%;
+  margin: 0;
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.md};
 `;
 const NotFound = styled.p`
   margin: 0;
@@ -340,6 +350,8 @@ const Foot = styled.p`
   font-size: ${({ theme }) => theme.type.size.sm};
   text-align: center;
 `;
+export type FindOutcome = 'found' | 'not_found' | 'locked' | 'error';
+
 export type MyOrdersViewProps = Readonly<{
   lang: Language;
   /** `idle` counts as loading. */
@@ -352,6 +364,12 @@ export type MyOrdersViewProps = Readonly<{
   offline: boolean;
   /** The saved order's token for a code (any case, spacing or dashes), if this phone has it. */
   findToken: (code: string) => string | undefined;
+  /** D-075: the code is not saved here; ask the server with the first name. `found` has opened it. */
+  onFind: (code: string, firstName: string) => Promise<FindOutcome>;
+  /** The find form searches this phone's last kitchen; false = none saved, so it can't ask. */
+  hasKitchen: boolean;
+  /** That kitchen's name when the customer side knows it. */
+  kitchenName: string | null;
   onOpenOrder: (token: string) => void;
   /** Empty state: the last kitchen's menu, or the home page. */
   onOpenMenu: () => void;
@@ -367,6 +385,9 @@ export function MyOrdersView({
   stale,
   offline,
   findToken,
+  onFind,
+  hasKitchen,
+  kitchenName,
   onOpenOrder,
   onOpenMenu,
   onRetry,
@@ -374,6 +395,11 @@ export function MyOrdersView({
   const { t } = useTranslation(ORDERS_NS);
   const [typed, setTyped] = useState('');
   const [notFound, setNotFound] = useState(false);
+  // A well-formed code this phone doesn't have: ask for the first name (D-075).
+  const [askName, setAskName] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [finding, setFinding] = useState(false);
+  const [findFailure, setFindFailure] = useState<Exclude<FindOutcome, 'found'> | null>(null);
 
   const tryOpen = useCallback(
     (value: string, atSixth: boolean) => {
@@ -384,7 +410,7 @@ export function MyOrdersView({
         return;
       }
       const token = findToken(parsed);
-      if (token === undefined) setNotFound(true);
+      if (token === undefined) setAskName(true);
       else onOpenOrder(token);
     },
     [findToken, onOpenOrder],
@@ -393,6 +419,8 @@ export function MyOrdersView({
     (event: ChangeEvent<HTMLInputElement>) => {
       setTyped(event.target.value);
       setNotFound(false);
+      setAskName(false);
+      setFindFailure(null);
       // Typing a saved code opens that order on the 6th character.
       tryOpen(event.target.value, true);
     },
@@ -404,6 +432,20 @@ export function MyOrdersView({
       tryOpen(typed, false);
     },
     [tryOpen, typed],
+  );
+  const onFindSubmit = useCallback(
+    (event: FormEvent) => {
+      event.preventDefault();
+      const parsed = parseOrderCode(typed);
+      if (parsed === null || firstName.trim() === '' || finding) return;
+      setFinding(true);
+      setFindFailure(null);
+      void onFind(parsed, firstName.trim()).then((outcome) => {
+        setFinding(false);
+        if (outcome !== 'found') setFindFailure(outcome);
+      });
+    },
+    [onFind, typed, firstName, finding],
   );
 
   const empty = status === 'ready' && current.length === 0 && earlier.length === 0;
@@ -429,6 +471,35 @@ export function MyOrdersView({
         <NotFound id="my-orders-not-found" role="alert">
           {t('list.codeNotFound')}
         </NotFound>
+      ) : null}
+      {askName && !hasKitchen ? (
+        <NotFound id="my-orders-no-kitchen" role="alert">
+          {t('list.findNoKitchen')}
+        </NotFound>
+      ) : null}
+      {askName && hasKitchen ? (
+        <FindForm onSubmit={onFindSubmit}>
+          <FindHint id="my-orders-find-hint">
+            {t('list.findHint')}
+            {kitchenName !== null ? ` ${t('list.findIn', { kitchen: kitchenName })}` : ''}
+          </FindHint>
+          <CodeInput
+            type="text"
+            aria-label={t('list.nameLabel')}
+            aria-describedby="my-orders-find-hint"
+            placeholder={t('list.namePlaceholder')}
+            value={firstName}
+            maxLength={FIRST_NAME_MAX}
+            onChange={(event) => setFirstName(event.target.value)}
+            autoComplete="off"
+          />
+          <OpenButton type="submit" disabled={finding || firstName.trim() === ''}>
+            {t('list.find')}
+          </OpenButton>
+        </FindForm>
+      ) : null}
+      {findFailure !== null ? (
+        <NotFound role="alert">{t(`list.find_${findFailure}`)}</NotFound>
       ) : null}
       {stale ? <OfflineNote offline={offline} onRetry={onRetry} /> : null}
       {status === 'error' ? (

@@ -1,6 +1,10 @@
 import { StrictMode, createElement, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { App } from './app/App';
+import { CustomerTabBar, TAB_BAR_HEIGHT } from './app/CustomerShell';
+import { AppThemeProvider } from './theme/AppThemeProvider';
 import { createAppStore } from './app/store';
 import { registerCustomerI18n } from './features/customer-menu';
 import { registerCustomerOrdersI18n } from './features/customer-orders';
@@ -69,6 +73,36 @@ void initI18n().then(async () => {
       );
       return;
     }
+  }
+  if (import.meta.env.DEV && window.location.pathname.startsWith('/__fixtures/')) {
+    // Dev only (dropped from a production build): /__fixtures/:screenId renders a customer
+    // design screen from fixtures, for the design-compare check. Here, not in the app's routes,
+    // because only this file may import a harness.
+    const { FixturesPage } = await import('./harness/customerFixtures/FixturesPage');
+    createRoot(container).render(
+      <StrictMode>
+        <Provider store={createAppStore()}>
+          <AppThemeProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route
+                  path="/__fixtures/:screenId"
+                  element={
+                    <FixturesPage
+                      tabBarHeight={TAB_BAR_HEIGHT}
+                      tabBar={(active, unseen) => (
+                        <CustomerTabBar active={active} unseen={unseen} menuHref="/" />
+                      )}
+                    />
+                  }
+                />
+              </Routes>
+            </BrowserRouter>
+          </AppThemeProvider>
+        </Provider>
+      </StrictMode>,
+    );
+    return;
   }
   createRoot(container).render(
     <StrictMode>

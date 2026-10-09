@@ -1,8 +1,7 @@
-import { useMemo, type ComponentType } from 'react';
+import { useMemo, type ComponentType, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router';
 import { styled, ThemeProvider } from 'styled-components';
-import { CustomerTabBar, TAB_BAR_HEIGHT, type TabId } from '../../app/CustomerShell';
 import { CustomerPage } from '../../components/CustomerPage';
 import { GlobalStyle } from '../../theme/GlobalStyle';
 import type { Brand, Mode } from '../../theme/designTokens';
@@ -32,7 +31,15 @@ const SCREENS: Readonly<Record<string, ComponentType<FixtureProps>>> = {
 };
 
 /** The root screens show the bottom tab bar, as the design does: the tab each one belongs to. */
-const ROOT_TABS: Readonly<Record<string, TabId>> = {
+type TabKey = 'menu' | 'orders' | 'settings';
+
+/** What src/main.tsx hands in, because a harness may not import the app's tab bar itself. */
+export type FixturesPageProps = Readonly<{
+  tabBar: (active: TabKey, unseen: boolean) => ReactNode;
+  tabBarHeight: string;
+}>;
+
+const ROOT_TABS: Readonly<Record<string, TabKey>> = {
   'menu-home': 'menu',
   'menu-paused': 'menu',
   'menu-closed': 'menu',
@@ -51,8 +58,8 @@ const BRANDS: Readonly<Record<string, Brand>> = {
   jawa: 'jawa',
 };
 
-const Frame = styled.div<{ $tabs: boolean }>`
-  --customer-tabbar-height: ${({ $tabs }) => ($tabs ? TAB_BAR_HEIGHT : '0px')};
+const Frame = styled.div<{ $tabs: boolean; $barHeight: string }>`
+  --customer-tabbar-height: ${({ $tabs, $barHeight }) => ($tabs ? $barHeight : '0px')};
   max-width: 30rem;
   margin: 0 auto;
   min-height: 100dvh;
@@ -66,7 +73,7 @@ function stateFor(id: string): Readonly<Record<string, unknown>> {
   return all[id] ?? {};
 }
 
-export default function FixturesPage() {
+export function FixturesPage({ tabBar, tabBarHeight }: FixturesPageProps) {
   const { t } = useTranslation();
   const { screenId = '' } = useParams();
   const [query] = useSearchParams();
@@ -79,16 +86,16 @@ export default function FixturesPage() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
-      <Frame $tabs={tab !== undefined}>
+      <Frame $tabs={tab !== undefined} $barHeight={tabBarHeight}>
         {Screen ? (
           <Screen data={fixtures} state={stateFor(screenId)} />
         ) : (
           <CustomerPage title={title} kitchenName={fixtures.kitchen.name} />
         )}
-        {tab !== undefined ? (
-          // The design shows the unseen-update dot on the My orders tab of the filled list only.
-          <CustomerTabBar active={tab} unseen={screenId === 'my-orders'} menuHref="/" />
-        ) : null}
+        {tab !== undefined
+          ? // The design shows the unseen-update dot on the My orders tab of the filled list only.
+            tabBar(tab, screenId === 'my-orders')
+          : null}
       </Frame>
     </ThemeProvider>
   );

@@ -462,3 +462,15 @@ Format for each entry:
 - A code redeems once (a conditional update).
 **Trade-off:** anyone can block add-device codes for 15 minutes; password and passkey sign-in are unaffected.
 **Revisit when:** the lock is abused (then add a kitchen field to the code screen).
+
+## D-074 · Customer app: the EN/ID switch lives only in Settings (2026-10-10; builder)
+**Ruling:** "in customer app. the toggle of id/en should be only in setting page .. why you also have it in main page?"
+**Decision:** the customer app's language switch appears only on the Settings tab. It is removed from the menu home (the photo corner) and from the menu state screens (paused, closed, not published). This overrides `uxDesign/customer/SPEC.md` §4.1 ("On the photo: EN/ID switch (top right)"). The language still defaults from the phone and is remembered.
+**Trade-off:** a first-time customer who wants Indonesian has to open Settings once; the WhatsApp link already brings most in their usual language (default from the phone).
+**Revisit when:** customers miss it on the menu.
+
+## D-075 · Customer: getting a lost order back; the name remembered on the phone (2026-10-10; builder)
+**Ruling:** "do C for now .. and only retries 2 .. case insensitive .. and also we always have A"; "first name should save in phone storage too".
+**Decision:** (A) the WhatsApp message carries the private order link. (C) My orders can find an order by code plus first name, in one kitchen; the name ignores case; 2 wrong tries lock for 15 minutes, per IP and per kitchen-and-code; a miss never says which part was wrong. The first name is kept in the phone storage and prefills checkout.
+**Trade-off:** code plus first name is weaker than the private link; the 2-try lock keeps guessing impractical, but anyone who knows both can open the order (it holds no phone or address).
+**Revisit when:** abused, or once A makes C unnecessary.

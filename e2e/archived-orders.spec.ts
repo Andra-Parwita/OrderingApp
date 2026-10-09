@@ -30,10 +30,10 @@ test('an order of a finished menu opens read-only from its link', async ({
     expect(closed.ok()).toBe(true);
 
     await page.goto(`/o/${order.token}`);
-    await expect(page.getByText('This menu is closed')).toBeVisible();
-    await expect(page.getByText(/2× Lime-leaf mixed rice/)).toBeVisible();
+    await expect(page.getByText(/This menu is closed/)).toBeVisible();
+    await expect(page.getByText(/2 × Lime-leaf mixed rice/)).toBeVisible();
     // Finishing the menu closes the order that was still open (D-069 Q4) as collected.
-    await expect(page.getByText('Collected', { exact: true })).toBeVisible();
+    await expect(page.getByText(/^Collected/).first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change order' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Cancel order' })).toHaveCount(0);
 

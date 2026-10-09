@@ -184,6 +184,7 @@
     "pickup": "Pickup",
     "pickupWhen": "Pickup {{when}}",
     "delivery": "Delivery",
+    "link": "My order: {{link}}",
     "addAddress": "My address:"
   }
 }

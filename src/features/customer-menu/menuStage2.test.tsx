@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -72,10 +72,11 @@ describe('menu home', () => {
     ).toBeVisible();
   });
 
-  it('switches to Indonesian from the EN / ID switch', async () => {
+  it('has no EN / ID switch (it lives in Settings) and speaks Indonesian when the language is ID', async () => {
     renderHome();
     await screen.findByRole('heading', { name: 'Onde Onde' });
-    fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
+    expect(screen.queryByRole('radio', { name: 'ID' })).toBeNull();
+    await act(() => i18n.changeLanguage('id'));
     expect(await screen.findByText('Sabtu, 10 Okt')).toBeVisible();
     expect(screen.getByText('Jumat, 9 Okt, 21.00')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Lihat menu dan pesan' })).toBeVisible();
@@ -102,7 +103,7 @@ describe('menu home', () => {
     // The viewer's own button goes to the dishes.
     fireEvent.click(screen.getAllByRole('button', { name: 'See full picture' })[0]!);
     const inside = await screen.findByRole('dialog');
-    fireEvent.click(inside.querySelector('button:last-of-type')!);
+    fireEvent.click(within(inside).getByRole('button', { name: 'See dishes and order' }));
     expect(onSeeDishes).toHaveBeenCalledTimes(1);
   });
 

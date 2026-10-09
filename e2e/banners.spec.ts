@@ -1,5 +1,6 @@
 /// <reference lib="dom" />
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { markHowItWorksSeen } from './customerHelpers';
 import { collectErrors, pageScrollWidth } from './sellerHelpers';
 
 // Stage 4.9 (D-038): images are never cropped; the seller's colour fills the sides of the banner;
@@ -114,7 +115,7 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
       await rail.getByRole('button', { name: 'Collapse menu' }).click();
       // The owner's rail icon (D-040) takes the place of the initial.
       const icon = rail.getByRole('img', { name: 'Onde Onde' });
-      await expect(icon).toHaveAttribute('src', '/samples/rail-icon.png');
+      await expect(icon).toHaveAttribute('src', '/samples/icon-512.jpg');
       await expect(rail.getByText(/coming soon$/)).toHaveCount(0);
       const initialBox = await icon.boundingBox();
       expect(Math.abs((initialBox?.width ?? 0) - 40)).toBeLessThan(1);
@@ -150,6 +151,7 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
   {
     const { context, page, errors } = await open(390, 844);
     try {
+      await markHowItWorksSeen(context);
       await page.goto('/onde-onde');
       const image = await loaded(page, alt);
       await expect(image).toHaveAttribute('src', '/samples/banner-phone.jpg');

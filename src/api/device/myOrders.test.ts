@@ -195,4 +195,12 @@ describe('WhatsApp link', () => {
     expect(text).toContain('K7F-2QX');
     expect(text.endsWith('wa.addAddress')).toBe(true);
   });
+
+  it('carries the private order link (D-075)', () => {
+    const t = ((key: string, values?: Record<string, string>) =>
+      `${key}${values ? JSON.stringify(values) : ''}`) as never;
+    const text = buildWhatsAppText(order(), t, null);
+    expect(text).toContain(`${window.location.origin}/o/tok-1`);
+    expect(text).toContain('wa.link');
+  });
 });

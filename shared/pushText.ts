@@ -12,6 +12,8 @@ type Texts = {
   delivered: string;
   collected: string;
   other: string;
+  nudge: string;
+  nudgeReturning: string;
   status: Record<OrderStatus, string>;
 };
 
@@ -26,6 +28,9 @@ export const PUSH_TEXTS: Record<Language, Texts> = {
     delivered: 'Delivered',
     collected: 'Collected',
     other: 'Update from the seller',
+    nudge: 'The seller is waiting for your order number on WhatsApp.',
+    nudgeReturning:
+      'Your order is in. Sending it on WhatsApp is optional, but it helps the seller confirm faster.',
     status: {
       ordered: 'Order placed',
       confirmed: 'Your order is confirmed',
@@ -46,6 +51,9 @@ export const PUSH_TEXTS: Record<Language, Texts> = {
     delivered: 'Sudah diterima',
     collected: 'Sudah diambil',
     other: 'Kabar dari penjual',
+    nudge: 'Penjual menunggu nomor pesanan Anda lewat WhatsApp.',
+    nudgeReturning:
+      'Pesanan Anda sudah masuk. Mengirimnya lewat WhatsApp bersifat opsional, tetapi membantu penjual mengonfirmasi lebih cepat.',
     status: {
       ordered: 'Pesanan diterima',
       confirmed: 'Pesanan Anda dikonfirmasi',
@@ -75,7 +83,12 @@ const isMessageKey = (key: string): key is MessageKey =>
 /** The notification body for one inbox entry, or undefined when it is not worth a push. */
 export function pushBodyOf(entry: InboxEntry, language: Language): string | undefined {
   const texts = PUSH_TEXTS[language];
-  if (entry.kind === 'nudge') return undefined;
+  if (entry.kind === 'nudge') {
+    // Same words as the inbox; a nudge without a known key says nothing.
+    return entry.textKey === 'nudge' || entry.textKey === 'nudgeReturning'
+      ? texts[entry.textKey]
+      : undefined;
+  }
   if (entry.kind === 'status') {
     // "Order placed" is the customer's own action: no push.
     return entry.status === undefined || entry.status === 'ordered'

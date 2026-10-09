@@ -325,7 +325,10 @@ export function OrderPageView(props: OrderPageViewProps) {
   const info = orderInfo(order, menu, lang);
   const final = isFinal(order.status);
   const orderingOpen = menu?.ordering.open ?? true;
-  const canChange = !order.locked && !final && orderingOpen;
+  // Change and Cancel only while the order is Ordered or Confirmed (spec §4.4): not once it is
+  // ready or out for delivery.
+  const stillOpen = order.status === 'ordered' || order.status === 'confirmed';
+  const canChange = !order.locked && stillOpen && orderingOpen;
   const cutoffAt = menu?.week.cutoffAt;
   const step = deliveryStep(order);
   const readyPickup = order.fulfilment === 'pickup' && order.status === 'ready_for_pickup';
@@ -422,7 +425,7 @@ export function OrderPageView(props: OrderPageViewProps) {
             <span>{t('order.lockedBanner')}</span>
           </Note>
         ) : null}
-        {!order.locked && !final && !canChange ? <Hint>{t('order.closed')}</Hint> : null}
+        {!order.locked && stillOpen && !orderingOpen ? <Hint>{t('order.closed')}</Hint> : null}
         {props.cancelError ? <Alert role="alert">{props.cancelError}</Alert> : null}
         <OutlineButton type="button" onClick={props.onWhatsApp}>
           <OrderIcon name="chat" />

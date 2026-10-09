@@ -128,7 +128,12 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
   });
 
   /** The 5th failure locks at once, so it answers `locked_out`; earlier ones say how many are left. */
-  async function recordFailure(scopes: ReadonlyArray<string>): Promise<AuthFail> {
+  async function recordFailure(
+    scopes: ReadonlyArray<string>,
+    maxFails: number | Record<string, number> = MAX_FAILED_ATTEMPTS,
+  ): Promise<AuthFail> {
+    const maxOf = (scope: string) =>
+      typeof maxFails === 'number' ? maxFails : (maxFails[scope] ?? MAX_FAILED_ATTEMPTS);
     const at = iso(now());
     await db.batch(
       scopes.flatMap((scope) => [
@@ -142,7 +147,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
           'UPDATE auth_attempts SET locked_until = ? WHERE scope = ? AND fails >= ?',
           iso(now() + LOCKOUT_MINUTES * MINUTE),
           scope,
-          MAX_FAILED_ATTEMPTS,
+          maxOf(scope),
         ),
       ]),
     );
@@ -150,10 +155,10 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       `SELECT scope, fails, locked_until FROM auth_attempts WHERE scope IN (${marks(scopes.length)})`,
       ...scopes,
     );
-    const worst = Math.max(0, ...rows.map((row) => row.fails));
+    const fewest = Math.min(...rows.map((row) => maxOf(row.scope) - row.fails));
     const seconds = await lockedSeconds(scopes);
     if (seconds > 0) return lockedFail(seconds);
-    return { ...INVALID, triesLeft: MAX_FAILED_ATTEMPTS - worst };
+    return { ...INVALID, triesLeft: fewest };
   }
 
   async function clearFailures(scopes: ReadonlyArray<string>): Promise<void> {
@@ -763,6 +768,34 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       return row
         ? { credentialId, transports: transportsOf(row.credential_transports) }
         : undefined;
+    },
+
+    /**
+     * D-075: one guess at a lost order. `limits` maps each scope to its own number of wrong tries.
+     * Refused while any scope is locked; a null answer is a wrong try (a scope locks at its limit). A hit clears only `clearOnHit`: clearing the client's own
+     * scope would let a guesser with one valid order reset it between guesses. Tries older than the
+     * lock time are forgotten.
+     */
+    async guessLimited<T>(
+      limits: Record<string, number>,
+      clearOnHit: Array<string>,
+      attempt: () => Promise<T | null>,
+    ): Promise<AuthResult<T>> {
+      const scopes = Object.keys(limits);
+      await db
+        .stmt(
+          `DELETE FROM auth_attempts WHERE scope IN (${marks(scopes.length)})
+           AND locked_until IS NULL AND updated_at <= ?`,
+          ...scopes,
+          iso(now() - LOCKOUT_MINUTES * MINUTE),
+        )
+        .run();
+      const locked = await lockedSeconds(scopes);
+      if (locked > 0) return lockedFail(locked);
+      const value = await attempt();
+      if (value === null) return recordFailure(scopes, limits);
+      await clearFailures(clearOnHit);
+      return ok(value);
     },
 
     /** Fixed window per scope: the seconds until the window ends when over `max`, else 0. */

@@ -23,6 +23,7 @@ import {
   parseArray,
   parseLocalText,
 } from './parse';
+import { parseOrderCode } from './orderCode';
 import { isValidSlug } from './seller';
 import { ORDER_STATUSES } from './status';
 
@@ -80,6 +81,24 @@ export type ExpiredOrder = {
 
 /** Customer endpoints (by token) that return one order. */
 export type CustomerOrderResponse = { order: CustomerOrder };
+/** POST /api/s/:slug/orders/find (D-075): get a lost order back by its code and first name. */
+export type FindOrderRequest = { code: string; firstName: string };
+/** Only the private token; the client then opens the order the usual way. */
+export type FindOrderResponse = { token: string };
+
+export function parseFindOrderRequest(input: unknown): FindOrderRequest | null {
+  if (!isRecord(input)) return null;
+  const code = typeof input['code'] === 'string' ? parseOrderCode(input['code']) : null;
+  const name = typeof input['firstName'] === 'string' ? input['firstName'].trim() : '';
+  if (code === null || name === '' || name.length > FIRST_NAME_MAX) return null;
+  return { code, firstName: name };
+}
+
+export function parseFindOrderResponse(input: unknown): FindOrderResponse | null {
+  return isRecord(input) && typeof input['token'] === 'string' && input['token'] !== ''
+    ? { token: input['token'] }
+    : null;
+}
 /** GET /api/orders/:token: the order (maybe archived and read-only), or its expired summary. */
 export type FetchedOrderResponse = CustomerOrderResponse | { expired: ExpiredOrder };
 /** GET /api/orders?tokens=a,b (max 20); unknown tokens are omitted. */

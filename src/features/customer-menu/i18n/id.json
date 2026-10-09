@@ -181,6 +181,7 @@
     "pickup": "Ambil sendiri",
     "pickupWhen": "Ambil sendiri {{when}}",
     "delivery": "Diantar",
+    "link": "Pesanan saya: {{link}}",
     "addAddress": "Alamat saya:"
   }
 }

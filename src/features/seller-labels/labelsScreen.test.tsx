@@ -22,15 +22,21 @@ async function openLabels(): Promise<void> {
 }
 
 describe('LabelsScreen', () => {
-  it('shows one label per confirmed order with code, name, items, day and QR placeholder', async () => {
+  it('shows one label per confirmed order with code, name, items, day and a real QR', async () => {
     await openLabels();
     expect(screen.getAllByRole('article')).toHaveLength(2);
     const label = screen.getByRole('article', { name: 'K7F-2QX' });
     expect(within(label).getByText('Rina')).toBeInTheDocument();
     expect(within(label).getByText('2× Lemper ayam / Chicken lemper')).toBeInTheDocument();
     expect(within(label).getByText(/^Pickup · \w{3} \d{1,2} \w{3}$/)).toBeInTheDocument();
-    expect(within(label).getByRole('img', { name: 'QR code (coming soon)' })).toHaveTextContent(
-      'QR',
+    const qr = within(label).getByRole('img', { name: 'Order QR code' });
+    expect(qr.tagName.toLowerCase()).toBe('svg');
+    expect(qr.querySelector('path')?.getAttribute('d')).toBeTruthy();
+    expect(qr).toHaveTextContent('');
+    // A different order gets a different code.
+    const other = within(screen.getByRole('article', { name: 'R8P-4WB' })).getByRole('img');
+    expect(other.querySelector('path')?.getAttribute('d')).not.toBe(
+      qr.querySelector('path')?.getAttribute('d'),
     );
   });
 
@@ -107,6 +113,6 @@ describe('LabelsScreen', () => {
     expect(screen.getByRole('button', { name: 'Cetak' })).toBeInTheDocument();
     const label = screen.getByRole('article', { name: 'K7F-2QX' });
     expect(within(label).getByText(/^Ambil · /)).toBeInTheDocument();
-    expect(within(label).getByRole('img', { name: 'Kode QR (segera hadir)' })).toBeInTheDocument();
+    expect(within(label).getByRole('img', { name: 'Kode QR pesanan' })).toBeInTheDocument();
   });
 });

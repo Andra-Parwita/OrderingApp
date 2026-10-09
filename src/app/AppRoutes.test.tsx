@@ -113,7 +113,7 @@ describe('AppRoutes', () => {
       'content',
       '#121411',
     );
-    fireEvent.click(screen.getByRole('radio', { name: 'Match device' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Auto' }));
     expect(localStorage.getItem('theme')).toBe('auto');
   });
 

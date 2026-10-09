@@ -13,6 +13,7 @@ import {
   warningConfirmed,
 } from './sellerOrdersSlice';
 import { chooseSeller, SELLER_KEY } from '../../api/device/sellerContext';
+import { devSampleOrdersRequested } from './devActions';
 import { createTestStore } from './testSupport';
 
 async function newOrder(firstName: string) {
@@ -131,6 +132,45 @@ describe('sellerOrdersSaga', () => {
     store.dispatch(paidChangeRequested({ code: created.code, paid: true }));
     await waitFor(() => store.getState().sellerOrders.change.status === 'idle');
     expect(store.getState().sellerOrders.orders[0]?.paid).toBe(true);
+  });
+
+  it('sample orders: a double tap sends one request, the button state follows it, a toast answers', async () => {
+    let posts = 0;
+    server.events.on('request:start', ({ request }) => {
+      if (request.method === 'POST' && new URL(request.url).pathname === '/api/dev/sample-orders') {
+        posts += 1;
+      }
+    });
+    const store = createTestStore({ saga: true, pollMs: 1000 });
+    store.dispatch(devSampleOrdersRequested());
+    store.dispatch(devSampleOrdersRequested());
+    expect(store.getState().sellerOrders.devSampling).toBe(true);
+    await waitFor(() => !store.getState().sellerOrders.devSampling);
+    expect(posts).toBe(1);
+    expect(store.getState().sellerOrders.toast?.kind).toMatch(/^sample(Added|Partial)$/);
+    expect(store.getState().sellerOrders.orders.length).toBeGreaterThan(0);
+    server.events.removeAllListeners();
+  });
+
+  it.each([
+    [{ added: 12, reason: 'sold_out' }, 'samplePartial', '12'],
+    [{ added: 0, reason: 'sold_out' }, 'sampleNone', '0'],
+    [{ added: 0, reason: 'no_menu' }, 'sampleNoMenu', '0'],
+    [{ added: 50 }, 'sampleAdded', '50'],
+  ])('sample orders: %j shows the %s toast', async (answer, kind, name) => {
+    server.use(http.post('*/api/dev/sample-orders', () => HttpResponse.json(answer)));
+    const store = createTestStore({ saga: true, pollMs: 1000 });
+    store.dispatch(devSampleOrdersRequested());
+    await waitFor(() => store.getState().sellerOrders.toast !== null);
+    expect(store.getState().sellerOrders.toast).toMatchObject({ kind, name });
+  });
+
+  it('sample orders: a failed request shows the error toast', async () => {
+    server.use(http.post('*/api/dev/sample-orders', () => HttpResponse.error()));
+    const store = createTestStore({ saga: true, pollMs: 1000 });
+    store.dispatch(devSampleOrdersRequested());
+    await waitFor(() => store.getState().sellerOrders.toast !== null);
+    expect(store.getState().sellerOrders.toast).toMatchObject({ kind: 'sampleFailed' });
   });
 
   it('sends the chosen seller as X-Seller on seller calls, and lists only their orders', async () => {

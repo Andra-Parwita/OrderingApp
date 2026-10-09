@@ -1,6 +1,10 @@
 // API routes on standard Request/Response; shared by the Worker and the MSW handlers.
 import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
-import { parseSampleOrdersRequest, type DevSellersResponse } from '../../shared/devContract';
+import {
+  parseSampleOrdersRequest,
+  type DevSellersResponse,
+  type SampleOrdersResponse,
+} from '../../shared/devContract';
 import {
   parseDeliveryStepRequest,
   parseMarkCollectedRequest,
@@ -67,6 +71,7 @@ import {
 import {
   parseCreateOrderRequest,
   parseCreateSellerOrderRequest,
+  parseFindOrderRequest,
   parseUpdateOrderRequest,
   toArchivedOrder,
   toCustomerOrder,
@@ -75,6 +80,7 @@ import {
   type CustomerOrdersResponse,
   type ExpiredOrder,
   type FetchedOrderResponse,
+  type FindOrderResponse,
   type SellerOrderResponse,
   type SellerOrdersResponse,
 } from '../../shared/orderContract';
@@ -89,7 +95,12 @@ import {
   parseSettingsRequest,
   type SettingsResponse,
 } from '../../shared/sellerContract';
-import { parseChefInviteRequest, type KeyResponse } from '../../shared/authContract';
+import {
+  ORDER_LOOKUP_MAX_FAILS,
+  ORDER_LOOKUP_MAX_FAILS_PER_CLIENT,
+  parseChefInviteRequest,
+  type KeyResponse,
+} from '../../shared/authContract';
 import {
   parseSendUpdatesRequest,
   type SendUpdatesResponse,
@@ -100,7 +111,8 @@ import { deleteImageRefs, putUploadedImage, type ImageBucket } from '../images/r
 import type { LiveNotifier } from '../live/hub';
 import { chefAccess, handleAdmin, handleAuth } from './authRoutes';
 import { sessionTokenOf } from '../auth/cookie';
-import { error, readJson } from './respond';
+import { sha256Hex } from '../db/crypto';
+import { authError, error, readJson } from './respond';
 import type { Repository, SellerRepository, StoreResult } from '../repo/Repository';
 
 const noSeller = () => error('seller_not_found', 'Seller not found');
@@ -290,6 +302,32 @@ export async function handleApiRequest(
       );
       return customerResult(result, sellerStore.seller, 201);
     }
+    // D-075: a lost order back by code and first name, in this kitchen. Two wrong tries lock it for
+    // 15 minutes per kitchen-and-code; ten lock a client address. Every miss answers alike.
+    if (b === 'orders' && c === 'find' && method === 'POST') {
+      const input = parseFindOrderRequest(await readJson(request));
+      if (!input) return bad();
+      // Only a hash of the address is kept: wrong-try rows (and so the hash) are swept by the hourly
+      // cron once they are older than the lock time and not locked.
+      const client = await sha256Hex(request.headers.get('CF-Connecting-IP') ?? 'local');
+      const perCode = `find:${sellerStore.seller.id}:${input.code}`;
+      const wanted = input.firstName.toLowerCase();
+      const found = await store.auth.guessLimited(
+        {
+          [`find:ip:${client}`]: ORDER_LOOKUP_MAX_FAILS_PER_CLIENT,
+          [perCode]: ORDER_LOOKUP_MAX_FAILS,
+        },
+        [perCode],
+        async () => {
+          const order = await sellerStore.getByCode(input.code);
+          return order && order.firstName.trim().toLowerCase() === wanted ? order.token : null;
+        },
+      );
+      if (found.ok) return Response.json({ token: found.value } satisfies FindOrderResponse);
+      return found.error === 'locked_out'
+        ? authError(found)
+        : error('not_found', 'No order found for that code and name');
+    }
     return null;
   }
 
@@ -453,9 +491,9 @@ export async function handleApiRequest(
       if (!sellerStore) return noSeller();
       const input = parseSampleOrdersRequest(await readJson(request));
       if (!input) return bad();
-      const added = await store.dev.addSampleOrders(sellerStore.seller.id, input.count);
-      if (added > 0) await signal(context, sellerStore.seller.id, 'order.created');
-      return Response.json({ added });
+      const result = await store.dev.addSampleOrders(sellerStore.seller.id, input.count);
+      if (result.added > 0) await signal(context, sellerStore.seller.id, 'order.created');
+      return Response.json(result satisfies SampleOrdersResponse);
     }
     if (method === 'POST' && a === 'reset') {
       await store.dev.reset();

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { ThemeProvider } from 'styled-components';
@@ -55,9 +55,11 @@ describe('notification entry points', () => {
     show({ env: iphone });
     expect(screen.getByText('Notifications are off')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Turn on updates' }));
-    expect(screen.getByRole('dialog')).toBeVisible();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeVisible();
+    // The card behind the guide has the same heading, so look inside the dialog.
     expect(
-      screen.getByRole('heading', { name: 'Get a message when your order is ready' }),
+      within(dialog).getByRole('heading', { name: 'Get a message when your order is ready' }),
     ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Show me how' }));
     expect(screen.getByText('Step 1 of 4')).toBeVisible();

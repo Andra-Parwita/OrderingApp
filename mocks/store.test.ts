@@ -298,7 +298,7 @@ describe('seller rules', () => {
     const names = ['Rina', 'Tom', 'Sari', 'Budi', 'Mei', 'Dewi', 'Arif', 'Lisa'];
 
     it('is deterministic and valid', async () => {
-      expect(await world.repo.dev.addSampleOrders(ONDE_ID, 12)).toBe(12);
+      expect(await world.repo.dev.addSampleOrders(ONDE_ID, 12)).toEqual({ added: 12 });
       const first = await store.listOrders();
       await world.reset();
       store = await sellerOf();
@@ -315,6 +315,61 @@ describe('seller rules', () => {
       await world.repo.dev.addSampleOrders(ONDE_ID, 100);
       for (const view of (await store.getMenu()).items) {
         expect(view.remaining === null || view.remaining >= 0).toBe(true);
+      }
+    });
+
+    it('adds 50 across statuses, paid or not, delivery and repeat customers', async () => {
+      await world.db.stmt('UPDATE menu_items SET portion_limit = NULL').run();
+      expect(await world.repo.dev.addSampleOrders(ONDE_ID, 50)).toEqual({ added: 50 });
+      const orders = await store.listOrders();
+      expect(orders).toHaveLength(50);
+      expect(new Set(orders.map((order) => order.status)).size).toBeGreaterThanOrEqual(5);
+      expect(new Set(orders.map((order) => order.paid)).size).toBe(2);
+      expect(orders.some((order) => order.returning)).toBe(true);
+      expect(new Set(orders.map((order) => order.firstName)).size).toBeLessThan(50);
+    });
+
+    it('three taps in a row never error and never oversell; the last says sold out', async () => {
+      await world.db.stmt('UPDATE menu_items SET portion_limit = 3').run();
+      const answers = [];
+      for (let tap = 0; tap < 3; tap++) {
+        answers.push(await world.repo.dev.addSampleOrders(ONDE_ID, 50));
+      }
+      expect(answers[0]).toMatchObject({ reason: 'sold_out' });
+      expect(answers[0]?.added).toBeGreaterThan(0);
+      expect(answers[2]).toEqual({ added: 0, reason: 'sold_out' });
+      const taken = new Map<string, number>();
+      for (const order of await store.listOrders()) {
+        if (order.status === 'cancelled') continue;
+        for (const line of order.lines) {
+          taken.set(line.itemId, (taken.get(line.itemId) ?? 0) + line.qty);
+        }
+      }
+      for (const qty of taken.values()) expect(qty).toBeLessThanOrEqual(3);
+    });
+
+    it('follows the current menu: none after finish, then the new menu dishes and places', async () => {
+      await world.db.stmt("UPDATE menus SET state = 'live'").run();
+      expectOk(await store.finishMenuNow());
+      expect(await world.repo.dev.addSampleOrders(ONDE_ID, 5)).toEqual({
+        added: 0,
+        reason: 'no_menu',
+      });
+
+      expectOk(await store.createMenu({}));
+      const dish = expectOk(
+        await store.createDish({ name: { en: 'Klepon', id: 'Klepon' }, priceCents: 900 }),
+      );
+      const place = (await store.listPickupPlaces())[1];
+      expectOk(
+        await store.updateMenu({ dishIds: [dish.id], places: [{ placeId: place?.id ?? '' }] }),
+      );
+      expect(await world.repo.dev.addSampleOrders(ONDE_ID, 5)).toEqual({ added: 5 });
+      const orders = (await store.listOrders()).filter((order) => order.id.startsWith('sample-'));
+      expect(orders).toHaveLength(5);
+      for (const order of orders) {
+        expect(order.lines.map((line) => line.name.en)).toContain('Klepon');
+        if (order.fulfilment === 'pickup') expect(order.pickupPlaceId).toBe(place?.id);
       }
     });
 

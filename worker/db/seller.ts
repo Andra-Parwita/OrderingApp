@@ -5,6 +5,7 @@ import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
 import { diffOrder } from '../../shared/auditDiff';
 import { BACKUP_VERSION, type BackupFile } from '../../shared/backup';
 import { ordersToCsv } from '../../shared/csv';
+import type { SampleOrdersResponse } from '../../shared/devContract';
 import type {
   Actor,
   AuditEntry,
@@ -205,7 +206,7 @@ type Draft = OrderChange;
 
 export type SellerInternal = {
   repo: SellerRepository;
-  addSampleOrders(count: number): Promise<number>;
+  addSampleOrders(count: number): Promise<SampleOrdersResponse>;
 };
 
 export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal {
@@ -722,13 +723,36 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     return state;
   }
 
-  async function addSampleOrders(count: number): Promise<number> {
+  /**
+   * Plan 008: samples follow the seller's current menu (its dishes, places, cooking day and
+   * delivery setting, read fresh on every call), spread over every status, paid or not, changed,
+   * notes and repeat customers. Limits are never exceeded: what does not fit is skipped, and the
+   * answer says why fewer went in. A finished menu (or none) adds nothing.
+   */
+  async function addSampleOrders(count: number): Promise<SampleOrdersResponse> {
+    const menu = await db.first<{ state: string }>(
+      'SELECT state FROM menus WHERE seller_id = ?',
+      sid,
+    );
+    if (!menu || menu.state === 'finished') return { added: 0, reason: 'no_menu' };
+    const s = await loadState();
+    if (s.items.length === 0) return { added: 0, reason: 'no_menu' };
     const sample = await sampleState();
     const { random } = sample;
+    // Ids restart with a fresh worker; start past every order this seller already has.
+    const existing = await db.first<{ n: number }>(
+      'SELECT COUNT(*) AS n FROM orders WHERE seller_id = ?',
+      sid,
+    );
+    sample.counter = Math.max(sample.counter, existing?.n ?? 0);
     let added = 0;
     for (let n = 0; n < count; n++) {
-      const s = await loadState();
-      const items = s.items;
+      // Dishes that still have portions (not sold out by hand, limit not used up).
+      const items = s.items.filter(
+        (item) =>
+          item.soldOut !== true &&
+          (item.limit === undefined || item.limit - (s.used.get(item.id) ?? 0) > 0),
+      );
       if (items.length === 0) break;
       const picks = items.filter(() => random() < 0.4);
       if (picks.length === 0) picks.push(items[Math.floor(random() * items.length)] as MenuItem);
@@ -750,7 +774,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         firstName,
         language: random() < 0.5 ? 'en' : 'id',
         lines: requested,
-        fulfilment: random() < 0.6 ? 'pickup' : 'delivery',
+        fulfilment: random() < 0.4 && s.week.delivery.available ? 'delivery' : 'pickup',
         ...(note !== undefined ? { note } : {}),
         // Pickup samples rotate over the menu's places (no random draw, so seeds stay stable).
         ...(s.week.pickupPoints.length > 0
@@ -775,12 +799,6 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         { returning: random() < 0.3 },
       );
       let current = draft(order);
-      if (random() < 0.4) {
-        current = addInbox(withOrder(current, { status: 'confirmed' }), {
-          kind: 'status',
-          status: 'confirmed',
-        });
-      }
       if (random() < 0.25) current = withOrder(current, { waReceived: true });
       if (random() < 0.2) {
         // A customer edit after placing: flip fulfilment, change the note, and add an unlimited item.
@@ -790,7 +808,10 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
             !current.order.lines.some((line) => line.itemId === item.id),
         );
         const edit = patched(s, current.order, {
-          fulfilment: current.order.fulfilment === 'pickup' ? 'delivery' : 'pickup',
+          fulfilment:
+            current.order.fulfilment === 'pickup' && s.week.delivery.available
+              ? 'delivery'
+              : 'pickup',
           note: 'Changed my mind, thanks',
           ...(extra ? { lines: [...current.order.lines, { itemId: extra.id, qty: 1 }] } : {}),
         });
@@ -805,11 +826,38 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
           }
         }
       }
+      // Spread over the statuses (the fulfilment is final by now, so the next step fits it).
+      const stage = random();
+      const fulfilled = current.order.fulfilment === 'pickup';
+      const status: OrderStatus =
+        stage < 0.3
+          ? 'ordered'
+          : stage < 0.55
+            ? 'confirmed'
+            : stage < 0.75
+              ? fulfilled
+                ? 'ready_for_pickup'
+                : 'out_for_delivery'
+              : stage < 0.92
+                ? fulfilled
+                  ? 'collected'
+                  : 'delivered'
+                : 'cancelled';
+      if (status !== 'ordered') {
+        current = addInbox(withOrder(current, { status }), { kind: 'status', status });
+      }
+      const paidChance = status === 'cancelled' ? 0 : isFinalStatus(status) ? 0.9 : 0.35;
+      if (random() < paidChance) current = withOrder(current, { paid: true });
       if (random() < 0.15) current = withOrder(current, { locked: true });
       await db.batch([...insertOrderStatements(db, order, null), ...changeStatements(db, current)]);
       added++;
+      if (status !== 'cancelled') {
+        for (const line of current.order.lines) {
+          s.used.set(line.itemId, (s.used.get(line.itemId) ?? 0) + line.qty);
+        }
+      }
     }
-    return added;
+    return added === count ? { added } : { added, reason: 'sold_out' };
   }
 
   // ---- The repository ----

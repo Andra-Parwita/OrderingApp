@@ -20,13 +20,45 @@ const SCREENS = (
   }
 ).screens.filter((s) => s.compare);
 
-const BRAND = 'ondeonde';
-const MODE = 'light';
+// One run captures every screen three ways. References exist only for Onde Onde, light and dark, so
+// the Bali shots are paired with the Onde Onde light reference: only to check the layout holds.
+interface Variant {
+  name: string;
+  brand: string;
+  mode: 'light' | 'dark';
+  /** The reference the shot is paired with. */
+  reference: string;
+  suffix: string;
+}
+const VARIANTS: ReadonlyArray<Variant> = [
+  {
+    name: 'Onde Onde light',
+    brand: 'ondeonde',
+    mode: 'light',
+    reference: 'ondeonde-light',
+    suffix: 'app',
+  },
+  {
+    name: 'Onde Onde dark',
+    brand: 'ondeonde',
+    mode: 'dark',
+    reference: 'ondeonde-dark',
+    suffix: 'app-dark',
+  },
+  {
+    name: 'Bali light (layout check against the Onde Onde light reference)',
+    brand: 'bali',
+    mode: 'light',
+    reference: 'ondeonde-light',
+    suffix: 'app-bali',
+  },
+];
 const OUT = 'captures/design-customer';
 const REFERENCES = '../../uxDesign/customer/captures';
 
 interface Result {
   screen: Screen;
+  variant: Variant;
   file: string;
   loaded: boolean;
   errors: Array<string>;
@@ -42,9 +74,9 @@ function writeIndex(results: ReadonlyArray<Result>): void {
       const errors = r.errors.length
         ? `<ul>${r.errors.map((e) => `<li>${escapeHtml(e)}</li>`).join('')}</ul>`
         : '<p>no console errors</p>';
-      return `<section><h2>${id} <small>${r.loaded ? 'loaded' : 'FAILED to load'}, ${String(r.errors.length)} console error(s)</small></h2>${errors}
+      return `<section><h2>${id} · ${r.variant.name} <small>${r.loaded ? 'loaded' : 'FAILED to load'}, ${String(r.errors.length)} console error(s)</small></h2>${errors}
 <div class="pair"><figure><figcaption>App</figcaption><img src="${r.file}" alt="app ${id}"></figure>
-<figure><figcaption>Reference</figcaption><img src="${REFERENCES}/${id}__${BRAND}-${MODE}.png" alt="reference ${id}"></figure></div></section>`;
+<figure><figcaption>Reference</figcaption><img src="${REFERENCES}/${id}__${r.variant.reference}.png" alt="reference ${id}"></figure></div></section>`;
     })
     .join('\n');
   writeFileSync(
@@ -60,19 +92,20 @@ li{color:#f88}section{margin-bottom:32px}</style>
 test('design compare (customer): fixtures pages beside the references', async ({
   browser,
 }, testInfo) => {
-  test.setTimeout(300_000);
+  test.setTimeout(900_000);
   mkdirSync(OUT, { recursive: true });
   const baseURL = testInfo.project.use.baseURL;
   const results: Array<Result> = [];
 
-  for (const screen of SCREENS) {
-    const file = `${screen.id}.app.png`;
-    const result: Result = { screen, file, loaded: false, errors: [] };
+  const runs = VARIANTS.flatMap((variant) => SCREENS.map((screen) => ({ variant, screen })));
+  for (const { variant, screen } of runs) {
+    const file = `${screen.id}.${variant.suffix}.png`;
+    const result: Result = { screen, variant, file, loaded: false, errors: [] };
     results.push(result);
     const context = await browser.newContext({
       baseURL,
       viewport: { width: 390, height: 844 },
-      colorScheme: 'light',
+      colorScheme: variant.mode,
       reducedMotion: 'reduce',
     });
     try {
@@ -81,7 +114,7 @@ test('design compare (customer): fixtures pages beside the references', async ({
         if (m.type() === 'error') result.errors.push(m.text());
       });
       page.on('pageerror', (e) => result.errors.push(e.message));
-      await page.goto(`/__fixtures/${screen.id}?brand=${BRAND}&mode=${MODE}`, {
+      await page.goto(`/__fixtures/${screen.id}?brand=${variant.brand}&mode=${variant.mode}`, {
         waitUntil: 'load',
       });
       // The frame's safe areas: the app gives up this much at the top and bottom.
@@ -106,6 +139,16 @@ test('design compare (customer): fixtures pages beside the references', async ({
 
   writeIndex(results);
   const failed = results.filter((r) => !r.loaded);
+  const withErrors = results.filter((r) => r.errors.length > 0);
+  console.log(
+    `compare: ${String(results.length)} shots, ${String(results.length - failed.length)} loaded, ${String(failed.length)} failed, ${String(withErrors.length)} with console errors`,
+  );
+  for (const variant of VARIANTS) {
+    const mine = results.filter((r) => r.variant === variant);
+    console.log(
+      `  ${variant.name}: ${String(mine.filter((r) => r.loaded).length)}/${String(mine.length)} loaded, ${String(mine.filter((r) => r.errors.length > 0).length)} with console errors`,
+    );
+  }
   if (failed.length) {
     throw new Error(`pages that did not load: ${failed.map((r) => r.file).join(', ')}`);
   }

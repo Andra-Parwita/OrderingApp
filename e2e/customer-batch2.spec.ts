@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { markHowItWorksSeen } from './customerHelpers';
 
 // Batch 2, customer side (C4 My orders, C5 order page, basket edit mode) on the real routes. The
 // order is placed through the real customer flow so My orders is filled the way a customer fills it.
@@ -24,13 +25,14 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
   const firstName = `Dewi-${Date.now()}-${testInfo.project.name}`.slice(0, 40);
 
   // Place an order (tempeh has no portion limit, so parallel runs never sell it out).
-  await page.goto('/onde-onde');
+  await markHowItWorksSeen(context);
+  await page.goto('/onde-onde/dishes');
   const add = page.getByRole('button', { name: 'Add one Thin battered tempeh' });
   await add.click();
   await add.click();
-  await expect(page.getByText('How ordering works')).toBeVisible();
   await page.getByRole('button', { name: /View basket/ }).click();
-  await page.getByLabel('Your first name').fill(firstName);
+  await page.getByRole('button', { name: /Next: your name/ }).click();
+  await page.getByLabel('First name').fill(firstName);
   await page.getByRole('button', { name: 'Place order · $20.00' }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
   const codeText = (await page.getByTestId('order-code').textContent()) ?? '';
@@ -38,16 +40,16 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
   const code = codeText.replace('-', '');
 
   // The confirmation leads on to the order page.
-  await page.getByRole('button', { name: 'Change or cancel order' }).click();
+  await page.getByRole('button', { name: 'Change or cancel' }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+$/);
   await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
 
   // C4 My orders: the order is there, and typing its code opens it.
   await page.goto('/my-orders');
-  await expect(page.getByText('Current orders')).toBeVisible();
+  await expect(page.getByText('Current', { exact: true })).toBeVisible();
   const row = page.getByRole('button', { name: new RegExp(codeText) });
   await expect(row).toBeVisible();
-  await expect(row).toContainText('2× Thin battered tempeh');
+  await expect(row).toContainText('2 × Thin battered tempeh');
   await expect(row).toContainText('Ordered');
   await expect(row).toContainText('$20.00');
   await shot('list');
@@ -55,8 +57,8 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
   await expect(page.getByTestId('order-code')).toHaveText(codeText);
 
   // C5 order page.
-  await expect(page.getByTestId('timeline')).toContainText('Ordered (now)');
-  await expect(page.getByText('QR code (coming later)')).toBeVisible();
+  await expect(page.getByTestId('timeline')).toContainText('Ordered');
+  await expect(page.getByRole('button', { name: 'Show QR code' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
   await shot('order');
 
@@ -71,13 +73,13 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
 
   // Change the quantity: basket in edit mode, then back to the order page with the change.
   await page.getByRole('button', { name: 'Change order' }).click();
-  await expect(page.getByRole('button', { name: 'Update order · $20.00' })).toBeVisible();
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
   await shot('edit');
+  await page.getByRole('button', { name: /Next: your name/ }).click();
   await page.getByRole('button', { name: 'Update order · $30.00' }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+$/);
   await expect(page.getByTestId('order-code')).toHaveText(codeText);
-  await expect(page.getByText('3× Thin battered tempeh')).toBeVisible();
+  await expect(page.getByText('3 × Thin battered tempeh')).toBeVisible();
   await expect(page.getByText('$30.00').first()).toBeVisible();
 
   // The seller nudges, then locks (seller-side API calls; the page polls every 15 s, so open it fresh).
@@ -97,9 +99,13 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
   await shot('locked');
 
   // Indonesian
+  await page.goto('/settings');
   await page.getByRole('radio', { name: 'ID' }).click();
-  await expect(page.getByText('Kabar terbaru')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Kirim ke penjual lewat WhatsApp' })).toBeVisible();
+  await page.goto(`/o/${token}`);
+  await expect(page.getByText('Kabar dari penjual')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /^Kirim pesan ke .* lewat WhatsApp$/ }),
+  ).toBeVisible();
   await shot('locked-id');
 
   expect(consoleErrors).toEqual([]);

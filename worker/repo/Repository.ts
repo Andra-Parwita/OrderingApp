@@ -27,6 +27,7 @@ import type {
   StaffActor,
 } from '../../shared/domain';
 import type { BackupFile } from '../../shared/backup';
+import type { SampleOrdersResponse } from '../../shared/devContract';
 import type { PushSubscribeRequest } from '../../shared/pushContract';
 import type { ImageSlot } from '../../shared/imageSlots';
 import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
@@ -336,6 +337,16 @@ export type AuthRepository = {
   passkeyById(
     credentialId: string,
   ): Promise<{ credentialId: string; transports: Array<string> } | undefined>;
+  /**
+   * One guess with a lockout (D-075): `limits` maps each scope to its wrong-try limit. Refused with
+   * `locked_out` while any scope is locked; a null answer from `attempt` counts as a wrong try and
+   * locks a scope at its limit. A hit clears only the `clearOnHit` scopes.
+   */
+  guessLimited<T>(
+    limits: Record<string, number>,
+    clearOnHit: Array<string>,
+    attempt: () => Promise<T | null>,
+  ): Promise<AuthResult<T>>;
   /** Counts one request for `scope`; the seconds to wait when over the limit, else 0. */
   rateLimit(scope: string, max: number, windowSeconds: number): Promise<number>;
 
@@ -379,7 +390,7 @@ export type Repository = {
 
   /** Dev tools: only for a local database, and only when DEV_TOOLS is on (see worker/api). */
   dev: {
-    addSampleOrders(sellerId: string, count: number): Promise<number>;
+    addSampleOrders(sellerId: string, count: number): Promise<SampleOrdersResponse>;
     reset(): Promise<void>;
   };
 };

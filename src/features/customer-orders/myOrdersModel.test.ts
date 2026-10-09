@@ -33,7 +33,11 @@ function order(patch: Partial<CustomerOrder>): CustomerOrder {
 }
 
 const menu = (cookingDate: string) =>
-  ({ week: { cookingDate, pickupPoints: [] } }) as unknown as MenuResponse;
+  ({
+    week: { cookingDate, pickupPoints: [] },
+    kitchen: { name: 'Onde Onde', images: {} },
+    seller: { name: 'Onde Onde' },
+  }) as unknown as MenuResponse;
 
 describe('buildMyOrders', () => {
   it('puts this week and later orders in Current, and a past or closed week in Earlier', () => {

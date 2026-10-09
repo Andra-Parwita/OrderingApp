@@ -254,7 +254,7 @@ describe('web push and kitchen files', () => {
       expect(sent.map((item) => item.payload.body)).toEqual(['Running 5 minutes late']);
     });
 
-    it('sends status changes and delivery steps, but not payments, nudges or the customer own acts', async () => {
+    it('sends status changes and delivery steps, but not payments, locks or the customer own acts', async () => {
       const pickup = await place('Ana');
       const delivery = await place('Budi', { fulfilment: 'delivery' });
       await subscribe(pickup.token, 1);
@@ -263,9 +263,16 @@ describe('web push and kitchen files', () => {
       await seller(`/orders/${pickup.code}/status`, { to: 'confirmed' });
       await seller(`/orders/${pickup.code}/paid`, { paid: true });
       await seller(`/orders/${pickup.code}/lock`, { locked: true });
-      await seller(`/orders/${pickup.code}/nudge`, {});
       await flush();
       expect(sent.map((item) => item.payload.body)).toEqual(['Your order is confirmed']);
+
+      // A nudge is pushed, in the inbox words.
+      sent = [];
+      await seller(`/orders/${pickup.code}/nudge`, {});
+      await flush();
+      expect(sent.map((item) => item.payload.body)).toEqual([
+        'The seller is waiting for your order number on WhatsApp.',
+      ]);
 
       sent = [];
       await seller(`/orders/${delivery.code}/status`, { to: 'confirmed' });
@@ -490,6 +497,63 @@ describe('web push and kitchen files', () => {
       expect(text).toContain('>DD</text>');
       // No PNG can be made without a dependency: the gap is an honest 404.
       expect((await get('/k/dapur-demo/icon-180.png'))?.status).toBe(404);
+    });
+
+    // Plan 009 stage 4: the manifest and the icon files follow the kitchen's stored `railIcon` ref.
+    // A database seeded before the sample moved to icon-512.jpg still holds the old ref, so its phones
+    // get the old art; a seller's own upload replaces it.
+    const setIcon = (ref: string) =>
+      world.db
+        .stmt(
+          "UPDATE kitchen_images SET ref = ? WHERE seller_id = 'seller-onde-onde' AND slot = 'railIcon'",
+          ref,
+        )
+        .run();
+
+    it('points at the old sample art while the stored ref is the old sample', async () => {
+      await setIcon('/samples/rail-icon.png');
+      const manifest = (await (await get('/k/onde-onde/manifest.webmanifest'))?.json()) as {
+        icons: Array<{ src: string; type: string }>;
+      };
+      expect(manifest.icons.map((icon) => icon.type)).toEqual([
+        'image/png',
+        'image/png',
+        'image/png',
+      ]);
+      expect((await get('/k/onde-onde/icon-180.png'))?.headers.get('Location')).toBe(
+        '/samples/rail-icon.png',
+      );
+    });
+
+    it("serves the seller's own uploaded icon in the manifest and as the 180 px icon", async () => {
+      const ref = '/images/sellers/seller-onde-onde/railIcon-0123456789abcdef.png';
+      await setIcon(ref);
+      const bucket = {
+        put: () => Promise.resolve(),
+        delete: () => Promise.resolve(),
+        get: (key: string) =>
+          Promise.resolve(
+            key === ref.slice('/images/'.length)
+              ? {
+                  body: new Response('own-icon-bytes').body as ReadableStream,
+                  httpEtag: 'e',
+                  httpMetadata: { contentType: 'image/png' },
+                }
+              : null,
+          ),
+      };
+      const request = (path: string) =>
+        handleKitchenRequest(world.repo, new Request(`https://delave.test${path}`), {
+          images: bucket,
+        });
+      const manifest = (await (await request('/k/onde-onde/manifest.webmanifest'))?.json()) as {
+        icons: Array<{ type: string }>;
+      };
+      expect(manifest.icons.every((icon) => icon.type === 'image/png')).toBe(true);
+      const icon = await request('/k/onde-onde/icon-180.png');
+      expect(icon?.status).toBe(200);
+      expect(icon?.headers.get('Content-Type')).toBe('image/png');
+      expect(await icon?.text()).toBe('own-icon-bytes');
     });
 
     it('serves an uploaded icon at any size, and 404s unknown kitchens and sizes', async () => {

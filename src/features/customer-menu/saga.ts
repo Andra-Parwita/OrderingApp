@@ -7,6 +7,7 @@ import {
   updateOrder,
 } from '../../api/client';
 import { rememberKitchen } from '../../api/device/lastKitchen';
+import { rememberFirstName } from '../../api/device/firstName';
 import { isReturningCustomer, saveMyOrder } from '../../api/device/myOrders';
 import {
   editFailed,
@@ -76,6 +77,7 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
   >;
   if (result.ok) {
     yield call(saveMyOrder, result.data.order);
+    yield call(rememberFirstName, result.data.order.firstName);
     yield put(placeSucceeded(result.data.order));
   } else {
     yield put(placeFailed({ code: result.error, message: result.message }));

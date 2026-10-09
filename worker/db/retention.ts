@@ -2,6 +2,7 @@
 // cooking date; the totals stay and a stub (token + date) is left so old links say "archived".
 // It runs when a seller opens their history or backup, when a customer looks an order up, and
 // once a week for every seller from the Worker's cron (worker/api/scheduled.ts).
+import { LOCKOUT_MINUTES } from '../../shared/authContract';
 import { keepsOrderDetails } from '../../shared/pastWeeks';
 import type { Db } from './d1';
 
@@ -68,4 +69,19 @@ export async function dropExpiredDetails(
     );
   }
   return { weeks: expired.length, orders };
+}
+
+/**
+ * D-075: forgets the wrong tries of "find my order" (and so the hashed addresses) once they are
+ * older than the lock time and no lock is live. Only `find:` rows: sign-in counts are not touched.
+ * Returns how many rows went.
+ */
+export async function dropStaleFindAttempts(db: Db, now: Date): Promise<number> {
+  const rows = await db.all<{ scope: string }>(
+    `DELETE FROM auth_attempts WHERE scope LIKE 'find:%' AND updated_at <= ?
+     AND (locked_until IS NULL OR locked_until <= ?) RETURNING scope`,
+    new Date(now.getTime() - LOCKOUT_MINUTES * 60_000).toISOString(),
+    now.toISOString(),
+  );
+  return rows.length;
 }

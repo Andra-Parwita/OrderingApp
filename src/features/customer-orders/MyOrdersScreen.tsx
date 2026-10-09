@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { findOrder } from '../../api/customer';
+import { lastKitchen } from '../../api/device/lastKitchen';
 import { readMyOrders } from '../../api/device/myOrders';
 import { ScreenBoundary, isOffline, useLang } from './layout';
 import { buildMyOrders } from './myOrdersModel';
-import { MyOrdersView } from './MyOrdersView';
+import { MyOrdersView, type FindOutcome } from './MyOrdersView';
 import { selectList, selectMenus } from './selectors';
 import { listRequested } from './slice';
 
@@ -21,9 +23,39 @@ const findToken = (code: string) => readMyOrders().find((entry) => entry.code ==
 
 function MyOrdersContent({ onBack, onOpenOrder }: Props) {
   const lang = useLang();
+  // D-075: ask the kitchen the customer is in (the last one visited). The order opens by its token
+  // and is saved in My orders when its page loads.
+  const onFind = useCallback(
+    async (code: string, firstName: string): Promise<FindOutcome> => {
+      const slug = lastKitchen();
+      // The form isn't shown without a kitchen; never claim "not found" without asking.
+      if (slug === null) return 'error';
+      const result = await findOrder(slug, code, firstName);
+      if (result.ok) {
+        onOpenOrder(result.data.token);
+        return 'found';
+      }
+      return result.error === 'locked_out'
+        ? 'locked'
+        : result.error === 'not_found'
+          ? 'not_found'
+          : 'error';
+    },
+    [onOpenOrder],
+  );
   const dispatch = useDispatch();
   const list = useSelector(selectList);
   const menus = useSelector(selectMenus);
+  const kitchenSlug = lastKitchen();
+  // The name comes from what this side already has: that kitchen's menu, else one of its orders.
+  const kitchenName =
+    kitchenSlug === null
+      ? null
+      : (menus[kitchenSlug]?.kitchen.name ??
+        (list.status === 'ready'
+          ? list.orders.find((order) => order.seller.slug === kitchenSlug)?.seller.name
+          : undefined) ??
+        null);
 
   const load = useCallback(() => {
     dispatch(listRequested());
@@ -55,6 +87,9 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
       stale={stale !== undefined}
       offline={isOffline(stale)}
       findToken={findToken}
+      onFind={onFind}
+      hasKitchen={kitchenSlug !== null}
+      kitchenName={kitchenName}
       onOpenOrder={onOpenOrder}
       onOpenMenu={onBack}
       onRetry={load}

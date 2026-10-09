@@ -115,7 +115,8 @@ describe('expired order page', () => {
       <OrderScreen token={expired.token} onBack={noop} onChange={noop} onOpenMenu={onOpenMenu} />,
     );
     expect(await screen.findByText('This order has been archived')).toBeVisible();
-    expect(screen.getByText('Onde Onde')).toBeVisible();
+    // The seller's name is in the top bar and in the body.
+    expect(screen.getAllByText('Onde Onde').length).toBeGreaterThan(0);
     expect(screen.getByText(/· Sat 5 Sep/)).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'See the current menu' }));
     expect(onOpenMenu).toHaveBeenCalledWith('onde-onde');

@@ -22,6 +22,10 @@ export const SETUP_SESSION_MINUTES = 60;
 /** 5 failed tries (per device, and per seller) lock sign-in for 15 minutes (D-027 row 1). */
 export const MAX_FAILED_ATTEMPTS = 5;
 export const LOCKOUT_MINUTES = 15;
+/** Finding a lost order by code and first name locks a kitchen-and-code after 2 wrong tries (D-075). */
+export const ORDER_LOOKUP_MAX_FAILS = 2;
+/** ...and a client address after 10, so strangers sharing one IP are not locked out by each other. */
+export const ORDER_LOOKUP_MAX_FAILS_PER_CLIENT = 10;
 /** A WebAuthn challenge is good for 5 minutes and for one check. */
 export const CHALLENGE_TTL_MINUTES = 5;
 /** At most this many requests to /api/auth/* (and /api/admin/setup) per browser id per window. */

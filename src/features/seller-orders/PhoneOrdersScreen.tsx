@@ -42,13 +42,33 @@ export type PhoneOrdersScreenProps = OrdersScreenProps &
     onToggle?: (key: 'changed' | 'unpaid') => void;
   }>;
 
+// Plan 008: the layout gives the page the height between the banner and the bottom bar; the header
+// and filter bar stay, only the rows scroll (ListScroll). Other states scroll inside Scroll.
 const Page = styled.main`
   display: flex;
+  flex: 1;
   flex-direction: column;
-  min-height: 60dvh;
+  min-height: 0;
+`;
+const Scroll = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+`;
+const Board = styled.div`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+`;
+const ListScroll = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 `;
 const Head = styled.header`
   display: flex;
+  flex: none;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xs};
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadPhone}px
@@ -84,6 +104,7 @@ const NoLive = styled(SubLine)`
 `;
 const FilterBar = styled.div`
   display: flex;
+  flex: none;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadPhone}px;
@@ -140,6 +161,7 @@ const SearchButton = styled.button`
 `;
 const SearchRow = styled.label`
   display: flex;
+  flex: none;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   min-height: ${({ theme }) => theme.size.tap}px;
@@ -257,7 +279,7 @@ function PhoneOrdersContent({
 
   const filterLabel = filter === 'all' ? t('phone.allOrders') : t(`filter.${filter}`);
   const board = (
-    <>
+    <Board>
       <FilterBar role="search">
         <Dropdown
           type="button"
@@ -304,39 +326,41 @@ function PhoneOrdersContent({
           />
         </SearchRow>
       ) : null}
-      {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
-      {list.status === 'error' ? (
-        <ErrorBox role="alert">
-          <span>{t('error.load')}</span>
-          <Button onClick={retry}>{t('error.retry')}</Button>
-        </ErrorBox>
-      ) : null}
-      {noOrdersAtAll ? (
-        <EmptyState
-          icon="share"
-          title={t('orders.emptyTitle')}
-          why={t('orders.emptyHint')}
-          action={
-            onShare && live ? (
-              <Button variant="primary" onClick={onShare}>
-                <Icon name="chat" />
-                {t('orders.shareOnWhatsApp')}
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : null}
-      {list.status === 'ready' && counts.all > 0 && visible.length === 0 ? (
-        <Message>{t('orders.empty')}</Message>
-      ) : null}
-      {list.status === 'ready' ? (
-        <Rows>
-          {visible.map((order) => (
-            <PhoneOrderRow key={order.id} order={order} onOpen={onOpenOrder} />
-          ))}
-        </Rows>
-      ) : null}
-    </>
+      <ListScroll>
+        {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
+        {list.status === 'error' ? (
+          <ErrorBox role="alert">
+            <span>{t('error.load')}</span>
+            <Button onClick={retry}>{t('error.retry')}</Button>
+          </ErrorBox>
+        ) : null}
+        {noOrdersAtAll ? (
+          <EmptyState
+            icon="share"
+            title={t('orders.emptyTitle')}
+            why={t('orders.emptyHint')}
+            action={
+              onShare && live ? (
+                <Button variant="primary" onClick={onShare}>
+                  <Icon name="chat" />
+                  {t('orders.shareOnWhatsApp')}
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : null}
+        {list.status === 'ready' && counts.all > 0 && visible.length === 0 ? (
+          <Message>{t('orders.empty')}</Message>
+        ) : null}
+        {list.status === 'ready' ? (
+          <Rows>
+            {visible.map((order) => (
+              <PhoneOrderRow key={order.id} order={order} onOpen={onOpenOrder} />
+            ))}
+          </Rows>
+        ) : null}
+      </ListScroll>
+    </Board>
   );
 
   let body: ReactNode;
@@ -390,7 +414,7 @@ function PhoneOrdersContent({
         ) : null}
         {!live && view ? <NoLive>{t('home.noLive')}</NoLive> : null}
       </Head>
-      {body}
+      {kind === 'live' ? body : <Scroll>{body}</Scroll>}
       {sheet ? (
         <BottomSheet title={t('phone.filterTitle')} onClose={() => setSheet(false)}>
           {SHEET_FILTERS.map((id) => (

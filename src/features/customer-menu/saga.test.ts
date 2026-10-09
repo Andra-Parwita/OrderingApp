@@ -8,6 +8,7 @@ import {
   quantitySet,
   type PlaceRequest,
 } from './customerSlice';
+import { FIRST_NAME_KEY, savedFirstName } from '../../api/device/firstName';
 import { MY_ORDERS_KEY, readMyOrders } from '../../api/device/myOrders';
 import { createTestStore } from './testSupport';
 
@@ -28,6 +29,7 @@ async function storeWithMenu() {
 beforeEach(() => {
   localStorage.removeItem(MY_ORDERS_KEY);
   localStorage.removeItem('lastKitchen');
+  localStorage.removeItem(FIRST_NAME_KEY);
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -67,6 +69,14 @@ describe('customer saga', () => {
       place.status === 'placed' && place.token,
     );
     expect(saved[0]?.code).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);
+  });
+
+  it('remembers the first name on the phone after an order is placed', async () => {
+    const store = await storeWithMenu();
+    store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 1 }));
+    store.dispatch(placeRequested({ ...request, firstName: 'Lenny' }));
+    await vi.waitFor(() => expect(store.getState().customer.place.status).toBe('placed'));
+    expect(savedFirstName()).toBe('Lenny');
   });
 
   it.each([

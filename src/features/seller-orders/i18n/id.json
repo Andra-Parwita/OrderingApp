@@ -13,7 +13,7 @@
     "paid": "✓ Lunas",
     "note": "✎ Catatan",
     "enteredBy": "dimasukkan oleh {{name}}",
-    "devSample": "Tambah 5 pesanan contoh",
+    "devSample": "Tambah 50 pesanan contoh",
     "devReset": "Reset",
     "devResetConfirm": "Ketuk lagi untuk reset",
     "share": "Bagikan menu",
@@ -301,7 +301,12 @@
     "confirmed": "{{name}} dikonfirmasi",
     "paid": "{{name}} ditandai lunas",
     "cancelled": "{{name}} dibatalkan",
-    "collected": "{{name}} ditandai diambil"
+    "collected": "{{name}} ditandai diambil",
+    "sampleAdded": "{{name}} pesanan ditambahkan",
+    "samplePartial": "{{name}} pesanan ditambahkan; sisanya habis",
+    "sampleNone": "Tidak ada yang ditambahkan: semua hidangan habis",
+    "sampleNoMenu": "Buat menu dulu",
+    "sampleFailed": "Tidak bisa menambah contoh pesanan"
   },
   "dishes": {
     "title": "Hidangan",

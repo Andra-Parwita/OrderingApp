@@ -134,7 +134,7 @@ describe('basket edit mode', () => {
     expect(screen.getByLabelText('First name')).toHaveAttribute('readonly');
     expect(screen.getByLabelText('First name')).toHaveValue('Rina');
     expect(screen.getByLabelText(/^Note/)).toHaveValue('No chilli');
-    fireEvent.click(screen.getByRole('button', { name: 'Update order · 0.00' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Update order · / }));
     await waitFor(() => expect(onUpdated).toHaveBeenCalledWith(placed.token));
     const after = await fetchOrder(placed.token);
     expect(after.ok && after.data.order.lines[0]?.qty).toBe(2);
@@ -153,7 +153,7 @@ describe('basket edit mode', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add one Chicken lemper' }));
     await setOrderLocked(placed.code, true);
     toName();
-    fireEvent.click(screen.getByRole('button', { name: 'Update order · 0.00' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Update order · / }));
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The seller has locked this order. Message them on WhatsApp to change it.',
     );
@@ -172,7 +172,7 @@ describe('basket edit mode', () => {
     renderEdit(placed.token);
     fireEvent.click(await screen.findByRole('button', { name: 'Add one Chicken lemper' }));
     toName();
-    fireEvent.click(screen.getByRole('button', { name: 'Update order · 0.00' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Update order · / }));
     expect(await screen.findByRole('alert')).toHaveTextContent(text);
     expect(screen.getByRole('button', { name: /^Next: your name/ })).toBeDisabled();
     expect(readMyOrders()).toEqual([]);

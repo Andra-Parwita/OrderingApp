@@ -19,13 +19,14 @@ export function buildWhatsAppText(order: CustomerOrder, t: TFunction, when: stri
       : when
         ? t('wa.pickupWhen', { when })
         : t('wa.pickup');
-  const text = t('wa.message', {
+  // The private order link stays in the customer's chat, so any phone can open the order (D-075).
+  const text = `${t('wa.message', {
     code: formatOrderCode(order.code),
     items,
     total: formatMoney(total, lang),
     how,
     name: order.firstName,
-  });
+  })} ${t('wa.link', { link: `${window.location.origin}/o/${order.token}` })}`;
   return order.fulfilment === 'delivery' ? `${text} ${t('wa.addAddress')}` : text;
 }
 

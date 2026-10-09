@@ -71,7 +71,7 @@ describe('MyOrdersScreen', () => {
     expect(await screen.findByText('Current')).toBeVisible();
     const row = screen.getByRole('button', { name: new RegExp(placed.code.slice(0, 3)) });
     expect(row).toHaveTextContent('Ordered');
-    expect(row).toHaveTextContent('3× Thin battered tempeh');
+    expect(row).toHaveTextContent('3 × Thin battered tempeh');
     await waitFor(() => expect(row).toHaveTextContent('Sat 10 Oct · Pickup')); // after the menu loads
     expect(row).toHaveTextContent('$30.00');
     expect(screen.getByText(/Saved on this phone only. No account./)).toBeVisible();
@@ -131,6 +131,77 @@ describe('MyOrdersScreen', () => {
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={onOpenOrder} />);
     fireEvent.change(await screen.findByLabelText('Order code'), { target: { value: 'ZZZ-ZZZ' } });
     expect(await screen.findByText(/Not saved on this phone/)).toBeVisible();
+    expect(onOpenOrder).not.toHaveBeenCalled();
+  });
+
+  it('finds an order that is not saved here by its code and first name, and opens it', async () => {
+    const placed = await place();
+    localStorage.removeItem(MY_ORDERS_KEY);
+    localStorage.setItem('lastKitchen', 'onde-onde');
+    const onOpenOrder = vi.fn();
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={onOpenOrder} />);
+    fireEvent.change(await screen.findByLabelText('Order code'), {
+      target: { value: placed.code.toLowerCase() },
+    });
+    expect(onOpenOrder).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText('First name on the order'), {
+      target: { value: ' rina ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Find my order' }));
+    await waitFor(() => expect(onOpenOrder).toHaveBeenCalledWith(placed.token));
+  });
+
+  it('names the kitchen the find form searches in', async () => {
+    await place(); // a saved order of that kitchen gives its name
+    localStorage.setItem('lastKitchen', 'onde-onde');
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    fireEvent.change(await screen.findByLabelText('Order code'), { target: { value: 'ZZZ-ZZZ' } });
+    expect(await screen.findByText(/Searching in Onde Onde/)).toBeVisible();
+  });
+
+  it('with no saved kitchen, says to open the kitchen link first and asks the server nothing', async () => {
+    const asked = vi.fn();
+    server.use(
+      http.post('*/api/s/*/orders/find', () => {
+        asked();
+        return HttpResponse.json({ error: 'not_found', message: 'No order' }, { status: 404 });
+      }),
+    );
+    localStorage.removeItem('lastKitchen');
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    fireEvent.change(await screen.findByLabelText('Order code'), { target: { value: 'ZZZ-ZZZ' } });
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Open your kitchen's link first, then try again.",
+    );
+    expect(screen.queryByRole('button', { name: 'Find my order' })).not.toBeInTheDocument();
+    expect(asked).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [404, /No order found for that code and name/],
+    [429, /wait 15 minutes/],
+  ])('says so, without more, when the lookup answers %i', async (status, text) => {
+    server.use(
+      http.post('*/api/s/onde-onde/orders/find', () =>
+        HttpResponse.json(
+          status === 429
+            ? { error: 'locked_out', message: 'Too many tries', retryAfterSeconds: 900 }
+            : { error: 'not_found', message: 'No order' },
+          { status },
+        ),
+      ),
+    );
+    await place();
+    localStorage.removeItem(MY_ORDERS_KEY);
+    localStorage.setItem('lastKitchen', 'onde-onde');
+    const onOpenOrder = vi.fn();
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={onOpenOrder} />);
+    fireEvent.change(await screen.findByLabelText('Order code'), { target: { value: 'ZZZ-ZZZ' } });
+    fireEvent.change(screen.getByLabelText('First name on the order'), {
+      target: { value: 'Rina' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Find my order' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(text);
     expect(onOpenOrder).not.toHaveBeenCalled();
   });
 
@@ -317,7 +388,10 @@ describe('OrderScreen', () => {
       renderOrder(placed.token);
       const updates = await screen.findByTestId('updates');
       expect(updates).toHaveTextContent('Parking is behind the shop');
-      for (const entry of SATURDAY_KEYS) expect(updates).toHaveTextContent(entry[lang]);
+      // "Ready for pickup at {place}" needs the menu's pickup place, which arrives a moment later.
+      await waitFor(() => {
+        for (const entry of SATURDAY_KEYS) expect(updates).toHaveTextContent(entry[lang]);
+      });
       expect(updates).not.toHaveTextContent(/Update from the seller|Kabar dari penjual/);
     },
   );

@@ -36,7 +36,7 @@ test('a limited item shows "1 left", then Sold out, and refuses more orders', as
   expect((await order(remaining - 1, 'Limit')).ok()).toBe(true);
   expect((await menu()).remaining).toBe(1);
 
-  await page.goto('/onde-onde');
+  await page.goto('/onde-onde/dishes');
   const row = page.getByRole('listitem').filter({ hasText: 'Palembang fish cake with egg' });
   await expect(row.getByText('1 left')).toBeVisible();
 

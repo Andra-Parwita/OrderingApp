@@ -16,6 +16,15 @@
     "codePlaceholder": "Punya kode pesanan? mis. K7F-2QX",
     "open": "Buka",
     "codeNotFound": "Tidak tersimpan di ponsel ini. Buka tautan yang dikirim dapur, atau minta ke mereka.",
+    "findHint": "Tidak tersimpan di ponsel ini. Isi nama depan di pesanan untuk mencarinya.",
+    "findIn": "Mencari di {{kitchen}}.",
+    "findNoKitchen": "Buka dulu tautan dapur Anda, lalu coba lagi.",
+    "nameLabel": "Nama depan di pesanan",
+    "namePlaceholder": "Nama depan di pesanan",
+    "find": "Cari pesanan saya",
+    "find_not_found": "Pesanan tidak ditemukan untuk kode dan nama itu. Periksa lagi lalu coba kembali.",
+    "find_locked": "Terlalu banyak percobaan. Tunggu 15 menit lalu coba lagi.",
+    "find_error": "Tidak bisa mencari. Periksa koneksi Anda lalu coba lagi.",
     "thisWeek": "Sekarang",
     "earlier": "Sebelumnya",
     "emptyTitle": "Pesanan Anda akan muncul di sini",
@@ -141,6 +150,7 @@
     "pickup": "Ambil sendiri",
     "pickupWhen": "Ambil sendiri {{when}}",
     "delivery": "Diantar",
+    "link": "Pesanan saya: {{link}}",
     "addAddress": "Alamat saya:"
   }
 }
