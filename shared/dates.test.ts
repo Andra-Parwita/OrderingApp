@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  comingSaturday,
+  defaultCutoffAt,
   formatCookingDate,
   formatCutoff,
   formatDay,
@@ -33,5 +35,27 @@ describe('date helpers (Australia/Melbourne)', () => {
     expect(formatTime('2026-10-08T08:12:00Z', 'en')).toBe('7:12 pm');
     expect(formatTime('2026-10-08T08:12:00Z', 'id')).toBe('19.12');
     expect(formatDayTime('2026-10-08T08:12:00Z', 'en')).toBe('Thu 8 Oct 7:12 pm');
+  });
+});
+
+describe('default week for a new seller', () => {
+  it('picks the coming Saturday, in Melbourne time', () => {
+    // Wed 7 Oct 2026, 21:00 in Melbourne (daylight time, UTC+11)
+    expect(comingSaturday(new Date('2026-10-07T10:00:00Z'))).toBe('2026-10-10');
+    // Sun 11 Oct 2026 00:30 in Melbourne is still Sat 10 Oct in UTC: the next one is 17 Oct
+    expect(comingSaturday(new Date('2026-10-10T13:30:00Z'))).toBe('2026-10-17');
+    // Fri 9 Oct
+    expect(comingSaturday(new Date('2026-10-09T01:00:00Z'))).toBe('2026-10-10');
+    // On the Saturday itself the next Saturday
+    expect(comingSaturday(new Date('2026-10-10T01:00:00Z'))).toBe('2026-10-17');
+    // Sun 11 Oct, Melbourne
+    expect(comingSaturday(new Date('2026-10-11T01:00:00Z'))).toBe('2026-10-17');
+  });
+
+  it('cuts off the Friday before at 21:00, with the zone offset of that day', () => {
+    expect(defaultCutoffAt('2026-10-10')).toBe('2026-10-09T21:00:00+11:00');
+    // Daylight saving ends on Sun 5 Apr 2026: the Friday before Sat 11 Apr is on standard time
+    expect(defaultCutoffAt('2026-04-11')).toBe('2026-04-10T21:00:00+10:00');
+    expect(formatCutoff(defaultCutoffAt('2026-10-10'), 'en')).toBe('Fri 9 Oct, 9 pm');
   });
 });

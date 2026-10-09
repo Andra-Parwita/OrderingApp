@@ -2,8 +2,11 @@
   "orders": {
     "title": "Pesanan",
     "titleWithDate": "Pesanan · {{date}}",
-    "live": "Langsung",
-    "offline": "Menyambung ulang…",
+    "link": {
+      "live": "Langsung",
+      "reconnecting": "Menyambung lagi…",
+      "offline": "Offline · memuat lebih lambat"
+    },
     "notConfirmed_one": "{{count}} belum dikonfirmasi",
     "notConfirmed_other": "{{count}} belum dikonfirmasi",
     "show": "Lihat ›",

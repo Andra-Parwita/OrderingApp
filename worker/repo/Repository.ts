@@ -149,12 +149,15 @@ export type SellerRepository = {
   nudge(code: string): Promise<StoreResult<SellerOrder>>;
   arrivingSoon(code: string): Promise<StoreResult<SellerOrder>>;
   markSeen(code: string): Promise<StoreResult<SellerOrder>>;
-  /** One bulk update (stage 7.1) for one order; `rawCode` may be sloppy ("k7f-2qx"). */
-  sendUpdate(
-    rawCode: string,
+  /**
+   * Bulk updates (stage 7.1), one result per code, in order. A code may be sloppy ("k7f-2qx"). The
+   * orders are read together and written in a few batches, however many codes there are.
+   */
+  sendUpdates(
+    rawCodes: ReadonlyArray<string>,
     update: Omit<SendUpdatesRequest, 'codes'>,
     actor: StaffActor,
-  ): Promise<UpdateResult>;
+  ): Promise<Array<UpdateResult>>;
 };
 
 /** Where an order token leads (D-044): a live order, an archived one, or just its week's date. */
@@ -264,8 +267,10 @@ export type Repository = {
 
   /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */
   lookupByToken(token: string): Promise<TokenLookup | undefined>;
-  /** The seller id that owns a live order with this token (backup restore must not steal it). */
-  liveOrderOwner(token: string): Promise<string | undefined>;
+  /** Many tokens in a few round trips (My orders). Unknown tokens are left out of the map. */
+  lookupByTokens(tokens: ReadonlyArray<string>): Promise<Map<string, TokenLookup>>;
+  /** The seller id that holds a live order, for each of these tokens (backup restore must not steal one). */
+  liveOrderOwners(tokens: ReadonlyArray<string>): Promise<Map<string, string>>;
 
   auth: AuthRepository;
 

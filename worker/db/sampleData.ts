@@ -1,4 +1,5 @@
 import type { Chef, Kitchen, KitchenSettings, MenuItem, Seller, Week } from '../../shared/domain';
+import { comingSaturday, defaultCutoffAt } from '../../shared/dates';
 
 /** Everything one seller owns (D-036). */
 export type SellerFixture = {
@@ -208,11 +209,18 @@ export const fixtureSellers: ReadonlyArray<SellerFixture> = [
   },
 ];
 
-/** An empty kitchen for a seller the admin just created (stage 7.1): no items, no chefs. */
+/**
+ * An empty kitchen for a seller the admin just created (stage 7.1): no items, no chefs. Its first
+ * week is the coming Saturday, with the sample default cut-off (the evening before, 21:00); the
+ * pickup point, with its times, is the seller's to add. `createdAt` is the moment of creation.
+ */
 export function blankFixture(seller: Seller, createdAt: string): SellerFixture {
+  const cookingDate = comingSaturday(new Date(createdAt));
   const week: Week = {
     ...structuredClone((fixtureSellers[0] as SellerFixture).week),
     status: 'draft',
+    cookingDate,
+    cutoffAt: defaultCutoffAt(cookingDate),
     pickupPoints: [],
     delivery: { available: false, note: { en: '', id: '' } },
   };

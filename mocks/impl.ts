@@ -11,6 +11,7 @@ import { sha256Hex } from '../worker/db/crypto';
 import { Db, type D1Like } from '../worker/db/d1';
 import { applyMigrations } from '../worker/db/migrate';
 import { trackWrites } from './dirtyTables';
+import { countQueries, type QueryCounter } from './queryCount';
 import { handleApiRequest, type RouteContext } from '../worker/api/routes';
 import type { Repository } from '../worker/repo/Repository';
 
@@ -28,6 +29,8 @@ export type TestOptions = {
 /** One fresh world (the two sample kitchens, no orders, no accounts) for one test. */
 export type World = {
   repo: Repository;
+  /** D1 queries the repository has issued since `queries.reset()` (the free plan allows 50 per invocation). */
+  queries: QueryCounter;
   /** The raw database, for the few tests that bend a row the API cannot. */
   db: Db;
   /** Back to the sample kitchens; forgets sellers the admin added and every account. */
@@ -122,8 +125,9 @@ export async function openDatabase(name: string): Promise<Database> {
 /** The sample kitchens, no orders, no accounts: a fresh world on an open database. */
 export async function makeWorld(database: Database, options: TestOptions): Promise<World> {
   const db = new Db(database.d1);
+  const queries = countQueries(database.d1);
   // The repository's own dev tools (reset, sample orders) are on: this is a scratch database.
-  const repo = createD1Repository(database.d1, {
+  const repo = createD1Repository(queries.d1, {
     ...options,
     adminSetupKey: DEV_ADMIN_SETUP_KEY,
     devTools: true,
@@ -131,6 +135,7 @@ export async function makeWorld(database: Database, options: TestOptions): Promi
   await database.reset();
   return {
     repo,
+    queries,
     db,
     // The repository's own dev reset also forgets the sample-order generator it keeps.
     reset: async () => {

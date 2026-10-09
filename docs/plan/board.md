@@ -9,8 +9,9 @@ Live status of the current round. The plan itself (phases, stage tables, folder 
 | 0 · Plan | ✅ done 2026-10-07 (D-003 to D-015) | — |
 | 1 · Scaffold | ✅ landed ~20:24, gate verified by the coordinator | owner: open the hello screen on a phone |
 | 2 · Wireframes | ✅ done: batches 1–4 approved | — |
-| 3 · Prototype | ✅ batches 1–2, desktop seller layout, native customer app, owner's images, **multi-seller foundation** (02:19, 9 Oct) and **batch 3** (menu editor, setup + images, labels, history, archived orders; 04:54, 9 Oct) | owner commits; polish round; batch 4 stage table |
-| 4–5 | ⏳ not started | — |
+| 3 · Prototype | ✅ batches 1–4 + polish (owner commit `4c49a21`) | — |
+| 4 · Real backend on this PC | ✅ done 18:43, 9 Oct: D1, real passkeys + cookie sessions, live updates (DO), R2 images, retention cron, scratch DBs for tests | owner commits (message in `scratch/commit-message.txt`); owner tries it on this PC |
+| 5 · Cloudflare deploy | ⏳ not started | owner's step; see Findings "For phase 5" |
 
 ## Phase 1 · Scaffold (round 1)
 
@@ -154,8 +155,8 @@ Plan approved with review changes (D-046). Owner committed `4c49a21` "Polish" (b
 | 8.2 Real passkeys (@simplewebauthn, D-014), `__Host-` cookie sessions, Origin check, auth limits, virtual-authenticator e2e (wave) | builder · sonnet | 16:56 | ~17:50 | | `worker/auth/`, auth routes/repo, `src/api/http+auth`, seller-auth, admin, package.json; +@simplewebauthn server 14.0.3 / browser 14.0.0; `migrations/0002_webauthn.sql` | ✅ landed 17:23. Unit gate 17:26 green (81 files, 1232 tests). E2E 17:27 red: virtual authenticator `addCredential` invalid params (admin, session-flow) → fix round sent 17:28 → fixed 17:30: signCount overflowed int32, now 10/s since 2026-10-01 in `e2e/adminSession.ts` (auth-desktop 3/4, the 4th is the Origin case; session-flow 1/1); seller-saturday 403 `bad_origin` → owner chose A 17:31 (D-048): Playwright sends the test origin, server stays strict → one-file builder (sonnet) 17:31, green 17:33. Out-of-list edits accepted (routes.ts cookie resolution reviewed OK). For 8.4: keep the live socket's slug fallback dev-only; the real Worker entry must call `checkOrigin` |
 | 8.3 Per-seller Durable Object live updates (WebSocket Hibernation, SQLite-backed) + R2 images with immutable caching (wave) | builder · sonnet | 16:56 | ~17:50 | | `worker/live/` (SellerLive DO, hub, notifier), `worker/images/` (R2 put/serve), `wrangler.jsonc` (SELLER_LIVE, v1 `new_sqlite_classes`, IMAGES), `src/api/live.ts`, sagas → refetch on event (60 s fallback poll), `shared/liveContract.ts`; ~59 new tests; e2e `live.spec` written | ✅ landed 17:10 (waiting for the wave gate); smoke on a throwaway server (5199, stopped): socket + order event in ~0.5 s, R2 upload/serve/delete OK. Out-of-list touches reported (shared/liveContract, mock store `setImage` ref). Not done: the "Live" dot still reflects the last fetch, not the socket. ⚠️ the 8.2 builder edited `worker/mock/routes.ts` (8.3's file) for cookie resolution — overlap breach, reviewed at the gate 17:25: accepted. E2E `live.spec` timed out at 17:27 → fix round sent 17:28 → fixed 17:30: the spec waited on the first socket, which React strict mode closes in dev; it now collects frames from every socket (spec-only change, 1 passed in 1.8 s; scoped unit 80/80). My Origin guess was wrong |
 | Wave gate 8.2 ∥ 8.3 (+ D-048 config fix, sonnet; seller-setup image spec updated for R2 URLs, sonnet) | coordinator | 17:24 | | 17:35 | `playwright.config.ts` Origin header; `e2e/seller-setup.spec.ts` | ✅ green 17:35. Unit 81 files / 1232; e2e one project at a time: auth-mobile 3 (+1 skip), auth-desktop 4, session-flow 1, limits 1, archived 1, settings-desktop 5, desktop-chromium 21 (+3 skip) after the spec fix (3/3). Quiet tree, 0 CRLF, snapshot `phase4-wave2-green.tar` |
-| 8.4a Switch over: routes on D1, memory store and mock retired (D-047), dev-only paths behind `DEV_TOOLS`, unit/MSW tests on D1 only, e2e on a scratch D1 per run (never `.wrangler/state`) | builder · sonnet | 17:36 | ~19:00 | | `worker/`, `mocks/`, `src/api/`, `src/app/`, dev-tool bits, e2e setup, `playwright.config.ts`, `vite.config.ts`, `scripts/` | 🔄 running |
-| 8.4b Rules and ops: retention cron, portion-limit race, D1 query count per invocation, new-seller default week, "Live" dot from the socket, architecture docs (overview, API) | builder · sonnet | | | | | ⏳ after 8.4a (split from 8.4 at 17:36: too much for one pass) |
+| 8.4a Switch over: routes on D1, memory store and mock retired (D-047), dev-only paths behind `DEV_TOOLS`, unit/MSW tests on D1 only, e2e on a scratch D1 per run (never `.wrangler/state`) | builder · sonnet | 17:36 | ~19:00 | | `worker/`, `mocks/`, `src/api/`, `src/app/`, dev-tool bits, e2e setup, `playwright.config.ts`, `vite.config.ts`, `scripts/`; `worker/mock/` → `worker/api/` + `worker/db/sampleData.ts`; memory store deleted; `scripts/scratch-server.mjs`; `mocks/dirtyTables.ts`; `.dev.vars.example` tracked | ✅ landed 18:12. Gate 18:13–18:20: unit 82 files / 1065 (91 s; was 1232 / 75 s, memory halves gone); auth-mobile 3 (+1 skip), auth-desktop 4, session-flow 1; desktop-chromium first run 16/25 failed on page-load timeouts while the owner's server restarted and the PC was busy, re-run 22 (+3 skip) in 19 s. Snapshot `phase4-84a-green.tar`. Accepted: all 3 `/api/dev/*` kept behind `DEV_TOOLS`; scratch DB migrated and seeded before the e2e server starts. Owner ran the one-time setup (`.dev.vars` present, dev server restarted 18:17) |
+| 8.4b Rules and ops: retention cron, portion-limit race, D1 query count per invocation, new-seller default week, "Live" dot from the socket, architecture docs (overview, API), e2e warm-up | builder · sonnet | 18:21 | ~19:45 | | `worker/`, `shared/`, `src/api/`, Live dot, `mocks/`, `wrangler.jsonc` crons, `e2e/global-setup.ts`, `docs/architecture/`; new `worker/api/scheduled.ts`, `LiveDot`, `mocks/{queryCount,queries,portionRace,retention,newSeller}`, `docs/architecture/{overview,api}.md` | ✅ landed 18:38. Gate 18:40–18:43: unit 87 files / 1109; auth-desktop 4, session-flow 1, desktop-chromium 22 (+3 skip), limits 1, archived 1. Snapshot `phase4-84b-green.tar`. Cron `0 3 * * 1` proven on a scratch server (5 orders → 5 stubs, second run 0). Portion race closed by an in-batch guard (3 of 4 race tests fail without it). Query round trips: updates 200 → 4, restore 102 → 3, order lookup 60 → 1; every route < 40 with 100 orders. New seller: coming Saturday, cut-off Fri 21:00 Melbourne; **no pickup times** (a blank kitchen has no pickup point) → owner question. Builder ran `pnpm format` repo-wide (checked: no change to protected docs) |
 
 Findings from 8.1b (for 8.4): portion-limit check is read-then-write (two orders in the same instant could both pass) — fix with a conditional single-statement insert or route placement through the DO; **D1 queries per Worker invocation are limited on the free plan** — count queries per operation and batch reads before switching routes; new sellers' first week copies Onde Onde's dates — needs a real default (next Saturday).
 
@@ -166,6 +167,16 @@ Findings from 8.1b (for 8.4): portion-limit check is read-then-write (two orders
 Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-number at phone width (add `white-space: nowrap`); `seller-history` "speaks Indonesian" unit test failed once more under load (2nd time) → investigate, don't ignore (lesson 10); the expanded-rail collapse button's tooltip may clip (seen mid-transition only).
 
 ## Findings
+
+- **For phase 5** (from phase 4, 18:43):
+  - D1 free plan allows 50 queries per Worker invocation. Cloudflare's limits page doesn't say whether each statement in a `batch()` counts. 8.4b counted a batch as one, so "send an update" to 100 orders and backup restore rely on that. Verify on Cloudflare with 100 orders before relying on it.
+  - The cron only runs once deployed; locally, trigger it with `/cdn-cgi/handler/scheduled`.
+  - Set the `ADMIN_SETUP_KEY` secret.
+  - Phone passkeys need a real hostname, not the LAN IP (D-046).
+  - Sweep orphaned R2 images.
+  - Push notifications and real QR are still to come.
+- **Cook screen "Live" text** still follows the last fetch, not the socket (low; 8.4b did the orders screens only). Swap in `LiveDot`.
+- **Test time** (low): unit tests on D1 take ~90 s, up from ~75 s, mostly wrangler start-up per file.
 
 - **Batch 3 polish list** (coordinator, preview capture 04:54; low): preview steppers look enabled even though ordering is off; "Delivery available: Pickup only" reads oddly; the seller's WhatsApp number shows raw (`+61400000002`) in "How ordering works"; items without a size show a leading "· $9.00"; e2e leaves "B3 dish"/"Spec dish" items in Dapur Demo's in-memory menu (gone on server restart).
 
@@ -244,9 +255,19 @@ Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-n
 
 ## Start here (next session)
 
-**Where things stand (9 Oct 2026, 04:55):** phases 0–2 done; phase 3 prototype has batches 1–3 clickable on mock data — customer app (native tabs), seller desktop/phone, multi-seller (`/onde-onde`, `/dapur-demo`), owner's Onde Onde images, menu editor, seller setup + images editor, labels, past weeks, backup, archived orders (D-044). Decisions D-001…D-044. Last owner commit: `528d926`; batch 3 work is uncommitted (message drafted in `scratch/commit-message.txt`). Gate at 04:54: typecheck, lint, format, unit **818/818**, changed e2e specs green.
+**Where things stand (9 Oct 2026, 18:43):** phases 0–4 done.
+- The app runs on a real local backend: D1 via the repository in `worker/db/`, routes in `worker/api/`, real passkeys and `__Host-` cookie sessions, an Origin check, live updates through the `SellerLive` Durable Object, R2 images, and a weekly retention cron.
+- Dev-only paths are behind `DEV_TOOLS` in `.dev.vars`.
+- Tests use scratch D1 directories only (`mocks/impl.ts`, `scripts/scratch-server.mjs`).
+- Decisions D-001…D-049. Last owner commit: `4c49a21`; phase 4 is uncommitted (message in `scratch/commit-message.txt`).
+- Gate at 18:43: typecheck, lint, format, unit **1109/1109**, e2e projects green one at a time.
 
-**Next:** (1) owner commits batch 3; (2) small polish round from the Findings list (preview steppers look enabled, "Delivery available: Pickup only" wording, raw `+614…` number on the menu, leading "·" when an item has no size, test items left in Dapur Demo); (3) **batch 4** stage table for approval — sign-in screens (D-011 passkeys + password fallback, D-013 chefs), admin page that creates sellers and slugs (D-036/D-037), invite keys, scan to collect, hand-over, delivery run, bulk updates; (4) phase 4 real backend.
+**Next:**
+1. Owner commits phase 4.
+2. Owner tries it on this PC (admin setup at `https://localhost:5173/admin/setup`, invites, passkeys).
+3. Pickup-times question for new sellers (open).
+4. Small follow-ups: the cook screen `LiveDot`, plus the UI rework the owner plans.
+5. Phase 5 deploy: owner steps, see Findings "For phase 5".
 
 **Before any work:** read [lessons.md](lessons.md) (esp. 2, 10, 11) and the memory notes. Machine rules: no `python` heredocs, no `cd && write`, check for stray processes before every gate, gate = changed specs only (full suite only when the owner asks), read the clock before writing times.
 

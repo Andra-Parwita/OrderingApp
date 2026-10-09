@@ -1,4 +1,5 @@
 import { handleWorkerRequest, type ApiEnv } from './api';
+import { runRetention } from './api/scheduled';
 import type { SellerLive } from './live/SellerLive';
 
 // Cloudflare finds a Durable Object class by its export from the Worker's main module.
@@ -16,4 +17,8 @@ type Env = Omit<ApiEnv, 'DB' | 'IMAGES' | 'SELLER_LIVE'> & {
 
 export default {
   fetch: (request: Request, env: Env): Promise<Response> => handleWorkerRequest(request, env),
+  // The weekly cron in wrangler.jsonc (Monday 03:00 UTC): retention for every seller.
+  scheduled: async (_controller: ScheduledController, env: Env): Promise<void> => {
+    await runRetention(env, new Date());
+  },
 } satisfies ExportedHandler<Env>;

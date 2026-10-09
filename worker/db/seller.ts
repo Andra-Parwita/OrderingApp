@@ -442,8 +442,51 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     order: { ...d.order, ...patch },
   });
 
+  /**
+   * The first statement of a batch that writes order lines (D1 runs a batch in one transaction, so
+   * nothing can slip in between this check and the writes). If the lines would take more portions
+   * than a limited item has left, it raises "integer overflow" (abs of the smallest integer),
+   * which rolls the whole batch back; `isPortionRace` recognises that and the caller answers
+   * with the usual "sold out" error. The order's own earlier lines do not count against it.
+   */
+  function portionGuard(order: SellerOrder): D1Statement | null {
+    if (order.status === 'cancelled' || order.lines.length === 0) return null;
+    const want = order.lines.map(() => '(?, ?)').join(', ');
+    return db.stmt(
+      `WITH want (item_id, qty) AS (VALUES ${want})
+       SELECT CASE WHEN EXISTS (
+         SELECT 1 FROM want w JOIN menu_items m ON m.seller_id = ? AND m.id = w.item_id
+         WHERE m.portion_limit IS NOT NULL AND m.portion_limit < w.qty + COALESCE((
+           SELECT SUM(l.qty) FROM order_lines l JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
+           WHERE o.seller_id = m.seller_id AND o.past_week_id IS NULL AND o.status <> 'cancelled'
+             AND l.item_id = w.item_id AND o.id <> ?), 0)
+       ) THEN abs(-9223372036854775808) ELSE 0 END AS guard`,
+      ...order.lines.flatMap((line) => [line.itemId, line.qty]),
+      sid,
+      order.id,
+    );
+  }
+
+  function isPortionRace(error: unknown): boolean {
+    for (let e: unknown = error; e instanceof Error; e = e.cause) {
+      if (/integer overflow/i.test(e.message)) return true;
+    }
+    return false;
+  }
+
+  /** The error a customer who lost the race for the last portions gets (the one the app shows). */
+  function lostRace<T>(
+    s: State,
+    requested: Array<RequestedLine>,
+    existing?: Array<OrderLine>,
+  ): StoreResult<T> {
+    const again = buildLines(s, requested, existing);
+    return again.ok ? fail('sold_out', 'Sold out') : fail(again.error, again.message);
+  }
+
   async function commit(d: Draft): Promise<SellerOrder> {
-    await db.batch(changeStatements(db, d));
+    const guard = d.linesChanged ? portionGuard(d.order) : null;
+    await db.batch([...(guard ? [guard] : []), ...changeStatements(db, d)]);
     return d.order;
   }
 
@@ -505,7 +548,13 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     const code = await uniqueCode(deps.newCode);
     const token = deps.newToken();
     const order = buildOrder(input, lines.value, by, enteredBy, { id, code, token }, extra);
-    await db.batch(insertOrderStatements(db, order, null));
+    const guard = portionGuard(order);
+    try {
+      await db.batch([...(guard ? [guard] : []), ...insertOrderStatements(db, order, null)]);
+    } catch (error) {
+      if (!isPortionRace(error)) throw error;
+      return lostRace(await loadState(), input.lines);
+    }
     return ok(order);
   }
 
@@ -572,7 +621,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   };
 
   async function readPastWeeks(): Promise<Array<PastWeekSummary>> {
-    await dropExpiredDetails(db, sid, deps.now());
+    await dropExpiredDetails(db, deps.now(), sid);
     const [weeks, items] = await db.reads([
       db.stmt('SELECT * FROM past_weeks WHERE seller_id = ? ORDER BY rowid DESC', sid),
       db.stmt(
@@ -1168,7 +1217,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     // ---- Backup and CSV ----
 
     async exportBackup(): Promise<BackupFile> {
-      await dropExpiredDetails(db, sid, deps.now());
+      await dropExpiredDetails(db, deps.now(), sid);
       const [s, sets, live, past, archived, pastRows] = await Promise.all([
         loadState(),
         readSets(),
@@ -1344,7 +1393,13 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       const next = patched(s, order, patch);
       if (!next.ok) return next;
       const edited = editDraft(order, next.value, patch.lines !== undefined);
-      return ok(edited ? await commit(edited) : order);
+      if (!edited) return ok(order);
+      try {
+        return ok(await commit(edited));
+      } catch (error) {
+        if (!isPortionRace(error) || !patch.lines) throw error;
+        return lostRace(await loadState(order.id), patch.lines, order.lines);
+      }
     },
 
     /** Customer cancel (a change, so refused when closed or locked). */
@@ -1461,47 +1516,64 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     },
 
     /**
-     * One bulk update (stage 7.1) for one order. Cancelled orders get nothing. The message goes to
+     * Bulk updates (stage 7.1): the live orders are read once and the changes written in batches.
+     * Cancelled orders get nothing. The message goes to
      * the inbox as a `message` entry (`textKey` = the template, `minutes`, or the custom `text`);
      * with `alsoSetStatus` the status moves too, but only where nextStatuses allows it. When the
      * template is the plain twin of the status it moved to (ready, outForDelivery, delivered,
      * collected), the status entry already says it, so no second message is added.
      */
-    async sendUpdate(
-      rawCode: string,
+    async sendUpdates(
+      rawCodes: ReadonlyArray<string>,
       update: Omit<SendUpdatesRequest, 'codes'>,
       actor: StaffActor,
-    ): Promise<UpdateResult> {
-      const code = parseOrderCode(rawCode);
-      const order = code ? await readLiveOrder(db, sid, 'code', code) : undefined;
-      if (!code || !order) return { code: rawCode, ok: false, error: 'not_found' };
-      if (order.status === 'cancelled') return { code, ok: false, error: 'invalid_status' };
-      const wanted = update.alsoSetStatus === true ? statusOfTemplate(update.template) : null;
-      const target = wanted !== null && nextStatuses(order).includes(wanted) ? wanted : null;
-      const allowed = target !== null;
-      const twin = ['ready', 'outForDelivery', 'delivered', 'collected'].includes(update.template);
-      let current = draft(order);
-      if (!(allowed && twin)) {
-        current = withOrder(
-          addInbox(current, {
-            kind: 'message',
-            ...(update.template === 'custom'
-              ? { text: update.text ?? '' }
-              : { textKey: update.template }),
-            ...(update.minutes !== undefined ? { minutes: update.minutes } : {}),
-          }),
-          { updatedAt: nowIso() },
+    ): Promise<Array<UpdateResult>> {
+      const live = rawCodes.some((raw) => parseOrderCode(raw) !== null)
+        ? await readOrders(db, sid, 'o.past_week_id IS NULL')
+        : [];
+      const byCode = new Map(live.map((order) => [order.code, order]));
+      const drafts: Array<Draft> = [];
+      const results = rawCodes.map((rawCode): UpdateResult => {
+        const code = parseOrderCode(rawCode);
+        const order = code ? byCode.get(code) : undefined;
+        if (!code || !order) return { code: rawCode, ok: false, error: 'not_found' };
+        if (order.status === 'cancelled') return { code, ok: false, error: 'invalid_status' };
+        const wanted = update.alsoSetStatus === true ? statusOfTemplate(update.template) : null;
+        const target = wanted !== null && nextStatuses(order).includes(wanted) ? wanted : null;
+        const allowed = target !== null;
+        const twin = ['ready', 'outForDelivery', 'delivered', 'collected'].includes(
+          update.template,
         );
+        let current = draft(order);
+        if (!(allowed && twin)) {
+          current = withOrder(
+            addInbox(current, {
+              kind: 'message',
+              ...(update.template === 'custom'
+                ? { text: update.text ?? '' }
+                : { textKey: update.template }),
+              ...(update.minutes !== undefined ? { minutes: update.minutes } : {}),
+            }),
+            { updatedAt: nowIso() },
+          );
+        }
+        if (target !== null) {
+          const moved = addInbox(withOrder(current, { status: target, changed: false }), {
+            kind: 'status',
+            status: target,
+          });
+          current = addAudit(moved, { by: actor, what: 'status', detail: target });
+        }
+        // The same order twice in one request is written once (the repeat answers not_found).
+        byCode.delete(code);
+        drafts.push(current);
+        return { code, ok: true, statusChanged: allowed };
+      });
+      // About 5 statements an order: 50 orders a batch keeps each batch modest.
+      for (let from = 0; from < drafts.length; from += 50) {
+        await db.batch(drafts.slice(from, from + 50).flatMap((d) => changeStatements(db, d)));
       }
-      if (target !== null) {
-        const moved = addInbox(withOrder(current, { status: target, changed: false }), {
-          kind: 'status',
-          status: target,
-        });
-        current = addAudit(moved, { by: actor, what: 'status', detail: target });
-      }
-      await commit(current);
-      return { code, ok: true, statusChanged: allowed };
+      return results;
     },
   };
 

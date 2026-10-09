@@ -25,6 +25,9 @@
     "bindings": [{ "name": "SELLER_LIVE", "class_name": "SellerLive" }],
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["SellerLive"] }],
+  // Weekly retention (stage 8.4b, D-044): Mondays 03:00 UTC, the first run after a Saturday's
+  // cooking date plus 4 weeks has passed. The handler is `scheduled` in worker/index.ts.
+  "triggers": { "crons": ["0 3 * * 1"] },
   // Seller images (stage 8.3). Locally this is a simulated bucket; phase 5 creates the real one.
   "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "delave-images" }],
 }

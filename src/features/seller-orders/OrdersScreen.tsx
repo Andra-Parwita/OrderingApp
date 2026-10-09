@@ -14,6 +14,7 @@ import {
   useShowDevTools,
   useVisibleOrders,
 } from './ordersShared';
+import { LiveDot } from './LiveDot';
 import { useLang } from './orderText';
 import { OrderRow } from './OrderRow';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
@@ -59,11 +60,6 @@ const Tools = styled.div`
   flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-`;
-const LiveText = styled.span<{ $ok: boolean }>`
-  font-size: ${({ theme }) => theme.type.size.sm};
-  color: ${({ theme, $ok }) => ($ok ? theme.colour.accent : theme.status.cancelled.fg)};
-  white-space: nowrap;
 `;
 const Block = styled.div`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
@@ -120,7 +116,7 @@ function OrdersContent({
     cookingDate !== null
       ? t('orders.titleWithDate', { date: formatDay(cookingDate, lang) })
       : t('orders.title');
-  const liveOk = list.status === 'ready' && list.live === 'ok';
+  const fetchFailed = list.status === 'error' || (list.status === 'ready' && list.live === 'error');
 
   return (
     <Page>
@@ -133,9 +129,7 @@ function OrdersContent({
             </Button>
           ) : null}
           {onNewOrder ? <Button onClick={onNewOrder}>{t('orders.newOrder')}</Button> : null}
-          <LiveText $ok={liveOk} role="status">
-            ● {liveOk ? t('orders.live') : t('orders.offline')}
-          </LiveText>
+          <LiveDot fetchFailed={fetchFailed} />
           <LanguageSwitch />
         </Tools>
       </Head>

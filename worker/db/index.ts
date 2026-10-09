@@ -1,11 +1,12 @@
 // The Repository on Cloudflare D1 (stage 8.1b, D-046/D-047). The Worker serves every route from it (stage 8.4a).
 import type { AdminSeller } from '../../shared/authContract';
-import type { Seller } from '../../shared/domain';
+import type { Seller, SellerOrder } from '../../shared/domain';
+import { keepsOrderDetails } from '../../shared/pastWeeks';
 import { generateOrderCode, generateToken } from '../../shared/orderCode';
 import type { Repository, SellerRepository, TokenLookup } from '../repo/Repository';
 import { createAuthRepository } from './auth';
-import { Db, type D1Like } from './d1';
-import { readOrders } from './orders';
+import { Db, marks, type D1Like } from './d1';
+import { assembleOrders, orderReadStatements } from './orders';
 import { dropExpiredDetails } from './retention';
 import { newSellerStatements, wipeAndSeed } from './seed';
 import { createSellerInternal, type Deps, type SampleState, type SellerInternal } from './seller';
@@ -54,6 +55,85 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
     if (options.devTools !== true) throw new Error('Dev tools are off for this repository');
   };
 
+  type LookupRows = {
+    orders: Array<SellerOrder>;
+    dates: Map<string, string>;
+    gone: Map<string, { sellerId: string; cookingDate: string }>;
+    sellers: Map<string, Seller>;
+  };
+
+  /** One round trip for up to 40 tokens: their orders, closed-week dates, stubs and sellers. */
+  async function readTokens(tokens: Array<string>): Promise<LookupRows> {
+    const m = marks(tokens.length);
+    const results = await db.reads([
+      ...orderReadStatements(db, `o.token IN (${m})`, tokens),
+      db.stmt(
+        `SELECT o.token, p.cooking_date FROM orders o JOIN past_weeks p
+         ON p.seller_id = o.seller_id AND p.id = o.past_week_id WHERE o.token IN (${m})`,
+        ...tokens,
+      ),
+      db.stmt(
+        `SELECT token, seller_id, cooking_date FROM expired_orders WHERE token IN (${m})`,
+        ...tokens,
+      ),
+      db.stmt(
+        `SELECT id, slug, name FROM sellers WHERE id IN
+           (SELECT seller_id FROM orders WHERE token IN (${m}) UNION SELECT seller_id FROM expired_orders WHERE token IN (${m}))`,
+        ...tokens,
+        ...tokens,
+      ),
+    ]);
+    return {
+      orders: assembleOrders(results.slice(0, 4)),
+      dates: new Map(
+        (results[4] as Array<{ token: string; cooking_date: string }>).map((r) => [
+          r.token,
+          r.cooking_date,
+        ]),
+      ),
+      gone: new Map(
+        (results[5] as Array<{ token: string; seller_id: string; cooking_date: string }>).map(
+          (r) => [r.token, { sellerId: r.seller_id, cookingDate: r.cooking_date }],
+        ),
+      ),
+      sellers: new Map((results[6] as Array<Seller>).map((row) => [row.id, row])),
+    };
+  }
+
+  /** Where each token leads (D-044). Unknown tokens are left out of the map. */
+  async function lookupMany(tokens: ReadonlyArray<string>): Promise<Map<string, TokenLookup>> {
+    const wanted = [...new Set(tokens)];
+    const found = new Map<string, TokenLookup>();
+    for (let from = 0; from < wanted.length; from += 40) {
+      const group = wanted.slice(from, from + 40);
+      let rows = await readTokens(group);
+      // An order of a closed week past its keep date is archived first (retention), then read again.
+      if ([...rows.dates.values()].some((date) => !keepsOrderDetails(date, options.now()))) {
+        await dropExpiredDetails(db, options.now());
+        rows = await readTokens(group);
+      }
+      for (const token of group) {
+        const order = rows.orders.find((candidate) => candidate.token === token);
+        const sellerRow = rows.sellers.get(order?.sellerId ?? rows.gone.get(token)?.sellerId ?? '');
+        const sellerRepo = handle(sellerRow);
+        if (!sellerRepo) continue;
+        const cookingDate = rows.dates.get(token);
+        if (order) {
+          found.set(
+            token,
+            cookingDate === undefined
+              ? { kind: 'live', sellerRepo, order }
+              : { kind: 'archived', sellerRepo, order, cookingDate },
+          );
+          continue;
+        }
+        const stub = rows.gone.get(token);
+        if (stub) found.set(token, { kind: 'expired', sellerRepo, cookingDate: stub.cookingDate });
+      }
+    }
+    return found;
+  }
+
   return {
     async listSellers() {
       return db.all<Seller>('SELECT id, slug, name FROM sellers ORDER BY rowid');
@@ -92,50 +172,32 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
 
     /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */
     async lookupByToken(token): Promise<TokenLookup | undefined> {
-      const live = await db.first<{ seller_id: string }>(
-        'SELECT seller_id FROM orders WHERE token = ? AND past_week_id IS NULL',
-        token,
-      );
-      if (live) {
-        const seller = await byId(live.seller_id);
-        const sellerRepo = handle(seller);
-        const [order] = await readOrders(db, live.seller_id, 'o.token = ?', token);
-        if (sellerRepo && order) return { kind: 'live', sellerRepo, order };
-      }
-      const closed = await db.first<{ seller_id: string }>(
-        'SELECT seller_id FROM orders WHERE token = ? AND past_week_id IS NOT NULL',
-        token,
-      );
-      if (closed) await dropExpiredDetails(db, closed.seller_id, options.now());
-      const archived = await db.first<{ seller_id: string; cooking_date: string }>(
-        `SELECT o.seller_id, p.cooking_date FROM orders o
-         JOIN past_weeks p ON p.seller_id = o.seller_id AND p.id = o.past_week_id
-         WHERE o.token = ?`,
-        token,
-      );
-      if (archived) {
-        const sellerRepo = handle(await byId(archived.seller_id));
-        const [order] = await readOrders(db, archived.seller_id, 'o.token = ?', token);
-        if (sellerRepo && order) {
-          return { kind: 'archived', sellerRepo, order, cookingDate: archived.cooking_date };
-        }
-      }
-      const gone = await db.first<{ seller_id: string; cooking_date: string }>(
-        'SELECT seller_id, cooking_date FROM expired_orders WHERE token = ?',
-        token,
-      );
-      const sellerRepo = gone ? handle(await byId(gone.seller_id)) : undefined;
-      return gone && sellerRepo
-        ? { kind: 'expired', sellerRepo, cookingDate: gone.cooking_date }
-        : undefined;
+      return (await lookupMany([token])).get(token);
     },
 
-    async liveOrderOwner(token) {
-      const row = await db.first<{ seller_id: string }>(
-        'SELECT seller_id FROM orders WHERE token = ? AND past_week_id IS NULL',
-        token,
+    lookupByTokens: lookupMany,
+
+    /** For backup restore: which seller holds a live order with each of these tokens. */
+    async liveOrderOwners(tokens) {
+      const wanted = [...new Set(tokens)];
+      const groups: Array<Array<string>> = [];
+      for (let from = 0; from < wanted.length; from += 90)
+        groups.push(wanted.slice(from, from + 90));
+      const results = await db.batch(
+        groups.map((group) =>
+          db.stmt(
+            `SELECT token, seller_id FROM orders WHERE past_week_id IS NULL AND token IN (${marks(group.length)})`,
+            ...group,
+          ),
+        ),
       );
-      return row?.seller_id;
+      const owners = new Map<string, string>();
+      for (const rows of results) {
+        for (const row of rows as Array<{ token: string; seller_id: string }>) {
+          owners.set(row.token, row.seller_id);
+        }
+      }
+      return owners;
     },
 
     auth: createAuthRepository({

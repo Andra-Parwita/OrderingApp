@@ -155,6 +155,55 @@ let shared: LiveConnection | null = null;
 let sharedStatus: LiveStatus = 'connecting';
 const listeners = new Set<LiveListener>();
 
+// ---- What the "Live" dot shows (stage 8.4b) ----
+
+/**
+ * `live`: the socket is open. `reconnecting`: it was lost or is still connecting, and is trying
+ * again. `offline`: it failed OFFLINE_AFTER_FAILURES times in a row, so the screens are on their
+ * slow polling fallback and updates arrive late.
+ */
+export type LiveLink = 'live' | 'reconnecting' | 'offline';
+export const OFFLINE_AFTER_FAILURES = 3;
+
+let link: LiveLink = 'reconnecting';
+let failures = 0;
+const linkWatchers = new Set<() => void>();
+
+function setLink(next: LiveLink) {
+  if (next === link) return;
+  link = next;
+  for (const watcher of [...linkWatchers]) watcher();
+}
+
+function trackLink(status: LiveStatus) {
+  if (status === 'live') {
+    failures = 0;
+    setLink('live');
+  } else if (status === 'reconnecting') {
+    failures += 1;
+    setLink(failures >= OFFLINE_AFTER_FAILURES ? 'offline' : 'reconnecting');
+  }
+  // 'connecting' is the first attempt: the link stays as it is (reconnecting at the start).
+}
+
+function resetLink() {
+  failures = 0;
+  setLink('reconnecting');
+}
+
+/** The current link, for `useSyncExternalStore`. */
+export function getLiveLink(): LiveLink {
+  return link;
+}
+
+/** Calls `onChange` whenever the link changes; returns the way to stop. */
+export function watchLiveLink(onChange: () => void): () => void {
+  linkWatchers.add(onChange);
+  return () => {
+    linkWatchers.delete(onChange);
+  };
+}
+
 /** The socket URL for the current seller: wss on https pages, ws on http. */
 export function liveUrl(): string {
   const url = new URL(LIVE_PATH, window.location.href);
@@ -180,6 +229,7 @@ export function subscribeLive(
   listeners.add(listener);
   if (shared === null) {
     sharedStatus = 'connecting';
+    resetLink();
     shared = connectLive({
       url: liveUrl,
       createSocket,
@@ -188,6 +238,7 @@ export function subscribeLive(
       },
       onStatus: (status) => {
         sharedStatus = status;
+        trackLink(status);
         for (const each of [...listeners]) each.onStatus(status);
       },
     });
@@ -199,6 +250,7 @@ export function subscribeLive(
     if (listeners.size === 0 && shared !== null) {
       shared.close();
       shared = null;
+      resetLink();
     }
   };
 }

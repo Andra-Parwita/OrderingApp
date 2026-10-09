@@ -99,7 +99,7 @@ Live orders have `past_week_id` NULL. Closing a week sets it, so the order leave
 2. **Closed week, order details:** kept until `cooking_date + 4 weeks` (`ORDER_DETAIL_WEEKS`). Then the order rows (with lines, audit and inbox, by cascade) are deleted, `past_weeks.details_dropped_at` is set, and one `expired_orders` row per order keeps the token and the cooking date, so the old link says "archived" instead of "not found".
 3. **Totals:** `past_weeks` and `past_week_items` are kept for good.
 4. **Sign-in leftovers:** expired sessions, keys, codes and finished lockouts are purged.
-5. **How it runs:** the repository applies rule 2 lazily on every read of past weeks (as the mock does today); stage 8.4 adds the weekly cron that runs the same function.
+5. **How it runs:** `dropExpiredDetails` (`worker/db/retention.ts`) applies rule 2. The repository calls it lazily when a seller reads past weeks or a backup and when a customer looks up an order past its date; the weekly cron (Mondays 03:00 UTC, stage 8.4b, see [overview.md](overview.md#weekly-retention-cron)) runs it for every seller. It is idempotent.
 
 ## Entity relationships
 
@@ -159,8 +159,8 @@ auth_attempts   (stand-alone, by scope)
 
 `worker/repo/Repository.ts` is the only thing the routes talk to. It is **operation-level**: each method is one thing the routes do today ("place an order", "close the week", "redeem a key"), not one SQL statement, because those operations must be atomic (a D1 `batch`) and their rules (limits, statuses, lockouts) belong next to the writes. Everything is `async` and no SQL or storage types appear in it.
 
-- 8.1a: the existing in-memory store (`worker/mock/store.ts`, `worker/mock/auth.ts`) implements it through `worker/repo/memory.ts`.
-- 8.1b (built): the D1 implementation is `worker/db/` (`createD1Repository(d1, { now, adminSetupKey, ... })`); the contract suites in `mocks/` run against both implementations through `mocks/impl.ts`. The Worker routes still use the mock until 8.4.
+- 8.1a: an in-memory store implemented it first; it was retired in 8.4a (D-047).
+- 8.1b (built): the D1 implementation is `worker/db/` (`createD1Repository(d1, { now, adminSetupKey, ... })`); the unit and MSW tests in `mocks/` run on a local D1 through `mocks/impl.ts`, and every Worker route uses it (8.4a).
 - Groups: `sellers`, `seller(...)` handle (menu, week, chefs, sets, images, settings, backup, orders), `lookupByToken`, `auth`, `dev`.
 
 ### What 8.1b learned
@@ -168,10 +168,10 @@ auth_attempts   (stand-alone, by scope)
 - **D1 caps `LIKE`/`GLOB` patterns at 50 bytes.** The `#rrggbb` check in `0001_init.sql` was a 67-byte `GLOB` and failed on insert; it is now `length = 7`, a leading `#`, and `NOT GLOB '*[^0-9a-fA-F]*'`. (The migration was not applied anywhere yet, so it was edited in place.)
 - **`exec()` is per line**, so `worker/db/migrate.ts` splits statements itself (a `CREATE TRIGGER ... END;` block stays whole) and records applied files in wrangler's own `d1_migrations` table; `wrangler d1 migrations list --local` agrees with it.
 - **Local state paths differ:** the wrangler CLI keeps `--persist-to <dir>` under `<dir>/v3`; `getPlatformProxy` uses the path as given. The seed script passes `<dir>/v3` so both see the same database; the test harness uses private directories.
-- **Rules run in TypeScript on rows read from D1** (ported from `worker/mock/store.ts` and `auth.ts`); each operation that writes several rows is one `db.batch` (one transaction). A limit check reads the used portions and then writes, so two orders landing in the same millisecond could both pass; the Durable Object in 8.3 serialises writes per seller, which closes that window.
-- **Round trips cost:** locally about 4 ms per statement call and about 2.5 ms per written statement, so reads are batched (`Db.reads`) and a menu read is one trip. Check the per-invocation D1 query limit of the Workers plan before 8.4.
+- **Rules run in TypeScript on rows read from D1** (first ported from the retired in-memory store); each operation that writes several rows is one `db.batch` (one transaction). A limit check used to read the used portions and then write, so two orders landing in the same instant could both pass (the Durable Object does not serialise writes). Since 8.4b the first statement of the batch re-checks the limits inside the transaction and rolls the batch back when they no longer fit; the loser gets the usual "sold out" error (`mocks/portionRace.test.ts`).
+- **Round trips cost:** locally about 4 ms per statement call and about 2.5 ms per written statement, so reads are batched (`Db.reads`) and a menu read is one trip. The free plan allows 50 D1 queries per invocation; since 8.4b `mocks/queries.test.ts` holds every route under 40 with 100 orders in the week (My orders reads 20 tokens in one trip; bulk updates and restore are a few batches).
 - `Repository.dev.reset` deletes every row; the D1 repository refuses it (and sample orders) unless built with `devTools: true`, which only tests set.
-- A new seller's first week copies the Onde Onde dates, exactly as the mock does (`blankFixture`); a real default (next Saturday) is an 8.4 decision.
+- A new seller's first week is the coming Saturday with the sample cut-off (the evening before, 21:00 Melbourne time), from `comingSaturday` and `defaultCutoffAt` in `shared/dates.ts`; the pickup point and its times are the seller's to add.
 
 ## Deliberate gaps
 

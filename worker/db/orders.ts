@@ -5,20 +5,18 @@ import { Db, type D1Statement } from './d1';
 import { ordersOf, type AuditRow, type InboxRow, type LineRow, type OrderRow } from './rows';
 
 /**
- * Orders of one seller, oldest first (insertion order), with lines, audit and inbox. `where` is
- * SQL over the alias `o` (for example `o.past_week_id IS NULL`), with its bound `params`.
+ * The four reads behind a set of orders (orders, lines, audit, inbox) for a filter over the alias
+ * `o`. `assembleOrders` turns their results into orders, so a caller can send them together with
+ * other reads in one round trip.
  */
-export async function readOrders(
+export function orderReadStatements(
   db: Db,
-  sellerId: string,
-  where: string,
-  ...params: Array<string | number | null>
-): Promise<Array<SellerOrder>> {
-  const filter = `o.seller_id = ? AND (${where})`;
-  const args = [sellerId, ...params];
+  filter: string,
+  args: Array<string | number | null>,
+): Array<D1Statement> {
   const join = (table: string, alias: string) =>
     `FROM ${table} ${alias} JOIN orders o ON o.seller_id = ${alias}.seller_id AND o.id = ${alias}.order_id`;
-  const [orders, lines, audit, inbox] = await db.reads([
+  return [
     db.stmt(`SELECT o.* FROM orders o WHERE ${filter} ORDER BY o.rowid`, ...args),
     db.stmt(
       `SELECT l.* ${join('order_lines', 'l')} WHERE ${filter} ORDER BY l.order_id, l.position`,
@@ -32,13 +30,34 @@ export async function readOrders(
       `SELECT i.* ${join('order_inbox', 'i')} WHERE ${filter} ORDER BY i.order_id, i.seq DESC`,
       ...args,
     ),
-  ]);
+  ];
+}
+
+export function assembleOrders(results: ReadonlyArray<Array<unknown>>): Array<SellerOrder> {
+  const [orders, lines, audit, inbox] = results;
   return ordersOf(
-    orders as Array<OrderRow>,
-    lines as Array<LineRow>,
-    audit as Array<AuditRow>,
-    inbox as Array<InboxRow>,
+    (orders ?? []) as Array<OrderRow>,
+    (lines ?? []) as Array<LineRow>,
+    (audit ?? []) as Array<AuditRow>,
+    (inbox ?? []) as Array<InboxRow>,
   );
+}
+
+/**
+ * Orders of one seller, oldest first (insertion order), with lines, audit and inbox. `where` is
+ * SQL over the alias `o` (for example `o.past_week_id IS NULL`), with its bound `params`.
+ */
+export async function readOrders(
+  db: Db,
+  sellerId: string,
+  where: string,
+  ...params: Array<string | number | null>
+): Promise<Array<SellerOrder>> {
+  const statements = orderReadStatements(db, `o.seller_id = ? AND (${where})`, [
+    sellerId,
+    ...params,
+  ]);
+  return assembleOrders(await db.batch(statements));
 }
 
 export async function readLiveOrder(

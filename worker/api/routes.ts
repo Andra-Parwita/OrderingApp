@@ -265,8 +265,9 @@ export async function handleApiRequest(
       if (tokens.length > TOKENS_MAX) return bad();
       const orders: Array<CustomerOrder> = [];
       const expired: Array<ExpiredOrder> = [];
+      const found = await store.lookupByTokens(tokens);
       for (const token of tokens) {
-        const hit = await store.lookupByToken(token);
+        const hit = found.get(token);
         if (!hit) continue;
         if (hit.kind === 'live') orders.push(toCustomerOrder(hit.order, hit.sellerRepo.seller));
         else if (hit.kind === 'archived') {
@@ -463,8 +464,7 @@ async function handleSeller(
     const { codes, ...update } = input;
     // Forgiving codes ("k7f-2qx") are normalised first, so the same order is not sent twice.
     const unique = [...new Set(codes.map((code) => parseOrderCode(code) ?? code))];
-    const results: Array<UpdateResult> = [];
-    for (const code of unique) results.push(await store.sendUpdate(code, update, actor));
+    const results: Array<UpdateResult> = await store.sendUpdates(unique, update, actor);
     for (const entry of results)
       if (entry.ok) await signal(context, sellerId, 'order.changed', entry.code);
     return Response.json({
@@ -655,12 +655,8 @@ async function handleSeller(
     if (method === 'POST') {
       const file = parseBackupFile(await readJson(request));
       if (!file) return error('invalid_backup', 'This is not a valid backup file');
-      let taken = false;
-      for (const order of file.orders) {
-        const owner = await repo.liveOrderOwner(order.token);
-        if (owner !== undefined && owner !== store.seller.id) taken = true;
-      }
-      if (taken) {
+      const owners = await repo.liveOrderOwners(file.orders.map((order) => order.token));
+      if ([...owners.values()].some((owner) => owner !== store.seller.id)) {
         return error('invalid_backup', 'An order in this backup belongs to another kitchen');
       }
       await store.restoreBackup(file);

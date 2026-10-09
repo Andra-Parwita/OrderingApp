@@ -4,11 +4,14 @@ import {
   BACKOFF_MAX_MS,
   backoffMs,
   connectLive,
+  getLiveLink,
   HEARTBEAT_MS,
   HEARTBEAT_TIMEOUT_MS,
   liveChannel,
   liveUrl,
+  OFFLINE_AFTER_FAILURES,
   subscribeLive,
+  watchLiveLink,
   type LiveStatus,
   type SocketLike,
 } from './live';
@@ -186,5 +189,29 @@ describe('liveChannel', () => {
     expect(seen).toEqual([{ kind: 'status', status: 'live' }]);
     channel.close();
     expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+});
+
+describe('the live link (the Live dot)', () => {
+  it('goes live, reconnecting, then offline after repeated failures, and back', () => {
+    const seen: Array<string> = [];
+    const stopWatching = watchLiveLink(() => seen.push(getLiveLink()));
+    const stop = subscribeLive({ onEvent: () => undefined, onStatus: () => undefined }, create);
+    expect(getLiveLink()).toBe('reconnecting');
+    last().open();
+    expect(getLiveLink()).toBe('live');
+    // Lost: reconnecting, and offline once OFFLINE_AFTER_FAILURES attempts in a row have failed.
+    for (let attempt = 1; attempt <= OFFLINE_AFTER_FAILURES; attempt++) {
+      last().drop();
+      expect(getLiveLink()).toBe(attempt < OFFLINE_AFTER_FAILURES ? 'reconnecting' : 'offline');
+      vi.advanceTimersByTime(BACKOFF_MAX_MS);
+    }
+    // A socket that opens again clears it.
+    last().open();
+    expect(getLiveLink()).toBe('live');
+    expect(seen).toEqual(['live', 'reconnecting', 'offline', 'live']);
+    stop();
+    expect(getLiveLink()).toBe('reconnecting');
+    stopWatching();
   });
 });

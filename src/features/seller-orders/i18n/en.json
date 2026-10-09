@@ -2,8 +2,11 @@
   "orders": {
     "title": "Orders",
     "titleWithDate": "Orders · {{date}}",
-    "live": "Live",
-    "offline": "Reconnecting…",
+    "link": {
+      "live": "Live",
+      "reconnecting": "Reconnecting…",
+      "offline": "Offline · refreshing slowly"
+    },
     "notConfirmed_one": "{{count}} not confirmed",
     "notConfirmed_other": "{{count}} not confirmed",
     "show": "Show ›",

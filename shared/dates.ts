@@ -91,3 +91,39 @@ export function formatTime(iso: string, lang: Language): string {
 export function formatDayTime(iso: string, lang: Language): string {
   return `${formatDay(iso, lang)} ${formatTime(iso, lang)}`;
 }
+
+// ---- Defaults for a new week (stage 8.4b) ----
+
+const DAY_MS = 86_400_000;
+
+/** Today's date in the cook's zone, "YYYY-MM-DD". */
+function localDate(now: Date): string {
+  const parts = partsOf(now, 'en', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return `${parts.year ?? ''}-${parts.month ?? ''}-${parts.day ?? ''}`;
+}
+
+function addDays(date: string, days: number): string {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** The next Saturday after today, as a local date. A Saturday itself gives the one a week on. */
+export function comingSaturday(now: Date): string {
+  const today = localDate(now);
+  const weekday = new Date(`${today}T00:00:00Z`).getUTCDay(); // 0 Sunday .. 6 Saturday
+  return addDays(today, weekday === 6 ? 7 : 6 - weekday);
+}
+
+/** The cook's UTC offset on that local date at noon, "+11:00" or "+10:00" (daylight saving). */
+function zoneOffset(date: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: ZONE, timeZoneName: 'longOffset' })
+    .formatToParts(new Date(`${date}T12:00:00Z`))
+    .find((part) => part.type === 'timeZoneName');
+  const match = /GMT([+-]\d{2}:\d{2})/.exec(parts?.value ?? '');
+  return match?.[1] ?? '+10:00';
+}
+
+/** The sample default cut-off: the evening before cooking, 21:00 in the cook's zone. */
+export function defaultCutoffAt(cookingDate: string): string {
+  const day = addDays(cookingDate, -1);
+  return `${day}T21:00:00${zoneOffset(day)}`;
+}

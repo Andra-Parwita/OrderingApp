@@ -283,3 +283,14 @@ Format for each entry:
 **Decision:** the server rule stays strict (no exception for requests without `Origin`). Playwright sends the test site's own origin as an `Origin` header on all requests (`extraHTTPHeaders` in `playwright.config.ts`).
 **Trade-off:** the header also goes on any cross-origin request a spec makes (none today); a spec that needs a different origin overrides it per request.
 **Revisit when:** a non-browser client (script, integration) needs to write to seller endpoints.
+
+## D-049 · Phase 4 closing choices: dev flag, portion guard, weekly cron, query budget (2026-10-09; coordinator decision, overrulable)
+**Context:** stages 8.4a and 8.4b switched the Worker to D1 and closed the 8.1b findings.
+**Decision:**
+- Every dev-only path sits behind one Worker var, `DEV_TOOLS === '1'`, set only in `.dev.vars`. This covers the `X-Seller`/`X-Actor` override, the live-socket slug fallback, `/api/dev/{sellers,sample-orders,reset}`, the seller picker and the sample buttons. Absent means off, which is production.
+- Portion limits are re-checked inside the order's D1 batch. A guard statement fails the batch when the limit no longer fits, and the loser gets the normal `sold_out` / `exceeds_remaining` error.
+- Retention runs from a weekly cron, Monday 03:00 UTC (`0 3 * * 1`). It is idempotent and logs counts only.
+- Each route stays under 40 D1 round trips with 100 orders in the week; a `batch()` counts as one. That reading of the 50-per-invocation free limit is unconfirmed and gets checked on Cloudflare in phase 5.
+- A new seller's first week is the coming Saturday, with the cut-off Friday 21:00 Melbourne time.
+**Trade-off:** the guard relies on a deliberate SQLite error to roll the batch back, which is less obvious than a DO-serialised write but costs no extra round trip.
+**Revisit when:** Cloudflare counts batch statements one by one (then split bulk routes into chunks per request), or orders arrive fast enough to need the DO to serialise them.

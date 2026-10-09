@@ -1,4 +1,4 @@
-import { request, type APIRequestContext } from '@playwright/test';
+import { chromium, request, type APIRequestContext } from '@playwright/test';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { SoftAuthenticator, type ExportedCredential } from '../mocks/softAuthenticator';
@@ -44,6 +44,23 @@ async function assertScratchDatabase(baseURL: string): Promise<void> {
   }
 }
 
+/**
+ * Loads the customer app and a seller page once. The first page load after a code change makes
+ * vite re-optimise its dependencies and reload, which made the first specs time out; doing it
+ * here, before any spec starts, moves that cost out of them.
+ */
+async function warmUp(baseURL: string): Promise<void> {
+  const browser = await chromium.launch();
+  try {
+    const page = await (await browser.newContext({ ignoreHTTPSErrors: true })).newPage();
+    for (const route of ['/', '/seller/sign-in']) {
+      await page.goto(baseURL + route, { waitUntil: 'networkidle', timeout: 90_000 });
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 /** Registration options → software authenticator → the server's own verification. */
 async function registerPasskey(
   api: APIRequestContext,
@@ -66,6 +83,7 @@ async function registerPasskey(
 export default async function globalSetup(): Promise<void> {
   const baseURL = `https://localhost:${process.env['PORT'] ?? '5181'}`;
   await assertScratchDatabase(baseURL);
+  await warmUp(baseURL);
   const contexts: Array<APIRequestContext> = [];
   const open = async () => {
     const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });

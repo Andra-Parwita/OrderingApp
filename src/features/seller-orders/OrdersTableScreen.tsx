@@ -27,6 +27,7 @@ import {
   useShowDevTools,
   useVisibleOrders,
 } from './ordersShared';
+import { LiveDot } from './LiveDot';
 import type { OrdersScreenProps } from './OrdersScreen';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
 import { toneOf } from './orderStatus';
@@ -74,10 +75,6 @@ const Tools = styled.div`
   flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-`;
-const LiveText = styled.span<{ $ok: boolean }>`
-  color: ${({ theme, $ok }) => ($ok ? theme.colour.accent : theme.status.cancelled.fg)};
-  white-space: nowrap;
 `;
 const Chips = styled.div`
   display: flex;
@@ -230,7 +227,7 @@ function OrdersTableContent({
     cookingDate !== null
       ? t('orders.titleWithDate', { date: formatDay(cookingDate, lang) })
       : t('orders.title');
-  const liveOk = list.status === 'ready' && list.live === 'ok';
+  const fetchFailed = list.status === 'error' || (list.status === 'ready' && list.live === 'error');
   const noOrdersAtAll = list.status === 'ready' && counts.all === 0;
 
   return (
@@ -238,9 +235,7 @@ function OrdersTableContent({
       <Head>
         <Title>{title}</Title>
         <Tools>
-          <LiveText $ok={liveOk} role="status">
-            ● {liveOk ? t('orders.live') : t('orders.offline')}
-          </LiveText>
+          <LiveDot fetchFailed={fetchFailed} />
           {onShare ? (
             <Button variant="quiet" onClick={onShare}>
               {t('orders.share')}
