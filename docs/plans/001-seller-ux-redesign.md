@@ -12,6 +12,13 @@
 - **Commits** are the owner's (or yours, as the owner says); one commit per stage is a good rhythm.
 - **There's no production data yet** (the database is local-only), so schema changes can reshape tables freely; update the seed data (`worker/db/sampleData.ts`, `scripts/seed-local.mjs`) to match.
 
+## How to run it (auto mode, owner's instruction 2026-10-10)
+
+- **At the start, ask the builder once** which stages to pause after so they can check the app (for example after 2, 4, 7 and 12), and whether to commit after each stage. Write the answer at the top of this file.
+- **Then run stage after stage without stopping.** Pause only at those checkpoints, or for a **blocking** question: one that the plan, the handoff and the rulings can't answer and where a wrong guess would be costly. Everything else: decide, note it under "Notes" at the bottom, and go on.
+- After each stage: typecheck passes, then a one-line progress note (stage, files, anything decided).
+- **Speed over detail (owner, 2026-10-10):** at each checkpoint the builder runs the design-compare check **by itself**, looks at the result, fixes anything clearly off (wrong layout, missing section, wrong colours), and carries on. A broad check of the main screens is enough: **dark theme, Onde Onde brand, each board's default state**. No light-mode or per-theme passes, and no pixel-level polishing now.
+
 ## Rulings this plan relies on
 
 | # | Ruling |
@@ -37,6 +44,7 @@ Do them in order: later stages build on earlier ones. Each ends with `pnpm typec
 |---|---|---|---|
 | 1 | **Theme and fonts** | copy `uxDesign/seller/theme/tokens.ts` into `src/theme/`; `ThemeProvider` at the app root; Plus Jakarta Sans + IBM Plex Mono (Google Fonts link in `index.html`) | `makeColors(brand, mode)` drives every colour; mode (light/dark/auto) per device; brand defaults to Onde Onde until stage 3 stores it; `color-scheme` set on the root; Sumatra shifts danger toward orange-red; old Sogan tokens removed |
 | 2 | **Shell and patterns** | `src/app/SellerLayout.tsx`, `src/app/layout.ts`, `src/app/railPreference.ts`, a new `src/ui/patterns/` (or extend `src/ui/`) | left panel 232 / 72 px with menu picture or small icon, nav (chefs: no Menu, no Settings), "Not published" badge on Menu, Switch / EN-ID / Collapse at the bottom; banner 5:1 that shrinks to a strip on task screens; phone (< ~600 px) bottom bar Orders · Pickup & delivery · More and an "Open this on a tablet or computer" page; the patterns from handoff → Patterns built once: list + side panel (384 px), slide-over (560 px), warning dialog, toast with Undo (6 s), bottom sheet, empty state, pager of 20, compose & send |
+| 2b | **Design-compare check (simple)** | `src/harness/` (the existing `?harness=<name>&screen=…` pages with MSW fixtures), a new `e2e/design-compare.spec.ts`, `captures/design/` (ignored) | one command, `pnpm e2e e2e/design-compare.spec.ts`, opens each redesigned screen in the harness (dark, Onde Onde, default state; tablet 1180 × 820, phone 390 × 844 for phone screens), screenshots it and writes `captures/design/index.html` with **the app beside the matching `<Board>__default.jpg`**; later stages add their screens; run at checkpoints (not part of the typecheck-only loop) |
 | 3 | **Server: menus and dishes** | `migrations/` (new migration), `shared/domain.ts`, `shared/menuContract.ts`, `shared/setupContract.ts`, `shared/limits.ts`, `shared/backup.ts`, `worker/db/` (`seller.ts`, `write.ts`, `rows.ts`, `seed.ts`, `sampleData.ts`), `worker/api/routes.ts`, `worker/repo/Repository.ts`, `mocks/` | records from handoff → Data model: **Menu** (state not published / live / finished, cooking day, cut-off, pickup place ids + per-menu time overrides, delivery on + note, picture, wizard step reached, taking orders on/off) · **Dish library** (Your dishes) · **Menu dish** (dish id + price, limit, chef, sold out per menu) · **Saved set** = list of dish ids · **Pickup place** (max 5) · kitchen **theme** and **menu defaults** · chef default = the whole kitchen; auto-finish at midnight after the cooking day (the Worker's scheduled job) and a "finish now" call; finishing closes still-open orders; seed data updated |
 | 4 | **Server: orders, packing, messages** | same folders as stage 3 | order gets `packed`, per-item ticks, collected time and who collected (customer or seller); **message log** (menu, group = place / delivery / order, type, time, sent count); "message a pickup place" API (Ready in N min / Ready for pickup / own text; Ready for pickup also sets those orders Ready); delivery step API (each step notifies the customer's order page); customer "I've collected it" API; every refusal that used to block now returns a warning the client can override (D-062) |
 | 5 | **Sign in** | `src/features/seller-auth/` | board `Signin`, all steps (sign in, password, first time with invite key / 6-digit code, create), tablet and phone layouts, inline errors |
@@ -51,9 +59,10 @@ Do them in order: later stages build on earlier ones. Each ends with `pnpm typec
 ## End of phase
 
 - [ ] Full gate: `pnpm typecheck` · `pnpm lint` · `pnpm format:check` · `pnpm test` · the Playwright specs of changed screens (`pnpm e2e <spec>`)
-- [ ] The owner tries it on the tablet, a phone and the PC, in at least two themes, light and dark
+- [ ] The owner tries it on the tablet, a phone and the PC
 
 ## Notes
 
+- **Design references for the compare harness:** `uxDesign/seller/captures/<Board>__<state>.jpg` (157 shots: every board in every state and theme) are the references. They are **not in git** (17 MB): run `node uxDesign/seller/capture.mjs` once on a new PC to make them; it also re-shoots them (`node capture.mjs`, or `--serve` to browse the live boards at http://localhost:4173). Stage 2b pairs each app capture with the matching `<Board>__<state>` file.
 - **Picture sizes change** (handoff → Picture slots): phone banner becomes 3:1, wide banner 2000 × 400, small icon 512 × 512, menu picture (kitchen) 1200 × 600, plus the new per-menu picture 3:2. Old uploads may show letterboxed; that's fine.
 - **Later, not in this plan:** web push (plan 002, must be done before going live), the customer app redesign, per-dish pictures.

@@ -20,7 +20,7 @@ input,textarea{font:inherit}
 .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em}
 .nav:hover{background:var(--surf2)}
 .tab:hover{background:var(--surf2)}
-.kbg{background:var(--kbg) url(/_blob/9d66d22b795fcd89723161f5d44240c8) center/cover}
+.kbg{background:var(--kbg) url(assets/background.jpg) center/cover}
 input::placeholder,textarea::placeholder{color:var(--muted)}
 :focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
 a{color:var(--atext)}a:hover{color:var(--text)}
@@ -30,7 +30,7 @@ a{color:var(--atext)}a:hover{color:var(--text)}
 
   <nav aria-label="Main" style="width: 232px; flex: none; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 12px 12px; box-sizing: border-box; gap: 4px">
     <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px 16px">
-      <img src="/_blob/746b8d28ebdfff1101b66e7f1a47dc87" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
+      <img src="assets/menu-picture.jpg" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
       <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.01em">Onde Onde</div>
     </div>
     <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Orders</button>
@@ -53,7 +53,7 @@ a{color:var(--atext)}a:hover{color:var(--text)}
 
   <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
     <div style="height: 40px; flex: none; overflow: hidden">
-      <img src="/_blob/139c9225826686b89d154aeadf54b8f8" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
+      <img src="assets/banner.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
     </div>
     <section aria-label="Settings" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; overflow: hidden">
       <div style="padding: 16px 24px 14px; border-bottom: 1px solid var(--line)"><h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em">Settings</h1></div>
@@ -276,11 +276,11 @@ class Component extends DCLogic {
     const tabs = tabDefs.map(x => ({ label:x[1], hint:x[2], gap: !!x[3], sel: tab === x[0] ? 'true' : 'false',
       style: tab === x[0] ? 'background: var(--tint); color: var(--atext)' : '', pick: () => this.setState({ tab: x[0] }) }));
     const pics = [
-      ['Menu picture','2:1','Left panel and shared posts','/_blob/746b8d28ebdfff1101b66e7f1a47dc87','2 / 1'],
-      ['Small icon','Square','Collapsed menu and browser tab','/_blob/746b8d28ebdfff1101b66e7f1a47dc87','1 / 1'],
-      ['Wide banner','5:1','Top of tablet and computer screens','/_blob/139c9225826686b89d154aeadf54b8f8','5 / 1'],
-      ['Phone banner','3:1','Top of phone screens','/_blob/acd48bfd8fe58ccb5848726b21276ba5','3 / 1'],
-      ['Background','Picture or colour','Fills the space around banners','/_blob/9d66d22b795fcd89723161f5d44240c8','5 / 1'],
+      ['Menu picture','2:1','Left panel and shared posts','assets/menu-picture.jpg','2 / 1'],
+      ['Small icon','Square','Collapsed menu and browser tab','assets/menu-picture.jpg','1 / 1'],
+      ['Wide banner','5:1','Top of tablet and computer screens','assets/banner.jpg','5 / 1'],
+      ['Phone banner','3:1','Top of phone screens','assets/phone-banner.jpg','3 / 1'],
+      ['Background','Picture or colour','Fills the space around banners','assets/background.jpg','5 / 1'],
       ['Background colour','Colour','Used when there\'s no picture','', '']
     ].map(p => ({ name:p[0], shape:p[1], use:p[2], src:p[3], ratio:p[4], hasImg: !!p[3], isColor: !p[3], boxStyle: p[3] ? '' : 'background: #1D2A1A' }));
     const locs = [['Clayton','Side gate, ring the bell','Gerbang samping, tekan bel','10:00–12:00'],['Glenelg','Front porch, blue door','Teras depan, pintu biru','11:00–13:00'],['Adelaide CBD','Rundle Mall fountain','Air mancur Rundle Mall','12:00–12:30']]

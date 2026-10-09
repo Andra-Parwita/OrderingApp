@@ -21,7 +21,7 @@ input{font:inherit}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .row:hover{background:var(--surf2)}
 .nav:hover{background:var(--surf2)}
-.kbg{background:var(--kbg) url(/_blob/9d66d22b795fcd89723161f5d44240c8) center/cover}
+.kbg{background:var(--kbg) url(assets/background.jpg) center/cover}
 input::placeholder{color:var(--muted)}
 :focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
 a{color:var(--atext)}a:hover{color:var(--text)}
@@ -33,7 +33,7 @@ a{color:var(--atext)}a:hover{color:var(--text)}
   <sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
   <nav aria-label="Main" style="width: 232px; flex: none; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 12px 12px; box-sizing: border-box; gap: 4px">
     <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px 16px">
-      <img src="/_blob/746b8d28ebdfff1101b66e7f1a47dc87" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
+      <img src="assets/menu-picture.jpg" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
       <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.01em">Onde Onde</div>
     </div>
     <button class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--tint); color: var(--atext); font-weight: 600" aria-current="page">
@@ -91,7 +91,7 @@ a{color:var(--atext)}a:hover{color:var(--text)}
   <!-- MAIN PANEL -->
   <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
     <div style="height: {{bannerH}}px; flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden">
-      <img src="/_blob/139c9225826686b89d154aeadf54b8f8" alt="Onde Onde, Indonesian homemade food" style="width: 100%; height: 100%; object-fit: {{bannerFit}}; object-position: center 35%; display: block">
+      <img src="assets/banner.jpg" alt="Onde Onde, Indonesian homemade food" style="width: 100%; height: 100%; object-fit: {{bannerFit}}; object-position: center 35%; display: block">
     </div>
 
     <section aria-label="Orders" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; box-shadow: {{sheetShadow}}">
