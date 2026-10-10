@@ -14,6 +14,9 @@
     "note": "✎ Note",
     "enteredBy": "entered by {{name}}",
     "devSample": "Add 50 sample orders",
+    "demoBar": "Demo kitchen",
+    "demoClear": "Clear samples",
+    "demoClearConfirm": "Tap again to clear",
     "devReset": "Reset",
     "devResetConfirm": "Tap again to reset",
     "share": "Share menu",
@@ -169,6 +172,10 @@
     "locked": "Locked",
     "none": "Nothing to do"
   },
+  "banner": {
+    "collapse": "Show more orders",
+    "show": "Show the banner"
+  },
   "home": {
     "title": "Orders",
     "live": "Live",
@@ -223,6 +230,7 @@
     "toggles": "Show only",
     "newOrder": "New order",
     "share": "Share menu",
+    "more": "More",
     "paid": "Paid",
     "wa": "WhatsApp order number received",
     "returning": "Returning customer",
@@ -306,7 +314,9 @@
     "samplePartial": "Added {{name}}; the rest are sold out",
     "sampleNone": "Nothing added: every dish is sold out",
     "sampleNoMenu": "Make a menu first",
-    "sampleFailed": "Couldn't add samples"
+    "sampleFailed": "Couldn't add samples",
+    "samplesCleared": "Cleared {{name}} sample orders",
+    "clearFailed": "Couldn't clear samples"
   },
   "dishes": {
     "title": "Dishes",

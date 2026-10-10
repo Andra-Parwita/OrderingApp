@@ -68,6 +68,8 @@
       "link": "Tautan: /{{slug}}",
       "invite": "Buat kunci undangan",
       "recovery": "Buat kunci pemulihan",
+      "demo": "Dapur demo",
+      "demoNote": "Aktif: penjual bisa menambah 50 pesanan contoh dan menghapusnya, dan pelanggan melihat bahwa ini demo. Jangan aktifkan untuk dapur sungguhan.",
       "devices": "Perangkat",
       "noDevices": "Belum ada perangkat.",
       "chef": "Koki {{name}}",

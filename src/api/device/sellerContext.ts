@@ -13,6 +13,13 @@ export function setSessionSeller(slug: string | null): void {
   sessionSlug = slug;
 }
 
+/** Plan 013: the signed-in kitchen is a demo one; set by the session provider with the seller. */
+let sessionDemo = false;
+export function setSessionDemo(demo: boolean): void {
+  sessionDemo = demo;
+}
+export const sessionIsDemo = (): boolean => sessionDemo;
+
 /** The session's seller when signed in; else the dev choice, or the dev default. */
 export function currentSellerSlug(): string {
   if (sessionSlug !== null && isValidSlug(sessionSlug)) return sessionSlug;

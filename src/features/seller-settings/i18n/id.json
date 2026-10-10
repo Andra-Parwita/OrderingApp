@@ -29,6 +29,7 @@
   "saveFailed": "Tidak bisa menyimpan. Coba lagi.",
   "panes": {
     "nav": "Bagian pengaturan",
+    "link": { "title": "Tautan", "sub": "Salin, bagikan, kode QR" },
     "kitchen": { "title": "Dapur", "sub": "Nama, WhatsApp, gambar" },
     "post": { "title": "Postingan WhatsApp", "sub": "Sapaan dan penutup" },
     "pickup": { "title": "Lokasi ambil", "sub": "Sampai 5 tempat" },
@@ -37,6 +38,23 @@
     "chefs": { "title": "Juru masak", "sub": "Undang, ganti nama, hapus" },
     "devices": { "title": "Perangkat", "sub": "Tambah, ganti nama, keluar" },
     "backup": { "title": "Cadangan", "sub": "Unduh atau pulihkan" }
+  },
+  "link": {
+    "intro": "Kirim tautan ini ke pelanggan. Mereka membukanya untuk melihat menu dan memesan.",
+    "copy": "Salin tautan",
+    "copied": "Tautan disalin",
+    "copyFailed": "Tidak bisa menyalin. Pilih tautannya saja.",
+    "share": "Bagikan",
+    "shareText": "{{name}}: pesan di sini {{link}}",
+    "qrTitle": "Kode QR",
+    "qrAlt": "Kode QR untuk {{link}}",
+    "download": "Unduh QR",
+    "print": "Cetak",
+    "sellerTitle": "Aplikasi penjual",
+    "sellerNote": "Buka ini di perangkat lain, lalu masuk (atau pakai kode 6 digit dari Perangkat).",
+    "sellerCopy": "Salin tautan aplikasi penjual",
+    "sellerShare": "Bagikan tautan aplikasi penjual",
+    "sellerShareText": "{{name}}: aplikasi penjual {{link}}"
   },
   "kitchen": {
     "name": "Nama dapur",

@@ -19,6 +19,7 @@ import {
   signOutChefEverywhere,
   signOutDevice,
   signOutSellerDevice,
+  setSellerDemo,
 } from '../../api/auth';
 import type { ApiFailure } from '../../api/http';
 import {
@@ -75,6 +76,14 @@ const Panel = styled.div`
 const SmallHeading = styled.h3`
   margin: 0;
   font-size: ${({ theme }) => theme.type.size.base};
+`;
+const Check = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  min-height: ${({ theme }) => theme.minTapTarget};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+  cursor: pointer;
 `;
 const Fields = styled.div`
   display: grid;
@@ -231,6 +240,23 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
     [selected, loadChefs, loadDevices, refusedHere],
   );
 
+  const changeDemo = useCallback(
+    async (demo: boolean) => {
+      if (!selected) return;
+      setBusy(true);
+      setKeyProblem(null);
+      const result = await setSellerDemo(selected.id, demo);
+      setBusy(false);
+      if (!result.ok) {
+        setKeyProblem(refusedHere(result));
+        return;
+      }
+      const { seller } = result.data;
+      setSellers((current) => (current ?? []).map((row) => (row.id === seller.id ? seller : row)));
+    },
+    [selected, refusedHere],
+  );
+
   const signOutMine = useCallback(
     async (deviceId: string) => {
       const result = await signOutDevice(deviceId);
@@ -308,6 +334,16 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
                   {t('home.seller.recovery')}
                 </Button>
               </Row>
+              <Check>
+                <input
+                  type="checkbox"
+                  checked={selected.demo === true}
+                  disabled={busy}
+                  onChange={(event) => void changeDemo(event.target.checked)}
+                />
+                {t('home.seller.demo')}
+              </Check>
+              <Muted>{t('home.seller.demoNote')}</Muted>
               {keyProblem ? <Message $bad>{keyProblem}</Message> : null}
               {shown && shown.sellerId === selected.id ? (
                 <KeyBox

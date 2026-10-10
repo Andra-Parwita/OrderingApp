@@ -259,6 +259,12 @@ export type SellerRepository = {
   subscribePush(token: string, request: PushSubscribeRequest): Promise<StoreResult<true>>;
   /** Removes one browser's subscription from the order. Idempotent. */
   unsubscribePush(token: string, endpoint: string): Promise<StoreResult<true>>;
+
+  // Demo kitchens (plan 013). The routes check `seller.demo` before calling these.
+  /** Adds sample orders (marked `sample`), as the dev tool does. */
+  addDemoSamples(count: number): Promise<SampleOrdersResponse>;
+  /** Deletes this seller's sample orders only (their lines, audit, inbox and push rows go with them). */
+  clearDemoSamples(): Promise<{ removed: number }>;
 };
 
 /** Where an order token leads (D-044): a live order, an archived one, or just its week's date. */
@@ -378,6 +384,8 @@ export type Repository = {
    * the kitchen with the five sample pictures; absent means none.
    */
   addSeller(name: string, slug: string, options?: { sampleImages?: boolean }): Promise<AdminSeller>;
+  /** Plan 013: the admin switches a kitchen into or out of demo mode. */
+  setSellerDemo(sellerId: string, demo: boolean): Promise<void>;
 
   /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */
   lookupByToken(token: string): Promise<TokenLookup | undefined>;

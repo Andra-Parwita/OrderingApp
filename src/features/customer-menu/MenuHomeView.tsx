@@ -112,6 +112,12 @@ const Tagline = styled.p`
   color: ${({ theme }) => theme.c.muted};
   font-size: ${({ theme }) => theme.type.size.md};
 `;
+/** Plan 013: a demo kitchen says so, quietly, under its name. */
+const DemoNote = styled.p`
+  margin: 0 0 ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+`;
 const rowStyle = css`
   display: flex;
   align-items: center;
@@ -322,6 +328,7 @@ export function MenuHomeView({
     <>
       <Name>{kitchen.name}</Name>
       <Tagline>{withCook ? t('home.byCook', { tagline, cook }) : tagline}</Tagline>
+      {data.seller.demo === true ? <DemoNote>{t('home.demo')}</DemoNote> : null}
       <Row>
         <MenuIcon name="calendar" />
         <RowText>

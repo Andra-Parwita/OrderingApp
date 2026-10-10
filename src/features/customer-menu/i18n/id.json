@@ -42,6 +42,7 @@
     "viewOnly": "Anda masih bisa melihat menu."
   },
   "home": {
+    "demo": "Dapur demo: pesanan di sini bukan pesanan sungguhan",
     "seeFullPicture": "Lihat foto lengkap",
     "cooking": "Masak <b>{{date}}</b>",
     "orderBy": "Pesan sebelum <b>{{dateTime}}</b>",

@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
+import { manifestHref as kitchenManifestHref } from '../../../shared/kitchenHeadLinks';
+import { appleTouchIconPath, sellerManifestPath } from '../../../shared/kitchenManifest';
 import { isValidSlug } from '../../../shared/seller';
 
 // The per-kitchen web app manifest and the iPhone home-screen icon (plan 004 stage 7, spec 6.4).
 // "Add to Home Screen" reads the page's links at that moment, so they are set when the page loads:
 // the manifest's `start_url` is the page the customer is on (their order, for the order flow).
 
-export type ManifestTarget = Readonly<{ slug: string; start: string }>;
+/** `seller`: the seller app's own manifest (start and scope `/seller`), not the customer one. */
+export type ManifestTarget = Readonly<{ slug: string; start: string; seller?: true }>;
 
 /** The order link the installed app opens first (the first-open code in OrderScreen reads it). */
 export const HOME_SCREEN_SOURCE = 'homescreen';
@@ -33,8 +36,13 @@ export function manifestTarget(
   return isValidSlug(first) ? { slug: first, start: `/${first}` } : null;
 }
 
-export function manifestHref({ slug, start }: ManifestTarget): string {
-  return `/k/${encodeURIComponent(slug)}/manifest.webmanifest?start=${encodeURIComponent(start)}`;
+/** The seller app's manifest for the signed-in kitchen; null when there is no kitchen (admin, signed out). */
+export function sellerManifestTarget(slug: string | undefined): ManifestTarget | null {
+  return isValidSlug(slug) ? { slug, start: '/seller', seller: true } : null;
+}
+
+export function manifestHref({ slug, start, seller }: ManifestTarget): string {
+  return seller ? sellerManifestPath(slug) : kitchenManifestHref(slug, start);
 }
 
 function setLink(rel: string, href: string | null): void {
@@ -50,26 +58,24 @@ function setLink(rel: string, href: string | null): void {
 }
 
 /**
- * Points the page at the kitchen's manifest. `apple-touch-icon` is linked only when the kitchen
- * uploaded a small icon: the default icon is an SVG, which iOS does not take (it would show a
- * screenshot of the page instead, so no link is better than a wrong one).
+ * Points the page at the kitchen's manifest and icon. The icon address always answers with a PNG
+ * (the upload, or the shared default), so `apple-touch-icon` is always linked (plan 011).
  */
-export function setManifestLinks(target: ManifestTarget | null, hasUploadedIcon: boolean): void {
+export function setManifestLinks(target: ManifestTarget | null): void {
   setLink('manifest', target ? manifestHref(target) : null);
-  setLink(
-    'apple-touch-icon',
-    target && hasUploadedIcon ? `/k/${encodeURIComponent(target.slug)}/icon-180.png` : null,
-  );
+  setLink('apple-touch-icon', target ? appleTouchIconPath(target.slug) : null);
 }
 
 /** Keeps the manifest links right for the page on show. */
-export function useManifestLinks(target: ManifestTarget | null, hasUploadedIcon: boolean): void {
+export function useManifestLinks(target: ManifestTarget | null): void {
   const slug = target?.slug;
   const start = target?.start;
+  const seller = target?.seller;
   useEffect(() => {
     setManifestLinks(
-      slug !== undefined && start !== undefined ? { slug, start } : null,
-      hasUploadedIcon,
+      slug !== undefined && start !== undefined
+        ? { slug, start, ...(seller ? { seller } : {}) }
+        : null,
     );
-  }, [slug, start, hasUploadedIcon]);
+  }, [slug, start, seller]);
 }

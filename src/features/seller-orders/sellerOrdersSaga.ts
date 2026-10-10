@@ -9,6 +9,8 @@ import {
   takeLeading,
 } from 'redux-saga/effects';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
+import { demoSamplesClearRequested, demoSamplesRequested } from './demoActions';
+import { addDemoSamples, clearDemoSamples } from '../../api/demo';
 import type { ApiFailure, ApiResult } from '../../api/http';
 import {
   addSampleOrders,
@@ -30,7 +32,7 @@ import {
 } from '../../api/client';
 import { liveRefreshLoop, type LiveMessage } from '../../api/live';
 import type { EventChannel } from 'redux-saga';
-import type { SampleOrdersResponse } from '../../../shared/devContract';
+import type { ClearSamplesResponse, SampleOrdersResponse } from '../../../shared/devContract';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
 import type { MenuViewResponse, UpdateMenuResponse } from '../../../shared/menusContract';
 import type { PastWeeksResponse } from '../../../shared/pastWeeks';
@@ -366,14 +368,11 @@ export function* patchDish(action: ReturnType<typeof dishPatchRequested>) {
 // Dev only: the Worker has these routes only in dev.
 const DEV_SAMPLE_COUNT = 50;
 
-export function* devSampleOrders() {
+/** Adds samples with `send`, shows how it went, and reloads the list. */
+function* addSamplesWith(send: () => Promise<ApiResult<SampleOrdersResponse>>) {
   yield put(devSamplingChanged(true));
   try {
-    const result = (yield call(
-      addSampleOrders,
-      DEV_SAMPLE_COUNT,
-      currentSellerSlug(),
-    )) as ApiResult<SampleOrdersResponse>;
+    const result = (yield call(send)) as ApiResult<SampleOrdersResponse>;
     if (result.ok) {
       const { added, reason } = result.data;
       const kind: ToastKind =
@@ -388,6 +387,31 @@ export function* devSampleOrders() {
     } else {
       yield put(toastShown({ kind: 'sampleFailed', name: '', undo: null }));
     }
+    yield call(loadOrders);
+  } finally {
+    yield put(devSamplingChanged(false));
+  }
+}
+
+export function* devSampleOrders() {
+  yield* addSamplesWith(() => addSampleOrders(DEV_SAMPLE_COUNT, currentSellerSlug()));
+}
+
+/** Plan 013: a demo kitchen adds its 50 samples (the server picks the count and checks the kitchen). */
+export function* demoSamples() {
+  yield* addSamplesWith(addDemoSamples);
+}
+
+/** Plan 013: a demo kitchen removes its sample orders (and only those). */
+export function* demoSamplesClear() {
+  yield put(devSamplingChanged(true));
+  try {
+    const result = (yield call(clearDemoSamples)) as ApiResult<ClearSamplesResponse>;
+    yield put(
+      result.ok
+        ? toastShown({ kind: 'samplesCleared', name: String(result.data.removed), undo: null })
+        : toastShown({ kind: 'clearFailed', name: '', undo: null }),
+    );
     yield call(loadOrders);
   } finally {
     yield put(devSamplingChanged(false));
@@ -421,5 +445,8 @@ export function* sellerOrdersSaga(
   // Only the dev buttons dispatch these, and they show only when the server has DEV_TOOLS on.
   yield takeLeading(devSampleOrdersRequested.type, devSampleOrders);
   yield takeLatest(devResetRequested.type, devReset);
+  // Plan 013: the demo kitchen's buttons; the server refuses anyone else.
+  yield takeLeading(demoSamplesRequested.type, demoSamples);
+  yield takeLeading(demoSamplesClearRequested.type, demoSamplesClear);
   yield call(watchPolling, pollMs, channel);
 }

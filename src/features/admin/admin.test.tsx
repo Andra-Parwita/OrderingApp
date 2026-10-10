@@ -302,6 +302,27 @@ describe('AdminHomeScreen', () => {
     expect(await screen.findByText('No devices yet.')).toBeInTheDocument();
   });
 
+  it('switches a kitchen into and out of demo mode (plan 013), in both languages', async () => {
+    await signInAsAdmin();
+    renderThemed(<AdminHomeScreen />);
+    const table = await screen.findByRole('table', { name: 'Sellers' });
+    fireEvent.click(within(table).getByRole('row', { name: /Onde Onde/ }));
+    const box = await screen.findByRole('checkbox', { name: 'Demo kitchen' });
+    expect(box).not.toBeChecked();
+    fireEvent.click(box);
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Demo kitchen' })).toBeChecked(),
+    );
+    expect((await mockStores.sellerBySlug('onde-onde'))?.seller.demo).toBe(true);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Demo kitchen' }));
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Demo kitchen' })).not.toBeChecked(),
+    );
+    expect((await mockStores.sellerBySlug('onde-onde'))?.seller.demo).toBe(false);
+    await i18n.changeLanguage('id');
+    expect(await screen.findByRole('checkbox', { name: 'Dapur demo' })).toBeInTheDocument();
+  });
+
   it('lists chefs read-only with devices, and signs a chef out everywhere on the second tap', async () => {
     await signInAsAdmin();
     await addChefDevices('wati', 2);

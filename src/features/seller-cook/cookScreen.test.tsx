@@ -4,8 +4,10 @@ import { mockStore } from '../../../mocks/handlers';
 import * as kitchen from '../../api/kitchen';
 import { CookScreen } from './CookScreen';
 import { selectCookGroups } from './cookSelectors';
-import { pollingStarted, pollingStopped } from './cookSlice';
+import { rememberSignedIn } from '../../api/device/sellerContext';
+import { loaded, pollingStarted, pollingStopped } from './cookSlice';
 import {
+  MENU,
   createTestStore,
   renderWithStore,
   sampleOrders,
@@ -84,6 +86,43 @@ describe('Kitchen · Cook', () => {
     seed(store, sampleOrders());
     const state = store.getState();
     expect(selectCookGroups(state, 'all', 'chef')).toBe(selectCookGroups(state, 'all', 'chef'));
+  });
+});
+
+describe('Kitchen · chef filter', () => {
+  it('hides the control when the kitchen has no chefs', () => {
+    const store = createTestStore({ saga: false });
+    store.dispatch(loaded({ orders: sampleOrders(), menu: { ...MENU, chefs: [] } }));
+    renderWithStore(<CookScreen />, store);
+    expect(screen.queryByRole('radio', { name: 'Chef Wati' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: 'All' })).not.toBeInTheDocument();
+  });
+
+  it('shows only the chosen chef in Cook, and remembers it', () => {
+    renderKitchen();
+    fireEvent.click(screen.getByRole('radio', { name: 'Chef Wati' }));
+    expect(screen.getByText('Chicken lemper')).toBeInTheDocument();
+    expect(screen.queryByText('Mixed rice')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('cook-chef-filter')).toBe('chef-wati');
+  });
+
+  it('defaults to the signed-in chef', () => {
+    rememberSignedIn({ slug: 'delave', chefId: 'wati' });
+    renderKitchen();
+    expect(screen.getByRole('radio', { name: 'Chef Wati' })).toBeChecked();
+    expect(screen.queryByText('Fried chicken')).not.toBeInTheDocument();
+  });
+
+  it('in Pack lists only orders with that chef and greys the other lines', () => {
+    renderKitchen();
+    fireEvent.click(screen.getByRole('tab', { name: /Pack/ }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Chef Wati' }));
+    expect(
+      within(screen.getByRole('list', { name: 'Bags' })).getAllByRole('listitem'),
+    ).toHaveLength(2);
+    // Rina's bag is open: lemper is hers to pack, the nasi is another chef's.
+    expect(screen.getByRole('checkbox', { name: /Mixed rice/ })).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: /Chicken lemper/ })).toBeEnabled();
   });
 });
 

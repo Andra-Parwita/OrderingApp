@@ -20,6 +20,20 @@ export const manifestPath = (slug: string): string => `/k/${slug}/manifest.webma
 export const iconPath = (slug: string, size: IconSize, ext: 'png' | 'svg' = 'png'): string =>
   `/k/${slug}/icon-${String(size)}.${ext}`;
 
+/** The home-screen icon for iOS: always answers with a PNG (the upload, or the shared default). */
+export const appleTouchIconPath = (slug: string): string =>
+  `/k/${encodeURIComponent(slug)}/apple-touch-icon.png`;
+
+/** The seller app's home-screen name; a name, so the same in EN and ID. */
+export const sellerAppName = (kitchenName: string): string => `${kitchenName} · Seller`;
+
+/** The seller app's manifest: start and scope `/seller`, the same icons (plan 011 stage 4). */
+export const sellerManifestPath = (slug: string): string =>
+  `/k/${encodeURIComponent(slug)}/seller.webmanifest`;
+
+/** The shared default icon (public/), served for kitchens without an uploaded one. */
+export const DEFAULT_ICON_PATH = '/app-icon.png';
+
 /** Up to two initials: the first letters of the first two words ("Onde Onde" gives "OO"). */
 export function initialsOf(name: string): string {
   const words = name
@@ -80,7 +94,7 @@ export type KitchenManifest = {
 
 /**
  * `uploadedType` is the content type of the seller's small icon (served as PNG-named files at any
- * size); without one the icons are the default SVG.
+ * size); without one the icons are the shared default PNG (same URLs, so never SVG-only).
  */
 export function buildManifest(input: {
   slug: string;
@@ -88,31 +102,23 @@ export function buildManifest(input: {
   theme: ThemeName;
   start: string | null;
   uploadedType?: string;
+  /** The seller app's manifest: named "<kitchen> · Seller", starting and scoped at `/seller`. */
+  seller?: boolean;
 }): KitchenManifest {
-  const { slug, name, theme, start, uploadedType } = input;
+  const { slug, theme, start, uploadedType, seller } = input;
+  const name = seller === true ? sellerAppName(input.name) : input.name;
   const { bg } = THEME_COLOURS[theme];
-  const icons: Array<ManifestIcon> =
-    uploadedType !== undefined
-      ? [
-          { src: iconPath(slug, 192), sizes: '192x192', type: uploadedType },
-          { src: iconPath(slug, 512), sizes: '512x512', type: uploadedType },
-          { src: iconPath(slug, 512), sizes: '512x512', type: uploadedType, purpose: 'maskable' },
-        ]
-      : [
-          { src: iconPath(slug, 192, 'svg'), sizes: 'any', type: 'image/svg+xml' },
-          { src: iconPath(slug, 512, 'svg'), sizes: 'any', type: 'image/svg+xml' },
-          {
-            src: iconPath(slug, 512, 'svg'),
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'maskable',
-          },
-        ];
+  const type = uploadedType ?? 'image/png';
+  const icons: Array<ManifestIcon> = [
+    { src: iconPath(slug, 192), sizes: '192x192', type },
+    { src: iconPath(slug, 512), sizes: '512x512', type },
+    { src: iconPath(slug, 512), sizes: '512x512', type, purpose: 'maskable' },
+  ];
   return {
     name,
     short_name: name,
-    start_url: safeStartUrl(start, slug),
-    scope: '/',
+    start_url: seller === true ? '/seller' : safeStartUrl(start, slug),
+    scope: seller === true ? '/seller' : '/',
     display: 'standalone',
     background_color: bg,
     theme_color: bg,

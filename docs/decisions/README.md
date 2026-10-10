@@ -474,3 +474,27 @@ Format for each entry:
 **Decision:** (A) the WhatsApp message carries the private order link. (C) My orders can find an order by code plus first name, in one kitchen; the name ignores case; 2 wrong tries lock for 15 minutes, per IP and per kitchen-and-code; a miss never says which part was wrong. The first name is kept in the phone storage and prefills checkout.
 **Trade-off:** code plus first name is weaker than the private link; the 2-try lock keeps guessing impractical, but anyone who knows both can open the order (it holds no phone or address).
 **Revisit when:** abused, or once A makes C unnecessary.
+
+## D-076 · Cloudflare: a demo kitchen for samples; Onde Onde is a real seller (2026-10-10; builder)
+**Ruling:** "A then" (a separate demo kitchen); "onde-onde is my own seller to test and show off as demonstrator and really owned seller"; "get ready to deploy to cloudflare for real test".
+**Decision:** `DEV_TOOLS` (reset everything, no sign-in, dev samples) is never on in production. The admin can mark a kitchen as demo; only a demo kitchen's signed-in seller can add 50 sample orders and clear them, and its customers see "Demo kitchen". Onde Onde goes to Cloudflare as a real kitchen: created by the admin, filled by Backup → Restore from the local Onde Onde; pictures uploaded on the PC are uploaded again (restore keeps only the built-in `/samples/` pictures). Plan 012 (deploy readiness) and plan 013 (demo kitchen) are approved together.
+**Trade-off:** one more kitchen to keep up to date for demos.
+**Revisit when:** demos need their own data set or a reset schedule.
+
+## D-077 · The app's address is order.shaggybobo.app (2026-10-10; builder)
+**Ruling:** "we do have bought domain in Cloudflare .. shaggybobo.app domain"; "b" (a sub-address, not the main domain).
+**Decision:** the Worker runs on `https://order.shaggybobo.app` as a Cloudflare custom domain; `workers.dev` is off. Kitchens are `order.shaggybobo.app/<slug>`. `shaggybobo.app` itself stays free for a website.
+**Trade-off:** slightly longer links than the main domain.
+**Revisit when:** never lightly: moving the address means every seller, chef and admin registers new passkeys.
+
+## D-078 · jsqr approved for camera scanning (2026-10-10; builder)
+**Ruling:** "jsqr is okay".
+**Decision:** plan 018 may add the `jsqr` dependency (MIT, no dependencies) as the QR decoder on iPad and iPhone Safari, loaded only when scanning starts; the built-in BarcodeDetector is used where it exists.
+**Trade-off:** one more dependency to keep updated.
+**Revisit when:** Safari ships BarcodeDetector.
+
+## D-079 · Automatic app version: 1.0.<commit count> · <commit> (2026-10-10; builder)
+**Ruling:** "A" (automatic version on every deploy).
+**Decision:** the version is `<major>.<minor>.<git commit count>` plus the short commit id, with "· draft" for uncommitted builds. Major and minor are raised by hand in package.json for big releases. It shows in /api/health, the seller Settings and admin footers, and the customer About page (plan 020).
+**Trade-off:** the build number counts commits, so two deploys of the same commit share a number (the draft tag tells uncommitted ones apart).
+**Revisit when:** a CI pipeline deploys without git history.

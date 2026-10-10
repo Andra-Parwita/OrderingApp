@@ -5,9 +5,10 @@ import { styled } from 'styled-components';
 import { formatDay, formatDayTime } from '../../../shared/dates';
 import { parseOrderCode } from '../../../shared/orderCode';
 import type { MenuView } from '../../../shared/menusContract';
-import { Button, EmptyState, Icon, ListWithPanel } from '../../ui';
+import { Button, EmptyState, Icon, ListWithPanel, Menu } from '../../ui';
 import { LiveDot } from '../../components/LiveDot';
-import { DishesPanel } from './DishesPanel';
+import { BannerToggle } from './BannerToggle';
+import { DishesSlideOver, useSoldTotal } from './DishesPanel';
 import { FeedbackHost } from './FeedbackHost';
 import {
   FinishedHome,
@@ -80,25 +81,25 @@ const Board = styled.div`
   flex-direction: column;
   min-height: 0;
 `;
+// Plan 015: one row. Narrow, the search shrinks first, then the button labels drop to their icons.
 const Head = styled.header`
   display: flex;
   flex: none;
-  flex-wrap: wrap;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.size.pagePadTablet}px ${({ theme }) => theme.size.pagePadTablet}px
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px
     ${({ theme }) => theme.spacing.sm};
-`;
-const TitleBlock = styled.div`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  min-width: 0;
+  container-type: inline-size;
+
+  @container (max-width: 62rem) {
+    b {
+      display: none;
+    }
+  }
 `;
 const TitleLine = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
 `;
@@ -108,21 +109,21 @@ const Title = styled.h1`
   font-weight: 700;
   line-height: 1.25;
 `;
-const SubLine = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.c.muted};
-  font-size: 0.875rem;
-
-  strong {
-    color: ${({ theme }) => theme.c.text};
-    font-weight: 600;
-  }
-`;
 const Tools = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+const Filler = styled.div`
+  flex: 1;
+`;
+const SearchGroup = styled.div`
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-width: 0;
 `;
 const NoLive = styled.span`
   display: inline-flex;
@@ -182,7 +183,7 @@ const Search = styled.label`
   flex: 1;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
-  min-width: 12rem;
+  min-width: 6rem;
   min-height: ${({ theme }) => theme.size.tap}px;
   padding: 0 ${({ theme }) => theme.spacing.md};
   border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
@@ -211,11 +212,15 @@ const Toggle = styled.button<{ $on: boolean }>`
   color: ${({ theme }) => theme.c.text};
   font: inherit;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 
   svg {
     width: 1rem;
     height: 1rem;
+  }
+  b {
+    font-weight: inherit;
   }
   span {
     color: ${({ theme }) => theme.c.muted};
@@ -229,6 +234,11 @@ const Tabs = styled.div`
   overflow-x: auto;
   padding: 0 ${({ theme }) => theme.size.pagePadTablet}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 const Tab = styled.button<{ $on: boolean }>`
   display: inline-flex;
@@ -273,6 +283,10 @@ const Bottom = styled.div`
   margin-top: auto;
 `;
 
+// The active tab scrolls into view when the row of tabs is wider than the screen.
+const showTab = (tab: HTMLElement | null) =>
+  tab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+
 const TAB_FILTERS = STATUS_FILTERS.filter((id) => id !== 'changed');
 
 function TakingOrders({ view }: Readonly<{ view: MenuView }>) {
@@ -285,6 +299,60 @@ function TakingOrders({ view }: Readonly<{ view: MenuView }>) {
       <i aria-hidden="true" />
       {on ? t('home.takingOrders') : t('home.paused')}
     </Switch>
+  );
+}
+
+/** Search plus the Changed and Not paid toggles. In the header on a live menu. */
+function SearchAndToggles({
+  query,
+  onQueryChange,
+  toggles = { changed: false, unpaid: false },
+  onToggle,
+}: Pick<OrdersTableScreenProps, 'query' | 'onQueryChange' | 'toggles' | 'onToggle'>) {
+  const { t } = useTranslation(SELLER_NS);
+  const counts = useSelector(selectCounts);
+  const unpaid = useSelector(selectUnpaidCount);
+  const onQuery = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => onQueryChange(event.target.value),
+    [onQueryChange],
+  );
+  return (
+    <>
+      <Search>
+        <Icon name="list" />
+        <input
+          type="search"
+          value={query}
+          onChange={onQuery}
+          placeholder={t('live.search')}
+          aria-label={t('live.search')}
+          autoComplete="off"
+          enterKeyHint="search"
+        />
+      </Search>
+      <Toggle
+        type="button"
+        aria-pressed={toggles.changed}
+        aria-label={`${t('live.changed')} ${counts.changed}`}
+        $on={toggles.changed}
+        onClick={() => onToggle?.('changed')}
+      >
+        <Icon name="pencil" />
+        <b>{t('live.changed')}</b>
+        <span>{counts.changed}</span>
+      </Toggle>
+      <Toggle
+        type="button"
+        aria-pressed={toggles.unpaid}
+        aria-label={`${t('live.notPaid')} ${unpaid}`}
+        $on={toggles.unpaid}
+        onClick={() => onToggle?.('unpaid')}
+      >
+        <Icon name="coin" />
+        <b>{t('live.notPaid')}</b>
+        <span>{unpaid}</span>
+      </Toggle>
+    </>
   );
 }
 
@@ -308,16 +376,11 @@ function OrdersBoard({
   const dispatch = useDispatch();
   const list = useSelector(selectList);
   const counts = useSelector(selectCounts);
-  const unpaid = useSelector(selectUnpaidCount);
   const visible = useVisibleOrders(filter, query, toggles);
   const selected = useSelector((state: SellerOrdersRootState) =>
     selectedCode ? selectOrderByCode(state, selectedCode) : undefined,
   );
   const retry = useCallback(() => dispatch(refreshRequested()), [dispatch]);
-  const onQuery = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => onQueryChange(event.target.value),
-    [onQueryChange],
-  );
   const noOrdersAtAll = list.status === 'ready' && counts.all === 0;
   const raw = selectedCode ? (parseOrderCode(selectedCode) ?? selectedCode) : undefined;
 
@@ -333,43 +396,20 @@ function OrdersBoard({
     }
   }, [raw, list.status]);
 
-  // Fixed above the list: search, toggles and status tabs.
+  // Fixed above the list: the status tabs (and, on a finished menu, search and toggles; on a live
+  // menu those sit in the page header).
   const listHeader = (
     <>
-      <Filters role="search">
-        <Search>
-          <Icon name="list" />
-          <input
-            type="search"
-            value={query}
-            onChange={onQuery}
-            placeholder={t('live.search')}
-            aria-label={t('live.search')}
-            autoComplete="off"
-            enterKeyHint="search"
+      {readOnly ? (
+        <Filters role="search">
+          <SearchAndToggles
+            query={query}
+            onQueryChange={onQueryChange}
+            toggles={toggles}
+            onToggle={onToggle}
           />
-        </Search>
-        <Toggle
-          type="button"
-          aria-pressed={toggles.changed}
-          $on={toggles.changed}
-          onClick={() => onToggle?.('changed')}
-        >
-          <Icon name="pencil" />
-          {t('live.changed')}
-          <span>{counts.changed}</span>
-        </Toggle>
-        <Toggle
-          type="button"
-          aria-pressed={toggles.unpaid}
-          $on={toggles.unpaid}
-          onClick={() => onToggle?.('unpaid')}
-        >
-          <Icon name="coin" />
-          {t('live.notPaid')}
-          <span>{unpaid}</span>
-        </Toggle>
-      </Filters>
+        </Filters>
+      ) : null}
       <Tabs role="group" aria-label={t('live.status')}>
         {TAB_FILTERS.map((id: StatusFilter) => (
           <Tab
@@ -377,6 +417,7 @@ function OrdersBoard({
             type="button"
             aria-pressed={id === filter}
             $on={id === filter}
+            ref={id === filter ? showTab : undefined}
             onClick={() => onFilterChange(id)}
           >
             {t(`filter.${id}`)}
@@ -386,11 +427,9 @@ function OrdersBoard({
       </Tabs>
     </>
   );
-  // The scrolling part: the Dishes panel (one collapsed line until opened, so it scrolls away with
-  // the list), then the orders.
+  // The scrolling part: the orders.
   const listNode = (
     <>
-      {readOnly ? null : <DishesPanel />}
       {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
       {list.status === 'error' ? (
         <ErrorBox role="alert">
@@ -462,6 +501,8 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
   const past = useSelector(selectPast);
   const orders = useSelector(selectOrders);
   const [showAll, setShowAll] = useState(false);
+  const [dishesOpen, setDishesOpen] = useState(false);
+  const soldTotal = useSoldTotal();
   useOrdersPolling();
   useEarlierMenus();
   const showDev = useShowDevTools();
@@ -503,45 +544,70 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
     <Page>
       <FeedbackHost />
       <Head>
-        <TitleBlock>
-          <TitleLine>
-            <Title>{t('home.title')}</Title>
-            {live ? (
-              <LiveDot fetchFailed={fetchFailed} />
-            ) : (
-              <NoLive>
-                <Ring aria-hidden="true" />
-                {t('home.noLive')}
-              </NoLive>
-            )}
-            {live && view ? <TakingOrders view={view} /> : null}
-          </TitleLine>
-          {live && view ? (
-            <SubLine>
-              {t('home.menuFor', {
-                date: formatDay(view.menu.cookingDate, lang),
-                cutoff: formatDayTime(view.menu.cutoffAt, lang),
-              })}
-            </SubLine>
-          ) : null}
-        </TitleBlock>
-        {live ? (
-          <Tools>
-            {props.onShare ? (
-              <Button variant="quiet" onClick={props.onShare}>
-                <Icon name="share" />
-                {t('live.share')}
-              </Button>
-            ) : null}
-            {props.onNewOrder ? (
-              <Button variant="primary" onClick={props.onNewOrder}>
-                <Icon name="plus" />
-                {t('live.newOrder')}
-              </Button>
-            ) : null}
-          </Tools>
-        ) : null}
+        <TitleLine>
+          <Title>{t('home.title')}</Title>
+          {live ? (
+            <LiveDot fetchFailed={fetchFailed} />
+          ) : (
+            <NoLive>
+              <Ring aria-hidden="true" />
+              {t('home.noLive')}
+            </NoLive>
+          )}
+          {live && view ? <TakingOrders view={view} /> : null}
+        </TitleLine>
+        {live && view ? (
+          <>
+            <SearchGroup role="search">
+              <SearchAndToggles
+                query={props.query}
+                onQueryChange={props.onQueryChange}
+                toggles={props.toggles}
+                onToggle={props.onToggle}
+              />
+            </SearchGroup>
+            <Tools>
+              <Toggle
+                type="button"
+                $on={false}
+                aria-haspopup="dialog"
+                aria-label={`${t('dishes.title')} ${soldTotal}`}
+                onClick={() => setDishesOpen(true)}
+              >
+                <Icon name="pot" />
+                <b>{t('dishes.title')}</b>
+                <span>{soldTotal}</span>
+              </Toggle>
+              {props.onNewOrder ? (
+                <Button
+                  variant="primary"
+                  aria-label={t('live.newOrder')}
+                  onClick={props.onNewOrder}
+                >
+                  <Icon name="plus" />
+                  <b>{t('live.newOrder')}</b>
+                </Button>
+              ) : null}
+              <Menu
+                label={t('live.more')}
+                header={t('home.menuFor', {
+                  date: formatDay(view.menu.cookingDate, lang),
+                  cutoff: formatDayTime(view.menu.cutoffAt, lang),
+                })}
+                items={
+                  props.onShare
+                    ? [{ label: t('live.share'), icon: 'share', onSelect: props.onShare }]
+                    : []
+                }
+              />
+            </Tools>
+          </>
+        ) : (
+          <Filler />
+        )}
+        <BannerToggle />
       </Head>
+      {dishesOpen && live ? <DishesSlideOver onClose={() => setDishesOpen(false)} /> : null}
       {kind === 'live' ? body : <Scroll>{body}</Scroll>}
       {props.newOrderOpen && view ? (
         <NewOrderPanel onClose={props.onCloseNewOrder ?? (() => undefined)} />

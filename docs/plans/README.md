@@ -22,6 +22,16 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 | 008 | [Seller orders: 50 samples, only the list scrolls](008-seller-list-scroll.md) | done (09:06) |
 | 009 | [Customer: lost order back, remembered name, kitchen icon](009-order-recovery-name-icon.md) | done (09:23) |
 | 010 | [Order lookup: review fixes before Cloudflare](010-order-lookup-fixes.md) | done (09:58) |
+| 011 | [Kitchen icon and manifest in the page itself](011-kitchen-icons-at-the-edge.md) | done (10:33) |
+| 012 | [Ready for a real test on Cloudflare](012-cloudflare-ready.md) | config done; deploy pending (10:33) |
+| 013 | [Demo kitchen: samples on the real server](013-demo-kitchen.md) | done (10:33) |
+| 014 | [Orders home: collapse the banner](014-orders-banner-collapse.md) | done (11:14) |
+| 015 | [Orders home: one-row header and buttons, Dishes slide-over](015-orders-compact-and-dishes-slideover.md) | done (11:31) |
+| 016 | [Kitchen: filter by chef](016-kitchen-chef-filter.md) | done (11:17) |
+| 017 | [Settings: the customer link, copy, share and QR](017-settings-customer-link.md) | done (11:21) |
+| 018 | [Seller: scan the customer QR to hand over](018-scan-customer-qr.md) | approved (11:20, D-078); after plan 015 |
+| 019 | [Customer: About and privacy](019-customer-privacy-note.md) | proposed (11:37); after the demo; wording needs the owner |
+| 020 | [App version on every deploy](020-app-version.md) | approved (11:39, D-079); after the demo |
 
 ## Template
 

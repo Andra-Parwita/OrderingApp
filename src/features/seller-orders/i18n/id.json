@@ -14,6 +14,9 @@
     "note": "✎ Catatan",
     "enteredBy": "dimasukkan oleh {{name}}",
     "devSample": "Tambah 50 pesanan contoh",
+    "demoBar": "Dapur demo",
+    "demoClear": "Hapus pesanan contoh",
+    "demoClearConfirm": "Ketuk lagi untuk menghapus",
     "devReset": "Reset",
     "devResetConfirm": "Ketuk lagi untuk reset",
     "share": "Bagikan menu",
@@ -169,6 +172,10 @@
     "locked": "Dikunci",
     "none": "Tidak ada yang perlu dilakukan"
   },
+  "banner": {
+    "collapse": "Tampilkan lebih banyak pesanan",
+    "show": "Tampilkan banner"
+  },
   "home": {
     "title": "Pesanan",
     "live": "Langsung",
@@ -223,6 +230,7 @@
     "toggles": "Tampilkan saja",
     "newOrder": "Pesanan baru",
     "share": "Bagikan menu",
+    "more": "Lainnya",
     "paid": "Lunas",
     "wa": "Nomor pesanan sudah diterima lewat WhatsApp",
     "returning": "Pelanggan lama",
@@ -306,7 +314,9 @@
     "samplePartial": "{{name}} pesanan ditambahkan; sisanya habis",
     "sampleNone": "Tidak ada yang ditambahkan: semua hidangan habis",
     "sampleNoMenu": "Buat menu dulu",
-    "sampleFailed": "Tidak bisa menambah contoh pesanan"
+    "sampleFailed": "Tidak bisa menambah contoh pesanan",
+    "samplesCleared": "{{name}} pesanan contoh dihapus",
+    "clearFailed": "Tidak bisa menghapus pesanan contoh"
   },
   "dishes": {
     "title": "Hidangan",

@@ -162,7 +162,8 @@ describe('ListWithPanel', () => {
         panelLabel="Order detail"
       />,
     );
-    expect(screen.getByText('the list').parentElement).toHaveAttribute('hidden');
+    // The list sits in its own scroll area (plan 008); the hidden wrapper is that area's parent.
+    expect(screen.getByText('the list').closest('[hidden]')).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Back/ }));
     expect(onBack).toHaveBeenCalledOnce();
   });

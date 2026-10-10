@@ -43,6 +43,7 @@
     "viewOnly": "You can still see the menu."
   },
   "home": {
+    "demo": "Demo kitchen: orders here are not real",
     "seeFullPicture": "See full picture",
     "cooking": "Cooking <b>{{date}}</b>",
     "orderBy": "Order by <b>{{dateTime}}</b>",

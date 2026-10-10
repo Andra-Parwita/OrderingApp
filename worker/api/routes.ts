@@ -2,6 +2,7 @@
 import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
 import {
   parseSampleOrdersRequest,
+  type ClearSamplesResponse,
   type DevSellersResponse,
   type SampleOrdersResponse,
 } from '../../shared/devContract';
@@ -115,6 +116,7 @@ import { sha256Hex } from '../db/crypto';
 import { authError, error, readJson } from './respond';
 import type { Repository, SellerRepository, StoreResult } from '../repo/Repository';
 
+const DEMO_SAMPLE_COUNT = 50;
 const noSeller = () => error('seller_not_found', 'Seller not found');
 const weekClosed = () => error('week_closed', 'This week is closed');
 
@@ -471,6 +473,21 @@ export async function handleApiRequest(
           : { role: 'seller', name: sellerStore.seller.name };
       if (caller.role === 'chef' && chefMayNot(request.method, a)) {
         return error('forbidden', 'Chefs cannot do this');
+      }
+      // Plan 013: sample orders on a demo kitchen. A session of this kitchen (seller or chef) is
+      // needed (we are past that check) and the kitchen must be a demo one; the origin check is at
+      // the door (handleWorkerRequest). Nothing here depends on DEV_TOOLS.
+      if (a === 'demo' && b === 'samples' && !c) {
+        if (method !== 'POST' && method !== 'DELETE') return null;
+        if (sellerStore.seller.demo !== true) return error('forbidden', 'Not a demo kitchen');
+        if (method === 'DELETE') {
+          return Response.json(
+            (await sellerStore.clearDemoSamples()) satisfies ClearSamplesResponse,
+          );
+        }
+        const result = await sellerStore.addDemoSamples(DEMO_SAMPLE_COUNT);
+        if (result.added > 0) await signal(context, sellerStore.seller.id, 'order.created');
+        return Response.json(result satisfies SampleOrdersResponse);
       }
       return handleSeller(store, sellerStore, request, [a, b, c], bad, actor, context);
     }

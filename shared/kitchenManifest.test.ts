@@ -44,7 +44,7 @@ describe('the start url guard', () => {
 });
 
 describe('the manifest', () => {
-  it('uses SVG icons without an upload and the upload type with one', () => {
+  it('uses the default PNG icons without an upload and the upload type with one', () => {
     const plain = buildManifest({ slug: 'k', name: 'Kedai', theme: 'jawa', start: null });
     expect(plain).toMatchObject({
       name: 'Kedai',
@@ -56,10 +56,11 @@ describe('the manifest', () => {
       theme_color: '#F6F0E6',
     });
     expect(plain.icons.map((icon) => icon.src)).toEqual([
-      '/k/k/icon-192.svg',
-      '/k/k/icon-512.svg',
-      '/k/k/icon-512.svg',
+      '/k/k/icon-192.png',
+      '/k/k/icon-512.png',
+      '/k/k/icon-512.png',
     ]);
+    expect(plain.icons.map((icon) => icon.type)).toEqual(['image/png', 'image/png', 'image/png']);
     expect(plain.icons[2]?.purpose).toBe('maskable');
     const own = buildManifest({
       slug: 'k',

@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { manifestHref, manifestTarget, setManifestLinks } from './manifestLinks';
+import {
+  manifestHref,
+  manifestTarget,
+  sellerManifestTarget,
+  setManifestLinks,
+} from './manifestLinks';
 
 const link = (rel: string) => document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
 
@@ -50,30 +55,38 @@ describe('manifestTarget', () => {
 
 describe('setManifestLinks', () => {
   it('sets the manifest link with the start page encoded', () => {
-    setManifestLinks({ slug: 'onde-onde', start: '/o/tok?source=homescreen' }, false);
+    setManifestLinks({ slug: 'onde-onde', start: '/o/tok?source=homescreen' });
     expect(link('manifest')?.getAttribute('href')).toBe(
       '/k/onde-onde/manifest.webmanifest?start=%2Fo%2Ftok%3Fsource%3Dhomescreen',
     );
   });
 
-  it('links apple-touch-icon only when the kitchen uploaded an icon', () => {
-    const target = { slug: 'onde-onde', start: '/onde-onde' };
-    setManifestLinks(target, false);
-    expect(link('apple-touch-icon')).toBeNull();
-    setManifestLinks(target, true);
-    expect(link('apple-touch-icon')?.getAttribute('href')).toBe('/k/onde-onde/icon-180.png');
-    setManifestLinks(target, false);
-    expect(link('apple-touch-icon')).toBeNull();
+  it('always links apple-touch-icon to the kitchen address (a PNG even without an upload)', () => {
+    setManifestLinks({ slug: 'onde-onde', start: '/onde-onde' });
+    expect(link('apple-touch-icon')?.getAttribute('href')).toBe(
+      '/k/onde-onde/apple-touch-icon.png',
+    );
+  });
+
+  it('the seller app links its own manifest and the same icon', () => {
+    expect(sellerManifestTarget(undefined)).toBeNull();
+    const target = sellerManifestTarget('onde-onde');
+    expect(target).toEqual({ slug: 'onde-onde', start: '/seller', seller: true });
+    setManifestLinks(target);
+    expect(link('manifest')?.getAttribute('href')).toBe('/k/onde-onde/seller.webmanifest');
+    expect(link('apple-touch-icon')?.getAttribute('href')).toBe(
+      '/k/onde-onde/apple-touch-icon.png',
+    );
   });
 
   it('updates the one link instead of adding another, and removes both for no kitchen', () => {
-    setManifestLinks({ slug: 'a-kitchen', start: '/a-kitchen' }, true);
-    setManifestLinks({ slug: 'b-kitchen', start: '/b-kitchen' }, true);
+    setManifestLinks({ slug: 'a-kitchen', start: '/a-kitchen' });
+    setManifestLinks({ slug: 'b-kitchen', start: '/b-kitchen' });
     expect(document.head.querySelectorAll('link[rel="manifest"]')).toHaveLength(1);
     expect(link('manifest')?.getAttribute('href')).toBe(
       manifestHref({ slug: 'b-kitchen', start: '/b-kitchen' }),
     );
-    setManifestLinks(null, true);
+    setManifestLinks(null);
     expect(link('manifest')).toBeNull();
     expect(link('apple-touch-icon')).toBeNull();
   });

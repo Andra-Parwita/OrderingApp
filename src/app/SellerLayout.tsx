@@ -7,6 +7,8 @@ import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { fetchMenu } from '../api/client';
 import { currentSellerSlug } from '../api/device/sellerContext';
 import { cssUrl } from '../components/cssUrl';
+import { sellerManifestTarget, useManifestLinks } from '../components/install';
+import { useBannerCollapsed } from '../components/useBannerCollapsed';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { ImageSlot } from '../ui';
 import { BANNER_MAX_WIDTH, BANNER_STRIP_HEIGHT, DESKTOP_QUERY } from './layout';
@@ -72,6 +74,21 @@ const BannerArea = styled.div`
   max-width: ${BANNER_MAX_WIDTH};
   margin: 0 auto;
 `;
+// Plan 014: the Orders home banner slides up to a 50 px strip (the picture cropped around its
+// middle) on the toggle in the Orders header. The max-height only has to exceed the tallest banner
+// (1600 px wide at 5:1 = 20 rem); reduced motion is switched off globally.
+const BannerClip = styled.div<{ $collapsed: boolean }>`
+  display: flex;
+  align-items: center;
+  max-height: ${({ $collapsed }) => ($collapsed ? '50px' : '24rem')};
+  overflow: hidden;
+  transition: max-height ${({ theme }) => theme.motion.fast};
+
+  > * {
+    flex: none;
+    width: 100%;
+  }
+`;
 // Task screens: the banner shrinks to a thin strip of the background; the sheet rises over it.
 const TaskStrip = styled(BannerStrip)`
   height: ${BANNER_STRIP_HEIGHT};
@@ -118,6 +135,7 @@ export function SellerLayout() {
   const { pathname } = useLocation();
   const { me } = useSession();
   const who = useWho();
+  useManifestLinks(me?.stage === 'full' ? sellerManifestTarget(me.slug) : null);
   const role = me?.role === 'chef' ? 'chef' : me?.role === 'seller' ? 'seller' : undefined;
   const navIds = useMemo(() => navIdsFor(role), [role]);
   const kitchen = useKitchen();
@@ -138,6 +156,7 @@ export function SellerLayout() {
   // Phone: the 3:1 banner belongs to the Orders list only; other phone screens have none.
   const phoneBanner = !tablet && pathname === '/seller';
   const fixed = fixesPage(pathname, tablet);
+  const bannerCollapsed = useBannerCollapsed() && fixed;
 
   return (
     <Shell $tablet={tablet} $fixed={fixed}>
@@ -162,25 +181,29 @@ export function SellerLayout() {
           ) : null}
           {tablet && !isTaskScreen(pathname) ? (
             <BannerStrip $background={background} $image={backgroundImage}>
-              <BannerArea>
-                <ImageSlot
-                  aspectRatio="5 / 1"
-                  background={background}
-                  src={kitchen?.images?.desktopBanner}
-                  alt={bannerText}
-                  placeholder={placeholder}
-                />
-              </BannerArea>
+              <BannerClip $collapsed={bannerCollapsed}>
+                <BannerArea>
+                  <ImageSlot
+                    aspectRatio="5 / 1"
+                    background={background}
+                    src={kitchen?.images?.desktopBanner}
+                    alt={bannerText}
+                    placeholder={placeholder}
+                  />
+                </BannerArea>
+              </BannerClip>
             </BannerStrip>
           ) : null}
           {phoneBanner ? (
-            <ImageSlot
-              aspectRatio="3 / 1"
-              background={background}
-              src={phoneBannerSrc(kitchen?.images)}
-              alt={bannerText}
-              placeholder={placeholder}
-            />
+            <BannerClip $collapsed={bannerCollapsed}>
+              <ImageSlot
+                aspectRatio="3 / 1"
+                background={background}
+                src={phoneBannerSrc(kitchen?.images)}
+                alt={bannerText}
+                placeholder={placeholder}
+              />
+            </BannerClip>
           ) : null}
         </Top>
         <Sheet $tablet={tablet} $fixed={fixed}>

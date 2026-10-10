@@ -5,7 +5,7 @@ import { styled } from 'styled-components';
 import { LIMIT_MAX } from '../../../shared/setupContract';
 import { pickText } from '../../../shared/text';
 import type { MenuDishView } from '../../../shared/menusContract';
-import { Button, TextField } from '../../ui';
+import { Button, SlideOver, TextField } from '../../ui';
 import { SELLER_NS } from './i18n/register';
 import { useLang } from './orderText';
 import { selectCurrent, selectSoldByItem } from './sellerOrdersSelectors';
@@ -15,17 +15,14 @@ import { dishPatchRequested } from './sellerOrdersSlice';
 // out. Edits are instant (D-069 Q2). It talks to today's menu item route (PATCH
 // /api/seller/menu/items/:id), the only per-dish live route that exists.
 
-const Wrap = styled.details`
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadTablet}px;
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+// Plan 015: shown inside a slide-over opened by the Dishes button.
+const Wrap = styled.div`
+  padding: 0 ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.xl};
 `;
-const Title = styled.summary`
+const Title = styled.h2`
   margin: 0 0 ${({ theme }) => theme.spacing.sm};
-  color: ${({ theme }) => theme.c.muted};
-  font-size: 0.75rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 `;
 const Row = styled.div`
   display: flex;
@@ -143,7 +140,33 @@ function DishRow({ dish, sold }: Readonly<{ dish: MenuDishView; sold: number }>)
   );
 }
 
-export function DishesPanel() {
+/** Total portions sold on the open menu (cancelled orders do not count). */
+export function useSoldTotal(): number {
+  const soldBy = useSelector(selectSoldByItem);
+  let total = 0;
+  for (const qty of soldBy.values()) total += qty;
+  return total;
+}
+
+/** The Dishes slide-over (30rem on a tablet or computer, full width on a phone). */
+export function DishesSlideOver({
+  onClose,
+  width = '30rem',
+}: Readonly<{ onClose: () => void; width?: string }>) {
+  const { t } = useTranslation(SELLER_NS);
+  return (
+    <SlideOver
+      label={t('dishes.title')}
+      closeLabel={t('detail.close')}
+      onClose={onClose}
+      width={width}
+    >
+      <DishesPanel />
+    </SlideOver>
+  );
+}
+
+function DishesPanel() {
   const { t } = useTranslation(SELLER_NS);
   const current = useSelector(selectCurrent);
   const soldBy = useSelector(selectSoldByItem);

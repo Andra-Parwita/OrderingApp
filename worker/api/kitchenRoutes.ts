@@ -1,13 +1,18 @@
 // Per-kitchen web app files (plan 004 stage 6, spec 6.4 and 6.5), public and cacheable:
 //   GET /k/<slug>/manifest.webmanifest?start=/o/<token>   the manifest, one per kitchen
-//   GET /k/<slug>/icon-<180|192|512>.png                  the seller's small icon (any size: the
+//   GET /k/<slug>/seller.webmanifest                      the seller app's manifest (start and scope /seller)
+//   GET /k/<slug>/icon-<180|192|512>.png                 the seller's small icon (any size: the
 //                                                         browser scales the 512)
 //   GET /k/<slug>/icon-<180|192|512>.svg                  the default icon: initials on the theme colour
-// The default is an SVG because making a PNG with letters needs a font renderer (no new dependency).
-// iOS wants a PNG for `apple-touch-icon`: a kitchen without an uploaded icon has none yet, so its
-// `.png` icons answer 404 and the page should only link `apple-touch-icon` when the manifest's icons
-// are not SVG.
-import { buildManifest, defaultIconSvg, ICON_SIZES } from '../../shared/kitchenManifest';
+//   GET /k/<slug>/apple-touch-icon.png                    the same as icon-180.png
+// The `.png` files always answer with an image (plan 011): the seller's upload, else a redirect to the
+// shared default PNG in public/. iOS needs a PNG for `apple-touch-icon`, so the page can always link it.
+import {
+  buildManifest,
+  DEFAULT_ICON_PATH,
+  defaultIconSvg,
+  ICON_SIZES,
+} from '../../shared/kitchenManifest';
 import type { ThemeName } from '../../shared/themes';
 import { DEFAULT_THEME } from '../../shared/themes';
 import { keyOfRef, contentTypeOfKey, type ImageBucket } from '../images/r2';
@@ -21,6 +26,13 @@ const SAMPLE_TYPES: Record<string, string> = {
   webp: 'image/webp',
 };
 const DATA_URL = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/;
+
+/** The shared default icon is a static file in public/; a short cache so a new default shows up soon. */
+const defaultIconRedirect = () =>
+  new Response(null, {
+    status: 302,
+    headers: { Location: DEFAULT_ICON_PATH, 'Cache-Control': 'public, max-age=3600' },
+  });
 
 /** The content type of a stored small-icon ref, or undefined when there is none (or it is unusable). */
 export function iconTypeOfRef(ref: string | undefined): string | undefined {
@@ -70,7 +82,10 @@ export async function handleKitchenRequest(
   context: { images?: ImageBucket | undefined } = {},
 ): Promise<Response | null> {
   const url = new URL(request.url);
-  const match = /^\/k\/([^/]+)\/(manifest\.webmanifest|icon-(\d+)\.(png|svg))$/.exec(url.pathname);
+  const match =
+    /^\/k\/([^/]+)\/(manifest\.webmanifest|seller\.webmanifest|apple-touch-icon\.png|icon-(\d+)\.(png|svg))$/.exec(
+      url.pathname,
+    );
   if (!match) return null;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
@@ -93,12 +108,13 @@ export async function handleKitchenRequest(
   const ref = menu.kitchen.images?.railIcon;
   const uploadedType = iconTypeOfRef(ref);
 
-  if (file === 'manifest.webmanifest') {
+  if (file === 'manifest.webmanifest' || file === 'seller.webmanifest') {
     const manifest = buildManifest({
       slug,
       name: menu.kitchen.name,
       theme,
       start: url.searchParams.get('start'),
+      seller: file === 'seller.webmanifest',
       ...(uploadedType !== undefined ? { uploadedType } : {}),
     });
     return Response.json(manifest, {
@@ -109,9 +125,13 @@ export async function handleKitchenRequest(
     });
   }
 
-  if (ext === 'png') {
-    if (ref === undefined || uploadedType === undefined) return NOT_FOUND();
-    return serveUploadedIcon(ref, uploadedType, context.images);
+  if (ext === 'png' || file === 'apple-touch-icon.png') {
+    // Always an image: the upload, or the shared default PNG when there is none (or it is gone).
+    const own =
+      ref !== undefined && uploadedType !== undefined
+        ? await serveUploadedIcon(ref, uploadedType, context.images)
+        : undefined;
+    return own && own.status !== 404 ? own : defaultIconRedirect();
   }
   // `.svg`: always the default, so a page can always show something.
   return new Response(defaultIconSvg(menu.kitchen.name, theme), {

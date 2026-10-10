@@ -5,6 +5,7 @@ import { Link } from 'react-router';
 import { styled } from 'styled-components';
 import { Toast } from '../../ui';
 import { SETTINGS_NS } from './i18n/register';
+import { CustomerLinkPane } from './CustomerLinkPane';
 import { KitchenPane, PostPane } from './KitchenPanes';
 import { PANE_IDS, SECOND_GROUP, paneHref, type PaneId } from './panes';
 import { PickupPane } from './PickupPane';
@@ -117,6 +118,7 @@ export function SettingsPanes({ pane, devices, images, chefs, backup }: Props) {
   }, [dispatch]);
 
   const content: Record<PaneId, ReactNode> = {
+    link: <CustomerLinkPane />,
     kitchen: <KitchenPane images={images} />,
     post: <PostPane />,
     pickup: <PickupPane />,

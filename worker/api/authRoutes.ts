@@ -12,6 +12,7 @@ import {
   parsePasswordSignInRequest,
   parseRegisterRequest,
   parseRenameDeviceRequest,
+  parseSetDemoRequest,
   type ChefAccessResponse,
   type DevicesResponse,
   type MeResponse,
@@ -287,6 +288,16 @@ export async function handleAdmin(
     }
     const target = b ? await store.sellerById(b) : undefined;
     if (b && !target) return error('seller_not_found', 'Seller not found');
+    // Plan 013: the admin switches a kitchen into or out of demo mode (admin session, checked above).
+    if (b && target && !c && method === 'PATCH') {
+      const input = parseSetDemoRequest(await readJson(request));
+      if (!input) return bad();
+      await store.setSellerDemo(target.seller.id, input.demo);
+      const seller = (await store.adminSellers()).find((row) => row.id === target.seller.id);
+      return seller
+        ? Response.json({ seller } satisfies SellerResponse)
+        : error('seller_not_found', 'Seller not found');
+    }
     if (b && (c === 'invite-key' || c === 'recovery-key') && !d && method === 'POST') {
       const key = await store.auth.createKey(
         { role: 'seller', sellerId: b },

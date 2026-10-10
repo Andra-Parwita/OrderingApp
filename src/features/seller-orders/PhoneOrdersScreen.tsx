@@ -5,6 +5,8 @@ import { styled } from 'styled-components';
 import { formatDay, formatDayTime } from '../../../shared/dates';
 import { Button, BottomSheet, EmptyState, Icon, SheetRow } from '../../ui';
 import { LiveDot } from '../../components/LiveDot';
+import { BannerToggle } from './BannerToggle';
+import { DishesSlideOver, useSoldTotal } from './DishesPanel';
 import { FeedbackHost } from './FeedbackHost';
 import {
   FinishedHome,
@@ -86,6 +88,12 @@ const TitleGroup = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   min-width: 0;
 `;
+const Actions = styled.div`
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
 const Title = styled.h1`
   margin: 0;
   font-size: 1.75rem;
@@ -106,7 +114,7 @@ const FilterBar = styled.div`
   display: flex;
   flex: none;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.xs};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadPhone}px;
 `;
 const Dropdown = styled.button`
@@ -121,6 +129,7 @@ const Dropdown = styled.button`
   color: ${({ theme }) => theme.c.text};
   font: inherit;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 
   span {
@@ -139,12 +148,29 @@ const ChangedToggle = styled.button<{ $on: boolean }>`
   background: ${({ theme, $on }) => ($on ? theme.c.warnTint : 'transparent')};
   color: ${({ theme }) => theme.c.warn};
   font: inherit;
+  white-space: nowrap;
   cursor: pointer;
 
   svg {
     width: 1rem;
     height: 1rem;
   }
+`;
+const DishesButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  min-width: ${({ theme }) => theme.size.tap}px;
+  height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.sm};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border-radius: ${({ theme }) => theme.radius.pill};
+  background: transparent;
+  color: ${({ theme }) => theme.c.text};
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
 `;
 const SearchButton = styled.button`
   display: inline-flex;
@@ -245,6 +271,8 @@ function PhoneOrdersContent({
   const orders = useSelector(selectOrders);
   const visible = useVisibleOrders(filter, query, toggles);
   const [sheet, setSheet] = useState(false);
+  const [dishes, setDishes] = useState(false);
+  const soldTotal = useSoldTotal();
   const [searching, setSearching] = useState(query !== '');
   const [showAll, setShowAll] = useState(false);
   useOrdersPolling();
@@ -301,6 +329,17 @@ function PhoneOrdersContent({
             <Icon name="pencil" />
             {t('phone.changedN', { count: counts.changed })}
           </ChangedToggle>
+        ) : null}
+        {live ? (
+          <DishesButton
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={`${t('dishes.title')} ${soldTotal}`}
+            onClick={() => setDishes(true)}
+          >
+            <Icon name="pot" />
+            {soldTotal}
+          </DishesButton>
         ) : null}
         <SearchButton
           type="button"
@@ -397,12 +436,15 @@ function PhoneOrdersContent({
             <Title>{t('home.title')}</Title>
             {live ? <LiveDot fetchFailed={fetchFailed} /> : null}
           </TitleGroup>
-          {live && onNewOrder ? (
-            <Button variant="primary" onClick={onNewOrder}>
-              <Icon name="plus" />
-              {t('live.newOrder')}
-            </Button>
-          ) : null}
+          <Actions>
+            {live && onNewOrder ? (
+              <Button variant="primary" onClick={onNewOrder}>
+                <Icon name="plus" />
+                {t('live.newOrder')}
+              </Button>
+            ) : null}
+            <BannerToggle />
+          </Actions>
         </TitleLine>
         {live && view ? (
           <SubLine>
@@ -415,6 +457,7 @@ function PhoneOrdersContent({
         {!live && view ? <NoLive>{t('home.noLive')}</NoLive> : null}
       </Head>
       {kind === 'live' ? body : <Scroll>{body}</Scroll>}
+      {dishes && live ? <DishesSlideOver width="100%" onClose={() => setDishes(false)} /> : null}
       {sheet ? (
         <BottomSheet title={t('phone.filterTitle')} onClose={() => setSheet(false)}>
           {SHEET_FILTERS.map((id) => (

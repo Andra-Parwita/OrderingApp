@@ -60,7 +60,10 @@ export type ToastKind =
   | 'samplePartial'
   | 'sampleNone'
   | 'sampleNoMenu'
-  | 'sampleFailed';
+  | 'sampleFailed'
+  // Plan 013 "Clear samples"; `name` carries the count.
+  | 'samplesCleared'
+  | 'clearFailed';
 /** What just happened, for the toast; undo is null where no Undo exists; id restarts the 6 s timer. */
 export type ActionToast = { id: number; kind: ToastKind; name: string; undo: UndoAction | null };
 

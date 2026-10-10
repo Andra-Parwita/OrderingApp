@@ -6,6 +6,7 @@ import type { Language } from '../../../shared/domain';
 import { pickText } from '../../../shared/text';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { COOK_NS } from './i18n/register';
+import { ChefFilterControl, useChefFilter } from './ChefFilterControl';
 import type { CookRow, GroupBy } from './cookModel';
 import { selectCookGroups, selectCookNotes } from './cookSelectors';
 import type { CookRootState } from './cookSlice';
@@ -211,8 +212,11 @@ export function CookTab({
   const [groupBy, setGroupBy] = useState<GroupBy>('item');
   const [counting, setCounting] = useCountMode();
   const { made, change } = useMadeCounts(cookingDate);
-  const groups = useSelector((state: CookRootState) => selectCookGroups(state, 'all', groupBy));
-  const notes = useSelector((state: CookRootState) => selectCookNotes(state, 'all'));
+  const chef = useChefFilter();
+  const groups = useSelector((state: CookRootState) =>
+    selectCookGroups(state, 'all', groupBy, chef.filter),
+  );
+  const notes = useSelector((state: CookRootState) => selectCookNotes(state, 'all', chef.filter));
 
   const groupOptions: ReadonlyArray<SegmentedOption<GroupBy>> = GROUPS.map((value) => ({
     value,
@@ -246,6 +250,7 @@ export function CookTab({
             label={t('group.label')}
           />
         </Inline>
+        <ChefFilterControl {...chef} />
         <Switch>
           <input type="checkbox" role="switch" checked={counting} onChange={onCounting} />
           {t('countMode')} <Hint>{t('countHint')}</Hint>

@@ -29,6 +29,7 @@
   "saveFailed": "Could not save. Try again.",
   "panes": {
     "nav": "Settings sections",
+    "link": { "title": "Links", "sub": "Copy, share, QR code" },
     "kitchen": { "title": "Kitchen", "sub": "Name, WhatsApp, pictures" },
     "post": { "title": "WhatsApp post", "sub": "Greeting and closing" },
     "pickup": { "title": "Pickup locations", "sub": "Up to 5 places" },
@@ -37,6 +38,23 @@
     "chefs": { "title": "Chefs", "sub": "Invite, rename, delete" },
     "devices": { "title": "Devices", "sub": "Add, rename, sign out" },
     "backup": { "title": "Backup", "sub": "Download or restore" }
+  },
+  "link": {
+    "intro": "Send this link to your customers. They open it to see the menu and order.",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copyFailed": "Could not copy. Select the link instead.",
+    "share": "Share",
+    "shareText": "{{name}}: order here {{link}}",
+    "qrTitle": "QR code",
+    "qrAlt": "QR code for {{link}}",
+    "download": "Download QR",
+    "print": "Print",
+    "sellerTitle": "Seller app",
+    "sellerNote": "Open this on another device, then sign in (or use a 6-digit code from Devices).",
+    "sellerCopy": "Copy seller app link",
+    "sellerShare": "Share seller app link",
+    "sellerShareText": "{{name}}: seller app {{link}}"
   },
   "kitchen": {
     "name": "Kitchen name",

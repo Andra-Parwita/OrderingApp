@@ -31,7 +31,15 @@ export type D1RepositoryOptions = {
   onCustomerChange?: (changes: Array<CustomerChange>) => void;
 };
 
-type SellerRow = { id: string; slug: string; name: string; created_at: string };
+type SellerRow = { id: string; slug: string; name: string; demo: number; created_at: string };
+
+/** A sellers row as a Seller (the demo flag is 0/1 in D1). */
+const toSeller = (row: Omit<SellerRow, 'created_at'>): Seller => ({
+  id: row.id,
+  slug: row.slug,
+  name: row.name,
+  demo: row.demo === 1,
+});
 
 export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Repository {
   const db = new Db(d1);
@@ -48,12 +56,12 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
   };
 
   const internal = (row: Seller | undefined): SellerInternal | undefined =>
-    row ? createSellerInternal(deps, { id: row.id, slug: row.slug, name: row.name }) : undefined;
+    row ? createSellerInternal(deps, row) : undefined;
   const handle = (row: Seller | undefined): SellerRepository | undefined => internal(row)?.repo;
   const byId = (id: string) =>
     db
-      .first<Seller>('SELECT id, slug, name FROM sellers WHERE id = ?', id)
-      .then((r) => r ?? undefined);
+      .first<SellerRow>('SELECT id, slug, name, demo FROM sellers WHERE id = ?', id)
+      .then((r) => (r ? toSeller(r) : undefined));
 
   const requireDevTools = () => {
     if (options.devTools !== true) throw new Error('Dev tools are off for this repository');
@@ -81,7 +89,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
         ...tokens,
       ),
       db.stmt(
-        `SELECT id, slug, name FROM sellers WHERE id IN
+        `SELECT id, slug, name, demo FROM sellers WHERE id IN
            (SELECT seller_id FROM orders WHERE token IN (${m}) UNION SELECT seller_id FROM expired_orders WHERE token IN (${m}))`,
         ...tokens,
         ...tokens,
@@ -100,7 +108,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
           (r) => [r.token, { sellerId: r.seller_id, cookingDate: r.cooking_date }],
         ),
       ),
-      sellers: new Map((results[6] as Array<Seller>).map((row) => [row.id, row])),
+      sellers: new Map((results[6] as Array<SellerRow>).map((row) => [row.id, toSeller(row)])),
     };
   }
 
@@ -140,26 +148,27 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
 
   return {
     async listSellers() {
-      return db.all<Seller>('SELECT id, slug, name FROM sellers ORDER BY rowid');
+      return (
+        await db.all<SellerRow>('SELECT id, slug, name, demo FROM sellers ORDER BY rowid')
+      ).map(toSeller);
     },
 
     async adminSellers() {
       const rows = await db.all<SellerRow>(
-        'SELECT id, slug, name, created_at FROM sellers ORDER BY rowid',
+        'SELECT id, slug, name, demo, created_at FROM sellers ORDER BY rowid',
       );
       return rows.map((row) => ({
-        id: row.id,
-        slug: row.slug,
-        name: row.name,
+        ...toSeller(row),
         createdAt: row.created_at,
       }));
     },
 
     async sellerBySlug(slug) {
-      return handle(
-        (await db.first<Seller>('SELECT id, slug, name FROM sellers WHERE slug = ?', slug)) ??
-          undefined,
+      const row = await db.first<SellerRow>(
+        'SELECT id, slug, name, demo FROM sellers WHERE slug = ?',
+        slug,
       );
+      return handle(row ? toSeller(row) : undefined);
     },
 
     async sellerById(id) {
@@ -168,10 +177,14 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
 
     /** The caller has checked the slug (valid, unique). */
     async addSeller(name, slug, opts): Promise<AdminSeller> {
-      const seller: Seller = { id: `seller-${slug}`, slug, name };
+      const seller: Seller = { id: `seller-${slug}`, slug, name, demo: false };
       const createdAt = options.now().toISOString();
       await db.batch(newSellerStatements(db, seller, createdAt, opts?.sampleImages));
       return { ...seller, createdAt };
+    },
+
+    async setSellerDemo(sellerId, demo) {
+      await db.stmt('UPDATE sellers SET demo = ? WHERE id = ?', demo ? 1 : 0, sellerId).run();
     },
 
     /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */

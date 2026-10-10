@@ -53,7 +53,9 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
     await sellerPage.screenshot({ path: 'captures/b2flow-2-seller-detail.png', fullPage: true });
 
     // Nudge: the reminder reaches the customer's order page (it polls every 15 s).
-    await sellerPage.getByRole('button', { name: /^Nudge/ }).click();
+    const panel = sellerPage.getByRole('complementary', { name: /^Order / });
+    await panel.getByRole('button', { name: 'More', exact: true }).click();
+    await sellerPage.getByRole('menuitem', { name: /^Nudge/ }).click();
     await expect(sellerPage.getByText('Reminder sent to the customer')).toBeVisible();
     await expect(page.getByTestId('updates')).toContainText(
       'The seller is waiting for your order number on WhatsApp.',
@@ -62,8 +64,11 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
     await page.screenshot({ path: 'captures/b2flow-3-customer-nudged.png', fullPage: true });
 
     // Lock: the customer can no longer change the order.
-    await sellerPage.getByRole('button', { name: /^Lock/ }).click();
-    await expect(sellerPage.getByRole('button', { name: /^Unlock/ })).toBeVisible();
+    await panel.getByRole('button', { name: 'More', exact: true }).click();
+    await sellerPage.getByRole('menuitem', { name: /^Lock/ }).click();
+    await panel.getByRole('button', { name: 'More', exact: true }).click();
+    await expect(sellerPage.getByRole('menuitem', { name: /^Unlock/ })).toBeVisible();
+    await sellerPage.keyboard.press('Escape');
     await expect(
       page.getByText('The seller has locked this order. Message them on WhatsApp to change it.'),
     ).toBeVisible({ timeout: 40_000 });

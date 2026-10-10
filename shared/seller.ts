@@ -42,5 +42,7 @@ export function parseSeller(input: unknown): Seller | null {
   if (!isRecord(input)) return null;
   const { id, slug, name } = input;
   if (typeof id !== 'string' || id === '' || typeof name !== 'string') return null;
-  return isValidSlug(slug) ? { id, slug, name } : null;
+  return isValidSlug(slug)
+    ? { id, slug, name, ...(input['demo'] === true ? { demo: true } : {}) }
+    : null;
 }

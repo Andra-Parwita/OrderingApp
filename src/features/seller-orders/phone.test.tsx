@@ -64,6 +64,17 @@ describe('Phone orders', () => {
     expect(screen.getAllByRole('button', { name: /order link on WhatsApp/ })).toHaveLength(2);
   });
 
+  it('opens the Dishes slide-over from the header button and closes it with Escape', () => {
+    renderList();
+    fireEvent.click(screen.getByRole('button', { name: /^Dishes\s*\d+$/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Dishes' });
+    expect(
+      within(dialog).getByRole('button', { name: 'Edit limit: Chicken lemper' }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(dialog, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('opens a bottom sheet with the statuses plus Changed and Not paid', () => {
     const toggle = vi.fn();
     renderList(toggle);

@@ -20,6 +20,10 @@
     "dish": "Dish",
     "chef": "Chef"
   },
+  "chefFilter": {
+    "label": "Chef",
+    "all": "All"
+  },
   "countMode": "Count mode",
   "countHint": "tick off as you cook",
   "cooked": "{{made}} of {{total}} cooked",
@@ -42,6 +46,7 @@
     "pickupAt": "{{time}} pickup",
     "inBag": "{{ticked}} of {{total}} items in the bag",
     "note": "Note",
+    "otherChef": "another chef's dish, not in this view",
     "notTicked_one": "{{count}} not ticked yet. You can still mark it packed.",
     "notTicked_other": "{{count}} not ticked yet. You can still mark it packed.",
     "allIn": "All in. Packing doesn't change the order status; mark it ready in Pickup & delivery.",

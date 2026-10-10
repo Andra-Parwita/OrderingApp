@@ -68,6 +68,8 @@
       "link": "Link: /{{slug}}",
       "invite": "Create invite key",
       "recovery": "Create recovery key",
+      "demo": "Demo kitchen",
+      "demoNote": "On: the seller can add 50 sample orders and clear them, and customers see this is a demo. Never switch it on for a real kitchen.",
       "devices": "Devices",
       "noDevices": "No devices yet.",
       "chef": "Chef {{name}}",

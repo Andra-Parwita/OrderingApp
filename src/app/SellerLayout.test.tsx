@@ -113,7 +113,7 @@ describe('SellerLayout', () => {
     wide = true;
     renderLayout();
     const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
-    const strip = banner.parentElement?.parentElement?.parentElement as HTMLElement;
+    const strip = banner.parentElement?.parentElement?.parentElement?.parentElement as HTMLElement;
     expect(strip).toHaveStyle({ backgroundColor: 'rgb(131, 89, 55)' });
     expect(strip.style.backgroundImage || getComputedStyle(strip).backgroundImage).toContain(
       '/samples/banner-bg.jpg',
@@ -130,7 +130,7 @@ describe('SellerLayout', () => {
     wide = true;
     renderLayout();
     const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
-    const strip = banner.parentElement?.parentElement?.parentElement as HTMLElement;
+    const strip = banner.parentElement?.parentElement?.parentElement?.parentElement as HTMLElement;
     expect(strip).toHaveStyle({ backgroundColor: 'rgb(131, 89, 55)' });
     expect(getComputedStyle(strip).backgroundImage).not.toContain('url');
   });

@@ -218,7 +218,8 @@ describe('AppRoutes', () => {
   it('opens the share page from the Orders header', async () => {
     wide = true;
     renderAt('/seller');
-    fireEvent.click(await screen.findByRole('button', { name: 'Share menu' }, { timeout: 5000 }));
+    fireEvent.click(await screen.findByRole('button', { name: 'More' }, { timeout: 5000 }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Share menu' }));
     expect(screen.getByTestId('where')).toHaveTextContent('/seller/share');
   });
 
@@ -262,7 +263,7 @@ describe('AppRoutes', () => {
     expect(slot).toHaveAttribute('data-fit', 'contain');
     expect(slot).toHaveAttribute('data-ratio', '5 / 1');
     expect(slot).toHaveStyle({ background: 'rgb(131, 89, 55)' });
-    expect(slot.parentElement?.parentElement).toHaveStyle({
+    expect(slot.parentElement?.parentElement?.parentElement).toHaveStyle({
       backgroundColor: 'rgb(131, 89, 55)',
     });
     expect(banner).toHaveStyle({ objectFit: 'contain' });

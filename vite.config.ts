@@ -33,6 +33,9 @@ function persistState(): { path: string } | undefined {
 
 const persist = persistState();
 
+// Plan 011: no dev hook for the kitchen links. With `assets.run_worker_first` the Cloudflare plugin
+// runs the Worker for pages in dev too, so the same HTMLRewriter code (worker/pages.ts) serves
+// phones on the home Wi-Fi, with the kitchen name and the `/o/:token` links as well.
 export default defineConfig({
   plugins: [react(), cloudflare(persist ? { persistState: persist } : {})],
   server: {

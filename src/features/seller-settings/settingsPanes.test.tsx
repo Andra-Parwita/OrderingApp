@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router';
 import { Provider } from 'react-redux';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { server } from '../../../mocks/server';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { SettingsPanes } from './SettingsPanes';
@@ -42,11 +42,53 @@ const change = (label: string, value: string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 
 describe('SettingsPanes', () => {
-  it('lists all eight panes and marks the open one', async () => {
+  it('shows the customer link, copies it, falls back to WhatsApp to share, and encodes it in the QR', async () => {
+    server.use(
+      http.get('*/api/menu*', () => new HttpResponse(null, { status: 404 })),
+      http.get('*/api/*/menu*', () => new HttpResponse(null, { status: 404 })),
+    );
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    renderPane('link');
+    const link = screen.getAllByText(/^https?:\/\/[^ ]+\/[^ /]+$/)[0]!.textContent;
+    expect(link.startsWith(window.location.origin)).toBe(true);
+    expect(screen.getByRole('img', { name: `QR code for ${link}` })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(link));
+    expect(await screen.findByText('Link copied')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    const url = String(open.mock.calls[0]![0]);
+    expect(url.startsWith('https://wa.me/?text=')).toBe(true);
+    expect(decodeURIComponent(url)).toContain(link);
+    open.mockRestore();
+  });
+
+  it('shows the seller app link, copies it, and labels its QR with it', async () => {
+    server.use(
+      http.get('*/api/menu*', () => new HttpResponse(null, { status: 404 })),
+      http.get('*/api/*/menu*', () => new HttpResponse(null, { status: 404 })),
+    );
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    renderPane('link');
+    const link = screen.getByText(/\/seller\/sign-in\?kitchen=[^ ]+$/).textContent;
+    expect(link.startsWith(`${window.location.origin}/seller/sign-in?kitchen=`)).toBe(true);
+    expect(screen.getByRole('img', { name: `QR code for ${link}` })).toBeInTheDocument();
+    expect(screen.getByText(/Open this on another device/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy seller app link' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(link));
+  });
+
+  it('lists all nine panes and marks the open one', async () => {
     server.use(http.get('*/api/seller/pickup-places', () => HttpResponse.json({ places: [] })));
     renderPane('pickup');
     const nav = screen.getByRole('navigation', { name: 'Settings sections' });
-    expect(nav.querySelectorAll('a')).toHaveLength(8);
+    expect(nav.querySelectorAll('a')).toHaveLength(9);
     expect(screen.getByRole('link', { name: /Pickup locations/ })).toHaveAttribute(
       'aria-current',
       'page',

@@ -4,7 +4,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import { useDevTools } from '../../api/devTools';
 import { hasSessionHint } from '../../api/device/session';
+import { sessionIsDemo } from '../../api/device/sellerContext';
 import { Button, ConfirmButton } from '../../ui';
+import { demoSamplesClearRequested, demoSamplesRequested } from './demoActions';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
 import { SELLER_NS } from './i18n/register';
 import type { StatusFilter } from './orderStatus';
@@ -78,9 +80,13 @@ const DevBar = styled.div`
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
 `;
 
-/** Dev tools show only when the server runs with DEV_TOOLS and there is no real session; never to a chef or a signed-in seller. */
+/**
+ * The bar under the list shows (a) the dev tools, only when the server runs with DEV_TOOLS and there
+ * is no real session, or (b) the sample buttons of a demo kitchen (plan 013) to its signed-in staff.
+ */
 export function useShowDevTools(): boolean {
-  return useDevTools() === true && !hasSessionHint();
+  const devTools = useDevTools();
+  return sessionIsDemo() || (devTools === true && !hasSessionHint());
 }
 
 // Dev only: sample data, and a reset of the local database to the sample kitchens.
@@ -88,8 +94,27 @@ export function DevTools() {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
   const busy = useSelector(selectDevSampling);
+  const addDemo = useCallback(() => dispatch(demoSamplesRequested()), [dispatch]);
+  const clearDemo = useCallback(() => dispatch(demoSamplesClearRequested()), [dispatch]);
   const addSamples = useCallback(() => dispatch(devSampleOrdersRequested()), [dispatch]);
   const reset = useCallback(() => dispatch(devResetRequested()), [dispatch]);
+  // A demo kitchen gets its own two buttons and never the reset.
+  if (sessionIsDemo()) {
+    return (
+      <DevBar aria-label={t('orders.demoBar')}>
+        <Button onClick={addDemo} disabled={busy}>
+          {t('orders.devSample')}
+        </Button>
+        <ConfirmButton
+          variant="quiet"
+          label={t('orders.demoClear')}
+          confirmLabel={t('orders.demoClearConfirm')}
+          onConfirm={clearDemo}
+          disabled={busy}
+        />
+      </DevBar>
+    );
+  }
   return (
     <DevBar>
       <Button onClick={addSamples} disabled={busy}>

@@ -10,6 +10,18 @@ export type SampleOrdersRequest = { count: number };
  * Never an error status for "nothing fits".
  */
 export type SampleOrdersResponse = { added: number; reason?: 'no_menu' | 'sold_out' };
+/**
+ * Plan 013, demo kitchens only: POST /api/seller/demo/samples adds 50 (a SampleOrdersResponse);
+ * DELETE /api/seller/demo/samples removes the sample orders and answers how many.
+ */
+export type ClearSamplesResponse = { removed: number };
+
+export function parseClearSamplesResponse(input: unknown): ClearSamplesResponse | null {
+  return isRecord(input) && isInt(input['removed'], 0, 100000)
+    ? { removed: input['removed'] }
+    : null;
+}
+
 /** POST /api/dev/reset (dev only). */
 export type ResetResponse = { ok: true };
 

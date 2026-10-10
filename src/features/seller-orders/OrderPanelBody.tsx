@@ -8,7 +8,7 @@ import { formatDay, formatDayTime } from '../../../shared/dates';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
-import { Button, Icon, WarningDialog, type IconName } from '../../ui';
+import { Button, Icon, Menu, WarningDialog, type IconName, type MenuItem } from '../../ui';
 import { SELLER_NS } from './i18n/register';
 import { StatusMark } from './StatusMark';
 import { actorLabel, orderTotalCents } from './orderText';
@@ -325,81 +325,96 @@ export function OrderPanelBody({
   );
 }
 
+// Plan 015: one row (about 64 px with its padding): the main step wide, WhatsApp and Paid as icon
+// buttons, the rest in a ⋯ menu.
 const Foot = styled.div`
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
+`;
+const Main = styled(Button)`
+  flex: 1;
+  min-height: ${({ theme }) => theme.size.mainAction}px;
+  font-size: 1rem;
+`;
+const IconAction = styled(Button)`
+  flex: none;
+  width: ${({ theme }) => theme.size.mainAction}px;
+  height: ${({ theme }) => theme.size.mainAction}px;
+  padding: 0;
+  color: ${({ theme }) => theme.c.text};
 
-  & > button:first-child {
-    min-height: ${({ theme }) => theme.size.mainAction + 4}px;
-    font-size: 1rem;
+  svg {
+    width: 1.375rem;
+    height: 1.375rem;
   }
 `;
-const Pair = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-const Plain = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-const Danger = styled(Button)`
-  color: ${({ theme }) => theme.c.danger};
-`;
-const Quiet = styled(Button)`
-  color: ${({ theme }) => theme.c.text};
-`;
 
-/** The pinned buttons: one main step, two helpers, then plain Lock, Nudge, Cancel and a quiet Mark collected. */
+/** The pinned row: one main step, WhatsApp and Paid icon buttons, and a ⋯ menu (Collected, Lock, Nudge, Cancel). */
 export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
   const { t } = useTranslation(SELLER_NS);
   const a = useOrderActions(order);
   const [asking, setAsking] = useState(false);
-  // Collected is the quiet button below (D-069 Q4), so it is never the main step here.
-  const main = a.forward.find((status) => status !== 'collected');
+  // Collected is not the main step while another step is open (D-069 Q4); it waits in the menu.
+  const next = a.forward.find((status) => status !== 'collected');
   const canCollect = order.fulfilment === 'pickup' && !a.final;
+  const main = next ?? (canCollect ? 'collected' : undefined);
+  const items: Array<MenuItem> = [
+    ...(canCollect && next
+      ? [{ label: t('detail.action.collected'), onSelect: a.onCollected, disabled: a.saving }]
+      : []),
+    {
+      label: order.locked ? t('panel.unlock') : t('panel.lock'),
+      icon: 'lock',
+      disabled: a.saving || a.final,
+      onSelect: a.onLock,
+    },
+    {
+      label: t('panel.nudge'),
+      icon: 'bell',
+      disabled: a.saving || a.final,
+      onSelect: a.onNudge,
+    },
+    ...(a.canCancel
+      ? [
+          {
+            label: t('detail.cancel'),
+            icon: 'x' as const,
+            danger: true,
+            disabled: a.saving,
+            onSelect: () => setAsking(true),
+          },
+        ]
+      : []),
+  ];
   return (
     <Foot>
       {main ? (
-        <Button variant="primary" fullWidth disabled={a.saving} onClick={() => a.onStep(main)}>
+        <Main
+          variant="primary"
+          disabled={a.saving}
+          onClick={() => (main === 'collected' ? a.onCollected() : a.onStep(main))}
+        >
           <Icon name="check" />
           {t(`detail.action.${main}`)}
-        </Button>
+        </Main>
       ) : null}
-      <Pair>
-        <Button onClick={a.onWhatsApp}>
-          <Icon name="chat" />
-          {t('detail.sendLink')}
-        </Button>
-        <Button disabled={a.saving} onClick={() => a.setPaid(!order.paid)}>
-          <Icon name="coin" />
-          {order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
-        </Button>
-      </Pair>
-      <Plain>
-        <Quiet variant="quiet" disabled={a.saving || a.final} onClick={a.onLock}>
-          <Icon name="lock" />
-          {order.locked ? t('panel.unlock') : t('panel.lock')}
-        </Quiet>
-        <Quiet variant="quiet" disabled={a.saving || a.final} onClick={a.onNudge}>
-          <Icon name="bell" />
-          {t('panel.nudge')}
-        </Quiet>
-        {a.canCancel ? (
-          <Danger variant="quiet" disabled={a.saving} onClick={() => setAsking(true)}>
-            <Icon name="x" />
-            {t('detail.cancel')}
-          </Danger>
-        ) : null}
-      </Plain>
-      {canCollect ? (
-        <Quiet variant="quiet" fullWidth disabled={a.saving} onClick={a.onCollected}>
-          {t('detail.action.collected')}
-        </Quiet>
-      ) : null}
+      <IconAction
+        aria-label={t('detail.sendLink')}
+        title={t('detail.sendLink')}
+        onClick={a.onWhatsApp}
+      >
+        <Icon name="chat" />
+      </IconAction>
+      <IconAction
+        aria-label={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
+        title={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
+        disabled={a.saving}
+        onClick={() => a.setPaid(!order.paid)}
+      >
+        <Icon name="coin" />
+      </IconAction>
+      <Menu label={t('live.more')} items={items} side="up" />
       {asking ? (
         <WarningDialog
           title={t('panel.cancelTitle', { name: order.firstName })}

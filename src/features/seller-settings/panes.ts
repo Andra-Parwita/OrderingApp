@@ -1,6 +1,7 @@
 // The Settings panes, in the order the list shows them (handoff: Settings, tablet, owner).
 
 export const PANE_IDS = [
+  'link',
   'kitchen',
   'post',
   'pickup',

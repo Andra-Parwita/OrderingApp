@@ -16,7 +16,9 @@ import {
   type Bag,
   type PackSort,
 } from './packModel';
-import { selectBags } from './cookSelectors';
+import { ChefFilterControl, useChefFilter } from './ChefFilterControl';
+import { isOwnItem } from './cookModel';
+import { selectBags, selectCookMenu } from './cookSelectors';
 import { orderReplaced, type CookRootState } from './cookSlice';
 
 const SORTS: ReadonlyArray<PackSort> = ['time', 'place', 'code'];
@@ -159,7 +161,8 @@ const Items = styled.ul`
   padding: 0;
   list-style: none;
 `;
-const ItemButton = styled.button<{ $on: boolean }>`
+const ItemButton = styled.button<{ $on: boolean; $other: boolean }>`
+  opacity: ${({ $other }) => ($other ? 0.5 : 1)};
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.lg};
@@ -174,7 +177,7 @@ const ItemButton = styled.button<{ $on: boolean }>`
   font-size: 1.125rem;
   text-align: left;
   text-decoration: ${({ $on }) => ($on ? 'line-through' : 'none')};
-  cursor: pointer;
+  cursor: ${({ $other }) => ($other ? 'default' : 'pointer')};
 `;
 const Box = styled.span<{ $on: boolean }>`
   display: inline-flex;
@@ -226,7 +229,9 @@ export function PackTab() {
   const { t, i18n } = useTranslation(COOK_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const dispatch = useDispatch();
-  const bags = useSelector((state: CookRootState) => selectBags(state));
+  const chef = useChefFilter();
+  const menu = useSelector((state: CookRootState) => selectCookMenu(state));
+  const bags = useSelector((state: CookRootState) => selectBags(state, chef.filter));
   const [sort, setSort] = useState<PackSort>('time');
   const [openCode, setOpenCode] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -305,7 +310,16 @@ export function PackTab() {
     [save],
   );
 
-  if (sorted.length === 0 || !open) return <Centered>{t('pack.empty')}</Centered>;
+  if (sorted.length === 0 || !open) {
+    return (
+      <>
+        <SortBar>
+          <ChefFilterControl {...chef} />
+        </SortBar>
+        <Centered>{t('pack.empty')}</Centered>
+      </>
+    );
+  }
 
   const untickedCount = open.total - open.ticked;
   const where = open.place
@@ -324,6 +338,7 @@ export function PackTab() {
             onChange={setSort}
             label={t('pack.orderBy')}
           />
+          <ChefFilterControl {...chef} />
         </SortBar>
         <BagList aria-label={t('pack.list')}>
           {sorted.map((bag) => (
@@ -374,13 +389,19 @@ export function PackTab() {
         <Items>
           {open.order.lines.map((line) => {
             const on = line.ticked === true;
+            const other = !isOwnItem(menu, chef.filter, line.itemId);
             return (
               <li key={line.itemId}>
                 <ItemButton
                   type="button"
                   role="checkbox"
                   aria-checked={on}
+                  aria-label={
+                    other ? `${pickText(line.name, lang)} · ${t('pack.otherChef')}` : undefined
+                  }
+                  disabled={other}
                   $on={on}
+                  $other={other}
                   onClick={() => void tick(open.order, line.itemId)}
                 >
                   <Box $on={on}>{on ? <Icon name="check" /> : null}</Box>

@@ -2,7 +2,8 @@ export type Language = 'en' | 'id';
 export type LocalText = { en: string; id: string };
 
 /** A kitchen on Delave (D-036). `slug` is the customer link `/<slug>` (D-037); see shared/seller.ts. */
-export type Seller = { id: string; slug: string; name: string };
+/** `demo` (plan 013): the admin made this a demo kitchen. The server always sets it; fixtures may omit it. */
+export type Seller = { id: string; slug: string; name: string; demo?: boolean };
 /** What an order tells a customer about its seller. */
 export type SellerRef = Pick<Seller, 'slug' | 'name'>;
 

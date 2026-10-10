@@ -35,6 +35,15 @@ describe('packModel', () => {
     expect(bags[0]).toMatchObject({ ticked: 1, total: 2, packed: false });
   });
 
+  it('with a chef filter keeps orders that have those dishes and counts only those lines', () => {
+    const mixed = makeOrder({
+      lines: [{ ...line('lemper', 1), ticked: true }, line('nasi', 1)],
+    });
+    const bags = bagsOf([mixed, orders[0]!], POINTS, (id) => id === 'lemper');
+    expect(bags).toHaveLength(1);
+    expect(bags[0]).toMatchObject({ ticked: 1, total: 1 });
+  });
+
   it('sorts by pickup time with deliveries last, by place and by code', () => {
     const bags = bagsOf(orders, POINTS);
     expect(sortBags(bags, 'time').map((bag) => bag.order.id)).toEqual(['b', 'a', 'c']);

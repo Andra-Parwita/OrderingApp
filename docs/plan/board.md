@@ -273,6 +273,7 @@ Findings from 6.5 (low): the seller's number in "How ordering works" wraps mid-n
 - **Building:** plan 010, the fixes from the pre-Cloudflare review of 008-009 (lookup lock per code 2 / per IP 10, sweep of wrong-try rows, no false "not found", dev sample error toast).
 - **Then:** refresh the commit message; Cloudflare waits for the owner's go.
 - **Open for the owner/builder:**
+  - **later (builder, 10 Oct):** an admin page view of R2 storage use (total size and per kitchen, against the 10 GB free tier); needs its own plan;
   - try it on a tablet, a phone and the PC;
   - home-screen icon: the local DB has the old sample icon; upload it again in Settings → Pictures, then re-add the home-screen app (no re-seed, the builder's choice);
   - delete the retired screens (needs OK);

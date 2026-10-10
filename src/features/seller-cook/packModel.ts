@@ -20,11 +20,14 @@ export type Bag = {
 export function bagsOf(
   orders: ReadonlyArray<Order>,
   points: ReadonlyArray<PickupPoint> | undefined,
+  /** Chef filter: only orders with a line for which this is true; ticks count those lines. */
+  own: (itemId: string) => boolean = () => true,
 ): Array<Bag> {
   const list = points ?? [];
   return orders
-    .filter((order) => order.status !== 'cancelled' && order.lines.length > 0)
+    .filter((order) => order.status !== 'cancelled' && order.lines.some((line) => own(line.itemId)))
     .map((order) => {
+      const mine = order.lines.filter((line) => own(line.itemId));
       const point =
         order.fulfilment === 'pickup'
           ? (list.find((candidate) => candidate.id === order.pickupPlaceId) ?? list[0])
@@ -34,8 +37,8 @@ export function bagsOf(
         code: formatOrderCode(order.code),
         place: point?.place ?? null,
         time: point?.window.start ?? null,
-        ticked: order.lines.filter((line) => line.ticked === true).length,
-        total: order.lines.length,
+        ticked: mine.filter((line) => line.ticked === true).length,
+        total: mine.length,
         packed: order.packed === true,
       };
     });

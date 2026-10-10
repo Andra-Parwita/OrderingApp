@@ -82,6 +82,43 @@ export function cookNotes(counted: ReadonlyArray<Order>): Array<CookNote> {
   return notes;
 }
 
+/** 'all', 'seller' (dishes without a chef, D-012) or `chef-<id>`. */
+export type ChefFilter = string;
+export const ALL_CHEFS: ChefFilter = 'all';
+
+/** Who makes a dish: 'seller' for no chef (or one no longer on the menu), else `chef-<id>`. */
+export function chefKey(menu: CookMenu | null, itemId: string): ChefFilter {
+  const chefId = menu?.items.find((item) => item.id === itemId)?.chefId;
+  return menu?.chefs.some((chef) => chef.id === chefId) ? `chef-${chefId}` : 'seller';
+}
+
+/** The filter choices after "All": the kitchen itself, then each chef. Empty when no chefs. */
+export function chefChoices(menu: CookMenu | null): Array<{ value: ChefFilter; label: string }> {
+  if (!menu || menu.chefs.length === 0) return [];
+  return [
+    { value: 'seller', label: menu.kitchenName },
+    ...menu.chefs.map((chef) => ({ value: `chef-${chef.id}`, label: chef.name })),
+  ];
+}
+
+/** Does this dish belong to the chosen chef? Always true for 'all'. */
+export function isOwnItem(menu: CookMenu | null, filter: ChefFilter, itemId: string): boolean {
+  return filter === ALL_CHEFS || chefKey(menu, itemId) === filter;
+}
+
+/** Orders cut down to the chosen chef's lines; orders left with none are dropped. */
+export function filterByChef(
+  orders: ReadonlyArray<Order>,
+  menu: CookMenu | null,
+  filter: ChefFilter,
+): ReadonlyArray<Order> {
+  if (filter === ALL_CHEFS) return orders;
+  return orders.flatMap((order) => {
+    const lines = order.lines.filter((line) => isOwnItem(menu, filter, line.itemId));
+    return lines.length > 0 ? [{ ...order, lines }] : [];
+  });
+}
+
 type Pick = { order: Order; lineIndex: number };
 
 function rowsFrom(

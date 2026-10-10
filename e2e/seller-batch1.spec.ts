@@ -55,6 +55,7 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
   const ready = page.getByRole('button', { name: 'Mark ready for pickup', exact: true });
   await expect(ready).toBeVisible();
   await ready.click();
+  // Collected is the main step once the order is ready (pickup).
   await expect(page.getByRole('button', { name: 'Mark collected', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Mark paid', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Mark not paid', exact: true })).toBeVisible();
@@ -80,7 +81,13 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
     await expect(page).toHaveURL(/\/seller\?q=/);
     await page.getByRole('radio', { name: 'ID', exact: true }).click();
     await orderRow(page, new RegExp(firstName)).click();
-    await expect(page.getByRole('button', { name: 'Batalkan pesanan' })).toBeVisible();
+    // Cancel now sits in the panel's ⋯ menu (Lainnya).
+    await page
+      .getByRole('complementary')
+      .getByRole('button', { name: 'Lainnya', exact: true })
+      .click();
+    await expect(page.getByRole('menuitem', { name: 'Batalkan pesanan' })).toBeVisible();
+    await page.keyboard.press('Escape');
     await expect(page.getByRole('heading', { name: 'Perubahan terakhir' })).toBeVisible();
     await page.getByRole('button', { name: 'Tutup' }).click();
     await expect(page).toHaveURL(/\/seller\?q=/);

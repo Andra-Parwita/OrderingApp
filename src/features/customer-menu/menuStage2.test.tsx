@@ -62,6 +62,21 @@ describe('menu home', () => {
     expect(onSeeDishes).toHaveBeenCalledTimes(1);
   });
 
+  it('says "Demo kitchen" under the name for a demo kitchen only (plan 013), in both languages', async () => {
+    const first = renderHome();
+    await screen.findByRole('heading', { name: 'Onde Onde' });
+    expect(screen.queryByText(/Demo kitchen/)).toBeNull();
+    first.unmount();
+
+    await useMenu((menu) => ({ ...menu, seller: { ...menu.seller, demo: true } }));
+    renderHome();
+    expect(await screen.findByText('Demo kitchen: orders here are not real')).toBeVisible();
+    await act(() => i18n.changeLanguage('id'));
+    expect(
+      await screen.findByText('Dapur demo: pesanan di sini bukan pesanan sungguhan'),
+    ).toBeVisible();
+  });
+
   it('shows the phone banner with its alt text in the current language', async () => {
     renderHome();
     const banner = await screen.findByRole('img', { name: 'Onde Onde — Indonesian homemade food' });

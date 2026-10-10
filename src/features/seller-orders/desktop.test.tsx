@@ -1,6 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import { useState } from 'react';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { OrdersTableScreen } from './OrdersTableScreen';
 import type { StatusFilter } from './orderStatus';
 import {
@@ -27,7 +27,10 @@ function orders() {
 }
 
 /** Stands in for the route wrapper: the code, filter, search and toggles live in its state. */
-function Workspace({ initialFilter = 'all' }: Readonly<{ initialFilter?: StatusFilter }>) {
+function Workspace({
+  initialFilter = 'all',
+  onShare = noop,
+}: Readonly<{ initialFilter?: StatusFilter; onShare?: () => void }>) {
   const [code, setCode] = useState<string | undefined>(undefined);
   const [filter, setFilter] = useState<StatusFilter>(initialFilter);
   const [query, setQuery] = useState('');
@@ -40,7 +43,7 @@ function Workspace({ initialFilter = 'all' }: Readonly<{ initialFilter?: StatusF
       onQueryChange={setQuery}
       onOpenOrder={setCode}
       onNewOrder={noop}
-      onShare={noop}
+      onShare={onShare}
       toggles={toggles}
       onToggle={(key) => setToggles((old) => ({ ...old, [key]: !old[key] }))}
       onCloseOrder={() => setCode(undefined)}
@@ -49,22 +52,48 @@ function Workspace({ initialFilter = 'all' }: Readonly<{ initialFilter?: StatusF
   );
 }
 
-function renderLive(initialFilter: StatusFilter = 'all') {
+function renderLive(initialFilter: StatusFilter = 'all', onShare: () => void = noop) {
   const store = createTestStore({ saga: false });
   seed(store, orders());
   seedMenu(store, makeMenuView('live'));
-  renderWithStore(<Workspace initialFilter={initialFilter} />, store);
+  renderWithStore(<Workspace initialFilter={initialFilter} onShare={onShare} />, store);
   return store;
 }
 
 describe('Home with a live menu', () => {
-  it('has the header, the Taking orders switch, Share menu, New order and the sub-line', () => {
+  it('has a one-row header: switch, search, toggles, Dishes, New order and a More menu', () => {
     renderLive();
     expect(screen.getByRole('heading', { name: 'Orders' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Taking orders' })).toBeChecked();
-    expect(screen.getByRole('button', { name: 'Share menu' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Name or code' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Changed\s*1$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Not paid\s*3$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Dishes\s*\d+$/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New order' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show more orders' })).toBeInTheDocument();
+    expect(screen.queryByText(/Menu for .*17 Oct/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the menu line and Share menu in the More menu, and Share still works', () => {
+    const onShare = vi.fn();
+    renderLive('all', onShare);
+    const more = screen.getByRole('button', { name: 'More' });
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(more);
     expect(screen.getByText(/Menu for .*17 Oct.* · Orders close/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Share menu' }));
+    expect(onShare).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(more).toHaveFocus();
+  });
+
+  it('closes the More menu with Escape', () => {
+    renderLive();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(screen.getByRole('menuitem', { name: 'Share menu' })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'More' })).toHaveFocus();
   });
 
   it('shows "Orders paused" when Taking orders is off', () => {
@@ -98,12 +127,34 @@ describe('Home with a live menu', () => {
     expect(screen.getByText('No orders match.')).toBeInTheDocument();
   });
 
-  it('shows the live Dishes panel with sold, left and the limit', () => {
+  it('opens the Dishes slide-over from its button and closes it with Close or Escape', () => {
     renderLive();
-    // The panel is open on the live Home; the dish also appears in the order rows.
-    expect(screen.getByText('Dishes')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Edit limit: Chicken lemper' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sold out' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const open = screen.getByRole('button', { name: /^Dishes\s*\d+$/ });
+    open.focus(); // a real click focuses the button; fireEvent does not
+    fireEvent.click(open);
+    const dialog = screen.getByRole('dialog', { name: 'Dishes' });
+    expect(dialog).toHaveFocus();
+    expect(
+      within(dialog).getByRole('button', { name: 'Edit limit: Chicken lemper' }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Sold out' })).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(open).toHaveFocus();
+    fireEvent.click(open);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('still edits a dish limit inside the slide-over', () => {
+    renderLive();
+    fireEvent.click(screen.getByRole('button', { name: /^Dishes\s*\d+$/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Dishes' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Edit limit: Chicken lemper' }));
+    expect(within(dialog).getByLabelText(/Limit for Chicken lemper/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(within(dialog).queryByLabelText(/Limit for Chicken lemper/)).not.toBeInTheDocument();
   });
 
   it('shows the empty state when there are no orders at all', () => {
@@ -128,27 +179,25 @@ describe('the order beside the list', () => {
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 
-  it('shows Confirm order as the main button, the helpers, plain buttons and a quiet Mark collected', () => {
+  it('shows one row: Confirm order, two icon buttons and a More menu with the rest', () => {
     renderLive();
     fireEvent.click(rowOf('Rina'));
     const panel = screen.getByRole('complementary');
-    for (const name of [
-      'Confirm order',
-      'Send link on WhatsApp',
-      'Mark paid',
-      'Lock',
-      'Nudge',
-      'Cancel order',
-      'Mark collected',
-    ]) {
+    for (const name of ['Confirm order', 'Send link on WhatsApp', 'Mark paid', 'More']) {
       expect(within(panel).getByRole('button', { name })).toBeInTheDocument();
+    }
+    fireEvent.click(within(panel).getByRole('button', { name: 'More' }));
+    for (const name of ['Mark collected', 'Lock', 'Nudge', 'Cancel order']) {
+      expect(within(panel).getByRole('menuitem', { name })).toBeEnabled();
     }
   });
 
   it('asks before cancelling and names who is told', () => {
     renderLive();
     fireEvent.click(rowOf('Rina'));
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel order' }));
+    const panel = screen.getByRole('complementary');
+    fireEvent.click(within(panel).getByRole('button', { name: 'More' }));
+    fireEvent.click(within(panel).getByRole('menuitem', { name: 'Cancel order' }));
     const dialog = screen.getByRole('alertdialog');
     expect(within(dialog).getByText("Cancel Rina's order?")).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Keep order' })).toBeInTheDocument();

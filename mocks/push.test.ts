@@ -6,6 +6,7 @@ import { parseCustomerOrderResponse } from '../shared/orderContract';
 import type { PushPayload } from '../shared/pushContract';
 import { checkOrigin } from '../worker/auth/origin';
 import { Db } from '../worker/db/d1';
+import { kitchenHeadFor } from '../worker/api/kitchenPage';
 import { handleKitchenRequest } from '../worker/api/kitchenRoutes';
 import { createPushDispatcher, type CustomerChange } from '../worker/push/dispatch';
 import {
@@ -468,7 +469,7 @@ describe('web push and kitchen files', () => {
       expect(((await none?.json()) as { start_url: string }).start_url).toBe('/onde-onde');
     });
 
-    it('a kitchen with no uploaded icon gets the initials on its theme colour as SVG', async () => {
+    it('a kitchen with no uploaded icon gets the default PNG icons (and an SVG with its initials)', async () => {
       await world.db
         .stmt(
           "DELETE FROM kitchen_images WHERE slot = 'railIcon' AND seller_id = 'seller-dapur-demo'",
@@ -485,9 +486,9 @@ describe('web push and kitchen files', () => {
       expect(manifest.name).toBe('Dapur Demo');
       expect(manifest.theme_color).toBe('#F7F0EE');
       expect(manifest.icons.map((icon) => icon.type)).toEqual([
-        'image/svg+xml',
-        'image/svg+xml',
-        'image/svg+xml',
+        'image/png',
+        'image/png',
+        'image/png',
       ]);
       const svg = await get('/k/dapur-demo/icon-512.svg');
       expect(svg?.headers.get('Content-Type')).toBe('image/svg+xml');
@@ -495,8 +496,12 @@ describe('web push and kitchen files', () => {
       expect(text).toContain('fill="#8A2232"');
       expect(text).toContain('fill="#FFFFFF"');
       expect(text).toContain('>DD</text>');
-      // No PNG can be made without a dependency: the gap is an honest 404.
-      expect((await get('/k/dapur-demo/icon-180.png'))?.status).toBe(404);
+      // Every PNG address answers with an image: the shared default (a static file in public/).
+      for (const file of ['icon-180.png', 'icon-512.png', 'apple-touch-icon.png']) {
+        const icon = await get(`/k/dapur-demo/${file}`);
+        expect(icon?.status).toBe(302);
+        expect(icon?.headers.get('Location')).toBe('/app-icon.png');
+      }
     });
 
     // Plan 009 stage 4: the manifest and the icon files follow the kitchen's stored `railIcon` ref.
@@ -554,6 +559,73 @@ describe('web push and kitchen files', () => {
       expect(icon?.status).toBe(200);
       expect(icon?.headers.get('Content-Type')).toBe('image/png');
       expect(await icon?.text()).toBe('own-icon-bytes');
+      const apple = await request('/k/onde-onde/apple-touch-icon.png');
+      expect(apple?.headers.get('Content-Type')).toBe('image/png');
+      expect(await apple?.text()).toBe('own-icon-bytes');
+    });
+
+    it('the page head carries the kitchen links: by slug, by order token, none for unknown', async () => {
+      const slugHead = await kitchenHeadFor(world.repo, '/onde-onde/basket');
+      expect(slugHead).toContain(
+        '<link rel="manifest" href="/k/onde-onde/manifest.webmanifest?start=%2Fonde-onde">',
+      );
+      expect(slugHead).toContain(
+        '<link rel="apple-touch-icon" href="/k/onde-onde/apple-touch-icon.png">',
+      );
+      expect(slugHead).toContain('apple-mobile-web-app-title" content="Onde Onde"');
+      const { token } = await place('Rina');
+      const orderHead = await kitchenHeadFor(world.repo, `/o/${token}`);
+      expect(orderHead).toContain('/k/onde-onde/manifest.webmanifest?start=%2Fo%2F');
+      expect(orderHead).toContain('source%3Dhomescreen');
+      for (const none of [
+        '/nobody-here',
+        '/seller/orders',
+        '/o/not-a-token',
+        '/',
+        '/o',
+        '/sw.js',
+      ]) {
+        expect(await kitchenHeadFor(world.repo, none)).toBeNull();
+      }
+    });
+
+    it('the seller manifest starts and is scoped at /seller, named for the kitchen, same icons', async () => {
+      const manifest = (await (await get('/k/onde-onde/seller.webmanifest'))?.json()) as Record<
+        string,
+        unknown
+      >;
+      expect(manifest).toMatchObject({
+        name: 'Onde Onde · Seller',
+        start_url: '/seller',
+        scope: '/seller',
+        display: 'standalone',
+      });
+      const customer = (await (await get('/k/onde-onde/manifest.webmanifest'))?.json()) as {
+        icons: unknown;
+      };
+      expect(manifest['icons']).toEqual(customer.icons);
+      expect((await get('/k/nobody/seller.webmanifest'))?.status).toBe(404);
+    });
+
+    it('a signed-in seller page head has the seller links; no session, no links', async () => {
+      const invite = await world.repo.auth.createKey(
+        { role: 'seller', sellerId: 'seller-onde-onde' },
+        'invite',
+      );
+      const redeemed = await world.repo.auth.redeemKey(invite.key, 'device-seller-0001');
+      if (!redeemed.ok) throw new Error(JSON.stringify(redeemed));
+      const full = await world.repo.auth.register(redeemed.value.token, {
+        kind: 'password',
+        password: 'correct horse battery',
+        deviceName: 'Test tablet',
+      });
+      if (!full.ok) throw new Error(JSON.stringify(full));
+      const head = await kitchenHeadFor(world.repo, '/seller/orders', full.value.token);
+      expect(head).toContain('href="/k/onde-onde/seller.webmanifest"');
+      expect(head).toContain('href="/k/onde-onde/apple-touch-icon.png"');
+      expect(head).toContain('content="Onde Onde · Seller"');
+      expect(await kitchenHeadFor(world.repo, '/seller')).toBeNull();
+      expect(await kitchenHeadFor(world.repo, '/seller', 'not-a-session')).toBeNull();
     });
 
     it('serves an uploaded icon at any size, and 404s unknown kitchens and sizes', async () => {

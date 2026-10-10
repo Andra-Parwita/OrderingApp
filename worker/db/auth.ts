@@ -217,8 +217,14 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     setup: boolean,
   ): Promise<Me> {
     const row = account.seller_id
-      ? await db.first<{ id: string; slug: string; name: string; chef_name: string | null }>(
-          `SELECT s.id, s.slug, s.name, c.name AS chef_name FROM sellers s
+      ? await db.first<{
+          id: string;
+          slug: string;
+          name: string;
+          demo: number;
+          chef_name: string | null;
+        }>(
+          `SELECT s.id, s.slug, s.name, s.demo, c.name AS chef_name FROM sellers s
            LEFT JOIN chefs c ON c.seller_id = s.id AND c.id = ? WHERE s.id = ?`,
           account.chef_id,
           account.seller_id,
@@ -228,6 +234,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       role: account.role,
       stage: setup ? 'setup' : 'full',
       ...(row ? { sellerId: row.id, slug: row.slug, sellerName: row.name } : {}),
+      ...(row?.demo === 1 ? { demo: true as const } : {}),
       ...(account.chef_id ? { chefId: account.chef_id } : {}),
       ...(row?.chef_name ? { chefName: row.chef_name } : {}),
       ...(device ? { deviceId: device.id, deviceName: device.name } : {}),

@@ -19,6 +19,10 @@
     "dish": "Menu",
     "chef": "Koki"
   },
+  "chefFilter": {
+    "label": "Koki",
+    "all": "Semua"
+  },
   "countMode": "Mode hitung",
   "countHint": "centang saat memasak",
   "cooked": "{{made}} dari {{total}} dimasak",
@@ -41,6 +45,7 @@
     "pickupAt": "ambil {{time}}",
     "inBag": "{{ticked}} dari {{total}} menu di kantong",
     "note": "Catatan",
+    "otherChef": "menu koki lain, tidak di tampilan ini",
     "notTicked_other": "{{count}} belum dicentang. Tetap bisa ditandai dikemas.",
     "allIn": "Semua masuk. Mengemas tidak mengubah status pesanan; tandai siap di Serah terima.",
     "isPacked": "Sudah dikemas. Status pesanan tidak berubah.",

@@ -64,6 +64,8 @@ export type Me = {
   sellerId?: string;
   slug?: string;
   sellerName?: string;
+  /** Plan 013: present (true) only for a demo kitchen. */
+  demo?: true;
   /** Chef only. */
   chefId?: string;
   chefName?: string;
@@ -108,6 +110,8 @@ export type RegisterRequest =
 export type RenameDeviceRequest = { name: string };
 export type CreateSellerRequest = { name: string; slug: string };
 export type ChefInviteRequest = { chefId: string };
+/** PATCH /api/admin/sellers/:slug (plan 013): switch the demo kitchen mode. */
+export type SetDemoRequest = { demo: boolean };
 
 // ---- Responses ----
 
@@ -236,6 +240,10 @@ export function parseCreateSellerRequest(input: unknown): CreateSellerRequest | 
   return name && typeof slug === 'string' ? { name, slug } : null;
 }
 
+export function parseSetDemoRequest(input: unknown): SetDemoRequest | null {
+  return isRecord(input) && typeof input['demo'] === 'boolean' ? { demo: input['demo'] } : null;
+}
+
 export function parseChefInviteRequest(input: unknown): ChefInviteRequest | null {
   if (!isRecord(input)) return null;
   const chefId = text(input['chefId'], 100);
@@ -255,6 +263,7 @@ export function parseMe(input: unknown): Me | null {
     ...(typeof sellerId === 'string' ? { sellerId } : {}),
     ...(typeof slug === 'string' ? { slug } : {}),
     ...(typeof sellerName === 'string' ? { sellerName } : {}),
+    ...(input['demo'] === true ? { demo: true as const } : {}),
     ...(typeof chefId === 'string' ? { chefId } : {}),
     ...(typeof chefName === 'string' ? { chefName } : {}),
     ...(typeof deviceId === 'string' ? { deviceId } : {}),

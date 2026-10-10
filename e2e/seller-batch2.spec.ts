@@ -48,11 +48,27 @@ test('seller handles a new customer, then adds a WhatsApp order', async ({
     await expect(row.getByRole('img', { name: 'WhatsApp order number received' })).toBeVisible();
   }
 
-  await page.getByRole('button', { name: /^Nudge/ }).click();
+  // On a desktop, Nudge and Lock live in the panel's ⋯ More menu (the Orders header has one too);
+  // the phone screen keeps them as buttons.
+  const more = page.getByRole('complementary', { name: /^Order / }).getByRole('button', {
+    name: 'More',
+    exact: true,
+  });
+  const action = async (name: RegExp) => {
+    if (desktop) {
+      await more.click();
+      await page.getByRole('menuitem', { name }).click();
+    } else await page.getByRole('button', { name }).click();
+  };
+  await action(/^Nudge/);
   await expect(page.getByText('Reminder sent to the customer')).toBeVisible();
 
-  await page.getByRole('button', { name: /^Lock/ }).click();
-  await expect(page.getByRole('button', { name: /^Unlock/ })).toBeVisible();
+  await action(/^Lock/);
+  if (desktop) {
+    await more.click();
+    await expect(page.getByRole('menuitem', { name: /^Unlock/ })).toBeVisible();
+    await page.keyboard.press('Escape');
+  } else await expect(page.getByRole('button', { name: /^Unlock/ })).toBeVisible();
   if (desktop) await expect(row.getByRole('img', { name: 'Locked' })).toBeVisible();
 
   await page

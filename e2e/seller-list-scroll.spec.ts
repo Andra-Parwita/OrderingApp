@@ -81,7 +81,31 @@ test('only the order list scrolls, with 50 sample orders', async ({
       // The list kept its place.
       expect((await listScroller(page))?.top).toBeGreaterThan(100);
       await page.screenshot({ path: 'captures/p008/orders-desktop-1180x820.png' });
+      // Plan 014: collapsing the banner gives the list room; the order stays open.
+      const rowsBefore = (await listScroller(page))?.height ?? 0;
+      await page.getByRole('button', { name: 'Show more orders' }).click();
+      await expect(page.getByRole('button', { name: 'Show the banner' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      );
+      await expect
+        .poll(async () => (await listScroller(page))?.height ?? 0)
+        .toBeGreaterThan(rowsBefore + 80);
+      expect(await pageScrolls(page)).toBe(false);
+      await page.screenshot({ path: 'captures/p014/collapsed-1180.png' });
+      // Plan 015: the order's buttons are one row, and Dishes opens as a slide-over.
+      await page.screenshot({ path: 'captures/p015/collapsed-order-open-1180x820.png' });
+      await page.getByRole('button', { name: /^Dishes \d+$/ }).click();
+      await expect(page.getByRole('dialog', { name: 'Dishes' })).toBeVisible();
+      await page.screenshot({ path: 'captures/p015/dishes-open-1180x820.png' });
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
     } else {
+      await page.getByRole('button', { name: /^Dishes \d+$/ }).click();
+      await expect(page.getByRole('dialog', { name: 'Dishes' })).toBeVisible();
+      await page.screenshot({ path: 'captures/p015/dishes-phone-390x844.png' });
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
       const bar = page.locator('footer nav');
       await expect(bar).toBeVisible();
       const box = await bar.boundingBox();

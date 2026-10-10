@@ -13,7 +13,12 @@ export {
   type InstallOverride,
 } from './useInstallFlow';
 export { promptInstall, useCanInstall } from './installPrompt';
-export { manifestTarget, useManifestLinks, HOME_SCREEN_SOURCE } from './manifestLinks';
+export {
+  manifestTarget,
+  sellerManifestTarget,
+  useManifestLinks,
+  HOME_SCREEN_SOURCE,
+} from './manifestLinks';
 export type { Environment } from './detect';
 export type { ScreenId } from './flow';
 

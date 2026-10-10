@@ -214,6 +214,14 @@ export function createSeller(name: string, slug: string): Promise<ApiResult<Sell
   });
 }
 
+/** Plan 013: switch a kitchen into or out of demo mode (admin only). */
+export function setSellerDemo(sellerId: string, demo: boolean): Promise<ApiResult<SellerResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}`, parseSellerResponse, {
+    method: 'PATCH',
+    body: { demo },
+  });
+}
+
 /** Shown once; only its hash is kept. */
 export function createInviteKey(sellerId: string): Promise<ApiResult<KeyResponse>> {
   return request(`/api/admin/sellers/${enc(sellerId)}/invite-key`, parseKeyResponse, {

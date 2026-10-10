@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { cookGroups, cookNotes, cookStats, countedOrders, type CookGroup } from './cookModel';
+import {
+  chefChoices,
+  cookGroups,
+  cookNotes,
+  cookStats,
+  countedOrders,
+  filterByChef,
+  type CookGroup,
+} from './cookModel';
 import { MENU, line, makeOrder, sampleOrders } from './testSupport';
 
 const qtys = (group: CookGroup | undefined) =>
@@ -119,6 +127,40 @@ describe('cookGroups', () => {
 
   it('has no groups when nothing is counted', () => {
     expect(cookGroups([], MENU, 'item')).toEqual([]);
+  });
+});
+
+describe('chef filter', () => {
+  const counted = countedOrders(sampleOrders(), 'all');
+
+  it('offers the kitchen and each chef, and nothing without chefs', () => {
+    expect(chefChoices(MENU)).toEqual([
+      { value: 'seller', label: 'Delave' },
+      { value: 'chef-wati', label: 'Chef Wati' },
+    ]);
+    expect(chefChoices({ ...MENU, chefs: [] })).toEqual([]);
+  });
+
+  it("keeps only a chef's lines and drops orders left empty", () => {
+    const orders = filterByChef(counted, MENU, 'chef-wati');
+    expect(orders.map((order) => [order.firstName, order.lines.map((l) => l.itemId)])).toEqual([
+      ['Rina', ['lemper']],
+      ['Tom', ['lemper', 'tempe']],
+    ]);
+    const rows = cookGroups(orders, MENU, 'item')[0]?.rows ?? [];
+    expect(rows.map((row) => [row.itemId, row.qty])).toEqual([
+      ['lemper', 5],
+      ['tempe', 1],
+    ]);
+  });
+
+  it('picks the dishes without a chef for the kitchen, and everything for All', () => {
+    const seller = filterByChef(counted, MENU, 'seller');
+    expect(seller.map((order) => [order.firstName, order.lines.map((l) => l.itemId)])).toEqual([
+      ['Rina', ['nasi']],
+      ['Sari', ['ayam']],
+    ]);
+    expect(filterByChef(counted, MENU, 'all')).toBe(counted);
   });
 });
 

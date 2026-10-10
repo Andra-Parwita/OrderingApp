@@ -4,7 +4,7 @@ import type { Me } from '../../shared/authContract';
 import { staffSignedOut } from '../api/staffSignedOut';
 import { fetchMe, signOut } from '../api/auth';
 import { hasSessionHint } from '../api/device/session';
-import { rememberSignedIn, setSessionSeller } from '../api/device/sellerContext';
+import { rememberSignedIn, setSessionDemo, setSessionSeller } from '../api/device/sellerContext';
 
 // Who is signed in on this device. The server decides (`GET /api/auth/me`); the guards ask it
 // when a seller or admin area is entered. The session is an HttpOnly cookie: scripts cannot see
@@ -40,6 +40,7 @@ export function isStaff(me: Me | null): me is Me {
 
 /** Seller screens act for the session's seller; the device remembers who signed in last. */
 function applyMe(me: Me | null): void {
+  setSessionDemo(isStaff(me) && me.demo === true);
   if (isStaff(me) && me.slug) {
     setSessionSeller(me.slug);
     rememberSignedIn({

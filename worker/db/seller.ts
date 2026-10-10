@@ -717,7 +717,13 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         'SELECT COUNT(*) AS n FROM sellers WHERE rowid < (SELECT rowid FROM sellers WHERE id = ?)',
         sid,
       );
-      state = newSampleState(deps.seed + (row?.n ?? 0));
+      // The Worker builds a fresh repository per request, so the seed also moves with the orders
+      // already held: a second "add" must not replay the first one's tokens (they are unique).
+      const held = await db.first<{ n: number }>(
+        'SELECT COUNT(*) AS n FROM orders WHERE seller_id = ?',
+        sid,
+      );
+      state = newSampleState(deps.seed + (row?.n ?? 0) + (held?.n ?? 0) * 7919);
       deps.samples.set(sid, state);
     }
     return state;
@@ -849,7 +855,11 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       const paidChance = status === 'cancelled' ? 0 : isFinalStatus(status) ? 0.9 : 0.35;
       if (random() < paidChance) current = withOrder(current, { paid: true });
       if (random() < 0.15) current = withOrder(current, { locked: true });
-      await db.batch([...insertOrderStatements(db, order, null), ...changeStatements(db, current)]);
+      await db.batch([
+        ...insertOrderStatements(db, order, null),
+        db.stmt('UPDATE orders SET sample = 1 WHERE seller_id = ? AND id = ?', sid, order.id),
+        ...changeStatements(db, current),
+      ]);
       added++;
       if (status !== 'cancelled') {
         for (const line of current.order.lines) {
@@ -860,12 +870,36 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     return added === count ? { added } : { added, reason: 'sold_out' };
   }
 
+  /** Plan 013: removes this seller's sample orders and their rows; nothing else is touched. */
+  async function clearSampleOrders(): Promise<{ removed: number }> {
+    const counted = await db.first<{ n: number }>(
+      'SELECT COUNT(*) AS n FROM orders WHERE seller_id = ? AND sample = 1',
+      sid,
+    );
+    // Children first (the cascade would do it too; this does not rely on it).
+    const children = ['order_lines', 'order_audit', 'order_inbox', 'push_subscriptions'].map(
+      (table) =>
+        db.stmt(
+          `DELETE FROM ${table} WHERE seller_id = ? AND order_id IN (SELECT id FROM orders WHERE seller_id = ? AND sample = 1)`,
+          sid,
+          sid,
+        ),
+    );
+    await db.batch([
+      ...children,
+      db.stmt('DELETE FROM orders WHERE seller_id = ? AND sample = 1', sid),
+    ]);
+    return { removed: counted?.n ?? 0 };
+  }
+
   // ---- The repository ----
 
   const repo: SellerRepository = {
     seller,
     ...handover,
     ...pushOps,
+    addDemoSamples: addSampleOrders,
+    clearDemoSamples: clearSampleOrders,
 
     async getMenu() {
       return publicMenu(await loadState());

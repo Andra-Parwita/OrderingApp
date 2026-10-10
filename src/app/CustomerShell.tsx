@@ -5,8 +5,7 @@ import { css, keyframes, styled } from 'styled-components';
 import { isValidSlug } from '../../shared/seller';
 import { lastKitchen } from '../api/device/lastKitchen';
 import { manifestTarget, useManifestLinks } from '../components/install';
-import { selectMenu } from '../features/customer-menu';
-import { selectMenus, selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
+import { selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
 import { Icon, type IconName } from '../ui';
 
 // The customer app's bottom tab bar (D-039): Menu · My orders · Settings, fixed to the bottom,
@@ -195,22 +194,13 @@ export function CustomerTabBar({
  */
 function useShellManifest(pathname: string): void {
   const orderPage = useSelector(selectOrderPage);
-  const orderMenus = useSelector(selectMenus);
-  const menu = useSelector(selectMenu);
   const orderToken = /^\/o\/([^/]+)/.exec(pathname)?.[1];
   const orderSlug =
     orderPage.status === 'ready' && orderPage.order.token === orderToken
       ? orderPage.order.seller.slug
       : undefined;
   const target = manifestTarget(pathname, { orderSlug, lastSlug: lastKitchen() });
-  const slug = target?.slug;
-  const icon =
-    slug === undefined
-      ? undefined
-      : menu.status === 'ready' && menu.data.seller.slug === slug
-        ? menu.data.kitchen.images?.railIcon
-        : orderMenus[slug]?.kitchen.images?.railIcon;
-  useManifestLinks(target, icon !== undefined && icon !== '');
+  useManifestLinks(target);
 }
 
 /** Wraps the customer pages with the tab bar. */
