@@ -1,0 +1,141 @@
+{
+  "close": "Close",
+  "back": "Back",
+  "notNow": "Not now",
+  "skip": "Skip, I'll check the order page",
+  "fallbackKitchen": "this app",
+  "orderLabel": "Order {{code}}",
+  "ask": {
+    "title": "Get a message when your order is ready",
+    "body": "On iPhone, first add {{kitchen}} to your Home Screen. 4 quick taps, about a minute.",
+    "button": "Show me how",
+    "skip": "Not now, I'll check the order page",
+    "sampleBody": "Your order is ready",
+    "now": "now"
+  },
+  "doneLast": "Done",
+  "copyHint": "After tapping: \"Link copied. Now open Safari.\"",
+  "stepOf": "Step {{n}} of {{total}}",
+  "stepsAlt": "Progress: step {{n}} of {{total}}",
+  "done": "Done, next step",
+  "step1": {
+    "title": "Tap the ••• button",
+    "body": "It's at the bottom right of the screen.",
+    "older": "Older iPhone? Tap the Share button instead, then skip to step 3.",
+    "pointer": "The button is down here"
+  },
+  "step2": {
+    "title": "Tap \"Share\"",
+    "titleOther": "Tap the Share button",
+    "body": "It's in the menu that just opened.",
+    "bodyOther": "It's in your browser's bar, a square with an arrow pointing up."
+  },
+  "step3": {
+    "title": "Tap \"Add to Home Screen\"",
+    "body": "Don't see it? Tap \"More\" or scroll down."
+  },
+  "step4": {
+    "title": "Tap \"Add\"",
+    "body": "Top right. Leave \"Open as Web App\" switched on."
+  },
+  "pictures": {
+    "copy": "Copy",
+    "readingList": "Add to Reading List",
+    "addHome": "Add to Home Screen",
+    "findOnPage": "Find on Page",
+    "share": "Share",
+    "add": "Add",
+    "cancel": "Cancel",
+    "openAsApp": "Open as Web App"
+  },
+  "open": {
+    "added": "Added",
+    "title": "Now open {{kitchen}} from your Home Screen",
+    "body": "It opens straight to order {{code}}. Turn on notifications there.",
+    "bodyNoCode": "It opens straight to your order. Turn on notifications there.",
+    "cantFind": "I can't find the icon",
+    "cantFindHelp": "Look through your Home Screen pages, or swipe down on the Home Screen and type {{kitchen}}.",
+    "stay": "Stay here and check the order page"
+  },
+  "iosInApp": {
+    "title": "First, open this page in Safari",
+    "body": "You're inside {{app}}. Order updates only work from Safari on iPhone.",
+    "step1": "Tap <b>Copy link</b> below",
+    "step2": "Open <b>Safari</b>",
+    "step3": "Tap the address bar and <b>Paste and Go</b>"
+  },
+  "androidInApp": {
+    "title": "First, open this page in Chrome",
+    "body": "You're inside {{app}}, which can't send order updates.",
+    "step1": "Tap <b>⋮</b> at the top right",
+    "step2": "Tap <b>Open in Chrome</b>"
+  },
+  "inAppName": "this app",
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied. Now open Safari.",
+  "linkCopiedAndroid": "Link copied.",
+  "copyFailed": "Couldn't copy. Press and hold the address bar to copy it.",
+  "android": {
+    "allowBody": "Tap Allow when your phone asks.",
+    "waiting": "Waiting for your answer…"
+  },
+  "notify": {
+    "offTitle": "Last step: turn on notifications",
+    "offBody": "Your phone will ask. Tap <b>Allow</b> and we'll tell you when order {{code}} is ready.",
+    "offBodyNoCode": "Your phone will ask. Tap <b>Allow</b> and we'll tell you when your order is ready.",
+    "offButton": "Turn on notifications",
+    "working": "Turning on…",
+    "onTitle": "Notifications are on",
+    "onBody": "We'll tell you when your order is ready.",
+    "onButton": "Done",
+    "blockedTitle": "Notifications are blocked",
+    "blockedBody": "Your phone is set to not show them. You can turn them back on in your iPhone's Settings:",
+    "blockedBodyAndroid": "Your phone or browser is set to not show them. You can allow them again.",
+    "blockedBodyDesktop": "This browser is set to not show them. You can allow them again.",
+    "blockedStep1": "Open <b>Settings</b>",
+    "blockedStep2": "Tap <b>Notifications</b>",
+    "blockedStep3": "Tap <b>{{kitchen}}</b>",
+    "blockedStep4": "Switch on <b>Allow Notifications</b>",
+    "blockedAndroid": "On Android: in Chrome tap ⋮, then Settings, Site settings, Notifications, and allow {{domain}}.",
+    "blockedDesktop": "Click the lock or settings icon next to the address, then allow Notifications for {{domain}}.",
+    "stillBlocked": "Still blocked. Check the setting, then tap again.",
+    "blockedDone": "I turned them on",
+    "notSetUpTitle": "Notifications aren't set up on this server yet",
+    "notSetUpBody": "Nothing is wrong with your phone. Your order page always shows the latest.",
+    "failedTitle": "We couldn't turn notifications on",
+    "failedBody": "Check your connection and try again. Your order page always shows the latest.",
+    "tryAgain": "Try again",
+    "unsupportedTitle": "This browser can't get notifications",
+    "unsupportedBody": "Your order page always shows the latest. For messages, use Safari on iPhone (added to your Home Screen) or Chrome on Android.",
+    "gotIt": "OK"
+  },
+  "line": {
+    "off": "Notifications are off",
+    "on": "Notifications are on",
+    "blocked": "Notifications are blocked",
+    "desktop": "Get updates on this computer",
+    "turnOn": "Turn on",
+    "howTo": "How to turn on",
+    "working": "Turning on…"
+  },
+  "card": {
+    "title": "Get a message when your order is ready",
+    "body": "Takes a minute. Or skip it and check this order page.",
+    "button": "Turn on updates",
+    "onTitle": "Notifications are on",
+    "onBody": "We'll tell you when your order is ready.",
+    "blockedTitle": "Notifications are blocked",
+    "blockedBody": "Turn them back on in your phone's settings to get a message when it's ready.",
+    "blockedButton": "How to turn them on"
+  },
+  "settings": {
+    "on": "On",
+    "off": "Off",
+    "blocked": "Blocked in your phone's settings",
+    "unsupported": "Not available in this browser",
+    "working": "Working…",
+    "homeInstall": "Install",
+    "homeShow": "Show me how",
+    "homeFallback": "No Install button? Tap ⋮ in Chrome, then <b>Add to home screen</b>."
+  }
+}

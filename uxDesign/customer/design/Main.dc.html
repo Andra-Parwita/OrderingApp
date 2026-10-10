@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menu flow</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+.th{--text:#1C1F1A;--muted:#5D6358;--edge:#7F857A;--ok:#1F6B5C;--warn:#8A5A00;--danger:#A93724;--onfill:#FFFFFF;--disabled:#A9AFA3;--okbg:color-mix(in srgb,var(--ok) 12%,var(--surface));--warnbg:#FBF1D9;--ready:#2B5C9E;--kbg:#E9E3CF;--dangerline:color-mix(in srgb,var(--danger) 40%,var(--surface))}
+.th.dark{--text:#F1EEE6;--muted:#A9AFA3;--edge:#6B7266;--ok:#7EC4B0;--warn:#E9B949;--danger:#EE8B78;--disabled:#5E6459;--warnbg:rgba(233,185,73,.10);--ready:#8DB4E8;--kbg:#1D2A1A;color-scheme:dark}
+.th.ondeonde{--fill:#2F6B36;--acc:#2A5F30;--tint:#E5EFE2;--bg:#F6F2E8;--panel:#EFEADD;--surface:#FFFDF8;--s2:#F4F0E6;--line:#E4DED0}
+.th.ondeonde.dark{--fill:#8CC08A;--onfill:#0F1E10;--acc:#93C590;--tint:color-mix(in srgb,#8CC08A 15%,#121411);--bg:#121411;--panel:#0E100D;--surface:#181A16;--s2:#20231E;--line:#2A2E27}
+.th.bali{--fill:#1D5C73;--acc:#1A5469;--tint:#E0EDF1;--bg:#F1F4F4;--panel:#E7EDEE;--surface:#FCFEFE;--s2:#EEF3F4;--line:#DAE2E4}
+.th.bali.dark{--fill:#84C3D6;--onfill:#0B2129;--acc:#8CC6D8;--tint:color-mix(in srgb,#84C3D6 15%,#101417);--bg:#101417;--panel:#0C1013;--surface:#161B1F;--s2:#1E2429;--line:#283037}
+.th.sumatra{--fill:#8A2232;--acc:#7E1F2E;--tint:#F5E1E3;--bg:#F7F0EE;--panel:#F0E6E3;--surface:#FFFBFA;--s2:#F6EEEC;--line:#E6D9D6}
+.th.sumatra.dark{--fill:#EBA0AA;--onfill:#2B0A10;--acc:#EDA6AF;--tint:color-mix(in srgb,#EBA0AA 15%,#161112);--bg:#161112;--panel:#110D0E;--surface:#1C1617;--s2:#251D1F;--line:#322729}
+.th.sunda{--fill:#3A4C96;--acc:#34448A;--tint:#E4E7F4;--bg:#F2F2F7;--panel:#E9EAF2;--surface:#FDFDFF;--s2:#F0F1F7;--line:#DDDFEA}
+.th.sunda.dark{--fill:#A9B6EC;--onfill:#121A3A;--acc:#AEBBEE;--tint:color-mix(in srgb,#A9B6EC 15%,#111219);--bg:#111219;--panel:#0D0E14;--surface:#17181F;--s2:#1F2029;--line:#2A2C37}
+.th.jawa{--fill:#7A4A1E;--acc:#6E431B;--tint:#F2E7DA;--bg:#F6F0E6;--panel:#EEE5D7;--surface:#FFFBF4;--s2:#F5EEE2;--line:#E5DACA}
+.th.jawa.dark{--fill:#D9AE7E;--onfill:#2A1A08;--acc:#DDB38A;--tint:color-mix(in srgb,#D9AE7E 15%,#15120E);--bg:#15120E;--panel:#100E0B;--surface:#1B1813;--s2:#24201A;--line:#312B23}
+body{margin:0;background:#ECE7E1}
+a{color:var(--acc)}a:hover{color:var(--acc)}
+.cap{height:32px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700;color:#2B2420}
+.cap span{font-weight:500;color:#6B5F55}
+.dev{width:418px;height:872px;border-radius:60px;background:#1C1C1E;padding:14px;box-sizing:border-box;box-shadow:inset 0 0 0 2px #48484A,0 24px 48px rgba(40,30,20,.22)}
+.scr{width:390px;height:844px;border-radius:47px;overflow:hidden;position:relative;background:var(--bg);color:var(--text);font-size:15px;line-height:1.45}
+.sb{position:absolute;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 46px;font-size:16px;font-weight:600;z-index:20;color:var(--text)}
+.di{position:absolute;top:11px;left:50%;margin-left:-62px;width:124px;height:36px;border-radius:18px;background:#000;z-index:21}
+.hi{position:absolute;bottom:8px;left:50%;margin-left:-67px;width:134px;height:5px;border-radius:3px;background:var(--text);z-index:22}
+.m{color:var(--muted)}
+.glass{background:rgba(20,16,13,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14)}
+.tab{position:absolute;left:0;right:0;bottom:0;height:84px;background:color-mix(in srgb, var(--bg) 96%, transparent);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));z-index:8}
+.nv{display:flex;flex-direction:column;align-items:center;padding-top:8px;gap:3px;color:var(--muted);text-decoration:none;font-size:12px;font-weight:500}
+.nv.on{color:var(--acc);font-weight:700}
+.irow{display:flex;align-items:center;gap:14px;min-height:46px;border-bottom:1px solid rgba(0,0,0,.08);font-size:15.5px;color:var(--text);text-decoration:none}
+.irow svg{flex:none;color:var(--acc)}
+.grab{width:40px;height:5px;border-radius:3px;background:rgba(0,0,0,.18);margin:8px auto 0}
+.st{width:44px;height:44px;border-radius:22px;background:var(--line);border:0;color:var(--text);font-size:22px;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.dish{display:flex;gap:12px;padding:14px 20px;border-top:1px solid var(--line);align-items:center}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:54px;border-radius:27px;background:var(--fill);color:var(--onfill);font-weight:700;font-size:17px;text-decoration:none;border:0;font-family:inherit}
+.lang{display:flex;padding:3px;border-radius:22px}
+.lang b{min-width:46px;height:38px;border-radius:19px;display:flex;align-items:center;justify-content:center;font-size:14.5px;color:#fff}
+.ib{width:44px;height:44px;border-radius:22px;color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+.page{position:absolute;inset:0;background:var(--bg)}
+.nb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:52px;padding:54px 8px 0;border-bottom:1px solid var(--line)}
+.back{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 8px 0 4px;color:var(--acc);font-size:16.5px;text-decoration:none;justify-self:start}
+.logo{height:36px;width:72px;object-fit:contain;border-radius:9px;background:#FBF3E4;display:block}
+.lt{margin:14px 20px 0;font-size:28px;line-height:1.15;letter-spacing:-.01em}
+.sub{margin:2px 20px 10px;font-size:14.5px;color:var(--muted)}
+</style>
+</helmet>
+<div class="th {{brandKey}} {{modeKey}}" style="width: 2314px; height: 920px; display: flex; gap: 56px; font-family: 'Plus Jakarta Sans', -apple-system, 'Segoe UI', sans-serif">
+
+  <!-- 1 Home -->
+  <div>
+    <div class="cap">1 · Opens from WhatsApp <span>· banner, then menu photo, then info</span></div>
+    <div class="dev"><div class="scr">
+      <img src="assets/menu-picture.jpg" alt="" style="position: absolute; left: 0; top: 184px; width: 390px; height: 660px; object-fit: cover; object-position: 50% 20%; display: block">
+      <img src="assets/phone-banner.jpg" alt="Onde Onde: four cooks with Indonesian dishes" style="position: absolute; left: 0; top: 54px; width: 390px; height: 130px; object-fit: cover; display: block; z-index: 1">
+      <div class="sb"><span>12:41</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+
+      <a href="#full" aria-label="See the whole menu picture" style="position: absolute; left: 0; right: 0; top: 184px; height: 248px; z-index: 2"></a>
+      <div class="lang glass" role="group" aria-label="Language" style="position: absolute; top: 196px; right: 16px; z-index: 3"><b style="background: var(--fill); color: var(--onfill)">EN</b><b>ID</b></div>
+      <a href="#full" class="glass" style="position: absolute; left: 16px; top: 380px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 20px; color: #fff; text-decoration: none; font-size: 14px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"></path></svg>See full picture</a>
+
+      <div role="region" aria-label="Menu info" style="position: absolute; left: 0; right: 0; top: 432px; bottom: 0; z-index: 4; border-radius: 26px 26px 0 0; background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2); border-top: 1px solid rgba(0,0,0,.06)">
+        <div style="padding: 16px 20px 0">
+          <div style="margin-bottom: 2px"><h1 style="margin: 0; font-size: 22px; line-height: 1.2; letter-spacing: -.01em">Onde Onde</h1><p class="m" style="margin: 0; font-size: 14.5px">Indonesian homemade food · by Ibu Sari</p></div>
+          <div class="irow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg><span style="flex: 1">Cooking <strong>Sat 17 Oct</strong></span></div>
+          <div class="irow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg><span style="flex: 1">Order by <strong>Fri 16 Oct, 9 pm</strong></span></div>
+          <a href="#" class="irow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg><span style="flex: 1">Pickup at <strong>3 places</strong> · or delivery</span><svg style="color: var(--edge)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+          <a href="#" class="irow" style="border-bottom: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.5M12 17v.3"></path></svg><span style="flex: 1">How ordering works</span><svg style="color: var(--edge)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg></a>
+        </div>
+        <div style="position: absolute; left: 16px; right: 16px; bottom: 96px"><a href="#" class="btn">See dishes and order<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a></div>
+      </div>
+
+      <nav class="tab" aria-label="Main"><a href="#" class="nv on" aria-current="page"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>Menu</a><a href="#" class="nv"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>My orders</a><a href="#" class="nv"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg>Settings</a></nav>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 2 Full picture -->
+  <div>
+    <div class="cap">2 · Tap the photo <span>· whole picture, nothing cropped</span></div>
+    <div class="dev"><div class="scr" style="background: var(--surface)">
+      <div class="sb"><span>12:41</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div style="position: absolute; top: 58px; left: 12px; right: 12px; display: flex; align-items: center; gap: 10px; z-index: 3">
+        <button class="ib glass" aria-label="Close picture"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        <div style="color: var(--text); font-weight: 700; font-size: 16px">Menu for Sat 17 Oct</div>
+      </div>
+      <img src="assets/menu-picture.jpg" alt="Menu picture: siomay, grilled chicken, balado eggs, bubur ayam and stuffed tofu" style="position: absolute; left: 0; top: 140px; width: 390px; height: 497px; object-fit: contain; display: block">
+      <div style="position: absolute; left: 0; right: 0; bottom: 104px; text-align: center; color: var(--muted); font-size: 14px">Pinch to zoom · swipe down to close</div>
+      <div style="position: absolute; left: 16px; right: 16px; bottom: 34px"><a href="#" class="btn">See dishes and order</a></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 3 Transition -->
+  <div>
+    <div class="cap">3 · Dishes slide in from the right <span>· mid-slide</span></div>
+    <div class="dev"><div class="scr" style="background: var(--surface)">
+      <div style="position: absolute; top: 0; bottom: 0; left: -110px; width: 390px; overflow: hidden">
+        <img src="assets/menu-picture.jpg" alt="" style="position: absolute; left: 0; top: 184px; width: 390px; height: 660px; object-fit: cover; object-position: 50% 20%">
+        <img src="assets/phone-banner.jpg" alt="" style="position: absolute; left: 0; top: 54px; width: 390px; height: 130px; object-fit: cover">
+        <div style="position: absolute; left: 0; right: 0; top: 432px; bottom: 0; border-radius: 26px 26px 0 0; background: color-mix(in srgb, var(--surface) 92%, transparent)"></div>
+        <div style="position: absolute; inset: 0; background: rgba(0,0,0,.35)"></div>
+      </div>
+      <div style="position: absolute; top: 0; bottom: 0; left: 168px; width: 390px; background: var(--bg); box-shadow: -14px 0 30px rgba(0,0,0,.5)">
+        <div class="nb" style="grid-template-columns: auto auto 1fr; gap: 50px"><span class="back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>Menu</span><img class="logo" src="assets/logo-wide.png" alt=""><span></span></div>
+        <div class="lt">Dishes</div>
+        <div class="sub">Sat 17 Oct · order by Fri 16 Oct, 9 pm</div>
+        <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px">Lime-leaf mixed rice</div><div class="m" style="font-size: 14px">with salt-and-chilli fried chicken</div></div></div>
+        <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px">Tilapia pesmol</div><div class="m" style="font-size: 14px">turmeric pesmol sauce</div></div></div>
+        <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px">Chicken lemper</div></div></div>
+      </div>
+      <svg style="position: absolute; left: 40px; top: 400px; z-index: 15; color: var(--warn)" width="110" height="40" viewBox="0 0 110 40" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M104 20H8M24 6L8 20l16 14"></path></svg>
+      <div class="sb"><span>12:42</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 4 Dishes page -->
+  <div>
+    <div class="cap">4 · Dishes page <span>· tap ‹ Menu to go back</span></div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:42</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="nb"><a href="#" class="back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>Menu</a><img class="logo" src="assets/logo-wide.png" alt="Onde Onde"><span></span></div>
+      <h2 class="lt">Dishes</h2>
+      <div class="sub">Sat 17 Oct · order by Fri 16 Oct, 9 pm</div>
+      <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px">Lime-leaf mixed rice</div><div class="m" style="font-size: 14px">with salt-and-chilli fried chicken, crispy tempeh and stir-fried cabbage</div><div style="font-size: 14.5px; margin-top: 2px">1 box · <strong>$15.00</strong></div></div><div style="display: flex; align-items: center; gap: 4px"><button class="st" aria-label="One fewer">−</button><span style="width: 26px; text-align: center; font-weight: 700; font-size: 17px; color: var(--acc)">2</span><button class="st" aria-label="One more">+</button></div></div>
+      <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px">Tilapia pesmol</div><div class="m" style="font-size: 14px">turmeric pesmol sauce</div><div style="font-size: 14.5px; margin-top: 2px">1 portion · <strong>$15.00</strong></div><div style="display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 13.5px; font-weight: 700; color: var(--warn)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>3 left</div></div><button class="st" aria-label="Add Tilapia pesmol">+</button></div>
+      <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px; color: var(--muted)">Chicken lemper</div><div class="m" style="font-size: 14px">sticky rice rolls in banana leaf · 4 pieces · $10.00</div></div><span style="display: inline-flex; align-items: center; gap: 5px; height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid var(--edge); font-size: 13.5px; font-weight: 700"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M6 6l12 12"></path></svg>Sold out</span></div>
+      <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px">Palembang fish cake with egg</div><div class="m" style="font-size: 14px">&quot;submarine&quot;</div><div style="font-size: 14.5px; margin-top: 2px">1 portion · <strong>$10.00</strong></div></div><button class="st" aria-label="Add fish cake">+</button></div>
+      <div class="dish"><div style="flex: 1"><div style="font-weight: 700; font-size: 16px">Kue lapis</div><div class="m" style="font-size: 14px">steamed layer cake, pandan and coconut</div><div style="font-size: 14.5px; margin-top: 2px">6 pieces · <strong>$12.00</strong> · <span style="color: var(--warn); font-weight: 700">1 left</span></div></div><div style="display: flex; align-items: center; gap: 4px"><button class="st" aria-label="One fewer">−</button><span style="width: 26px; text-align: center; font-weight: 700; font-size: 17px; color: var(--acc)">1</span><button class="st" disabled aria-label="None left" style="color: var(--disabled); background: var(--surface)">+</button></div></div>
+
+      <div style="position: absolute; left: 0; right: 0; bottom: 84px; padding: 10px 16px; background: var(--bg); border-top: 1px solid var(--line); z-index: 7">
+        <a href="Basket.dc.html" class="btn" style="justify-content: space-between; padding: 0 22px"><span>3 items · $42.00</span><span style="display: inline-flex; align-items: center; gap: 4px">View basket<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg></span></a>
+      </div>
+      <nav class="tab" aria-label="Main"><a href="#" class="nv on" aria-current="page"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>Menu</a><a href="#" class="nv"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>My orders</a><a href="#" class="nv"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg>Settings</a></nav>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+
+  <!-- 5 How ordering works page -->
+  <div>
+    <div class="cap">5 · How ordering works <span>· same slide-in page</span></div>
+    <div class="dev"><div class="scr">
+      <div class="sb"><span>12:41</span><span style="display: flex; gap: 6px; align-items: center"><svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg><svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x="1" y="1" width="22" height="11" rx="3" stroke="currentColor" stroke-opacity=".5"></rect><rect x="3" y="3" width="17" height="7" rx="1.5" fill="currentColor"></rect></svg></span></div><div class="di"></div>
+      <div class="nb"><a href="#" class="back"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>Menu</a><img class="logo" src="assets/logo-wide.png" alt="Onde Onde"><span></span></div>
+      <h2 class="lt">How ordering works</h2>
+      <ol style="list-style: none; margin: 22px 0 0; padding: 0 20px; display: flex; flex-direction: column; gap: 22px">
+        <li style="display: flex; gap: 16px; align-items: center"><span style="flex: none; width: 56px; height: 56px; border-radius: 28px; background: var(--line); color: var(--acc); display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg></span><div><strong style="font-size: 17px">1. Pick your dishes</strong><div class="m" style="font-size: 15px">Then choose pickup or delivery.</div></div></li>
+        <li style="display: flex; gap: 16px; align-items: center"><span style="flex: none; width: 56px; height: 56px; border-radius: 28px; background: var(--line); color: var(--acc); display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></span><div><strong style="font-size: 17px">2. Place the order</strong><div class="m" style="font-size: 15px">Just your first name. No account.</div></div></li>
+        <li style="display: flex; gap: 16px; align-items: center"><span style="flex: none; width: 56px; height: 56px; border-radius: 28px; background: var(--line); color: var(--acc); display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg></span><div><strong style="font-size: 17px">3. Send it on WhatsApp</strong><div class="m" style="font-size: 15px">To Ibu Sari, +61 4xx xxx xxx. You pay her directly.</div></div></li>
+      </ol>
+      <div style="position: absolute; left: 16px; right: 16px; bottom: 100px"><a href="#" class="btn">See dishes and order<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></a></div>
+      <nav class="tab" aria-label="Main"><a href="#" class="nv on" aria-current="page"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>Menu</a><a href="#" class="nv"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 8h14l-1 12H6z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg>My orders</a><a href="#" class="nv"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg>Settings</a></nav>
+      <div class="hi"></div>
+    </div></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"brand": {"editor": "enum", "options": ["Onde Onde", "Bali", "Sumatra", "Sunda", "Jawa"], "default": "Onde Onde", "section": "Seller theme"}, "mode": {"editor": "enum", "options": ["Light", "Dark"], "default": "Light", "section": "Seller theme"}, "$preview": {"width": 2314, "height": 920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const brands = { 'Onde Onde': 'ondeonde', 'Bali': 'bali', 'Sumatra': 'sumatra', 'Sunda': 'sunda', 'Jawa': 'jawa' };
+    const b = brands[this.props.brand ?? 'Onde Onde'] ?? 'ondeonde';
+    const d = (this.props.mode ?? 'Light') === 'Dark' ? 'dark' : 'light';
+    return { brandKey: b, modeKey: d };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,8 +1,14 @@
 # Weekly food ordering (family and friends)
 
-A home cook publishes a menu each Wednesday for Saturday pickup or delivery. Customers order by link in EN or ID and send their order number to the seller on WhatsApp. The seller updates statuses and customers are notified. No payments, no customer accounts, no phone numbers in the cloud. One seller, 10–50 orders a week. Keep it simple.
+A home cook publishes a menu whenever they like, for pickup or delivery on its cooking day (usually Saturday). Customers order by link in EN or ID and send their order number to the seller on WhatsApp. The seller updates statuses and customers are notified. No payments, no customer accounts, no phone numbers in the cloud. One seller, 10–50 orders a menu. Keep it simple.
 
-**Current stage: planning.** Nothing is built. Next: plan the flow and a clickable prototype, using the `react-ts-app-plan` skill.
+## Start here (current work)
+
+- **The app is built and runs locally** (seller, customer, admin; Cloudflare Worker with local D1/R2). Not deployed yet.
+- **Plans:** [docs/plans/](docs/plans/README.md) lists every plan and its status; [the board](docs/plan/board.md) "Start here" says what is current. Plans 001 (seller redesign) and 004 (customer redesign + web push) are done.
+- **Web push is done** (plan 004). **Don't connect to Cloudflare until the owner says so.**
+- **Design references:** `uxDesign/seller/` and `uxDesign/customer/`. Their screenshots are not in git: on a new PC, or after a design update, run `node uxDesign/seller/capture.mjs` and `node scripts/capture-customer-design.mjs` once before comparing the app with the design.
+- Each developer's PC uses its own LAN IP for the dev certificate; nothing is hard-coded ([D-053](docs/decisions/README.md)).
 
 ## Read when needed (not all at once)
 
@@ -38,7 +44,8 @@ Details are in [docs/design/README.md](docs/design/README.md).
 ## Always
 
 - **Stack:** React + TypeScript (strict), Redux Toolkit + redux-saga, Vite, ESLint + Prettier, **no circular imports**, Vitest + Playwright. No new dependency without the owner's OK.
-- **Gate:** typecheck · lint · format:check · test · the changed Playwright specs.
+- **Plan first:** every change starts as a plan in [docs/plans/](docs/plans/README.md) with a goal and stages, approved by the owner before building ([D-055](docs/decisions/README.md)).
+- **Checks:** while building a plan's stages, run **typecheck only**. The full gate (lint · format:check · test · the changed Playwright specs) runs **once, at the end of the phase**.
 - **Dev is always HTTPS** (mkcert, reachable from phones on the home Wi-Fi). See [tech-stack.md](docs/guide/tech-stack.md#testing-on-real-phones-home-wi-fi).
 - **Bilingual EN / ID** for every user-visible string, through i18n.
 - **Open every message with a status marker:** 🔴🔴🔴 ACTION NEEDED / 🟡 HEADS UP / 🟢 NO ACTION. Ask one question at a time (A / B / C with a recommendation).

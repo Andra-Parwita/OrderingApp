@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Colour from the logo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.tn{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div style="width: 1180px; height: 1140px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 28px; background: #F6F2E8; color: #1C1F1A; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.4">
+  <div style="display: flex; align-items: flex-end; gap: 32px">
+    <div style="flex: 1">
+      <h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em">Colour, from the logo</h1>
+      <p style="margin: 6px 0 0; color: #5D6358; font-size: 14px; max-width: 640px">Leaf green from the wordmark is the one accent. Everything else is a warm neutral with a hint of green. Ratios are WCAG contrast against the surface they sit on.</p>
+    </div>
+    <div style="display: flex; gap: 14px">
+      <sc-for list="{{src}}" as="s" hint-placeholder-count="5">
+        <div style="display: flex; flex-direction: column; gap: 6px; width: 96px">
+          <div style="height: 44px; border-radius: 8px; border: 1px solid rgba(0,0,0,.08); background: {{s.hex}}"></div>
+          <span style="font-weight: 600">{{s.name}}</span>
+          <span class="mono" style="color: #5D6358; font-size: 12px">{{s.hex}}</span>
+          <span style="color: #5D6358; font-size: 12px">{{s.role}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex: 1; min-height: 0">
+    <sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+      <div style="border-radius: 14px; padding: 20px 24px; display: flex; flex-direction: column; gap: 2px; background: {{m.bg}}; color: {{m.text}}">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 700">{{m.title}}</h2>
+          <span style="font-size: 12px; color: {{m.muted}}">ratio vs surface</span>
+        </div>
+        <sc-for list="{{m.tokens}}" as="k" hint-placeholder-count="12">
+          <div style="display: grid; grid-template-columns: 28px 112px 76px 1fr 52px; align-items: center; gap: 10px; min-height: 30px; border-bottom: 1px solid {{m.line}}">
+            <span style="width: 24px; height: 18px; border-radius: 5px; border: 1px solid {{m.line}}; background: {{k.hex}}"></span>
+            <span style="font-weight: 600">{{k.name}}</span>
+            <span class="mono" style="font-size: 12px; color: {{m.muted}}">{{k.hex}}</span>
+            <span style="font-size: 12px; color: {{m.muted}}">{{k.use}}</span>
+            <span class="tn" style="text-align: right; font-weight: 600">{{k.ratio}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: baseline; gap: 14px">
+      <h2 style="margin: 0; font-size: 18px; font-weight: 700">Themes from across Indonesia</h2>
+      <span style="color: #5D6358">Each theme has its own accent and its own lightly tinted backgrounds, in light and dark. Text and status colours stay the same so the app always reads the same way. Every pair passes AA.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px">
+      <sc-for list="{{brands}}" as="b" hint-placeholder-count="5">
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 3px solid {{b.lf}}">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-weight: 700; font-size: 15px">{{b.name}}</span>
+            <span style="color: #5D6358; font-size: 12px; min-height: 34px">{{b.note}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: {{b.lbg}}; border: 1px solid {{b.lline}}">
+            <span style="font-size: 11px; font-weight: 700; color: #5D6358">LIGHT</span>
+            <span style="display: flex; align-items: center; justify-content: center; height: 36px; border-radius: 8px; font-weight: 700; background: {{b.lf}}; color: #FFFFFF">New order</span>
+            <span style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border-radius: 6px; font-weight: 600; background: {{b.lt}}; color: {{b.la}}">Orders</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: {{b.dbg}}">
+            <span style="font-size: 11px; font-weight: 700; color: #A9AFA3">DARK</span>
+            <span style="display: flex; align-items: center; justify-content: center; height: 36px; border-radius: 8px; font-weight: 700; background: {{b.df}}; color: {{b.do}}">New order</span>
+            <span style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border-radius: 6px; font-weight: 600; background: {{b.dt}}; color: {{b.da}}">Orders</span>
+          </div>
+          <span class="mono" style="font-size: 11px; color: #5D6358">Accent {{b.lf}} · {{b.df}}<br>Ground {{b.lbg}} · {{b.dbg}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1180,"height":1140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const src = [
+      { name:'Leaf', hex:'#213A1E', role:'Wordmark. Brand accent' },
+      { name:'Frangipani', hex:'#FBF3E2', role:'Light surfaces' },
+      { name:'Petal yellow', hex:'#F2C14E', role:'Dots and fills only' },
+      { name:'Chili', hex:'#D8432F', role:'Danger, darkened' },
+      { name:'Rattan', hex:'#B8895A', role:'Kept as a spare' }
+    ];
+    const dark = [
+      ['Background','#121411','Main panel ground','—'],
+      ['Panel','#0E100D','Left panel, bottom bar','—'],
+      ['Surface','#181A16','Sheet, rows, detail','—'],
+      ['Hairline','#2A2E27','Row dividers (decorative)','—'],
+      ['Control edge','#6B7266','Inputs, chip outlines','3.5'],
+      ['Text','#F1EEE6','Body, names, totals','15.1'],
+      ['Muted text','#A9AFA3','Codes, items, meta','7.8'],
+      ['Accent fill','#8CC08A','Main button, active chip','—'],
+      ['On accent','#0F1E10','Text on accent fill','8.3'],
+      ['Accent text','#93C590','Links, active nav, Live','8.9'],
+      ['Confirmed','#7EC4B0','Status, with icon','8.7'],
+      ['Changed','#E9B949','Flag, with icon + word','9.6'],
+      ['Danger','#EE8B78','Cancelled, Cancel order','7.2']
+    ];
+    const light = [
+      ['Background','#F6F2E8','Main panel ground','—'],
+      ['Panel','#EFEADD','Left panel, bottom bar','—'],
+      ['Surface','#FFFDF8','Sheet, rows, detail','—'],
+      ['Hairline','#E4DED0','Row dividers (decorative)','—'],
+      ['Control edge','#7F857A','Inputs, chip outlines','3.6'],
+      ['Text','#1C1F1A','Body, names, totals','16.4'],
+      ['Muted text','#5D6358','Codes, items, meta','6.1'],
+      ['Accent fill','#2F6B36','Main button, active chip','—'],
+      ['On accent','#FFFFFF','Text on accent fill','6.4'],
+      ['Accent text','#2A5F30','Links, active nav, Live','7.4'],
+      ['Confirmed','#1F6B5C','Status, with icon','6.2'],
+      ['Changed','#8A5A00','Flag, with icon + word','5.8'],
+      ['Danger','#A93724','Cancelled, Cancel order','6.3']
+    ];
+    const tok = a => a.map(r => ({ name:r[0], hex:r[1], use:r[2], ratio:r[3] }));
+    const modes = [
+      { title:'Dark', bg:'#181A16', text:'#F1EEE6', muted:'#A9AFA3', line:'#2A2E27', tokens:tok(dark) },
+      { title:'Light', bg:'#FFFDF8', text:'#1C1F1A', muted:'#5D6358', line:'#E4DED0', tokens:tok(light) }
+    ];
+    const brands = [
+      { name:'Onde Onde · Daun', note:'Leaf green from the logo wordmark. The default.', lf:'#2F6B36', la:'#2A5F30', lt:'#E5EFE2', df:'#8CC08A', do:'#0F1E10', da:'#93C590', dt:'rgba(140,192,138,.14)', lbg:'#FFFDF8', lline:'#E4DED0', dbg:'#181A16' },
+      { name:'Bali · Laut', note:'Deep sea blue around the island, against pale temple stone.', lf:'#1D5C73', la:'#1A5469', lt:'#E0EDF1', df:'#84C3D6', do:'#0B2129', da:'#8CC6D8', dt:'rgba(132,195,214,.14)', lbg:'#FCFEFE', lline:'#DAE2E4', dbg:'#161B1F' },
+      { name:'Sumatra · Songket', note:'The maroon of Minangkabau songket cloth.', lf:'#8A2232', la:'#7E1F2E', lt:'#F5E1E3', df:'#EBA0AA', do:'#2B0A10', da:'#EDA6AF', dt:'rgba(235,160,170,.14)', lbg:'#FFFBFA', lline:'#E6D9D6', dbg:'#1C1617' },
+      { name:'Sunda · Nila', note:'Indigo, the oldest batik dye, from West Java.', lf:'#3A4C96', la:'#34448A', lt:'#E4E7F4', df:'#A9B6EC', do:'#121A3A', da:'#AEBBEE', dt:'rgba(169,182,236,.15)', lbg:'#FDFDFF', lline:'#DDDFEA', dbg:'#17181F' },
+      { name:'Jawa · Sogan', note:'The warm brown of Solo and Yogya batik.', lf:'#7A4A1E', la:'#6E431B', lt:'#F2E7DA', df:'#D9AE7E', do:'#2A1A08', da:'#DDB38A', dt:'rgba(217,174,126,.15)', lbg:'#FFFBF4', lline:'#E5DACA', dbg:'#1B1813' }
+    ];
+    return { src, modes, brands };
+  }
+}
+</script>
+</body>
+</html>

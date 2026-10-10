@@ -1,0 +1,20 @@
+{
+  "title": "Bagikan menu",
+  "loading": "Memuat menu…",
+  "error": "Menu tidak bisa dimuat.",
+  "retry": "Coba lagi",
+  "language": {
+    "label": "Bahasa postingan",
+    "id": "Indonesia",
+    "en": "Inggris",
+    "both": "Keduanya"
+  },
+  "preview": "Pratinjau teks",
+  "share": "Bagikan ke WhatsApp",
+  "copy": "Salin teks",
+  "copied": "Tersalin",
+  "copyFailed": "Tidak bisa menyalin. Pilih teksnya saja.",
+  "copyLink": "Salin tautan pesanan",
+  "linkCopied": "Tautan pesanan disalin",
+  "goOrders": "Ke pesanan"
+}

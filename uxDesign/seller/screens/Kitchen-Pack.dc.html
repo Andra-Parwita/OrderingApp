@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kitchen · pack</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.02em}
+.nav:hover{background:var(--surf2)}
+.row:hover{background:var(--surf2)}
+.kbg{background:var(--kbg) url(assets/background.jpg) center/cover}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); {{vars}}">
+
+  <nav aria-label="Main" style="width: 72px; flex: none; display: flex; flex-direction: column; align-items: center; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 0 12px; box-sizing: border-box; gap: 4px">
+    <div aria-label="Onde Onde" style="width: 44px; height: 44px; border-radius: 12px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 16px">O</div>
+    <button class="nav" aria-label="Orders" title="Orders" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></button>
+    <button aria-label="Kitchen" title="Kitchen" aria-current="page" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--tint); color: var(--atext)"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg></button>
+    <button class="nav" aria-label="Pickup and delivery" title="Pickup &amp; delivery" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg></button>
+    <button class="nav" aria-label="Menu" title="Menu" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg></button>
+    <button class="nav" aria-label="Settings" title="Settings" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg></button>
+  </nav>
+
+  <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: 40px; flex: none; overflow: hidden">
+      <img src="assets/banner.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
+    </div>
+    <section aria-label="Kitchen" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; overflow: hidden">
+      <div style="padding: 14px 24px 0; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--line)">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em">Kitchen · Sat 17 Oct</h1>
+          <span class="tn" style="margin-left: auto; font-size: 13px; color: var(--muted)">{{packedCount}} of 10 bags packed</span>
+          <button style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600"><svg class="i" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"></path></svg>Print labels</button>
+        </div>
+        <div role="tablist" aria-label="Kitchen view" style="display: flex; gap: 4px; margin-bottom: -1px">
+          <a href="Kitchen.dc.html" role="tab" aria-selected="false" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; color: var(--muted); font-weight: 500; text-decoration: none; border-bottom: 2px solid transparent"><svg class="i i-s" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20"></path></svg>Cook <span style="font-size: 12px">by dish</span></a>
+          <span role="tab" aria-selected="true" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; font-weight: 700; border-bottom: 2px solid var(--fill)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"></path></svg>Pack <span style="font-size: 12px; font-weight: 500; color: var(--muted)">by order</span></span>
+        </div>
+      </div>
+
+      <div style="flex: 1; min-height: 0; display: flex">
+        <!-- BAG LIST -->
+        <div style="width: 380px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--line)">
+          <div style="display: flex; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--line); font-size: 13px">
+            <span style="font-weight: 600; color: var(--muted); align-self: center">Order by</span>
+            <span style="padding: 6px 10px; border-radius: 8px; background: var(--tint); color: var(--atext); font-weight: 600">Pickup time</span>
+            <span style="padding: 6px 10px; border-radius: 8px; color: var(--muted); font-weight: 600">Place</span>
+            <span style="padding: 6px 10px; border-radius: 8px; color: var(--muted); font-weight: 600">Code</span>
+          </div>
+          <div style="flex: 1; min-height: 0; overflow-y: auto">
+            <sc-for list="{{bags}}" as="b" hint-placeholder-count="10">
+              <button class="row" onClick="{{b.open}}" aria-current="{{b.cur}}" style="display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; min-height: 52px; padding: 6px 16px; border-bottom: 1px solid var(--line); {{b.rowStyle}}">
+                <span style="width: 22px; height: 22px; border-radius: 11px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex: none; {{b.dotStyle}}"><svg class="i i-s" viewBox="0 0 24 24" style="opacity: {{b.tickO}}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+                  <span style="display: flex; gap: 8px; align-items: baseline"><span style="font-weight: 600">{{b.name}}</span><span class="mono" style="font-size: 11px; color: var(--muted)">{{b.code}}</span></span>
+                  <span style="font-size: 12px; color: var(--muted)">{{b.where}}</span>
+                </span>
+                <span class="tn" style="font-size: 12px; font-weight: 600; color: {{b.progColor}}">{{b.prog}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- CURRENT BAG -->
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+          <div style="padding: 16px 24px 10px; display: flex; align-items: flex-start; gap: 12px">
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+              <div style="display: flex; align-items: baseline; gap: 12px">
+                <span class="mono" style="font-size: 18px; font-weight: 600; color: var(--muted)">{{cur.code}}</span>
+                <h2 style="margin: 0; font-size: 24px; font-weight: 700">{{cur.name}}</h2>
+              </div>
+              <span style="font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px"><svg class="i i-s" viewBox="0 0 24 24"><path d="{{cur.fulD}}"></path></svg>{{cur.where}}</span>
+            </div>
+            <span class="tn" style="font-size: 13px; font-weight: 600; color: var(--muted)">{{cur.prog}} items in the bag</span>
+          </div>
+          <sc-if value="{{cur.hasNote}}" hint-placeholder-val="{{ true }}">
+            <div style="margin: 0 24px 8px; padding: 10px 12px; border-radius: 10px; background: var(--warnTint); font-size: 13px; display: flex; gap: 8px"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--warn); margin-top: 1px"><path d="M4 5h16v11H9l-5 4z"></path></svg><span><strong style="font-weight: 600">Note:</strong> {{cur.note}}</span></div>
+          </sc-if>
+          <div role="group" aria-label="Items in this bag" style="flex: 1; min-height: 0; overflow-y: auto; padding: 0 24px">
+            <sc-for list="{{cur.items}}" as="it" hint-placeholder-count="3">
+              <button role="checkbox" aria-checked="{{it.on}}" onClick="{{it.toggle}}" class="row" style="display: flex; align-items: center; gap: 14px; width: 100%; min-height: 56px; border-bottom: 1px solid var(--line); padding: 0 4px">
+                <span style="width: 26px; height: 26px; border-radius: 7px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex: none; {{it.box}}"><svg class="i" viewBox="0 0 24 24" style="opacity: {{it.tick}}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+                <span class="tn" style="width: 34px; font-size: 17px; font-weight: 700; {{it.txt}}">{{it.qty}}×</span>
+                <span style="flex: 1; font-size: 16px; font-weight: 600; {{it.txt}}">{{it.name}} <span style="font-size: 13px; font-weight: 500; color: var(--muted)">· {{it.size}}</span></span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-top: 1px solid var(--line)">
+            <span style="font-size: 12px; color: var(--muted); flex: 1">{{cur.hint}}</span>
+            <button style="min-height: 48px; padding: 0 14px; border-radius: 10px; color: var(--muted); font-weight: 600">Skip for now</button>
+            <button onClick="{{packNext}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 15px"><svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Packed · next bag</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = {
+      dark: { text:'#F1EEE6', muted:'#A9AFA3', ctrl:'#6B7266', conf:'#7EC4B0', warn:'#E9B949', warnTint:'rgba(233,185,73,.10)' },
+      light:{ text:'#1C1F1A', muted:'#5D6358', ctrl:'#7F857A', conf:'#1F6B5C', warn:'#8A5A00', warnTint:'#FBF1D9' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+    const bag = 'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2';
+    const truck = 'M2 6h12v10H2zM14 10h4l3 3v3h-7zM5 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M15 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0';
+    const orders = [
+      ['B3R9TP','Siti','Clayton · 10:00','p',[[1,'Nasi Ayam Bali','1 box'],[1,'Sayur urab','Tub']],''],
+      ['R4G8YA','Rachel','Clayton · 10:00','p',[[2,'Rendang','Regular'],[2,'Onde onde','Pack of 6']],''],
+      ['K7M2QX','Wulan','Glenelg · 11:00','p',[[2,'Rendang','Regular'],[1,'Nasi Ayam Bali','1 box'],[1,'Onde onde','Pack of 6']],'Less spicy for the rendang, please.'],
+      ['Q2N6VS','Dewi','Glenelg · 11:00','p',[[2,'Onde onde','Pack of 6']],''],
+      ['E3X5NR','Ketut','Glenelg · 11:00','p',[[4,'Nasi Ayam Bali','1 box']],''],
+      ['W1L7HB','Tom','Clayton · 10:00','p',[[2,'Sayur urab','Tub']],''],
+      ['H8D4LM','Michael','Delivery · from 12:00','d',[[3,'Rendang','Regular'],[2,'Sambal matah','Small jar']],''],
+      ['T5J1WC','Anastasia','Delivery · from 12:00','d',[[2,'Nasi Ayam Bali','1 box'],[2,'Sayur urab','Tub'],[1,'Sambal matah','Small jar']],''],
+      ['C6P2ZU','Putri','Delivery · from 12:00','d',[[1,'Nasi Ayam Bali','1 box'],[1,'Onde onde','Pack of 6']],''],
+      ['Y8S2DF','Linh','Delivery · from 12:00','d',[[1,'Rendang','Regular'],[1,'Sambal matah','Small jar']],'']
+    ];
+    const defTicks = { B3R9TP:[0,1], R4G8YA:[0,1], K7M2QX:[0], W1L7HB:[0] };
+    const ticks = this.state.ticks ?? defTicks;
+    const packed = this.state.packed ?? ['B3R9TP','R4G8YA','W1L7HB'];
+    const curCode = this.state.cur ?? 'K7M2QX';
+    const bags = orders.map(o => {
+      const tk = ticks[o[0]] ?? [];
+      const isPacked = packed.includes(o[0]);
+      const isCur = o[0] === curCode;
+      return { code:o[0], name:o[1], where:o[2], prog: isPacked ? 'Packed' : tk.length + '/' + o[4].length,
+        progColor: isPacked ? t.conf : (tk.length ? t.text : t.muted),
+        tickO: isPacked ? '1' : '0',
+        dotStyle: isPacked ? 'background: ' + t.fill + '; color: ' + t.on : 'border: 1.5px solid ' + t.ctrl,
+        cur: isCur ? 'true' : 'false', rowStyle: isCur ? 'background: var(--tint)' : '',
+        open: () => this.setState({ cur: o[0] }) };
+    });
+    const co = orders.find(o => o[0] === curCode);
+    const ctk = ticks[co[0]] ?? [];
+    const items = co[4].map((it, i) => {
+      const on = ctk.includes(i);
+      return { qty:it[0], name:it[1], size:it[2], on: on ? 'true' : 'false', tick: on ? '1' : '0',
+        box: on ? 'background: var(--fill); color: var(--on)' : 'border: 2px solid var(--ctrl); color: transparent',
+        txt: on ? 'color: var(--muted); text-decoration: line-through' : '',
+        toggle: () => this.setState({ ticks: Object.assign({}, ticks, { [co[0]]: on ? ctk.filter(x => x !== i) : ctk.concat([i]) }) }) };
+    });
+    const missing = co[4].length - ctk.length;
+    const cur = { code:co[0], name:co[1], where: co[2] + (co[3] === 'p' ? ' pickup' : ''), fulD: co[3] === 'p' ? bag : truck,
+      prog: ctk.length + ' of ' + co[4].length, items, hasNote: !!co[5], note: co[5],
+      hint: missing ? missing + ' not ticked yet. You can still mark it packed.' : 'All in. Packing doesn\'t change the order status; mark it ready in Pickup & delivery.' };
+    const idx = orders.findIndex(o => o[0] === curCode);
+    const nextOpen = orders.slice(idx + 1).concat(orders.slice(0, idx)).find(o => !packed.includes(o[0]) && o[0] !== curCode);
+    return { vars, bags, cur, packedCount: packed.length,
+      packNext: () => this.setState({ packed: packed.includes(curCode) ? packed : packed.concat([curCode]), cur: nextOpen ? nextOpen[0] : curCode }) };
+  }
+}
+</script>
+</body>
+</html>

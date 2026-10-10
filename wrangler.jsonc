@@ -1,0 +1,79 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ordering-app",
+  // The owner's Cloudflare account (owns shaggybobo.app and R2; D-077). Not a secret.
+  "account_id": "e6111b98ee1c444f7947fbb6ab24257a",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  // Plan 011: the Worker sees every request except the hashed files in /assets and the sample pictures,
+  // so it can add the kitchen's manifest and icon links to the HTML (worker/index.ts, then ASSETS).
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // The last four are vite's dev modules (nothing of them exists in the build): through the Worker, an
+    // aborted module request (a page navigating away) becomes "fetch failed" and vite shows its error
+    // overlay on every open page.
+    "run_worker_first": [
+      "/*",
+      "!/assets/*",
+      "!/samples/*",
+      "!/src/*",
+      "!/shared/*",
+      "!/node_modules/*",
+      "!/@*",
+    ],
+  },
+  // Variables and secrets are NOT set here: `.dev.vars` locally (see .dev.vars.example) and Cloudflare
+  // secrets in production. Never put DEV_TOOLS in this file: only a local `.dev.vars` may turn it on.
+  //
+  // Local D1 only for now (stage 8.1b). Phase 5 replaces "local-only" with the real database id
+  // (the owner's step); never run --remote before that.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "shaggybobo-order",
+      "database_id": "30b13a3d-98d7-4d16-92bf-183d3d6a98b2",
+      // Keeps the local D1 (keyed by this id) when database_id becomes the real one.
+      "preview_database_id": "local-only",
+      "migrations_dir": "migrations",
+    },
+  ],
+  // Live updates (stage 8.3): one Durable Object per seller. The free plan only allows SQLite-backed
+  // classes, hence "new_sqlite_classes". Change a class later with a new migration tag, never edit v1.
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SELLER_LIVE",
+        "class_name": "SellerLive",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["SellerLive"],
+    },
+  ],
+  // Weekly retention (stage 8.4b, D-044): Mondays 03:00 UTC, the first run after a Saturday's
+  // cooking date plus 4 weeks has passed. Hourly (plan 001, D-069 Q5): finish every live menu whose
+  // cooking day has ended (midnight Melbourne). The handler is `scheduled` in worker/index.ts; if
+  // the weekly entry changes, change RETENTION_CRON in worker/api/scheduled.ts with it.
+  "triggers": {
+    "crons": ["0 3 * * 1", "0 * * * *"],
+  },
+  // Seller images (stage 8.3). Locally this is a simulated bucket; phase 5 creates the real one.
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "shaggybobo-images",
+    },
+  ],
+  // Production address: a custom domain only, no workers.dev URL.
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "order.shaggybobo.app",
+      "custom_domain": true,
+    },
+  ],
+}

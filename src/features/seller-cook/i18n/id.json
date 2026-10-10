@@ -1,0 +1,62 @@
+{
+  "title": "Dapur · {{date}}",
+  "titleBare": "Dapur",
+  "subtitle_other": "Dari {{count}} pesanan. Pesanan yang dibatalkan tidak dihitung. Diperbarui saat pesanan berubah.",
+  "loading": "Memuat dapur…",
+  "error": "Dapur tidak bisa dimuat.",
+  "retry": "Coba lagi",
+  "empty": "Belum ada yang dimasak.",
+  "printLabels": "Cetak label",
+  "tabs": {
+    "label": "Dapur",
+    "cook": "Masak",
+    "cookSub": "per menu",
+    "pack": "Kemas",
+    "packSub": "per pesanan"
+  },
+  "group": {
+    "label": "Kelompokkan",
+    "dish": "Menu",
+    "chef": "Koki"
+  },
+  "chefFilter": {
+    "label": "Koki",
+    "all": "Semua"
+  },
+  "countMode": "Mode hitung",
+  "countHint": "centang saat memasak",
+  "cooked": "{{made}} dari {{total}} dimasak",
+  "less": "Kurangi satu {{name}}",
+  "more": "Tambah satu {{name}}",
+  "splitPickup": "{{count}} ambil",
+  "splitDelivery": "{{count}} antar",
+  "notes": "Catatan ({{count}})",
+  "pack": {
+    "orderBy": "Urutkan",
+    "sort": {
+      "time": "Jam ambil",
+      "place": "Tempat",
+      "code": "Kode"
+    },
+    "list": "Kantong",
+    "packedCount": "{{packed}} dari {{total}} kantong dikemas",
+    "packed": "Dikemas",
+    "delivery": "Antar",
+    "pickupAt": "ambil {{time}}",
+    "inBag": "{{ticked}} dari {{total}} menu di kantong",
+    "note": "Catatan",
+    "otherChef": "menu koki lain, tidak di tampilan ini",
+    "notTicked_other": "{{count}} belum dicentang. Tetap bisa ditandai dikemas.",
+    "allIn": "Semua masuk. Mengemas tidak mengubah status pesanan; tandai siap di Serah terima.",
+    "isPacked": "Sudah dikemas. Status pesanan tidak berubah.",
+    "packedNext": "Dikemas · kantong berikutnya",
+    "skip": "Lewati dulu",
+    "unpack": "Tandai belum dikemas",
+    "saveError": "Tidak bisa menyimpan. Periksa koneksi lalu coba lagi.",
+    "empty": "Belum ada kantong untuk dikemas.",
+    "warnTitle_other": "{{count}} menu belum dicentang",
+    "warnBody_other": "{{count}} menu di kantong ini belum dicentang. Tandai dikemas saja?",
+    "warnCancel": "Lanjut mengemas",
+    "warnContinue": "Tandai dikemas"
+  }
+}

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pickup and delivery</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input{font:inherit}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em}
+.nav:hover{background:var(--surf2)}
+.row:hover{background:var(--surf2)}
+.kbg{background:var(--kbg) url(assets/background.jpg) center/cover}
+input::placeholder{color:var(--muted)}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; position: relative; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); {{vars}}">
+
+  <nav aria-label="Main" style="width: 72px; flex: none; display: flex; flex-direction: column; align-items: center; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 0 12px; box-sizing: border-box; gap: 4px">
+    <div aria-label="Onde Onde" style="width: 44px; height: 44px; border-radius: 12px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 16px">O</div>
+    <button class="nav" aria-label="Orders" title="Orders" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></button>
+    <button class="nav" aria-label="Kitchen" title="Kitchen" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg></button>
+    <button aria-label="Pickup and delivery" title="Pickup &amp; delivery" aria-current="page" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--tint); color: var(--atext)"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg></button>
+    <button class="nav" aria-label="Menu" title="Menu" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg></button>
+    <button class="nav" aria-label="Settings" title="Settings" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg></button>
+  </nav>
+
+  <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: 40px; flex: none; overflow: hidden">
+      <img src="assets/banner.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
+    </div>
+    <section aria-label="Pickup and delivery" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; overflow: hidden">
+      <div style="padding: 14px 24px 0; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--line)">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; flex: 1">Pickup &amp; delivery · Sat 17 Oct</h1>
+          <label style="display: flex; align-items: center; gap: 8px; height: 44px; width: 240px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; color: var(--muted); box-sizing: border-box">
+            <svg class="i i-s" viewBox="0 0 24 24"><path d="M11 4a7 7 0 1 0 0 14a7 7 0 1 0 0-14zM20 20l-4-4"></path></svg>
+            <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Find by bag code or name</span>
+            <input placeholder="Bag code or name" style="border: 0; background: none; outline: none; color: var(--text); min-width: 0; flex: 1; font-size: 14px">
+          </label>
+        </div>
+        <div role="tablist" aria-label="Handover" style="display: flex; gap: 4px; margin-bottom: -1px">
+          <button role="tab" aria-selected="{{pSel}}" onClick="{{toPickup}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px; border-bottom: 2px solid {{pBar}}; font-weight: {{pW}}; color: {{pC}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"></path></svg>Pickup <span class="tn" style="font-size: 12px; font-weight: 600; color: var(--muted)">6 orders · 2 collected by customers</span></button>
+          <button role="tab" aria-selected="{{dSel}}" onClick="{{toDelivery}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px; border-bottom: 2px solid {{dBar}}; font-weight: {{dW}}; color: {{dC}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="M2 6h12v10H2zM14 10h4l3 3v3h-7zM5 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M15 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0"></path></svg>Delivery <span class="tn" style="font-size: 12px; font-weight: 600; color: var(--muted)">4 orders · 1 delivered</span></button>
+        </div>
+      </div>
+
+      <!-- PICKUP: one column per location -->
+      <sc-if value="{{isPickup}}" hint-placeholder-val="{{ true }}">
+        <div style="flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr))">
+          <sc-for list="{{places}}" as="pl" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line)">
+              <div style="padding: 14px 20px 12px; display: flex; align-items: flex-start; gap: 10px; border-bottom: 1px solid var(--line)">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+                  <h2 style="margin: 0; font-size: 18px; font-weight: 700">{{pl.place}}</h2>
+                  <span style="font-size: 12px; color: var(--muted)">{{pl.time}} · {{pl.dir}}</span>
+                  <span class="tn" style="font-size: 12px; font-weight: 600">{{pl.counts}}</span>
+                  <span class="tn" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: {{pl.lastColor}}"><svg class="i i-s" viewBox="0 0 24 24" style="width: 14px; height: 14px"><path d="{{pl.lastIcon}}"></path></svg>{{pl.last}}</span>
+                </div>
+                <button onClick="{{pl.message}}" style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px; flex: none"><svg class="i i-s" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"></path></svg>Message {{pl.waiting}}</button>
+              </div>
+              <div style="flex: 1; min-height: 0; overflow-y: auto">
+                <sc-for list="{{pl.rows}}" as="r" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 20px; border-bottom: 1px solid var(--line); box-sizing: border-box; {{r.style}}">
+                    <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+                      <span style="display: flex; gap: 10px; align-items: baseline"><span class="mono" style="font-size: 14px; font-weight: 600">{{r.code}}</span><span style="font-size: 15px; font-weight: 600; {{r.nameStyle}}">{{r.name}}</span><span style="margin-left: auto; font-size: 12px; font-weight: 600; color: {{r.payColor}}">{{r.pay}}</span></span>
+                      <span style="font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.items}}<span style="color: {{r.sColor}}"> · {{r.status}}</span></span>
+                    </span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- DELIVERY -->
+      <sc-if value="{{isDelivery}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 4px 28px 20px">
+          <div style="display: flex; align-items: center; gap: 12px; margin: 10px 0">
+            <p style="margin: 0; flex: 1; font-size: 13px; color: var(--muted)">Addresses aren't in the app; they're in your WhatsApp chats. Each step notifies that customer.</p>
+          </div>
+          <sc-for list="{{deliveries}}" as="d" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; gap: 16px; min-height: 72px; border-bottom: 1px solid var(--line); {{d.style}}">
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                <span style="display: flex; gap: 8px; align-items: baseline"><span style="font-size: 16px; font-weight: 600">{{d.name}}</span><span class="mono" style="font-size: 11px; color: var(--muted)">{{d.code}}</span><span style="font-size: 12px; font-weight: 600; color: {{d.payColor}}">{{d.pay}}</span></span>
+                <span style="font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{d.items}}</span>
+              </span>
+              <ol aria-label="Delivery steps" style="list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 6px; flex: none">
+                <sc-for list="{{d.steps}}" as="s" hint-placeholder-count="3">
+                  <li style="display: inline-flex; align-items: center; gap: 6px">
+                    <sc-if value="{{s.done}}" hint-placeholder-val="{{ false }}">
+                      <span style="display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 0 10px; font-size: 13px; font-weight: 600; color: var(--muted)"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--conf)"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{s.label}}</span>
+                    </sc-if>
+                    <sc-if value="{{s.next}}" hint-placeholder-val="{{ true }}">
+                      <button style="display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 13px">{{s.label}}</button>
+                    </sc-if>
+                    <sc-if value="{{s.later}}" hint-placeholder-val="{{ false }}">
+                      <span style="min-height: 40px; display: inline-flex; align-items: center; padding: 0 10px; font-size: 13px; color: var(--muted)">{{s.label}}</span>
+                    </sc-if>
+                    <sc-if value="{{s.arrow}}" hint-placeholder-val="{{ true }}"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--ctrl)"><path d="M9 6l6 6-6 6"></path></svg></sc-if>
+                  </li>
+                </sc-for>
+              </ol>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </section>
+  </main>
+
+  <!-- SEND A MESSAGE (to a location, delivery group or one customer) -->
+  <sc-if value="{{updateOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center">
+      <div role="dialog" aria-label="Send a message" style="width: 560px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 20px 48px rgba(0,0,0,.4); display: flex; flex-direction: column">
+        <div style="display: flex; align-items: center; padding: 16px 10px 6px 24px">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700">Message {{toLabel}}</h2>
+            <span class="tn" style="font-size: 12px; color: var(--muted)">{{toCount}} customers · sent as a web push and shown on their order page</span>
+          </div>
+          <button onClick="{{closeUpdate}}" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        </div>
+        <div role="radiogroup" aria-label="Message" style="display: flex; flex-direction: column; gap: 2px; padding: 8px 24px">
+          <sc-for list="{{templates}}" as="m" hint-placeholder-count="5">
+            <button role="radio" aria-checked="{{m.sel}}" onClick="{{m.pick}}" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 10px; {{m.style}}">
+              <span style="width: 18px; height: 18px; border-radius: 9px; box-sizing: border-box; flex: none; {{m.ring}}"></span><span style="font-weight: 600">{{m.a}}</span><sc-if value="{{m.mins}}" hint-placeholder-val="{{ false }}"><span class="tn" style="padding: 2px 8px; border-radius: 6px; border: 1px solid var(--ctrl); font-weight: 600">15</span><span style="font-weight: 600">min</span></sc-if><sc-if value="{{m.wasSent}}" hint-placeholder-val="{{ false }}"><span class="tn" style="margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--conf)"><svg class="i i-s" viewBox="0 0 24 24" style="width: 14px; height: 14px"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Sent {{m.sentAt}}</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        <div style="padding: 12px 24px 0; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em">They'll see</span>
+          <div style="padding: 12px 14px; border-radius: 12px; background: var(--surf2); font-size: 14px">{{preview}}</div>
+        </div>
+        <sc-if value="{{repeat}}" hint-placeholder-val="{{ false }}">
+          <div style="margin: 10px 24px 0; padding: 10px 12px; border-radius: 10px; background: var(--warnTint); display: flex; gap: 8px; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--warn); margin-top: 1px"><path d="M12 4l9 16H3zM12 10v4M12 17h.01"></path></svg><span>{{repeatText}}</span></div>
+        </sc-if>
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 16px">
+          <sc-if value="{{sent}}" hint-placeholder-val="{{ false }}"><span class="tn" style="margin-right: auto; padding-left: 8px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--conf)"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Sent to {{sentN}}</span></sc-if>
+          <button onClick="{{closeUpdate}}" style="min-height: 48px; padding: 0 16px; border-radius: 10px; color: var(--muted); font-weight: 600">Close</button>
+          <button onClick="{{send}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700">{{sendLabel}}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"view":{"editor":"enum","options":["pickup","delivery"],"default":"pickup","section":"Layout"},"messageDialog":{"editor":"boolean","default":false,"section":"Layout"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = {
+      dark: { text:'#F1EEE6', muted:'#A9AFA3', ctrl:'#6B7266', conf:'#7EC4B0', warn:'#E9B949' },
+      light:{ text:'#1C1F1A', muted:'#5D6358', ctrl:'#7F857A', conf:'#1F6B5C', warn:'#8A5A00' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+    const view = this.state.view ?? this.props.view ?? 'pickup';
+    const upd = this.state.upd ?? this.props.messageDialog ?? false;
+    const target = this.state.target ?? 'Glenelg';
+    const counts = { Glenelg:3, Clayton:1, delivery:3 };
+    const rowsOf = rows => rows.map(r => {
+      const done = r[3] === 'Collected';
+      return { name:r[0], code:r[1], items:r[2], status: done ? 'Collected ' + r[5] : r[3], pay:r[4],
+        sColor: done ? t.muted : r[3] === 'Ready' ? t.conf : t.text,
+        payColor: r[4] === 'Paid' ? t.muted : t.warn,
+        open: !done, done, msgLabel:'Message ' + r[0],
+        btnStyle: r[3] === 'Ready' ? 'background: var(--fill); color: var(--on)' : 'border: 1px solid var(--ctrl)',
+        style: done ? 'opacity: .6' : '', nameStyle: done ? 'text-decoration: line-through' : '' };
+    });
+    const openMsg = (to) => () => this.setState({ upd: true, target: to, sent: false });
+    const names = { readyin:'Ready in 15 min', ready:'Ready for pickup', own:'Your own text', arriving:'Arriving in 15 min', out:'Out for delivery', delivered:'Delivered' };
+    const log = this.state.log ?? { Glenelg: { readyin:'10:40' }, Clayton: { ready:'9:55' }, delivery: {} };
+    const lastOf = k => { const e = Object.entries(log[k] || {}); return e.length ? e[e.length - 1] : null; };
+    const lastLine = k => { const l = lastOf(k); return l ? 'Sent "' + names[l[0]] + '" at ' + l[1] : 'No message sent yet'; };
+    const lastIcon = k => lastOf(k) ? 'M5 12.5l4.5 4.5L19 7.5' : 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z';
+    const lastColor = k => lastOf(k) ? t.conf : t.muted;
+    const places = [
+      { place:'Glenelg', time:'11:00–13:00', dir:'Front porch, blue door', counts:'3 to collect', waiting:'3', message: openMsg('Glenelg'), last: lastLine('Glenelg'), lastIcon: lastIcon('Glenelg'), lastColor: lastColor('Glenelg'),
+        rows: rowsOf([['Wulan','K7M2QX','2× Rendang · 1× Nasi Ayam Bali · 1× Onde onde','Ready','Not paid · $58.00'],['Dewi','Q2N6VS','2× Onde onde','Ready','Not paid · $30.00'],['Ketut','E3X5NR','4× Nasi Ayam Bali','Confirmed','Not paid · $62.00']]) },
+      { place:'Clayton', time:'10:00–12:00', dir:'Side gate, ring the bell', counts:'1 to collect · 2 collected', waiting:'1', message: openMsg('Clayton'), last: lastLine('Clayton'), lastIcon: lastIcon('Clayton'), lastColor: lastColor('Clayton'),
+        rows: rowsOf([['Tom','W1L7HB','2× Sayur urab','Ready','Not paid · $17.00'],['Siti','B3R9TP','1× Nasi Ayam Bali · 1× Sayur urab','Collected','Paid','10:12'],['Rachel','R4G8YA','2× Rendang · 2× Onde onde','Collected','Paid','10:31']]) }
+    ];
+    const stepNames = ['Out for delivery','Arriving soon','Delivered'];
+    const deliveries = [
+      ['H8D4LM','Michael','3× Rendang · 2× Sambal matah','Not paid · $71.00',2],
+      ['T5J1WC','Anastasia','2× Nasi Ayam Bali · 2× Sayur urab · 1× Sambal matah','Paid',1],
+      ['C6P2ZU','Putri','1× Nasi Ayam Bali · 1× Onde onde','Not paid · $29.00',0],
+      ['Y8S2DF','Linh','1× Rendang · 1× Sambal matah','Paid',3]
+    ].map(d => ({ code:d[0], name:d[1], items:d[2], pay:d[3], payColor: d[3] === 'Paid' ? t.muted : t.warn,
+      style: d[4] === 3 ? 'opacity: .6' : '',
+      steps: stepNames.map((s, i) => ({ label:s, done: i < d[4], next: i === d[4], later: i > d[4], arrow: i < 2 })) }));
+    const isDel = target === 'delivery';
+    const tdefs = isDel
+      ? [['arriving','Arriving in',true,'',''],['out','Out for delivery',false,'Out for delivery'],['delivered','Delivered',false,'Delivered'],['own','Your own text',false,'']]
+      : [['readyin','Ready in',true,'Ready'],['ready','Ready for pickup',false,'Ready'],['own','Your own text',false,'']];
+    const tpl = this.state.tpl && tdefs.find(x => x[0] === this.state.tpl) ? this.state.tpl : tdefs[0][0];
+    const sel = on => on ? 'background: var(--tint)' : '';
+    const ring = on => on ? 'border: 6px solid var(--fill)' : 'border: 1.5px solid var(--ctrl)';
+    const tlog = log[target] || {};
+    const templates = tdefs.map(x => ({ a:x[1], mins:x[2], wasSent: !!tlog[x[0]], sentAt: tlog[x[0]] || '', sel: tpl === x[0] ? 'true' : 'false', style: sel(tpl === x[0]), ring: ring(tpl === x[0]), pick: () => this.setState({ tpl: x[0], sent: false }) }));
+    const repeat = !!tlog[tpl] && tpl !== 'own';
+    const repeatText = repeat ? 'You already sent "' + names[tpl] + '" to this group at ' + tlog[tpl] + '. You can still send it again.' : '';
+    const cur = tdefs.find(x => x[0] === tpl);
+    const previews = { readyin:'Your Onde Onde order will be ready at ' + target + ' in 15 minutes.', ready:'Your Onde Onde order is ready for pickup at ' + target + '.', arrived:'We\'ve arrived at ' + target + '. See you soon!', collected:'Thanks for collecting your order. Enjoy!', arriving:'Your Onde Onde order is arriving in 15 minutes.', out:'Your Onde Onde order is out for delivery.', delivered:'Your Onde Onde order has been delivered. Enjoy!', own:'[Your message]' };
+    const n = counts[target];
+    return { vars, places, deliveries, templates, preview: previews[tpl], repeat, repeatText,
+      sendLabel: (repeat ? 'Send again to ' : 'Send to ') + counts[target],
+      toLabel: isDel ? 'delivery customers' : 'everyone picking up at ' + target, toCount: n, sent: this.state.sent ?? false, sentN: n + ' of ' + n,
+      statusHint: cur[3] ? 'Moves each order to ' + cur[3] + '.' : 'This message has no matching status.',
+      isPickup: view === 'pickup', isDelivery: view === 'delivery', updateOpen: upd,
+      pSel: view === 'pickup' ? 'true' : 'false', dSel: view === 'delivery' ? 'true' : 'false',
+      pBar: view === 'pickup' ? 'var(--fill)' : 'transparent', dBar: view === 'delivery' ? 'var(--fill)' : 'transparent',
+      pW: view === 'pickup' ? '700' : '500', dW: view === 'delivery' ? '700' : '500',
+      pC: view === 'pickup' ? 'var(--text)' : 'var(--muted)', dC: view === 'delivery' ? 'var(--text)' : 'var(--muted)',
+      toPickup: () => this.setState({ view: 'pickup' }), toDelivery: () => this.setState({ view: 'delivery' }),
+      msgDelivery: openMsg('delivery'), closeUpdate: () => this.setState({ upd: false }),
+      send: () => this.setState({ sent: true, log: Object.assign({}, log, { [target]: Object.assign({}, tlog, { [tpl]: '11:05' }) }) }) };
+  }
+}
+</script>
+</body>
+</html>

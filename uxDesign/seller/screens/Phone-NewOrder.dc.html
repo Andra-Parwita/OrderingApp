@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New order · phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input,textarea{font:inherit}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.i-l{width:22px;height:22px}
+.tn{font-variant-numeric:tabular-nums}
+.noscroll{scrollbar-width:none}
+.noscroll::-webkit-scrollbar{display:none}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; color: var(--text); background: var(--surf); {{vars}}">
+  <div style="flex: none; display: flex; align-items: center; height: 52px; padding: 0 4px; border-bottom: 1px solid var(--line)">
+    <a href="Phone-Orders.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--atext); text-decoration: none; font-weight: 600; font-size: 16px">Cancel</a>
+    <span style="flex: 1; text-align: center; font-weight: 700; font-size: 16px; margin-right: 76px">New order</span>
+  </div>
+
+  <div class="noscroll" style="flex: 1; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="cname" style="font-size: 13px; font-weight: 600">First name</label>
+      <input id="cname" value="Maya" style="height: 48px; padding: 0 14px; border: 1px solid var(--ctrl); border-radius: 12px; background: none; color: var(--text); font-size: 16px">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 13px; font-weight: 600">Their language</span>
+      <div role="group" aria-label="Customer language" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; border-radius: 12px; background: var(--surf2)">
+        <button aria-pressed="true" style="min-height: 42px; border-radius: 10px; text-align: center; font-weight: 700; background: var(--surf); box-shadow: 0 1px 3px rgba(0,0,0,.2)">Indonesian</button>
+        <button aria-pressed="false" style="min-height: 42px; border-radius: 10px; text-align: center; font-weight: 600; color: var(--muted)">English</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column">
+      <span style="font-size: 13px; font-weight: 600; margin-bottom: 4px">Items</span>
+      <sc-for list="{{dishes}}" as="d" hint-placeholder-count="6">
+        <div style="display: flex; align-items: center; gap: 10px; min-height: 56px; border-bottom: 1px solid var(--line)">
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column"><span style="font-weight: 600; {{d.nameStyle}}">{{d.name}}</span><span class="tn" style="font-size: 12px; color: var(--muted)">{{d.size}} · {{d.price}}{{d.left}}</span></span>
+          <button aria-label="{{d.minusLabel}}" onClick="{{d.minus}}" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid var(--ctrl); display: flex; align-items: center; justify-content: center; opacity: {{d.minusO}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12h14"></path></svg></button>
+          <span class="tn" style="width: 22px; text-align: center; font-weight: 700; font-size: 17px">{{d.q}}</span>
+          <button aria-label="{{d.plusLabel}}" onClick="{{d.plus}}" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; {{d.plusStyle}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 13px; font-weight: 600">Pickup or delivery</span>
+      <div role="radiogroup" aria-label="Pickup or delivery" style="display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+        <sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+          <button role="radio" aria-checked="{{o.sel}}" onClick="{{o.pick}}" style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid var(--line); {{o.style}}">
+            <span style="width: 20px; height: 20px; border-radius: 10px; box-sizing: border-box; flex: none; {{o.ring}}"></span>
+            <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600">{{o.label}}</span><span style="font-size: 12px; color: var(--muted)">{{o.sub}}</span></span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="cnote" style="font-size: 13px; font-weight: 600">Note <span style="color: var(--muted); font-weight: 500">· optional</span></label>
+      <textarea id="cnote" rows="2" placeholder="e.g. extra sambal" style="resize: none; padding: 12px 14px; border: 1px solid var(--ctrl); border-radius: 12px; background: none; color: var(--text); font-size: 15px"></textarea>
+    </div>
+
+    <div style="display: flex; flex-direction: column">
+      <label style="display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer"><span style="width: 22px; height: 22px; border-radius: 6px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; flex: none"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Confirm it now</label>
+      <label style="display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer"><span style="width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--ctrl); box-sizing: border-box; flex: none"></span>Already paid</label>
+    </div>
+  </div>
+
+  <div style="flex: none; padding: 12px 16px 24px; border-top: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; gap: 6px">
+    <div style="display: flex; justify-content: space-between; font-size: 14px"><span style="color: var(--muted)">{{count}} items</span><span class="tn" style="font-weight: 700">Total {{total}}</span></div>
+    <button style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border-radius: 14px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 16px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5z"></path></svg>Create &amp; send link on WhatsApp</button>
+    <button style="min-height: 44px; text-align: center; color: var(--atext); font-weight: 600; font-size: 14px">Create only</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = { dark: { text:'#F1EEE6', muted:'#A9AFA3', ctrl:'#6B7266' }, light:{ text:'#1C1F1A', muted:'#5D6358', ctrl:'#7F857A' } };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const menu = [['Nasi Ayam Bali','1 box',15.5,''],['Rendang','Regular',18,' · 3 left'],['Onde onde','Pack of 6',6.5,''],['Sayur urab','Tub',8.5,''],['Sambal matah','Small jar',7,''],['Kue lapis','4 pieces',9,' · sold out']];
+    const q = this.state.q ?? { 'Rendang':1, 'Onde onde':2 };
+    let total = 0, count = 0;
+    const dishes = menu.map(m => {
+      const n = q[m[0]] ?? 0; total += n * m[2]; count += n;
+      const so = m[3].includes('sold');
+      const set = v => this.setState({ q: Object.assign({}, q, { [m[0]]: Math.max(0, v) }) });
+      return { name:m[0], size:m[1], price:'$' + m[2].toFixed(2), left:m[3], q:n,
+        nameStyle: so ? 'color: var(--muted)' : '', minusO: n ? '1' : '.4',
+        plusStyle: n ? 'background: var(--fill); color: var(--on)' : 'border: 1px solid var(--ctrl)',
+        minusLabel:'One less ' + m[0], plusLabel:'One more ' + m[0], minus: () => set(n - 1), plus: () => set(n + 1) };
+    });
+    const pick = this.state.pick ?? 'Glenelg';
+    const opts = [['Glenelg','Pickup · Glenelg','11:00–13:00 · Front porch'],['Clayton','Pickup · Clayton','10:00–12:00 · Side gate'],['Delivery','Delivery','Address agreed on WhatsApp']].map(o => {
+      const s = pick === o[0];
+      return { label:o[1], sub:o[2], sel: s ? 'true' : 'false', style: s ? 'background: var(--tint)' : '',
+        ring: s ? 'border: 6px solid var(--fill)' : 'border: 1.5px solid var(--ctrl)', pick: () => this.setState({ pick: o[0] }) };
+    });
+    return { vars: Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';'), dishes, opts, count, total: '$' + total.toFixed(2) };
+  }
+}
+</script>
+</body>
+</html>

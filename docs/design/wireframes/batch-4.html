@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wireframes · batch 4 · sign-in and Saturday</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #ececec; color: #333; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+  main { max-width: 1700px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .legend { color: #555; margin: 0 0 18px; }
+  .row { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
+  .frame { width: 375px; max-width: 100%; }
+  .frame.wide { width: 780px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .phone { background: #fff; border: 2px solid #777; border-radius: 22px; overflow: hidden; }
+  .wide .pair { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  .wide .pair .phone { width: 375px; max-width: 100%; }
+  .wide .pair .wa { flex: 1 1 260px; }
+  ul.notes { margin: 8px 0 0; padding-left: 18px; color: #444; font-size: 12px; }
+  ul.notes li { margin-bottom: 3px; }
+
+  .pad { padding: 10px 12px; }
+  .hair { border-top: 1px solid #bbb; }
+  .muted { color: #666; }
+  .small { font-size: 12px; }
+  .b { font-weight: 600; }
+  .img { position: relative; background: #e2e2e2; border: 1px solid #aaa; display: flex; align-items: center; justify-content: center; color: #555; font-size: 12px; overflow: hidden;
+    background-image: linear-gradient(to top right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)), linear-gradient(to bottom right, transparent calc(50% - 0.5px), #aaa, transparent calc(50% + 0.5px)); }
+  .img span { background: #e2e2e2; padding: 1px 6px; position: relative; }
+  .btn { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; border: 1.5px solid #555; border-radius: 6px; background: #fff; color: #333; font-weight: 600; text-align: center; width: 100%; }
+  .btn.pri { background: #444; color: #fff; border-color: #444; }
+  .btn.dis { border-style: dashed; border-color: #bbb; color: #999; }
+  .link { display: flex; align-items: center; min-height: 44px; text-decoration: underline; color: #444; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; background: #e4e4e4; border: 1px solid #bbb; font-size: 12px; white-space: nowrap; }
+  .tag { display: inline-block; padding: 0 6px; border: 1px solid #999; border-radius: 3px; font-size: 11px; color: #555; }
+  .field { border: 1px solid #888; border-radius: 6px; min-height: 44px; padding: 0 10px; display: flex; align-items: center; color: #777; background: #fff; }
+  .lang { display: inline-flex; border: 1px solid #777; border-radius: 6px; overflow: hidden; }
+  .lang span { padding: 0 10px; min-height: 36px; display: flex; align-items: center; }
+  .lang .on { background: #444; color: #fff; }
+  .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+  .item { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .item .t { flex: 1; min-width: 0; }
+  .item.out { background: #f3f3f3; color: #777; }
+  .step { display: inline-flex; align-items: center; flex: none; }
+  .step i { font-style: normal; width: 40px; height: 44px; border: 1.5px solid #666; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .step b { width: 26px; text-align: center; font-weight: 600; }
+  .step.off i { border-color: #bbb; color: #bbb; border-style: dashed; }
+  .step.off b { color: #aaa; }
+  .week { background: #f3f3f3; padding: 8px 12px; border-top: 1px solid #ccc; }
+  .week div { display: flex; justify-content: space-between; gap: 8px; }
+  .sticky { background: #444; color: #fff; display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 14px; font-weight: 600; }
+
+  .line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .line:first-child { border-top: 0; }
+  .line .step { margin-left: auto; }
+  .radio { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .radio u { width: 18px; height: 18px; border: 1.5px solid #555; border-radius: 50%; flex: none; display: inline-block; }
+  .radio u.on { background: radial-gradient(#444 45%, #fff 50%); }
+  .note { background: #f3f3f3; border: 1px solid #ccc; border-radius: 6px; padding: 6px 8px; font-size: 12px; color: #555; }
+  .code { font-size: 38px; font-weight: 700; letter-spacing: .08em; text-align: center; font-family: ui-monospace, Consolas, monospace; }
+  .qr { width: 120px; height: 120px; margin: 8px auto; }
+  .wa { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 10px; padding: 12px; }
+  .wa p { margin: 6px 0; background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; }
+
+  .tabs { display: flex; border-bottom: 1px solid #bbb; }
+  .tabs span { flex: 1 1 0; text-align: center; padding: 0 1px; min-height: 44px; display: flex; flex-direction: column; justify-content: center; font-size: 11px; line-height: 1.2; border-right: 1px solid #ddd; }
+  .tabs span:last-child { border-right: 0; }
+  .tabs .on { background: #e4e4e4; font-weight: 700; box-shadow: inset 0 -3px 0 #444; }
+  .o { display: grid; grid-template-columns: auto 1fr auto; gap: 0 8px; align-items: center; padding: 6px 12px; min-height: 48px; border-top: 1px solid #ddd; }
+  .o .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .o .n { font-weight: 600; }
+  .o .s { grid-column: 1 / 3; color: #555; font-size: 12px; }
+  .o .m { text-align: right; white-space: nowrap; font-weight: 600; }
+  .bar { display: flex; border-top: 1px solid #999; background: #f3f3f3; }
+  .bar span { flex: 1; min-height: 52px; display: flex; align-items: center; justify-content: center; font-size: 12px; border-right: 1px solid #ccc; }
+  .bar span:last-child { border-right: 0; }
+  .bar .on { font-weight: 700; background: #e4e4e4; }
+  .toggle { display: inline-block; width: 44px; height: 24px; border: 1.5px solid #555; border-radius: 12px; position: relative; flex: none; background: #ccc; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 22px; width: 17px; height: 17px; border-radius: 50%; background: #444; }
+
+  /* batch 2 additions, same palette */
+  .seg { display: flex; border: 1px solid #777; border-radius: 6px; overflow: hidden; }
+  .seg span { flex: 1 1 0; min-height: 40px; padding: 0 4px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; border-right: 1px solid #bbb; }
+  .seg span:last-child { border-right: 0; }
+  .seg .on { background: #444; color: #fff; font-weight: 600; }
+  .stepper { display: flex; margin: 6px 0; }
+  .stepper div { flex: 1 1 0; text-align: center; font-size: 11px; line-height: 1.25; padding: 0 2px; }
+  .stepper u { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: 0 auto 3px; border: 1.5px solid #888; border-radius: 50%; text-decoration: none; font-size: 12px; background: #fff; color: #777; }
+  .stepper .done u { background: #bbb; border-color: #888; color: #333; }
+  .stepper .cur u { background: #444; border-color: #444; color: #fff; }
+  .stepper .cur { font-weight: 700; }
+  .banner { background: #e4e4e4; border: 1px solid #999; border-radius: 6px; padding: 8px 10px; font-weight: 600; }
+  .ev { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .ev:first-child { border-top: 0; }
+  .ev span:first-child { color: #666; white-space: nowrap; }
+  .grp { background: #e4e4e4; padding: 6px 12px; border-top: 1px solid #bbb; font-weight: 700; display: flex; justify-content: space-between; }
+  .ck { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 12px; min-height: 48px; border-top: 1px solid #ddd; }
+  .ck .t { flex: 1; min-width: 0; }
+  .ck .q { text-align: right; white-space: nowrap; font-weight: 700; font-size: 15px; min-width: 56px; }
+  .ck.out { background: #f3f3f3; color: #777; }
+  .thumbs { display: flex; gap: 8px; }
+  .thumbs .img { width: 64px; height: 64px; flex: none; }
+  .thumbs .add { width: 64px; height: 64px; flex: none; border: 1.5px dashed #888; border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; color: #555; }
+  .pv { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 10px; padding: 10px 12px; overflow-wrap: anywhere; }
+  .pv p { margin: 0 0 8px; }
+  .pv p:last-child { margin-bottom: 0; }
+
+  /* batch 3 additions, same palette */
+  .sec { background: #e4e4e4; padding: 6px 12px; border-top: 1px solid #bbb; font-weight: 700; }
+  .lbl { font-weight: 600; margin-bottom: 3px; }
+  .help { font-size: 12px; color: #666; margin-top: 3px; }
+  .two { display: flex; gap: 8px; }
+  .two > div { flex: 1 1 0; min-width: 0; }
+  .field.area { min-height: 64px; align-items: flex-start; padding-top: 10px; }
+  .field.val { color: #333; }
+  .sel { justify-content: space-between; }
+  .btn.sm { min-height: 44px; width: auto; flex: 1 1 0; }
+  .btns { display: flex; gap: 8px; }
+  .row2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; }
+  .mi { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 8px 12px; border-top: 1px solid #ccc; min-height: 56px; }
+  .mi .t { flex: 1; min-width: 0; }
+  .mi .r { text-align: right; white-space: nowrap; font-weight: 600; }
+  .dots { width: 44px; height: 44px; flex: none; border: 1.5px solid #666; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .key { background: #f0f0f0; border: 1.5px dashed #888; border-radius: 6px; padding: 10px; text-align: center; font: 700 22px ui-monospace, Consolas, monospace; letter-spacing: .06em; }
+  .ban { height: 90px; width: 100%; }
+  .hdr { padding: 8px 12px; background: #f3f3f3; border: 1px dashed #999; border-radius: 6px; }
+  .frame.wide2 { width: 780px; }
+  .opts .seg { margin-top: 4px; }
+  .sheet { background: #f3f3f3; border: 1px solid #aaa; padding: 10px; }
+  .labels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .lab { background: #fff; border: 1px dashed #777; padding: 8px; display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: start; min-width: 0; }
+  .lab .code { font-size: 22px; text-align: left; letter-spacing: .04em; }
+  .lab .qr { width: 52px; height: 52px; margin: 0; }
+  .lab .nm { font-weight: 600; }
+  .lab .its { grid-column: 1 / 3; font-size: 12px; overflow-wrap: anywhere; }
+  .lab .its div { margin-top: 2px; }
+  .lab .pk { grid-column: 1 / 3; border-top: 1px solid #ccc; padding-top: 4px; font-weight: 600; font-size: 12px; }
+
+  /* draft 2: preview as customer */
+  .selbar { background: #444; color: #fff; padding: 8px 12px; }
+  .selbar .b { margin-bottom: 6px; }
+  .selbar .btn.sm { min-height: 40px; }
+  .selbar .btn:not(.pri) { background: #444; color: #fff; border-color: #fff; }
+  .selbar .btn.pri { background: #fff; color: #333; border-color: #fff; }
+
+  /* batch 4 additions, same palette */
+  .cam { position: relative; height: 300px; background: #d6d6d6; border: 1px solid #aaa; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .cam .guide { width: 180px; height: 180px; border: 3px solid #fff; outline: 1px solid #777; border-radius: 8px; box-shadow: 0 0 0 600px rgba(0,0,0,.18); }
+  .cam .cap { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #333; font-size: 12px; font-weight: 600; }
+  .numst { display: flex; gap: 8px; padding: 6px 0; border-top: 1px solid #ddd; }
+  .numst:first-child { border-top: 0; }
+  .numst u { flex: none; width: 24px; height: 24px; border: 1.5px solid #555; border-radius: 50%; text-decoration: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; }
+  .res { padding: 10px 12px; border-top: 1px solid #bbb; }
+  .res .big { font-size: 15px; font-weight: 700; display: flex; gap: 8px; align-items: flex-start; }
+  .res .sym { flex: none; width: 24px; height: 24px; border: 2px solid #444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .res.bad { background: #f3f3f3; }
+  .res.bad .sym { border-style: dashed; }
+  .drow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 8px; padding: 8px 12px; border-top: 1px solid #ddd; min-height: 48px; }
+  .drow .t { flex: 1 1 200px; min-width: 0; }
+  .sbtn { width: auto; flex: none; min-height: 44px; }
+  .oc { padding: 8px 12px; border-top: 1px solid #ddd; }
+  .oc .h { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .oc .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .oc .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .oc .acts .btn { width: auto; flex: 1 1 100px; min-height: 44px; font-size: 12px; padding: 0 6px; }
+  .oc .acts .btn.dim { border-color: #bbb; color: #888; font-weight: 400; }
+  .card { border: 1px solid #aaa; border-radius: 8px; padding: 10px; background: #f8f8f8; }
+</style>
+</head>
+<body>
+<main>
+<h1>Wireframes · batch 4 · sign-in and Saturday</h1>
+<p class="legend">Low fidelity, greys only. Grey box with a cross = image. Dark fill = primary, outline = secondary, dashed = disabled. Annotations name each action as <b>Server</b> (HTTPS to the app server) or <b>Local / WhatsApp</b> (stays on the phone, or opens WhatsApp and never touches the server). Sign-in screens drawn in EN; Indonesian versions needed later. Roles: admin, seller, chef (D-011, D-013). Draft 1, 2026-10-07.</p>
+<div class="row">
+
+<!-- A1 -->
+<section class="frame">
+<h2>A1 · Set up with your key</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Dapur Bu Ani</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad hair">
+    <div class="b" style="font-size:15px;margin-bottom:8px">Set up your sign-in</div>
+    <div class="lbl">Enter the key you were sent</div>
+    <div class="field">7QK4-M2XD-9PTR</div>
+    <div class="help">Valid for 24 hours, works once</div>
+  </div>
+  <div class="pad"><div class="link" style="min-height:44px">Scan QR instead</div></div>
+  <div class="pad hair"><div class="btn pri">Continue</div></div>
+</div>
+<ul class="notes">
+  <li>The field is forgiving: spaces, dashes and lowercase are all accepted ("7qk4 m2xd 9ptr" works).</li>
+  <li><b>Server</b>: "Continue" sends the key to be checked. A wrong, expired or used key gets one plain message, never a hint about which part was wrong.</li>
+  <li>Key attempts are rate-limited per device and per kitchen; after too many the screen says to wait or ask for a new key.</li>
+  <li><b>Local</b>: "Scan QR instead" opens the camera on this screen only and fills the field; the key is still checked by the Server.</li>
+  <li>Seller keys come from the admin, chef keys from the seller (S11); on success the next screen is A2.</li>
+</ul>
+</section>
+
+<!-- A2 -->
+<section class="frame">
+<h2>A2 · Create a passkey</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Hi Chef Wati</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad hair">
+    <div class="small b" style="margin-bottom:4px">Your device</div>
+    <div class="seg"><span class="on">iPhone</span><span>Android</span><span>Windows / Mac</span></div>
+  </div>
+  <div class="pad">
+    <div class="numst"><u>1</u><div>Make sure your phone has a screen lock (Settings → Face ID &amp; Passcode)</div></div>
+    <div class="numst"><u>2</u><div>Tap Create passkey below</div></div>
+    <div class="numst"><u>3</u><div>Confirm with Face ID or your passcode</div></div>
+  </div>
+  <div class="pad"><div class="note">Your passkey stays on your phone and syncs with iCloud Keychain. Nothing to remember.</div></div>
+  <div class="pad hair">
+    <div class="btn pri">Create passkey</div>
+    <div class="link" style="min-height:44px;margin-top:4px">My phone can't do this → set a password instead</div>
+  </div>
+</div>
+<ul class="notes">
+  <li>The device switch only changes the help text (local); the iPhone tab is shown, Android and Windows / Mac have their own 3 steps.</li>
+  <li><b>Server</b>: "Create passkey" asks for a challenge, the phone signs it (Face ID, fingerprint or screen PIN) and the Server stores the public part.</li>
+  <li><b>Local</b>: the device switch, and the link to A2b.</li>
+  <li>The Indonesian version of this help text is needed later (all steps, the switch and the note).</li>
+</ul>
+</section>
+
+<!-- A2b -->
+<section class="frame">
+<h2>A2b · Set a password</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Set a password</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad hair">
+    <div class="banner">Your device can't make a passkey, so set a password</div>
+  </div>
+  <div class="pad">
+    <div class="lbl">New password</div>
+    <div class="field" style="justify-content:space-between"><span>••••••••••••</span><span class="small b" style="text-decoration:underline">Show</span></div>
+    <div class="help">At least 10 characters</div>
+    <div class="lbl" style="margin-top:8px">Confirm password</div>
+    <div class="field" style="justify-content:space-between"><span>••••••••••••</span><span class="small b" style="text-decoration:underline">Show</span></div>
+  </div>
+  <div class="pad hair"><div class="btn pri">Save password</div></div>
+  <div class="pad"><div class="note">You can switch to a passkey later from a newer device.</div></div>
+</div>
+<ul class="notes">
+  <li><b>Server</b>: "Save password" stores a salted hash of the password for this person; the password is never shown again.</li>
+  <li><b>Local</b>: the Show / Hide toggle and the 10-character check before the button is enabled.</li>
+  <li>Passwords are a fallback only (D-011); the admin has no password option at all.</li>
+  <li>Sign-in attempts with a password are rate-limited like keys.</li>
+</ul>
+</section>
+
+<!-- A3 -->
+<section class="frame">
+<h2>A3 · Sign in</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Dapur Bu Ani</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="pad hair">
+    <div class="b" style="font-size:15px;margin-bottom:8px">Sign in</div>
+    <div class="btn pri">Sign in with passkey</div>
+    <div class="btn" style="margin-top:8px">Use password instead ▴</div>
+  </div>
+  <div class="pad">
+    <div class="lbl">Password</div>
+    <div class="field" style="justify-content:space-between"><span>••••••••••••</span><span class="small b" style="text-decoration:underline">Show</span></div>
+    <div class="btn pri" style="margin-top:8px">Sign in</div>
+  </div>
+  <div class="pad hair"><div class="link" style="min-height:44px">Lost access? Ask Bu Ani (or the admin) for a new key</div></div>
+</div>
+<ul class="notes">
+  <li>Shown for a returning person of any role; "Use password instead" is drawn expanded (it only appears for people who set a password).</li>
+  <li><b>Server</b>: the passkey check and the password check. Failed attempts are rate-limited.</li>
+  <li>A session lasts 30 days and is renewed each time the app is used, so most people sign in rarely.</li>
+  <li><b>Local</b>: expanding the password field. "Lost access?" is text only: the person asks on WhatsApp (<b>WhatsApp</b>, outside the app) and gets a new key for A1.</li>
+</ul>
+</section>
+
+<!-- A4 -->
+<section class="frame wide2">
+<h2>A4 · Admin page (desktop first, EN only)</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Admin</b><span class="pill">Signed in as admin</span></div>
+  <div class="sec">Seller</div>
+  <div class="pad">
+    <div class="b">Bu Ani · Dapur Bu Ani · 2 devices</div>
+  </div>
+  <div class="drow"><div class="t"><div class="b">iPhone</div><div class="small muted">last used now</div></div><div class="btn sbtn">Sign out</div></div>
+  <div class="drow"><div class="t"><div class="b">iPad</div><div class="small muted">last used Wed</div></div><div class="btn sbtn">Sign out</div></div>
+  <div class="pad hair">
+    <div class="btns" style="flex-wrap:wrap"><div class="btn sm" style="flex-basis:200px">Create seller invite key</div><div class="btn sm" style="flex-basis:200px">Issue recovery key</div></div>
+    <div class="small muted" style="margin-top:4px">Sign out asks for a second tap.</div>
+    <div class="key" style="margin-top:8px;font-size:18px">7QK4-M2XD-9PTR</div>
+    <div class="small muted" style="text-align:center;margin-top:2px">valid 24 h · works once</div>
+    <div class="btns" style="margin-top:8px"><div class="btn sm">Copy</div><div class="btn sm">Send on WhatsApp</div></div>
+  </div>
+  <div class="sec">Chefs</div>
+  <div class="drow"><div class="t"><div class="b">Chef Wati · 2 devices</div><div class="small muted">Read-only list</div></div><div class="btn sbtn">Sign out all</div></div>
+  <div class="sec">Your admin devices</div>
+  <div class="drow"><div class="t"><div class="b">Windows PC (Windows Hello)</div></div><span class="pill">this device</span></div>
+  <div class="pad"><div class="btn" style="width:auto;display:inline-flex">+ Add a device</div></div>
+</div>
+<ul class="notes">
+  <li>Everything on this page is <b>Server</b>: invite and recovery keys, sign out, add a device. No scripts or terminal needed.</li>
+  <li>The admin sees no order details, customers or menus; this page only manages access.</li>
+  <li>Seller and chef sessions can't open /admin; the Server refuses them.</li>
+  <li><b>Local / WhatsApp</b>: "Copy" copies the key; "Send on WhatsApp" opens WhatsApp with the key text (the Server never sees the chat). The key box is drawn after tapping "Create seller invite key".</li>
+  <li>Admin signs in with a passkey only (D-011). Chefs are listed read-only; the seller adds and invites them.</li>
+</ul>
+</section>
+
+<!-- A4b -->
+<section class="frame">
+<h2>A4b · Admin first setup</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">/admin/setup</b></div>
+  <div class="pad hair">
+    <div class="lbl">Enter the setup key</div>
+    <div class="field">ADMIN_SETUP_KEY value</div>
+    <div class="help">The value of the Cloudflare secret ADMIN_SETUP_KEY</div>
+  </div>
+  <div class="pad hair"><div class="btn pri">Create admin passkey</div></div>
+  <div class="pad"><div class="note">This page stops working once an admin exists.</div></div>
+</div>
+<ul class="notes">
+  <li>Used once, by the owner, to create the first admin passkey (no password option).</li>
+  <li><b>Server</b>: checks the setup key (rate-limited), then stores the new admin passkey and closes this page for good.</li>
+  <li>After that, the admin signs in from A3 and manages access on A4.</li>
+</ul>
+</section>
+
+<!-- C6 -->
+<section class="frame">
+<h2>C6 · Scan to collect</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">‹ Scan to collect</b><span class="lang"><span class="on">EN</span><span>ID</span></span></div>
+  <div class="cam"><div class="guide"></div><div class="cap">Point at the QR on your container</div></div>
+  <div class="pad hair"><div class="link" style="min-height:44px">Type the order code instead</div></div>
+</div>
+<ul class="notes">
+  <li>The camera is used only on this screen and stops when it closes.</li>
+  <li><b>Local</b>: the QR is read on the phone; nothing from the camera is uploaded.</li>
+  <li><b>Server</b>: once a code is read (or typed), the Server is asked about that one order and the result shows on C6b.</li>
+  <li>If the camera is refused, the screen falls back to the typed code.</li>
+</ul>
+</section>
+
+<!-- C6b -->
+<section class="frame">
+<h2>C6b · Scan result (two states)</h2>
+<div class="phone">
+  <div class="pad small b muted">State 1 · your order</div>
+  <div class="res">
+    <div class="big"><span class="sym">✓</span><div>This is your order K7F-2QX</div></div>
+    <div class="small" style="margin-top:6px">Rina · 2× Lemper ayam, 1× Tempe mendoan</div>
+    <div class="btn pri" style="margin-top:10px">Collected</div>
+  </div>
+  <div class="pad small b muted hair">State 2 · not your order</div>
+  <div class="res bad">
+    <div class="big"><span class="sym">✗</span><div>This isn't your order — check the label with the seller</div></div>
+    <div class="btn" style="margin-top:10px">Scan again</div>
+  </div>
+</div>
+<ul class="notes">
+  <li>"Your order" means the code is saved in My orders on this phone (<b>Local</b> check); no account is involved.</li>
+  <li>State 2 shows a symbol and words, never colour alone, and reveals nothing about whose order it is.</li>
+  <li><b>Server</b>: "Collected" marks the order Collected and the seller's hand-over list (S13) updates live; the customer gets the usual status update.</li>
+  <li><b>Local</b>: "Scan again" returns to C6.</li>
+</ul>
+</section>
+
+<!-- S13 -->
+<section class="frame">
+<h2>S13 · Hand-over (Saturday pickup)</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Pickup · Sat 11 Oct</b><span class="pill">Ready 9 · Collected 4</span></div>
+  <div class="pad hair"><div class="btn pri" style="min-height:64px;font-size:16px">Scan label</div></div>
+  <div class="pad">
+    <div class="lbl">Type order code</div>
+    <div class="field">K7F-2QX</div>
+    <div class="help">Spaces, dashes and lowercase are fine; looks up after the 6th character</div>
+  </div>
+  <div class="pad hair">
+    <div class="card">
+      <div class="head"><b class="code" style="font-size:20px;text-align:left">K7F-2QX</b><span class="pill">Ready for pickup</span></div>
+      <div class="b" style="margin-top:4px">Rina</div>
+      <div class="small">2× Lemper ayam</div>
+      <div class="small">1× Tempe mendoan</div>
+      <div class="head" style="margin-top:6px"><b>$30.00</b><span class="tag">Paid ✓</span></div>
+      <div class="btn pri" style="margin-top:10px">Mark Collected</div>
+    </div>
+  </div>
+  <div class="bar"><span>Orders</span><span>Cook list</span><span class="on">Hand-over</span><span>More</span></div>
+</div>
+<ul class="notes">
+  <li>The point: match the right container to the right person before it leaves the table.</li>
+  <li><b>Server</b>: looking up a code, and "Mark Collected". The audit keeps who marked it (last 4 changes).</li>
+  <li><b>Local</b>: "Scan label" reads the QR on the phone; the camera is used only here.</li>
+  <li>Open to the seller and to chefs (D-013); the counts update live as others mark orders.</li>
+</ul>
+</section>
+
+<!-- S13b -->
+<section class="frame">
+<h2>S13b · Delivery run</h2>
+<div class="phone">
+  <div class="pad head"><b style="font-size:16px">Delivery · Sat 11 Oct</b><span class="pill">3 orders</span></div>
+  <div class="oc">
+    <div class="h"><span><span class="c">B4X-8GA</span> <b>Arif</b></span><span class="pill">Ready</span></div>
+    <div class="small muted">1× Nasi campur, 1× Tempe mendoan · <b>$25.00</b></div>
+    <div class="acts"><div class="btn pri">Out for delivery</div><div class="btn dim">Arriving soon</div><div class="btn dim">Scan to mark Delivered</div></div>
+  </div>
+  <div class="oc">
+    <div class="h"><span><span class="c">T2N-6KC</span> <b>Budi</b></span><span class="pill">Ready</span></div>
+    <div class="small muted">1× Ayam goreng 250 g · <b>$12.50</b></div>
+    <div class="acts"><div class="btn pri">Out for delivery</div><div class="btn dim">Arriving soon</div><div class="btn dim">Scan to mark Delivered</div></div>
+  </div>
+  <div class="oc">
+    <div class="h"><span><span class="c">N2V-9HP</span> <b>Tom</b></span><span class="pill">Out for delivery</span></div>
+    <div class="small muted">2× Ayam goreng 250 g · <b>$25.00</b></div>
+    <div class="acts"><div class="btn">Arriving soon</div><div class="btn pri">Scan to mark Delivered</div></div>
+  </div>
+  <div class="pad hair"><div class="note">Addresses are in your WhatsApp chats, not in the app (D-007)</div></div>
+</div>
+<ul class="notes">
+  <li>The driver is the seller or a chef. Dimmed buttons are not available yet for that status; they are not disabled-forever.</li>
+  <li><b>Server</b>: "Out for delivery", "Arriving soon" (one tap, sends that customer a notification) and "Scan to mark Delivered".</li>
+  <li>Scanning the label at the door marks Delivered, matching the container to the order (<b>Local</b> scan, then <b>Server</b>).</li>
+  <li>Customers get each update. The address and phone are never in the app; the driver reads them in WhatsApp.</li>
+</ul>
+</section>
+
+</div>
+</main>
+</body>
+</html>

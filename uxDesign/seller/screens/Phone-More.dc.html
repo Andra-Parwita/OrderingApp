@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>More · phone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-l{width:22px;height:22px}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.4; color: var(--text); background: var(--surf); {{vars}}">
+  <div style="padding: 16px 16px 12px"><h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">More</h1></div>
+  <div style="flex: 1; display: flex; flex-direction: column; gap: 20px; padding: 0 16px">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; background: var(--surf2)">
+      <div aria-hidden="true" style="width: 44px; height: 44px; border-radius: 22px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center; font-weight: 700">IR</div>
+      <div style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 700">Ira</span><span style="font-size: 13px; color: var(--muted)">Owner · Onde Onde</span></div>
+      <button style="min-height: 44px; padding: 0 12px; border-radius: 22px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 14px">Switch person</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 13px; font-weight: 600; color: var(--muted)">Language</span>
+      <div role="group" aria-label="Language" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; border-radius: 12px; background: var(--surf2)">
+        <button aria-pressed="true" style="min-height: 44px; border-radius: 10px; text-align: center; font-weight: 700; background: var(--surf); box-shadow: 0 1px 3px rgba(0,0,0,.2)">English</button>
+        <button aria-pressed="false" style="min-height: 44px; border-radius: 10px; text-align: center; font-weight: 600; color: var(--muted)">Bahasa Indonesia</button>
+      </div>
+    </div>
+    <button style="min-height: 52px; border-radius: 12px; border: 1px solid var(--ctrl); text-align: center; font-weight: 600; color: var(--danger)">Sign out</button>
+    <p style="margin: 0; font-size: 13px; color: var(--muted)">Menu, Kitchen and Settings are on your tablet or computer.</p>
+  </div>
+  <nav aria-label="Main" style="flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--panel); border-top: 1px solid var(--line); padding: 4px 8px 20px">
+    <a href="Phone-Orders.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></span>Orders</a>
+    <a href="Phone-Handover.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted); text-decoration: none"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px"><svg class="i i-l" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg></span>Pickup &amp; delivery</a>
+    <button aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 56px; justify-content: center; font-size: 12px; font-weight: 700; color: var(--atext)"><span style="display: flex; align-items: center; justify-content: center; width: 56px; height: 30px; border-radius: 15px; background: var(--tint)"><svg class="i i-l" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></span>More</button>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = { dark: { text:'#F1EEE6', muted:'#A9AFA3', ctrl:'#6B7266', danger:'#EE8B78' }, light:{ text:'#1C1F1A', muted:'#5D6358', ctrl:'#7F857A', danger:'#A93724' } };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    return { vars: Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';') };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "button": "Scan",
+  "buttonLabel": "Scan the customer's QR code",
+  "title": "Scan the customer's QR code",
+  "aim": "Point the camera at the QR code on the customer's order page.",
+  "cancel": "Cancel",
+  "starting": "Starting the camera…",
+  "torchOn": "Turn the light on",
+  "torchOff": "Turn the light off",
+  "denied": "The camera is blocked or not available. Allow camera access in your browser, or type the code instead.",
+  "typeCode": "Type the code",
+  "hint": "Handwritten code? Tap the search box, then Scan Text.",
+  "notOrderCode": "That QR code is not an order code.",
+  "notFound": "No order {{code}} in this list.",
+  "cancelled": "Order {{code}} is cancelled."
+}

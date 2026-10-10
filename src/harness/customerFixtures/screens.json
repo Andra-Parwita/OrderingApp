@@ -1,0 +1,376 @@
+{
+  "about": "Every screen in the design, where to find it, and the browser context it runs in. 'board' is a file in /design; 'frame' is the screen's position in that board, counting phone frames left to right from 1 (in the rendered page: the Nth element with class 'scr'). Each phone frame shows phone chrome that is NOT part of the app: the status bar (.sb / .asb), the Dynamic Island or camera hole (.di / .ph), the home bar (.hi / .ahi), and in browser screens the Safari bar (.saf), Chrome bar (.chrome) or WhatsApp in-app bar (.ctab). Hide or ignore those when comparing. 'safeTop' / 'safeBottom' are the px the app gives up at the top and bottom in that context (safe area plus any browser bar), so the app content lines up with the frame.",
+  "viewport": { "width": 390, "height": 844 },
+  "brands": ["ondeonde", "bali", "sumatra", "sunda", "jawa"],
+  "modes": ["light", "dark"],
+  "screens": [
+    {
+      "id": "menu-home",
+      "board": "Main.dc.html",
+      "frame": 1,
+      "title": "Menu home, opened from the WhatsApp link",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "menu-full-picture",
+      "board": "Main.dc.html",
+      "frame": 2,
+      "title": "Full menu picture (tap the photo)",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "menu-slide-transition",
+      "board": "Main.dc.html",
+      "frame": 3,
+      "title": "Illustration of the slide-in from the right (motion, not a screen)",
+      "compare": false
+    },
+    {
+      "id": "menu-dishes",
+      "board": "Main.dc.html",
+      "frame": 4,
+      "title": "Dishes page with basket bar",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "menu-how-it-works",
+      "board": "Main.dc.html",
+      "frame": 5,
+      "title": "How ordering works",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+
+    {
+      "id": "menu-paused",
+      "board": "MenuStates.dc.html",
+      "frame": 1,
+      "title": "Seller paused ordering",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "menu-closed",
+      "board": "MenuStates.dc.html",
+      "frame": 2,
+      "title": "Cut-off passed",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "menu-not-published",
+      "board": "MenuStates.dc.html",
+      "frame": 3,
+      "title": "Menu not out yet",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "menu-load-error",
+      "board": "MenuStates.dc.html",
+      "frame": 4,
+      "title": "Loading skeleton with error and Try again",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+
+    {
+      "id": "basket",
+      "board": "Basket.dc.html",
+      "frame": 1,
+      "title": "Basket, pickup chosen",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "pickup-place",
+      "board": "Basket.dc.html",
+      "frame": 2,
+      "title": "Choose a pickup place",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "your-name",
+      "board": "Basket.dc.html",
+      "frame": 3,
+      "title": "First name and note, Place order",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "basket-delivery-error",
+      "board": "Basket.dc.html",
+      "frame": 4,
+      "title": "Basket with delivery and a sold-out error",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+
+    {
+      "id": "placing",
+      "board": "Placed.dc.html",
+      "frame": 1,
+      "title": "Placing your order (button busy)",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "order-placed",
+      "board": "Placed.dc.html",
+      "frame": 2,
+      "title": "Order placed",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "order-qr",
+      "board": "Placed.dc.html",
+      "frame": 3,
+      "title": "QR code page for pickup",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+
+    {
+      "id": "order-confirmed",
+      "board": "Order.dc.html",
+      "frame": 1,
+      "title": "Order page, confirmed, change and cancel available",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "order-ready",
+      "board": "Order.dc.html",
+      "frame": 2,
+      "title": "Order page, ready for pickup, I've collected",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "order-cancel-confirm",
+      "board": "Order.dc.html",
+      "frame": 3,
+      "title": "Cancel order confirmation sheet",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+
+    {
+      "id": "my-orders",
+      "board": "MyOrders.dc.html",
+      "frame": 1,
+      "title": "My orders: Current and Earlier",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "my-orders-empty",
+      "board": "MyOrders.dc.html",
+      "frame": 2,
+      "title": "My orders, empty",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "order-earlier",
+      "board": "MyOrders.dc.html",
+      "frame": 3,
+      "title": "Earlier order, read-only",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "order-archived",
+      "board": "MyOrders.dc.html",
+      "frame": 4,
+      "title": "Archived order (after 4 weeks)",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+
+    {
+      "id": "ios-ask",
+      "board": "InstallIOS.dc.html",
+      "frame": 1,
+      "title": "iPhone Safari: Get a message when your order is ready",
+      "context": "Safari",
+      "safeTop": 54,
+      "safeBottom": 88,
+      "compare": true
+    },
+    {
+      "id": "ios-step-1",
+      "board": "InstallIOS.dc.html",
+      "frame": 2,
+      "title": "Step 1 of 4: tap •••",
+      "context": "Safari",
+      "safeTop": 54,
+      "safeBottom": 88,
+      "compare": true,
+      "note": "The ring around ••• sits on Safari's own bar and is illustration only."
+    },
+    {
+      "id": "ios-step-2",
+      "board": "InstallIOS.dc.html",
+      "frame": 3,
+      "title": "Step 2 of 4: tap Share",
+      "context": "Safari",
+      "safeTop": 54,
+      "safeBottom": 88,
+      "compare": true
+    },
+    {
+      "id": "ios-step-3",
+      "board": "InstallIOS.dc.html",
+      "frame": 4,
+      "title": "Step 3 of 4: Add to Home Screen",
+      "context": "Safari",
+      "safeTop": 54,
+      "safeBottom": 88,
+      "compare": true
+    },
+    {
+      "id": "ios-step-4",
+      "board": "InstallIOS.dc.html",
+      "frame": 5,
+      "title": "Step 4 of 4: tap Add",
+      "context": "Safari",
+      "safeTop": 54,
+      "safeBottom": 88,
+      "compare": true
+    },
+    {
+      "id": "ios-open-from-home",
+      "board": "InstallIOS.dc.html",
+      "frame": 6,
+      "title": "Now open Onde Onde from your Home Screen",
+      "context": "Safari",
+      "safeTop": 54,
+      "safeBottom": 88,
+      "compare": true
+    },
+    {
+      "id": "ios-step-1-id",
+      "board": "InstallIOS.dc.html",
+      "frame": 7,
+      "title": "Step 1 in Indonesian (longest copy)",
+      "context": "Safari",
+      "lang": "id",
+      "safeTop": 54,
+      "safeBottom": 88,
+      "compare": true
+    },
+
+    {
+      "id": "ios-inside-whatsapp",
+      "board": "InstallOther.dc.html",
+      "frame": 1,
+      "title": "iPhone inside WhatsApp: open in Safari first",
+      "context": "WhatsApp in-app browser (iOS)",
+      "safeTop": 100,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "android-allow",
+      "board": "InstallOther.dc.html",
+      "frame": 2,
+      "title": "Android Chrome: notification prompt straight away",
+      "context": "Chrome Android",
+      "compare": false,
+      "note": "The dialog is Chrome's own. The app part is the page behind it."
+    },
+    {
+      "id": "android-inside-whatsapp",
+      "board": "InstallOther.dc.html",
+      "frame": 3,
+      "title": "Android inside WhatsApp: open in Chrome first",
+      "context": "WhatsApp in-app browser (Android)",
+      "safeTop": 92,
+      "safeBottom": 24,
+      "compare": true,
+      "note": "The ••• menu is WhatsApp's own; ignore it."
+    },
+    {
+      "id": "android-settings",
+      "board": "InstallOther.dc.html",
+      "frame": 4,
+      "title": "Android: Settings with optional Install",
+      "context": "Chrome Android",
+      "safeTop": 92,
+      "safeBottom": 0,
+      "compare": true
+    },
+    {
+      "id": "desktop",
+      "board": "InstallOther.dc.html",
+      "frame": 5,
+      "title": "Desktop: quiet Turn on updates line (not a phone frame)",
+      "context": "Desktop browser",
+      "compare": false
+    },
+
+    {
+      "id": "notify-off",
+      "board": "Notify.dc.html",
+      "frame": 1,
+      "title": "Installed, notifications off: Turn on notifications",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "notify-system-prompt",
+      "board": "Notify.dc.html",
+      "frame": 2,
+      "title": "iPhone's own permission alert after the tap",
+      "compare": false,
+      "note": "The alert is the phone's; the app only shows the arrow hint if you choose to."
+    },
+    {
+      "id": "notify-on",
+      "board": "Notify.dc.html",
+      "frame": 3,
+      "title": "Notifications on",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    },
+    {
+      "id": "notify-blocked",
+      "board": "Notify.dc.html",
+      "frame": 4,
+      "title": "Notifications blocked: how to turn them back on",
+      "safeTop": 54,
+      "safeBottom": 34,
+      "compare": true
+    }
+  ]
+}

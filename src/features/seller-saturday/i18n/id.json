@@ -1,0 +1,127 @@
+{
+  "common": {
+    "loading": "Memuat pesanan…",
+    "loadError": "Pesanan tidak bisa dimuat.",
+    "retry": "Coba lagi",
+    "paid": "Lunas",
+    "notPaid": "Belum bayar · {{amount}}",
+    "packed": "Dikemas",
+    "actionFailed": "Gagal. Silakan coba lagi."
+  },
+  "status": {
+    "ordered": "Dipesan",
+    "confirmed": "Dikonfirmasi",
+    "ready_for_pickup": "Siap",
+    "out_for_delivery": "Sedang diantar",
+    "collected": "Diambil",
+    "delivered": "Terkirim",
+    "cancelled": "Dibatalkan"
+  },
+  "title": "Serah terima · {{date}}",
+  "titleNoDate": "Serah terima",
+  "search": "Kode tas atau nama",
+  "viewLabel": "Tampilkan",
+  "view": {
+    "pickup": "Ambil · {{count}}",
+    "delivery": "Antar · {{count}}"
+  },
+  "summary": {
+    "pickup": "{{collected}} sudah diambil pelanggan",
+    "delivery": "{{delivered}} terkirim"
+  },
+  "note": {
+    "placeSent": "Terkirim ke {{sent}} pesanan di {{place}}.",
+    "placeReady": "Terkirim ke {{sent}} pesanan di {{place}}. {{readied}} ditandai Siap.",
+    "step": {
+      "out_for_delivery": "Pesanan {{name}} sedang diantar.",
+      "arriving_soon": "{{name}} diberi tahu pesanan hampir tiba.",
+      "delivered": "Pesanan {{name}} sudah terkirim."
+    }
+  },
+  "pickup": {
+    "noPlaces": "Menu ini tidak punya tempat ambil.",
+    "empty": "Belum ada pesanan ambil di sini.",
+    "counts": "{{toCollect}} belum diambil · {{collected}} diambil",
+    "place": "Tempat ambil",
+    "message": "Pesan",
+    "messageLabel": "Kirim pesan ke {{place}}",
+    "rowLabel": "Pesanan {{code}}, {{name}}"
+  },
+  "message": {
+    "title": "Pesan untuk {{place}}",
+    "choose": "Yang dikirim",
+    "readyIn": "Siap dalam N menit",
+    "ready": "Siap diambil",
+    "custom": "Teks sendiri",
+    "minutes": "{{count}} mnt",
+    "minutesLabel": "Menit",
+    "shortReadyIn": "Siap dalam {{count}} menit",
+    "shortReady": "Siap diambil",
+    "textReadyIn": "Pesanan Anda siap diambil dalam {{count}} menit.",
+    "textReady": "Pesanan Anda siap diambil.",
+    "customLabel": "Pesan Anda ({{lang}})",
+    "customHelp": "Pelanggan membacanya apa adanya. Jangan tulis data pribadi.",
+    "readyNote": "Juga menandai pesanan terbuka di tempat ini Siap (menjangkau {{count}}).",
+    "noStatus": "Ini tidak mengubah status pesanan apa pun.",
+    "sentLabel": "Sudah terkirim",
+    "sentLine": "Terkirim “{{text}}” pukul {{time}}",
+    "send_other": "Kirim ke {{count}} pesanan",
+    "sending": "Mengirim…",
+    "sendAnyway": "Tetap kirim",
+    "close": "Tutup",
+    "type": {
+      "out_for_delivery": "Sedang diantar",
+      "arriving_soon": "Hampir tiba",
+      "delivered": "Terkirim"
+    }
+  },
+  "delivery": {
+    "empty": "Belum ada pesanan antar.",
+    "rowLabel": "Pesanan {{code}}, {{name}}",
+    "stepsLabel": "Langkah antar untuk {{code}}",
+    "step": {
+      "out_for_delivery": "Sedang diantar",
+      "arriving_soon": "Hampir tiba",
+      "delivered": "Terkirim"
+    },
+    "minutesLabel": "Tiba dalam",
+    "minutesAria": "Menit sampai {{code}} tiba",
+    "noTime": "tanpa waktu",
+    "sendAnyway": "Tetap kirim"
+  },
+  "warn": {
+    "cancel": "Jangan kirim",
+    "repeat_message": {
+      "title": "Kirim lagi?",
+      "body": "Pesan yang sama sudah dikirim ke {{place}} beberapa menit lalu. Pelanggan di sana akan melihatnya dua kali."
+    },
+    "nobody_to_message": {
+      "title": "Tidak ada penerima",
+      "body": "{{place}} tidak punya pesanan terbuka, jadi tidak ada yang menerima ini."
+    },
+    "order_cancelled": {
+      "title": "Pesanan dibatalkan",
+      "body": "Ini akan sampai ke pesanan yang dibatalkan."
+    },
+    "step_out_of_order": {
+      "title": "Tidak berurutan?",
+      "body": "Ini bukan langkah berikutnya untuk {{name}} ({{code}}). Pelanggan tetap diberi tahu."
+    },
+    "step_repeated": {
+      "title": "Kirim langkah ini lagi?",
+      "body": "{{name}} ({{code}}) sudah diberi tahu langkah ini."
+    },
+    "order_closed": {
+      "title": "Pesanan sudah selesai",
+      "body": "{{name}} ({{code}}) sudah terkirim, diambil, atau dibatalkan."
+    },
+    "not_delivery": {
+      "title": "Bukan antar",
+      "body": "{{name}} ({{code}}) adalah pesanan ambil."
+    },
+    "other": {
+      "title": "Tetap lanjutkan?",
+      "body": "Ada yang tidak biasa. Anda masih bisa mengirimnya."
+    }
+  }
+}

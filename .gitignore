@@ -14,6 +14,7 @@ coverage/
 .wrangler/
 .dev.vars
 .dev.vars.*
+!.dev.vars.example
 
 # Local HTTPS certificates (mkcert, see docs/decisions D-002)
 .certs/
@@ -55,3 +56,15 @@ desktop.ini
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# Design reference screenshots: regenerate with `node uxDesign/<app>/capture.mjs` (17 MB, not kept in git)
+uxDesign/*/captures/
+
+# Design-compare screenshots (e2e/design-compare.spec.ts)
+captures/
+
+graphify-out/
+
+
+# graphify knowledge graph output (regenerate with /graphify)
+graphify-out/

@@ -74,8 +74,8 @@ Task: <one sentence>.  Tier: <mid>.
 Read first: <the 2–4 files / spec sections that matter, with line numbers if known>.
 You own: <files / folders>. Don't touch anything else; if you need to, report instead.
 Build: <the behaviour, bullet by bullet, quoting the ruling where it matters>.
-Prove: typecheck; <the scoped tests>; <the one spec file> (you are alone on the tree, so run it) ;
-        a capture of the changed screen, looked at.
+Prove: typecheck only (D-055). Write or update the tests, but don't run lint, tests or specs:
+        they run once, batched, at the end of the phase. Report the exact commands to run then.
 Data / ports: <scratch DB, asserted in the same command>; <ports>; kill only your own processes.
 Report: files ±, decisions, deviations with reasons, counts, attempts, the exact spec command.
 ```
@@ -129,6 +129,7 @@ Files changed (± lines) · decisions made (one line each) · deviations **with 
 
 ## 5 · Verification
 
+- **This project (D-055):** while building, only typecheck runs; lint, format, Vitest and the changed specs are batched once at the end of the phase. The loop below applies at that end-of-phase gate.
 - **Development loop:** write → typecheck → the relevant specs → (visual change) capture and **actually look** → (bug fix) prove the new test **fails without the fix** (a guard that can't fail is decoration) → format and lint at the end.
 - **Green is not ready for a visible change.** After agents land, **smoke-load each changed screen live** on scratch ports: zero console errors, and a capture the coordinator looks at beside a sibling screen. A component reused somewhere new gets a capture there.
 - **Read the content of captures, not only the layout:** names, wording, the right person's data. Demo-looking text and data mismatches pass every test.

@@ -1,0 +1,29 @@
+{
+  "title": "Print labels",
+  "loading": "Loading orders…",
+  "error": "Could not load the orders.",
+  "retry": "Try again",
+  "paper": {
+    "label": "Paper",
+    "a4": "A4 sheet (2 × 7 labels)",
+    "roll": "Label printer (62 mm roll)"
+  },
+  "which": {
+    "label": "Which orders",
+    "confirmed": "Confirmed ({{count}})",
+    "notCancelled": "All not cancelled ({{count}})",
+    "selected": "Selected ({{count}})"
+  },
+  "pick": {
+    "label": "Choose orders to print",
+    "none": "No orders yet."
+  },
+  "print": "Print",
+  "previewTitle": "Preview · {{paper}}",
+  "previewEmpty": "No labels to print for this choice.",
+  "label": {
+    "qrName": "Order QR code",
+    "pickup": "Pickup · {{day}}",
+    "delivery": "Delivery · {{day}}"
+  }
+}

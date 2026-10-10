@@ -1,0 +1,26 @@
+/* Onde Onde themes as CSS custom properties. Put class="th <brand> <light|dark>" on the app root.
+   brand: ondeonde | bali | sumatra | sunda | jawa. Same values as tokens.ts. */
+.th{--text:#1C1F1A;--muted:#5D6358;--edge:#7F857A;--ok:#1F6B5C;--warn:#8A5A00;--danger:#A93724;--onfill:#FFFFFF;--disabled:#A9AFA3;--okbg:color-mix(in srgb,var(--ok) 12%,var(--surface));--warnbg:#FBF1D9;--ready:#2B5C9E;--kbg:#E9E3CF;--dangerline:color-mix(in srgb,var(--danger) 40%,var(--surface))}
+
+.th.dark{--text:#F1EEE6;--muted:#A9AFA3;--edge:#6B7266;--ok:#7EC4B0;--warn:#E9B949;--danger:#EE8B78;--disabled:#5E6459;--warnbg:rgba(233,185,73,.10);--ready:#8DB4E8;--kbg:#1D2A1A;color-scheme:dark}
+
+.th.ondeonde{--fill:#2F6B36;--acc:#2A5F30;--tint:#E5EFE2;--bg:#F6F2E8;--panel:#EFEADD;--surface:#FFFDF8;--s2:#F4F0E6;--line:#E4DED0}
+
+.th.ondeonde.dark{--fill:#8CC08A;--onfill:#0F1E10;--acc:#93C590;--tint:color-mix(in srgb,#8CC08A 15%,#121411);--bg:#121411;--panel:#0E100D;--surface:#181A16;--s2:#20231E;--line:#2A2E27}
+
+.th.bali{--fill:#1D5C73;--acc:#1A5469;--tint:#E0EDF1;--bg:#F1F4F4;--panel:#E7EDEE;--surface:#FCFEFE;--s2:#EEF3F4;--line:#DAE2E4}
+
+.th.bali.dark{--fill:#84C3D6;--onfill:#0B2129;--acc:#8CC6D8;--tint:color-mix(in srgb,#84C3D6 15%,#101417);--bg:#101417;--panel:#0C1013;--surface:#161B1F;--s2:#1E2429;--line:#283037}
+
+.th.sumatra{--fill:#8A2232;--acc:#7E1F2E;--tint:#F5E1E3;--bg:#F7F0EE;--panel:#F0E6E3;--surface:#FFFBFA;--s2:#F6EEEC;--line:#E6D9D6}
+
+.th.sumatra.dark{--fill:#EBA0AA;--onfill:#2B0A10;--acc:#EDA6AF;--tint:color-mix(in srgb,#EBA0AA 15%,#161112);--bg:#161112;--panel:#110D0E;--surface:#1C1617;--s2:#251D1F;--line:#322729}
+
+.th.sunda{--fill:#3A4C96;--acc:#34448A;--tint:#E4E7F4;--bg:#F2F2F7;--panel:#E9EAF2;--surface:#FDFDFF;--s2:#F0F1F7;--line:#DDDFEA}
+
+.th.sunda.dark{--fill:#A9B6EC;--onfill:#121A3A;--acc:#AEBBEE;--tint:color-mix(in srgb,#A9B6EC 15%,#111219);--bg:#111219;--panel:#0D0E14;--surface:#17181F;--s2:#1F2029;--line:#2A2C37}
+
+.th.jawa{--fill:#7A4A1E;--acc:#6E431B;--tint:#F2E7DA;--bg:#F6F0E6;--panel:#EEE5D7;--surface:#FFFBF4;--s2:#F5EEE2;--line:#E5DACA}
+
+.th.jawa.dark{--fill:#D9AE7E;--onfill:#2A1A08;--acc:#DDB38A;--tint:color-mix(in srgb,#D9AE7E 15%,#15120E);--bg:#15120E;--panel:#100E0B;--surface:#1B1813;--s2:#24201A;--line:#312B23}
+

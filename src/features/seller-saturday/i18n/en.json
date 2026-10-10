@@ -1,0 +1,128 @@
+{
+  "common": {
+    "loading": "Loading orders…",
+    "loadError": "Could not load the orders.",
+    "retry": "Try again",
+    "paid": "Paid",
+    "notPaid": "Not paid · {{amount}}",
+    "packed": "Packed",
+    "actionFailed": "That did not work. Please try again."
+  },
+  "status": {
+    "ordered": "Ordered",
+    "confirmed": "Confirmed",
+    "ready_for_pickup": "Ready",
+    "out_for_delivery": "Out for delivery",
+    "collected": "Collected",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "title": "Pickup & delivery · {{date}}",
+  "titleNoDate": "Pickup & delivery",
+  "search": "Bag code or name",
+  "viewLabel": "Show",
+  "view": {
+    "pickup": "Pickup · {{count}}",
+    "delivery": "Delivery · {{count}}"
+  },
+  "summary": {
+    "pickup": "{{collected}} collected by customers",
+    "delivery": "{{delivered}} delivered"
+  },
+  "note": {
+    "placeSent": "Sent to {{sent}} orders at {{place}}.",
+    "placeReady": "Sent to {{sent}} orders at {{place}}. {{readied}} marked Ready.",
+    "step": {
+      "out_for_delivery": "{{name}}'s order is out for delivery.",
+      "arriving_soon": "Told {{name}} the order is arriving soon.",
+      "delivered": "{{name}}'s order is delivered."
+    }
+  },
+  "pickup": {
+    "noPlaces": "This menu has no pickup places.",
+    "empty": "No pickup orders here yet.",
+    "counts": "{{toCollect}} to collect · {{collected}} collected",
+    "place": "Pickup place",
+    "message": "Message",
+    "messageLabel": "Message {{place}}",
+    "rowLabel": "Order {{code}}, {{name}}"
+  },
+  "message": {
+    "title": "Message {{place}}",
+    "choose": "What to send",
+    "readyIn": "Ready in N min",
+    "ready": "Ready for pickup",
+    "custom": "Your own text",
+    "minutes": "{{count}} min",
+    "minutesLabel": "Minutes",
+    "shortReadyIn": "Ready in {{count}} min",
+    "shortReady": "Ready for pickup",
+    "textReadyIn": "Your order will be ready for pickup in {{count}} min.",
+    "textReady": "Your order is ready for pickup.",
+    "customLabel": "Your message ({{lang}})",
+    "customHelp": "Customers read this as written. Please do not add private details.",
+    "readyNote": "Also marks the open orders at this place Ready (it reaches {{count}}).",
+    "noStatus": "This does not change any order's status.",
+    "sentLabel": "Already sent",
+    "sentLine": "Sent “{{text}}” at {{time}}",
+    "send_one": "Send to {{count}} order",
+    "send_other": "Send to {{count}} orders",
+    "sending": "Sending…",
+    "sendAnyway": "Send anyway",
+    "close": "Close",
+    "type": {
+      "out_for_delivery": "Out for delivery",
+      "arriving_soon": "Arriving soon",
+      "delivered": "Delivered"
+    }
+  },
+  "delivery": {
+    "empty": "No delivery orders yet.",
+    "rowLabel": "Order {{code}}, {{name}}",
+    "stepsLabel": "Delivery steps for {{code}}",
+    "step": {
+      "out_for_delivery": "Out for delivery",
+      "arriving_soon": "Arriving soon",
+      "delivered": "Delivered"
+    },
+    "minutesLabel": "Arriving in",
+    "minutesAria": "Minutes until {{code}} arrives",
+    "noTime": "no time",
+    "sendAnyway": "Send anyway"
+  },
+  "warn": {
+    "cancel": "Don't send",
+    "repeat_message": {
+      "title": "Send this again?",
+      "body": "The same message went to {{place}} a few minutes ago. Customers there would see it twice."
+    },
+    "nobody_to_message": {
+      "title": "Nobody to message",
+      "body": "{{place}} has no open orders, so nobody would get this."
+    },
+    "order_cancelled": {
+      "title": "Cancelled order",
+      "body": "This would reach a cancelled order."
+    },
+    "step_out_of_order": {
+      "title": "Out of order?",
+      "body": "This is not the next step for {{name}} ({{code}}). The customer is told as usual."
+    },
+    "step_repeated": {
+      "title": "Send this step again?",
+      "body": "{{name}} ({{code}}) was already told this step."
+    },
+    "order_closed": {
+      "title": "Order is finished",
+      "body": "{{name}} ({{code}}) is already delivered, collected or cancelled."
+    },
+    "not_delivery": {
+      "title": "Not a delivery",
+      "body": "{{name}} ({{code}}) is a pickup order."
+    },
+    "other": {
+      "title": "Go ahead anyway?",
+      "body": "Something looks unusual. You can still send it."
+    }
+  }
+}

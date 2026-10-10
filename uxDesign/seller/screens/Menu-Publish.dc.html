@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New menu · step 4 publish and share</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.nav:hover{background:var(--surf2)}
+.kbg{background:var(--kbg) url(assets/background.jpg) center/cover}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); {{vars}}">
+
+  <nav aria-label="Main" style="width: 72px; flex: none; display: flex; flex-direction: column; align-items: center; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 0 12px; box-sizing: border-box; gap: 4px">
+    <div aria-label="Onde Onde" style="width: 44px; height: 44px; border-radius: 12px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; margin-bottom: 16px">O</div>
+    <button class="nav" aria-label="Orders" title="Orders" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg></button>
+    <button class="nav" aria-label="Kitchen" title="Kitchen" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg></button>
+    <button class="nav" aria-label="Pickup and delivery" title="Pickup &amp; delivery" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg></button>
+    <button aria-label="Menu" title="Menu" aria-current="page" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--tint); color: var(--atext)"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg></button>
+    <button class="nav" aria-label="Settings" title="Settings" style="width: 48px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg></button>
+  </nav>
+
+  <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: 40px; flex: none; overflow: hidden">
+      <img src="assets/banner.jpg" alt="" style="width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block">
+    </div>
+    <section aria-label="Publish and share" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; overflow: hidden">
+
+      <div style="padding: 16px 24px 14px; display: flex; align-items: center; gap: 24px; border-bottom: 1px solid var(--line)">
+        <div style="display: flex; flex-direction: column; gap: 2px; flex: none"><h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em">Menu for Sat 24 Oct</h1><span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: {{statusColor}}"><svg viewBox="0 0 8 8" style="width: 8px; height: 8px" aria-hidden="true"><circle cx="4" cy="4" r="3.25" fill="{{dotFill}}" stroke="currentColor" stroke-width="1.5"></circle></svg>{{status}}</span></div>
+        <ol aria-label="Steps" style="list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 8px; flex: 1; font-size: 13px">
+          <li style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 24px; height: 24px; border-radius: 12px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Dishes</li>
+          <li aria-hidden="true" style="flex: 1; max-width: 40px; height: 1px; background: var(--fill)"></li>
+          <li style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 24px; height: 24px; border-radius: 12px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Details</li>
+          <li aria-hidden="true" style="flex: 1; max-width: 40px; height: 1px; background: var(--fill)"></li>
+          <li style="display: inline-flex; align-items: center; gap: 8px"><a href="Menu-Check.dc.html" style="display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; min-height: 44px"><span style="width: 24px; height: 24px; border-radius: 12px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center"><svg class="i i-s" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Check</a></li>
+          <li aria-hidden="true" style="flex: 1; max-width: 40px; height: 1px; background: var(--fill)"></li>
+          <li aria-current="step" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700"><span style="width: 24px; height: 24px; border-radius: 12px; background: var(--fill); color: var(--on); display: flex; align-items: center; justify-content: center; font-size: 12px">4</span>Publish &amp; share</li>
+        </ol>
+      </div>
+
+      <!-- BEFORE PUBLISH -->
+      <sc-if value="{{before}}" hint-placeholder-val="{{ true }}">
+        <div style="flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 24px">
+          <div style="width: 520px; display: flex; flex-direction: column; gap: 18px">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <h2 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Ready to publish?</h2>
+              <p style="margin: 0; color: var(--muted); font-size: 15px">The order link starts working straight away. You can still change anything afterwards.</p>
+            </div>
+            <dl style="margin: 0; display: grid; grid-template-columns: 130px 1fr; font-size: 14px">
+              <dt style="color: var(--muted); padding: 10px 0; border-top: 1px solid var(--line)">Dishes</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid var(--line)">6 · Nasi Ayam Bali, Rendang, Onde onde, Sayur urab, Kue lapis, Soto ayam</dd>
+              <dt style="color: var(--muted); padding: 10px 0; border-top: 1px solid var(--line)">Cooking day</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid var(--line); font-weight: 600">Sat 24 Oct</dd>
+              <dt style="color: var(--muted); padding: 10px 0; border-top: 1px solid var(--line)">Orders close</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid var(--line)">Thu 22 Oct, 8:00 pm</dd>
+              <dt style="color: var(--muted); padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)">Pickup &amp; delivery</dt><dd style="margin: 0; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line)">Clayton, Glenelg · Delivery on</dd>
+            </dl>
+            <div style="display: flex; gap: 10px; align-items: center">
+              <a href="Menu-Check.dc.html" style="display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--ctrl); color: var(--text); font-weight: 600; text-decoration: none"><svg class="i i-s" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"></path></svg>Back</a>
+              <button onClick="{{publish}}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 12px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 16px"><svg class="i" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>Publish menu</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- AFTER PUBLISH: share -->
+      <sc-if value="{{after}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; min-height: 0; display: flex">
+          <div style="flex: 1; min-width: 0; padding: 20px 28px; display: flex; flex-direction: column; gap: 10px; background: var(--bg)">
+            <span style="font-size: 13px; font-weight: 700">Your WhatsApp post</span>
+            <div style="align-self: flex-start; max-width: 460px; padding: 14px 16px; border-radius: 14px 14px 14px 4px; background: var(--surf2); font-size: 14px; line-height: 1.5; white-space: pre-line; overflow-y: auto; min-height: 0">{{post}}</div>
+          </div>
+          <div style="width: 380px; flex: none; padding: 20px 28px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--tint)">
+              <svg class="i" viewBox="0 0 24 24" style="color: var(--atext)"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM8 12.5l2.5 2.5L16 9.5"></path></svg>
+              <span style="display: flex; flex-direction: column"><strong style="font-weight: 700">Your menu is live</strong><span style="font-size: 13px; color: var(--muted)">Customers can order now.</span></span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span style="font-size: 13px; font-weight: 600">Post language</span>
+              <div role="group" aria-label="Post language" style="display: flex; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+                <sc-for list="{{langs}}" as="l" hint-placeholder-count="3">
+                  <button aria-pressed="{{l.p}}" onClick="{{l.pick}}" style="flex: 1; min-height: 44px; text-align: center; font-weight: 600; font-size: 13px; {{l.s}}">{{l.label}}</button>
+                </sc-for>
+              </div>
+            </div>
+            <button style="display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border-radius: 12px; background: var(--fill); color: var(--on); font-weight: 700; font-size: 16px"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5z"></path></svg>Share to WhatsApp</button>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+              <button style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M8 8h12v12H8zM4 16V4h12"></path></svg>Copy text</button>
+              <button style="display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border-radius: 10px; border: 1px solid var(--ctrl); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"></path></svg>Copy order link</button>
+            </div>
+            <div style="height: 1px; background: var(--line)"></div>
+            <a href="Main.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 700; text-decoration: none">Go to orders<svg class="i i-s" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"></path></svg></a>
+            <button style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--atext); font-weight: 600; font-size: 13px"><svg class="i i-s" viewBox="0 0 24 24"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Save these 6 dishes as a set</button>
+            <span style="margin-top: auto; font-size: 12px; color: var(--muted)">You can share again any time from Orders › Share menu.</span>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"published":{"editor":"boolean","default":false,"section":"Layout"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const N = {
+      dark: { bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', ctrl:'#6B7266', text:'#F1EEE6', muted:'#A9AFA3', kbg:'#1D2A1A' },
+      light:{ bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', ctrl:'#7F857A', text:'#1C1F1A', muted:'#5D6358', kbg:'#E9E3CF' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+    const pub = this.state.pub ?? this.props.published ?? false;
+    const lang = this.state.lang ?? 'id';
+    const id = 'Halo semua!\nMenu Onde Onde untuk Sabtu, 24 Oktober:\n\n• Nasi Ayam Bali (1 kotak) $15.50\n• Rendang (biasa) $18.00\n• Onde onde (isi 6) $6.50\n• Sayur urab (wadah) $8.50\n• Kue lapis (4 potong) $9.00\n• Soto ayam (mangkuk + nasi) $14.00\n\nPesan paling lambat Kamis 22 Okt, 20.00.\nAmbil di Clayton (10.00–12.00) atau Glenelg (11.00–13.00). Bisa diantar, dalam 10 km, $5.\n\nPesan di sini: [order link]\nTerima kasih!';
+    const en = 'Hi everyone!\nOnde Onde menu for Saturday 24 October:\n\n• Nasi Ayam Bali (1 box) $15.50\n• Rendang (regular) $18.00\n• Onde onde (pack of 6) $6.50\n• Sayur urab (tub) $8.50\n• Kue lapis (4 pieces) $9.00\n• Soto ayam (bowl with rice) $14.00\n\nOrder by Thu 22 Oct, 8:00 pm.\nPickup at Clayton (10:00–12:00) or Glenelg (11:00–13:00). Delivery within 10 km, $5.\n\nOrder here: [order link]\nThank you!';
+    const post = lang === 'id' ? id : lang === 'en' ? en : id + '\n\n———\n\n' + en;
+    const on = 'background: var(--fill); color: var(--on)';
+    const langs = [['id','Indonesian'],['en','English'],['both','Both']].map(x => ({ label:x[1], p: lang === x[0] ? 'true' : 'false', s: lang === x[0] ? on : 'color: var(--text)', pick: () => this.setState({ lang: x[0] }) }));
+    return { vars, before: !pub, after: pub, post, langs,
+      status: pub ? 'Live · customers can order' : 'Not published · saved',
+      statusColor: pub ? 'var(--atext)' : 'var(--muted)', dotFill: pub ? 'currentColor' : 'none',
+      publish: () => this.setState({ pub: true }) };
+  }
+}
+</script>
+</body>
+</html>

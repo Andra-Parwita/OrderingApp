@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visual directions · batch 1</title>
+<style>
+/* Page chrome (neutral, not part of either direction) */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#f1f0ec;color:#1f1f1c;font:0.9375rem/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.page{max-width:1640px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.5rem;line-height:1.25;margin:0 0 4px}
+h2{font-size:1.125rem;line-height:1.25;margin:40px 0 4px}
+h3{font-size:.9375rem;margin:24px 0 8px}
+.lede{color:#4d4c47;max-width:70ch;margin:8px 0}
+.draft{color:#4d4c47;font-size:.8125rem;margin:0 0 16px}
+.page ul{margin:6px 0;padding-left:20px;max-width:75ch}
+.page li{margin:3px 0}
+.dir{border-top:1px solid #cfcdc5;margin-top:32px;padding-top:8px}
+.sub{color:#4d4c47;font-size:.8125rem;max-width:80ch;margin:0 0 16px}
+.frames{display:grid;grid-template-columns:minmax(0,375px);gap:28px 24px;justify-content:center}
+@media (min-width:850px){.frames{grid-template-columns:repeat(2,375px)}}
+@media (min-width:1640px){.frames{grid-template-columns:repeat(4,375px)}}
+.cap{font-size:.8125rem;font-weight:600;margin:0 0 6px;color:#3a3a36}
+.cap span{font-weight:400;color:#4d4c47}
+.tbl{overflow-wrap:anywhere;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:.8125rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:5px 8px 5px 0;border-top:1px solid #dcdad3}
+thead th{border-top:0;color:#4d4c47;font-weight:600}
+tbody th{font-weight:600;width:16%}
+td.c{width:36%}
+td.n{width:12%}
+.sw{display:inline-block;width:30px;height:22px;line-height:22px;text-align:center;border:1px solid #cfcdc5;border-radius:4px;font-style:normal;font-weight:600;font-size:.75rem;vertical-align:middle;margin-right:6px}
+.sw b{display:block;width:16px;height:6px;margin:7px auto;border-radius:2px}
+.sw.p{width:auto;padding:0 6px;border:0;border-radius:999px}
+.ok{font-weight:600}
+.compare{display:grid;grid-template-columns:1fr;gap:8px 32px;max-width:1000px}
+@media (min-width:850px){.compare{grid-template-columns:1fr 1fr}}
+.note{color:#4d4c47;font-size:.8125rem}
+
+/* Direction palettes: same token names as src/theme/themes.ts + proposed status tints */
+.A.l{--bg:#fafaf8;--surface:#f1f0ec;--text:#1f1f1c;--textMuted:#5c5b55;--hairline:#dcdad3;--outline:#85847c;--accent:#3d6656;--onAccent:#ffffff;--focus:#3d6656;
+ --ord-f:#6b5416;--ord-b:#f1e8d2;--con-f:#3a4a5e;--con-b:#e3e8ee;--rdy-f:#2f5446;--rdy-b:#dde9e2;--don-f:#55544e;--don-b:#e8e7e2;--can-f:#7a3b33;--can-b:#f0dfdc}
+.A.d{--bg:#161614;--surface:#201f1d;--text:#ebeae4;--textMuted:#a5a39a;--hairline:#33322f;--outline:#7d7c74;--accent:#8cbba5;--onAccent:#0f1d17;--focus:#8cbba5;
+ --ord-f:#e0c88a;--ord-b:#38301c;--con-f:#a9bad0;--con-b:#272e38;--rdy-f:#a6cdb8;--rdy-b:#223329;--don-f:#b0aea5;--don-b:#2a2926;--can-f:#e0aaa2;--can-b:#3a2623}
+.B.l{--bg:#faf8f5;--surface:#f2eee8;--text:#231f1b;--textMuted:#5f5750;--hairline:#e0d9cf;--outline:#8a8176;--accent:#9a4f38;--onAccent:#ffffff;--focus:#9a4f38;
+ --ord-f:#6b5416;--ord-b:#f1e8d2;--con-f:#3a4a5e;--con-b:#e3e8ee;--rdy-f:#2f5446;--rdy-b:#dde9e2;--don-f:#5a544c;--don-b:#ebe7e0;--can-f:#7a3b33;--can-b:#f0dfdc}
+.B.d{--bg:#171412;--surface:#211d1a;--text:#ede7df;--textMuted:#aaa196;--hairline:#342e29;--outline:#857b70;--accent:#d9937a;--onAccent:#2a1209;--focus:#d9937a;
+ --ord-f:#e0c88a;--ord-b:#38301c;--con-f:#a9bad0;--con-b:#272e38;--rdy-f:#a6cdb8;--rdy-b:#223329;--don-f:#b3aba0;--don-b:#2c2824;--can-f:#e0aaa2;--can-b:#3a2623}
+
+/* Phone (shared structure: spacing 4/8/12/16/24/32, type 13/15/18/24, radius 4/8/pill) */
+.phone{width:100%;max-width:375px;background:var(--bg);color:var(--text);border:1px solid #bdbab1;border-radius:8px;overflow:hidden;font:400 .9375rem/1.5 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-variant-numeric:tabular-nums}
+.phone *{box-sizing:border-box}
+.phone b,.phone strong{font-weight:600}
+.phone .sm{font-size:.8125rem;line-height:1.4}
+.phone .mu{color:var(--textMuted)}
+.phone :where(button){font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer}
+.phone :focus-visible,.phone .kf{outline:2px solid var(--focus);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;padding:0 16px}
+.top a{display:flex;align-items:center;min-height:44px;color:var(--textMuted);font-size:.8125rem;text-decoration:underline}
+.lang{display:flex;gap:4px}
+.lang span,.lang b{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;font-size:.8125rem;border-radius:999px;color:var(--textMuted)}
+.lang b{min-height:32px;min-width:44px;align-self:center;background:var(--accent);color:var(--onAccent)}
+.lang span{min-height:32px;align-self:center}
+.banner{height:96px;background:linear-gradient(135deg,var(--surface) 0%,var(--hairline) 100%);display:flex;align-items:flex-end;padding:8px 16px;font-size:.8125rem;color:var(--text)}
+.hero{padding:12px 16px 8px}
+.hero h4{margin:0;font-size:1.125rem;line-height:1.25;font-weight:600}
+.week{margin:0;padding:4px 16px 8px;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:.8125rem;line-height:1.4}
+.week dt{color:var(--textMuted)}
+.week dd{margin:0;font-weight:600}
+.tag{display:inline-block;font-size:.8125rem;font-weight:400;color:var(--textMuted);background:var(--surface);border-radius:4px;padding:0 6px;white-space:nowrap}
+.item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:8px 16px;border-top:1px solid var(--hairline);min-height:64px}
+.item .t{display:flex;flex-direction:column;gap:1px;min-width:0}
+.item .t>b{line-height:1.25}
+.item.out .t>b,.item.out .d{color:var(--textMuted)}
+.d{font-size:.8125rem;line-height:1.35;color:var(--textMuted)}
+.m{font-size:.8125rem}
+.step{display:flex;align-items:center}
+.step button{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.125rem;border-radius:8px;border:1px solid var(--outline)}
+.step button[disabled]{opacity:.45;cursor:default}
+.step output{min-width:28px;text-align:center;font-weight:400;color:var(--textMuted)}
+.step output.q{font-weight:600;color:var(--text)}
+.pill{display:inline-block;font-size:.8125rem;font-weight:600;line-height:1.35;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.ordered{color:var(--ord-f);background:var(--ord-b)}
+.confirmed{color:var(--con-f);background:var(--con-b)}
+.ready{color:var(--rdy-f);background:var(--rdy-b)}
+.done{color:var(--don-f);background:var(--don-b)}
+.cancelled{color:var(--can-f);background:var(--can-b)}
+.cta{display:flex;justify-content:space-between;align-items:center;min-height:52px;padding:0 16px;background:var(--accent);color:var(--onAccent);font-weight:600;width:100%;text-align:left}
+.cta:focus-visible{outline-offset:-4px}
+.shead{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 4px;min-height:44px}
+.shead b{font-size:1.125rem;line-height:1.25}
+.alert{display:flex;justify-content:space-between;align-items:center;min-height:44px;margin:0 16px;padding:0 12px;background:var(--surface);border-radius:8px;width:calc(100% - 32px);text-align:left;font-size:.9375rem}
+.chips{display:flex;flex-wrap:wrap;gap:0 4px;padding:4px 12px 0}
+.chips button{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;font-size:.8125rem;color:var(--textMuted);border-radius:8px}
+.chips button b{font-weight:600}
+.chips button.on{background:var(--surface);color:var(--text);font-weight:600}
+.search{padding:4px 16px 8px}
+.field{display:flex;align-items:center;min-height:44px;padding:0 12px;border:1px solid var(--outline);border-radius:8px;color:var(--textMuted)}
+.o{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;padding:8px 16px;min-height:56px;border-top:1px solid var(--hairline);width:100%;text-align:left}
+.o .code{font-weight:600;letter-spacing:.02em;white-space:nowrap;margin-right:8px}
+.o .amt{font-weight:600;white-space:nowrap;text-align:right}
+.o .s{font-size:.8125rem;line-height:1.4;color:var(--textMuted)}
+.add{padding:8px 16px 12px;border-top:1px solid var(--hairline)}
+.btn2{display:flex;align-items:center;justify-content:center;min-height:44px;width:100%;border:1px solid var(--outline);border-radius:8px;font-weight:600}
+.bar{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--hairline);background:var(--bg)}
+.bar span{display:flex;align-items:center;justify-content:center;min-height:52px;font-size:.8125rem;color:var(--textMuted);text-align:center;border-top:2px solid transparent;margin-top:-1px}
+.bar span.on{color:var(--text);font-weight:600;background:var(--surface);border-top-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Visual directions · batch 1</h1>
+<p class="draft">Draft 1, 2026-10-07 · static mock-up, not a build source</p>
+<p class="lede"><b>Purpose:</b> pick one visual direction (colour only) for the whole app before any UI is built. Both directions share the same layout, spacing, type scale and radii from <code>src/theme/tokens.ts</code>; only the colour tokens differ. Direction A is the current theme exactly. Direction B is a proposal and exists on this page only.</p>
+<p class="lede"><b>How to compare:</b> look at the same four frames in each direction (Customer menu light, Seller orders light, then the same two in dark). Check: does the one accent colour feel calm, do the status pills read at a glance, is the list dense but not tiring, and does the focus ring show clearly (each frame shows one control in its keyboard-focus state). Then read the token tables: every text and UI pair passes WCAG AA in both modes. Reply with A or B (or "A with B's surface").</p>
+<ul>
+<li>Accent is used only on the primary action, the selected language pill, the focus ring and the selected-tab line.</li>
+<li>Status pills are muted tints and always carry text. Status tints are proposed here for both directions (the current theme has no status tokens yet).</li>
+<li>No boxed cards: 1px hairlines, spacing and slight surface tints only.</li>
+</ul>
+
+<!-- ===================== DIRECTION A ===================== -->
+<section class="dir" id="a">
+<h2>Direction A · "Sage"</h2>
+<p class="sub">Current theme exactly (<code>themes.ts</code>): warm-grey neutrals with a deep sage green accent.</p>
+<div class="frames">
+
+<div><p class="cap">C1 · Menu <span>· light</span></p>
+<div class="phone A l">
+<div class="top"><a href="#a">My orders</a><span class="lang"><b>EN</b><span>ID</span></span></div>
+<div class="banner">Seller banner image (placeholder)</div>
+<div class="hero"><h4>Dapur Bu Ani</h4><div class="mu sm">Home cooking, made fresh every Saturday</div></div>
+<dl class="week"><dt>Cooking</dt><dd>Sat 11 Oct</dd><dt>Order by</dt><dd>Fri 10 Oct, 8 pm</dd><dt>Pickup</dt><dd>Sat 2–5 pm, Glen Waverley</dd><dt>Delivery</dt><dd>Available <span class="tag">address sent on WhatsApp</span></dd></dl>
+<div class="item"><div class="t"><b>Lime-leaf mixed rice</b><span class="d">Salt-and-chilli fried chicken, crispy tempeh, stir-fried cabbage</span><span class="m">1 box · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tilapia pesmol</b><span class="d">Tilapia in turmeric pesmol sauce</span><span class="m">1 portion · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Chicken lemper</b><span class="d">Sticky rice rolls in banana leaf</span><span class="m">4 pieces · <b>$10.00</b> · <span class="pill ordered">3 left</span></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">2</output><button aria-label="Increase">+</button></div></div>
+<div class="item out"><div class="t"><b>Empek-empek "submarine"</b><span class="d">Palembang fish cake with egg</span><span class="m">1 portion · <b>$10.00</b> · <span class="pill done">Sold out</span></span></div><div class="step"><button disabled aria-label="Decrease">−</button><output>0</output><button disabled aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Salt-and-chilli fried chicken</b><span class="d">Battered fried chicken</span><span class="m">250 g · <b>$12.50</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tempeh mendoan</b><span class="d">Thin battered tempeh</span><span class="m">4 pieces · <b>$10.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">1</output><button class="kf" aria-label="Increase">+</button></div></div>
+<button class="cta"><span>3 items · $30.00</span><span>View basket ›</span></button>
+</div></div>
+
+<div><p class="cap">S1 · Seller orders <span>· light</span></p>
+<div class="phone A l">
+<div class="shead"><b>Orders · Sat 11 Oct</b><span class="pill ready">● Live</span></div>
+<button class="alert"><b>2 not confirmed</b><span>Show ›</span></button>
+<div class="chips"><button class="on">All <b>14</b></button><button>Ordered <b>2</b></button><button>Confirmed <b>10</b></button><button>Ready <b>1</b></button><button>Done <b>1</b></button><button>Cancelled <b>0</b></button></div>
+<div class="search"><div class="field">Order code or name</div></div>
+<button class="o kf" style="outline-offset:-4px"><span><b class="code">K7F-2QX</b>Rina</span><b class="amt">$30.00</b><span class="s">2 Lemper, 1 Tempe · Pickup <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">M3H-9TD</b>Tom</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Delivery <span class="tag">✎ Note</span></span><span class="pill ordered">Ordered</span></button>
+<button class="o"><span><b class="code">R8P-4WB</b>Sari <span class="tag">✓ Paid</span></span><b class="amt">$45.00</b><span class="s">2 Nasi, 1 Pesmol · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">T2N-6KC</b>Budi</span><b class="amt">$12.50</b><span class="s">1 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">W5J-3MZ</b>Mei <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Pesmol, 1 Lemper · Pickup <span class="tag">entered by seller</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">H9D-7RV</b>Dewi</span><b class="amt">$30.00</b><span class="s">3 Tempe · Pickup <span class="tag">entered by Chef Wati</span> <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">B4X-8GA</b>Arif <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Nasi, 1 Tempe · Delivery</span><span class="pill ready">Ready</span></button>
+<button class="o"><span><b class="code">F6S-2LN</b>Lisa <span class="tag">✓ Paid</span></span><b class="amt">$20.00</b><span class="s">2 Lemper · Pickup</span><span class="pill done">Done</span></button>
+<button class="o"><span><b class="code">D7Q-5YE</b>Rina</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">N2V-9HP</b>Tom</span><b class="amt">$25.00</b><span class="s">2 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<div class="add"><button class="btn2">+ Add order</button></div>
+<div class="bar"><span class="on">Orders</span><span>Cook list</span><span>Hand-over</span><span>Menu</span><span>More</span></div>
+</div></div>
+
+<div><p class="cap">C1 · Menu <span>· dark</span></p>
+<div class="phone A d">
+<div class="top"><a href="#a">My orders</a><span class="lang"><b>EN</b><span>ID</span></span></div>
+<div class="banner">Seller banner image (placeholder)</div>
+<div class="hero"><h4>Dapur Bu Ani</h4><div class="mu sm">Home cooking, made fresh every Saturday</div></div>
+<dl class="week"><dt>Cooking</dt><dd>Sat 11 Oct</dd><dt>Order by</dt><dd>Fri 10 Oct, 8 pm</dd><dt>Pickup</dt><dd>Sat 2–5 pm, Glen Waverley</dd><dt>Delivery</dt><dd>Available <span class="tag">address sent on WhatsApp</span></dd></dl>
+<div class="item"><div class="t"><b>Lime-leaf mixed rice</b><span class="d">Salt-and-chilli fried chicken, crispy tempeh, stir-fried cabbage</span><span class="m">1 box · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tilapia pesmol</b><span class="d">Tilapia in turmeric pesmol sauce</span><span class="m">1 portion · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Chicken lemper</b><span class="d">Sticky rice rolls in banana leaf</span><span class="m">4 pieces · <b>$10.00</b> · <span class="pill ordered">3 left</span></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">2</output><button aria-label="Increase">+</button></div></div>
+<div class="item out"><div class="t"><b>Empek-empek "submarine"</b><span class="d">Palembang fish cake with egg</span><span class="m">1 portion · <b>$10.00</b> · <span class="pill done">Sold out</span></span></div><div class="step"><button disabled aria-label="Decrease">−</button><output>0</output><button disabled aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Salt-and-chilli fried chicken</b><span class="d">Battered fried chicken</span><span class="m">250 g · <b>$12.50</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tempeh mendoan</b><span class="d">Thin battered tempeh</span><span class="m">4 pieces · <b>$10.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">1</output><button class="kf" aria-label="Increase">+</button></div></div>
+<button class="cta"><span>3 items · $30.00</span><span>View basket ›</span></button>
+</div></div>
+
+<div><p class="cap">S1 · Seller orders <span>· dark</span></p>
+<div class="phone A d">
+<div class="shead"><b>Orders · Sat 11 Oct</b><span class="pill ready">● Live</span></div>
+<button class="alert"><b>2 not confirmed</b><span>Show ›</span></button>
+<div class="chips"><button class="on">All <b>14</b></button><button>Ordered <b>2</b></button><button>Confirmed <b>10</b></button><button>Ready <b>1</b></button><button>Done <b>1</b></button><button>Cancelled <b>0</b></button></div>
+<div class="search"><div class="field">Order code or name</div></div>
+<button class="o kf" style="outline-offset:-4px"><span><b class="code">K7F-2QX</b>Rina</span><b class="amt">$30.00</b><span class="s">2 Lemper, 1 Tempe · Pickup <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">M3H-9TD</b>Tom</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Delivery <span class="tag">✎ Note</span></span><span class="pill ordered">Ordered</span></button>
+<button class="o"><span><b class="code">R8P-4WB</b>Sari <span class="tag">✓ Paid</span></span><b class="amt">$45.00</b><span class="s">2 Nasi, 1 Pesmol · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">T2N-6KC</b>Budi</span><b class="amt">$12.50</b><span class="s">1 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">W5J-3MZ</b>Mei <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Pesmol, 1 Lemper · Pickup <span class="tag">entered by seller</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">H9D-7RV</b>Dewi</span><b class="amt">$30.00</b><span class="s">3 Tempe · Pickup <span class="tag">entered by Chef Wati</span> <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">B4X-8GA</b>Arif <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Nasi, 1 Tempe · Delivery</span><span class="pill ready">Ready</span></button>
+<button class="o"><span><b class="code">F6S-2LN</b>Lisa <span class="tag">✓ Paid</span></span><b class="amt">$20.00</b><span class="s">2 Lemper · Pickup</span><span class="pill done">Done</span></button>
+<button class="o"><span><b class="code">D7Q-5YE</b>Rina</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">N2V-9HP</b>Tom</span><b class="amt">$25.00</b><span class="s">2 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<div class="add"><button class="btn2">+ Add order</button></div>
+<div class="bar"><span class="on">Orders</span><span>Cook list</span><span>Hand-over</span><span>Menu</span><span>More</span></div>
+</div></div>
+
+</div>
+
+<h3>Direction A · tokens and contrast (WCAG 2.x relative luminance)</h3>
+<p class="note">Each cell: foreground on background, then ratio and result. Needs 4.5:1 for text, 3:1 for UI outlines and the focus ring. Hairline is decorative (exempt); surface and bg are backgrounds.</p>
+<div class="tbl"><table>
+<thead><tr><th>Pair (token on token)</th><th>Light</th><th>Dark</th><th>Needs</th></tr></thead>
+<tbody>
+<tr><th>bg</th><td class="c"><i class="sw" style="background:#fafaf8"></i>#fafaf8</td><td class="c"><i class="sw" style="background:#161614"></i>#161614</td><td class="n">page</td></tr>
+<tr><th>surface</th><td class="c"><i class="sw" style="background:#f1f0ec"></i>#f1f0ec</td><td class="c"><i class="sw" style="background:#201f1d"></i>#201f1d</td><td class="n">tint</td></tr>
+<tr><th>hairline</th><td class="c"><i class="sw" style="background:#fafaf8"><b style="background:#dcdad3"></b></i>#dcdad3 · 1.34</td><td class="c"><i class="sw" style="background:#161614"><b style="background:#33322f"></b></i>#33322f · 1.41</td><td class="n">decorative</td></tr>
+<tr><th>text on bg</th><td class="c"><i class="sw" style="background:#fafaf8;color:#1f1f1c">Aa</i>#1f1f1c on #fafaf8 · <span class="ok">15.81 pass</span></td><td class="c"><i class="sw" style="background:#161614;color:#ebeae4">Aa</i>#ebeae4 on #161614 · <span class="ok">15.03 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>text on surface</th><td class="c"><i class="sw" style="background:#f1f0ec;color:#1f1f1c">Aa</i>on #f1f0ec · <span class="ok">14.49 pass</span></td><td class="c"><i class="sw" style="background:#201f1d;color:#ebeae4">Aa</i>on #201f1d · <span class="ok">13.66 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>textMuted on bg</th><td class="c"><i class="sw" style="background:#fafaf8;color:#5c5b55">Aa</i>#5c5b55 · <span class="ok">6.52 pass</span></td><td class="c"><i class="sw" style="background:#161614;color:#a5a39a">Aa</i>#a5a39a · <span class="ok">7.17 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>textMuted on surface</th><td class="c"><i class="sw" style="background:#f1f0ec;color:#5c5b55">Aa</i>#5c5b55 · <span class="ok">5.97 pass</span></td><td class="c"><i class="sw" style="background:#201f1d;color:#a5a39a">Aa</i>#a5a39a · <span class="ok">6.51 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>accent (as text) on bg</th><td class="c"><i class="sw" style="background:#fafaf8;color:#3d6656">Aa</i>#3d6656 · <span class="ok">6.21 pass</span></td><td class="c"><i class="sw" style="background:#161614;color:#8cbba5">Aa</i>#8cbba5 · <span class="ok">8.43 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>accent (as text) on surface</th><td class="c"><i class="sw" style="background:#f1f0ec;color:#3d6656">Aa</i>#3d6656 · <span class="ok">5.70 pass</span></td><td class="c"><i class="sw" style="background:#201f1d;color:#8cbba5">Aa</i>#8cbba5 · <span class="ok">7.66 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>onAccent on accent</th><td class="c"><i class="sw" style="background:#3d6656;color:#ffffff">Aa</i>#ffffff on #3d6656 · <span class="ok">6.49 pass</span></td><td class="c"><i class="sw" style="background:#8cbba5;color:#0f1d17">Aa</i>#0f1d17 on #8cbba5 · <span class="ok">8.08 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>outline on bg</th><td class="c"><i class="sw" style="background:#fafaf8"><b style="background:#85847c"></b></i>#85847c · <span class="ok">3.60 pass</span></td><td class="c"><i class="sw" style="background:#161614"><b style="background:#7d7c74"></b></i>#7d7c74 · <span class="ok">4.32 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>outline on surface</th><td class="c"><i class="sw" style="background:#f1f0ec"><b style="background:#85847c"></b></i>#85847c · <span class="ok">3.30 pass</span></td><td class="c"><i class="sw" style="background:#201f1d"><b style="background:#7d7c74"></b></i>#7d7c74 · <span class="ok">3.93 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>focus on bg</th><td class="c"><i class="sw" style="background:#fafaf8"><b style="background:#3d6656"></b></i>#3d6656 · <span class="ok">6.21 pass</span></td><td class="c"><i class="sw" style="background:#161614"><b style="background:#8cbba5"></b></i>#8cbba5 · <span class="ok">8.43 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>focus on surface</th><td class="c"><i class="sw" style="background:#f1f0ec"><b style="background:#3d6656"></b></i>#3d6656 · <span class="ok">5.70 pass</span></td><td class="c"><i class="sw" style="background:#201f1d"><b style="background:#8cbba5"></b></i>#8cbba5 · <span class="ok">7.66 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>pill Ordered (proposed)</th><td class="c"><i class="sw p" style="background:#f1e8d2;color:#6b5416">Aa</i>#6b5416 on #f1e8d2 · <span class="ok">5.93 pass</span></td><td class="c"><i class="sw p" style="background:#38301c;color:#e0c88a">Aa</i>#e0c88a on #38301c · <span class="ok">7.96 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Confirmed (proposed)</th><td class="c"><i class="sw p" style="background:#e3e8ee;color:#3a4a5e">Aa</i>#3a4a5e on #e3e8ee · <span class="ok">7.34 pass</span></td><td class="c"><i class="sw p" style="background:#272e38;color:#a9bad0">Aa</i>#a9bad0 on #272e38 · <span class="ok">6.92 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Ready / Live (proposed)</th><td class="c"><i class="sw p" style="background:#dde9e2;color:#2f5446">Aa</i>#2f5446 on #dde9e2 · <span class="ok">6.79 pass</span></td><td class="c"><i class="sw p" style="background:#223329;color:#a6cdb8">Aa</i>#a6cdb8 on #223329 · <span class="ok">7.66 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Done / Sold out (proposed)</th><td class="c"><i class="sw p" style="background:#e8e7e2;color:#55544e">Aa</i>#55544e on #e8e7e2 · <span class="ok">6.14 pass</span></td><td class="c"><i class="sw p" style="background:#2a2926;color:#b0aea5">Aa</i>#b0aea5 on #2a2926 · <span class="ok">6.54 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Cancelled (proposed)</th><td class="c"><i class="sw p" style="background:#f0dfdc;color:#7a3b33">Aa</i>#7a3b33 on #f0dfdc · <span class="ok">6.52 pass</span></td><td class="c"><i class="sw p" style="background:#3a2623;color:#e0aaa2">Aa</i>#e0aaa2 on #3a2623 · <span class="ok">7.05 pass</span></td><td class="n">4.5</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ===================== DIRECTION B ===================== -->
+<section class="dir" id="b">
+<h2>Direction B · "Clay"</h2>
+<p class="sub">Proposal: same structure, spacing and type scale; warmer neutral surfaces (a touch more red-brown in the greys) and a muted terracotta accent. Status tints are the same as A, so the accent is the only change in hue.</p>
+<div class="frames">
+
+<div><p class="cap">C1 · Menu <span>· light</span></p>
+<div class="phone B l">
+<div class="top"><a href="#b">My orders</a><span class="lang"><b>EN</b><span>ID</span></span></div>
+<div class="banner">Seller banner image (placeholder)</div>
+<div class="hero"><h4>Dapur Bu Ani</h4><div class="mu sm">Home cooking, made fresh every Saturday</div></div>
+<dl class="week"><dt>Cooking</dt><dd>Sat 11 Oct</dd><dt>Order by</dt><dd>Fri 10 Oct, 8 pm</dd><dt>Pickup</dt><dd>Sat 2–5 pm, Glen Waverley</dd><dt>Delivery</dt><dd>Available <span class="tag">address sent on WhatsApp</span></dd></dl>
+<div class="item"><div class="t"><b>Lime-leaf mixed rice</b><span class="d">Salt-and-chilli fried chicken, crispy tempeh, stir-fried cabbage</span><span class="m">1 box · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tilapia pesmol</b><span class="d">Tilapia in turmeric pesmol sauce</span><span class="m">1 portion · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Chicken lemper</b><span class="d">Sticky rice rolls in banana leaf</span><span class="m">4 pieces · <b>$10.00</b> · <span class="pill ordered">3 left</span></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">2</output><button aria-label="Increase">+</button></div></div>
+<div class="item out"><div class="t"><b>Empek-empek "submarine"</b><span class="d">Palembang fish cake with egg</span><span class="m">1 portion · <b>$10.00</b> · <span class="pill done">Sold out</span></span></div><div class="step"><button disabled aria-label="Decrease">−</button><output>0</output><button disabled aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Salt-and-chilli fried chicken</b><span class="d">Battered fried chicken</span><span class="m">250 g · <b>$12.50</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tempeh mendoan</b><span class="d">Thin battered tempeh</span><span class="m">4 pieces · <b>$10.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">1</output><button class="kf" aria-label="Increase">+</button></div></div>
+<button class="cta"><span>3 items · $30.00</span><span>View basket ›</span></button>
+</div></div>
+
+<div><p class="cap">S1 · Seller orders <span>· light</span></p>
+<div class="phone B l">
+<div class="shead"><b>Orders · Sat 11 Oct</b><span class="pill ready">● Live</span></div>
+<button class="alert"><b>2 not confirmed</b><span>Show ›</span></button>
+<div class="chips"><button class="on">All <b>14</b></button><button>Ordered <b>2</b></button><button>Confirmed <b>10</b></button><button>Ready <b>1</b></button><button>Done <b>1</b></button><button>Cancelled <b>0</b></button></div>
+<div class="search"><div class="field">Order code or name</div></div>
+<button class="o kf" style="outline-offset:-4px"><span><b class="code">K7F-2QX</b>Rina</span><b class="amt">$30.00</b><span class="s">2 Lemper, 1 Tempe · Pickup <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">M3H-9TD</b>Tom</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Delivery <span class="tag">✎ Note</span></span><span class="pill ordered">Ordered</span></button>
+<button class="o"><span><b class="code">R8P-4WB</b>Sari <span class="tag">✓ Paid</span></span><b class="amt">$45.00</b><span class="s">2 Nasi, 1 Pesmol · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">T2N-6KC</b>Budi</span><b class="amt">$12.50</b><span class="s">1 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">W5J-3MZ</b>Mei <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Pesmol, 1 Lemper · Pickup <span class="tag">entered by seller</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">H9D-7RV</b>Dewi</span><b class="amt">$30.00</b><span class="s">3 Tempe · Pickup <span class="tag">entered by Chef Wati</span> <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">B4X-8GA</b>Arif <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Nasi, 1 Tempe · Delivery</span><span class="pill ready">Ready</span></button>
+<button class="o"><span><b class="code">F6S-2LN</b>Lisa <span class="tag">✓ Paid</span></span><b class="amt">$20.00</b><span class="s">2 Lemper · Pickup</span><span class="pill done">Done</span></button>
+<button class="o"><span><b class="code">D7Q-5YE</b>Rina</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">N2V-9HP</b>Tom</span><b class="amt">$25.00</b><span class="s">2 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<div class="add"><button class="btn2">+ Add order</button></div>
+<div class="bar"><span class="on">Orders</span><span>Cook list</span><span>Hand-over</span><span>Menu</span><span>More</span></div>
+</div></div>
+
+<div><p class="cap">C1 · Menu <span>· dark</span></p>
+<div class="phone B d">
+<div class="top"><a href="#b">My orders</a><span class="lang"><b>EN</b><span>ID</span></span></div>
+<div class="banner">Seller banner image (placeholder)</div>
+<div class="hero"><h4>Dapur Bu Ani</h4><div class="mu sm">Home cooking, made fresh every Saturday</div></div>
+<dl class="week"><dt>Cooking</dt><dd>Sat 11 Oct</dd><dt>Order by</dt><dd>Fri 10 Oct, 8 pm</dd><dt>Pickup</dt><dd>Sat 2–5 pm, Glen Waverley</dd><dt>Delivery</dt><dd>Available <span class="tag">address sent on WhatsApp</span></dd></dl>
+<div class="item"><div class="t"><b>Lime-leaf mixed rice</b><span class="d">Salt-and-chilli fried chicken, crispy tempeh, stir-fried cabbage</span><span class="m">1 box · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tilapia pesmol</b><span class="d">Tilapia in turmeric pesmol sauce</span><span class="m">1 portion · <b>$15.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Chicken lemper</b><span class="d">Sticky rice rolls in banana leaf</span><span class="m">4 pieces · <b>$10.00</b> · <span class="pill ordered">3 left</span></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">2</output><button aria-label="Increase">+</button></div></div>
+<div class="item out"><div class="t"><b>Empek-empek "submarine"</b><span class="d">Palembang fish cake with egg</span><span class="m">1 portion · <b>$10.00</b> · <span class="pill done">Sold out</span></span></div><div class="step"><button disabled aria-label="Decrease">−</button><output>0</output><button disabled aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Salt-and-chilli fried chicken</b><span class="d">Battered fried chicken</span><span class="m">250 g · <b>$12.50</b></span></div><div class="step"><button aria-label="Decrease">−</button><output>0</output><button aria-label="Increase">+</button></div></div>
+<div class="item"><div class="t"><b>Tempeh mendoan</b><span class="d">Thin battered tempeh</span><span class="m">4 pieces · <b>$10.00</b></span></div><div class="step"><button aria-label="Decrease">−</button><output class="q">1</output><button class="kf" aria-label="Increase">+</button></div></div>
+<button class="cta"><span>3 items · $30.00</span><span>View basket ›</span></button>
+</div></div>
+
+<div><p class="cap">S1 · Seller orders <span>· dark</span></p>
+<div class="phone B d">
+<div class="shead"><b>Orders · Sat 11 Oct</b><span class="pill ready">● Live</span></div>
+<button class="alert"><b>2 not confirmed</b><span>Show ›</span></button>
+<div class="chips"><button class="on">All <b>14</b></button><button>Ordered <b>2</b></button><button>Confirmed <b>10</b></button><button>Ready <b>1</b></button><button>Done <b>1</b></button><button>Cancelled <b>0</b></button></div>
+<div class="search"><div class="field">Order code or name</div></div>
+<button class="o kf" style="outline-offset:-4px"><span><b class="code">K7F-2QX</b>Rina</span><b class="amt">$30.00</b><span class="s">2 Lemper, 1 Tempe · Pickup <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">M3H-9TD</b>Tom</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Delivery <span class="tag">✎ Note</span></span><span class="pill ordered">Ordered</span></button>
+<button class="o"><span><b class="code">R8P-4WB</b>Sari <span class="tag">✓ Paid</span></span><b class="amt">$45.00</b><span class="s">2 Nasi, 1 Pesmol · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">T2N-6KC</b>Budi</span><b class="amt">$12.50</b><span class="s">1 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">W5J-3MZ</b>Mei <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Pesmol, 1 Lemper · Pickup <span class="tag">entered by seller</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">H9D-7RV</b>Dewi</span><b class="amt">$30.00</b><span class="s">3 Tempe · Pickup <span class="tag">entered by Chef Wati</span> <span class="tag">✎ Note</span></span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">B4X-8GA</b>Arif <span class="tag">✓ Paid</span></span><b class="amt">$25.00</b><span class="s">1 Nasi, 1 Tempe · Delivery</span><span class="pill ready">Ready</span></button>
+<button class="o"><span><b class="code">F6S-2LN</b>Lisa <span class="tag">✓ Paid</span></span><b class="amt">$20.00</b><span class="s">2 Lemper · Pickup</span><span class="pill done">Done</span></button>
+<button class="o"><span><b class="code">D7Q-5YE</b>Rina</span><b class="amt">$15.00</b><span class="s">1 Nasi campur · Pickup</span><span class="pill confirmed">Confirmed</span></button>
+<button class="o"><span><b class="code">N2V-9HP</b>Tom</span><b class="amt">$25.00</b><span class="s">2 Ayam 250 g · Delivery</span><span class="pill confirmed">Confirmed</span></button>
+<div class="add"><button class="btn2">+ Add order</button></div>
+<div class="bar"><span class="on">Orders</span><span>Cook list</span><span>Hand-over</span><span>Menu</span><span>More</span></div>
+</div></div>
+
+</div>
+
+<h3>Direction B · tokens and contrast (WCAG 2.x relative luminance)</h3>
+<p class="note">Same method and thresholds as Direction A. Values on this table are proposed, not in <code>themes.ts</code>.</p>
+<div class="tbl"><table>
+<thead><tr><th>Pair (token on token)</th><th>Light</th><th>Dark</th><th>Needs</th></tr></thead>
+<tbody>
+<tr><th>bg</th><td class="c"><i class="sw" style="background:#faf8f5"></i>#faf8f5</td><td class="c"><i class="sw" style="background:#171412"></i>#171412</td><td class="n">page</td></tr>
+<tr><th>surface</th><td class="c"><i class="sw" style="background:#f2eee8"></i>#f2eee8</td><td class="c"><i class="sw" style="background:#211d1a"></i>#211d1a</td><td class="n">tint</td></tr>
+<tr><th>hairline</th><td class="c"><i class="sw" style="background:#faf8f5"><b style="background:#e0d9cf"></b></i>#e0d9cf · 1.32</td><td class="c"><i class="sw" style="background:#171412"><b style="background:#342e29"></b></i>#342e29 · 1.37</td><td class="n">decorative</td></tr>
+<tr><th>text on bg</th><td class="c"><i class="sw" style="background:#faf8f5;color:#231f1b">Aa</i>#231f1b on #faf8f5 · <span class="ok">15.44 pass</span></td><td class="c"><i class="sw" style="background:#171412;color:#ede7df">Aa</i>#ede7df on #171412 · <span class="ok">14.93 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>text on surface</th><td class="c"><i class="sw" style="background:#f2eee8;color:#231f1b">Aa</i>on #f2eee8 · <span class="ok">14.16 pass</span></td><td class="c"><i class="sw" style="background:#211d1a;color:#ede7df">Aa</i>on #211d1a · <span class="ok">13.62 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>textMuted on bg</th><td class="c"><i class="sw" style="background:#faf8f5;color:#5f5750">Aa</i>#5f5750 · <span class="ok">6.68 pass</span></td><td class="c"><i class="sw" style="background:#171412;color:#aaa196">Aa</i>#aaa196 · <span class="ok">7.20 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>textMuted on surface</th><td class="c"><i class="sw" style="background:#f2eee8;color:#5f5750">Aa</i>#5f5750 · <span class="ok">6.13 pass</span></td><td class="c"><i class="sw" style="background:#211d1a;color:#aaa196">Aa</i>#aaa196 · <span class="ok">6.57 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>accent (as text) on bg</th><td class="c"><i class="sw" style="background:#faf8f5;color:#9a4f38">Aa</i>#9a4f38 · <span class="ok">5.58 pass</span></td><td class="c"><i class="sw" style="background:#171412;color:#d9937a">Aa</i>#d9937a · <span class="ok">7.34 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>accent (as text) on surface</th><td class="c"><i class="sw" style="background:#f2eee8;color:#9a4f38">Aa</i>#9a4f38 · <span class="ok">5.12 pass</span></td><td class="c"><i class="sw" style="background:#211d1a;color:#d9937a">Aa</i>#d9937a · <span class="ok">6.70 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>onAccent on accent</th><td class="c"><i class="sw" style="background:#9a4f38;color:#ffffff">Aa</i>#ffffff on #9a4f38 · <span class="ok">5.92 pass</span></td><td class="c"><i class="sw" style="background:#d9937a;color:#2a1209">Aa</i>#2a1209 on #d9937a · <span class="ok">7.07 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>outline on bg</th><td class="c"><i class="sw" style="background:#faf8f5"><b style="background:#8a8176"></b></i>#8a8176 · <span class="ok">3.61 pass</span></td><td class="c"><i class="sw" style="background:#171412"><b style="background:#857b70"></b></i>#857b70 · <span class="ok">4.42 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>outline on surface</th><td class="c"><i class="sw" style="background:#f2eee8"><b style="background:#8a8176"></b></i>#8a8176 · <span class="ok">3.31 pass</span></td><td class="c"><i class="sw" style="background:#211d1a"><b style="background:#857b70"></b></i>#857b70 · <span class="ok">4.03 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>focus on bg</th><td class="c"><i class="sw" style="background:#faf8f5"><b style="background:#9a4f38"></b></i>#9a4f38 · <span class="ok">5.58 pass</span></td><td class="c"><i class="sw" style="background:#171412"><b style="background:#d9937a"></b></i>#d9937a · <span class="ok">7.34 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>focus on surface</th><td class="c"><i class="sw" style="background:#f2eee8"><b style="background:#9a4f38"></b></i>#9a4f38 · <span class="ok">5.12 pass</span></td><td class="c"><i class="sw" style="background:#211d1a"><b style="background:#d9937a"></b></i>#d9937a · <span class="ok">6.70 pass</span></td><td class="n">3 (UI)</td></tr>
+<tr><th>pill Ordered (proposed)</th><td class="c"><i class="sw p" style="background:#f1e8d2;color:#6b5416">Aa</i>#6b5416 on #f1e8d2 · <span class="ok">5.93 pass</span></td><td class="c"><i class="sw p" style="background:#38301c;color:#e0c88a">Aa</i>#e0c88a on #38301c · <span class="ok">7.96 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Confirmed (proposed)</th><td class="c"><i class="sw p" style="background:#e3e8ee;color:#3a4a5e">Aa</i>#3a4a5e on #e3e8ee · <span class="ok">7.34 pass</span></td><td class="c"><i class="sw p" style="background:#272e38;color:#a9bad0">Aa</i>#a9bad0 on #272e38 · <span class="ok">6.92 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Ready / Live (proposed)</th><td class="c"><i class="sw p" style="background:#dde9e2;color:#2f5446">Aa</i>#2f5446 on #dde9e2 · <span class="ok">6.79 pass</span></td><td class="c"><i class="sw p" style="background:#223329;color:#a6cdb8">Aa</i>#a6cdb8 on #223329 · <span class="ok">7.66 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Done / Sold out (proposed)</th><td class="c"><i class="sw p" style="background:#ebe7e0;color:#5a544c">Aa</i>#5a544c on #ebe7e0 · <span class="ok">6.07 pass</span></td><td class="c"><i class="sw p" style="background:#2c2824;color:#b3aba0">Aa</i>#b3aba0 on #2c2824 · <span class="ok">6.44 pass</span></td><td class="n">4.5</td></tr>
+<tr><th>pill Cancelled (proposed)</th><td class="c"><i class="sw p" style="background:#f0dfdc;color:#7a3b33">Aa</i>#7a3b33 on #f0dfdc · <span class="ok">6.52 pass</span></td><td class="c"><i class="sw p" style="background:#3a2623;color:#e0aaa2">Aa</i>#e0aaa2 on #3a2623 · <span class="ok">7.05 pass</span></td><td class="n">4.5</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ===================== COMPARISON ===================== -->
+<section class="dir">
+<h2>Comparison</h2>
+<div class="compare">
+<div><h3>A · Sage</h3>
+<ul>
+<li><b>Feel:</b> cool, calm and clinical-fresh; green reads as "go" and "fresh food", very quiet next to the grey-beige neutrals.</li>
+<li><b>Strengths:</b> already built into the tokens (no rework); highest contrast headroom for the accent; green sits naturally with food and avoids any "error" connotation.</li>
+<li><b>Risks:</b> accent and the "Ready" status tint are both green, so the primary button and a positive status can look related; can feel generic or slightly cold for a home cook.</li>
+</ul></div>
+<div><h3>B · Clay</h3>
+<ul>
+<li><b>Feel:</b> warm, homely and appetising; terracotta and warm neutrals suggest kitchen, clay pots and spices while staying muted.</li>
+<li><b>Strengths:</b> a distinct identity from the status colours (green Ready, amber Ordered, slate Confirmed all stay clearly separate); the warmth suits a personal seller brand; passes AA with room (lowest text ratio 5.12).</li>
+<li><b>Risks:</b> terracotta sits near red, so it needs discipline (accent never on errors or Cancelled); less contrast headroom on accent-on-surface than A's dark mode; needs a change to <code>themes.ts</code> and an owner OK.</li>
+</ul></div>
+</div>
+</section>
+
+</div>
+</body>
+</html>
