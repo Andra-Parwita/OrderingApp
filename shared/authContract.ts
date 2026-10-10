@@ -72,6 +72,9 @@ export type Me = {
   /** Present once the device is registered (full sessions). */
   deviceId?: string;
   deviceName?: string;
+  /** Setup sessions only (plan 025): the account already has a password / a passkey. */
+  hasPassword?: boolean;
+  hasPasskey?: boolean;
 };
 
 export type DeviceView = {
@@ -268,6 +271,8 @@ export function parseMe(input: unknown): Me | null {
     ...(typeof chefName === 'string' ? { chefName } : {}),
     ...(typeof deviceId === 'string' ? { deviceId } : {}),
     ...(typeof deviceName === 'string' ? { deviceName } : {}),
+    ...(typeof input['hasPassword'] === 'boolean' ? { hasPassword: input['hasPassword'] } : {}),
+    ...(typeof input['hasPasskey'] === 'boolean' ? { hasPasskey: input['hasPasskey'] } : {}),
   };
 }
 

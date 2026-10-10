@@ -29,9 +29,15 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 | 015 | [Orders home: one-row header and buttons, Dishes slide-over](015-orders-compact-and-dishes-slideover.md) | done (11:31) |
 | 016 | [Kitchen: filter by chef](016-kitchen-chef-filter.md) | done (11:17) |
 | 017 | [Settings: the customer link, copy, share and QR](017-settings-customer-link.md) | done (11:21) |
-| 018 | [Seller: scan the customer QR to hand over](018-scan-customer-qr.md) | approved (11:20, D-078); after plan 015 |
-| 019 | [Customer: About and privacy](019-customer-privacy-note.md) | proposed (11:37); after the demo; wording needs the owner |
-| 020 | [App version on every deploy](020-app-version.md) | approved (11:39, D-079); after the demo |
+| 018 | [Seller: scan the customer QR to hand over](018-scan-customer-qr.md) | done (11:48); real-device camera check pending |
+| 019 | [Customer: About and privacy](019-customer-privacy-note.md) | done (11:44); ID wording needs a native check |
+| 020 | [App version on every deploy](020-app-version.md) | done (11:48) |
+| 021 | [Seller: notice new orders while the app is open](021-seller-new-order-alert.md) | done (12:28) |
+| 022 | [Orders header: nothing overlaps on the iPad](022-orders-header-fit.md) | done (12:00); narrow-portrait list follow-up open |
+| 023 | [Text size: smaller, normal, larger](023-text-size.md) | approved (11:47); after 020 and 021 |
+| 024 | [Customer pages show the current kitchen theme from the first paint](024-customer-theme-first-paint.md) | approved (11:49); after 021 and 023 |
+| 025 | [Add a device: use the existing passkey or password](025-add-device-existing-login.md) | done (12:28); iPad check pending |
+| 026 | [A small error log sent to the server (last 500)](026-client-error-log.md) | approved (12:15); after 025 |
 
 ## Template
 

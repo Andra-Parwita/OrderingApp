@@ -1,5 +1,6 @@
 {
   "title": "Settings",
+  "version": "Version {{version}}",
   "loading": "Loading settings…",
   "error": "Could not load the settings.",
   "retry": "Try again",
@@ -118,6 +119,10 @@
     "dark": "Dark",
     "auto": "Auto",
     "modeHelper": "Auto follows this device's own setting. Saved on this device.",
+    "soundTitle": "Sound for new orders",
+    "soundOn": "On",
+    "soundOff": "Off",
+    "soundHelper": "A short, quiet tone when a new order arrives while the app is open. Saved on this device.",
     "themeTitle": "Colour theme",
     "themeHelper": "Changes the accent and background tint for everyone in your kitchen.",
     "themes": {

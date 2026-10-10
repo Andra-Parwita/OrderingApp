@@ -9,6 +9,8 @@ export type UndoToastProps = Readonly<{
   /** What just happened: "Rina confirmed". `null` shows nothing; the live region stays mounted. */
   message: string | null;
   onUndo: () => void;
+  /** The button's text when it is not Undo (an Open button, say). */
+  actionLabel?: string;
   /** Called after `durationMs` (the Undo window closed) so the owner can clear the message. */
   onDismiss: () => void;
   durationMs?: number;
@@ -41,7 +43,13 @@ const Bar = styled.div`
  * A quick reversible action does not ask first; it says what happened and offers Undo for 6 s.
  * Announced to screen readers through the polite live region.
  */
-export function UndoToast({ message, onUndo, onDismiss, durationMs = UNDO_MS }: UndoToastProps) {
+export function UndoToast({
+  message,
+  onUndo,
+  actionLabel,
+  onDismiss,
+  durationMs = UNDO_MS,
+}: UndoToastProps) {
   const { t } = useTranslation();
   useEffect(() => {
     if (message == null) return undefined;
@@ -54,7 +62,7 @@ export function UndoToast({ message, onUndo, onDismiss, durationMs = UNDO_MS }: 
         <Bar>
           <span>{message}</span>
           <Button variant="quiet" onClick={onUndo}>
-            {t('patterns.undo')}
+            {actionLabel ?? t('patterns.undo')}
           </Button>
         </Bar>
       ) : null}

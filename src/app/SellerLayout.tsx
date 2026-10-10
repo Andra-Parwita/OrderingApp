@@ -10,6 +10,7 @@ import { cssUrl } from '../components/cssUrl';
 import { sellerManifestTarget, useManifestLinks } from '../components/install';
 import { useBannerCollapsed } from '../components/useBannerCollapsed';
 import { useMediaQuery } from '../components/useMediaQuery';
+import { useNewOrderTitle } from '../features/seller-orders';
 import { ImageSlot } from '../ui';
 import { BANNER_MAX_WIDTH, BANNER_STRIP_HEIGHT, DESKTOP_QUERY } from './layout';
 import { PhoneBar } from './PhoneBar';
@@ -143,6 +144,7 @@ export function SellerLayout() {
   const [collapsed, toggleCollapsed] = useRailCollapsed();
   const lang = i18n.language.startsWith('id') ? 'id' : 'en';
   const kitchenName = kitchen?.name ?? t('sellerNav.kitchen');
+  useNewOrderTitle(t('sellerNav.navOrders'), kitchenName);
   const bannerText = kitchen
     ? bannerAlt(kitchen, lang)
     : `${kitchenName} — ${t('sellerNav.bannerImage')}`;

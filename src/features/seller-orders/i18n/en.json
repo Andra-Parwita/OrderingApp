@@ -225,6 +225,7 @@
   },
   "live": {
     "search": "Name or code",
+    "new": "New",
     "changed": "Changed",
     "notPaid": "Not paid",
     "toggles": "Show only",
@@ -316,7 +317,11 @@
     "sampleNoMenu": "Make a menu first",
     "sampleFailed": "Couldn't add samples",
     "samplesCleared": "Cleared {{name}} sample orders",
-    "clearFailed": "Couldn't clear samples"
+    "clearFailed": "Couldn't clear samples",
+    "newOrder": "New order · {{name}}",
+    "newOrders": "{{name}} new orders",
+    "open": "Open",
+    "show": "Show"
   },
   "dishes": {
     "title": "Dishes",

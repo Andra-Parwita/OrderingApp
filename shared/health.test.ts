@@ -3,13 +3,18 @@ import { parseHealth } from './health';
 
 describe('parseHealth', () => {
   it('accepts a valid response', () => {
-    const body = { status: 'ok', time: '2026-10-07T10:00:00.000Z', devTools: true };
+    const body = {
+      status: 'ok',
+      time: '2026-10-07T10:00:00.000Z',
+      devTools: true,
+      version: '1.0.18 · c491a12',
+    };
     expect(parseHealth(body)).toEqual(body);
   });
 
-  it('reads a missing devTools as off', () => {
+  it('reads a missing devTools as off and a missing version as empty', () => {
     const body = { status: 'ok', time: '2026-10-07T10:00:00.000Z' };
-    expect(parseHealth(body)).toEqual({ ...body, devTools: false });
+    expect(parseHealth(body)).toEqual({ ...body, devTools: false, version: '' });
   });
 
   it.each([

@@ -5,7 +5,11 @@ import { Link } from 'react-router';
 import { styled } from 'styled-components';
 import type { Kitchen } from '../../shared/domain';
 import { LanguageSwitch } from '../components/LanguageSwitch';
-import { selectOrdersCount, type SellerOrdersRootState } from '../features/seller-orders';
+import {
+  selectOrdersCount,
+  useUnseenNewOrders,
+  type SellerOrdersRootState,
+} from '../features/seller-orders';
 import { SellerPicker } from '../components/SellerPicker';
 import { Icon, ImageSlot, Tooltip } from '../ui';
 import { HREF, ICON, type NavId } from './sellerNav';
@@ -247,6 +251,7 @@ export function SellerRail({
   const collapseLabel = t(collapsed ? 'sellerNav.expand' : 'sellerNav.collapse');
   const notPublished = t('sellerNav.notPublished');
   const ordersCount = useOrdersCount();
+  const unseenNew = useUnseenNewOrders();
   return (
     <Column>
       <Rail aria-label={t('sellerNav.label')} $collapsed={collapsed}>
@@ -303,6 +308,12 @@ export function SellerRail({
                       </Badge>
                     ) : null}
                     {flagged && collapsed ? <Dot aria-hidden="true" /> : null}
+                    {id === 'orders' && unseenNew > 0 ? (
+                      <>
+                        <Dot aria-hidden="true" />
+                        <Hidden>{t('sellerNav.newOrders')}</Hidden>
+                      </>
+                    ) : null}
                   </Item>
                 </Tooltip>
               </li>

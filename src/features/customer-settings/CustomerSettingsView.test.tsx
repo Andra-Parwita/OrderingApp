@@ -93,6 +93,20 @@ describe('CustomerSettingsView', () => {
     expect(screen.getByText('Step 1 of 4')).toBeVisible();
   });
 
+  it('opens About and privacy in English and in Indonesian', async () => {
+    show();
+    fireEvent.click(screen.getByRole('button', { name: /Read/ }));
+    expect(screen.getByText(/your phone number and your address/)).toBeVisible();
+    expect(screen.getByText(/4 weeks after the cooking day/)).toBeVisible();
+    expect(screen.getByText('Version dev')).toBeVisible();
+    await i18n.changeLanguage('id');
+    expect(screen.getByText(/nomor ponsel dan alamat Anda/)).toBeVisible();
+    expect(screen.getByText('Versi dev')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: /Tutup/ }));
+    expect(screen.queryByText(/nomor ponsel dan alamat Anda/)).toBeNull();
+    await i18n.changeLanguage('en');
+  });
+
   it('hides the home-screen card once the app is installed', () => {
     show({ install: { env: { ...base, installed: true } }, canInstall: false });
     expect(screen.queryByText('Put it on your home screen')).toBeNull();

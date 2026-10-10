@@ -111,6 +111,20 @@ export function neighbourCodes(
   };
 }
 
+export const selectFresh = (state: SellerOrdersRootState) => state.sellerOrders.fresh;
+export const selectUnseenNew = (state: SellerOrdersRootState) => state.sellerOrders.unseenNew;
+
+/**
+ * Plan 021: orders in `after` that were not in `before` and were placed by a customer. The seller's
+ * own New order carries `enteredBy`; the server's dev and demo samples have ids starting `sample-`.
+ */
+export function newCustomerOrders(before: ReadonlyArray<Order>, after: ReadonlyArray<Order>) {
+  const known = new Set(before.map((order) => order.id));
+  return after.filter(
+    (order) => !known.has(order.id) && !order.enteredBy && !order.id.startsWith('sample-'),
+  );
+}
+
 /** How many orders the live menu has, for the nav; null until the first load. */
 export const selectOrdersCount = (state: SellerOrdersRootState): number | null =>
   state.sellerOrders.list.status === 'ready' ? state.sellerOrders.orders.length : null;

@@ -86,6 +86,14 @@ describe('Pickup & delivery · Pickup', () => {
     expect(screen.getByText('Rina')).toBeVisible();
   });
 
+  it('has a labelled Scan button and the Scan Text hint beside the search', async () => {
+    renderThemed(<HandOverScreen />);
+    expect(
+      await screen.findByRole('button', { name: "Scan the customer's QR code" }),
+    ).toBeVisible();
+    expect(screen.getByText(/Tap the search box, then Scan Text/)).toBeVisible();
+  });
+
   it('sends Ready for pickup, marks the orders Ready, and warns on a repeat', async () => {
     const rina = await make('Rina', 'pickup', ['confirmed']);
     renderThemed(<HandOverScreen />);

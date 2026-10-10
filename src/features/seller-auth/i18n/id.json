@@ -9,7 +9,10 @@
     "setupExpired": "Waktu penyiapan habis. Mulai lagi dengan kunci baru.",
     "generic": "Terjadi kesalahan. Coba lagi.",
     "passkeyCancelled": "Permintaan passkey ditutup. Coba lagi, atau pakai kata sandi.",
-    "passkeyFailed": "Perangkat ini tidak bisa memakai passkey. Coba lagi, atau pakai kata sandi."
+    "passkeyFailed": "Perangkat ini tidak bisa memakai passkey. Coba lagi, atau pakai kata sandi.",
+    "passwordExists": "Akun ini sudah punya kata sandi. Masuk dengan kata sandimu.",
+    "passkeyExists": "Perangkat ini sudah punya passkey untuk akun ini. Masuk dengan passkey itu.",
+    "wrongPasskey": "Passkey itu milik akun lain. Pilih passkey untuk dapur ini."
   },
   "deviceName": {
     "label": "Nama perangkat ini",
@@ -47,7 +50,16 @@
     "working": "Menyiapkan…",
     "passwordTitle": "Atur kata sandi",
     "passwordText": "Untuk perangkat tanpa wajah atau sidik jari.",
-    "unavailable": "Wajah atau sidik jari tidak bisa dipakai di alamat web ini (alamat IP). Atur kata sandi saja."
+    "unavailable": "Wajah atau sidik jari tidak bisa dipakai di alamat web ini (alamat IP). Atur kata sandi saja.",
+    "existingTitle": "Selamat datang kembali",
+    "existingTitleName": "Selamat datang kembali, {{name}}",
+    "existingChoose": "Akun ini sudah punya cara untuk masuk. Pakai di perangkat ini.",
+    "signInTitle": "Masuk dengan wajah atau sidik jari",
+    "signInText": "Pakai passkey yang sudah dimiliki akun ini.",
+    "addTitle": "Tambah passkey baru",
+    "addText": "Buat satu lagi untuk perangkat ini.",
+    "existingPasswordTitle": "Pakai kata sandimu",
+    "existingPasswordText": "Kata sandi yang sudah dimiliki akun ini."
   },
   "password": {
     "title": "Atur kata sandi",

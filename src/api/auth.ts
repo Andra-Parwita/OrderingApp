@@ -74,9 +74,11 @@ async function ceremony<T>(run: () => Promise<T>): Promise<ApiResult<T>> {
   } catch (cause) {
     const name = cause instanceof Error ? cause.name : '';
     const cancelled = name === 'NotAllowedError' || name === 'AbortError';
+    // Plan 025: creating a passkey is refused when this device already holds one for the account.
+    const held = name === 'InvalidStateError';
     return {
       ok: false,
-      error: cancelled ? 'passkey_cancelled' : 'passkey_failed',
+      error: held ? 'passkey_exists' : cancelled ? 'passkey_cancelled' : 'passkey_failed',
       status: 0,
       message: cause instanceof Error ? cause.message : 'Passkey failed',
     };

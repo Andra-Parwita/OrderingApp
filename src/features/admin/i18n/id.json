@@ -1,5 +1,6 @@
 {
   "loading": "Memuat…",
+  "version": "Versi {{version}}",
   "retry": "Coba lagi",
   "error": {
     "generic": "Terjadi masalah. Coba lagi.",

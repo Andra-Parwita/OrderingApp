@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { collectErrors, pageScrollWidth, searchBox } from './sellerHelpers';
+import { collectErrors, pageScrollWidth, searchFor } from './sellerHelpers';
 
 // The collapsible left panel (D-032) and an orders list whose key identifiers never truncate.
 // (The cook list's equal-width "who ordered" chips are gone with the Kitchen redesign.) Desktop only; orders are found by a unique name.
@@ -42,7 +42,7 @@ test('seller desktop: collapsible rail, nothing cut in the list', async ({
     // The table at 1024 px, rail expanded: nothing spills, no name is cut.
     async function expectTableUncut(viewport: number): Promise<void> {
       await page.setViewportSize({ width: viewport, height: 800 });
-      await searchBox(page).fill(String(stamp));
+      await searchFor(page, String(stamp));
       const rows = page
         .getByRole('button', { name: new RegExp(String(stamp)) })
         .filter({ hasText: '$15.00' });

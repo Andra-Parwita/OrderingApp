@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { PickupPoint, SellerOrder } from '../../../shared/domain';
 import type { DeliveryStep, MessagePlaceResponse } from '../../../shared/handoverContract';
+import { ScanEntry, SCAN_NS } from '../../components/scan';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { DeliveryView } from './DeliveryRunScreen';
 import { PickupView } from './PickupView';
@@ -87,11 +88,19 @@ type Props = Readonly<{
   phone?: boolean;
   /** Phone only: the delivery address kept on this phone for an order (D-059). */
   addressOf?: (code: string) => string | undefined;
+  /** A scanned order opens here (its page, with the hand-over button). */
+  onOpenOrder?: (code: string) => void;
 }>;
 
 /** Pickup & delivery (plan 001 stage 9): tell customers, never collect for them (D-068). */
-export function HandOverScreen({ view: initial = 'pickup', phone = false, addressOf }: Props) {
+export function HandOverScreen({
+  view: initial = 'pickup',
+  phone = false,
+  addressOf,
+  onOpenOrder,
+}: Props) {
   const { t } = useTranslation(SATURDAY_NS);
+  const { t: scan } = useTranslation(SCAN_NS);
   const lang = useLang();
   const { data, reload } = useHandoverData();
   const [view, setView] = useState<HandoverViewName>(initial);
@@ -144,6 +153,14 @@ export function HandOverScreen({ view: initial = 'pickup', phone = false, addres
     [reload, t],
   );
 
+  // A scanned order opens on its own page when the route says how; else the list narrows to it.
+  const openScanned = (code: string) => {
+    if (onOpenOrder) return onOpenOrder(code);
+    const found = ready?.orders.find((o) => o.code === code);
+    if (found) setView(found.fulfilment);
+    setQuery(code);
+  };
+
   return (
     <Page>
       <Top $phone={phone}>
@@ -163,6 +180,11 @@ export function HandOverScreen({ view: initial = 'pickup', phone = false, addres
             spellCheck={false}
           />
         </Search>
+        <ScanEntry
+          find={(code) => ready?.orders.find((o) => o.code === code)}
+          onOpen={openScanned}
+        />
+        <Muted>{scan('hint')}</Muted>
       </Top>
       <Bar $phone={phone}>
         <Segmented options={options} value={view} onChange={setView} label={t('viewLabel')} />

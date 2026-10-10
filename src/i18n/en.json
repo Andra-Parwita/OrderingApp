@@ -69,6 +69,7 @@
     "updates": "Send an update",
     "backToSaturday": "Back to Hand-over",
     "navOrders": "Orders",
+    "newOrders": "new orders",
     "navKitchen": "Kitchen",
     "navHandover": "Pickup & delivery",
     "navMenu": "Menu",
@@ -100,7 +101,19 @@
     "themeAutoHint": "Auto · follows phone",
     "updatesTitle": "Order updates",
     "homeTitle": "Put it on your home screen",
-    "homeBody": "Opens like an app, one tap away."
+    "homeBody": "Opens like an app, one tap away.",
+    "aboutTitle": "About and privacy",
+    "aboutShow": "Read",
+    "aboutHide": "Hide",
+    "aboutKeep": "What we keep: your first name, your order (dishes, pickup or delivery, note) and your language, with the kitchen you ordered from. If you allow notifications, your browser's notification address for that order.",
+    "aboutNever": "What we never keep in the cloud: your phone number and your address. You send those to the seller on WhatsApp, and they stay on the seller's phone.",
+    "aboutDevice": "On this phone: your orders list, your first name for the next order, the last kitchen you used, and your language and theme, in this browser only. Clearing the site data removes them.",
+    "aboutNotify": "Notifications: only if you allow them, only for the orders saved on this phone. They are removed when an order is cancelled or when the kitchen finishes its week.",
+    "aboutHow": "How long: order details are deleted 4 weeks after the cooking day. Only an empty marker stays, so an old link says it is archived.",
+    "aboutFind": "Find my order: wrong tries keep a scrambled form of your internet address for about an hour at most, to stop guessing.",
+    "aboutNo": "No accounts, no ads and no payments in the app.",
+    "aboutWho": "Run by {{app}}.",
+    "aboutVersion": "Version {{version}}"
   },
   "notFound": {
     "title": "Page not found",

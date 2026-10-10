@@ -41,6 +41,10 @@ export const API_ERROR_CODES = [
   'locked_out',
   'slug_taken',
   'admin_exists',
+  /** Plan 025: a password through an add-device code, but the account already has one. */
+  'password_exists',
+  /** Plan 025: the passkey is already registered (this device already holds it). */
+  'passkey_exists',
   /** A state-changing call whose `Origin` is missing or is not this site (stage 8.2). */
   'bad_origin',
 ] as const;

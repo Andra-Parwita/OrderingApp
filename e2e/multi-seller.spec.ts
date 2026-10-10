@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { goToName, markHowItWorksSeen } from './customerHelpers';
-import { collectErrors, orderRow, searchBox } from './sellerHelpers';
+import { collectErrors, orderRow, searchFor } from './sellerHelpers';
 
 // Stage 5.2 (D-036, D-037): one app, many sellers. Orders are placed at two sellers' own links,
 // My orders spans both, and the seller side (dev picker) only ever shows the chosen seller's
@@ -80,17 +80,17 @@ test('two sellers: orders at each link, My orders across both, the seller side p
     const sellerErrors = collectErrors(seller);
     await seller.goto('/seller');
     await expect(seller.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
-    await searchBox(seller).fill(ondeName);
+    await searchFor(seller, ondeName);
     await expect(orderRow(seller, new RegExp(ondeName))).toBeVisible();
-    await searchBox(seller).fill(demoName);
+    await searchFor(seller, demoName);
     await expect(orderRow(seller, new RegExp(demoName))).toHaveCount(0);
 
     await seller.getByLabel('Seller (dev only)').selectOption('dapur-demo');
     await expect(seller.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
     await expect(seller.getByLabel('Seller (dev only)')).toHaveValue('dapur-demo');
-    await searchBox(seller).fill(demoName);
+    await searchFor(seller, demoName);
     await expect(orderRow(seller, new RegExp(demoName))).toBeVisible();
-    await searchBox(seller).fill(ondeName);
+    await searchFor(seller, ondeName);
     await expect(orderRow(seller, new RegExp(ondeName))).toHaveCount(0);
     await seller.screenshot({ path: 'captures/multi-seller-seller-dapur-demo.png' });
     expect(sellerErrors).toEqual([]);

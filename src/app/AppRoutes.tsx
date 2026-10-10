@@ -549,7 +549,12 @@ function HandOverRoute() {
     (code: string) => getContact(currentSellerSlug(), code)?.address || undefined,
     [],
   );
-  return <HandOverScreen phone={phone} addressOf={addressOf} />;
+  const navigate = useNavigate();
+  const openOrder = useCallback(
+    (code: string) => void navigate(`/seller/orders/${code}`),
+    [navigate],
+  );
+  return <HandOverScreen phone={phone} addressOf={addressOf} onOpenOrder={openOrder} />;
 }
 
 /** Screens of other features that the menu wizard shows: the customer's menu and the WhatsApp post. */

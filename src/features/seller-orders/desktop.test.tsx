@@ -61,17 +61,44 @@ function renderLive(initialFilter: StatusFilter = 'all', onShare: () => void = n
 }
 
 describe('Home with a live menu', () => {
-  it('has a one-row header: switch, search, toggles, Dishes, New order and a More menu', () => {
+  it('has a one-row header (switch, Search, New order, More) and the toggles in the tab row', () => {
     renderLive();
     expect(screen.getByRole('heading', { name: 'Orders' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Taking orders' })).toBeChecked();
-    expect(screen.getByRole('searchbox', { name: 'Name or code' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Changed\s*1$/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Not paid\s*3$/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Dishes\s*\d+$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Search orders' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Changed\s*1$/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByRole('button', { name: /^Not paid\s*3$/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.queryByRole('button', { name: /^Dishes\s*\d+$/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New order' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Show more orders' })).toBeInTheDocument();
     expect(screen.queryByText(/Menu for .*17 Oct/)).not.toBeInTheDocument();
+  });
+
+  it('Search swaps the tabs for a focused field; Escape or Close clears it and brings the tabs back', () => {
+    renderLive();
+    const open = screen.getByRole('button', { name: 'Search orders' });
+    fireEvent.click(open);
+    const box = screen.getByRole('searchbox', { name: 'Name or code' });
+    expect(box).toHaveFocus();
+    expect(screen.queryByRole('button', { name: /^Confirmed\s*2$/ })).not.toBeInTheDocument();
+    fireEvent.change(box, { target: { value: 'rina' } });
+    fireEvent.keyDown(box, { key: 'Escape' });
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Confirmed\s*2$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Tom/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Search orders' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close search' })[1] as HTMLElement);
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
   });
 
   it('keeps the menu line and Share menu in the More menu, and Share still works', () => {
@@ -90,7 +117,7 @@ describe('Home with a live menu', () => {
   it('closes the More menu with Escape', () => {
     renderLive();
     fireEvent.click(screen.getByRole('button', { name: 'More' }));
-    expect(screen.getByRole('menuitem', { name: 'Share menu' })).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: /^Dishes\s*\d+$/ })).toHaveFocus();
     fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'More' })).toHaveFocus();
@@ -121,18 +148,24 @@ describe('Home with a live menu', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Not paid\s*3$/ }));
     expect(screen.queryByRole('button', { name: /Sari/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Budi/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Search orders' }));
     fireEvent.change(screen.getByRole('searchbox', { name: 'Name or code' }), {
       target: { value: 'zzz' },
     });
     expect(screen.getByText('No orders match.')).toBeInTheDocument();
   });
 
-  it('opens the Dishes slide-over from its button and closes it with Close or Escape', () => {
+  // Plan 022: Dishes lives in the More menu, with its total portions in the item.
+  const openDishes = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /^Dishes\s*\d+$/ }));
+  };
+
+  it('opens the Dishes slide-over from the More menu and closes it with Close or Escape', () => {
     renderLive();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    const open = screen.getByRole('button', { name: /^Dishes\s*\d+$/ });
-    open.focus(); // a real click focuses the button; fireEvent does not
-    fireEvent.click(open);
+    const open = screen.getByRole('button', { name: 'More' });
+    openDishes();
     const dialog = screen.getByRole('dialog', { name: 'Dishes' });
     expect(dialog).toHaveFocus();
     expect(
@@ -142,14 +175,14 @@ describe('Home with a live menu', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(open).toHaveFocus();
-    fireEvent.click(open);
+    openDishes();
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('still edits a dish limit inside the slide-over', () => {
     renderLive();
-    fireEvent.click(screen.getByRole('button', { name: /^Dishes\s*\d+$/ }));
+    openDishes();
     const dialog = screen.getByRole('dialog', { name: 'Dishes' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Edit limit: Chicken lemper' }));
     expect(within(dialog).getByLabelText(/Limit for Chicken lemper/)).toBeInTheDocument();

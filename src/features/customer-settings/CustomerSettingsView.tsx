@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { appVersion } from '../../../shared/buildInfo';
 import type { Language } from '../../../shared/domain';
 import {
   INSTALL_NS,
@@ -102,6 +103,41 @@ const Knob = styled.span`
   }
 `;
 
+// ---- About and privacy ----
+
+const AboutButton = styled.button`
+  flex: none;
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.md};
+  border: 0;
+  background: none;
+  color: ${({ theme }) => theme.c.atext};
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+`;
+const About = styled.ul`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg}
+    ${({ theme }) => theme.spacing.lg} calc(${({ theme }) => theme.spacing.lg} + 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.md};
+  line-height: 1.5;
+`;
+const ABOUT_KEYS = [
+  'aboutKeep',
+  'aboutNever',
+  'aboutDevice',
+  'aboutNotify',
+  'aboutHow',
+  'aboutFind',
+  'aboutNo',
+] as const;
+
 // ---- The home-screen card ----
 
 const Card = styled.section`
@@ -199,6 +235,7 @@ export function CustomerSettingsView({
 }: CustomerSettingsViewProps) {
   const { t } = useTranslation();
   const { t: ti } = useTranslation(INSTALL_NS);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const install = useSavedOrdersInstall(installOverride);
   const browserOffersInstall = useCanInstall();
   const canInstall = canInstallOverride ?? browserOffersInstall;
@@ -278,6 +315,31 @@ export function CustomerSettingsView({
             <Knob />
           </Track>
         </Row>
+        <Row>
+          <Label>
+            <Name id="settings-about">{t('customerSettings.aboutTitle')}</Name>
+          </Label>
+          <AboutButton
+            type="button"
+            aria-expanded={aboutOpen}
+            aria-controls="settings-about-text"
+            aria-describedby="settings-about"
+            onClick={() => {
+              setAboutOpen((open) => !open);
+            }}
+          >
+            {aboutOpen ? t('customerSettings.aboutHide') : t('customerSettings.aboutShow')}
+          </AboutButton>
+        </Row>
+        {aboutOpen ? (
+          <About id="settings-about-text">
+            {ABOUT_KEYS.map((key) => (
+              <li key={key}>{t(`customerSettings.${key}`)}</li>
+            ))}
+            <li>{t('customerSettings.aboutWho', { app: t('app.name') })}</li>
+            <li>{t('customerSettings.aboutVersion', { version: appVersion() })}</li>
+          </About>
+        ) : null}
       </Rows>
       {showHome ? (
         <Card aria-labelledby="settings-home">

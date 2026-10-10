@@ -1,8 +1,10 @@
 import {
   call,
+  delay,
   put,
   race,
   select,
+  spawn,
   take,
   takeEvery,
   takeLatest,
@@ -31,6 +33,9 @@ import {
   setOrderWaReceived,
 } from '../../api/client';
 import { liveRefreshLoop, type LiveMessage } from '../../api/live';
+import { playChime } from '../../components/chime';
+import type { Order } from '../../../shared/domain';
+import { formatOrderCode } from '../../../shared/orderCode';
 import type { EventChannel } from 'redux-saga';
 import type { ClearSamplesResponse, SampleOrdersResponse } from '../../../shared/devContract';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
@@ -38,8 +43,12 @@ import type { MenuViewResponse, UpdateMenuResponse } from '../../../shared/menus
 import type { PastWeeksResponse } from '../../../shared/pastWeeks';
 import type { ItemResponse } from '../../../shared/setupContract';
 import type { SellerOrderResponse, SellerOrdersResponse } from '../../../shared/orderContract';
+import { newCustomerOrders, selectToast } from './sellerOrdersSelectors';
 import {
   changeFailed,
+  freshExpired,
+  newOrdersArrived,
+  type ActionToast,
   type FailedChange,
   warningDismissed,
   collectedRequested,
@@ -85,14 +94,58 @@ import { currentSellerSlug } from '../../api/device/sellerContext';
 /** How often the list reloads while the live socket is down (the fallback). */
 export const POLL_MS = 60_000;
 
+/** Plan 021: how long a new order's row stays highlighted. */
+export const FRESH_MS = 6000;
+
+function* expireFresh(ids: Array<string>) {
+  yield delay(FRESH_MS);
+  yield put(freshExpired({ ids }));
+}
+
+/** Plan 021: toast, highlight, dot and (if the seller wants it) a chime for new customer orders. */
+export function* announceNew(arrived: ReadonlyArray<Order>) {
+  if (arrived.length === 0) return;
+  const ids = arrived.map((order) => order.id);
+  yield put(
+    newOrdersArrived({
+      orders: arrived.map(({ id, code, firstName }) => ({ id, code, firstName })),
+    }),
+  );
+  // An Undo still open is not worth losing: the highlight and the dot say it anyway.
+  const shown = (yield select(selectToast)) as ActionToast | null;
+  const [only] = arrived;
+  if (!shown?.undo && only) {
+    yield put(
+      toastShown(
+        arrived.length === 1
+          ? {
+              kind: 'newOrder',
+              name: `${only.firstName} · ${formatOrderCode(only.code)}`,
+              undo: null,
+              open: { code: only.code },
+            }
+          : { kind: 'newOrders', name: String(arrived.length), undo: null, open: { code: null } },
+      ),
+    );
+  }
+  yield call(playChime);
+  yield spawn(expireFresh, ids);
+}
+
 export function* loadOrders() {
+  const before = (yield select()) as SellerOrdersRootState;
   const result = (yield call(
     fetchSellerOrders,
     undefined,
     currentSellerSlug(),
   )) as ApiResult<SellerOrdersResponse>;
-  if (result.ok) yield put(ordersLoaded({ orders: result.data.orders }));
-  else yield put(ordersFailed());
+  if (result.ok) {
+    yield put(ordersLoaded({ orders: result.data.orders }));
+    // The first load is the baseline, not news.
+    if (before.sellerOrders.list.status === 'ready') {
+      yield call(announceNew, newCustomerOrders(before.sellerOrders.orders, result.data.orders));
+    }
+  } else yield put(ordersFailed());
 }
 
 export function* loadCurrent() {

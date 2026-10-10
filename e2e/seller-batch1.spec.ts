@@ -89,7 +89,7 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
     await expect(page.getByRole('menuitem', { name: 'Batalkan pesanan' })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('heading', { name: 'Perubahan terakhir' })).toBeVisible();
-    await page.getByRole('button', { name: 'Tutup' }).click();
+    await page.getByRole('button', { name: 'Tutup', exact: true }).click();
     await expect(page).toHaveURL(/\/seller\?q=/);
     await expect(
       searchBox(page).or(page.getByRole('searchbox', { name: 'Nama atau kode' })),

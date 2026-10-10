@@ -4,11 +4,19 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { browserPasskeys } from '../../../mocks/browserPasskeys';
 import { clearCookies, installCookieJar, sessionCookie } from '../../../mocks/cookieJar';
 import { MOCK_NOW, mockStores } from '../../../mocks/handlers';
-import { createDeviceCode, fetchMe, registerDevice, signInWithKey } from '../../api/auth';
+import {
+  createDeviceCode,
+  fetchMe,
+  registerDevice,
+  signInWithCode,
+  signInWithKey,
+} from '../../api/auth';
+import type { ApiFailure } from '../../api/http';
 import { fetchMenu, fetchMyOrders, fetchSellerOrders, placeOrder } from '../../api/client';
 import { getCredentialId } from '../../api/device/session';
-import { cleanCode, cleanKey, guessDevice } from './authText';
+import { cleanCode, cleanKey, failureMessage, guessDevice } from './authText';
 import { DevicesScreen } from './DevicesScreen';
+import { AUTH_NS } from './i18n/register';
 import { PasskeyHelpScreen } from './PasskeyHelpScreen';
 import { PasswordSetupScreen } from './PasswordSetupScreen';
 import { DeviceCodeScreen, SetupKeyScreen } from './SetupKeyScreen';
@@ -245,6 +253,122 @@ describe('PasskeyHelpScreen (Create)', () => {
     expect(
       await screen.findByText('Your setup timed out. Start again with a new key.'),
     ).toBeInTheDocument();
+  });
+});
+
+/** A seller who already has a login, then a second device that redeems an add-device code. */
+async function setupViaCode(how: 'password' | 'passkey') {
+  await signInAsSeller(how);
+  const code = await createDeviceCode();
+  if (!code.ok) throw new Error('no code');
+  clearCookies(); // the new device has no session yet
+  const started = await signInWithCode(code.data.code);
+  if (!started.ok) throw new Error(started.error);
+  return started.data.me;
+}
+
+describe('add a device when the account already has a login (plan 025)', () => {
+  it('stage 1: the code answer says what the account has', async () => {
+    expect(await setupViaCode('passkey')).toMatchObject({ hasPassword: false, hasPasskey: true });
+  });
+
+  it('stage 1: ... a password only', async () => {
+    expect(await setupViaCode('password')).toMatchObject({ hasPassword: true, hasPasskey: false });
+  });
+
+  it('offers to sign in with the passkey the account has, and that finishes the session', async () => {
+    const setup = await setupViaCode('passkey');
+    const onDone = vi.fn();
+    renderScreen(<PasskeyHelpScreen setup={setup} onDone={onDone} onUsePassword={vi.fn()} />);
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Add a new passkey/ })).toBeInTheDocument();
+    press(/^Sign in with face or fingerprint/);
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+    expect(onDone.mock.calls[0]?.[0]).toMatchObject({ role: 'seller', stage: 'full' });
+  });
+
+  it('falls back to signing in when the browser refuses a second passkey (InvalidStateError)', async () => {
+    const setup = await setupViaCode('passkey');
+    const onDone = vi.fn();
+    renderScreen(<PasskeyHelpScreen setup={setup} onDone={onDone} onUsePassword={vi.fn()} />);
+    browserPasskeys.failNext('exists');
+    press(/^Add a new passkey/);
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+    expect(onDone.mock.calls[0]?.[0]).toMatchObject({ stage: 'full' });
+  });
+
+  it('refuses a passkey that belongs to another account', async () => {
+    await signInAsSeller('passkey');
+    const code = await createDeviceCode();
+    if (!code.ok) throw new Error('no code');
+    await adminPasskeyOnThisBrowser(); // the admin passkey is now the newest on this authenticator
+    clearCookies();
+    const started = await signInWithCode(code.data.code);
+    if (!started.ok) throw new Error(started.error);
+    const onDone = vi.fn();
+    renderScreen(
+      <PasskeyHelpScreen setup={started.data.me} onDone={onDone} onUsePassword={vi.fn()} />,
+    );
+    press(/^Sign in with face or fingerprint/);
+    expect(
+      await screen.findByText(
+        'That passkey belongs to a different account. Pick the passkey for this kitchen.',
+      ),
+    ).toBeInTheDocument();
+    expect(onDone).not.toHaveBeenCalled();
+    expect(sessionCookie()).toBeNull();
+  });
+
+  it('offers "Use your password" instead of "Set a password" when there is one', async () => {
+    const setup = await setupViaCode('password');
+    const onUsePassword = vi.fn();
+    renderScreen(
+      <PasskeyHelpScreen setup={setup} onDone={vi.fn()} onUsePassword={onUsePassword} />,
+    );
+    expect(screen.queryByRole('button', { name: SET_PASSWORD })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Sign in with face or fingerprint/ })).toBeNull();
+    press(/^Use your password/);
+    expect(onUsePassword).toHaveBeenCalled();
+  });
+
+  it('signs in with the existing password through the normal sign-in', async () => {
+    const setup = await setupViaCode('password');
+    const onDone = vi.fn();
+    renderScreen(<PasswordSetupScreen setup={setup} onDone={onDone} />);
+    expect(screen.queryByLabelText('New password')).not.toBeInTheDocument();
+    type('Password', 'not the password at all');
+    press('Sign in');
+    expect(
+      await screen.findByText('That did not work. Check it and try again. 4 tries left.'),
+    ).toBeInTheDocument();
+    expect(onDone).not.toHaveBeenCalled();
+    type('Password', PASSWORD);
+    press('Sign in');
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+    expect(onDone.mock.calls[0]?.[0]).toMatchObject({ role: 'seller', stage: 'full' });
+  });
+
+  it('stage 3: server codes become known messages', () => {
+    const t = i18n.getFixedT('en', AUTH_NS);
+    const fail = (error: ApiFailure['error'], extra: Partial<ApiFailure> = {}): ApiFailure => ({
+      ok: false,
+      error,
+      status: 0,
+      message: 'x',
+      ...extra,
+    });
+    expect(failureMessage(t, fail('password_exists'))).toMatch(/already has a password/);
+    expect(failureMessage(t, fail('passkey_exists'))).toMatch(/already has a passkey/);
+    expect(failureMessage(t, fail('unauthorized'))).toMatch(/timed out/);
+    expect(failureMessage(t, fail('locked_out', { retryAfterSeconds: 120 }))).toMatch(
+      /Too many tries.*2 minutes/,
+    );
+    expect(failureMessage(t, fail('invalid_request'))).toMatch(/Something went wrong/);
+    // Indonesian has all of them too.
+    const id = i18n.getFixedT('id', AUTH_NS);
+    for (const code of ['password_exists', 'passkey_exists'] as const) {
+      expect(failureMessage(id, fail(code))).not.toMatch(/Something went wrong|errors\./);
+    }
   });
 });
 

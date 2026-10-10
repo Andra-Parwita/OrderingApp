@@ -1,5 +1,6 @@
 {
   "title": "Pengaturan",
+  "version": "Versi {{version}}",
   "loading": "Memuat pengaturan…",
   "error": "Pengaturan tidak bisa dimuat.",
   "retry": "Coba lagi",
@@ -118,6 +119,10 @@
     "dark": "Gelap",
     "auto": "Otomatis",
     "modeHelper": "Otomatis mengikuti pengaturan perangkat ini. Disimpan di perangkat ini.",
+    "soundTitle": "Suara untuk pesanan baru",
+    "soundOn": "Nyala",
+    "soundOff": "Mati",
+    "soundHelper": "Nada pendek yang pelan saat pesanan baru masuk selagi aplikasi terbuka. Disimpan di perangkat ini.",
     "themeTitle": "Tema warna",
     "themeHelper": "Mengubah warna aksen dan latar untuk semua orang di dapurmu.",
     "themes": {

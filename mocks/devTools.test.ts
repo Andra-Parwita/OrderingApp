@@ -114,6 +114,7 @@ describe('dev tools flag', () => {
     const on = parseHealth(
       await (await handleWorkerRequest(req('GET', '/api/health'), env('1'))).json(),
     );
+    expect(off?.version).toBe('dev'); // no build define under vitest
     expect(off?.devTools).toBe(false);
     expect(on?.devTools).toBe(true);
   });

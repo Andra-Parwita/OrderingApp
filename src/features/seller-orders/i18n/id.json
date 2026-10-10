@@ -225,6 +225,7 @@
   },
   "live": {
     "search": "Nama atau kode",
+    "new": "Baru",
     "changed": "Diubah",
     "notPaid": "Belum dibayar",
     "toggles": "Tampilkan saja",
@@ -316,7 +317,11 @@
     "sampleNoMenu": "Buat menu dulu",
     "sampleFailed": "Tidak bisa menambah contoh pesanan",
     "samplesCleared": "{{name}} pesanan contoh dihapus",
-    "clearFailed": "Tidak bisa menghapus pesanan contoh"
+    "clearFailed": "Tidak bisa menghapus pesanan contoh",
+    "newOrder": "Pesanan baru · {{name}}",
+    "newOrders": "{{name}} pesanan baru",
+    "open": "Buka",
+    "show": "Lihat"
   },
   "dishes": {
     "title": "Hidangan",

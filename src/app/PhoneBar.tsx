@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { styled } from 'styled-components';
+import { useUnseenNewOrders } from '../features/seller-orders';
 import { Icon } from '../ui';
 import { HREF, ICON, PHONE_NAV_IDS, type PhoneNavId } from './sellerNav';
 
@@ -24,6 +25,7 @@ const List = styled.ul`
   list-style: none;
 `;
 const Tab = styled(Link)<{ $active: boolean }>`
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -41,6 +43,24 @@ const Tab = styled(Link)<{ $active: boolean }>`
     outline-offset: -0.125rem;
   }
 `;
+// Plan 021: new orders not yet seen.
+const Dot = styled.span`
+  position: absolute;
+  top: 0.5rem;
+  left: calc(50% + 0.5rem);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.c.warn};
+`;
+const Hidden = styled.span`
+  position: absolute;
+  width: 0.0625rem;
+  height: 0.0625rem;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+`;
 const Item = styled.li`
   flex: 1;
   min-width: 0;
@@ -49,6 +69,7 @@ const Item = styled.li`
 /** Phone: Orders · Pickup & delivery · More. The current tab is marked by weight and colour. */
 export function PhoneBar({ activeId }: Readonly<{ activeId: PhoneNavId }>) {
   const { t } = useTranslation();
+  const unseenNew = useUnseenNewOrders();
   return (
     <Bar>
       <nav aria-label={t('sellerNav.phoneLabel')}>
@@ -62,6 +83,12 @@ export function PhoneBar({ activeId }: Readonly<{ activeId: PhoneNavId }>) {
               >
                 <Icon name={ICON[id]} />
                 {t(LABEL_KEY[id])}
+                {id === 'orders' && unseenNew > 0 ? (
+                  <>
+                    <Dot aria-hidden="true" />
+                    <Hidden>{t('sellerNav.newOrders')}</Hidden>
+                  </>
+                ) : null}
               </Tab>
             </Item>
           ))}

@@ -16,6 +16,7 @@ export const healthFixture: HealthResponse = {
   status: 'ok',
   time: '2026-10-07T10:00:00.000Z',
   devTools: true,
+  version: '1.0.0 · test',
 };
 
 /** A fixed clock: Wed 7 Oct 2026, before the cut-off. */

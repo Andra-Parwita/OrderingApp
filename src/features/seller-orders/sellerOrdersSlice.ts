@@ -63,9 +63,24 @@ export type ToastKind =
   | 'sampleFailed'
   // Plan 013 "Clear samples"; `name` carries the count.
   | 'samplesCleared'
-  | 'clearFailed';
-/** What just happened, for the toast; undo is null where no Undo exists; id restarts the 6 s timer. */
-export type ActionToast = { id: number; kind: ToastKind; name: string; undo: UndoAction | null };
+  | 'clearFailed'
+  // Plan 021 new customer orders; `name` is "Tom · V34-P42" or the count.
+  | 'newOrder'
+  | 'newOrders';
+/**
+ * What just happened, for the toast; undo is null where no Undo exists; id restarts the 6 s timer.
+ * `open` (plan 021) gives the toast an Open/Show button: an order code, or null for the list.
+ */
+export type ActionToast = {
+  id: number;
+  kind: ToastKind;
+  name: string;
+  undo: UndoAction | null;
+  open?: { code: string | null };
+};
+
+/** A new customer order, as much as the toast needs. */
+export type ArrivedOrder = { id: string; code: string; firstName: string };
 
 /** One-off messages for the toast. */
 export type Notice = 'nudged';
@@ -92,6 +107,10 @@ export type SellerOrdersState = {
   toast: ActionToast | null;
   /** Dev only: a sample-orders request is running (the button waits). */
   devSampling: boolean;
+  /** Plan 021: ids of new customer orders still highlighted (about 6 s). */
+  fresh: Array<string>;
+  /** Plan 021: new customer orders since the list was last viewed (the Orders dot, the tab title). */
+  unseenNew: number;
 };
 export type SellerOrdersRootState = { sellerOrders: SellerOrdersState };
 
@@ -108,6 +127,8 @@ const initialState: SellerOrdersState = {
   warned: null,
   toast: null,
   devSampling: false,
+  fresh: [],
+  unseenNew: 0,
 };
 
 let toastId = 0;
@@ -131,6 +152,18 @@ const sellerOrdersSlice = createSlice({
         return old && JSON.stringify(old) === JSON.stringify(order) ? old : order;
       });
       state.list = { status: 'ready', live: 'ok' };
+    },
+    /** Plan 021: a reload found customer orders that were not there before. */
+    newOrdersArrived(state, action: PayloadAction<{ orders: Array<ArrivedOrder> }>) {
+      state.fresh.push(...action.payload.orders.map((order) => order.id));
+      state.unseenNew += action.payload.orders.length;
+    },
+    freshExpired(state, action: PayloadAction<{ ids: Array<string> }>) {
+      state.fresh = state.fresh.filter((id) => !action.payload.ids.includes(id));
+    },
+    /** The list was on screen (and the page visible): the dot and the tab count go. */
+    newOrdersViewed(state) {
+      state.unseenNew = 0;
     },
     ordersFailed(state) {
       state.list =
@@ -289,6 +322,9 @@ export const {
   refreshRequested,
   ordersLoaded,
   ordersFailed,
+  newOrdersArrived,
+  freshExpired,
+  newOrdersViewed,
   weekLoaded,
   statusChangeRequested,
   paidChangeRequested,

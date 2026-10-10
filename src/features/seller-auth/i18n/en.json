@@ -9,7 +9,10 @@
     "setupExpired": "Your setup timed out. Start again with a new key.",
     "generic": "Something went wrong. Try again.",
     "passkeyCancelled": "The passkey prompt was closed. Try again, or use a password.",
-    "passkeyFailed": "This device could not use a passkey. Try again, or use a password."
+    "passkeyFailed": "This device could not use a passkey. Try again, or use a password.",
+    "passwordExists": "This account already has a password. Use your password to sign in.",
+    "passkeyExists": "This device already has a passkey for this account. Sign in with it instead.",
+    "wrongPasskey": "That passkey belongs to a different account. Pick the passkey for this kitchen."
   },
   "deviceName": {
     "label": "Name of this device",
@@ -47,7 +50,16 @@
     "working": "Setting up…",
     "passwordTitle": "Set a password",
     "passwordText": "For devices without face or fingerprint.",
-    "unavailable": "Face or fingerprint does not work on this web address (it is an IP address). Set a password instead."
+    "unavailable": "Face or fingerprint does not work on this web address (it is an IP address). Set a password instead.",
+    "existingTitle": "Welcome back",
+    "existingTitleName": "Welcome back, {{name}}",
+    "existingChoose": "This account already has a way to sign in. Use it on this device.",
+    "signInTitle": "Sign in with face or fingerprint",
+    "signInText": "Use the passkey this account already has.",
+    "addTitle": "Add a new passkey",
+    "addText": "Make another one for this device.",
+    "existingPasswordTitle": "Use your password",
+    "existingPasswordText": "The password this account already has."
   },
   "password": {
     "title": "Set a password",

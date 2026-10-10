@@ -34,6 +34,8 @@ const STATUS: Record<ApiErrorCode, number> = {
   locked_out: 429,
   slug_taken: 409,
   admin_exists: 409,
+  password_exists: 409,
+  passkey_exists: 409,
   bad_origin: 403,
 };
 

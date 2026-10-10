@@ -1,0 +1,16 @@
+{
+  "button": "Pindai",
+  "buttonLabel": "Pindai kode QR pelanggan",
+  "title": "Pindai kode QR pelanggan",
+  "aim": "Arahkan kamera ke kode QR di halaman pesanan pelanggan.",
+  "cancel": "Batal",
+  "starting": "Menyalakan kamera…",
+  "torchOn": "Nyalakan lampu",
+  "torchOff": "Matikan lampu",
+  "denied": "Kamera diblokir atau tidak tersedia. Izinkan akses kamera di browser, atau ketik kodenya.",
+  "typeCode": "Ketik kodenya",
+  "hint": "Kode tulisan tangan? Ketuk kotak cari, lalu Pindai Teks.",
+  "notOrderCode": "Kode QR itu bukan kode pesanan.",
+  "notFound": "Tidak ada pesanan {{code}} di daftar ini.",
+  "cancelled": "Pesanan {{code}} dibatalkan."
+}

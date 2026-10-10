@@ -230,9 +230,18 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
           account.seller_id,
         )
       : null;
+    // Plan 025: a setup session says what login the account already has (booleans only), so the
+    // client can offer it instead of making a second one.
+    const hasPasskey = setup
+      ? (await db.first(
+          'SELECT 1 AS hit FROM devices WHERE account_id = ? AND credential_public_key IS NOT NULL LIMIT 1',
+          account.id,
+        )) !== null
+      : false;
     return {
       role: account.role,
       stage: setup ? 'setup' : 'full',
+      ...(setup ? { hasPassword: account.password_hash !== null, hasPasskey } : {}),
       ...(row ? { sellerId: row.id, slug: row.slug, sellerName: row.name } : {}),
       ...(row?.demo === 1 ? { demo: true as const } : {}),
       ...(account.chef_id ? { chefId: account.chef_id } : {}),
@@ -608,7 +617,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       if (request.kind === 'password') {
         if (account.role === 'admin') return fail('invalid_request', 'The admin uses a passkey');
         if (session.via === 'code' && account.password_hash !== null) {
-          return fail('invalid_request', 'This account already has a password');
+          return fail('password_exists', 'This account already has a password');
         }
         const salt = crypto.getRandomValues(new Uint8Array(16));
         statements.push(
@@ -627,7 +636,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
           'SELECT 1 AS hit FROM devices WHERE credential_id = ?',
           passkey.credentialId,
         );
-        if (taken) return fail('invalid_request', 'This passkey is already registered');
+        if (taken) return fail('passkey_exists', 'This passkey is already registered');
       }
       const deviceId = newDeviceId();
       const full = await newDeviceSession(account, deviceId);

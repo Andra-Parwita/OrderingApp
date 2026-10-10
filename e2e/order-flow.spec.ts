@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { orderRow, searchBox } from './sellerHelpers';
+import { orderRow, searchFor } from './sellerHelpers';
 
 function watchConsole(page: Page): Array<string> {
   const errors: Array<string> = [];
@@ -55,7 +55,7 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
     const sellerErrors = watchConsole(sellerPage);
     await sellerPage.goto('/seller');
     await expect(sellerPage.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
-    await searchBox(sellerPage).fill(firstName);
+    await searchFor(sellerPage, firstName);
     await expect(sellerPage).toHaveURL(/\/seller\?q=Flow-/);
     const row = orderRow(sellerPage, new RegExp(firstName));
     await expect(row).toBeVisible();

@@ -5,7 +5,7 @@
 import { SoftAuthenticator } from './softAuthenticator';
 
 let soft: SoftAuthenticator | undefined;
-let next: 'ok' | 'cancel' | 'fail' = 'ok';
+let next: 'ok' | 'cancel' | 'fail' | 'exists' = 'ok';
 let supported = true;
 
 const authenticator = (): SoftAuthenticator =>
@@ -16,7 +16,13 @@ function guard(): void {
   const kind = next;
   next = 'ok';
   const failure = new Error(kind === 'cancel' ? 'The prompt was closed' : 'Cannot use a passkey');
-  failure.name = kind === 'cancel' ? 'NotAllowedError' : 'InvalidStateError';
+  // `exists`: the browser refuses to make a second passkey for the account (plan 025).
+  failure.name =
+    kind === 'cancel'
+      ? 'NotAllowedError'
+      : kind === 'exists'
+        ? 'InvalidStateError'
+        : 'NotSupportedError';
   throw failure;
 }
 
@@ -28,7 +34,7 @@ export const browserPasskeys = {
     supported = true;
   },
   /** The next prompt is closed by the person (`cancel`) or fails (`fail`). */
-  failNext(kind: 'cancel' | 'fail'): void {
+  failNext(kind: 'cancel' | 'fail' | 'exists'): void {
     next = kind;
   },
   setSupported(value: boolean): void {

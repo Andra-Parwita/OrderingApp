@@ -1,5 +1,6 @@
 {
   "loading": "Loading…",
+  "version": "Version {{version}}",
   "retry": "Try again",
   "error": {
     "generic": "Something went wrong. Try again.",

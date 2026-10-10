@@ -12,11 +12,13 @@ import { SELLER_NS } from './i18n/register';
 import type { StatusFilter } from './orderStatus';
 import {
   selectDevSampling,
+  selectFresh,
   selectOrders,
+  selectUnseenNew,
   visibleOrders,
   type ListToggles,
 } from './sellerOrdersSelectors';
-import { pollingStarted, pollingStopped } from './sellerOrdersSlice';
+import { newOrdersViewed, pollingStarted, pollingStopped } from './sellerOrdersSlice';
 
 // Pieces the phone list (OrdersScreen) and the desktop table (OrdersTableScreen) both use.
 
@@ -40,6 +42,27 @@ export function useOrdersPolling(): void {
       dispatch(pollingStopped());
     };
   }, [dispatch]);
+}
+
+/** Plan 021: the list is on screen and the page is visible, so new orders count as seen. */
+export function useNewOrdersViewed(): void {
+  const dispatch = useDispatch();
+  const unseen = useSelector(selectUnseenNew);
+  useEffect(() => {
+    if (unseen === 0) return undefined;
+    const check = () => {
+      if (!document.hidden) dispatch(newOrdersViewed());
+    };
+    check();
+    document.addEventListener('visibilitychange', check);
+    return () => document.removeEventListener('visibilitychange', check);
+  }, [unseen, dispatch]);
+}
+
+/** The new-order highlight: ids as a set, for rows. */
+export function useFreshIds(): ReadonlySet<string> {
+  const fresh = useSelector(selectFresh);
+  return useMemo(() => new Set(fresh), [fresh]);
 }
 
 const Chip = styled.button<{ $pressed: boolean }>`

@@ -5,6 +5,7 @@ import { styled } from 'styled-components';
 import { formatDay, formatDayTime } from '../../../shared/dates';
 import { Button, BottomSheet, EmptyState, Icon, SheetRow } from '../../ui';
 import { LiveDot } from '../../components/LiveDot';
+import { ScanEntry } from '../../components/scan';
 import { BannerToggle } from './BannerToggle';
 import { DishesSlideOver, useSoldTotal } from './DishesPanel';
 import { FeedbackHost } from './FeedbackHost';
@@ -20,7 +21,14 @@ import { homeKindOf } from './homeState';
 import { STATUS_FILTERS, type StatusFilter } from './orderStatus';
 import { useLang } from './orderText';
 import type { OrdersScreenProps } from './OrdersScreen';
-import { DevTools, useOrdersPolling, useShowDevTools, useVisibleOrders } from './ordersShared';
+import {
+  DevTools,
+  useFreshIds,
+  useNewOrdersViewed,
+  useOrdersPolling,
+  useShowDevTools,
+  useVisibleOrders,
+} from './ordersShared';
 import { ChevronDownIcon, SearchIcon } from './PhoneIcons';
 import { PhoneOrderRow } from './PhoneOrderRow';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
@@ -276,6 +284,8 @@ function PhoneOrdersContent({
   const [searching, setSearching] = useState(query !== '');
   const [showAll, setShowAll] = useState(false);
   useOrdersPolling();
+  useNewOrdersViewed();
+  const fresh = useFreshIds();
   useEarlierMenus();
   const showDev = useShowDevTools();
 
@@ -394,7 +404,12 @@ function PhoneOrdersContent({
         {list.status === 'ready' ? (
           <Rows>
             {visible.map((order) => (
-              <PhoneOrderRow key={order.id} order={order} onOpen={onOpenOrder} />
+              <PhoneOrderRow
+                key={order.id}
+                order={order}
+                isNew={fresh.has(order.id)}
+                onOpen={onOpenOrder}
+              />
             ))}
           </Rows>
         ) : null}
@@ -437,6 +452,14 @@ function PhoneOrdersContent({
             {live ? <LiveDot fetchFailed={fetchFailed} /> : null}
           </TitleGroup>
           <Actions>
+            {live ? (
+              <ScanEntry
+                compact
+                find={(code) => orders.find((o) => o.code === code)}
+                onOpen={onOpenOrder}
+                onTypeCode={() => setSearching(true)}
+              />
+            ) : null}
             {live && onNewOrder ? (
               <Button variant="primary" onClick={onNewOrder}>
                 <Icon name="plus" />

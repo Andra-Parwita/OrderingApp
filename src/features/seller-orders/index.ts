@@ -9,3 +9,4 @@ export { sellerOrdersSaga } from './sellerOrdersSaga';
 export { sellerOrdersReducer, type SellerOrdersRootState } from './sellerOrdersSlice';
 export { parseStatusFilter, type StatusFilter } from './orderStatus';
 export { selectOrdersCount } from './sellerOrdersSelectors';
+export { useNewOrderTitle, useUnseenNewOrders } from './newOrderBadge';

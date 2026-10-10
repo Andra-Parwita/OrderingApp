@@ -173,7 +173,9 @@ describe('AppRoutes', () => {
   it('keeps the table beside an open order on a desktop, with the filter in the URL', async () => {
     wide = true;
     renderAt('/seller/orders/K7F2QX?status=ready');
-    expect(await screen.findByLabelText('Name or code', {}, { timeout: 5000 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Search orders' }, { timeout: 5000 }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Ready/ })).toHaveAttribute('aria-pressed', 'true');
     // The order opens in a panel beside the list, not over it.
     expect(screen.getByRole('complementary', { name: 'Order K7F2QX' })).toBeInTheDocument();
@@ -183,7 +185,7 @@ describe('AppRoutes', () => {
   it('has one main landmark and one language switch on the desktop table', async () => {
     wide = true;
     renderAt('/seller/orders/K7F2QX');
-    await screen.findByLabelText('Name or code', {}, { timeout: 5000 });
+    await screen.findByRole('button', { name: 'Search orders' }, { timeout: 5000 });
     expect(screen.getAllByRole('main')).toHaveLength(1);
     expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
     expect(screen.getByRole('complementary', { name: 'Order K7F2QX' })).toBeInTheDocument();
@@ -227,19 +229,22 @@ describe('AppRoutes', () => {
     wide = true;
     renderAt('/seller?status=ready&q=rina');
     expect(await screen.findByLabelText('Name or code', {}, { timeout: 5000 })).toHaveValue('rina');
+    // The search is open, so it stands in for the tabs; closing it keeps the status.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close search' })[0] as HTMLElement);
     expect(screen.getByRole('button', { name: /^Ready/ })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('writes the seller filter and search to the URL, dropping the defaults', async () => {
     wide = true;
     renderAt('/seller');
-    await screen.findByLabelText('Name or code', {}, { timeout: 5000 });
-    fireEvent.click(screen.getByRole('button', { name: /^Done/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Done/ }, { timeout: 5000 }));
     expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done');
+    fireEvent.click(screen.getByRole('button', { name: 'Search orders' }));
     fireEvent.change(screen.getByLabelText('Name or code'), { target: { value: 'tom' } });
     expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done&q=tom');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close search' })[0] as HTMLElement);
+    expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done');
     fireEvent.click(screen.getByRole('button', { name: /^All/ }));
-    fireEvent.change(screen.getByLabelText('Name or code'), { target: { value: '' } });
     expect(screen.getByTestId('where')).toHaveTextContent(/^\/seller$/);
   });
 

@@ -10,6 +10,7 @@ import {
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchPreferences } from '../../api/menus';
 import { updatePreferences } from '../../api/settings';
+import { setSoundPreference, useSoundPreference } from '../../components/chime';
 import { Button, Segmented, TextField, type SegmentedOption } from '../../ui';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
 import {
@@ -283,6 +284,11 @@ export function AppearancePane({ onToast }: Readonly<{ onToast: () => void }>) {
     { value: 'dark', label: t('look.dark') },
     { value: 'auto', label: t('look.auto') },
   ];
+  const sound = useSoundPreference();
+  const soundOptions: ReadonlyArray<SegmentedOption<'on' | 'off'>> = [
+    { value: 'on', label: t('look.soundOn') },
+    { value: 'off', label: t('look.soundOff') },
+  ];
   // The picker's swatches follow the mode in use; "auto" reads the device.
   const dark =
     preference === 'dark' ||
@@ -315,6 +321,18 @@ export function AppearancePane({ onToast }: Readonly<{ onToast: () => void }>) {
           />
         </div>
         <Muted>{t('look.modeHelper')}</Muted>
+      </PaneGroup>
+      <PaneGroup>
+        <GroupTitle>{t('look.soundTitle')}</GroupTitle>
+        <div>
+          <Segmented
+            options={soundOptions}
+            value={sound ? 'on' : 'off'}
+            onChange={(next) => setSoundPreference(next === 'on')}
+            label={t('look.soundTitle')}
+          />
+        </div>
+        <Muted>{t('look.soundHelper')}</Muted>
       </PaneGroup>
       <PaneGroup>
         <GroupTitle>{t('look.themeTitle')}</GroupTitle>

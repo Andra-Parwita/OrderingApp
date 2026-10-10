@@ -1,6 +1,7 @@
 // The Worker's request handling (stage 8.4a, D-047), apart from the Durable Object export so unit
 // tests can run it: the Origin check, the health answer, seller images, then the API on D1. The
 // repository is built from the bindings once per request; nothing is kept between requests.
+import { appVersion } from '../../shared/buildInfo';
 import type { HealthResponse } from '../../shared/health';
 import { checkOrigin } from '../auth/origin';
 import { createD1Repository } from '../db';
@@ -53,7 +54,12 @@ export async function handleWorkerRequest(
   const { pathname } = new URL(request.url);
   if (pathname === '/api/health' && request.method === 'GET') {
     // `devTools` lets the app ask the server instead of guessing from its own build.
-    const body: HealthResponse = { status: 'ok', time: new Date().toISOString(), devTools };
+    const body: HealthResponse = {
+      status: 'ok',
+      time: new Date().toISOString(),
+      devTools,
+      version: appVersion(),
+    };
     return Response.json(body);
   }
   // Seller images stream from R2: public, content-hashed, cached for a year (stage 8.3).

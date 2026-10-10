@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
 import { Toast, UndoToast, WarningDialog } from '../../ui';
 import { SELLER_NS } from './i18n/register';
 import { selectNotice, selectToast, selectWarned } from './sellerOrdersSelectors';
@@ -22,6 +23,7 @@ import {
 export function FeedbackHost() {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const toast = useSelector(selectToast);
   const warned = useSelector(selectWarned);
   const notice = useSelector(selectNotice);
@@ -31,6 +33,12 @@ export function FeedbackHost() {
     dispatch(noticeCleared());
   }, [dispatch]);
   const undo = useCallback(() => {
+    // Plan 021: a new-order toast's button opens the order, or shows the list.
+    if (toast?.open) {
+      dispatch(toastCleared());
+      void navigate(toast.open.code ? `/seller/orders/${toast.open.code}` : '/seller');
+      return;
+    }
     const action = toast?.undo;
     if (!action) return;
     dispatch(toastCleared());
@@ -41,18 +49,20 @@ export function FeedbackHost() {
     } else {
       dispatch(paidChangeRequested({ code: action.code, paid: action.paid, undo: true }));
     }
-  }, [dispatch, toast]);
+  }, [dispatch, navigate, toast]);
   const dismissWarning = useCallback(() => dispatch(warningDismissed()), [dispatch]);
   const goAhead = useCallback(() => dispatch(warningConfirmed()), [dispatch]);
 
   const toastText = toast ? t(`toast.${toast.kind}`, { name: toast.name }) : null;
-  const plain = toast && !toast.undo ? toastText : notice === 'nudged' ? t('detail.nudged') : null;
+  const hasButton = Boolean(toast?.undo ?? toast?.open);
+  const plain = toast && !hasButton ? toastText : notice === 'nudged' ? t('detail.nudged') : null;
   const code = warned?.warning.code;
   return (
     <>
       <UndoToast
         key={toast?.id ?? 0}
-        message={toast?.undo ? toastText : null}
+        message={hasButton ? toastText : null}
+        actionLabel={toast?.open ? t(toast.open.code ? 'toast.open' : 'toast.show') : undefined}
         onUndo={undo}
         onDismiss={clear}
       />

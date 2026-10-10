@@ -16,12 +16,28 @@ import { openOrderLink } from './whatsappLink';
 // pickup or delivery, Paid, and a round WhatsApp button. The row opens the order; the button opens
 // WhatsApp with the message written, to the saved number if this phone has one (D-059).
 
-const Row = styled.div`
+const Row = styled.div<{ $fresh: boolean }>`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  background: ${({ theme, $fresh }) => ($fresh ? theme.c.tint : 'transparent')};
+  transition: background-color 1s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+// Plan 021: the highlight is never colour alone; this word goes with it.
+const NewTag = styled.span`
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.atext};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  color: ${({ theme }) => theme.c.atext};
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
 `;
 const Open = styled.button`
   display: flex;
@@ -106,9 +122,18 @@ const Send = styled.button`
   }
 `;
 
-export type PhoneOrderRowProps = Readonly<{ order: Order; onOpen: (code: string) => void }>;
+export type PhoneOrderRowProps = Readonly<{
+  order: Order;
+  /** Plan 021: a new customer order, highlighted for a few seconds. */
+  isNew?: boolean;
+  onOpen: (code: string) => void;
+}>;
 
-export const PhoneOrderRow = memo(function PhoneOrderRow({ order, onOpen }: PhoneOrderRowProps) {
+export const PhoneOrderRow = memo(function PhoneOrderRow({
+  order,
+  isNew = false,
+  onOpen,
+}: PhoneOrderRowProps) {
   const { t, i18n } = useTranslation(SELLER_NS);
   const lang = useLang();
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
@@ -117,10 +142,11 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({ order, onOpen }: Phon
     [i18n, order],
   );
   return (
-    <Row data-row-id={order.code}>
+    <Row data-row-id={order.code} $fresh={isNew}>
       <Open type="button" onClick={open}>
         <Top>
           <Name>{order.firstName}</Name>
+          {isNew ? <NewTag>{t('live.new')}</NewTag> : null}
           <Code>{formatOrderCode(order.code)}</Code>
           <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
         </Top>

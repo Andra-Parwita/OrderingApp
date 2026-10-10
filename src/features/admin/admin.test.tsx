@@ -207,6 +207,7 @@ describe('AdminHomeScreen', () => {
     expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();
     expect(screen.queryByText(/nasi campur|lemper/i)).not.toBeInTheDocument();
     expect(await screen.findByText(/this device/)).toBeInTheDocument();
+    expect(screen.getByText('Version dev')).toBeInTheDocument();
   });
 
   it('shows why a link cannot be used: bad characters, reserved, taken', async () => {

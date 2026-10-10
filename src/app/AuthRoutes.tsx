@@ -50,7 +50,9 @@ export function SellerSetupRoute() {
   const [step, setStep] = useState<SetupStep>('key');
   // "Welcome, <first name>": only a chef's invite carries a person's name.
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
+  const [setup, setSetup] = useState<Me | undefined>(undefined);
   const toPasskey = useCallback((me: Me) => {
+    setSetup(me);
     setFirstName(me.chefName?.trim().split(/\s+/)[0] || undefined);
     setStep('passkey');
   }, []);
@@ -77,12 +79,13 @@ export function SellerSetupRoute() {
       {step === 'passkey' ? (
         <PasskeyHelpScreen
           name={firstName}
+          setup={setup}
           onDone={done}
           onUsePassword={() => setStep('password')}
         />
       ) : null}
       {step === 'password' ? (
-        <PasswordSetupScreen onDone={done} onUsePasskey={() => setStep('passkey')} />
+        <PasswordSetupScreen setup={setup} onDone={done} onUsePasskey={() => setStep('passkey')} />
       ) : null}
     </SignInFrame>
   );

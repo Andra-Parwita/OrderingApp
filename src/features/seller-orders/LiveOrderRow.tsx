@@ -13,7 +13,7 @@ import { itemsSummary, orderTotalCents, useLang } from './orderText';
 // One order in the live list (handoff, Home): code, first name, Changed flag, small icons, total,
 // items, pickup or delivery, status, Paid. The whole row is one 56 px+ button.
 
-const Row = styled.button<{ $selected: boolean }>`
+const Row = styled.button<{ $selected: boolean; $fresh: boolean }>`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.125rem ${({ theme }) => theme.spacing.lg};
@@ -23,11 +23,17 @@ const Row = styled.button<{ $selected: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadTablet}px;
   border: 0;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  background: ${({ theme, $selected }) => ($selected ? theme.c.tint : 'transparent')};
+  background: ${({ theme, $selected, $fresh }) =>
+    $selected || $fresh ? theme.c.tint : 'transparent'};
   color: ${({ theme }) => theme.c.text};
   font: inherit;
   text-align: start;
   cursor: pointer;
+  transition: background-color 1s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 
   &:hover {
     background: ${({ theme, $selected }) => ($selected ? theme.c.tint : theme.c.surf2)};
@@ -56,6 +62,16 @@ const Name = styled.span`
   font-size: 0.9375rem;
   font-weight: 600;
   text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+// Plan 021: the highlight is never colour alone; this word goes with it.
+const NewTag = styled.span`
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.atext};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  color: ${({ theme }) => theme.c.atext};
+  font-size: 0.75rem;
+  font-weight: 700;
   white-space: nowrap;
 `;
 const Flag = styled.span`
@@ -130,12 +146,15 @@ function SmallIcon({ icon, label }: Readonly<{ icon: IconName; label: string }>)
 export type LiveOrderRowProps = Readonly<{
   order: Order;
   selected: boolean;
+  /** Plan 021: a new customer order, highlighted for a few seconds. */
+  isNew?: boolean;
   onOpen: (code: string) => void;
 }>;
 
 export const LiveOrderRow = memo(function LiveOrderRow({
   order,
   selected,
+  isNew = false,
   onOpen,
 }: LiveOrderRowProps) {
   const { t } = useTranslation(SELLER_NS);
@@ -146,6 +165,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
     <Row
       type="button"
       $selected={selected}
+      $fresh={isNew}
       aria-current={selected ? 'true' : undefined}
       data-row-id={order.code}
       onClick={open}
@@ -153,6 +173,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
       <Line>
         <Code>{formatOrderCode(order.code)}</Code>
         <Name>{order.firstName}</Name>
+        {isNew ? <NewTag>{t('live.new')}</NewTag> : null}
         {order.changed ? (
           <Flag>
             <Icon name="pencil" />

@@ -7,6 +7,8 @@ import { parseOrderCode } from '../../../shared/orderCode';
 import type { MenuView } from '../../../shared/menusContract';
 import { Button, EmptyState, Icon, ListWithPanel, Menu } from '../../ui';
 import { LiveDot } from '../../components/LiveDot';
+import { ScanEntry } from '../../components/scan';
+import { SearchIcon } from './PhoneIcons';
 import { BannerToggle } from './BannerToggle';
 import { DishesSlideOver, useSoldTotal } from './DishesPanel';
 import { FeedbackHost } from './FeedbackHost';
@@ -25,7 +27,14 @@ import { OrderPanelActions, OrderPanelBody } from './OrderPanelBody';
 import { homeKindOf } from './homeState';
 import { STATUS_FILTERS, type StatusFilter } from './orderStatus';
 import { useLang } from './orderText';
-import { DevTools, useOrdersPolling, useShowDevTools, useVisibleOrders } from './ordersShared';
+import {
+  DevTools,
+  useFreshIds,
+  useNewOrdersViewed,
+  useOrdersPolling,
+  useShowDevTools,
+  useVisibleOrders,
+} from './ordersShared';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import {
   selectCounts,
@@ -96,6 +105,12 @@ const Head = styled.header`
       display: none;
     }
   }
+  /* Plan 022: narrower still (820 px with an order open), the switch keeps only its track. */
+  @container (max-width: 44rem) {
+    button[role='switch'] > span {
+      display: none;
+    }
+  }
 `;
 const TitleLine = styled.div`
   display: flex;
@@ -117,13 +132,6 @@ const Tools = styled.div`
 `;
 const Filler = styled.div`
   flex: 1;
-`;
-const SearchGroup = styled.div`
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  min-width: 0;
 `;
 const NoLive = styled.span`
   display: inline-flex;
@@ -227,6 +235,58 @@ const Toggle = styled.button<{ $on: boolean }>`
     font-variant-numeric: tabular-nums;
   }
 `;
+const TabToggle = styled(Toggle)`
+  flex: none;
+  align-self: center;
+`;
+const Divider = styled.span`
+  flex: none;
+  align-self: center;
+  width: ${({ theme }) => theme.border.hairline};
+  height: 1.5rem;
+  background: ${({ theme }) => theme.c.line};
+`;
+// Plan 022: the search field takes the tabs' place, full width, with a close button.
+const SearchBar = styled.div`
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: 0 ${({ theme }) => theme.size.pagePadTablet}px ${({ theme }) => theme.spacing.sm};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+`;
+const IconButton = styled.button`
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: ${({ theme }) => theme.size.tap}px;
+  height: ${({ theme }) => theme.size.tap}px;
+  padding: 0;
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: transparent;
+  color: ${({ theme }) => theme.c.text};
+  cursor: pointer;
+
+  &[aria-expanded='true'] {
+    background: ${({ theme }) => theme.c.surf2};
+  }
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  i {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: ${({ theme }) => theme.c.fill};
+  }
+`;
 const Tabs = styled.div`
   display: flex;
   flex: none;
@@ -295,42 +355,65 @@ function TakingOrders({ view }: Readonly<{ view: MenuView }>) {
   const on = view.menu.takingOrders;
   const flip = useCallback(() => dispatch(takingOrdersRequested({ value: !on })), [dispatch, on]);
   return (
-    <Switch type="button" role="switch" aria-checked={on} $on={on} onClick={flip}>
+    <Switch
+      type="button"
+      role="switch"
+      aria-label={on ? t('home.takingOrders') : t('home.paused')}
+      aria-checked={on}
+      $on={on}
+      onClick={flip}
+    >
       <i aria-hidden="true" />
-      {on ? t('home.takingOrders') : t('home.paused')}
+      <span>{on ? t('home.takingOrders') : t('home.paused')}</span>
     </Switch>
   );
 }
 
-/** Search plus the Changed and Not paid toggles. In the header on a live menu. */
-function SearchAndToggles({
-  query,
-  onQueryChange,
-  toggles = { changed: false, unpaid: false },
-  onToggle,
-}: Pick<OrdersTableScreenProps, 'query' | 'onQueryChange' | 'toggles' | 'onToggle'>) {
+type SearchProps = Pick<OrdersTableScreenProps, 'query' | 'onQueryChange'> &
+  Readonly<{ autoFocus?: boolean; onEscape?: () => void }>;
+
+function SearchField({ query, onQueryChange, autoFocus, onEscape }: SearchProps) {
   const { t } = useTranslation(SELLER_NS);
-  const counts = useSelector(selectCounts);
-  const unpaid = useSelector(selectUnpaidCount);
   const onQuery = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => onQueryChange(event.target.value),
     [onQueryChange],
   );
   return (
+    <Search>
+      <Icon name="list" />
+      <input
+        type="search"
+        value={query}
+        onChange={onQuery}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && onEscape) {
+            event.preventDefault();
+            onEscape();
+          }
+        }}
+        placeholder={t('live.search')}
+        aria-label={t('live.search')}
+        autoComplete="off"
+        enterKeyHint="search"
+        autoFocus={autoFocus}
+      />
+    </Search>
+  );
+}
+
+/** The Changed and Not paid toggles (aria-pressed). */
+function Toggles({
+  toggles = { changed: false, unpaid: false },
+  onToggle,
+  tab = false,
+}: Pick<OrdersTableScreenProps, 'toggles' | 'onToggle'> & Readonly<{ tab?: boolean }>) {
+  const { t } = useTranslation(SELLER_NS);
+  const counts = useSelector(selectCounts);
+  const unpaid = useSelector(selectUnpaidCount);
+  const Chip = tab ? TabToggle : Toggle;
+  return (
     <>
-      <Search>
-        <Icon name="list" />
-        <input
-          type="search"
-          value={query}
-          onChange={onQuery}
-          placeholder={t('live.search')}
-          aria-label={t('live.search')}
-          autoComplete="off"
-          enterKeyHint="search"
-        />
-      </Search>
-      <Toggle
+      <Chip
         type="button"
         aria-pressed={toggles.changed}
         aria-label={`${t('live.changed')} ${counts.changed}`}
@@ -340,8 +423,8 @@ function SearchAndToggles({
         <Icon name="pencil" />
         <b>{t('live.changed')}</b>
         <span>{counts.changed}</span>
-      </Toggle>
-      <Toggle
+      </Chip>
+      <Chip
         type="button"
         aria-pressed={toggles.unpaid}
         aria-label={`${t('live.notPaid')} ${unpaid}`}
@@ -351,12 +434,13 @@ function SearchAndToggles({
         <Icon name="coin" />
         <b>{t('live.notPaid')}</b>
         <span>{unpaid}</span>
-      </Toggle>
+      </Chip>
     </>
   );
 }
 
-type BoardProps = OrdersTableScreenProps & Readonly<{ readOnly: boolean }>;
+type BoardProps = OrdersTableScreenProps &
+  Readonly<{ readOnly: boolean; searching?: boolean; onEscape?: () => void }>;
 
 /** The orders list with its toggles and tabs, and the order beside it. */
 function OrdersBoard({
@@ -371,12 +455,15 @@ function OrdersBoard({
   onCloseOrder,
   onShare,
   selectedCode,
+  searching = false,
+  onEscape,
 }: BoardProps) {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
   const list = useSelector(selectList);
   const counts = useSelector(selectCounts);
   const visible = useVisibleOrders(filter, query, toggles);
+  const fresh = useFreshIds();
   const selected = useSelector((state: SellerOrdersRootState) =>
     selectedCode ? selectOrderByCode(state, selectedCode) : undefined,
   );
@@ -402,29 +489,40 @@ function OrdersBoard({
     <>
       {readOnly ? (
         <Filters role="search">
-          <SearchAndToggles
-            query={query}
-            onQueryChange={onQueryChange}
-            toggles={toggles}
-            onToggle={onToggle}
-          />
+          <SearchField query={query} onQueryChange={onQueryChange} />
+          <Toggles toggles={toggles} onToggle={onToggle} />
         </Filters>
       ) : null}
-      <Tabs role="group" aria-label={t('live.status')}>
-        {TAB_FILTERS.map((id: StatusFilter) => (
-          <Tab
-            key={id}
-            type="button"
-            aria-pressed={id === filter}
-            $on={id === filter}
-            ref={id === filter ? showTab : undefined}
-            onClick={() => onFilterChange(id)}
-          >
-            {t(`filter.${id}`)}
-            <span>{counts[id]}</span>
-          </Tab>
-        ))}
-      </Tabs>
+      {searching ? (
+        <SearchBar role="search">
+          <SearchField query={query} onQueryChange={onQueryChange} autoFocus onEscape={onEscape} />
+          <IconButton type="button" aria-label={t('phone.searchClose')} onClick={onEscape}>
+            <Icon name="x" />
+          </IconButton>
+        </SearchBar>
+      ) : (
+        <Tabs role="group" aria-label={t('live.status')}>
+          {TAB_FILTERS.map((id: StatusFilter) => (
+            <Tab
+              key={id}
+              type="button"
+              aria-pressed={id === filter}
+              $on={id === filter}
+              ref={id === filter ? showTab : undefined}
+              onClick={() => onFilterChange(id)}
+            >
+              {t(`filter.${id}`)}
+              <span>{counts[id]}</span>
+            </Tab>
+          ))}
+          {readOnly ? null : (
+            <>
+              <Divider aria-hidden="true" />
+              <Toggles tab toggles={toggles} onToggle={onToggle} />
+            </>
+          )}
+        </Tabs>
+      )}
     </>
   );
   // The scrolling part: the orders.
@@ -461,6 +559,7 @@ function OrdersBoard({
               key={order.id}
               order={order}
               selected={order.code === raw}
+              isNew={fresh.has(order.id)}
               onOpen={onOpenOrder}
             />
           ))
@@ -502,8 +601,15 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
   const orders = useSelector(selectOrders);
   const [showAll, setShowAll] = useState(false);
   const [dishesOpen, setDishesOpen] = useState(false);
+  const [searching, setSearching] = useState(props.query !== '');
+  const { onQueryChange } = props;
+  const closeSearch = useCallback(() => {
+    onQueryChange('');
+    setSearching(false);
+  }, [onQueryChange]);
   const soldTotal = useSoldTotal();
   useOrdersPolling();
+  useNewOrdersViewed();
   useEarlierMenus();
   const showDev = useShowDevTools();
   const retryCurrent = useCallback(() => dispatch(currentRequested()), [dispatch]);
@@ -537,7 +643,7 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
       </>
     );
   } else {
-    body = <OrdersBoard {...props} readOnly={false} />;
+    body = <OrdersBoard {...props} readOnly={false} searching={searching} onEscape={closeSearch} />;
   }
 
   return (
@@ -558,26 +664,21 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
         </TitleLine>
         {live && view ? (
           <>
-            <SearchGroup role="search">
-              <SearchAndToggles
-                query={props.query}
-                onQueryChange={props.onQueryChange}
-                toggles={props.toggles}
-                onToggle={props.onToggle}
-              />
-            </SearchGroup>
+            <Filler />
             <Tools>
-              <Toggle
+              <IconButton
                 type="button"
-                $on={false}
-                aria-haspopup="dialog"
-                aria-label={`${t('dishes.title')} ${soldTotal}`}
-                onClick={() => setDishesOpen(true)}
+                aria-label={searching ? t('phone.searchClose') : t('phone.searchOpen')}
+                aria-expanded={searching}
+                onClick={searching ? closeSearch : () => setSearching(true)}
               >
-                <Icon name="pot" />
-                <b>{t('dishes.title')}</b>
-                <span>{soldTotal}</span>
-              </Toggle>
+                <SearchIcon />
+                {props.query ? <i aria-hidden="true" /> : null}
+              </IconButton>
+              <ScanEntry
+                find={(code) => orders.find((o) => o.code === code)}
+                onOpen={props.onOpenOrder}
+              />
               {props.onNewOrder ? (
                 <Button
                   variant="primary"
@@ -594,11 +695,16 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
                   date: formatDay(view.menu.cookingDate, lang),
                   cutoff: formatDayTime(view.menu.cutoffAt, lang),
                 })}
-                items={
-                  props.onShare
-                    ? [{ label: t('live.share'), icon: 'share', onSelect: props.onShare }]
-                    : []
-                }
+                items={[
+                  {
+                    label: `${t('dishes.title')} ${soldTotal}`,
+                    icon: 'pot',
+                    onSelect: () => setDishesOpen(true),
+                  },
+                  ...(props.onShare
+                    ? [{ label: t('live.share'), icon: 'share' as const, onSelect: props.onShare }]
+                    : []),
+                ]}
               />
             </Tools>
           </>

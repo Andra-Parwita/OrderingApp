@@ -27,6 +27,10 @@ export const Muted = styled.p`
   font-size: ${({ theme }) => theme.type.size.sm};
   color: ${({ theme }) => theme.c.muted};
 `;
+/** The app version, small and muted at the foot of Settings (plan 020). */
+export const Version = styled(Muted)`
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
 export const ErrorLine = styled.p`
   margin: 0;
   font-weight: ${({ theme }) => theme.type.weight.strong};

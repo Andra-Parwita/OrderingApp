@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { appVersion } from '../../../shared/buildInfo';
 import type { AdminSeller, ChefAccess, DeviceView } from '../../../shared/authContract';
 import type { Language } from '../../../shared/domain';
 import { formatDay, formatDayTime } from '../../../shared/dates';
@@ -460,6 +461,7 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
         </Section>
 
         <Muted>{t('home.privacy')}</Muted>
+        <Muted>{t('version', { version: appVersion() })}</Muted>
       </Page>
     </>
   );

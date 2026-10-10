@@ -5,6 +5,8 @@ import { styled } from 'styled-components';
 import type { KitchenSettings, Language } from '../../../shared/domain';
 import { formatCutoff } from '../../../shared/dates';
 import { POST_TEXT_MAX } from '../../../shared/limits';
+import { appVersion } from '../../../shared/buildInfo';
+import { Version } from './paneParts';
 import { Button, Segmented, TextArea, TextField, Toast, type SegmentedOption } from '../../ui';
 import { SETTINGS_NS } from './i18n/register';
 import { phoneIsValid, toDraft, toSettings, type Draft } from './settingsForm';
@@ -207,6 +209,7 @@ export function SettingsScreen({ children }: Readonly<{ children?: ReactNode }>)
         <SettingsForm key={version} settings={settings} cutoffAt={cutoffAt} lang={lang} />
       ) : null}
       {children}
+      <Version>{t('version', { version: appVersion() })}</Version>
       <Toast message={toast ? t('saved') : null} onDismiss={dismiss} />
     </Page>
   );

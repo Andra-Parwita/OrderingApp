@@ -40,6 +40,10 @@ export function failureMessage(t: TFunction, failure: ApiFailure): string {
       return t('errors.passkeyCancelled');
     case 'passkey_failed':
       return t('errors.passkeyFailed');
+    case 'password_exists':
+      return t('errors.passwordExists');
+    case 'passkey_exists':
+      return t('errors.passkeyExists');
     default:
       return t('errors.generic');
   }

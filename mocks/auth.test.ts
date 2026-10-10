@@ -556,7 +556,8 @@ describe('sign-in', () => {
         token: setup.token,
         body: { kind: 'password', password: 'another long password', deviceName: 'Tablet' },
       });
-      expect(pw.status).toBe(400);
+      expect(pw.status).toBe(409);
+      expect(errorOf(pw)?.error).toBe('password_exists');
       const passkey = await registerPasskey(setup.token, 'Tablet', new SoftAuthenticator(SITE));
       expect(passkey.me.stage).toBe('full');
       const devices = parseDevicesResponse((await call('GET', '/api/auth/devices', full)).body);
@@ -564,6 +565,80 @@ describe('sign-in', () => {
         'Kitchen phone',
         'Tablet',
       ]);
+    });
+  });
+
+  describe('add a device when the account already has a login (plan 025)', () => {
+    const flagsOf = (login: Login) => ({
+      hasPassword: login.me.hasPassword,
+      hasPasskey: login.me.hasPasskey,
+    });
+    const codeSetup = async (full: Login, deviceId: string) => {
+      const code = parseCodeResponse((await call('POST', '/api/auth/device-codes', full)).body);
+      return session(
+        await call('POST', '/api/auth/code', { body: { code: code?.code, deviceId } }),
+      );
+    };
+
+    it('tells a setup session whether the account has a password and a passkey', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      // Password only.
+      const viaCode = await codeSetup(full, 'tablet-0001-zzzz');
+      expect(flagsOf(viaCode)).toEqual({ hasPassword: true, hasPasskey: false });
+      const me = parseMeResponse((await call('GET', '/api/auth/me', viaCode)).body);
+      expect(me?.me).toMatchObject({ stage: 'setup', hasPassword: true, hasPasskey: false });
+      // Passkey too, after the tablet registers one.
+      await registerPasskey(viaCode.token, 'Tablet', new SoftAuthenticator(SITE));
+      expect(flagsOf(await codeSetup(full, 'tablet-0002-yyyy'))).toEqual({
+        hasPassword: true,
+        hasPasskey: true,
+      });
+      // Passkey only: the admin.
+      const admin = await adminSignedIn();
+      expect(flagsOf(await codeSetup(admin, 'laptop-0001-xxxx'))).toEqual({
+        hasPassword: false,
+        hasPasskey: true,
+      });
+      // Neither: a kitchen that was only invited (the invite key is redeemed, nothing registered).
+      const newInvite = key(await call('POST', `/api/admin/sellers/${B_ID}/invite-key`, admin));
+      const bare = session(
+        await call('POST', '/api/auth/invite', {
+          body: { key: newInvite.key, deviceId: 'bare-0001-wwww' },
+        }),
+      );
+      expect(flagsOf(bare)).toEqual({ hasPassword: false, hasPasskey: false });
+    });
+
+    it('a full session carries no flags', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      expect(flagsOf(full)).toEqual({ hasPassword: undefined, hasPasskey: undefined });
+    });
+
+    it('signs in with the existing passkey after a code, and only with a real check', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      const soft = new SoftAuthenticator(SITE);
+      await registerPasskey((await codeSetup(full, 'tablet-0001-zzzz')).token, 'Tablet', soft);
+      const setup = await codeSetup(full, 'tablet-0002-yyyy');
+      // The setup session alone is not a full session.
+      expect((await call('GET', '/api/seller/orders', setup)).status).toBe(401);
+      // A broken signature does not turn it into one, and counts as a failed try.
+      const forged = await passkeySignIn(soft, 'tablet-0002-yyyy', { breakSignature: true });
+      expect(errorOf(forged)?.error).toBe('invalid_credentials');
+      // The real passkey signs in through the normal check.
+      const ok = session(await passkeySignIn(soft, 'tablet-0002-yyyy'));
+      expect(ok.me.stage).toBe('full');
+    });
+
+    it('keeps the code rules: single use', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      const code = parseCodeResponse((await call('POST', '/api/auth/device-codes', full)).body);
+      await call('POST', '/api/auth/code', {
+        body: { code: code?.code, deviceId: 'tablet-0001-zzzz' },
+      });
+      const second = await call('POST', '/api/auth/code', {
+        body: { code: code?.code, deviceId: 'tablet-0002-yyyy' },
+      });
+      expect(errorOf(second)?.error).toBe('invalid_credentials');
     });
   });
 

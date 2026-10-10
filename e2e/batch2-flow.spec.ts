@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { orderRow, pageScrollWidth, sampleDay, searchBox, searchFor } from './sellerHelpers';
+import { orderRow, pageScrollWidth, sampleDay, searchFor } from './sellerHelpers';
 
 function watchConsole(page: Page): Array<string> {
   const errors: Array<string> = [];
@@ -103,7 +103,7 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
 async function expectTabsInsideList(page: Page, width: number) {
   const group = page.getByRole('group', { name: 'Order status' });
   const tabs = group.getByRole('button');
-  await expect(tabs).toHaveCount(6);
+  await expect(tabs).toHaveCount(8); // six statuses, then Changed and Not paid (plan 022)
   const pane = await page.getByRole('main').boundingBox();
   expect(pane, `list pane at ${width}`).not.toBeNull();
   for (let i = 0; i < 6; i += 1) {
@@ -159,7 +159,7 @@ test('seller desktop: list and panel, kitchen, empty state; tablet and phone lay
 
     // The list: a heading, search, the Changed / Not paid toggles and the status tabs.
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible();
-    await expect(searchBox(page)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Search orders' })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Changed \d+$/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /^Not paid \d+$/ })).toBeVisible();
     await expectTabsInsideList(page, 1280);
@@ -194,7 +194,10 @@ test('seller desktop: list and panel, kitchen, empty state; tablet and phone lay
 
     // 1024 px is still the tablet layout and nothing spills sideways.
     await page.setViewportSize({ width: 1024, height: 800 });
+    // The open search stands in for the tabs: close it (this clears it), check, search again.
+    await page.getByRole('button', { name: 'Close search' }).first().click();
     await expectTabsInsideList(page, 1024);
+    await searchFor(page, stamp);
     expect(await pageScrollWidth(page)).toBeLessThanOrEqual(1024);
     await rows.nth(0).click();
     await expect(panel).toBeVisible();
