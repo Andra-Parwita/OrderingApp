@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import { formatDay, formatDayTime } from '../../../shared/dates';
 import { parseOrderCode } from '../../../shared/orderCode';
@@ -12,13 +13,8 @@ import { SearchIcon } from './PhoneIcons';
 import { BannerToggle } from './BannerToggle';
 import { DishesSlideOver, useSoldTotal } from './DishesPanel';
 import { FeedbackHost } from './FeedbackHost';
-import {
-  FinishedHome,
-  HomeMessage,
-  NotPublishedHome,
-  SetupChecklist,
-  useEarlierMenus,
-} from './HomeStates';
+import { FinishedHome, HomeMessage, NoMenuRunning, useEarlierMenus } from './HomeStates';
+import { useReadOnlyOrders } from './orderAccess';
 import { SELLER_NS } from './i18n/register';
 import { LiveOrderRow } from './LiveOrderRow';
 import { NewOrderPanel } from './NewOrderPanel';
@@ -598,6 +594,8 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
   const list = useSelector(selectList);
   const current = useSelector(selectCurrent);
   const past = useSelector(selectPast);
+  // A helper may not read earlier menus: for them there are none to wait for.
+  const readOnly = useReadOnlyOrders();
   const orders = useSelector(selectOrders);
   const [showAll, setShowAll] = useState(false);
   const [dishesOpen, setDishesOpen] = useState(false);
@@ -608,6 +606,7 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
     setSearching(false);
   }, [onQueryChange]);
   const soldTotal = useSoldTotal();
+  const navigate = useNavigate();
   useOrdersPolling();
   useNewOrdersViewed();
   useEarlierMenus();
@@ -617,7 +616,7 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
   const fetchFailed = list.status === 'error' || (list.status === 'ready' && list.live === 'error');
   const view = current.status === 'ready' ? current.view : null;
   const kind = view
-    ? homeKindOf(view, past.status === 'ready' ? past.weeks : null, orders)
+    ? homeKindOf(view, past.status === 'ready' ? past.weeks : readOnly ? [] : null, orders)
     : 'checking';
   const live = kind === 'live';
 
@@ -631,14 +630,17 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
     );
   } else if (!view || kind === 'checking') {
     body = <HomeMessage text={t('home.loading')} />;
-  } else if (kind === 'first_run') {
-    body = <SetupChecklist view={view} />;
-  } else if (kind === 'not_published') {
-    body = <NotPublishedHome view={view} />;
+  } else if (kind === 'first_run' || kind === 'not_published') {
+    body = <NoMenuRunning phone={false} />;
   } else if (kind === 'finished') {
     body = (
       <>
-        <FinishedHome view={view} showAll={showAll} onToggleAll={() => setShowAll((on) => !on)} />
+        <FinishedHome
+          view={view}
+          showAll={showAll}
+          onToggleAll={() => setShowAll((on) => !on)}
+          phone={false}
+        />
         {showAll ? <OrdersBoard {...props} readOnly /> : null}
       </>
     );
@@ -660,7 +662,7 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
               {t('home.noLive')}
             </NoLive>
           )}
-          {live && view ? <TakingOrders view={view} /> : null}
+          {live && view && !readOnly ? <TakingOrders view={view} /> : null}
         </TitleLine>
         {live && view ? (
           <>
@@ -679,6 +681,15 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
                 find={(code) => orders.find((o) => o.code === code)}
                 onOpen={props.onOpenOrder}
               />
+              {readOnly ? null : (
+                <Button
+                  aria-label={t('print.print')}
+                  onClick={() => void navigate('/seller/orders/print')}
+                >
+                  <Icon name="print" />
+                  <b>{t('print.print')}</b>
+                </Button>
+              )}
               {props.onNewOrder ? (
                 <Button
                   variant="primary"

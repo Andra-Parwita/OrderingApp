@@ -2,18 +2,19 @@
 // D-046). The session token never appears in a body: it travels only in the HttpOnly `__Host-`
 // cookie. Passkeys are WebAuthn: options come from the server, the browser signs, the server checks.
 import { APP_NAME } from './appName';
-import type { Seller } from './domain';
+import type { PauseKind, Seller } from './domain';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray } from './parse';
 import { parseSeller } from './seller';
 
 /**
  * What a session can do in its active kitchen. 'seller' is a kitchen OWNER (plan 033: a person with
- * an `owner` membership); 'chef' is a person with a `chef` membership; 'admin' is the separate admin.
+ * an `owner` membership); 'chef' is a person with a `chef` membership; 'helper' is a person with a
+ * `helper` membership (plan 028); 'admin' is the separate admin.
  */
-export const ROLES = ['admin', 'seller', 'chef'] as const;
+export const ROLES = ['admin', 'seller', 'chef', 'helper'] as const;
 export type Role = (typeof ROLES)[number];
 /** A person's role in one kitchen (a membership). */
-export const MEMBERSHIP_ROLES = ['owner', 'chef'] as const;
+export const MEMBERSHIP_ROLES = ['owner', 'chef', 'helper'] as const;
 export type MembershipRole = (typeof MEMBERSHIP_ROLES)[number];
 
 /** Invite keys: valid 24 hours, admit ONE device (D-085); more devices come with a 6-digit code. */
@@ -76,6 +77,8 @@ export type Me = {
   sellerName?: string;
   /** Plan 013: present (true) only for a demo kitchen. */
   demo?: true;
+  /** Plan 032: present only when the kitchen is closed to customers (staff still work). */
+  paused?: 'customers';
   /** Chef only. */
   chefId?: string;
   chefName?: string;
@@ -132,6 +135,8 @@ export type InviteRequest = { displayName: string; role: MembershipRole; chefId?
 export type SwitchRequest = { sellerId: string };
 /** PATCH /api/admin/sellers/:slug (plan 013): switch the demo kitchen mode. */
 export type SetDemoRequest = { demo: boolean };
+/** POST /api/admin/sellers/:id/pause (plan 032): how to pause. `/resume` takes no body. */
+export type PauseRequest = { kind: PauseKind };
 
 // ---- Responses ----
 
@@ -172,9 +177,38 @@ export type TeamMember = {
   you?: true;
 };
 export type MembersResponse = { members: Array<TeamMember> };
+export const INVITE_STATUSES = ['waiting', 'used', 'expired'] as const;
+/** One invite as the admin sees it (plan 043): never the key, which is stored hashed. */
+export type InviteInfo = {
+  displayName: string;
+  role: MembershipRole;
+  createdAt: string;
+  expiresAt: string;
+  status: (typeof INVITE_STATUSES)[number];
+  /** When the key was used (status `used`). */
+  usedAt?: string;
+};
+export type InvitesResponse = { invites: Array<InviteInfo> };
+/** How many invites the admin's list shows. */
+export const INVITES_SHOWN = 20;
 export type CodeResponse = { code: string; expiresAt: string };
 /** A seller as the admin lists it: when it was added is shown there only. */
-export type AdminSeller = Seller & { createdAt: string };
+export type AdminSeller = Seller & {
+  createdAt: string;
+  /** Plan 038 stage 3: a summary for the row. Counts and dates only (D-007); absent from old servers. */
+  summary?: SellerSummary;
+};
+/** What the admin sees of a kitchen at a glance. */
+export type SellerSummary = {
+  /** People with a place in the kitchen. */
+  people: number;
+  /** The kitchen's one current menu: its state and cooking day (YYYY-MM-DD); null if it has none. */
+  menu: { state: 'not_published' | 'live' | 'finished'; cookingDate: string } | null;
+  /** Orders on the current menu, cancelled ones left out (a count, no names). */
+  orders: number;
+  /** The newest time any of the kitchen's people used a device; null if none ever did. */
+  lastActiveAt: string | null;
+};
 export type SellersResponse = { sellers: Array<AdminSeller> };
 export type SellerResponse = { seller: AdminSeller };
 /** A chef and how many devices are signed in as them (names and counts only, no order data). */
@@ -296,6 +330,12 @@ export function parseSetDemoRequest(input: unknown): SetDemoRequest | null {
   return isRecord(input) && typeof input['demo'] === 'boolean' ? { demo: input['demo'] } : null;
 }
 
+export function parsePauseRequest(input: unknown): PauseRequest | null {
+  if (!isRecord(input)) return null;
+  const kind = input['kind'];
+  return kind === 'full' || kind === 'customers' ? { kind } : null;
+}
+
 export function parseChefInviteRequest(input: unknown): ChefInviteRequest | null {
   if (!isRecord(input)) return null;
   const chefId = text(input['chefId'], 100);
@@ -349,6 +389,7 @@ export function parseMe(input: unknown): Me | null {
     ...(typeof slug === 'string' ? { slug } : {}),
     ...(typeof sellerName === 'string' ? { sellerName } : {}),
     ...(input['demo'] === true ? { demo: true as const } : {}),
+    ...(input['paused'] === 'customers' ? { paused: 'customers' as const } : {}),
     ...(typeof chefId === 'string' ? { chefId } : {}),
     ...(typeof chefName === 'string' ? { chefName } : {}),
     ...(typeof deviceId === 'string' ? { deviceId } : {}),
@@ -420,7 +461,27 @@ function parseAdminSeller(input: unknown): AdminSeller | null {
   const seller = parseSeller(input);
   if (!seller || !isRecord(input)) return null;
   const { createdAt } = input;
-  return isIsoDate(createdAt) ? { ...seller, createdAt } : null;
+  if (!isIsoDate(createdAt)) return null;
+  const summary = parseSellerSummary(input['summary']);
+  return summary ? { ...seller, createdAt, summary } : { ...seller, createdAt };
+}
+
+/** Absent or malformed means "no summary": an older server still parses. */
+function parseSellerSummary(input: unknown): SellerSummary | null {
+  if (!isRecord(input)) return null;
+  const { people, orders, lastActiveAt } = input;
+  const rawMenu = input['menu'] ?? null;
+  let menu: SellerSummary['menu'] = null;
+  if (rawMenu !== null) {
+    if (!isRecord(rawMenu)) return null;
+    const { state, cookingDate } = rawMenu;
+    if (!isOneOf(['not_published', 'live', 'finished'] as const, state)) return null;
+    if (typeof cookingDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(cookingDate)) return null;
+    menu = { state, cookingDate };
+  }
+  if (!isInt(people, 0, 100000) || !isInt(orders, 0, 100000)) return null;
+  if (lastActiveAt !== null && !isIsoDate(lastActiveAt)) return null;
+  return { people, menu, orders, lastActiveAt };
 }
 
 export function parseSellersResponse(input: unknown): SellersResponse | null {
@@ -505,6 +566,23 @@ function parseTeamMember(input: unknown): TeamMember | null {
     ...(typeof chefName === 'string' ? { chefName } : {}),
     ...(you === true ? { you: true as const } : {}),
   };
+}
+
+function parseInviteInfo(input: unknown): InviteInfo | null {
+  if (!isRecord(input)) return null;
+  const { displayName, role, createdAt, expiresAt, status, usedAt } = input;
+  if (typeof displayName !== 'string' || !isOneOf(MEMBERSHIP_ROLES, role)) return null;
+  if (!isIsoDate(createdAt) || !isIsoDate(expiresAt) || !isOneOf(INVITE_STATUSES, status)) {
+    return null;
+  }
+  if (usedAt !== undefined && !isIsoDate(usedAt)) return null;
+  return { displayName, role, createdAt, expiresAt, status, ...(usedAt ? { usedAt } : {}) };
+}
+
+export function parseInvitesResponse(input: unknown): InvitesResponse | null {
+  if (!isRecord(input)) return null;
+  const invites = parseArray(input['invites'], parseInviteInfo);
+  return invites ? { invites } : null;
 }
 
 export function parseMembersResponse(input: unknown): MembersResponse | null {

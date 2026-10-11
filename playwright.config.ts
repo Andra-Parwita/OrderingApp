@@ -11,7 +11,15 @@ const ORIGIN = `https://localhost:${PORT}`;
 // specs that place orders. They live in `seller-settings*.spec.ts`, which the main projects skip;
 // the "settings-*" projects run them afterwards, one project at a time (each depends on the
 // one before), so nothing else is running while ordering is closed.
-const ISOLATED = /(seller-settings.*|seller-menu|seller-batch3)\.spec\.ts$/;
+// seller-setup changes the shared kitchens' pictures, pickup places and chefs (and puts them back),
+// which banners and the order specs read, so it is here too.
+const ISOLATED = /(seller-settings.*|seller-menu|seller-batch3|seller-setup)\.spec\.ts$/;
+// Plan 029: changes Onde Onde's stock of one dish (and puts it back); the order specs read it, so it
+// runs alone, after limits, on the Android phone project.
+const DAY_SELLING = /\/day-selling\.spec\.ts$/;
+// Capture-only specs that reset the database or onboard people into the shared kitchens. Never in
+// the normal run: `CAPTURES=1 pnpm exec playwright test --project=captures-desktop-chromium --no-deps`.
+const CAPTURES = /\/p0(33|39)-captures\.spec\.ts$/;
 // Closes a week and resets the mock in `finally`: runs alone, after everything else.
 const ARCHIVED = /archived-orders\.spec\.ts$/;
 // The one spec that orders a limited item. It runs last, alone, so nothing else sells that item out.
@@ -21,17 +29,20 @@ const LIMITS = /limits\.spec\.ts$/;
 // specs. The two files that share Dapur Demo's account (seller-auth, session-flow) never overlap.
 const AUTH = /\/(seller-auth|admin|seller-saturday)\.spec\.ts$/;
 const SESSION_FLOW = /\/session-flow\.spec\.ts$/;
-const MAIN = ['mobile-webkit', 'mobile-chromium', 'desktop-chromium'];
-// Webkit runs after the two chromium projects, not beside them: the dev server sends every module
-// as its own request, and with three projects loading at once webkit's page loads stall (a lazy
-// module request never finishes, so `load` never fires).
-const CHROMIUM = ['mobile-chromium', 'desktop-chromium'];
+// Plan 028: the helper on the phone; shares Dapur Demo and an admin passkey, so it runs after session-flow.
+const HELPER_FLOW = /\/helper-flow\.spec\.ts$/;
+// Plan 030: a chef adds and edits a dish; same shared account, so it runs after the helper.
+const CHEF_DISHES = /\/chef-dishes\.spec\.ts$/;
+// The iPhone-size check: Chromium with an iPhone 15 screen, running only this small set (customer flow
+// + Indonesian, the native-app customer shell, a customer order reaching the seller, nudge and lock). Everything else runs on the Android phone and desktop projects.
+const IPHONE_SMOKE = /\/(customer-batch1|native-customer|order-flow|batch2-flow)\.spec\.ts$/;
+const MAIN = ['iphone-chromium', 'mobile-chromium', 'desktop-chromium'];
 
 export default defineConfig({
   testDir: './e2e',
   outputDir: './test-results',
   fullyParallel: true,
-  // 30 s is Playwright's default; webkit runs after the chromium projects so it is not starved.
+  // 30 s is Playwright's default.
   timeout: 30_000,
   // Registers the dev admin (and one passkey per auth spec) once per run, after checking that the
   // server runs on the run's own scratch database.
@@ -46,31 +57,52 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'iphone-chromium',
+      testMatch: IPHONE_SMOKE,
+      use: { ...devices['iPhone 15'], browserName: 'chromium' },
+    },
+    {
+      // One basic WebKit (Safari engine) smoke spec; runs last, after everything else. WebKit is slower, so 60 s.
       name: 'mobile-webkit',
-      testIgnore: [ISOLATED, LIMITS, ARCHIVED, AUTH, SESSION_FLOW],
-      dependencies: CHROMIUM,
+      testMatch: /\/customer-batch1\.spec\.ts$/,
+      timeout: 60_000,
+      dependencies: ['archived-desktop-chromium'],
       use: { ...devices['iPhone 14'] },
     },
     {
       name: 'mobile-chromium',
-      testIgnore: [ISOLATED, LIMITS, ARCHIVED, AUTH, SESSION_FLOW],
+      testIgnore: [
+        ISOLATED,
+        LIMITS,
+        ARCHIVED,
+        AUTH,
+        SESSION_FLOW,
+        HELPER_FLOW,
+        CHEF_DISHES,
+        DAY_SELLING,
+        CAPTURES,
+      ],
       use: { ...devices['Pixel 7'] },
     },
     {
       name: 'desktop-chromium',
-      testIgnore: [ISOLATED, LIMITS, ARCHIVED, AUTH, SESSION_FLOW],
+      testIgnore: [
+        ISOLATED,
+        LIMITS,
+        ARCHIVED,
+        AUTH,
+        SESSION_FLOW,
+        HELPER_FLOW,
+        CHEF_DISHES,
+        DAY_SELLING,
+        CAPTURES,
+      ],
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'settings-mobile-webkit',
-      testMatch: ISOLATED,
-      dependencies: MAIN,
-      use: { ...devices['iPhone 14'] },
     },
     {
       name: 'settings-mobile-chromium',
       testMatch: ISOLATED,
-      dependencies: ['settings-mobile-webkit'],
+      dependencies: MAIN,
       use: { ...devices['Pixel 7'] },
     },
     {
@@ -86,9 +118,15 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
+      name: 'day-selling-mobile-chromium',
+      testMatch: DAY_SELLING,
+      dependencies: ['limits'],
+      use: { ...devices['Pixel 7'] },
+    },
+    {
       name: 'auth-mobile-chromium',
       testMatch: AUTH,
-      dependencies: ['limits'],
+      dependencies: ['day-selling-mobile-chromium'],
       use: { ...devices['Pixel 7'] },
     },
     {
@@ -104,11 +142,32 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'archived-desktop-chromium',
-      testMatch: ARCHIVED,
+      name: 'helper-mobile-chromium',
+      testMatch: HELPER_FLOW,
       dependencies: ['session-flow'],
+      use: { ...devices['Pixel 7'] },
+    },
+    {
+      name: 'chef-dishes-desktop-chromium',
+      testMatch: CHEF_DISHES,
+      dependencies: ['helper-mobile-chromium'],
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'archived-desktop-chromium',
+      testMatch: ARCHIVED,
+      dependencies: ['chef-dishes-desktop-chromium'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    ...(process.env['CAPTURES'] === '1'
+      ? [
+          {
+            name: 'captures-desktop-chromium',
+            testMatch: CAPTURES,
+            use: { ...devices['Desktop Chrome'] },
+          },
+        ]
+      : []),
   ],
   webServer: {
     command: `node scripts/scratch-server.mjs --port ${String(PORT)} --dir ${DB_DIR}`,

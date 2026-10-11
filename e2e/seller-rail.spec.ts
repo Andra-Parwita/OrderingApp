@@ -28,7 +28,7 @@ test('seller desktop: collapsible rail, nothing cut in the list', async ({
   try {
     const page = await context.newPage();
     const errors = collectErrors(page);
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
     const rail = page.getByRole('navigation', { name: 'Seller' });
     const width = async () => (await rail.boundingBox())?.width ?? Number.NaN;

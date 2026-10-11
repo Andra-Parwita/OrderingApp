@@ -1,6 +1,5 @@
 {
   "loading": "Memuat…",
-  "version": "Versi {{version}}",
   "retry": "Coba lagi",
   "error": {
     "generic": "Terjadi masalah. Coba lagi.",
@@ -56,12 +55,10 @@
     "signOut": "Keluar",
     "sellers": "Penjual",
     "sellersTable": "Penjual",
-    "colName": "Nama",
-    "colLink": "Tautan",
-    "colCreated": "Dibuat",
-    "colDevices": "Perangkat",
     "noSellers": "Belum ada penjual.",
-    "selectHint": "Pilih penjual untuk membuat undangan dan mengelola orang.",
+    "devicesCount_other": "{{count}} perangkat",
+    "createdOn": "Dibuat {{date}}",
+    "close": "Tutup",
     "add": {
       "title": "Tambah penjual",
       "name": "Nama penjual",
@@ -86,14 +83,36 @@
       "signOut": "Keluarkan",
       "signOutConfirm": "Ketuk lagi untuk mengeluarkan",
       "members": "Orang",
+      "tabs": "Detail dapur",
+      "tab": { "invitations": "Undangan", "settings": "Pengaturan" },
+      "images": "Gambar",
+      "imagesNote": "Gambar untuk dapur ini. Penjual bisa mengubahnya nanti di Pengaturan.",
       "noMembers": "Belum ada yang bergabung.",
+      "invites": "Undangan terbaru",
+      "noInvites": "Belum ada undangan.",
+      "inviteLine": "{{role}} · dikirim {{sent}}",
+      "inviteWaiting": "Menunggu, berakhir {{when}}",
+      "inviteUsed": "Dipakai {{when}}",
+      "inviteExpired": "Kedaluwarsa {{when}}",
       "role": {
         "owner": "Pemilik",
-        "chef": "Koki"
+        "chef": "Koki",
+        "helper": "Asisten"
       },
       "remove": "Hapus",
       "removeConfirm": "Ketuk lagi untuk menghapus",
       "memberLine_other": "{{role}} · {{count}} perangkat"
+    },
+    "pause": {
+      "title": "Jeda dapur ini",
+      "state": "Status",
+      "label": { "open": "Buka", "customers": "Tutup untuk pelanggan", "full": "Dijeda" },
+      "customersButton": "Tutup untuk pelanggan",
+      "customersNote": "Pelanggan melihat \"Dapur ini sedang tutup\" dan tidak bisa memesan. Orang dapur tetap bekerja seperti biasa.",
+      "fullButton": "Jeda dapur",
+      "fullConfirm": "Ketuk lagi: semua orang akan dikeluarkan",
+      "fullNote": "Pelanggan tidak bisa memesan, dan semua orang di dapur dikeluarkan serta tidak bisa masuk, memakai kunci atau kode. Tidak ada yang dihapus.",
+      "resume": "Lanjutkan dapur"
     },
     "key": {
       "inviteTitle": "Kunci undangan untuk {{name}}",
@@ -104,7 +123,12 @@
       "copied": "Tersalin",
       "copyFailed": "Gagal menyalin. Pilih kuncinya lalu salin sendiri.",
       "whatsapp": "Kirim lewat WhatsApp",
-      "message": "Undangan {{app}} Anda: {{link}} (berlaku sekali, di satu perangkat, dalam 24 jam)",
+      "greet": "Halo {{name}}!",
+      "greetAnon": "Halo!",
+      "message": "{{greet}} 👋 Anda diundang untuk mengelola *{{kitchen}}* di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
+      "messageLang": "Bahasa pesan",
+      "messagePreview": "Pesan (bisa diubah sebelum dikirim)",
+      "copyMessage": "Salin pesan",
       "done": "Selesai",
       "nameLabel": "Nama orangnya",
       "nameHelper": "Tampil di daftar tim. Boleh dikosongkan.",
@@ -123,6 +147,31 @@
       "saveName": "Simpan nama",
       "cancel": "Batal"
     },
-    "privacy": "Halaman ini hanya mengatur akses. Tidak ada pesanan, pelanggan, atau menu di sini."
+    "problems": {
+      "title": "Masalah ({{count}})",
+      "none": "Belum ada masalah dilaporkan.",
+      "failed": "Masalah tidak dapat dimuat.",
+      "app": "Aplikasi",
+      "allApps": "Semua aplikasi",
+      "kitchen": "Dapur",
+      "allKitchens": "Semua dapur",
+      "clear": "Hapus semua",
+      "clearConfirm": "Ketuk lagi untuk hapus semua",
+      "older": "Lebih lama",
+      "newer": "Lebih baru",
+      "range": "{{from}}-{{to}} dari {{total}}",
+      "list": "Masalah terbaru"
+    },
+    "privacy": "Halaman ini mengatur akses dan gambar dapur. Tidak ada pesanan atau pelanggan di sini.",
+    "sum": {
+      "people_other": "{{count}} orang",
+      "noMenu": "Tanpa menu",
+      "live": "Tayang · {{day}}",
+      "notPublished": "Belum diterbitkan",
+      "finished": "Selesai · {{day}}",
+      "orders_other": "{{count}} pesanan",
+      "active": "Aktif {{when}}",
+      "neverActive": "Belum pernah aktif"
+    }
   }
 }

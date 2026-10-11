@@ -123,5 +123,41 @@
       "title": "Tetap lanjutkan?",
       "body": "Ada yang tidak biasa. Anda masih bisa mengirimnya."
     }
+  },
+  "sell": {
+    "title": "Jual",
+    "tabsLabel": "Jual atau ringkasan",
+    "tabSell": "Jual",
+    "tabSummary": "Ringkasan",
+    "none": "Belum ada hidangan yang dijual di hari-H. Atur \"Dijual di hari-H\" di editor hidangan, atau pakai Atur jumlah.",
+    "left": "{{name}}: sisa porsi",
+    "soldOut": "Habis di lapak",
+    "minusOne": "Jual satu {{name}}",
+    "minusN": "Jual sejumlah angka {{name}}",
+    "setCountFor": "Atur jumlah {{name}}",
+    "number": "Jumlah",
+    "setCount": "Atur jumlah",
+    "sold": "Terjual {{count}} × {{name}}",
+    "undo": "Batalkan",
+    "undoEntry": "Batalkan: {{text}}",
+    "undoRefused": "Penjualan itu tidak bisa dibatalkan lagi.",
+    "soldOutNote": "Sisa tidak cukup. Jumlah sudah diperbarui.",
+    "byDish": "Per hidangan",
+    "dish": "Hidangan",
+    "preordered": "Pre-order",
+    "soldOnDay": "Hari-H",
+    "leftCol": "Sisa",
+    "totalSold": "Terjual di hari-H: {{count}}",
+    "byPerson": "Per orang",
+    "noSales": "Belum ada penjualan.",
+    "portions_one": "{{count}} porsi",
+    "portions_other": "{{count}} porsi",
+    "log": "Catatan",
+    "csv": "Unduh CSV",
+    "kind": {
+      "sale": "Jual",
+      "count": "Atur jumlah",
+      "undo": "Batal"
+    }
   }
 }

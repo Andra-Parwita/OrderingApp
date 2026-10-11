@@ -8,6 +8,8 @@ export const API_ERROR_CODES = [
   'week_not_published',
   'unknown_item',
   'sold_out',
+  /** Plan 029: an on-the-day-only dish cannot be pre-ordered. */
+  'not_preorderable',
   'exceeds_remaining',
   'invalid_status',
   'order_locked',
@@ -47,6 +49,10 @@ export const API_ERROR_CODES = [
   'passkey_exists',
   /** A state-changing call whose `Origin` is missing or is not this site (stage 8.2). */
   'bad_origin',
+  /** Plan 032: the kitchen is paused by the admin; no sign-in, key or code works for it. */
+  'kitchen_paused',
+  /** Plan 032: the kitchen is closed to customers (a pause); no new orders or changes. */
+  'kitchen_closed',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

@@ -14,6 +14,7 @@ import {
   parseDevicesResponse,
   parseKeyResponse,
   parseMeResponse,
+  parseInvitesResponse,
   parseMembersResponse,
   parseMembershipsResponse,
   parseTeamNamesResponse,
@@ -27,6 +28,7 @@ import {
   type DevicesResponse,
   type InviteRequest,
   type KeyResponse,
+  type InvitesResponse,
   type MembersResponse,
   type MembershipsResponse,
   type MeResponse,
@@ -35,7 +37,19 @@ import {
   type SessionResponse,
   type TeamNamesResponse,
 } from '../../shared/authContract';
-import { parseOkResponse, type OkResponse } from '../../shared/setupContract';
+import {
+  parseLogListResponse,
+  type LogListResponse,
+  type LogQuery,
+} from '../../shared/logContract';
+import type { PauseKind } from '../../shared/domain';
+import type { ImageSlot } from '../../shared/imageSlots';
+import {
+  parseImagesResponse,
+  parseOkResponse,
+  type ImagesResponse,
+  type OkResponse,
+} from '../../shared/setupContract';
 import {
   clearCredentialId,
   getCredentialId,
@@ -44,6 +58,7 @@ import {
   setSessionHint,
   type CredentialRole,
 } from './device/session';
+import { reportPasskeyError } from './clientLog';
 import { request, type ApiResult } from './http';
 
 const enc = encodeURIComponent;
@@ -83,6 +98,7 @@ async function ceremony<T>(run: () => Promise<T>): Promise<ApiResult<T>> {
     const cancelled = name === 'NotAllowedError' || name === 'AbortError';
     // Plan 025: creating a passkey is refused when this device already holds one for the account.
     const held = name === 'InvalidStateError';
+    if (!cancelled && !held) reportPasskeyError(name, cause instanceof Error ? cause.message : '');
     return {
       ok: false,
       error: held ? 'passkey_exists' : cancelled ? 'passkey_cancelled' : 'passkey_failed',
@@ -238,6 +254,21 @@ export function adminSetup(setupKey: string): Promise<ApiResult<SessionResponse>
   return post('/api/admin/setup', { setupKey, deviceId: getDeviceId() });
 }
 
+/** The newest client problems (plan 026), admin only. */
+export function fetchAdminLog(query: LogQuery): Promise<ApiResult<LogListResponse>> {
+  const params = new URLSearchParams();
+  if (query.app) params.set('app', query.app);
+  if (query.slug) params.set('slug', query.slug);
+  if (query.offset > 0) params.set('offset', String(query.offset));
+  const text = params.toString();
+  return request(`/api/admin/log${text ? `?${text}` : ''}`, parseLogListResponse);
+}
+
+/** Deletes every logged problem (admin only). */
+export function clearAdminLog(): Promise<ApiResult<OkResponse>> {
+  return request('/api/admin/log', parseOkResponse, { method: 'DELETE' });
+}
+
 export function fetchSellers(): Promise<ApiResult<SellersResponse>> {
   return request('/api/admin/sellers', parseSellersResponse);
 }
@@ -256,6 +287,18 @@ export function setSellerDemo(sellerId: string, demo: boolean): Promise<ApiResul
     method: 'PATCH',
     body: { demo },
   });
+}
+
+/** Plan 032: pause a kitchen (`full` signs everyone out) or resume it (admin only). */
+export function setSellerPaused(
+  sellerId: string,
+  kind: PauseKind | null,
+): Promise<ApiResult<SellerResponse>> {
+  return request(
+    `/api/admin/sellers/${enc(sellerId)}/${kind === null ? 'resume' : 'pause'}`,
+    parseSellerResponse,
+    { method: 'POST', ...(kind === null ? {} : { body: { kind } }) },
+  );
 }
 
 /** An invite for a first owner (one device, 24 hours). Shown once; only its hash is kept. */
@@ -281,6 +324,10 @@ export function createRecoveryKey(
 }
 
 /** The people of a kitchen: name, role, device count (the admin's replacement for the devices view). */
+export function fetchSellerInvites(sellerId: string): Promise<ApiResult<InvitesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/invites`, parseInvitesResponse);
+}
+
 export function fetchSellerMembers(sellerId: string): Promise<ApiResult<MembersResponse>> {
   return request(`/api/admin/sellers/${enc(sellerId)}/members`, parseMembersResponse);
 }
@@ -322,6 +369,32 @@ export function signOutChefEverywhere(
     parseOkResponse,
     { method: 'POST' },
   );
+}
+
+/** Plan 041: a kitchen's five pictures, set by the admin (the same slots as the seller's). */
+export function fetchSellerImages(sellerId: string): Promise<ApiResult<ImagesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/images`, parseImagesResponse);
+}
+
+/** `dataUrl` is already resized to the slot's size; the server checks type, size and shape. */
+export function uploadSellerImage(
+  sellerId: string,
+  slot: ImageSlot,
+  dataUrl: string,
+): Promise<ApiResult<ImagesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/images/${enc(slot)}`, parseImagesResponse, {
+    method: 'PUT',
+    body: { dataUrl },
+  });
+}
+
+export function removeSellerImage(
+  sellerId: string,
+  slot: ImageSlot,
+): Promise<ApiResult<ImagesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/images/${enc(slot)}`, parseImagesResponse, {
+    method: 'DELETE',
+  });
 }
 
 // ---- Seller ----

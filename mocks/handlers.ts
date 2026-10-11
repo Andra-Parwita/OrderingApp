@@ -137,6 +137,7 @@ export const mockStores: StoresTestApi = Object.assign(
   {
     // `auth` is an object, not a method: it gets its own lazy view.
     auth: lazy<Repository['auth']>(async () => (await openWorld()).repo.auth),
+    log: lazy<Repository['log']>(async () => (await openWorld()).repo.log),
     reset: resetWorld,
     forgetSessions: async () => {
       await (await openWorld()).db.stmt('DELETE FROM sessions').run();

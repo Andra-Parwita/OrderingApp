@@ -21,6 +21,8 @@ import {
   type MembershipRole,
   type PasswordSignInRequest,
   type Role,
+  type SellerSummary,
+  type InviteInfo,
   type TeamMember,
   type TeamName,
 } from '../../shared/authContract';
@@ -69,8 +71,9 @@ type MembershipRow = {
   role: MembershipRole;
   chef_id: string | null;
 };
-/** An owner acts as the seller always did; a chef as a chef (plan 033). */
-const callerRoleOf = (role: MembershipRole): Role => (role === 'owner' ? 'seller' : 'chef');
+/** An owner acts as the seller always did; a chef as a chef (plan 033); a helper as a helper (028). */
+const callerRoleOf = (role: MembershipRole): Role =>
+  role === 'owner' ? 'seller' : role === 'helper' ? 'helper' : 'chef';
 type DeviceRow = {
   id: string;
   account_id: string;
@@ -228,6 +231,17 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     );
   }
 
+  /** Plan 032: how a kitchen is paused (null = open). */
+  async function pausedOf(sellerId: string | null): Promise<'full' | 'customers' | null> {
+    if (sellerId === null) return null;
+    const row = await db.first<{ paused: 'full' | 'customers' | null }>(
+      'SELECT paused FROM sellers WHERE id = ?',
+      sellerId,
+    );
+    return row?.paused ?? null;
+  }
+  const PAUSED = fail('kitchen_paused', 'This kitchen is paused. Contact the admin.');
+
   /** The kitchen a sign-in opens: the asked one if the person belongs to it, else the oldest. */
   async function activeKitchen(
     accountId: string,
@@ -243,7 +257,8 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       if (wanted) return wanted.seller_id;
     }
     const first = await db.first<{ seller_id: string }>(
-      'SELECT seller_id FROM memberships WHERE account_id = ? ORDER BY created_at, rowid LIMIT 1',
+      `SELECT m.seller_id FROM memberships m JOIN sellers s ON s.id = m.seller_id
+       WHERE m.account_id = ? ORDER BY (s.paused = 'full'), m.created_at, m.rowid LIMIT 1`,
       accountId,
     );
     return first?.seller_id ?? null;
@@ -262,9 +277,10 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
           slug: string;
           name: string;
           demo: number;
+          paused: string | null;
           chef_name: string | null;
         }>(
-          `SELECT s.id, s.slug, s.name, s.demo, c.name AS chef_name FROM sellers s
+          `SELECT s.id, s.slug, s.name, s.demo, s.paused, c.name AS chef_name FROM sellers s
            LEFT JOIN chefs c ON c.seller_id = s.id AND c.id = ? WHERE s.id = ?`,
           membership.chef_id,
           membership.seller_id,
@@ -286,6 +302,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       ...(setup ? { hasPassword: account.password_hash !== null, hasPasskey } : {}),
       ...(row ? { sellerId: row.id, slug: row.slug, sellerName: row.name } : {}),
       ...(row?.demo === 1 ? { demo: true as const } : {}),
+      ...(row?.paused === 'customers' ? { paused: 'customers' as const } : {}),
       ...(membership?.chef_id ? { chefId: membership.chef_id } : {}),
       ...(row?.chef_name ? { chefName: row.chef_name } : {}),
       ...(device ? { deviceId: device.id, deviceName: device.name } : {}),
@@ -467,12 +484,15 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         role: 'admin' | 'person';
         seller_id: string | null;
         chef_id: string | null;
+        display_name: string | null;
         m_role: MembershipRole | null;
         has_device: number | null;
+        paused: string | null;
       }>(
-        `SELECT s.expires_at, s.device_id, s.seller_id, a.id AS account_id, a.role, m.chef_id,
-           m.role AS m_role, d.id AS has_device
+        `SELECT s.expires_at, s.device_id, s.seller_id, a.id AS account_id, a.role, a.display_name, m.chef_id,
+           m.role AS m_role, d.id AS has_device, k.paused
          FROM sessions s JOIN accounts a ON a.id = s.account_id
+         LEFT JOIN sellers k ON k.id = s.seller_id
          LEFT JOIN devices d ON d.id = s.device_id
          LEFT JOIN memberships m ON m.account_id = a.id AND m.seller_id = s.seller_id
          WHERE s.token_hash = ?`,
@@ -482,7 +502,8 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       if (
         Date.parse(row.expires_at) <= now() ||
         (row.device_id && !row.has_device) ||
-        (row.role === 'person' && !row.m_role)
+        (row.role === 'person' && !row.m_role) ||
+        (row.role === 'person' && row.paused === 'full')
       ) {
         await db.stmt('DELETE FROM sessions WHERE token_hash = ?', hash).run();
         return undefined;
@@ -502,6 +523,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         role: row.role === 'admin' || !row.m_role ? 'admin' : callerRoleOf(row.m_role),
         setup: row.device_id === null,
         accountId: row.account_id,
+        ...(row.display_name !== null ? { displayName: row.display_name } : {}),
         ...(row.seller_id !== null ? { sellerId: row.seller_id } : {}),
         ...(row.chef_id !== null ? { chefId: row.chef_id } : {}),
         ...(row.device_id !== null ? { deviceId: row.device_id } : {}),
@@ -570,6 +592,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       });
       if (!result.ok) return result;
       const invite = result.value;
+      if ((await pausedOf(invite.seller_id)) === 'full') return PAUSED;
       const redemption = db.stmt(
         'INSERT INTO auth_key_redemptions (key_hash, client_device_id, redeemed_at) VALUES (?, ?, ?)',
         hash,
@@ -681,6 +704,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         iso(now()),
       );
       if (record) {
+        if ((await pausedOf(record.seller_id)) === 'full') return PAUSED;
         const scope = codeScope(record.seller_id);
         const locked = await lockedSeconds([device, scope]);
         if (locked > 0) return lockedFail(locked);
@@ -827,6 +851,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       });
       if (!result.ok) return result;
       const sellerId = (seller as { id: string }).id;
+      if ((await pausedOf(sellerId)) === 'full') return PAUSED;
       const deviceId = newDeviceId();
       const full = await newDeviceSession(result.value, sellerId, deviceId);
       await db.batch([
@@ -864,6 +889,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       });
       if (!result.ok) return result;
       const { row, account, sellerId } = result.value;
+      if ((await pausedOf(sellerId)) === 'full') return PAUSED;
       const full = await newDeviceSession(account, sellerId, row.id);
       await db.batch(full.statements);
       return ok({
@@ -901,6 +927,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
 
     async switchKitchen(caller: Caller, sellerId: string) {
       if (!(await membershipOf(caller.accountId, sellerId))) return false;
+      if ((await pausedOf(sellerId)) === 'full') return false;
       await db
         .stmt(
           'UPDATE sessions SET seller_id = ? WHERE token_hash = ?',
@@ -946,6 +973,32 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         devices: row.devices,
         createdAt: row.created_at,
         ...(row.id === youAccountId ? { you: true as const } : {}),
+      }));
+    },
+
+    /** The newest invites of one kitchen (plan 043): who, what role, when, and how it ended up. */
+    async listInvites(sellerId: string, limit: number): Promise<Array<InviteInfo>> {
+      const rows = await db.all<{
+        display_name: string;
+        role: MembershipRole;
+        created_at: string;
+        expires_at: string;
+        used_at: string | null;
+      }>(
+        `SELECT k.display_name, k.role, k.created_at, k.expires_at,
+           (SELECT MAX(r.redeemed_at) FROM auth_key_redemptions r WHERE r.key_hash = k.key_hash) AS used_at
+         FROM auth_keys k WHERE k.seller_id = ?
+         ORDER BY k.created_at DESC, k.rowid DESC LIMIT ?`,
+        sellerId,
+        limit,
+      );
+      return rows.map((row) => ({
+        displayName: row.display_name,
+        role: row.role,
+        createdAt: row.created_at,
+        expiresAt: row.expires_at,
+        status: row.used_at ? 'used' : Date.parse(row.expires_at) <= now() ? 'expired' : 'waiting',
+        ...(row.used_at ? { usedAt: row.used_at } : {}),
       }));
     },
 
@@ -1215,4 +1268,50 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       ]);
     },
   };
+}
+
+/**
+ * Plan 038 stage 3: the admin's one-glance summary per kitchen, from four grouped queries (not one
+ * per kitchen). Counts and dates only, no names (D-007). A kitchen with nothing has no entry here.
+ */
+export async function sellerSummaries(db: Db): Promise<Map<string, SellerSummary>> {
+  const [menus, orders, people, active] = await Promise.all([
+    db.all<{
+      seller_id: string;
+      state: 'not_published' | 'live' | 'finished';
+      cooking_date: string;
+    }>('SELECT seller_id, state, cooking_date FROM menus'),
+    db.all<{ seller_id: string; n: number }>(
+      "SELECT seller_id, COUNT(*) AS n FROM orders WHERE past_week_id IS NULL AND status <> 'cancelled' GROUP BY seller_id",
+    ),
+    db.all<{ seller_id: string; n: number }>(
+      'SELECT seller_id, COUNT(*) AS n FROM memberships GROUP BY seller_id',
+    ),
+    db.all<{ seller_id: string; last: string }>(
+      'SELECT m.seller_id AS seller_id, MAX(d.last_used_at) AS last FROM memberships m JOIN devices d ON d.account_id = m.account_id GROUP BY m.seller_id',
+    ),
+  ]);
+  const byId = <T extends { seller_id: string }>(rows: Array<T>) =>
+    new Map(rows.map((row) => [row.seller_id, row]));
+  const menuOf = byId(menus);
+  const ordersOf = byId(orders);
+  const peopleOf = byId(people);
+  const activeOf = byId(active);
+  const ids = new Set([
+    ...menuOf.keys(),
+    ...ordersOf.keys(),
+    ...peopleOf.keys(),
+    ...activeOf.keys(),
+  ]);
+  const result = new Map<string, SellerSummary>();
+  for (const id of ids) {
+    const menu = menuOf.get(id);
+    result.set(id, {
+      people: peopleOf.get(id)?.n ?? 0,
+      menu: menu ? { state: menu.state, cookingDate: menu.cooking_date } : null,
+      orders: ordersOf.get(id)?.n ?? 0,
+      lastActiveAt: activeOf.get(id)?.last ?? null,
+    });
+  }
+  return result;
 }

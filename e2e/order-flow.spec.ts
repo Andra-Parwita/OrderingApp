@@ -18,7 +18,7 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   page,
   browser,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-webkit', 'one run, on the iPhone project');
+  test.skip(testInfo.project.name !== 'iphone-chromium', 'one run, on the iPhone project');
   const customerErrors = watchConsole(page);
   const firstName = `Flow-${Date.now()}`;
   const note = 'Less spicy please';
@@ -53,10 +53,10 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   try {
     const sellerPage = await seller.newPage();
     const sellerErrors = watchConsole(sellerPage);
-    await sellerPage.goto('/seller');
+    await sellerPage.goto('/seller/orders');
     await expect(sellerPage.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
     await searchFor(sellerPage, firstName);
-    await expect(sellerPage).toHaveURL(/\/seller\?q=Flow-/);
+    await expect(sellerPage).toHaveURL(/\/seller\/orders\?q=Flow-/);
     const row = orderRow(sellerPage, new RegExp(firstName));
     await expect(row).toBeVisible();
     await expect(row).toContainText(orderCode);

@@ -57,7 +57,16 @@ export function DishEditorHost({
   data,
   value,
   onClose,
-}: Readonly<{ data: MenuData; value: string | null; onClose: () => void }>) {
+  asChef = false,
+}: Readonly<{ data: MenuData; value: string | null; onClose: () => void; asChef?: boolean }>) {
   if (value === null) return null;
-  return <DishEditor key={value} data={data} target={targetOf(value)} onClose={onClose} />;
+  return (
+    <DishEditor
+      key={value}
+      data={data}
+      target={targetOf(value)}
+      onClose={onClose}
+      asChef={asChef}
+    />
+  );
 }

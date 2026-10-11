@@ -67,6 +67,7 @@ import {
   readOrders,
   type OrderChange,
 } from './orders';
+import { createDayOps } from './daySales';
 import { createHandoverOps } from './handover';
 import { createPushOps } from './push';
 import type { CustomerChange } from '../push/dispatch';
@@ -234,6 +235,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   };
   const menuOps = createMenuOps(menuDeps, sid);
   const handover = createHandoverOps(menuDeps, sid);
+  const dayOps = createDayOps(menuDeps, sid);
   const pushOps = createPushOps(db, deps.now, sid);
 
   // ---- Reading ----
@@ -355,6 +357,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   // ---- Menu rules ----
 
   function ordering(s: Pick<State, 'settings' | 'week'>): OrderingState {
+    if (seller.paused) return { open: false, reason: 'kitchen_closed' };
     if (!s.settings.orderingOpen) return { open: false, reason: 'closed_by_seller' };
     if (deps.now().getTime() >= Date.parse(s.week.cutoffAt)) {
       return { open: false, reason: 'cutoff_passed' };
@@ -365,6 +368,8 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   /** The error that stops a customer from placing or changing an order, if any. */
   function closedError<T>(s: State): StoreResult<T> | null {
     const state = ordering(s);
+    if (state.reason === 'kitchen_closed')
+      return fail('kitchen_closed', 'This kitchen is closed for now');
     if (state.reason === 'closed_by_seller') return fail('ordering_closed', 'Ordering is closed');
     if (state.reason === 'cutoff_passed') return fail('cutoff_passed', 'Orders are closed');
     return null;
@@ -372,10 +377,13 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
   /** The customer view: the chef (D-012) and the manual flag are dropped here. */
   function view(item: MenuItem, used: Map<string, number>): MenuItemView {
-    const copy = sellerView(item, used);
+    const { dayStock, ...copy } = sellerView(item, used);
     delete copy.chefId;
     delete copy.manualSoldOut;
-    return copy;
+    // Plan 029: customers see that it is sold at the stall, never how many.
+    return dayStock === undefined
+      ? copy
+      : { ...copy, onTheDay: dayStock > 0 ? ('available' as const) : ('sold_out' as const) };
   }
 
   function publicMenu(s: State): MenuResponse {
@@ -427,6 +435,10 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       const item = s.items.find((candidate) => candidate.id === itemId);
       if (!item) return fail('unknown_item', `Unknown item: ${itemId}`);
       const previous = existing.find((line) => line.itemId === itemId);
+      // Plan 029: an on-the-day-only dish cannot be pre-ordered (an order may keep what it has).
+      if (item.preorder === false && (!previous || qty > previous.qty)) {
+        return fail('not_preorderable', `${item.name.en} is sold on the day only`);
+      }
       // Manually sold out: no new portions (an order may keep what it already has).
       if (item.soldOut === true && (!previous || qty > previous.qty)) {
         const refused = tooMany('sold_out', `${item.name.en} is sold out`);
@@ -757,6 +769,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       const items = s.items.filter(
         (item) =>
           item.soldOut !== true &&
+          item.preorder !== false &&
           (item.limit === undefined || item.limit - (s.used.get(item.id) ?? 0) > 0),
       );
       if (items.length === 0) break;
@@ -897,6 +910,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   const repo: SellerRepository = {
     seller,
     ...handover,
+    ...dayOps,
     ...pushOps,
     addDemoSamples: addSampleOrders,
     clearDemoSamples: clearSampleOrders,
@@ -979,10 +993,18 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       else if (patch.chefId !== undefined) next.chefId = patch.chefId;
       if (patch.soldOut === false) delete next.soldOut;
       else if (patch.soldOut === true) next.soldOut = true;
+      if (patch.preorder === true) delete next.preorder;
+      else if (patch.preorder === false) next.preorder = false;
+      if (patch.dayStock === null) delete next.dayStock;
+      else if (patch.dayStock !== undefined) next.dayStock = patch.dayStock;
+      if (next.preorder === false && next.dayStock === undefined) {
+        return fail('invalid_request', 'On the day only needs a day stock');
+      }
       await db
         .stmt(
           `UPDATE menu_items SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
-             price_cents = ?, portion_limit = ?, chef_id = ?, sold_out = ? WHERE seller_id = ? AND id = ?`,
+             price_cents = ?, portion_limit = ?, chef_id = ?, sold_out = ?, preorder = ?, day_stock = ?
+             WHERE seller_id = ? AND id = ?`,
           next.name.en,
           next.name.id,
           next.description.en,
@@ -993,6 +1015,8 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
           next.limit ?? null,
           next.chefId ?? null,
           next.soldOut === true,
+          next.preorder !== false,
+          next.dayStock ?? null,
           sid,
           id,
         )
@@ -1231,6 +1255,8 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
           priceCents: item.priceCents,
           ...(item.limit !== undefined ? { limit: item.limit } : {}),
           ...(item.chefId !== undefined ? { chefId: item.chefId } : {}),
+          ...(item.preorder === false ? { preorder: false } : {}),
+          ...(item.dayStock !== undefined ? { dayStock: item.dayStock } : {}),
         });
         for (const item of items) {
           dishes.push(asDish(item, item.id));

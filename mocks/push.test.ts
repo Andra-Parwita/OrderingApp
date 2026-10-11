@@ -239,6 +239,19 @@ describe('web push and kitchen files', () => {
       expect(sent[0]?.target).toMatchObject({ p256dh: KEYS.p256dh, auth: KEYS.auth });
     });
 
+    it('a fully paused kitchen sends nothing (plan 032)', async () => {
+      const a = await place('Ana');
+      await subscribe(a.token, 1);
+      await world.db.stmt("UPDATE sellers SET paused = 'full' WHERE id = 'seller-onde-onde'").run();
+      const reply = await seller('/messages/place/glen-waverley', {
+        type: 'ready_in',
+        minutes: 15,
+      });
+      expect(reply.status).toBe(200);
+      await flush();
+      expect(sent).toHaveLength(0);
+    });
+
     it('ready now sends the status move; a custom message sends the seller text', async () => {
       const a = await place('Ana');
       await subscribe(a.token);

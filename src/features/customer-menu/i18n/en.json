@@ -26,6 +26,9 @@
     "previewOff": "Ordering is turned off in preview",
     "left": "{{count}} left",
     "soldOut": "Sold out",
+    "availableOnDay": "Available on the day",
+    "alsoAtStall": "Also at the stall",
+    "stallSoldOut": "Sold out at the stall",
     "decrease": "Remove one {{name}}",
     "increase": "Add one {{name}}",
     "items_one": "{{count}} item",
@@ -64,6 +67,8 @@
   "states": {
     "theSeller": "The seller",
     "pausedTitle": "Not taking orders right now",
+    "kitchenClosedTitle": "This kitchen is closed for now",
+    "kitchenClosedBody": "{{cook}} is not taking orders at the moment. Check back later, or send a message.",
     "pausedBody": "{{cook}} has paused ordering. Check back soon, or send a message.",
     "closedTitle": "Orders for {{date}} are closed",
     "closedBody": "The cut-off was {{dateTime}}. {{cook}} may still fit you in.",

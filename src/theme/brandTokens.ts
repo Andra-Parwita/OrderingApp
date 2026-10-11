@@ -1,22 +1,26 @@
-// ShaggyBobo's own branding (plan 028): the admin pages and the seller's first set-up. These are
+// ShaggyBobo's own branding (plan 036): the admin pages and the seller's first set-up. These are
 // the brand's fixed art values, the same in light and dark themes, kept here so the styled
 // components use tokens (D-006). Dark brown text (#2B1D12) on beige (#EADBC2) is well above 4.5:1.
 
 export const brandColour = {
   beige: '#EADBC2',
   ink: '#2B1D12',
-  /** The logo's "Shaggy" on light, and the dark-mode logo box. */
-  logoInk: '#392619',
-  logoInkOnDark: '#FFFDF7',
-  logoBoxDark: '#2B1D12',
-  bobo: '#E87520',
-  /** The leaves on the logo and the walking mascot (the owner's pick), as `--mascot-leaf` on :root. */
-  leaf: '#A34F38',
+  bobo: '#d9772b',
   /** The version pill's status dot. */
   dot: '#7FAF6E',
-  /** The skin around the walking mascot's eyes and the eye outline, sampled from the picture. */
-  skin: '#FCB448',
-  eyeOutline: '#5A2D14',
+  /** The mascot's ground shadow. */
+  mascotShadow: 'rgb(0 0 0 / 22%)',
+} as const;
+
+/** The pill around the icon and wordmark (plan 044), light and dark: background, border, "Shaggy", shadow. */
+export const brandPill = {
+  light: {
+    bg: '#fff6ea',
+    border: '#ead8bf',
+    word: '#2a1d14',
+    shadow: '0 1px 2px rgb(60 40 20 / 8%), 0 4px 14px rgb(60 40 20 / 6%)',
+  },
+  dark: { bg: '#2a1d14', border: '#3a2a1d', word: '#fff', shadow: 'none' },
 } as const;
 
 export const brandSize = {
@@ -24,20 +28,17 @@ export const brandSize = {
   bar: '72px',
   phoneBar: '56px',
   logoHeight: '32px',
-  logoGap: '4px',
+  logoGap: '8px',
   logoFontSize: '15.5px',
   logoLetterSpacing: '-0.7px',
-  logoBoxPadding: '6px 14px 6px 10px',
+  logoBoxPadding: '8px 14px 8px 10px',
+  pillRadius: '12px',
   hairline: '1px',
   footerRowGap: '4px',
   /** The letters' hop and the mascot's bounce. */
   hop: '-3px',
-  bounce: '-12px',
   /** The mascot's feet above the footer (owner: "like 50px from footer top"), and its widest. */
   mascotBottom: '50px',
   mascotMaxWidth: '380px',
-} as const;
-
-export const brandShadow = {
-  mascot: 'drop-shadow(0 14px 10px rgb(43 29 18 / 30%))',
+  mascotShadowBlur: '2px',
 } as const;

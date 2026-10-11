@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banner sizes · mock-up</title>
+<!-- Phone view: resize the window to a phone width (390) to see it as on a phone; wider windows show the app's 480 px column.
+     Owner's mock-up (2026-10-11): try the seller banner shapes and the collapse at any window size.
+     Open this file in a browser and resize the window (iPad landscape = 1180 x 820).
+     Images: public/samples/ (banner-wide-3840x328.webp, banner-template-wide.jpg, banner-wide.jpg 5:1, banner-bg.jpg, banner-phone-3x1.jpg). -->
+<style>
+  :root {
+    --bg: #F6F2E8; --surf: #FFFDF7; --surf2: #EFE9DB; --line: #E4DED0; --text: #1C1F1A; --muted: #5D6358;
+    --accent: #2A5F30; --accent-fill: #9BC79A; --warn: #A15C00; --rail: 232px; --rail-collapsed: 72px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #141713; --surf: #1C201B; --surf2: #242922; --line: #30362E; --text: #ECEFE8; --muted: #A9B0A3;
+    --accent: #9BC79A; --accent-fill: #8DBB8C; --warn: #F0B35A;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+  /* Controls (not part of the app) */
+  .controls { position: fixed; right: 12px; bottom: 12px; z-index: 50; width: 300px; max-height: calc(100vh - 24px); overflow: auto;
+    background: #111; color: #eee; border-radius: 12px; padding: 12px 14px; font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.35); }
+  .controls h2 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #9BC79A; }
+  .controls fieldset { border: 0; margin: 0 0 10px; padding: 0; }
+  .controls legend { font-weight: 600; margin-bottom: 4px; }
+  .controls label { display: block; margin: 2px 0; cursor: pointer; }
+  .controls .readout { font-family: ui-monospace, Consolas, monospace; background: #1d1d1d; border-radius: 8px; padding: 8px; line-height: 1.6; }
+  .controls button { font: inherit; background: #2a2a2a; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+  .controls.min > :not(.head) { display: none; }
+  .controls .head { display: flex; justify-content: space-between; align-items: center; }
+
+  /* App frame */
+  .app { display: flex; height: 100vh; }
+  .rail { flex: none; width: var(--rail); background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; transition: width .2s; }
+  .app.rail-collapsed .rail { width: var(--rail-collapsed); }
+  .railTop { padding: 16px; border-bottom: 1px solid var(--line); transition: height .2s; }
+  .logoCard { aspect-ratio: 2 / 1; border-radius: 12px; background: #fff url(../../../public/samples/rail.png) center / contain no-repeat; }
+  .app.rail-collapsed .logoCard { aspect-ratio: 1; background-image: url(../../../public/samples/rail-icon.png); }
+  .kitchen { font-weight: 700; margin-top: 10px; }
+  .app.fill .railTop { padding: 0; }
+  .app.fill .logoCard { border-radius: 0; aspect-ratio: auto; height: 116px; background-size: cover; background-color: #fff; }
+  .app.fill .kitchen { margin: 0; height: 48px; padding: 0 16px; display: flex; align-items: center; }
+  .app.fill.rail-collapsed .logoCard { height: 72px; background-size: cover; }
+  .app.rail-collapsed .kitchen, .app.rail-collapsed .nav span, .app.rail-collapsed .nav .count { display: none; }
+  .nav { padding: 8px; display: grid; gap: 2px; }
+  .nav a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; color: var(--text); text-decoration: none; }
+  .nav a.current { background: var(--surf2); font-weight: 600; }
+  .nav svg { width: 20px; height: 20px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .nav .count { margin-left: auto; color: var(--muted); }
+
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+  .bannerStrip { flex: none; position: relative; overflow: hidden; background: #6B5A3A url(../../../public/samples/banner-bg.jpg) center / cover; transition: height .25s ease; }
+  .bannerStrip img { display: block; height: 100%; margin: 0 auto; max-width: 100%; object-fit: contain; }
+  .bannerStrip.cover img { width: 100%; object-fit: cover; object-position: center; }
+  .bannerStrip.slide img { position: absolute; left: 0; top: 0; width: 100%; height: var(--full-h); max-width: none; object-fit: cover; object-position: center; }
+  .safe { position: absolute; inset: 0; pointer-events: none; display: none; }
+  .safe.on { display: block; }
+  .safe i { position: absolute; border: 2px dashed rgba(255,255,255,.9); outline: 2px dashed rgba(0,0,0,.6); outline-offset: -4px; }
+  .toggle { position: absolute; right: 12px; bottom: 10px; z-index: 2; font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 999px;
+    border: 0; background: rgba(0,0,0,.55); color: #fff; cursor: pointer; }
+  .sheet { flex: 1; min-height: 0; overflow: auto; background: var(--bg); position: relative; transition: box-shadow .25s; }
+  .sheet.raised { box-shadow: 0 -6px 16px rgba(0,0,0,.25); }
+  .content { padding: 20px 28px 120px; max-width: 1100px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  h1 { margin: 4px 0 2px; font-size: 26px; }
+  .sub { color: var(--muted); margin: 0 0 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 18px; }
+  .tiles div { padding: 14px 16px; border-right: 1px solid var(--line); }
+  .tiles div:last-child { border-right: 0; }
+  .tiles b { display: block; font-size: 24px; }
+  .tiles .warn b { color: var(--warn); }
+  .row { display: grid; grid-template-columns: 70px 1fr 110px 90px; gap: 12px; padding: 12px 4px; border-bottom: 1px solid var(--line); }
+  .row .muted { color: var(--muted); }
+
+  /* Customer phone preview */
+  .phoneWrap { display: none; height: 100vh; overflow: auto; background: var(--bg); }
+  .phoneWrap.on { display: block; }
+  .phoneCol { max-width: 480px; margin: 0 auto; background: var(--surf); min-height: 100%; }
+  .phoneBanner { display: block; width: 100%; aspect-ratio: 3 / 1; object-fit: cover; background: #6B5A3A url(../../../public/samples/banner-bg.jpg) center / cover; }
+  .phoneBody { padding: 16px; }
+  .dish { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .dish i { width: 72px; height: 72px; border-radius: 10px; background: var(--surf2); flex: none; }
+  .measureLine { position: fixed; left: 0; right: 0; height: 0; border-top: 2px dashed #E06A3A; z-index: 40; pointer-events: none; display: none; }
+  .measureLine.on { display: block; }
+  .measureLine span { position: absolute; right: 320px; top: -20px; background: #E06A3A; color: #fff; font: 12px ui-monospace, monospace; padding: 1px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="rail">
+    <div class="railTop" id="railTop"><div class="logoCard"></div><div class="kitchen">Onde Onde</div></div>
+    <nav class="nav">
+      <a class="current"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5M10 20v-5h4v5"/></svg><span>Home</span></a>
+      <a><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Orders</span><b class="count">11</b></a>
+      <a><svg viewBox="0 0 24 24"><path d="M4 11h16l-1.5 8h-13zM8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Kitchen</span></a>
+      <a><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></svg><span>Pickup &amp; delivery</span></a>
+      <a><svg viewBox="0 0 24 24"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/></svg><span>Menu</span></a>
+      <a><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16M9 5v4M15 10v4M7 15v4"/></svg><span>Settings</span></a>
+    </nav>
+  </aside>
+  <section class="main">
+    <div class="bannerStrip" id="strip">
+      <img id="banner" alt="Onde Onde banner">
+      <div class="safe" id="safe"><i id="safeBox"></i></div>
+      <button class="toggle" id="toggle" type="button">Collapse</button>
+    </div>
+    <div class="sheet" id="sheet">
+      <div class="content">
+        <div class="eyebrow">● Taking orders</div>
+        <h1>Menu for Sat 17 Oct</h1>
+        <p class="sub">Orders close Thu 15 Oct, 8:00 pm · 1 day 6 hours left</p>
+        <div class="tiles">
+          <div><b>11</b>orders · 1 cancelled</div><div><b>$454.50</b>total · $178 paid</div>
+          <div><b>4</b>to confirm · 2 changed</div><div class="warn"><b>6</b>not paid · $276.50</div>
+        </div>
+        <div id="rows"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="phoneWrap" id="phone">
+  <div class="phoneCol">
+    <img class="phoneBanner" src="../../../public/samples/banner-phone-3x1.jpg" alt="Phone banner">
+    <div class="phoneBody">
+      <div class="eyebrow">Order by Thu 8 pm · pickup Sat</div>
+      <h1>This week's menu</h1>
+      <div id="dishes"></div>
+    </div>
+  </div>
+</div>
+
+<div class="measureLine" id="fold"><span>first screen ends here</span></div>
+
+<aside class="controls" id="controls">
+  <div class="head"><h2>Banner mock-up</h2><button type="button" id="min">hide</button></div>
+  <fieldset><legend>View</legend>
+    <label><input type="radio" name="view" value="seller" checked> Seller (tablet / desktop)</label>
+    <label><input type="radio" name="view" value="phone"> Customer phone</label>
+  </fieldset>
+  <fieldset id="shapeSet"><legend>Seller banner</legend>
+    <label><input type="radio" name="shape" value="R" checked> A · fills the width, height = left menu's top (follows its collapse); no side bands</label>
+    <label style="margin-left:22px">artwork <select id="art"><option value="W">Onde Onde 3840×328 (final rule)</option><option value="T">template with zones (3840×328)</option><option value="5">5:1 · 2000×400 (old)</option></select></label>
+    <label><input type="radio" name="shape" value="A"> B · 6:1 (1920×320), max 160 px</label>
+    <label><input type="radio" name="shape" value="B"> C · 5:1 (2000×400), max 160 px</label>
+    <label><input type="radio" name="shape" value="C"> D · today: 5:1, grows with width</label>
+    <label><input type="radio" name="shape" value="X"> E · custom max height: <input type="number" id="custom" value="140" min="60" max="320" step="10" style="width:56px"> px</label>
+  </fieldset>
+  <fieldset><legend>Collapse</legend>
+    <label><input type="checkbox" id="onScroll" checked> collapse when the content scrolls</label>
+    <label>style <select id="cstyle"><option value="slide" selected>image stays the same, the sheet slides over it (shows its top)</option><option value="shrink">image shrinks to a thin strip</option></select></label>
+    <label>strip height <select id="stripH"><option value="50">50 px (today)</option><option value="72">72 px (design)</option><option value="rail" selected>= collapsed menu's top</option></select></label>
+  </fieldset>
+  <fieldset><legend>Other</legend>
+    <label><input type="checkbox" id="railCol"> left menu collapsed</label>
+    <label><input type="checkbox" id="railFill" checked> left menu logo fills its block (no card, edge to edge)</label>
+    <label><input type="checkbox" id="guides"> text safe area (80 / 20 px on the artboard)</label>
+    <label><input type="checkbox" id="foldLine" checked> show where the first screen ends</label>
+    <label><input type="checkbox" id="dark"> dark mode</label>
+  </fieldset>
+  <div class="readout" id="readout"></div>
+</aside>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const strip = $('strip'), banner = $('banner'), sheet = $('sheet'), app = $('app');
+let collapsed = false;
+let lastFull = 164;
+const RATIO = { A: 6, B: 5, C: 5, R: 6, X: 5 };
+const artKey = () => (val('shape') === 'R' ? $('art').value : String(RATIO[val('shape')]));
+const artRatio = () => (artKey() === 'T' || artKey() === 'W' ? 3840 / 328 : Number(artKey()));
+const SRC = { W: '../../../public/samples/banner-wide-3840x328.webp', T: '../../../public/samples/banner-template-wide.jpg', 5: '../../../public/samples/banner-wide.jpg' };
+const UPLOAD = { W: '3840 × 328 (content in the middle 1896)', 8: '2560 × 320 (8:1)', 6: '1920 × 320 (6:1)', 5: '2000 × 400 (5:1)' };
+
+for (let i = 0; i < 40; i++) {
+  const names = ['Dewi', 'Budi', 'Sari', 'Rina', 'Agus', 'Wati', 'Joko', 'Ayu'];
+  $('rows').insertAdjacentHTML('beforeend',
+    `<div class="row"><b>#${String(1040 + i)}</b><span>${names[i % 8]} · Rendang ×2, Onde onde ×6</span><span class="muted">Glenelg 10:00</span><span>$${(18 + (i * 7) % 40).toFixed(2)}</span></div>`);
+}
+for (let i = 0; i < 10; i++) {
+  $('dishes').insertAdjacentHTML('beforeend', `<div class="dish"><i></i><div><b>${['Rendang','Nasi Ayam Bali','Onde onde','Sayur urab','Sambal matah'][i % 5]}</b><div class="sub">Homemade · 1 portion</div><b>$${(9 + i).toFixed(2)}</b></div></div>`);
+}
+
+const val = (name) => document.querySelector(`input[name=${name}]:checked`).value;
+
+function fullHeight() {
+  const shape = val('shape');
+  const w = strip.clientWidth;
+  const r = RATIO[shape];
+  if (shape === 'C') return Math.min(w, 1600) / 5;
+  if (shape === 'R') {
+    if (app.classList.contains('rail-collapsed')) return stripHeight();
+    return $('railTop').offsetHeight;
+  }
+  if (shape === 'X') return Math.min(w / r, Number($('custom').value) || 140);
+  return Math.min(w / r, 160);
+}
+function stripHeight() {
+  const v = $('stripH').value;
+  if (v === 'rail') return $('railFill').checked ? 72 + 1 : 16 + 40 + 16 + 1; /* the collapsed menu's top and its line */
+  return Number(v);
+}
+function render() {
+  const phone = val('view') === 'phone';
+  $('phone').classList.toggle('on', phone);
+  app.style.display = phone ? 'none' : 'flex';
+  document.documentElement.dataset.theme = $('dark').checked ? 'dark' : 'light';
+  app.classList.toggle('rail-collapsed', $('railCol').checked);
+  app.classList.toggle('fill', $('railFill').checked);
+  const shape = val('shape');
+  const a = artRatio();
+  banner.src = SRC[artKey()];
+  if (shape === 'R') app.classList.toggle('rail-collapsed', $('railCol').checked || collapsed);
+  if (!collapsed) lastFull = fullHeight();
+  const full = lastFull;
+  const h = collapsed ? stripHeight() : full;
+  const slide = collapsed && $('cstyle').value === 'slide';
+  strip.style.setProperty('--full-h', `${full}px`);
+  strip.classList.toggle('slide', slide);
+  strip.style.height = `${h}px`;
+  strip.classList.toggle('cover', collapsed || h < 100 || shape === 'R');
+  $('toggle').textContent = collapsed ? 'Expand' : 'Collapse';
+  sheet.classList.toggle('raised', collapsed);
+  // Safe area: the artboard's 80 px side and 20 px top/bottom margins, scaled to the shown banner.
+  const cover = strip.classList.contains('cover');
+  const shownW = cover ? strip.clientWidth : Math.min(strip.clientWidth, h * a);
+  const scale = shownW / (a === 8 ? 2560 : a === 6 ? 1920 : 2000);
+  const box = $('safeBox');
+  box.style.left = `${(strip.clientWidth - shownW) / 2 + 80 * scale}px`;
+  box.style.width = `${shownW - 160 * scale}px`;
+  box.style.top = `${20 * scale}px`;
+  box.style.height = `${h - 40 * scale}px`;
+  $('safe').classList.toggle('on', $('guides').checked && !collapsed);
+  const fold = $('fold');
+  fold.classList.toggle('on', $('foldLine').checked);
+  fold.style.top = `${window.innerHeight - 2}px`;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  if (phone) {
+    const pw = Math.min(vw, 480), ph = pw / 3;
+    $('readout').innerHTML = `window ${vw} × ${vh}<br>phone banner ${Math.round(pw)} × ${Math.round(ph)} px<br>${Math.round(ph / vh * 100)}% of the screen<br>upload 1200 × 400 (3:1)`;
+  } else {
+    const rows = Math.floor((vh - h - 150) / 47);
+    const b = strip.clientWidth / h;
+    const crop = !cover ? 'whole artwork shown' : b > a ? `artwork: full width, middle ${Math.round(a / b * 100)}% of its height shown` : `artwork: full height, middle ${Math.round(b / a * 100)}% of its width shown`;
+    $('readout').innerHTML = `window ${vw} × ${vh}<br>content ${strip.clientWidth} px wide<br>banner ${Math.round(shownW)} × ${Math.round(h)} px${shownW < strip.clientWidth - 2 ? ' (+ side fill)' : ''}<br>${Math.round(h / vh * 100)}% of the screen<br>left menu top ${$('railTop').offsetHeight} px<br>order rows visible ≈ ${Math.max(0, rows)}<br>${crop}<br>upload ${UPLOAD[artKey()] ?? UPLOAD[a]}`;
+  }
+}
+sheet.addEventListener('scroll', () => {
+  if (!$('onScroll').checked) return;
+  const next = sheet.scrollTop > 8;
+  if (next !== collapsed) { collapsed = next; render(); }
+});
+$('toggle').addEventListener('click', () => { collapsed = !collapsed; render(); });
+$('min').addEventListener('click', () => { $('controls').classList.toggle('min'); $('min').textContent = $('controls').classList.contains('min') ? 'show' : 'hide'; });
+document.querySelectorAll('input, select').forEach((el) => el.addEventListener('input', render));
+window.addEventListener('resize', render);
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.bannerStrip, .rail').forEach((el) => (el.style.transition = 'none'));
+render();
+</script>
+</body>
+</html>

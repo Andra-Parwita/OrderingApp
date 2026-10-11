@@ -10,7 +10,13 @@ export const LIVE_PATH = '/api/seller/live';
 export const LIVE_PING = 'ping';
 export const LIVE_PONG = 'pong';
 
-export const LIVE_EVENT_TYPES = ['order.created', 'order.changed', 'menu.changed'] as const;
+/** `stock.changed` (plan 029): a day sale or a set count; the seller devices reload the stock. */
+export const LIVE_EVENT_TYPES = [
+  'order.created',
+  'order.changed',
+  'menu.changed',
+  'stock.changed',
+] as const;
 export type LiveEventType = (typeof LIVE_EVENT_TYPES)[number];
 
 /** What a route says happened; the Durable Object adds `at`. `code` is the seller-facing order code. */

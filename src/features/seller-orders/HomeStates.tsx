@@ -1,45 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { styled } from 'styled-components';
-import { fetchImages, fetchSettings } from '../../api/client';
-import { currentSellerSlug } from '../../api/device/sellerContext';
 import { formatDay } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
-import { summariseOrders, type PastWeekSummary, type WeekTotals } from '../../../shared/pastWeeks';
+import { summariseOrders, type WeekTotals } from '../../../shared/pastWeeks';
 import { pickText } from '../../../shared/text';
 import type { MenuView } from '../../../shared/menusContract';
-import { Button, EmptyState, Icon, Pager, pageItems, type ChecklistStep } from '../../ui';
+import { Button, Icon } from '../../ui';
 import { FeedbackHost } from './FeedbackHost';
 import { SELLER_NS } from './i18n/register';
 import { orderTotalCents, useLang } from './orderText';
 import { isUnpaid, selectOrders, selectPast } from './sellerOrdersSelectors';
+import { useReadOnlyOrders } from './orderAccess';
 import { paidChangeRequested, pastRequested } from './sellerOrdersSlice';
 
-// Home when no menu is live (handoff, Home): the first-run checklist, the "not published yet"
-// line with the last menu, and the "Just finished" summary. Earlier menus come in pages of 20.
+// Orders when no menu is live (plan 039): the last menu's summary, or a pointer to where menus are
+// started (Home on a tablet). The first-run checklist and the earlier menus live on Home.
 
 const Section = styled.section`
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadTablet}px;
-`;
-const Banner = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px;
-  background: ${({ theme }) => theme.c.tint};
-
-  strong {
-    font-weight: 700;
-  }
-  span {
-    color: ${({ theme }) => theme.c.muted};
-  }
 `;
 const Kicker = styled.p`
   display: flex;
@@ -67,6 +50,11 @@ const HeadRow = styled.div`
   align-items: flex-end;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
+`;
+const HeadActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 const Stats = styled.div`
   display: grid;
@@ -131,89 +119,11 @@ const Actions = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   margin-top: ${({ theme }) => theme.spacing.lg};
 `;
-const EarlierRow = styled(Link)`
-  display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-  min-height: ${({ theme }) => theme.size.tap + 8}px;
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  color: ${({ theme }) => theme.c.text};
-  text-decoration: none;
-  font-variant-numeric: tabular-nums;
-
-  strong {
-    font-weight: 700;
-  }
-  span {
-    color: ${({ theme }) => theme.c.muted};
-  }
-`;
 const Message = styled.p`
   margin: 0;
   padding: ${({ theme }) => theme.size.pagePadTablet}px;
   color: ${({ theme }) => theme.c.muted};
 `;
-
-/** First run: pictures, WhatsApp number, Make a menu, Publish. Each step opens where it is done today. */
-export function SetupChecklist({ view }: Readonly<{ view: MenuView }>) {
-  const { t } = useTranslation(SELLER_NS);
-  const navigate = useNavigate();
-  const [pictures, setPictures] = useState(false);
-  const [whatsapp, setWhatsapp] = useState(false);
-  useEffect(() => {
-    let live = true;
-    const slug = currentSellerSlug();
-    void fetchImages(undefined, slug).then((result) => {
-      if (live && result.ok) {
-        const { railImage, railIcon, desktopBanner, phoneBanner } = result.data.images;
-        setPictures([railImage, railIcon, desktopBanner, phoneBanner].some(Boolean));
-      }
-    });
-    void fetchSettings(undefined, slug).then((result) => {
-      if (live && result.ok) setWhatsapp(Boolean(result.data.settings.whatsappNumber));
-    });
-    return () => {
-      live = false;
-    };
-  }, []);
-  const steps = useMemo<Array<ChecklistStep>>(
-    () => [
-      { id: 'pictures', label: t('home.setup.pictures'), done: pictures },
-      { id: 'whatsapp', label: t('home.setup.whatsapp'), done: whatsapp },
-      {
-        id: 'menu',
-        label: t('home.setup.menu'),
-        done: view.dishes.length > 0 || view.menu.wizardStep > 0,
-      },
-      { id: 'publish', label: t('home.setup.publish'), done: false },
-    ],
-    [t, pictures, whatsapp, view],
-  );
-  return (
-    <Section>
-      <EmptyState
-        icon="list"
-        title={t('home.setup.title')}
-        why={t('home.setup.why')}
-        steps={steps}
-        action={
-          <Actions>
-            <Button variant="primary" onClick={() => void navigate('/seller/menu')}>
-              {t('home.setup.action')}
-            </Button>
-            <Button onClick={() => void navigate('/seller/images')}>
-              {t('home.setup.pictures')}
-            </Button>
-            <Button onClick={() => void navigate('/seller/settings')}>
-              {t('home.setup.whatsapp')}
-            </Button>
-          </Actions>
-        }
-      />
-    </Section>
-  );
-}
 
 function Totals({
   totals,
@@ -270,93 +180,46 @@ function Totals({
   );
 }
 
-function EarlierMenus({
-  weeks,
-  lang,
-}: Readonly<{ weeks: ReadonlyArray<PastWeekSummary>; lang: Language }>) {
+/**
+ * No menu is running and none is being made: Orders has nothing to show. A tablet is pointed to
+ * Home, where menus are started (plan 039); a phone has no Home, so it keeps a way to Menu.
+ */
+export function NoMenuRunning({ phone }: Readonly<{ phone: boolean }>) {
   const { t } = useTranslation(SELLER_NS);
-  const [page, setPage] = useState(0);
+  const navigate = useNavigate();
+  const readOnly = useReadOnlyOrders();
   return (
     <Section>
-      <HeadRow>
-        <h2>{t('home.earlier')}</h2>
-        <Muted>{t('home.earlierHint')}</Muted>
-      </HeadRow>
-      {weeks.length === 0 ? <Muted>{t('home.noEarlier')}</Muted> : null}
-      {pageItems(weeks, page).map((week) => (
-        <EarlierRow key={week.id} to="/seller/past-weeks">
-          <strong>{formatDay(week.cookingDate, lang)}</strong>
-          <span>
-            {t('home.earlierRow', { orders: week.totals.orders, dishes: week.totals.items.length })}
-          </span>
-          <strong>{formatMoney(week.totals.incomeCents, lang)}</strong>
-          <span>
-            {week.totals.unpaidCents > 0
-              ? t('home.unpaidAmount', { amount: formatMoney(week.totals.unpaidCents, lang) })
-              : t('home.allPaid')}
-          </span>
-        </EarlierRow>
-      ))}
-      <Pager page={page} total={weeks.length} onPage={setPage} />
+      <Muted>{t('home.noMenu')}</Muted>
+      <Actions>
+        {readOnly ? null : (
+          <Button
+            variant="primary"
+            onClick={() => void navigate(phone ? '/seller/menu' : '/seller')}
+          >
+            {phone ? t('home.makeMenu') : t('home.startFromHome')}
+          </Button>
+        )}
+      </Actions>
     </Section>
   );
 }
 
-/** Menu not published: "Your menu for <date> isn't published yet", the last menu, earlier menus. */
-export function NotPublishedHome({ view }: Readonly<{ view: MenuView }>) {
-  const { t } = useTranslation(SELLER_NS);
-  const lang = useLang();
-  const navigate = useNavigate();
-  const past = useSelector(selectPast);
-  const weeks = past.status === 'ready' ? past.weeks : [];
-  const last = weeks[0];
-  // A deleted menu (finished, never published): nothing to continue; the seller makes a new one.
-  const deleted = view.menu.state === 'finished';
-  return (
-    <>
-      <Banner>
-        <div>
-          {deleted ? (
-            <strong>{t('home.noMenu')}</strong>
-          ) : (
-            <>
-              <strong>
-                {t('home.notPublished', { date: formatDay(view.menu.cookingDate, lang) })}
-              </strong>{' '}
-              <span>{t('home.stepOf', { step: view.menu.wizardStep + 1 })}</span>
-            </>
-          )}
-        </div>
-        <Button variant="primary" onClick={() => void navigate('/seller/menu')}>
-          {deleted ? t('home.setup.action') : t('home.continue')}
-          <Icon name="forward" />
-        </Button>
-      </Banner>
-      {last ? (
-        <Section>
-          <Kicker>
-            <Icon name="check" />
-            {t('home.lastMenu')}
-          </Kicker>
-          <Big>{formatDay(last.cookingDate, lang)}</Big>
-          <Totals totals={last.totals} lang={lang} doneCount={null} unpaidCount={null} />
-        </Section>
-      ) : null}
-      <EarlierMenus weeks={weeks.slice(last ? 1 : 0)} lang={lang} />
-    </>
-  );
-}
-
-/** Cooking day over: "Just finished", unpaid loose ends, Earlier menus; "See all N orders" opens the list. */
+/**
+ * Cooking day over: the last menu's summary (totals, dishes sold, unpaid loose ends); "See all N
+ * orders" opens the list. Starting the next menu is on Home (a phone: Menu).
+ */
 export function FinishedHome({
   view,
   showAll,
   onToggleAll,
-}: Readonly<{ view: MenuView; showAll: boolean; onToggleAll: () => void }>) {
+  phone,
+}: Readonly<{ view: MenuView; showAll: boolean; onToggleAll: () => void; phone: boolean }>) {
   const { t } = useTranslation(SELLER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const readOnly = useReadOnlyOrders();
   const orders = useSelector(selectOrders);
   const past = useSelector(selectPast);
   const weeks = useMemo(() => (past.status === 'ready' ? past.weeks : []), [past]);
@@ -373,7 +236,6 @@ export function FinishedHome({
         : null,
     [orders],
   );
-  const earlier = weeks.filter((week) => week !== mine);
   return (
     <>
       <FeedbackHost />
@@ -387,14 +249,29 @@ export function FinishedHome({
             <Big>{formatDay(view.menu.cookingDate, lang)}</Big>
             <Muted>{t('home.closedNote')}</Muted>
           </div>
-          {orders.length > 0 ? (
-            <Button variant="quiet" aria-expanded={showAll} onClick={onToggleAll}>
-              {showAll ? t('home.hideAll') : t('home.seeAll', { count: orders.length })}
-            </Button>
-          ) : null}
+          <HeadActions>
+            {readOnly ? null : (
+              <Button
+                variant="quiet"
+                onClick={() => void navigate(phone ? '/seller/menu' : '/seller')}
+              >
+                {phone ? t('home.makeMenu') : t('home.startFromHome')}
+              </Button>
+            )}
+            {orders.length > 0 ? (
+              <Button variant="quiet" aria-expanded={showAll} onClick={onToggleAll}>
+                {showAll ? t('home.hideAll') : t('home.seeAll', { count: orders.length })}
+              </Button>
+            ) : null}
+          </HeadActions>
         </HeadRow>
         {totals ? (
-          <Totals totals={totals} lang={lang} doneCount={doneCount} unpaidCount={loose.length} />
+          <Totals
+            totals={totals}
+            lang={lang}
+            doneCount={doneCount}
+            unpaidCount={orders.length > 0 ? loose.length : null}
+          />
         ) : null}
         {loose.map((order) => (
           <Loose key={order.id}>
@@ -405,20 +282,17 @@ export function FinishedHome({
                 amount: formatMoney(orderTotalCents(order), lang),
               })}
             </span>
-            <Button onClick={() => dispatch(paidChangeRequested({ code: order.code, paid: true }))}>
-              <Icon name="check" />
-              {t('home.markPaid')}
-            </Button>
+            {readOnly ? null : (
+              <Button
+                onClick={() => dispatch(paidChangeRequested({ code: order.code, paid: true }))}
+              >
+                <Icon name="check" />
+                {t('home.markPaid')}
+              </Button>
+            )}
           </Loose>
         ))}
-        <Actions>
-          <Button onClick={() => void navigate('/seller/menu')}>
-            <Icon name="list" />
-            {t('home.useDishes')}
-          </Button>
-        </Actions>
       </Section>
-      <EarlierMenus weeks={earlier} lang={lang} />
     </>
   );
 }
@@ -426,9 +300,11 @@ export function FinishedHome({
 /** Asks for the earlier menus once, when a no-live-menu home is shown. */
 export function useEarlierMenus(): void {
   const dispatch = useDispatch();
+  const readOnly = useReadOnlyOrders();
   useEffect(() => {
-    dispatch(pastRequested());
-  }, [dispatch]);
+    // A helper may not read earlier menus (the server says 403): there is nothing to ask.
+    if (!readOnly) dispatch(pastRequested());
+  }, [dispatch, readOnly]);
 }
 
 export function HomeMessage({ text }: Readonly<{ text: string }>) {

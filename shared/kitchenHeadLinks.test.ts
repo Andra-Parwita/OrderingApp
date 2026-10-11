@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { kitchenHeadHtml, kitchenPageTarget } from './kitchenHeadLinks';
+import { kitchenHeadHtml, kitchenPageTarget, themeColourHtml } from './kitchenHeadLinks';
 
 describe('kitchenPageTarget', () => {
   it('finds the kitchen or the order, and nothing for reserved or file paths', () => {
@@ -26,5 +26,12 @@ describe('kitchenHeadHtml', () => {
     expect(html).toContain('content="Bu &quot;Rina&quot; &amp; &lt;Co&gt; &#39;x&#39;"');
     expect(html).not.toContain('<Co>');
     expect(kitchenHeadHtml('k-1')).not.toContain('apple-mobile-web-app-title');
+  });
+});
+
+describe('themeColourHtml', () => {
+  it('is the theme background, different per theme', () => {
+    expect(themeColourHtml('bali')).toMatch(/^<meta name="theme-color" content="#[0-9A-F]{6}">$/i);
+    expect(themeColourHtml('bali')).not.toBe(themeColourHtml('onde'));
   });
 });

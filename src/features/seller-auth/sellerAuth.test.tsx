@@ -364,13 +364,16 @@ describe('add a device when the account already has a login (plan 025)', () => {
     expect(failureMessage(t, fail('password_exists'))).toMatch(/already has a password/);
     expect(failureMessage(t, fail('passkey_exists'))).toMatch(/already has a passkey/);
     expect(failureMessage(t, fail('unauthorized'))).toMatch(/timed out/);
+    expect(failureMessage(t, fail('kitchen_paused'))).toBe(
+      'This kitchen is paused. Contact the admin.',
+    );
     expect(failureMessage(t, fail('locked_out', { retryAfterSeconds: 120 }))).toMatch(
       /Too many tries.*2 minutes/,
     );
     expect(failureMessage(t, fail('invalid_request'))).toMatch(/Something went wrong/);
     // Indonesian has all of them too.
     const id = i18n.getFixedT('id', AUTH_NS);
-    for (const code of ['password_exists', 'passkey_exists'] as const) {
+    for (const code of ['password_exists', 'passkey_exists', 'kitchen_paused'] as const) {
       expect(failureMessage(id, fail(code))).not.toMatch(/Something went wrong|errors\./);
     }
   });

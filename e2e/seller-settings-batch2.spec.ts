@@ -36,7 +36,7 @@ test('settings saves the WhatsApp number normalised; Orders pauses and resumes t
 
     // The ordering switch is "Taking orders" on Orders now: pause, then resume (other tests share
     // this server).
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     const taking = page.getByRole('switch', { name: 'Taking orders' });
     await expect(taking).toHaveAttribute('aria-checked', 'true');
     await taking.click();

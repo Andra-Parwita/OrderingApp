@@ -43,6 +43,7 @@ afterEach(async () => {
 const two: Array<Membership> = [
   { sellerId: 's1', slug: 'onde-onde', sellerName: 'Onde', role: 'owner' },
   { sellerId: 's2', slug: 'demo', sellerName: 'Demo', role: 'chef', chefId: 'c1' },
+  { sellerId: 's3', slug: 'stall', sellerName: 'Stall', role: 'helper' },
 ];
 const renderIt = (onSwitched = vi.fn()) =>
   render(
@@ -65,6 +66,7 @@ describe('KitchenSwitcher', () => {
     const select = await screen.findByRole('combobox', { name: 'Kitchen' });
     expect(screen.getByRole('option', { name: 'Onde · Owner' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Demo · Chef' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Stall · Helper' })).toBeInTheDocument();
     fireEvent.change(select, { target: { value: 's2' } });
     await waitFor(() => expect(onSwitched).toHaveBeenCalled());
     expect(switchKitchen).toHaveBeenCalledWith('s2');

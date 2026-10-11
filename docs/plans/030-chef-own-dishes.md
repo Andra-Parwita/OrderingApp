@@ -17,4 +17,4 @@
 
 ## Decisions and notes
 
-- **Needs the owner's answer:** when a chef edits a dish that is on the **live** menu, does the change show to customers at once, or only after the owner shares the menu again? Default in this plan: at once, like the owner's own edits today.
+- **Owner's ruling (2026-10-11: "A"):** a chef's edit to a dish on the **live** menu shows to customers at once, like the owner's own edits today. No approval step, no notification.

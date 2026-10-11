@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { styled } from 'styled-components';
-import { LanguageSwitch } from '../components/LanguageSwitch';
 import { ADMIN_NS, AdminHomeScreen, AdminSetupScreen, AdminSignInScreen } from '../features/admin';
 import {
   AUTH_NS,
@@ -12,25 +11,18 @@ import {
   SetupKeyScreen,
   SignInScreen,
 } from '../features/seller-auth';
+import { KitchenImagesEditor, type ResizeFn } from '../features/seller-setup';
 import type { Me } from '../../shared/authContract';
+import type { ImageSlot } from '../../shared/imageSlots';
 import { isValidSlug } from '../../shared/seller';
+import { fetchSellerImages, removeSellerImage, uploadSellerImage } from '../api/auth';
 import { lastSignedIn } from '../api/device/sellerContext';
-import { PageHeader } from '../ui';
+import { BrandBottomBar, BrandTopBar } from './BrandPanel';
 import { useSession } from './session';
 import { SignInFrame } from './SignInFrame';
 import { SWITCH_SIGN_IN } from './SwitchPerson';
 
-// Sign-in, setup and admin pages: outside the seller shell, each under a bar with the language
-// switch. Where each screen leads is decided here.
-
-function AuthFrame({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <>
-      <PageHeader title="" titleHidden trailing={<LanguageSwitch compact />} />
-      {children}
-    </>
-  );
-}
+// Sign-in, setup and admin pages: outside the seller shell. Where each screen leads is decided here.
 
 const FootLink = styled(Link)`
   display: inline-flex;
@@ -193,6 +185,27 @@ export function AdminSignInRoute() {
   );
 }
 
+/** The brand bar and footer the app layer gives the admin page (features may not import app). */
+export const ADMIN_TOP = (tools: ReactNode) => <BrandTopBar page="admin">{tools}</BrandTopBar>;
+export const ADMIN_BOTTOM = <BrandBottomBar />;
+
+/** The pictures editor of one kitchen, wired to the admin's image calls (plan 041). */
+export function AdminKitchenImages({
+  sellerId,
+  resize,
+}: Readonly<{ sellerId: string; resize?: ResizeFn }>) {
+  const calls = useMemo(
+    () => ({
+      load: () => fetchSellerImages(sellerId),
+      upload: (slot: ImageSlot, dataUrl: string) => uploadSellerImage(sellerId, slot, dataUrl),
+      remove: (slot: ImageSlot) => removeSellerImage(sellerId, slot),
+    }),
+    [sellerId],
+  );
+  return <KitchenImagesEditor calls={calls} {...(resize ? { resize } : {})} />;
+}
+const ADMIN_IMAGES = (sellerId: string) => <AdminKitchenImages sellerId={sellerId} />;
+
 export function AdminHomeRoute() {
   const navigate = useNavigate();
   const { adopt } = useSession();
@@ -200,9 +213,14 @@ export function AdminHomeRoute() {
     adopt(null);
     void navigate('/admin/sign-in', { replace: true });
   }, [adopt, navigate]);
+  // The admin page carries its own brand bar (plan 038), with the language switch and Sign out.
   return (
-    <AuthFrame>
-      <AdminHomeScreen onSignedOut={toSignIn} onSignInNeeded={toSignIn} />
-    </AuthFrame>
+    <AdminHomeScreen
+      onSignedOut={toSignIn}
+      onSignInNeeded={toSignIn}
+      top={ADMIN_TOP}
+      bottom={ADMIN_BOTTOM}
+      images={ADMIN_IMAGES}
+    />
   );
 }

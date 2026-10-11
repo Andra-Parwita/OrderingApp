@@ -79,7 +79,14 @@ export function KitchenSwitcher({
       <Select value={active ?? ''} onChange={(event) => void onChange(event)}>
         {memberships.map((m) => (
           <option key={m.sellerId} value={m.sellerId}>
-            {m.sellerName} · {t(m.role === 'owner' ? 'sellerNav.roleOwner' : 'sellerNav.roleChef')}
+            {m.sellerName} ·{' '}
+            {t(
+              m.role === 'owner'
+                ? 'sellerNav.roleOwner'
+                : m.role === 'helper'
+                  ? 'sellerNav.roleHelper'
+                  : 'sellerNav.roleChef',
+            )}
           </option>
         ))}
       </Select>

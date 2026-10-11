@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
-import { comingSaturday, formatCutoff, formatDay } from '../../../shared/dates';
+import { formatCutoff, formatDay } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import type { MenuDishView } from '../../../shared/menusContract';
-import { Button, Icon, ListWithPanel, TextField, WarningDialog } from '../../ui';
+import { Button, Icon, ListWithPanel, WarningDialog } from '../../ui';
+import { ChefMenu } from './ChefMenu';
 import { DishEditorHost, useDishEditor } from './DishEditorHost';
 import { MENU_NS } from './i18n/register';
 import {
-  AskDialog,
   GroupLabel,
   Head,
   LinkButton,
@@ -22,13 +22,14 @@ import {
   Tools,
   useLang,
   useMenuData,
-  useOpWatch,
   useRunOp,
   dishName,
 } from './menuShared';
 import type { MenuData } from './menuSlice';
 import { PastDetail, PastList } from './PastMenusPanel';
-import { STEPS, stepPath } from './steps';
+import type { MenuSlots } from './slots';
+import { STEPS, type Tab } from './steps';
+import { useMenuWizard, type NewMenuSource } from './useMenuWizard';
 import { useSold } from './useSold';
 
 // The Menu screen (plan 001 stage 7; handoff, Menu screen). Three states: no active menu (Past menus
@@ -151,38 +152,17 @@ const Pencil = styled.button`
   cursor: pointer;
 `;
 
-function NewMenuDialog({
-  onCancel,
-  onStart,
-}: Readonly<{ onCancel: () => void; onStart: (date: string) => void }>) {
-  const { t } = useTranslation(MENU_NS);
-  const [date, setDate] = useState(() => comingSaturday(new Date()));
-  return (
-    <AskDialog
-      title={t('new.title')}
-      confirmLabel={t('new.start')}
-      cancelLabel={t('cancel')}
-      disabled={!/^\d{4}-\d{2}-\d{2}$/.test(date)}
-      onCancel={onCancel}
-      onConfirm={() => onStart(date)}
-    >
-      <TextField
-        label={t('new.day')}
-        type="date"
-        value={date}
-        helper={t('new.dayHelper')}
-        onChange={(event) => setDate(event.target.value)}
-        data-autofocus
-      />
-    </AskDialog>
-  );
-}
-
 function LiveMenu({
   data,
   lang,
   onEdit,
-}: Readonly<{ data: MenuData; lang: Language; onEdit: (dish: MenuDishView) => void }>) {
+  onEditTab,
+}: Readonly<{
+  data: MenuData;
+  lang: Language;
+  onEdit: (dish: MenuDishView) => void;
+  onEditTab: (tab: Tab) => void;
+}>) {
   const { t } = useTranslation(MENU_NS);
   const navigate = useNavigate();
   const { run, busy } = useRunOp();
@@ -213,7 +193,7 @@ function LiveMenu({
           </Muted>
         </div>
         <Actions>
-          <Button onClick={() => void navigate('/seller/menu/edit/details')}>
+          <Button onClick={() => onEditTab('details')}>
             <Icon name="pencil" />
             {t('live.editDetails')}
           </Button>
@@ -289,7 +269,7 @@ function LiveMenu({
         ))}
       </div>
       <Actions style={{ marginTop: '1rem' }}>
-        <Button disabled={full} onClick={() => void navigate('/seller/menu/edit/dishes')}>
+        <Button disabled={full} onClick={() => onEditTab('dishes')}>
           <Icon name="plus" />
           {t('live.addDish')}{' '}
           <Muted as="span">{t('live.nOf', { n: view.dishes.length, max: 10 })}</Muted>
@@ -333,9 +313,12 @@ function pickSize(dish: MenuDishView, lang: Language): string {
   return own || dish.size.en || dish.size.id;
 }
 
-function NotPublished({ data, lang }: Readonly<{ data: MenuData; lang: Language }>) {
+function NotPublished({
+  data,
+  lang,
+  onContinue,
+}: Readonly<{ data: MenuData; lang: Language; onContinue: (step: number) => void }>) {
   const { t } = useTranslation(MENU_NS);
-  const navigate = useNavigate();
   const { run } = useRunOp();
   const [asking, setAsking] = useState(false);
   const { menu } = data.view;
@@ -357,7 +340,7 @@ function NotPublished({ data, lang }: Readonly<{ data: MenuData; lang: Language 
         ))}
       </Progress>
       <Actions>
-        <Button variant="primary" onClick={() => void navigate(stepPath('make', STEPS[next]!))}>
+        <Button variant="primary" onClick={() => onContinue(next)}>
           {t('draft.continue', { n: next + 1 })}
           <Icon name="forward" />
         </Button>
@@ -383,28 +366,25 @@ function NotPublished({ data, lang }: Readonly<{ data: MenuData; lang: Language 
   );
 }
 
-export function MenuScreen() {
+/** The owner's Menu; a chef (plan 030, `chefId` is theirs) gets Your dishes only. */
+export function MenuScreen({
+  slots,
+  chefId,
+}: Readonly<{ slots: Pick<MenuSlots, 'newMenu'>; chefId?: string }>) {
+  return chefId ? <ChefMenu chefId={chefId} /> : <OwnerMenu slots={slots} />;
+}
+
+function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu'> }>) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
-  const navigate = useNavigate();
+  const wizard = useMenuWizard();
   const { data, status } = useMenuData();
   const { run } = useRunOp();
   const editor = useDishEditor();
-  const [asking, setAsking] = useState(false);
+  // The New menu dialog (Home's), opened with the dishes of an earlier menu when it came from one.
+  const [asking, setAsking] = useState<{ source?: NewMenuSource } | null>(null);
   const [pastOpen, setPastOpen] = useState(false);
   const [pastId, setPastId] = useState<string | undefined>();
-  const [reuse, setReuse] = useState(false);
-  // New menu, then (when started from a past menu) its dishes, then the wizard.
-  const [carry, setCarry] = useState<string | null>(null);
-  useOpWatch(['createMenu'], {
-    onDone: () => {
-      if (carry) {
-        run({ kind: 'usePast', weekId: carry });
-        setCarry(null);
-      }
-      void navigate(stepPath('make', 'dishes'));
-    },
-  });
 
   if (!data) {
     return (
@@ -420,12 +400,6 @@ export function MenuScreen() {
   const none = state === 'finished';
   const past = data.past;
   const selected = past.find((week) => week.id === pastId);
-  const start = (date: string) => {
-    setAsking(false);
-    setCarry(reuse && pastId ? pastId : null);
-    setReuse(false);
-    run({ kind: 'createMenu', cookingDate: date });
-  };
   const detail = selected ? (
     <PastDetail
       summary={selected}
@@ -438,12 +412,11 @@ export function MenuScreen() {
       {...(none ? {} : { onBack: () => setPastId(undefined) })}
       onUse={() => {
         if (none) {
-          setReuse(true);
-          setAsking(true);
+          setAsking({ source: { kind: 'past', weekId: selected.id } });
         } else {
           run({ kind: 'usePast', weekId: selected.id });
           setPastOpen(false);
-          void navigate(stepPath('make', 'dishes'));
+          wizard.open('dishes');
         }
       }}
     />
@@ -451,9 +424,14 @@ export function MenuScreen() {
 
   const main =
     state === 'live' ? (
-      <LiveMenu data={data} lang={lang} onEdit={(dish) => editor.open({ itemId: dish.id })} />
+      <LiveMenu
+        data={data}
+        lang={lang}
+        onEdit={(dish) => editor.open({ itemId: dish.id })}
+        onEditTab={wizard.edit}
+      />
     ) : state === 'not_published' ? (
-      <NotPublished data={data} lang={lang} />
+      <NotPublished data={data} lang={lang} onContinue={wizard.open} />
     ) : (
       <Section>
         <Top>
@@ -498,13 +476,7 @@ export function MenuScreen() {
             {t('header.sets', { count: data.sets.length })}
           </HeaderLink>
           {none ? (
-            <Button
-              variant="primary"
-              onClick={() => {
-                setReuse(false);
-                setAsking(true);
-              }}
-            >
+            <Button variant="primary" onClick={() => setAsking({})}>
               <Icon name="plus" />
               {t('header.newMenu')}
             </Button>
@@ -519,7 +491,21 @@ export function MenuScreen() {
       <Body>
         <ListWithPanel list={main} {...(panel ? { panel } : {})} panelLabel={t('past.panel')} />
       </Body>
-      {asking ? <NewMenuDialog onCancel={() => setAsking(false)} onStart={start} /> : null}
+      {asking
+        ? slots.newMenu({
+            lang,
+            defaults: data.prefs.menuDefaults,
+            past,
+            sets: data.sets,
+            ...(asking.source ? { initialSource: asking.source } : {}),
+            onCreate: (input) => {
+              setAsking(null);
+              wizard.start(input);
+            },
+            onClose: () => setAsking(null),
+          })
+        : null}
+      {wizard.failed ? <Muted role="alert">{t('genericError')}</Muted> : null}
       <DishEditorHost data={data} value={editor.value} onClose={editor.close} />
     </Page>
   );

@@ -14,12 +14,14 @@ import {
   parseMeResponse,
   parseSellerResponse,
   parseSellersResponse,
+  parseInvitesResponse,
   parseMembersResponse,
   parseMembershipsResponse,
   parseSessionResponse,
   parseTeamNamesResponse,
   type SessionResponse,
 } from '../shared/authContract';
+import { parseLogListResponse } from '../shared/logContract';
 import { parseSellerOrderResponse, parseSellerOrdersResponse } from '../shared/orderContract';
 
 import { DEV_ADMIN_SETUP_KEY, devApi, useWorld, type World } from './impl';
@@ -244,7 +246,76 @@ describe('sign-in', () => {
     });
   });
 
+  describe('admin: client log (plan 026)', () => {
+    const logged = (message: string) => ({
+      app: 'customer' as const,
+      version: 'dev',
+      slug: null,
+      path: '/',
+      kind: 'js_error' as const,
+      code: 'TypeError',
+      message,
+      agent: 'Safari iOS 17',
+      standalone: false,
+    });
+
+    it('refuses anonymous callers and sellers', async () => {
+      expect((await call('GET', '/api/admin/log')).status).toBe(401);
+      const { full } = await sellerSignedIn(A_ID);
+      expect((await call('GET', '/api/admin/log', { token: full.token })).status).toBe(403);
+    });
+
+    it('gives the admin the newest entries first', async () => {
+      const admin = await adminSignedIn();
+      await world.repo.log.record([logged('older')]);
+      await world.repo.log.record([logged('newer')]);
+      const reply = await call('GET', '/api/admin/log', admin);
+      expect(reply.status).toBe(200);
+      const parsed = parseLogListResponse(reply.body);
+      expect(parsed?.entries.map((e) => e.message)).toEqual(['newer', 'older']);
+      expect(parsed?.total).toBe(2);
+    });
+
+    it('filters by app and kitchen, pages 50 at a time, and clears (admin only)', async () => {
+      const admin = await adminSignedIn();
+      const { full } = await sellerSignedIn(A_ID);
+      for (let n = 1; n <= 55; n += 1) await world.repo.log.record([logged(`c${String(n)}`)]);
+      await world.repo.log.record([{ ...logged('s1'), app: 'seller', slug: 'onde-onde' }]);
+      const get = async (query: string) =>
+        parseLogListResponse((await call('GET', `/api/admin/log${query}`, admin)).body);
+      const first = await get('');
+      expect([first?.entries.length, first?.total]).toEqual([50, 56]);
+      const second = await get('?offset=50');
+      expect(second?.entries.map((e) => e.message)).toEqual(['c6', 'c5', 'c4', 'c3', 'c2', 'c1']);
+      expect((await get('?app=seller'))?.entries.map((e) => e.message)).toEqual(['s1']);
+      const kitchen = await get('?slug=onde-onde');
+      expect([kitchen?.total, kitchen?.entries[0]?.message]).toEqual([1, 's1']);
+      expect((await get('?app=admin'))?.total).toBe(0);
+      // A bad filter or offset is ignored.
+      expect((await get('?app=nope&offset=-3'))?.entries).toHaveLength(50);
+
+      expect((await call('DELETE', '/api/admin/log')).status).toBe(401);
+      expect((await call('DELETE', '/api/admin/log', { token: full.token })).status).toBe(403);
+      expect((await get(''))?.total).toBe(56);
+      expect((await call('DELETE', '/api/admin/log', admin)).status).toBe(200);
+      expect((await get(''))?.total).toBe(0);
+    });
+  });
+
   describe('admin: sellers', () => {
+    it('answers a newly added seller with its summary line', async () => {
+      const admin = await adminSignedIn();
+      const reply = await call('POST', '/api/admin/sellers', {
+        ...admin,
+        body: { name: 'Warung Baru', slug: 'warung-baru' },
+      });
+      expect(reply.status).toBe(201);
+      expect(parseSellerResponse(reply.body)?.seller.summary).toMatchObject({
+        people: 0,
+        orders: 0,
+      });
+    });
+
     it('lists and creates sellers with slug rules, unique slugs and an empty kitchen', async () => {
       const admin = await adminSignedIn();
       const listed = parseSellersResponse((await call('GET', '/api/admin/sellers', admin)).body);
@@ -302,6 +373,7 @@ describe('sign-in', () => {
         ['POST', `/api/admin/sellers/${A_ID}/invite-key`],
         ['POST', `/api/admin/sellers/${A_ID}/recovery-key`],
         ['GET', `/api/admin/sellers/${A_ID}/devices`],
+        ['GET', `/api/admin/sellers/${A_ID}/invites`],
         ['GET', `/api/admin/sellers/${A_ID}/chefs`],
         ['POST', `/api/admin/sellers/${A_ID}/chefs/wati/sign-out-all`],
       ];
@@ -1428,7 +1500,7 @@ describe('sign-in', () => {
     it('refuses every forbidden route with 403 forbidden, and the seller may use them', async () => {
       const { chef, seller } = await chefSession();
       const forbidden: Array<[string, string, unknown?]> = [
-        ['POST', '/api/seller/dishes', { name: { en: 'x', id: 'x' }, priceCents: 100 }],
+        // POST /api/seller/dishes is open to a chef since plan 030 (mocks/chefDishes.test.ts)
         ['PATCH', '/api/seller/dishes/pesmol', { priceCents: 200 }],
         ['DELETE', '/api/seller/dishes/pesmol'],
         ['PUT', '/api/seller/menus/current', { dishIds: [] }],
@@ -1588,6 +1660,37 @@ describe('sign-in', () => {
         }),
       );
     }
+
+    it('lists the newest 20 invites of a kitchen: waiting, used and expired, never the key (plan 043)', async () => {
+      const admin = await adminSignedIn();
+      const invitesOf = async (sellerId: string) =>
+        parseInvitesResponse(
+          (await call('GET', `/api/admin/sellers/${sellerId}/invites`, admin)).body,
+        )?.invites ?? [];
+      expect(await invitesOf(A_ID)).toEqual([]);
+
+      const used = await adminInvite(admin, A_ID, 'Used one');
+      expect((await redeem(used.key, 'dev-used-0001')).status).toBe(200);
+      await adminInvite(admin, A_ID, 'Old one');
+      nowMs += 25 * 60 * MIN;
+      await adminInvite(admin, A_ID, 'Fresh one');
+      await adminInvite(admin, B_ID, 'Other kitchen');
+
+      const invites = await invitesOf(A_ID);
+      expect(invites.map((invite) => [invite.displayName, invite.status])).toEqual([
+        ['Fresh one', 'waiting'],
+        ['Old one', 'expired'],
+        ['Used one', 'used'],
+      ]);
+      expect(invites[2]?.usedAt).toBeDefined();
+      expect(invites.every((invite) => invite.role === 'owner')).toBe(true);
+      expect(JSON.stringify(invites)).not.toContain(used.key);
+
+      for (let i = 0; i < 22; i += 1) await adminInvite(admin, A_ID, `Many ${i}`);
+      const newest = await invitesOf(A_ID);
+      expect(newest).toHaveLength(20);
+      expect(newest[0]?.displayName).toBe('Many 21');
+    });
 
     it('a key redeemed from two devices at once admits exactly one', async () => {
       const admin = await adminSignedIn();

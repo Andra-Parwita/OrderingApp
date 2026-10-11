@@ -16,12 +16,20 @@ import type {
   MessagePlaceResponse,
   PackRequest,
 } from '../../shared/handoverContract';
+import type {
+  DayCountRequest,
+  DaySaleEntry,
+  DaySaleRequest,
+  DayStockResponse,
+  DayUndoRequest,
+} from '../../shared/daySalesContract';
 import type { AddMadeRequest } from '../../shared/madeContract';
 import type {
   Chef,
   KitchenImages,
   KitchenSettings,
   OrderStatus,
+  PauseKind,
   Seller,
   SellerMenuItemView,
   SellerOrder,
@@ -61,6 +69,7 @@ import type {
   UpdateItemRequest,
 } from '../../shared/setupContract';
 import type { SendUpdatesRequest, UpdateResult } from '../../shared/updateContract';
+import type { ClientLogRepository } from '../db/clientLog';
 import type {
   AdminSeller,
   CodeResponse,
@@ -72,6 +81,7 @@ import type {
   PasswordSignInRequest,
   Role,
   SessionResponse,
+  InviteInfo,
   TeamMember,
   TeamName,
 } from '../../shared/authContract';
@@ -106,8 +116,13 @@ export type Caller = {
   sellerId?: string;
   chefId?: string;
   accountId: string;
+  /** A person's name (plan 028: a helper's audit name); absent for the admin. */
+  displayName?: string;
   deviceId?: string;
 };
+
+/** Who recorded a day sale or count: the signed-in person (no account in a DEV_TOOLS header call). */
+export type DayActor = { accountId?: string; name: string; owner?: boolean };
 
 // ---- One seller ----
 
@@ -240,6 +255,14 @@ export type SellerRepository = {
   getMade(): Promise<StoreResult<Record<string, number>>>;
   /** Adds `delta` to one dish's made count in SQL (so concurrent taps all count); returns all counts. */
   addMade(request: AddMadeRequest): Promise<StoreResult<Record<string, number>>>;
+  /** Plan 029: takes `qty` off a dish's day stock in one atomic step and logs it; `sold_out` when too few are left. */
+  sellOnDay(request: DaySaleRequest, by: DayActor): Promise<StoreResult<DayStockResponse>>;
+  /** Plan 029: "Set count": the stock becomes `count`; the difference is logged. */
+  setDayCount(request: DayCountRequest, by: DayActor): Promise<StoreResult<DayStockResponse>>;
+  /** Plan 029: reverses one sale (stock comes back, the log gets an undo row). Owners any time; others only their own, within the window. */
+  undoDaySale(request: DayUndoRequest, by: DayActor): Promise<StoreResult<DayStockResponse>>;
+  /** Plan 029: the current menu's day-sales log, newest first. */
+  listDaySales(): Promise<Array<DaySaleEntry>>;
   /** The current menu's log, newest first. */
   listMessages(): Promise<Array<MessageLogEntry>>;
   /** Message every not-finished order of a pickup place; `ready_now` also sets them Ready (D-069 Q3). */
@@ -342,6 +365,8 @@ export type AuthRepository = {
   teamNames(sellerId: string): Promise<Array<TeamName>>;
   /** All members of a kitchen with their device counts; `youAccountId` marks the caller's row. */
   members(sellerId: string, youAccountId?: string): Promise<Array<TeamMember>>;
+  /** The newest invites of a kitchen, with how each ended up (plan 043). */
+  listInvites(sellerId: string, limit: number): Promise<Array<InviteInfo>>;
   /**
    * Ends a membership: that person's sessions in this kitchen go at once, other kitchens stay.
    * A person left with no kitchen is deleted. False when they were not a member.
@@ -422,6 +447,8 @@ export type Repository = {
   addSeller(name: string, slug: string, options?: { sampleImages?: boolean }): Promise<AdminSeller>;
   /** Plan 013: the admin switches a kitchen into or out of demo mode. */
   setSellerDemo(sellerId: string, demo: boolean): Promise<void>;
+  /** Plan 032: pause a kitchen (`full` also signs everyone of it out) or resume it (null). */
+  setSellerPaused(sellerId: string, kind: PauseKind | null): Promise<void>;
 
   /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */
   lookupByToken(token: string): Promise<TokenLookup | undefined>;
@@ -431,6 +458,9 @@ export type Repository = {
   liveOrderOwners(tokens: ReadonlyArray<string>): Promise<Map<string, string>>;
 
   auth: AuthRepository;
+
+  /** Plan 026: the client error log (a ring of the newest 500). */
+  log: ClientLogRepository;
 
   /** Dev tools: only for a local database, and only when DEV_TOOLS is on (see worker/api). */
   dev: {

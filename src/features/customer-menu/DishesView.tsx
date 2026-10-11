@@ -58,6 +58,10 @@ const Left = styled.span`
   font-size: ${({ theme }) => theme.type.size.sm};
   font-weight: 700;
 `;
+const Stall = styled.span`
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+`;
 const SoldOut = styled.span`
   display: inline-flex;
   flex: none;
@@ -141,7 +145,7 @@ type DishProps = Readonly<{
 
 /** The most of a dish the basket may hold: what is left, never past MAX_QTY. */
 export function dishMax(item: MenuItemView): number {
-  return item.soldOut ? 0 : Math.min(MAX_QTY, item.remaining ?? MAX_QTY);
+  return item.soldOut || item.preorder === false ? 0 : Math.min(MAX_QTY, item.remaining ?? MAX_QTY);
 }
 
 const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: DishProps) {
@@ -150,6 +154,9 @@ const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: DishProps)
   const description = pickText(item.description, lang);
   const size = pickText(item.size, lang);
   const max = dishMax(item);
+  // Plan 029: on the day only = no Add button; sold both ways = as usual plus a stall line.
+  const dayOnly = item.preorder === false;
+  const stallOut = item.onTheDay === 'sold_out';
   const lowStock = item.remaining !== null && item.remaining > 0 && item.remaining <= LOW_STOCK;
   const add = useCallback(() => onQty(item.id, qty + 1), [onQty, item.id, qty]);
   const remove = useCallback(() => onQty(item.id, qty - 1), [onQty, item.id, qty]);
@@ -162,14 +169,22 @@ const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: DishProps)
           {size ? `${size} · ` : null}
           <b>{formatMoney(item.priceCents, lang)}</b>
         </Meta>
-        {lowStock && !item.soldOut ? (
+        {item.onTheDay && !dayOnly ? (
+          <Stall>{stallOut ? t('menu.stallSoldOut') : t('menu.alsoAtStall')}</Stall>
+        ) : null}
+        {lowStock && !item.soldOut && !dayOnly ? (
           <Left>
             <MenuIcon name="clock" size="1rem" />
             {t('menu.left', { count: item.remaining })}
           </Left>
         ) : null}
       </Text>
-      {item.soldOut ? (
+      {dayOnly ? (
+        <SoldOut>
+          {stallOut ? <MenuIcon name="ban" size="1rem" /> : null}
+          {stallOut ? t('menu.soldOut') : t('menu.availableOnDay')}
+        </SoldOut>
+      ) : item.soldOut ? (
         <SoldOut>
           <MenuIcon name="ban" size="1rem" />
           {t('menu.soldOut')}

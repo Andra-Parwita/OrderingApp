@@ -16,13 +16,11 @@
     "removeConfirm": "Ketuk lagi untuk menghapus",
     "working": "Menyiapkan gambarmu…",
     "fileFor": "Pilih gambar untuk {{name}}",
-    "guide": "Ukuran terbaik {{width}} × {{height}} px",
-    "guideKeep": "Ukuran terbaik {{width}} × {{height}} px. Taruh wajah dan logo di tengah, {{keepWidth}} × {{keepHeight}} px.",
     "slots": {
       "desktopBanner": "Spanduk lebar (tablet dan komputer)",
       "phoneBanner": "Spanduk HP",
       "railImage": "Gambar menu (menu kiri)",
-      "railIcon": "Ikon kecil (menu tertutup)",
+      "railIcon": "Ikon aplikasi (layar utama ponsel dan menu tertutup)",
       "bannerBackgroundImage": "Latar belakang (layar lebar)"
     },
     "warn": {
@@ -47,7 +45,39 @@
     "altHelper": "Dibacakan untuk orang yang tidak bisa melihat gambar.",
     "saveStyle": "Simpan warna dan teks",
     "saving": "Menyimpan…",
-    "styleFailed": "Tidak bisa menyimpan. Coba lagi."
+    "styleFailed": "Tidak bisa menyimpan. Coba lagi.",
+    "spec": "{{width}} × {{height}} px · JPEG, PNG atau WebP · maksimal {{kb}} KB",
+    "specKeep": "{{width}} × {{height}} px · taruh wajah dan logo di tengah, {{keepWidth}} × {{keepHeight}} px · JPEG, PNG atau WebP · maksimal {{kb}} KB",
+    "help": {
+      "open": "Cara membuat gambar ini",
+      "label": "Cara membuat: {{name}}",
+      "close": "Tutup",
+      "download": "Unduh templat",
+      "templateAlt": "Templat untuk {{name}}: area berbingkai adalah zona aman",
+      "desktopBanner": [
+        "Templat ini adalah gambar penuh. Taruh wajah, logo, dan teks di dalam zona tengah yang berbingkai.",
+        "iPad (mendatar) menampilkan tepat zona tengah. Layar lebih lebar menampilkan lebih banyak sisi, jadi isi sisi dengan pemandangan saja.",
+        "Di layar tegak, banner menjadi lebih pendek, tetapi zona tengah tidak pernah terpotong."
+      ],
+      "phoneBanner": [
+        "Templat ini adalah gambar penuh. Taruh wajah, logo, dan teks di dalam zona tengah yang berbingkai.",
+        "Ponsel menampilkan seluruh gambar, jadi bagian tepi juga terlihat."
+      ],
+      "railImage": [
+        "Logo memenuhi kotaknya di menu kiri sampai ke tepi, dengan nama dapur di bawahnya.",
+        "Taruh logo di tengah yang berbingkai; tepinya bisa terpotong sedikit."
+      ],
+      "railIcon": [
+        "iPhone membulatkan sudutnya sendiri, jadi gambar dibuat persegi dan penuh sampai tepi.",
+        "Android bisa memotongnya menjadi lingkaran, jadi taruh logo di dalam 80% bagian tengah.",
+        "Menu kiri yang tertutup menampilkannya pada 72 × 72."
+      ],
+      "bannerBackgroundImage": [
+        "Tampil di belakang banner pada layar yang sangat lebar.",
+        "Pakai pemandangan atau pola saja, tanpa teks atau wajah."
+      ]
+    },
+    "specIcon": "{{width}} × {{height}} px · taruh logo di tengah, {{keepWidth}} × {{keepHeight}} · persegi, tanpa transparansi, tanpa sudut membulat · JPEG, PNG atau WebP · maksimal {{kb}} KB"
   },
   "chefs": {
     "title": "Koki",
@@ -73,6 +103,7 @@
     "title": "Tim",
     "you": "Anda",
     "roleOwner": "Pemilik",
+    "roleHelper": "Asisten",
     "roleChef": "Koki",
     "cook": "memasak sebagai {{name}}",
     "devices_zero": "Belum masuk di perangkat mana pun",
@@ -99,7 +130,14 @@
     "inviteCopied": "Tersalin",
     "inviteCopyFailed": "Tidak bisa menyalin. Pilih kuncinya dan salin sendiri.",
     "inviteWhatsapp": "Kirim lewat WhatsApp",
-    "inviteMessage": "Gabung ke dapur saya di {{app}}: {{link}} (berlaku sekali, dalam 24 jam)",
+    "greet": "Halo {{name}}!",
+    "greetAnon": "Halo!",
+    "messageOwner": "{{greet}} 👋 Anda diundang untuk mengelola *{{kitchen}}* di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
+    "messageChef": "{{greet}} 👋 Anda diundang bergabung di *{{kitchen}}* sebagai Koki di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
+    "messageHelper": "{{greet}} 👋 Anda diundang bergabung di *{{kitchen}}* sebagai Asisten di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
+    "messageLang": "Bahasa pesan",
+    "messagePreview": "Pesan (bisa diubah sebelum dikirim)",
+    "inviteCopyMessage": "Salin pesan",
     "inviteDone": "Selesai",
     "cooks": "Koki",
     "cooksHint": "Orang yang bisa diberi menu di daftar menu."

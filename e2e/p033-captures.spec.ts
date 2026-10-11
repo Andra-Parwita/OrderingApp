@@ -161,7 +161,7 @@ test('2 kitchen switcher', async ({ browser, request }, testInfo) => {
   test.setTimeout(120_000);
   const baseURL = testInfo.project.use.baseURL;
   for (const { w, h, path, file } of [
-    { w: 1280, h: 800, path: '/seller', file: 'switcher-rail-1280x800' },
+    { w: 1280, h: 800, path: '/seller/orders', file: 'switcher-rail-1280x800' },
     { w: 390, h: 844, path: '/seller/more', file: 'switcher-more-390x844' },
   ]) {
     const { context, page } = await newPage(browser, baseURL, w, h);
@@ -322,7 +322,7 @@ test('7 text size larger', async ({ browser }, testInfo) => {
   await seller.context.addInitScript(() => localStorage.setItem('textSize', 'larger'));
   const flushSeller = watch(seller.page, 'text-seller');
   await step('seller orders larger', async () => {
-    await seller.page.goto('/seller');
+    await seller.page.goto('/seller/orders');
     await expect(seller.page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible();
     await shot(seller.page, 'textsize-larger-seller-1024x768', false);
   });

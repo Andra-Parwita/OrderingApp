@@ -1,6 +1,5 @@
 {
   "loading": "Loading…",
-  "version": "Version {{version}}",
   "retry": "Try again",
   "error": {
     "generic": "Something went wrong. Try again.",
@@ -56,12 +55,11 @@
     "signOut": "Sign out",
     "sellers": "Sellers",
     "sellersTable": "Sellers",
-    "colName": "Name",
-    "colLink": "Link",
-    "colCreated": "Created",
-    "colDevices": "Devices",
     "noSellers": "No sellers yet.",
-    "selectHint": "Select a seller to create invites and manage people.",
+    "devicesCount_one": "{{count}} device",
+    "devicesCount_other": "{{count}} devices",
+    "createdOn": "Created {{date}}",
+    "close": "Close",
     "add": {
       "title": "Add a seller",
       "name": "Seller name",
@@ -86,15 +84,37 @@
       "signOut": "Sign out",
       "signOutConfirm": "Tap again to sign out",
       "members": "People",
+      "tabs": "Kitchen details",
+      "tab": { "invitations": "Invitations", "settings": "Settings" },
+      "images": "Images",
+      "imagesNote": "Pictures for this kitchen. The seller can change them later in Settings.",
       "noMembers": "Nobody has joined yet.",
+      "invites": "Recent invitations",
+      "noInvites": "No invitations yet.",
+      "inviteLine": "{{role}} · sent {{sent}}",
+      "inviteWaiting": "Waiting, expires {{when}}",
+      "inviteUsed": "Used {{when}}",
+      "inviteExpired": "Expired {{when}}",
       "role": {
         "owner": "Owner",
-        "chef": "Chef"
+        "chef": "Chef",
+        "helper": "Helper"
       },
       "remove": "Remove",
       "removeConfirm": "Tap again to remove",
       "memberLine_other": "{{role}} · {{count}} devices",
       "memberLine_one": "{{role}} · {{count}} device"
+    },
+    "pause": {
+      "title": "Pause this kitchen",
+      "state": "State",
+      "label": { "open": "Open", "customers": "Closed to customers", "full": "Paused" },
+      "customersButton": "Close to customers",
+      "customersNote": "Customers see \"This kitchen is closed for now\" and cannot order. The kitchen's people keep working as normal.",
+      "fullButton": "Pause the kitchen",
+      "fullConfirm": "Tap again: this signs everyone out",
+      "fullNote": "Customers are closed out, and everyone in the kitchen is signed out and cannot sign in, use keys or codes. Nothing is deleted.",
+      "resume": "Resume the kitchen"
     },
     "key": {
       "inviteTitle": "Invite key for {{name}}",
@@ -105,7 +125,12 @@
       "copied": "Copied",
       "copyFailed": "Could not copy. Select the key and copy it by hand.",
       "whatsapp": "Send on WhatsApp",
-      "message": "Your {{app}} invite: {{link}} (works once, on one device, within 24 hours)",
+      "greet": "Hi {{name}}!",
+      "greetAnon": "Hi!",
+      "message": "{{greet}} 👋 You're invited to run *{{kitchen}}* on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.",
+      "messageLang": "Message language",
+      "messagePreview": "Message (you can edit it before sending)",
+      "copyMessage": "Copy message",
       "done": "Done",
       "nameLabel": "Name of the person",
       "nameHelper": "Shown on the team list. Optional.",
@@ -124,6 +149,33 @@
       "saveName": "Save name",
       "cancel": "Cancel"
     },
-    "privacy": "This page manages access only. It shows no orders, customers or menus."
+    "problems": {
+      "title": "Problems ({{count}})",
+      "none": "No problems reported.",
+      "failed": "Could not load the problems.",
+      "list": "Recent problems",
+      "app": "App",
+      "allApps": "All apps",
+      "kitchen": "Kitchen",
+      "allKitchens": "All kitchens",
+      "clear": "Clear all",
+      "clearConfirm": "Tap again to clear all",
+      "older": "Older",
+      "newer": "Newer",
+      "range": "{{from}}-{{to}} of {{total}}"
+    },
+    "privacy": "This page manages access and the kitchen's pictures. It shows no orders or customers.",
+    "sum": {
+      "people_one": "{{count}} person",
+      "people_other": "{{count}} people",
+      "noMenu": "No menu",
+      "live": "Live · {{day}}",
+      "notPublished": "Not published",
+      "finished": "Finished · {{day}}",
+      "orders_one": "{{count}} order",
+      "orders_other": "{{count}} orders",
+      "active": "Active {{when}}",
+      "neverActive": "Not active yet"
+    }
   }
 }

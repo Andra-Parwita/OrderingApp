@@ -27,7 +27,7 @@ test('seller handles a new customer, then adds a WhatsApp order', async ({
   });
   expect(created.ok()).toBe(true);
 
-  await page.goto('/seller');
+  await page.goto('/seller/orders');
   await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
   await searchFor(page, customer);
   const row = orderRow(page, new RegExp(customer));
@@ -106,7 +106,7 @@ test('seller handles a new customer, then adds a WhatsApp order', async ({
   await page.screenshot({ path: `captures/seller2-new-${project}.png`, fullPage: true });
   await form.getByRole('button', { name: 'Create only' }).click();
 
-  await expect(page).toHaveURL(/\/seller(\?.*)?$/);
+  await expect(page).toHaveURL(/\/seller\/orders(\?.*)?$/);
   await searchFor(page, walkIn);
   const made = orderRow(page, new RegExp(walkIn));
   await expect(made).toBeVisible();

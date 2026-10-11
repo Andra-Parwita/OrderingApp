@@ -17,10 +17,10 @@
 
 | # | stage | files | done when |
 |---|---|---|---|
-| 1 | **Data.** Team members get a kind: the `chefs` table gains `kind TEXT NOT NULL DEFAULT 'chef' CHECK (kind IN ('chef','helper'))`. The account role stays `chef`; the kind decides what the person may do. This avoids rebuilding `accounts`, whose role CHECK can't be altered in SQLite. Migration at the next free number. | `migrations/`, `worker/db/seller.ts`, `shared/sellerContract.ts`, `shared/authContract.ts` (`Me` carries `kind`) | tests: an existing chef reads as `chef`; a helper reads as `helper`; restore of an old backup keeps everyone a chef |
-| 2 | **Server rules.** Next to `chefMayNot`, a `helperMayNot` lets a helper read orders, set sold out, and mark collected; everything else that writes is refused with 403. Checked per request, not in the UI. | `worker/api/routes.ts` | tests: each allowed call works for a helper; every other write gives 403 |
-| 3 | **Invite and list.** Settings → Chefs becomes "Team": invite a chef or a helper (the same invite key flow), and each row shows its kind. | `src/features/seller-setup/` (ChefsScreen, i18n), `src/features/admin/` (the kitchen's people list shows the kind) | tests: inviting a helper makes a helper; the list shows the kind |
-| 4 | **Helper's app.** A helper sees Orders (read only: no edit, cancel or paid buttons), the Kitchen view's sold-out toggle, and Hand over (scan and collected). The rail and menus hide the rest. | `src/app/sellerNav.ts`, `src/app/SellerRail.tsx`, `src/features/seller-orders/`, `src/features/seller-saturday/` | tests: a helper's rail shows only those; order buttons are hidden; e2e one helper flow on the phone |
+| 1 | **Data and contract** (re-planned 2026-10-11 after 033: a third **membership role** `helper`, not `chefs.kind`; 033 made `memberships.role` the one place that says what a person may do). Migration **0010** rebuilds `memberships` and `auth_keys` (and re-points `auth_key_redemptions`) with `role IN ('owner','chef','helper')`; `CHECK (role <> 'chef' OR chef_id IS NOT NULL)` stays, so a helper has `chef_id` NULL. Add `helper` to `ROLES`/`MEMBERSHIP_ROLES`, the `Me`/`Membership`/`TeamMember`/`InviteRequest` types and parsers, `callerRoleOf` and the session, device and key queries. A helper's `Me` has `role: 'helper'`, `displayName`, no `chefId`. | `migrations/0010_helper.sql`, `shared/authContract.ts`, `shared/domain.ts` (`StaffActor`, per the audit ruling), `worker/db/auth.ts`, `worker/db/rows.ts` | tests: existing owner and chef memberships unchanged by 0010; a helper invite redeems into a helper membership with no `chef_id`; `Me` and `/memberships` carry `helper`; a chef invite without `chefId` is still refused |
+| 2 | **Server rules.** A deny-by-default `helperMay(method, a, b, c)` allowlist next to `chefMayNot` (`worker/api/routes.ts` ~551): read orders, set sold out, collected/status; everything else gives 403, including `invites`, `team`, `chef-invites`, `backup`, `demo` and all menu, settings and `made` writes. The helper's actor name comes from `displayName` (no chef row). | `worker/api/routes.ts` | tests: each allowed call works for a helper; every other write (and `GET` on `backup`/`team`) gives 403; owners and chefs unchanged |
+| 3 | **Invite and list.** "Helper" in the Team screen's role select (`TeamScreen.tsx`; the cook picker stays chef-only); the role shows in the list, the kitchen switcher (`KitchenSwitcher.tsx` today says owner or chef) and the admin people list. | `src/features/seller-setup/` (`TeamScreen.tsx`, i18n), `src/app/KitchenSwitcher.tsx`, `src/features/admin/` | tests: inviting a helper sends `role: 'helper'` and no `chefId`; the list and switcher show "Helper" |
+| 4 | **Helper's app.** `helper` counts as staff (`isStaff` in `session.tsx`), lands on Orders, and sees only Orders (read only), the sold-out toggle and Hand over; the rest is hidden in the rail, menus and settings. | `src/app/session.tsx`, `AppRoutes.tsx`, `guards.tsx`, `SellerLayout.tsx`, `SwitchPerson.tsx`, `sellerNav.ts`, `SellerRail.tsx`, `src/features/seller-orders/`, `src/features/seller-saturday/`, `orderText.ts` | tests: a helper's rail shows only those; order edit, cancel and paid buttons are hidden; e2e one helper flow on the phone |
 
 ## End of phase
 
@@ -28,6 +28,10 @@
 - [ ] The owner invites a helper on the live demo kitchen and tries it on a phone
 
 ## Decisions and notes
+
+- **Helper invites (owner 2026-10-11: "A"):** the same as every invite (D-085): one key, one device, within 24 hours; a second device through the 6-digit code. No new rule.
+
+- **Audit label (owner 2026-10-11: "A"):** a helper's actions are recorded with the role `chef` in order history for now (`StaffActor`, `orders.entered_by_role` unchanged, no rebuild of `orders`). The helper's display name is still recorded. A real "helper" label is a later plan if it matters.
 
 - **Chefs also scan and mark collected** ([D-081](../decisions/README.md)); they can already update order status today, so nothing changes for chefs here.
 - **Chefs editing their own dishes** is [plan 030](030-chef-own-dishes.md), built after this one.

@@ -215,6 +215,39 @@ describe('live events and images', () => {
       expect(types().sort()).toEqual(['menu.changed', 'order.changed']);
     });
 
+    it('a day sale or set count says stock.changed to every device; a refused sale says nothing', async () => {
+      await call('PATCH', '/api/seller/menu/items/pesmol', { seller: A, body: { dayStock: 1 } });
+      room.sent.length = 0;
+      expect(
+        (
+          await call('POST', '/api/seller/day/sale', {
+            seller: A,
+            body: { itemId: 'pesmol', qty: 1 },
+          })
+        ).status,
+      ).toBe(200);
+      expect(types()).toEqual(['stock.changed']);
+      room.sent.length = 0;
+      expect(
+        (
+          await call('POST', '/api/seller/day/sale', {
+            seller: A,
+            body: { itemId: 'pesmol', qty: 1 },
+          })
+        ).status,
+      ).toBe(409);
+      expect(types()).toEqual([]);
+      expect(
+        (
+          await call('POST', '/api/seller/day/count', {
+            seller: A,
+            body: { itemId: 'pesmol', count: 5 },
+          })
+        ).status,
+      ).toBe(200);
+      expect(types()).toEqual(['stock.changed']);
+    });
+
     it('sends nothing when the write fails', async () => {
       const order = await place();
       room.sent.length = 0;
@@ -411,7 +444,7 @@ describe('live events and images', () => {
       expect(restored.body).toMatchObject({ ok: true, droppedImages: 0 });
       const after = await backupOf();
       expect(after.kitchen.images['railIcon']).toBe(icon);
-      expect(after.kitchen.images['desktopBanner']).toBe('/samples/banner-wide.jpg');
+      expect(after.kitchen.images['desktopBanner']).toBe('/samples/banner-wide-3840x328.jpg');
       expect(after.menu?.pictureRef).toBe(before.menu?.pictureRef);
     });
 
@@ -473,7 +506,7 @@ describe('serving images', () => {
     const stored = await putUploadedImage(bucket, 'seller-x', 'railIcon', png('railIcon'));
     await deleteImageRefs(
       bucket,
-      ['/samples/banner-wide.jpg', 'data:image/png;base64,AA', undefined],
+      ['/samples/banner-wide-3840x328.jpg', 'data:image/png;base64,AA', undefined],
       'seller-x',
     );
     expect(objects.size).toBe(1);

@@ -27,6 +27,8 @@ export function failureMessage(t: TFunction, failure: ApiFailure): string {
       return failure.triesLeft === undefined
         ? t('errors.wrong')
         : `${t('errors.wrong')} ${t('errors.triesLeft', { count: failure.triesLeft })}`;
+    case 'kitchen_paused':
+      return t('errors.paused');
     case 'unauthorized':
       return t('errors.setupExpired');
     case 'passkey_cancelled':

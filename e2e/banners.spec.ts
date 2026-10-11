@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { markHowItWorksSeen } from './customerHelpers';
 import { collectErrors, pageScrollWidth } from './sellerHelpers';
 
-// Stage 4.9 (D-038): images are never cropped; the seller's colour fills the sides of the banner;
+// Stage 4.9 (D-038): images are never cropped, except that the wide banner fills its strip (plan 040);
 // the rail shows its image, or its icon when collapsed (the seller's initial without one); the orders table fits 1024 px.
 const alt = 'Onde Onde — Indonesian homemade food';
 const BACKGROUND = 'rgb(131, 89, 55)'; // #835937
@@ -41,7 +41,9 @@ async function showsWholeImage(image: Locator): Promise<void> {
 const colourOf = (locator: Locator): Promise<string> =>
   locator.evaluate((el) => getComputedStyle(el).backgroundColor);
 
-test('banner, rail and customer images are never cropped', async ({ browser }, testInfo) => {
+test('banner fills its strip, rail and customer images show whole', async ({
+  browser,
+}, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium', 'one run, on the desktop project');
   test.setTimeout(120_000);
   const baseURL = testInfo.project.use.baseURL;
@@ -52,50 +54,36 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
     return { context, page, errors: collectErrors(page) };
   };
 
-  // Desktop banner: the whole image, with the seller's colour beside it, at 1280, 1366 and 1920.
+  // Desktop banner (plan 040, D-093): the image fills the content width, cover, no side bands, as
+  // tall as the left menu's top (164 px); narrower than iPad landscape it gets shorter instead.
   for (const [width, height, capture] of [
-    [1280, 800, null],
-    [1366, 768, 'captures/banners2-desktop-1366.png'],
-    [1920, 1080, 'captures/banners2-desktop-1920.png'],
+    [1180, 820, 'captures/banners3-desktop-1180.png'],
+    [1366, 768, 'captures/banners3-desktop-1366.png'],
+    [1920, 1080, 'captures/banners3-desktop-1920.png'],
+    [820, 1180, 'captures/banners3-desktop-820.png'],
   ] as const) {
     const { context, page, errors } = await open(width, height);
     try {
-      await page.goto('/seller');
+      await page.goto('/seller/orders');
       const image = await loaded(page, alt);
-      await showsWholeImage(image);
-      const slot = image.locator('xpath=..');
-      expect(await colourOf(slot)).toBe(BACKGROUND);
-      const strip = slot.locator('xpath=../../..'); // slot > area > clip > strip (the clip is the collapsible part)
-      expect(await colourOf(strip)).toBe(BACKGROUND);
-      const stripBox = await strip.boundingBox();
-      const slotBox = await slot.boundingBox();
-      expect(slotBox?.width ?? 0).toBeLessThanOrEqual(1600 + 1);
-      // 5:1, so the height follows the width: nothing caps it and forces a crop.
-      expect(Math.abs((slotBox?.width ?? 0) / (slotBox?.height ?? 1) - 5)).toBeLessThan(0.05);
+      expect(await image.evaluate((img) => getComputedStyle(img).objectFit)).toBe('cover');
+      const imageBox = await image.boundingBox();
+      const rail = page.getByRole('navigation', { name: 'Seller' });
+      const railBox = await rail.boundingBox();
+      const contentWidth = width - (railBox?.width ?? 0) - 1; // the rail's right hairline
+      // No side bands: the picture spans the whole content width.
+      expect(Math.abs((imageBox?.width ?? 0) - contentWidth)).toBeLessThan(2);
+      const expected = Math.min(164, (contentWidth * 328) / 1896);
+      expect(Math.abs((imageBox?.height ?? 0) - expected)).toBeLessThan(1.5);
+      if (width !== 820) expect(Math.round(imageBox?.height ?? 0)).toBe(164);
+      // The slot sits on the seller's colour only as a loading fallback.
+      expect(await colourOf(image.locator('xpath=..'))).toBe(BACKGROUND);
       if (width === 1920) {
-        // Wider than the 1600 px image area: the background shows on both sides of it.
-        expect((stripBox?.width ?? 0) - (slotBox?.width ?? 0)).toBeGreaterThan(50);
-        // D-040: the blurred background picture fills the whole strip behind the banner, and loads.
-        const backdrop = await strip.evaluate((el) => {
-          const style = getComputedStyle(el);
-          return { image: style.backgroundImage, size: style.backgroundSize };
-        });
-        expect(backdrop.image).toContain('/samples/banner-bg.jpg');
-        expect(backdrop.size).toBe('cover');
-        const decoded = await page.evaluate(
-          (url) =>
-            new Promise<number>((resolve) => {
-              const img = new Image();
-              img.onload = () => resolve(img.naturalWidth);
-              img.onerror = () => resolve(0);
-              img.src = url;
-            }),
-          '/samples/banner-bg.jpg',
-        );
-        expect(decoded).toBe(1280);
-        expect(Math.abs((stripBox?.height ?? 0) - (slotBox?.height ?? 0))).toBeLessThan(1);
+        const strip = image.locator('xpath=../../../..'); // slot > full > clip > strip
+        const backdrop = await strip.evaluate((el) => getComputedStyle(el).backgroundImage);
+        expect(backdrop).toContain('/samples/banner-bg.jpg');
       }
-      if (capture) await page.screenshot({ path: capture });
+      await page.screenshot({ path: capture });
       expect(errors).toEqual([]);
     } finally {
       await context.close();
@@ -106,22 +94,24 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
   {
     const { context, page, errors } = await open(1280, 800);
     try {
-      await page.goto('/seller');
+      await page.goto('/seller/orders');
       const rail = page.getByRole('navigation', { name: 'Seller' });
       const railImage = rail.getByRole('img');
       await expect(railImage).toHaveAttribute('src', '/samples/rail.png');
       const box = await railImage.boundingBox();
-      expect(Math.abs((box?.width ?? 0) / (box?.height ?? 1) - 2)).toBeLessThan(0.05);
+      // Fills its block edge to edge: 232 x 116, the kitchen name below it (164 px in all).
+      expect(Math.abs((box?.width ?? 0) - 232)).toBeLessThan(1);
+      expect(Math.abs((box?.height ?? 0) - 116)).toBeLessThan(1);
       await rail.getByRole('button', { name: 'Collapse menu' }).click();
       // The owner's rail icon (D-040) takes the place of the initial.
       const icon = rail.getByRole('img', { name: 'Onde Onde' });
       await expect(icon).toHaveAttribute('src', '/samples/icon-512.jpg');
       await expect(rail.getByText(/coming soon$/)).toHaveCount(0);
+      // The rail narrows over 150 ms; measure and capture it once it has.
+      await expect.poll(async () => (await rail.boundingBox())?.width ?? 999).toBeLessThan(73);
       const initialBox = await icon.boundingBox();
-      expect(Math.abs((initialBox?.width ?? 0) - 40)).toBeLessThan(1);
-      expect(Math.abs((initialBox?.height ?? 0) - 40)).toBeLessThan(1);
-      // The rail narrows over 150 ms; capture it once it has.
-      await expect.poll(async () => (await rail.boundingBox())?.width ?? 999).toBeLessThan(80);
+      expect(Math.abs((initialBox?.width ?? 0) - 72)).toBeLessThan(1);
+      expect(Math.abs((initialBox?.height ?? 0) - 72)).toBeLessThan(1);
       await page.screenshot({ path: 'captures/banners2-rail-collapsed.png' });
       expect(errors).toEqual([]);
     } finally {
@@ -134,9 +124,9 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
     const { context, page, errors } = await open(390, 844);
     try {
       // Orders on a phone (under 600 px): the 3:1 phone banner above the list.
-      await page.goto('/seller');
+      await page.goto('/seller/orders');
       const image = await loaded(page, alt);
-      await expect(image).toHaveAttribute('src', '/samples/banner-phone.jpg');
+      await expect(image).toHaveAttribute('src', '/samples/banner-phone-3x1.jpg');
       await showsWholeImage(image);
       expect(await colourOf(image.locator('xpath=..'))).toBe(BACKGROUND);
       expect(await pageScrollWidth(page)).toBeLessThanOrEqual(390);
@@ -154,7 +144,7 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
       await markHowItWorksSeen(context);
       await page.goto('/onde-onde');
       const image = await loaded(page, alt);
-      await expect(image).toHaveAttribute('src', '/samples/banner-phone.jpg');
+      await expect(image).toHaveAttribute('src', '/samples/banner-phone-3x1.jpg');
       await showsWholeImage(image);
       expect(await colourOf(image.locator('xpath=..'))).toBe(BACKGROUND);
       await page.screenshot({ path: 'captures/banners2-customer.png' });
@@ -217,7 +207,7 @@ test('the orders list fits 1024 px with long names, panel open and collapsed', a
   try {
     const page = await context.newPage();
     const errors = collectErrors(page);
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
     const rows = page.getByRole('button', { name: new RegExp(stamp) });
     await expect(rows).toHaveCount(names.length);
@@ -244,6 +234,60 @@ test('the orders list fits 1024 px with long names, panel open and collapsed', a
       .click();
     await fits();
     expect(errors).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});
+
+test('scrolling the orders list slides the sheet over the banner, which keeps its size', async ({
+  browser,
+  request,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-chromium', 'one run, on the desktop project');
+  const baseURL = testInfo.project.use.baseURL;
+  // Dapur Demo has room for 50 sample orders (see seller-list-scroll), so the list scrolls.
+  const sampled = await request.post('/api/dev/sample-orders', {
+    headers: { 'X-Seller': 'dapur-demo' },
+    data: { count: 50 },
+  });
+  expect(sampled.ok()).toBe(true);
+  const context = await browser.newContext({ baseURL, viewport: { width: 1180, height: 820 } });
+  try {
+    await context.addInitScript(() => localStorage.setItem('devSeller', 'dapur-demo'));
+    const page = await context.newPage();
+    await page.goto('/seller/orders');
+    const image = page.locator('img[src*="banner-wide"]');
+    await expect(image).toBeVisible();
+    const clip = image.locator('xpath=../../..'); // slot > full > clip
+    const rail = page.getByRole('navigation', { name: 'Seller' });
+    const height = async (locator: Locator) =>
+      Math.round((await locator.boundingBox())?.height ?? 0);
+    await expect.poll(() => height(clip)).toBe(164);
+    // Scroll the first element that actually scrolls inside the sheet.
+    const scrolled = await page.evaluate(() => {
+      const target = [...document.querySelectorAll<HTMLElement>('div')].find(
+        (el) => getComputedStyle(el).overflowY === 'auto' && el.scrollHeight > el.clientHeight + 40,
+      );
+      if (!target) return false;
+      target.scrollTop = 60;
+      return true;
+    });
+    expect(scrolled).toBe(true);
+    await expect.poll(() => height(clip)).toBe(73);
+    expect(Math.round((await image.boundingBox())?.height ?? 0)).toBe(164);
+    await page.screenshot({ path: 'captures/banners3-scrolled-1180.png' });
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll<HTMLElement>('div')) el.scrollTop = 0;
+    });
+    await expect.poll(() => height(clip)).toBe(164);
+    await rail.getByRole('button', { name: 'Collapse menu' }).click();
+    await expect.poll(async () => (await rail.boundingBox())?.width ?? 999).toBeLessThan(80);
+    // The banner follows the menu: 73 px strip, image still 164.
+    await expect.poll(() => height(clip)).toBe(73);
+    expect(Math.round((await image.boundingBox())?.height ?? 0)).toBe(164);
+    await page.screenshot({ path: 'captures/banners3-rail-collapsed-1180.png' });
+    await rail.getByRole('button', { name: 'Expand menu' }).click();
+    await expect.poll(() => height(clip)).toBe(164);
   } finally {
     await context.close();
   }

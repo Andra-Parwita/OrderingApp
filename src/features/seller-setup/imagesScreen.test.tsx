@@ -3,6 +3,7 @@ import i18n from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakePng, pngFor } from '../../../mocks/images';
 import { mockStore } from '../../../mocks/handlers';
+import { slotSpec } from '../../../shared/imageSlots';
 import { ImageReadError, type ResizeFn } from './imageResize';
 import { ImagesScreen } from './ImagesScreen';
 import { createTestStore, renderWithStore, setupI18n } from './testSupport';
@@ -10,7 +11,7 @@ import { createTestStore, renderWithStore, setupI18n } from './testSupport';
 beforeAll(setupI18n);
 afterEach(() => i18n.changeLanguage('en'));
 
-const ICON = 'Small icon (closed menu)';
+const ICON = 'App icon (phone home screen and closed menu)';
 const file = () => new File(['x'], 'picture.png', { type: 'image/png' });
 
 describe('ImagesScreen', () => {
@@ -37,17 +38,45 @@ describe('ImagesScreen', () => {
     ]) {
       expect(screen.getByRole('heading', { name })).toBeInTheDocument();
     }
+    const types = 'JPEG, PNG or WebP · up to 600 KB';
+    for (const line of [
+      /^1200 × 400 px · keep faces and the logo in the middle 1080 × 340 px · /,
+      /^1200 × 600 px · keep faces and the logo in the middle 1000 × 500 px · /,
+      /^512 × 512 px · keep the mark in the middle 410 × 410 · square, no transparency, no rounded corners · /,
+      /^1280 × 256 px · JPEG/,
+    ]) {
+      expect(screen.getByText(line)).toHaveTextContent(types);
+    }
+    // The wide banner size is read from shared/imageSlots, its middle zone is the iPad area.
+    const wide = slotSpec('desktopBanner');
     expect(
-      screen.getByText(
-        'Best size 2000 × 400 px. Keep faces and the logo in the middle 1500 × 350 px.',
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Best size 512 × 512 px')).toBeInTheDocument();
+      screen.getByText(new RegExp(`^${wide.width} × ${wide.height} px · keep .* 1896 × 328 px · `)),
+    ).toHaveTextContent(types);
     expect(screen.getByAltText(`Preview of ${ICON}`)).toHaveAttribute(
       'src',
       (await mockStore.getImages()).railIcon,
     );
     expect(screen.getByAltText('Preview of Phone banner')).toBeInTheDocument();
+  });
+
+  it('opens the how-to guide in place with the template and its download', async () => {
+    await renderImages(vi.fn());
+    const buttons = screen.getAllByRole('button', { name: 'How to make this picture' });
+    expect(buttons).toHaveLength(5);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(buttons[0] as HTMLElement);
+    const dialog = screen.getByRole('dialog', { name: /How to make: Wide banner/ });
+    expect(within(dialog).getByRole('img')).toHaveAttribute(
+      'src',
+      '/guides/template-desktop-banner.png',
+    );
+    expect(within(dialog).getByRole('link', { name: 'Download template' })).toHaveAttribute(
+      'download',
+      'template-desktop-banner.png',
+    );
+    expect(within(dialog).getByText(/iPad \(landscape\) shows exactly the middle/)).toBeVisible();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('uploads the resized picture to the chosen slot', async () => {
@@ -172,6 +201,10 @@ describe('ImagesScreen', () => {
       await screen.findByRole('heading', { name: 'Spanduk lebar (tablet dan komputer)' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Simpan warna dan teks' })).toBeInTheDocument();
-    expect(screen.getByText('Ukuran terbaik 512 × 512 px')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /^512 × 512 px · taruh logo di tengah, 410 × 410 · persegi, .* · JPEG, PNG atau WebP · maksimal 600 KB/,
+      ),
+    ).toBeInTheDocument();
   });
 });

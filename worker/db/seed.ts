@@ -17,6 +17,7 @@ import {
 
 /** Every table, children before parents, so deleting in this order never breaks a foreign key. */
 export const TABLES_CHILDREN_FIRST = [
+  'day_sales',
   'made_counts',
   'message_log',
   'order_audit',
@@ -36,6 +37,7 @@ export const TABLES_CHILDREN_FIRST = [
   'auth_attempts',
   'auth_challenges',
   'auth_rate',
+  'client_log',
   'saved_set_images',
   'saved_set_dishes',
   'saved_sets',

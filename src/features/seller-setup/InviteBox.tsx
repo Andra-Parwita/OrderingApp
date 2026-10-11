@@ -1,14 +1,19 @@
 import { useCallback, useState } from 'react';
+import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { APP_NAME } from '../../../shared/appName';
-import { Button } from '../../ui';
+import type { MembershipRole } from '../../../shared/authContract';
+import { Button, Segmented, TextArea } from '../../ui';
 import { SETUP_NS } from './i18n/register';
 import { Actions, Hint } from './parts';
 
 export type InviteBoxProps = Readonly<{
   name: string;
   slug: string;
+  /** The kitchen's name and the role the person is invited as, both said in the message. */
+  kitchen: string;
+  role: MembershipRole;
   keyText: string;
   onDone: () => void;
 }>;
@@ -59,17 +64,37 @@ const WhatsApp = styled.a`
 export const inviteLink = (slug: string, key: string): string =>
   `https://${window.location.host}/seller/setup?kitchen=${encodeURIComponent(slug)}#key=${encodeURIComponent(key)}`;
 
+type MessageLang = 'en' | 'id';
+const LANGS: ReadonlyArray<{ value: MessageLang; label: string }> = [
+  { value: 'en', label: 'English' },
+  { value: 'id', label: 'Bahasa Indonesia' },
+];
+const MESSAGE_KEY = {
+  owner: 'team.messageOwner',
+  chef: 'team.messageChef',
+  helper: 'team.messageHelper',
+} as const;
+
 /** An invite, shown once: copy the link with the key, or the key alone, or send the link on WhatsApp. */
-export function InviteBox({ name, slug, keyText, onDone }: InviteBoxProps) {
+export function InviteBox({ name, slug, kitchen, role, keyText, onDone }: InviteBoxProps) {
   const { t } = useTranslation(SETUP_NS);
   const [note, setNote] = useState<string | null>(null);
   const title = t('team.inviteTitle', { name });
   const link = inviteLink(slug, keyText);
-  const message = t('team.inviteMessage', {
-    link,
-    app: APP_NAME,
-    interpolation: { escapeValue: false },
-  });
+  // The message has its own language (the page may be in the other); no edit = the text as written.
+  const [lang, setLang] = useState<MessageLang>(i18n.language.startsWith('id') ? 'id' : 'en');
+  const [edited, setEdited] = useState<string | null>(null);
+  const say = i18n.getFixedT(lang, SETUP_NS);
+  const person = name.trim();
+  const message =
+    edited ??
+    say(MESSAGE_KEY[role], {
+      greet: person ? say('team.greet', { name: person }) : say('team.greetAnon'),
+      kitchen,
+      link,
+      app: APP_NAME,
+      interpolation: { escapeValue: false },
+    });
 
   const copy = useCallback(
     async (text: string) => {
@@ -89,9 +114,27 @@ export function InviteBox({ name, slug, keyText, onDone }: InviteBoxProps) {
       <KeyText>{keyText}</KeyText>
       <Hint>{t('team.inviteRule')}</Hint>
       <Hint>{t('team.inviteOnce')}</Hint>
+      <Segmented
+        label={t('team.messageLang')}
+        options={LANGS}
+        value={lang}
+        onChange={(next) => {
+          setLang(next);
+          setEdited(null);
+        }}
+      />
+      <TextArea
+        label={t('team.messagePreview')}
+        value={message}
+        rows={9}
+        onChange={(event) => setEdited(event.target.value)}
+      />
       <Actions>
         <Button variant="primary" onClick={() => void copy(link)}>
           {t('team.inviteCopyLink')}
+        </Button>
+        <Button variant="secondary" onClick={() => void copy(message)}>
+          {t('team.inviteCopyMessage')}
         </Button>
         <Button variant="secondary" onClick={() => void copy(keyText)}>
           {t('team.inviteCopyKey')}

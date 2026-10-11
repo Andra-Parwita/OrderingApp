@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Navigate, useNavigate } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import { formatDay } from '../../../shared/dates';
 import { Button, Icon } from '../../ui';
@@ -14,6 +14,7 @@ import { PricesTable } from './PricesTable';
 import { PublishStep } from './PublishStep';
 import type { MenuSlots } from './slots';
 import { STEPS, TABS, stepPath, type Mode, type Step, type Tab } from './steps';
+import { useCloseWizard } from './useMenuWizard';
 
 // Make a menu (the wizard, tablet) and editing a live menu (the same screens, no wizard). The
 // wizard autosaves on every change and has a plain Close. A live menu has tabs, no Publish step,
@@ -111,10 +112,20 @@ export function MakeMenuScreen({
   mode,
   step,
   slots,
-}: Readonly<{ mode: Mode; step: Step | Tab; slots: MenuSlots }>) {
+  layered = false,
+}: Readonly<{
+  mode: Mode;
+  step: Step | Tab;
+  slots: MenuSlots;
+  /** Shown in a layer that has its own Close button (plan 037). */
+  layered?: boolean;
+}>) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
   const navigate = useNavigate();
+  // The layer stays open from step to step: the screen it was opened over travels with the address.
+  const state: unknown = useLocation().state;
+  const close = useCloseWizard();
   const { data, status } = useMenuData();
   const { run } = useRunOp();
   const editor = useDishEditor();
@@ -141,17 +152,20 @@ export function MakeMenuScreen({
   if (menu.state === 'finished') return <Navigate to="/seller/menu" replace />;
   // Wizard for a menu being made, tabs for a live one; the last wizard step also shows the post.
   if (mode === 'make' && menu.state === 'live' && step !== 'publish') {
-    return <Navigate to={stepPath('edit', step === 'check' ? 'prices' : step)} replace />;
+    return (
+      <Navigate to={stepPath('edit', step === 'check' ? 'prices' : step)} replace state={state} />
+    );
   }
   if (mode === 'edit' && menu.state !== 'live') {
-    return <Navigate to={stepPath('make', step === 'prices' ? 'check' : step)} replace />;
+    return (
+      <Navigate to={stepPath('make', step === 'prices' ? 'check' : step)} replace state={state} />
+    );
   }
 
-  const go = (to: Step | Tab) => void navigate(stepPath(mode, to));
-  const close = () => void navigate('/seller/menu');
+  const go = (to: Step | Tab) => void navigate(stepPath(mode, to), { state });
   const live = menu.state === 'live';
   const date = formatDay(menu.cookingDate, lang);
-  const goOrders = () => void navigate('/seller');
+  const goOrders = () => void navigate('/seller/orders');
   const openEditor = (dishId: string) => editor.open({ dishId });
 
   const content =
@@ -225,7 +239,7 @@ export function MakeMenuScreen({
             ))}
           </Bar>
         )}
-        {mode === 'make' ? (
+        {mode === 'make' && !layered ? (
           <Button variant="quiet" onClick={close}>
             {t('close')}
           </Button>

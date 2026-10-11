@@ -570,3 +570,14 @@ Format for each entry:
 **Decision:** an order whose items don't fit one label prints on as many labels as needed, each with code, name, QR and "1 of 2"; the note goes on the last; the preview counts labels and orders (plan 035). Replaces silently hiding the overflow.
 **Trade-off:** a big order's bag gets two or more stickers.
 **Revisit when:** a kitchen uses bigger labels.
+
+## D-092 · A helper is a third membership role; history labels it "chef" for now (2026-10-11; owner)
+**Ruling:** "A". Plan 028, re-planned after 033: a helper is a membership role (`owner | chef | helper`), not a kind on the `chefs` table. In order history a helper's actions carry the role `chef`, with the helper's own display name.
+**Trade-off:** no rebuild of the large `orders` table (its `entered_by_role` CHECK allows only seller and chef); the cost is that history says "chef" for a helper.
+**Revisit when:** the owner needs to tell helpers and chefs apart in an order's history.
+**Also (owner, "A"):** a helper's invite follows D-085 like every invite (one key, one device, 24 hours; more devices by 6-digit code).
+
+## D-093 · The seller's wide banner is 3840 × 328, designed for iPad landscape (2026-10-11; owner)
+**Ruling:** "A" (plan 040). The real content sits in the middle 1896 × 328, exactly what iPad landscape shows at the left menu's top height (164 px, 2× for retina); the sides are scenery that wider screens reveal; narrower screens shrink the banner rather than cut the middle. No side bands anywhere (owner: "I don't want to have ugly bg on left and right"). The left-menu logo fills its block at the same height. The phone banner stays a separate 1200 × 400.
+**Trade-off:** the seller's designer draws a wider canvas with scenery on the sides; existing 5:1 banners must be re-uploaded (not deployed to real sellers yet). Replaces the 5:1 sizes of D-038 for the wide banner.
+**Revisit when:** sellers mostly use another device than iPad landscape.

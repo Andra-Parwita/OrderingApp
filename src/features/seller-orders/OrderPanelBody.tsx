@@ -225,11 +225,13 @@ export function OrderPanelBody({
               {t('panel.changedBy', { name: order.firstName, when: formatDayTime(lastEdit, lang) })}
             </strong>
             <span>{diff ? formatAuditDiff(diff, lang) : t('audit.edited')}</span>
-            <div>
-              <Button variant="quiet" disabled={a.saving} onClick={a.onSeen}>
-                {t('detail.seen')}
-              </Button>
-            </div>
+            {a.readOnly ? null : (
+              <div>
+                <Button variant="quiet" disabled={a.saving} onClick={a.onSeen}>
+                  {t('detail.seen')}
+                </Button>
+              </div>
+            )}
           </div>
         </Notice>
       ) : null}
@@ -239,11 +241,13 @@ export function OrderPanelBody({
           <div>
             <strong>{t('orders.newCustomer')}</strong>
             <span>{t('detail.bannerNew')}</span>
-            <div>
-              <Button variant="quiet" disabled={a.saving} onClick={a.onWaReceived}>
-                {t('detail.markWa')}
-              </Button>
-            </div>
+            {a.readOnly ? null : (
+              <div>
+                <Button variant="quiet" disabled={a.saving} onClick={a.onWaReceived}>
+                  {t('detail.markWa')}
+                </Button>
+              </div>
+            )}
           </div>
         </Notice>
       ) : null}
@@ -356,7 +360,7 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
   const a = useOrderActions(order);
   const [asking, setAsking] = useState(false);
   // Collected is not the main step while another step is open (D-069 Q4); it waits in the menu.
-  const next = a.forward.find((status) => status !== 'collected');
+  const next = a.readOnly ? undefined : a.forward.find((status) => status !== 'collected');
   const canCollect = order.fulfilment === 'pickup' && !a.final;
   const main = next ?? (canCollect ? 'collected' : undefined);
   const items: Array<MenuItem> = [
@@ -399,22 +403,26 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
           {t(`detail.action.${main}`)}
         </Main>
       ) : null}
-      <IconAction
-        aria-label={t('detail.sendLink')}
-        title={t('detail.sendLink')}
-        onClick={a.onWhatsApp}
-      >
-        <Icon name="chat" />
-      </IconAction>
-      <IconAction
-        aria-label={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
-        title={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
-        disabled={a.saving}
-        onClick={() => a.setPaid(!order.paid)}
-      >
-        <Icon name="coin" />
-      </IconAction>
-      <Menu label={t('live.more')} items={items} side="up" />
+      {a.readOnly ? null : (
+        <>
+          <IconAction
+            aria-label={t('detail.sendLink')}
+            title={t('detail.sendLink')}
+            onClick={a.onWhatsApp}
+          >
+            <Icon name="chat" />
+          </IconAction>
+          <IconAction
+            aria-label={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
+            title={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
+            disabled={a.saving}
+            onClick={() => a.setPaid(!order.paid)}
+          >
+            <Icon name="coin" />
+          </IconAction>
+          <Menu label={t('live.more')} items={items} side="up" />
+        </>
+      )}
       {asking ? (
         <WarningDialog
           title={t('panel.cancelTitle', { name: order.firstName })}

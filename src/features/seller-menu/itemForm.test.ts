@@ -30,6 +30,30 @@ describe('parsePriceInput', () => {
   });
 });
 
+describe('plan 029: preorder and day stock', () => {
+  const ok = { ...EMPTY_DRAFT, nameEn: 'Satay', price: '10' };
+
+  it('sends both fields; on the day only needs a stock', () => {
+    expect(createRequestOf(ok)).not.toHaveProperty('preorder');
+    expect(createRequestOf({ ...ok, onTheDay: true, dayStock: '12' })).toMatchObject({
+      dayStock: 12,
+    });
+    expect(
+      createRequestOf({ ...ok, preorder: false, onTheDay: true, dayStock: '0' }),
+    ).toMatchObject({
+      preorder: false,
+      dayStock: 0,
+    });
+    expect(createRequestOf({ ...ok, preorder: false })).toBeNull();
+    expect(validateDraft({ ...ok, preorder: false }).errors.preorder).toBe('needsDay');
+    expect(validateDraft({ ...ok, onTheDay: true, dayStock: 'x' }).errors.dayStock).toBe('invalid');
+    expect(updateRequestOf(ok)).toMatchObject({ preorder: true, dayStock: null });
+    expect(updateRequestOf({ ...ok, onTheDay: true, dayStock: '3' })).toMatchObject({
+      dayStock: 3,
+    });
+  });
+});
+
 describe('validateDraft', () => {
   const ok = { ...EMPTY_DRAFT, nameId: 'Lemper', price: '10' };
 

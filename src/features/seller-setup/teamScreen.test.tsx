@@ -79,6 +79,47 @@ describe('TeamScreen', () => {
     expect(document.body.textContent).not.toContain(key);
   });
 
+  it('invites a helper: sends role helper and no cook, and the list says Helper', async () => {
+    members = [owner, { ...wati, accountId: 'p2', displayName: 'Rina', role: 'helper' }];
+    delete (members[1] as { chefId?: string }).chefId;
+    delete (members[1] as { chefName?: string }).chefName;
+    renderWithStore(<TeamScreen />, createTestStore());
+    const list = await screen.findByRole('list', { name: 'Team' });
+    expect(within(list).getByText('Helper')).toBeInTheDocument();
+    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'Tia' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Helper' }));
+    expect(screen.queryByLabelText('Cook')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Make invite' }));
+    await screen.findByRole('region', { name: 'Invite for Tia' });
+    expect(createInvite).toHaveBeenCalledWith({ displayName: 'Tia', role: 'helper' });
+  });
+
+  it('writes the invite message in the language picked for it, with the role and the link (plan 043)', async () => {
+    renderWithStore(<TeamScreen />, createTestStore());
+    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'Tia' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Helper' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Make invite' }));
+    const box = await screen.findByRole('region', { name: 'Invite for Tia' });
+    const preview = within(box).getByLabelText<HTMLTextAreaElement>(
+      'Message (you can edit it before sending)',
+    );
+    const key = box.querySelector('code')?.textContent ?? '';
+    expect(preview.value).toContain("Hi Tia! 👋 You're invited to join");
+    expect(preview.value).toContain('as a helper');
+    // The page stays English; the message goes Indonesian.
+    fireEvent.click(within(box).getByRole('radio', { name: 'Bahasa Indonesia' }));
+    expect(preview.value).toContain('Halo Tia! 👋 Anda diundang bergabung di');
+    expect(preview.value).toContain('sebagai Asisten');
+    expect(preview.value).toContain(`/seller/setup?kitchen=`);
+    expect(preview.value).toContain(`#key=${key}`);
+    // An edit is what WhatsApp gets.
+    fireEvent.change(preview, { target: { value: 'Halo, ini undangan' } });
+    expect(within(box).getByRole('link', { name: 'Send on WhatsApp' })).toHaveAttribute(
+      'href',
+      `https://wa.me/?text=${encodeURIComponent('Halo, ini undangan')}`,
+    );
+  });
+
   it('removes a member on the second tap and offers to reassign their dishes', async () => {
     renderWithStore(<TeamScreen />, createTestStore());
     await screen.findByText('Wati');
@@ -95,5 +136,6 @@ describe('TeamScreen', () => {
     await i18n.changeLanguage('id');
     renderWithStore(<TeamScreen />, createTestStore());
     expect(await screen.findByRole('button', { name: 'Buat undangan' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Asisten' })).toBeInTheDocument();
   });
 });

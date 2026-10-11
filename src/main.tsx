@@ -20,6 +20,7 @@ import { registerSettingsI18n } from './features/seller-settings';
 import { registerSellerSetupI18n } from './features/seller-setup';
 import { registerShareI18n } from './features/seller-share';
 import { registerInstallI18n, startInstallSupport } from './components/install';
+import { startClientLog } from './api/clientLog';
 import { initI18n } from './i18n/init';
 
 const container = document.getElementById('root');
@@ -47,6 +48,8 @@ function findHarness(name: string | null) {
 const harness = import.meta.env.DEV
   ? findHarness(new URLSearchParams(window.location.search).get('harness'))
   : null;
+
+startClientLog();
 
 void initI18n().then(async () => {
   registerCustomerI18n();

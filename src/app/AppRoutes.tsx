@@ -1,15 +1,19 @@
-import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Navigate,
   Route,
   Routes,
+  UNSAFE_LocationContext as LocationContext,
+  matchPath,
   useLocation,
   useMatch,
   useNavigate,
+  useNavigationType,
   useParams,
   useSearchParams,
+  type Location,
 } from 'react-router';
 import { styled } from 'styled-components';
 import { lastKitchen } from '../api/device/lastKitchen';
@@ -41,6 +45,7 @@ import {
   getContact,
   OrderDetailScreen,
   OrdersTableScreen,
+  PrintOrdersScreen,
   PhoneOrdersScreen,
   parseStatusFilter,
   type StatusFilter,
@@ -51,17 +56,20 @@ import {
   DishesScreen,
   MakeMenuScreen,
   type MenuSlots,
-  MenuScreen as SellerMenuScreen,
   SavedSetsScreen,
+  isWizardPath,
   parseStep,
   parseTab,
+  useCloseWizard,
+  wizardBackground,
 } from '../features/seller-menu';
 import { SettingsPanes, paneHref, parsePane, type PaneId } from '../features/seller-settings';
 import { DevicesScreen } from '../features/seller-auth';
-import { HandOverScreen } from '../features/seller-saturday';
+import { HandOverScreen, SellScreen } from '../features/seller-saturday';
 import { ImagesScreen, TeamScreen } from '../features/seller-setup';
 import { ShareComposer, ShareScreen } from '../features/seller-share';
-import { Button, ListRow, PageHeader } from '../ui';
+import { Button, FullLayer, ListRow, PageHeader } from '../ui';
+import { NewMenuDialog } from '../features/seller-home';
 import {
   AdminHomeRoute,
   AdminSetupRoute,
@@ -70,11 +78,13 @@ import {
   SellerSignInRoute,
 } from './AuthRoutes';
 import { AdminGuard, SellerGuard, SellerOnly } from './guards';
+import { SellerMenuRoute } from './SellerMenuRoute';
 import { SessionProvider, useSession } from './session';
 import { CustomerShell } from './CustomerShell';
 import { DESKTOP_QUERY } from './layout';
 import { isValidSlug } from '../../shared/seller';
 import { HomePage, KitchenNotFoundPage, NotFoundPage } from './pages';
+import { SellerHomeRoute } from './SellerHomeRoute';
 import { SellerLayout } from './SellerLayout';
 import { KitchenSwitcher } from './KitchenSwitcher';
 import { MoreSwitchPerson } from './SwitchPerson';
@@ -299,11 +309,11 @@ function SellerListRoute({
     [setParam, toggles],
   );
   const onCloseOrder = useCallback(
-    () => void navigate(`/seller${search === '' ? '' : `?${search}`}`),
+    () => void navigate(`/seller/orders${search === '' ? '' : `?${search}`}`),
     [navigate, search],
   );
   const onNewOrder = useCallback(() => void navigate('/seller/new'), [navigate]);
-  const onCloseNewOrder = useCallback(() => void navigate('/seller'), [navigate]);
+  const onCloseNewOrder = useCallback(() => void navigate('/seller/orders'), [navigate]);
   const onShare = useCallback(() => void navigate('/seller/share'), [navigate]);
   const props = { filter, query, onFilterChange, onQueryChange, onOpenOrder, onNewOrder, onShare };
   return table ? (
@@ -324,11 +334,11 @@ function SellerListRoute({
 function SellerDetailRoute({ code }: Readonly<{ code: string }>) {
   const navigate = useNavigate();
   const { search } = useLocation();
-  const back = useCallback(() => void navigate(`/seller${search}`), [navigate, search]);
+  const back = useCallback(() => void navigate(`/seller/orders${search}`), [navigate, search]);
   return <OrderDetailScreen key={code} code={code} onBack={back} />;
 }
 
-/** /seller and /seller/orders/:code. A phone shows one page at a time; a desktop, the table with the order in a panel. */
+/** /seller/orders, /seller/orders/:code and /seller/new (on a phone also /seller). A phone shows one page at a time; a desktop, the table with the order in a panel. */
 function OrdersWorkspace() {
   const desktop = useMediaQuery(DESKTOP_QUERY);
   const { code } = useParams();
@@ -342,6 +352,25 @@ function OrdersWorkspace() {
   return <SellerListRoute table selectedCode={code} newOrderOpen={isNew} />;
 }
 
+/**
+ * /seller: Home on a tablet or computer (plan 039); on a phone, which has no Home, the Orders list
+ * as before. A chef has no Home either: a chef on a tablet goes to Orders.
+ */
+function SellerIndexRoute() {
+  const tablet = useMediaQuery(DESKTOP_QUERY);
+  const { me } = useSession();
+  if (!tablet) return <OrdersWorkspace />;
+  if (me?.role === 'chef') return <Navigate to="/seller/orders" replace />;
+  return <SellerHomeRoute />;
+}
+
+/** Plan 029: selling on the day. Owners and helpers; the owner may also correct the log. */
+function SellRoute() {
+  const { me } = useSession();
+  if (me?.role === 'chef') return <Navigate to="/seller" replace />;
+  return <SellScreen canCorrect={me?.role === 'seller'} />;
+}
+
 function CookRoute() {
   return <CookScreen />;
 }
@@ -349,7 +378,7 @@ function CookRoute() {
 function NewOrderRoute() {
   const navigate = useNavigate();
   const desktop = useMediaQuery(DESKTOP_QUERY);
-  const toOrders = useCallback(() => void navigate('/seller'), [navigate]);
+  const toOrders = useCallback(() => void navigate('/seller/orders'), [navigate]);
   return <NewOrderScreen onBack={toOrders} onDone={toOrders} hideLanguage={desktop} />;
 }
 
@@ -443,6 +472,11 @@ function LabelsRoute() {
     </MorePage>
   );
 }
+/** Plan 042: print the current menu's orders on A4; reached from the Orders header or More. */
+function PrintOrdersRoute() {
+  const navigate = useNavigate();
+  return <PrintOrdersScreen onBack={() => void navigate(-1)} />;
+}
 function PastWeeksRoute() {
   const { t } = useTranslation();
   return (
@@ -465,7 +499,9 @@ const MORE_LINKS = [
 // Phone: Kitchen and Labels are reached from More (plan 035); the rest is tablet-only.
 const PHONE_LINKS = [
   ['kitchen', '/seller/cook'],
+  ['sell', '/seller/sell'],
   ['labels', '/seller/labels'],
+  ['printOrders', '/seller/orders/print'],
 ] as const;
 // What the server closes to a chef (D-013); the chef does not see these.
 const CHEF_HIDDEN: ReadonlySet<string> = new Set([
@@ -484,7 +520,7 @@ function DevicesRoute() {
   const signedOut = useCallback(() => {
     void navigate('/seller/sign-in', { replace: true });
   }, [navigate]);
-  if (me?.role !== 'chef') return <ToPane pane="devices" />;
+  if (me?.role !== 'chef' && me?.role !== 'helper') return <ToPane pane="devices" />;
   return (
     <MorePage title={t('sellerNav.devices')}>
       <DevicesScreen onSignedOut={signedOut} signOutHere={end} />
@@ -498,21 +534,26 @@ function MoreRoute() {
   const navigate = useNavigate();
   const { me, end } = useSession();
   const desktop = useMediaQuery(DESKTOP_QUERY);
-  const links = MORE_LINKS.filter(
-    ([key]) => (me?.role !== 'chef' || !CHEF_HIDDEN.has(key)) && (key !== 'devices' || me !== null),
+  const helper = me?.role === 'helper';
+  const links = MORE_LINKS.filter(([key]) =>
+    helper
+      ? key === 'devices'
+      : (me?.role !== 'chef' || !CHEF_HIDDEN.has(key)) && (key !== 'devices' || me !== null),
   );
   const signOutNow = useCallback(async () => {
     await end();
     void navigate('/seller/sign-in', { replace: true });
   }, [end, navigate]);
-  if (desktop && me?.role !== 'chef') return <ToPane pane="kitchen" />;
+  if (desktop && me?.role !== 'chef' && !helper) return <ToPane pane="kitchen" />;
   // Phone: Switch person, language, sign out, where the rest lives, and the contacts on this phone.
   if (!desktop) {
     return (
       <>
         <PageHeader title={t('sellerNav.moreTitle')} />
         <nav aria-label={t('sellerNav.moreTitle')}>
-          {PHONE_LINKS.map(([key, to]) => (
+          {PHONE_LINKS.filter(([key]) =>
+            helper ? key === 'sell' : me?.role !== 'chef' || key !== 'sell',
+          ).map(([key, to]) => (
             <ListRow
               key={key}
               primary={t(`sellerNav.${key}`)}
@@ -574,168 +615,209 @@ function HandOverRoute() {
   return <HandOverScreen phone={phone} addressOf={addressOf} onOpenOrder={openOrder} />;
 }
 
-/** Screens of other features that the menu wizard shows: the customer's menu and the WhatsApp post. */
+/** Screens of other features that the menu wizard shows: the customer's menu, the post, the New menu dialog. */
 const MENU_SLOTS: MenuSlots = {
   preview: ({ slug, menu }) => <MenuPreview slug={slug} menu={menu} />,
   share: ({ onGoToOrders }) => <ShareComposer withLink onGoToOrders={onGoToOrders} />,
+  newMenu: (props) => <NewMenuDialog {...props} />,
 };
 
-/** Make a menu (the wizard) and a live menu's tabs: /seller/menu/make/:step and /seller/menu/edit/:step. */
-function MakeMenuRoute({ mode }: Readonly<{ mode: 'make' | 'edit' }>) {
-  const { step } = useParams();
+/**
+ * Make a menu (the wizard) and a live menu's tabs: /seller/menu/make/:step and /seller/menu/edit/:step.
+ * A layer over the screen it was opened from (plan 037): that screen stays rendered and its tab lit.
+ */
+function MakeMenuRoute({
+  mode,
+  step,
+}: Readonly<{ mode: 'make' | 'edit'; step: string | undefined }>) {
   const name = mode === 'make' ? parseStep(step) : parseTab(step);
   if (name === null) return <Navigate to="/seller/menu" replace />;
-  return <MakeMenuScreen mode={mode} step={name} slots={MENU_SLOTS} />;
+  return <MakeMenuScreen mode={mode} step={name} slots={MENU_SLOTS} layered />;
+}
+
+/** The address as typed, while the screens behind a wizard layer see the background address. */
+const RealLocation = createContext<Location | null>(null);
+
+/** Shown for a wizard opened with no background (a link, a refresh in a new tab): over Menu. */
+const MENU_BACKGROUND: Location = {
+  pathname: '/seller/menu',
+  search: '',
+  hash: '',
+  state: null,
+  key: 'menu',
+};
+
+function WizardLayerContent({ mode, step }: Readonly<{ mode: 'make' | 'edit'; step: string }>) {
+  const { t } = useTranslation('sellerMenu');
+  const close = useCloseWizard();
+  return (
+    <FullLayer label={t('make.layer')} closeLabel={t('close')} onClose={close}>
+      <MakeMenuRoute mode={mode} step={step} />
+    </FullLayer>
+  );
+}
+
+/** The wizard layer, on a tablet or computer: rendered inside the seller guard, over the background. */
+function WizardLayerHost() {
+  const real = useContext(RealLocation);
+  const tablet = useMediaQuery(DESKTOP_QUERY);
+  const navigationType = useNavigationType();
+  if (!tablet || !real || !isWizardPath(real.pathname)) return null;
+  const match =
+    matchPath('/seller/menu/make/:step', real.pathname) ??
+    matchPath('/seller/menu/edit/:step', real.pathname);
+  if (!match) return null;
+  const mode = real.pathname.startsWith('/seller/menu/make/') ? 'make' : 'edit';
+  return (
+    // The layer reads the real address (and its state), not the background the shell is showing.
+    <LocationContext.Provider value={{ location: real, navigationType }}>
+      <SellerOnly>
+        <WizardLayerContent key={mode} mode={mode} step={match.params.step ?? ''} />
+      </SellerOnly>
+    </LocationContext.Provider>
+  );
 }
 
 export function AppRoutes() {
+  const location = useLocation();
+  // A wizard address shows its background screen in the shell and the wizard in a layer.
+  const background = isWizardPath(location.pathname)
+    ? (wizardBackground(location.state) ?? MENU_BACKGROUND)
+    : undefined;
   return (
     <SessionProvider>
-      <Routes>
-        {/* Customer pages share the bottom tab bar (D-039). */}
-        <Route element={<CustomerShell />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/:slug" element={<MenuRoute />} />
-          <Route path="/:slug/dishes" element={<DishesRoute />} />
-          <Route path="/:slug/how-it-works" element={<HowItWorksRoute />} />
-          <Route path="/:slug/basket" element={<BasketRoute step="basket" />} />
-          <Route path="/:slug/basket/pickup" element={<BasketRoute step="pickup" />} />
-          <Route path="/:slug/basket/name" element={<BasketRoute step="name" />} />
-          <Route path="/o/:token" element={<OrderRoute />} />
-          <Route path="/o/:token/placed" element={<PlacedRoute />} />
-          <Route path="/o/:token/qr" element={<QrRoute />} />
-          <Route path="/o/:token/edit" element={<EditOrderRoute step="basket" />} />
-          <Route path="/o/:token/edit/name" element={<EditOrderRoute step="name" />} />
-          <Route path="/my-orders" element={<MyOrdersRoute />} />
-          <Route path="/settings" element={<CustomerSettingsScreen />} />
-        </Route>
-        {/* Sign-in and setup sit outside the seller shell; the shell needs a finished sign-in. */}
-        <Route path="/seller/setup" element={<SellerSetupRoute />} />
-        <Route path="/seller/sign-in" element={<SellerSignInRoute />} />
-        <Route path="/admin/setup" element={<AdminSetupRoute />} />
-        <Route path="/admin/sign-in" element={<AdminSignInRoute />} />
-        <Route
-          path="/admin"
-          element={
-            <AdminGuard>
-              <AdminHomeRoute />
-            </AdminGuard>
-          }
-        />
-        <Route
-          path="/seller"
-          element={
-            <SellerGuard>
-              <KitchenBrandSync />
-              <SellerLayout />
-            </SellerGuard>
-          }
-        >
-          <Route index element={<OrdersWorkspace />} />
-          <Route path="orders/:code" element={<OrdersWorkspace />} />
-          <Route path="new" element={<OrdersWorkspace />} />
-          <Route path="cook" element={<CookRoute />} />
-          <Route path="share" element={<ShareScreen />} />
+      <RealLocation.Provider value={location}>
+        {/* Only a wizard overrides the location: react-router reports every overridden location as a Pop, which would stop the customer pages sliding in. */}
+        <Routes location={background}>
+          {/* Customer pages share the bottom tab bar (D-039). */}
+          <Route element={<CustomerShell />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/:slug" element={<MenuRoute />} />
+            <Route path="/:slug/dishes" element={<DishesRoute />} />
+            <Route path="/:slug/how-it-works" element={<HowItWorksRoute />} />
+            <Route path="/:slug/basket" element={<BasketRoute step="basket" />} />
+            <Route path="/:slug/basket/pickup" element={<BasketRoute step="pickup" />} />
+            <Route path="/:slug/basket/name" element={<BasketRoute step="name" />} />
+            <Route path="/o/:token" element={<OrderRoute />} />
+            <Route path="/o/:token/placed" element={<PlacedRoute />} />
+            <Route path="/o/:token/qr" element={<QrRoute />} />
+            <Route path="/o/:token/edit" element={<EditOrderRoute step="basket" />} />
+            <Route path="/o/:token/edit/name" element={<EditOrderRoute step="name" />} />
+            <Route path="/my-orders" element={<MyOrdersRoute />} />
+            <Route path="/settings" element={<CustomerSettingsScreen />} />
+          </Route>
+          {/* Sign-in and setup sit outside the seller shell; the shell needs a finished sign-in. */}
+          <Route path="/seller/setup" element={<SellerSetupRoute />} />
+          <Route path="/seller/sign-in" element={<SellerSignInRoute />} />
+          <Route path="/admin/setup" element={<AdminSetupRoute />} />
+          <Route path="/admin/sign-in" element={<AdminSignInRoute />} />
           <Route
-            path="settings"
+            path="/admin"
             element={
-              <SellerOnly>
-                <ToPane pane="kitchen" />
-              </SellerOnly>
+              <AdminGuard>
+                <AdminHomeRoute />
+              </AdminGuard>
             }
           />
           <Route
-            path="settings/:pane"
+            path="/seller"
             element={
-              <SellerOnly>
-                <SettingsRoute />
-              </SellerOnly>
+              <SellerGuard>
+                <KitchenBrandSync />
+                <SellerLayout />
+                <WizardLayerHost />
+              </SellerGuard>
             }
-          />
-          <Route
-            path="menu"
-            element={
-              <SellerOnly>
-                <SellerMenuScreen />
-              </SellerOnly>
-            }
-          />
-          <Route
-            path="menu/make/:step"
-            element={
-              <SellerOnly>
-                <MakeMenuRoute mode="make" />
-              </SellerOnly>
-            }
-          />
-          <Route
-            path="menu/edit/:step"
-            element={
-              <SellerOnly>
-                <MakeMenuRoute mode="edit" />
-              </SellerOnly>
-            }
-          />
-          <Route
-            path="menu/dishes"
-            element={
-              <SellerOnly>
-                <DishesScreen />
-              </SellerOnly>
-            }
-          />
-          <Route
-            path="menu/sets"
-            element={
-              <SellerOnly>
-                <SavedSetsScreen />
-              </SellerOnly>
-            }
-          />
-          <Route path="more" element={<MoreRoute />} />
-          <Route
-            path="week"
-            element={
-              <SellerOnly>
-                <WeekRoute />
-              </SellerOnly>
-            }
-          />
-          <Route
-            path="images"
-            element={
-              <SellerOnly>
-                <ToPane pane="kitchen" />
-              </SellerOnly>
-            }
-          />
-          <Route
-            path="chefs"
-            element={
-              <SellerOnly>
-                <ToPane pane="chefs" />
-              </SellerOnly>
-            }
-          />
-          <Route path="labels" element={<LabelsRoute />} />
-          <Route path="past-weeks" element={<PastWeeksRoute />} />
-          <Route
-            path="backup"
-            element={
-              <SellerOnly>
-                <ToPane pane="backup" />
-              </SellerOnly>
-            }
-          />
-          <Route path="devices" element={<DevicesRoute />} />
-          <Route path="hand-over" element={<HandOverRoute />} />
-          {/* Old Saturday routes: the one Pickup & delivery screen holds them now. */}
-          <Route path="hand-over/pickup" element={<Navigate to="/seller/hand-over" replace />} />
-          <Route path="hand-over/delivery" element={<Navigate to="/seller/hand-over" replace />} />
-          <Route path="updates" element={<Navigate to="/seller/hand-over" replace />} />
-        </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          >
+            <Route index element={<SellerIndexRoute />} />
+            <Route path="orders" element={<OrdersWorkspace />} />
+            <Route path="orders/print" element={<PrintOrdersRoute />} />
+            <Route path="orders/:code" element={<OrdersWorkspace />} />
+            <Route path="new" element={<OrdersWorkspace />} />
+            <Route path="cook" element={<CookRoute />} />
+            <Route path="sell" element={<SellRoute />} />
+            <Route path="share" element={<ShareScreen />} />
+            <Route
+              path="settings"
+              element={
+                <SellerOnly>
+                  <ToPane pane="kitchen" />
+                </SellerOnly>
+              }
+            />
+            <Route
+              path="settings/:pane"
+              element={
+                <SellerOnly>
+                  <SettingsRoute />
+                </SellerOnly>
+              }
+            />
+            <Route path="menu" element={<SellerMenuRoute slots={MENU_SLOTS} />} />
+            <Route
+              path="menu/dishes"
+              element={
+                <SellerOnly>
+                  <DishesScreen />
+                </SellerOnly>
+              }
+            />
+            <Route
+              path="menu/sets"
+              element={
+                <SellerOnly>
+                  <SavedSetsScreen />
+                </SellerOnly>
+              }
+            />
+            <Route path="more" element={<MoreRoute />} />
+            <Route
+              path="week"
+              element={
+                <SellerOnly>
+                  <WeekRoute />
+                </SellerOnly>
+              }
+            />
+            <Route
+              path="images"
+              element={
+                <SellerOnly>
+                  <ToPane pane="kitchen" />
+                </SellerOnly>
+              }
+            />
+            <Route
+              path="chefs"
+              element={
+                <SellerOnly>
+                  <ToPane pane="chefs" />
+                </SellerOnly>
+              }
+            />
+            <Route path="labels" element={<LabelsRoute />} />
+            <Route path="past-weeks" element={<PastWeeksRoute />} />
+            <Route
+              path="backup"
+              element={
+                <SellerOnly>
+                  <ToPane pane="backup" />
+                </SellerOnly>
+              }
+            />
+            <Route path="devices" element={<DevicesRoute />} />
+            <Route path="hand-over" element={<HandOverRoute />} />
+            {/* Old Saturday routes: the one Pickup & delivery screen holds them now. */}
+            <Route path="hand-over/pickup" element={<Navigate to="/seller/hand-over" replace />} />
+            <Route
+              path="hand-over/delivery"
+              element={<Navigate to="/seller/hand-over" replace />}
+            />
+            <Route path="updates" element={<Navigate to="/seller/hand-over" replace />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </RealLocation.Provider>
     </SessionProvider>
   );
 }

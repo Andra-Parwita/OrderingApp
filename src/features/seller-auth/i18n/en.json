@@ -1,5 +1,6 @@
 {
   "errors": {
+    "paused": "This kitchen is paused. Contact the admin.",
     "wrong": "That did not work. Check it and try again.",
     "triesLeft_one": "{{count}} try left.",
     "triesLeft_other": "{{count}} tries left.",

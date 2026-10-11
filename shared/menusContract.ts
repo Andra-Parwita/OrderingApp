@@ -2,6 +2,7 @@
 // saved pickup places, and the kitchen's theme and menu defaults. Records follow
 // uxDesign/seller/docs/handoff.md -> Data model changes. Warn, never block (D-062): where a call
 // could once be refused for orders, it now answers with a warning flag.
+import { DAY_STOCK_MAX } from './daySalesContract';
 import type { Delivery, LocalText, PickupPoint, SellerMenuItemView } from './domain';
 import { MAX_MENU_ITEMS, MAX_PICKUP_PLACES, SET_NAME_MAX } from './limits';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
@@ -162,6 +163,9 @@ export type Dish = {
   priceCents: number;
   limit?: number;
   chefId?: string;
+  /** Plan 029: can be pre-ordered (absent = yes) and the day stock (absent = not sold on the day). */
+  preorder?: boolean;
+  dayStock?: number;
   /** When a menu last took a copy of it. */
   lastUsedAt?: string;
 };
@@ -196,6 +200,9 @@ export function parseDish(input: unknown): Dish | null {
   if (limit !== undefined && !isInt(limit, 1, LIMIT_MAX)) return null;
   if (chefId !== undefined && typeof chefId !== 'string') return null;
   if (lastUsedAt !== undefined && !isIsoDate(lastUsedAt)) return null;
+  const { preorder, dayStock } = input;
+  if (preorder !== undefined && typeof preorder !== 'boolean') return null;
+  if (dayStock !== undefined && !isInt(dayStock, 0, DAY_STOCK_MAX)) return null;
   return {
     id,
     name,
@@ -204,6 +211,8 @@ export function parseDish(input: unknown): Dish | null {
     priceCents,
     ...(limit !== undefined ? { limit } : {}),
     ...(chefId !== undefined ? { chefId } : {}),
+    ...(preorder !== undefined ? { preorder } : {}),
+    ...(dayStock !== undefined ? { dayStock } : {}),
     ...(lastUsedAt !== undefined ? { lastUsedAt } : {}),
   };
 }

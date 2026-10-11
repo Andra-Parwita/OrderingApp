@@ -238,36 +238,42 @@ describe('the order beside the list', () => {
 });
 
 describe('Home without a live menu', () => {
-  it('first run: the set-up checklist', () => {
+  it('first run: no checklist here, only a pointer to Home', () => {
     const store = createTestStore({ saga: false });
     seed(store, []);
     const view = makeMenuView('not_published', { wizardStep: 0 });
     seedMenu(store, { ...view, dishes: [] });
     renderWithStore(<Workspace />, store);
-    expect(screen.getByText('Set up your kitchen')).toBeInTheDocument();
-    expect(screen.getAllByText('Add your pictures').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Add your WhatsApp number').length).toBeGreaterThan(0);
-    expect(screen.getByText('Publish and share')).toBeInTheDocument();
+    expect(screen.queryByText('Set up your kitchen')).not.toBeInTheDocument();
+    expect(screen.getByText('No menu is open right now.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Start the next menu from Home' }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
-  it('not published: the Continue line for the cooking date', () => {
+  it('not published: no Continue line here either', () => {
     const store = createTestStore({ saga: false });
     seed(store, []);
     seedMenu(store, makeMenuView('not_published', { wizardStep: 1 }));
     renderWithStore(<Workspace />, store);
-    expect(screen.getByText(/isn't published yet/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Continue/ })).toBeInTheDocument();
-    expect(screen.getByText('Step 2 of 4 · saved')).toBeInTheDocument();
+    expect(screen.queryByText(/isn't published yet/)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Start the next menu from Home' }),
+    ).toBeInTheDocument();
   });
 
-  it('cooking day over: Just finished, the unpaid loose ends and Earlier menus', () => {
+  it('cooking day over: Just finished and the unpaid loose ends; no Earlier menus, no new menu', () => {
     const store = createTestStore({ saga: false });
     seed(store, orders());
     seedMenu(store, makeMenuView('finished'));
     renderWithStore(<Workspace />, store);
     expect(screen.getByText('Just finished')).toBeInTheDocument();
-    expect(screen.getByText('Earlier menus')).toBeInTheDocument();
+    expect(screen.queryByText('Earlier menus')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Use these dishes/ })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Start the next menu from Home' }),
+    ).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Mark paid' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'See all 4 orders' })).toBeInTheDocument();
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();

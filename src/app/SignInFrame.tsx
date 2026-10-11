@@ -9,7 +9,6 @@ import { lastKitchen } from '../api/device/lastKitchen';
 import { cssUrl } from '../components/cssUrl';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { useMediaQuery } from '../components/useMediaQuery';
-import { brandColour, brandSize } from '../theme/brandTokens';
 import { BrandLogo } from './BrandLogo';
 import { BrandBottomBar, BrandColumn, BrandTopBar, type BrandPage } from './BrandPanel';
 import { SPLIT_QUERY } from './layout';
@@ -21,7 +20,7 @@ import { SPLIT_QUERY } from './layout';
 // of the form on a tablet and on top of it on a phone; the EN / ID switch is top right, and the
 // kitchen's logo and name sit above the form (the app name when there is no last kitchen).
 
-// Plan 028: the admin pages and the seller's first set-up carry ShaggyBobo's branding instead.
+// Plan 036: the admin pages and the seller's first set-up carry ShaggyBobo's branding instead.
 
 /** The last kitchen this device used, from the public menu; null if none, it cannot be read, or off. */
 function useLastKitchen(enabled: boolean): Kitchen | null {
@@ -82,16 +81,6 @@ const Name = styled.p`
   text-align: center;
   color: ${({ theme }) => theme.c.text};
 `;
-// Plan 028: the logo's own colours on the form side. In dark mode it sits in the brand's dark
-// brown box with a light "Shaggy" (the owner's dark logo variant).
-const LogoBox = styled.span`
-  display: inline-flex;
-  color: ${brandColour.logoInk};
-  ${({ theme }) =>
-    theme.mode === 'dark'
-      ? `color: ${brandColour.logoInkOnDark}; background: ${brandColour.logoBoxDark}; padding: ${brandSize.logoBoxPadding}; border-radius: ${theme.radius.md};`
-      : ''}
-`;
 const BrandSide = styled.div`
   position: sticky;
   top: 0;
@@ -124,15 +113,17 @@ const FormArea = styled.div`
     box-sizing: border-box;
   }
 `;
-const Head = styled.div`
+// The admin pages' content is 32rem wide with 24px padding, so their logo lines up with the heading.
+const Head = styled.div<{ $admin?: boolean }>`
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   width: 100%;
-  max-width: 28rem;
+  max-width: ${({ $admin }) => ($admin ? '32rem' : '28rem')};
   margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.size.pagePadTablet / 16}rem;
+  padding: 0
+    ${({ theme, $admin }) => ($admin ? theme.spacing.xl : `${theme.size.pagePadTablet / 16}rem`)};
 `;
 const Logo = styled.img`
   width: 2.5rem;
@@ -166,7 +157,7 @@ export function SignInFrame({
   children: ReactNode;
   /** The kitchen's name from this device's memory, shown until the public menu has loaded. */
   kitchenName?: string | undefined;
-  /** Admin pages and the seller's first set-up: ShaggyBobo branding, no kitchen (plan 028). */
+  /** Admin pages and the seller's first set-up: ShaggyBobo branding, no kitchen (plan 036). */
   brand?: BrandPage | undefined;
 }>) {
   const { i18n } = useTranslation();
@@ -203,10 +194,8 @@ export function SignInFrame({
         </TopBar>
         <FormArea>
           {brand ? (
-            <Head>
-              <LogoBox>
-                <BrandLogo />
-              </LogoBox>
+            <Head $admin={brand === 'admin'}>
+              <BrandLogo />
             </Head>
           ) : kitchen || kitchenName ? (
             <Head>

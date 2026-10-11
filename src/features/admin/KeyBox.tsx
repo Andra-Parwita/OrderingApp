@@ -1,9 +1,10 @@
 import { useCallback, useState, type FormEvent } from 'react';
+import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { APP_NAME } from '../../../shared/appName';
 import { DISPLAY_NAME_MAX } from '../../../shared/authContract';
-import { Button, TextField } from '../../ui';
+import { Button, Segmented, TextArea, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { Message, Muted, Row } from './shared';
 
@@ -11,6 +12,8 @@ export type KeyBoxProps = Readonly<{
   title: string;
   /** The kitchen the invite is for (it goes in the link as `?kitchen=`). */
   slug: string;
+  /** The kitchen's name, said in the message. */
+  kitchen: string;
   /** Makes the key for the typed name (may be empty); null means it failed. */
   create: (displayName: string) => Promise<string | null>;
   onDone: () => void;
@@ -63,16 +66,25 @@ const WhatsApp = styled.a`
   }
 `;
 
+type MessageLang = 'en' | 'id';
+const LANGS: ReadonlyArray<{ value: MessageLang; label: string }> = [
+  { value: 'en', label: 'English' },
+  { value: 'id', label: 'Bahasa Indonesia' },
+];
+
 /**
  * An invite: first a name for the person, then the key, shown once, to copy as a link or on its
  * own, or to send on WhatsApp (no phone number: the admin picks the chat). The key works once, on
  * one device, within 24 hours (D-085).
  */
-export function KeyBox({ title, slug, create, onDone }: KeyBoxProps) {
+export function KeyBox({ title, slug, kitchen, create, onDone }: KeyBoxProps) {
   const { t } = useTranslation(ADMIN_NS);
   const [displayName, setDisplayName] = useState('');
   const [keyText, setKeyText] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // The message has its own language (the page may be in the other); no edit = the text as written.
+  const [lang, setLang] = useState<MessageLang>(i18n.language.startsWith('id') ? 'id' : 'en');
+  const [edited, setEdited] = useState<string | null>(null);
   const [note, setNote] = useState<{ text: string; bad: boolean } | null>(null);
 
   const make = useCallback(
@@ -125,21 +137,43 @@ export function KeyBox({ title, slug, create, onDone }: KeyBoxProps) {
   }
 
   const link = `https://${location.host}/seller/setup?kitchen=${encodeURIComponent(slug)}#key=${keyText}`;
-  const message = t('home.key.message', {
-    link,
-    app: APP_NAME,
-    interpolation: { escapeValue: false },
-  });
+  const say = i18n.getFixedT(lang, ADMIN_NS);
+  const name = displayName.trim();
+  const message =
+    edited ??
+    say('home.key.message', {
+      greet: name ? say('home.key.greet', { name }) : say('home.key.greetAnon'),
+      kitchen,
+      link,
+      app: APP_NAME,
+      interpolation: { escapeValue: false },
+    });
   return (
     <Box role="region" aria-label={title}>
       <Heading>{title}</Heading>
       <KeyText>{keyText}</KeyText>
       <Muted>{t('home.key.rule')}</Muted>
       <Muted>{t('home.key.once')}</Muted>
+      <Segmented
+        label={t('home.key.messageLang')}
+        options={LANGS}
+        value={lang}
+        onChange={(next) => {
+          setLang(next);
+          setEdited(null);
+        }}
+      />
+      <TextArea
+        label={t('home.key.messagePreview')}
+        value={message}
+        rows={9}
+        onChange={(event) => setEdited(event.target.value)}
+      />
       <Row>
         <Button variant="primary" onClick={() => void copy(link)}>
           {t('home.key.copyLink')}
         </Button>
+        <Button onClick={() => void copy(message)}>{t('home.key.copyMessage')}</Button>
         <Button onClick={() => void copy(keyText)}>{t('home.key.copy')}</Button>
         <WhatsApp
           href={`https://wa.me/?text=${encodeURIComponent(message)}`}

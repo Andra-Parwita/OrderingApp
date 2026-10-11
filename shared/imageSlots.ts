@@ -24,9 +24,9 @@ export type SlotSpec = {
 };
 
 const SIZES: Record<UploadSlot, { width: number; height: number }> = {
-  // Stage 10 sizes (handoff, Picture slots): wide banner 5:1, phone banner 3:1, kitchen menu
-  // picture 2:1, small icon square, background 5:1.
-  desktopBanner: { width: 2000, height: 400 },
+  // Wide banner 3840 x 328 (D-093, plan 040), phone banner 3:1, left-menu picture 2:1, small icon
+  // square, background 5:1.
+  desktopBanner: { width: 3840, height: 328 },
   phoneBanner: { width: 1200, height: 400 },
   railImage: { width: 1200, height: 600 },
   railIcon: { width: 512, height: 512 },

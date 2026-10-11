@@ -31,8 +31,8 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/admin\/sign-in$/);
   await page.getByRole('button', { name: 'Sign in with passkey' }).click();
-  await expect(page.getByRole('table', { name: 'Sellers' })).toBeVisible();
-  await page.getByRole('row', { name: /Dapur Demo/ }).click();
+  await expect(page.getByRole('list', { name: 'Sellers' })).toBeVisible();
+  await page.getByRole('button', { name: /\/dapur-demo/ }).click();
   await page.getByRole('button', { name: 'Create invite key' }).click();
   const box = page.getByRole('region', { name: 'Invite key for Dapur Demo' });
   await box.getByLabel('Name of the person').fill(PERSON);
@@ -101,7 +101,7 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await expect(rail.getByRole('link', { name: 'Orders' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Kitchen' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Pickup & delivery' })).toBeVisible();
-  await expect(rail.getByRole('link', { name: 'Menu', exact: true })).toHaveCount(0);
+  await expect(rail.getByRole('link', { name: 'Menu', exact: true })).toBeVisible(); // plan 030
   await expect(rail.getByRole('link', { name: 'Settings', exact: true })).toHaveCount(0);
   await page.screenshot({ path: 'captures/session-flow-chef.png', fullPage: true });
 
@@ -112,6 +112,8 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.screenshot({ path: 'captures/session-flow-hand-over.png', fullPage: true });
 
   await page.goto('/seller/menu');
+  await expect(page.getByRole('heading', { level: 1, name: 'Your dishes' })).toBeVisible();
+  await page.goto('/seller/settings/kitchen');
   await expect(page.getByRole('heading', { name: 'Not available for chefs' })).toBeVisible();
   await page.goto('/seller/more');
   await expect(page.getByRole('button', { name: 'Devices' })).toBeVisible();

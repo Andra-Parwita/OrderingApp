@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { KitchenImages } from '../../../shared/domain';
+import { IMAGE_MAX_KB } from '../../../shared/limits';
 import { IMAGE_SLOTS, slotSpec, type ImageSlot } from '../../../shared/imageSlots';
 import { isHexColour, phoneBannerSrc } from '../../../shared/kitchenImages';
 import { Button, ConfirmButton, ImageSlot as Picture, TextField, Toast } from '../../ui';
 import { ImageReadError, resizeImage, type ResizeFn, type ResizeResult } from './imageResize';
 import { SETUP_NS } from './i18n/register';
+import { SlotGuide } from './SlotGuide';
 import {
   Actions,
   Body,
@@ -29,10 +31,12 @@ import {
   type SetupRootState,
 } from './setupSlice';
 
-/** The middle area (D-038) where faces and the logo are safe on the two banners. */
+/** The middle area (plan 040) where faces and the logo are safe; the rail logo keeps its centre. */
 const KEEP: Partial<Record<ImageSlot, { width: number; height: number }>> = {
-  desktopBanner: { width: 1500, height: 350 },
-  phoneBanner: { width: 1000, height: 340 },
+  desktopBanner: { width: 1896, height: 328 },
+  phoneBanner: { width: 1080, height: 340 },
+  railImage: { width: 1000, height: 500 },
+  railIcon: { width: 410, height: 410 },
 };
 
 const FALLBACK_COLOUR = '#ffffff';
@@ -169,11 +173,24 @@ type SlotCardProps = Readonly<{
   background: string;
   failureCode: string | undefined;
   resize: ResizeFn;
+  /** A resized picture to store for this slot. */
+  onUpload: (slot: ImageSlot, dataUrl: string) => void;
+  onRemove: (slot: ImageSlot) => void;
 }>;
 
-function SlotCard({ slot, src, busy, disabled, background, failureCode, resize }: SlotCardProps) {
+/** One slot: size line, guide, preview, upload and remove. Shared with the admin's Images part. */
+export function SlotCard({
+  slot,
+  src,
+  busy,
+  disabled,
+  background,
+  failureCode,
+  resize,
+  onUpload,
+  onRemove,
+}: SlotCardProps) {
   const { t } = useTranslation(SETUP_NS);
-  const dispatch = useDispatch();
   const input = useRef<HTMLInputElement>(null);
   const [working, setWorking] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
@@ -197,35 +214,37 @@ function SlotCard({ slot, src, busy, disabled, background, failureCode, resize }
       try {
         const result = await resize(file, slot, background);
         if (result.offRatio) setPending(result);
-        else dispatch(uploadRequested({ slot, dataUrl: result.dataUrl }));
+        else onUpload(slot, result.dataUrl);
       } catch (error) {
         setReadError(error instanceof ImageReadError ? error.code : 'other');
       } finally {
         setWorking(false);
       }
     },
-    [background, dispatch, resize, slot],
+    [background, onUpload, resize, slot],
   );
   const accept = useCallback(() => {
-    if (pending) dispatch(uploadRequested({ slot, dataUrl: pending.dataUrl }));
+    if (pending) onUpload(slot, pending.dataUrl);
     setPending(null);
-  }, [dispatch, pending, slot]);
+  }, [onUpload, pending, slot]);
   const cancel = useCallback(() => setPending(null), []);
-  const remove = useCallback(() => dispatch(removeRequested(slot)), [dispatch, slot]);
+  const remove = useCallback(() => onRemove(slot), [onRemove, slot]);
 
   return (
     <Card>
       <CardTitle>{name}</CardTitle>
       <Hint>
-        {keep
-          ? t('images.guideKeep', {
-              width: spec.width,
-              height: spec.height,
-              keepWidth: keep.width,
-              keepHeight: keep.height,
-            })
-          : t('images.guide', { width: spec.width, height: spec.height })}
+        {t(slot === 'railIcon' ? 'images.specIcon' : keep ? 'images.specKeep' : 'images.spec', {
+          width: spec.width,
+          height: spec.height,
+          keepWidth: keep?.width,
+          keepHeight: keep?.height,
+          kb: IMAGE_MAX_KB,
+        })}
       </Hint>
+      <div>
+        <SlotGuide slot={slot} name={name} />
+      </div>
       <div>
         <Picture
           aspectRatio={ratio}
@@ -353,6 +372,11 @@ function ImagesBody({ resize }: ImagesBodyProps) {
     [altEn, altId, colour, colourValid, dispatch],
   );
 
+  const onUpload = useCallback(
+    (slot: ImageSlot, dataUrl: string) => dispatch(uploadRequested({ slot, dataUrl })),
+    [dispatch],
+  );
+  const onRemove = useCallback((slot: ImageSlot) => dispatch(removeRequested(slot)), [dispatch]);
   const slotFailure = (slot: ImageSlot) =>
     failure && failure.target === slot ? failure.code : undefined;
 
@@ -372,6 +396,8 @@ function ImagesBody({ resize }: ImagesBodyProps) {
             background={shown}
             failureCode={slotFailure(slot)}
             resize={resize}
+            onUpload={onUpload}
+            onRemove={onRemove}
           />
         ))}
       </Section>

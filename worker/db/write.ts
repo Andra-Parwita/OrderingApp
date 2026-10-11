@@ -145,8 +145,8 @@ export function dishStatement(
 ): D1Statement {
   return db.stmt(
     `INSERT INTO dishes (seller_id, id, name_en, name_id, description_en, description_id, size_en, size_id,
-       price_cents, portion_limit, chef_id, last_used_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       price_cents, portion_limit, chef_id, last_used_at, created_at, preorder, day_stock)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     sellerId,
     dish.id,
     dish.name.en,
@@ -160,6 +160,8 @@ export function dishStatement(
     dish.chefId ?? null,
     dish.lastUsedAt ?? null,
     createdAt,
+    dish.preorder !== false,
+    dish.dayStock ?? null,
   );
 }
 
@@ -173,8 +175,8 @@ export function itemStatement(
 ): D1Statement {
   return db.stmt(
     `INSERT INTO menu_items (seller_id, id, position, name_en, name_id, description_en, description_id, size_en, size_id,
-       price_cents, portion_limit, chef_id, sold_out, dish_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       price_cents, portion_limit, chef_id, sold_out, dish_id, preorder, day_stock)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     sellerId,
     item.id,
     position,
@@ -189,6 +191,8 @@ export function itemStatement(
     item.chefId ?? null,
     item.soldOut === true,
     dishId ?? null,
+    item.preorder !== false,
+    item.dayStock ?? null,
   );
 }
 

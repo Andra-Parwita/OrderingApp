@@ -1,6 +1,6 @@
-# 028 · ShaggyBobo branding on admin and seller first set-up
+# 036 · ShaggyBobo branding on admin and seller first set-up
 
-**Status:** done (2026-10-11); owner's design in chat (`temp/img.png`, `temp/img_1.png`, not in git) and "that should be Shaggy Bobo". Replaces [027](027-admin-sign-in-panel.md).
+**Status:** done (2026-10-11); owner's design in chat (`temp/img.png`, `temp/img_1.png`, not in git) and "that should be Shaggy Bobo". Replaces an earlier draft (an empty left panel), now removed. Renumbered from 028 on 2026-10-11 (the builder's 027–035 came first).
 **Goal:** `/admin/setup`, `/admin/sign-in` and `/seller/setup` (the invitation) show the developer's ShaggyBobo branding instead of a kitchen. `/seller/sign-in` (a returning seller) keeps the last kitchen's banner (D-051).
 
 ## Stages

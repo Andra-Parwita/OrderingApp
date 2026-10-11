@@ -186,21 +186,7 @@
     "menuFor": "Menu for {{date}} · Orders close {{cutoff}}",
     "loading": "Loading…",
     "loadError": "Could not load the menu.",
-    "setup": {
-      "title": "Set up your kitchen",
-      "why": "Four quick steps and customers can order.",
-      "pictures": "Add your pictures",
-      "whatsapp": "Add your WhatsApp number",
-      "menu": "Make a menu",
-      "publish": "Publish and share",
-      "go": "Open",
-      "action": "Make a menu"
-    },
-    "notPublished": "Your menu for {{date}} isn't published yet.",
-    "stepOf": "Step {{step}} of 4 · saved",
-    "continue": "Continue",
     "justFinished": "Just finished",
-    "lastMenu": "Last menu",
     "closedNote": "The menu closed at the end of the cooking day.",
     "seeAll": "See all {{count}} orders",
     "hideAll": "Hide the orders",
@@ -213,15 +199,9 @@
     "dishesSold": "Dishes sold",
     "unpaidLine": "{{name}} hasn't paid {{amount}}",
     "markPaid": "Mark paid",
-    "useDishes": "Use these dishes for a new menu",
-    "earlier": "Earlier menus",
-    "earlierHint": "Order details are kept for 4 weeks, then only the totals.",
-    "earlierRow": "{{orders}} orders · {{dishes}} dishes",
-    "allPaid": "All paid",
-    "unpaidAmount": "{{amount}} not paid",
-    "noEarlier": "No earlier menus yet.",
-    "allMenus": "All earlier menus",
-    "noMenu": "No menu is open right now."
+    "noMenu": "No menu is open right now.",
+    "startFromHome": "Start the next menu from Home",
+    "makeMenu": "Make a menu"
   },
   "live": {
     "search": "Name or code",
@@ -392,5 +372,37 @@
     "importBad": "That file isn't a contacts export.",
     "count_one": "{{count}} contact saved on this phone",
     "count_other": "{{count}} contacts saved on this phone"
+  },
+  "print": {
+    "title": "Print orders",
+    "print": "Print",
+    "back": "Back",
+    "loading": "Loading orders…",
+    "empty": "No orders to print.",
+    "notAllowed": "Printing orders is for the owner and chefs.",
+    "hint_one": "{{count}} A4 page. Print, then choose \"Save as PDF\" in the print window if you want a file.",
+    "hint_other": "{{count}} A4 pages. Print, then choose \"Save as PDF\" in the print window if you want a file.",
+    "which": {
+      "label": "Which orders",
+      "all": "All",
+      "notCollected": "Not collected",
+      "notPaid": "Not paid"
+    },
+    "sort": {
+      "label": "Sort by",
+      "place": "Place",
+      "code": "Code"
+    },
+    "menuFor": "Menu for {{day}}",
+    "printedAt": "Printed {{time}}",
+    "page": "Page {{n}} of {{total}}",
+    "continued": "continued",
+    "otherPlace": "Other place",
+    "paid": "Paid",
+    "notPaid": "Not paid",
+    "totals": "Totals (pre-orders)",
+    "total": "Total",
+    "ordersCount_one": "{{count}} order",
+    "ordersCount_other": "{{count}} orders"
   }
 }

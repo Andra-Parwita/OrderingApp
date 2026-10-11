@@ -43,7 +43,7 @@ test('message a pickup place, and walk a delivery through its steps', async ({
   page,
   request,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('webkit'), 'Android and desktop only');
+  test.skip(testInfo.project.name.includes('iphone'), 'Android and desktop only');
   const errors = collectErrors(page);
   const project = testInfo.project.name;
   const minutes = project.includes('desktop') ? 20 : 15;

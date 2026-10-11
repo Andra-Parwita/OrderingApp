@@ -49,7 +49,7 @@ test('only the order list scrolls, with 50 sample orders', async ({
     await context.addInitScript((slug) => localStorage.setItem('devSeller', slug), SELLER);
     const page = await context.newPage();
     const errors = collectErrors(page);
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible();
     await expect.poll(async () => (await listScroller(page))?.full ?? 0).toBeGreaterThan(1000);
 
@@ -61,9 +61,25 @@ test('only the order list scrolls, with 50 sample orders', async ({
     const middle = await listScroller(page, -1);
     expect(middle?.top).toBeGreaterThan(100);
     expect(await pageScrolls(page)).toBe(false);
-    // Header unmoved, still on screen.
+    // Plan 040: on tablet/desktop the sheet slides over the banner (164 px -> 73 px strip), so the
+    // header moves up by that difference, once (after the slide settles); the page does not scroll.
+    // On a phone the header stays where it was.
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight),
+    ).toBeLessThanOrEqual(1);
+    const moved = desktop ? 164 - 73 : 0;
+    await expect
+      .poll(async () => (before?.y ?? 0) - ((await heading.boundingBox())?.y ?? 0), {
+        timeout: 3000,
+      })
+      .toBeCloseTo(moved, -1);
     const after = await heading.boundingBox();
-    expect(after?.y).toBe(before?.y);
+    expect(Math.abs((before?.y ?? 0) - (after?.y ?? 0) - moved)).toBeLessThanOrEqual(4);
+    // Then it stays put while the list keeps scrolling.
+    await listScroller(page, (middle?.full ?? 0) - (middle?.height ?? 0));
+    const end = await heading.boundingBox();
+    expect(end?.y).toBe(after?.y);
 
     if (desktop) {
       await expect(page.getByRole('group', { name: 'Status' })).toBeVisible();

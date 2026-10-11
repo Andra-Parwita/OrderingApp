@@ -4,16 +4,18 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { APP_NAME } from '../../shared/appName';
 import { initI18n } from '../i18n/init';
+import { brandPill } from '../theme/brandTokens';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import { SignInFrame } from './SignInFrame';
 
 const fetchMenu = vi.fn();
 vi.mock('../api/client', () => ({ fetchMenu: (slug: string) => fetchMenu(slug) as unknown }));
 
+let deviceIsDark = true;
 beforeAll(async () => {
   window.matchMedia = () =>
     ({
-      matches: true,
+      matches: deviceIsDark,
       addEventListener: () => undefined,
       removeEventListener: () => undefined,
     }) as unknown as MediaQueryList;
@@ -21,6 +23,7 @@ beforeAll(async () => {
   await i18n.changeLanguage('en');
 });
 afterEach(() => {
+  deviceIsDark = true;
   localStorage.clear();
   fetchMenu.mockReset();
 });
@@ -72,7 +75,7 @@ describe('SignInFrame (D-051)', () => {
   });
 
   it.each(['admin', 'sellerSetup'] as const)(
-    'shows ShaggyBobo branding on %s and ignores the last kitchen (plan 028)',
+    'shows ShaggyBobo branding on %s and ignores the last kitchen (plan 036)',
     (page) => {
       localStorage.setItem('lastKitchen', 'onde-onde');
       renderFrame(page);
@@ -85,4 +88,25 @@ describe('SignInFrame (D-051)', () => {
       expect(screen.getByText('vdev')).toBeInTheDocument();
     },
   );
+
+  it('puts the logo in the light pill in light mode and the dark pill in dark mode', () => {
+    deviceIsDark = false;
+    const light = renderFrame('admin');
+    const lightPill = screen.getAllByRole('img', { name: 'ShaggyBobo' }).at(-1)!;
+    expect(lightPill).toHaveStyle({ background: 'var(--brand-bg)' });
+    expect(lightPill.getAttribute('class')).toBeTruthy();
+    expect(getComputedStyle(lightPill).getPropertyValue('--brand-bg')).toBe(brandPill.light.bg);
+    light.unmount();
+    deviceIsDark = true;
+    renderFrame('admin');
+    const darkPill = screen.getAllByRole('img', { name: 'ShaggyBobo' }).at(-1)!;
+    expect(getComputedStyle(darkPill).getPropertyValue('--brand-bg')).toBe(brandPill.dark.bg);
+  });
+
+  it('shows the happy-face icon, no leaf', () => {
+    renderFrame('admin');
+    const pill = screen.getAllByRole('img', { name: 'ShaggyBobo' }).at(-1)!;
+    expect(pill.querySelector('img')).toHaveAttribute('src', '/brand/logo-icon.webp');
+    expect(pill.querySelector('svg')).toBeNull();
+  });
 });

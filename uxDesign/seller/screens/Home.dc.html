@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home · tablet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.i-s{width:16px;height:16px}
+.tn{font-variant-numeric:tabular-nums}
+.row:hover{background:var(--surf2)}
+.nav:hover{background:var(--surf2)}
+.stat:hover{background:var(--surf2)}
+.kbg{background:var(--kbg) url(assets/background.jpg) center/cover}
+:focus-visible{outline:2px solid var(--fill);outline-offset:2px;border-radius:8px}
+a{color:var(--atext)}a:hover{color:var(--text)}
+.cap{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; position: relative; display: flex; overflow: hidden; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: var(--text); background: var(--bg); {{vars}}">
+
+  <!-- LEFT PANEL -->
+  <nav aria-label="Main" style="width: 232px; flex: none; display: flex; flex-direction: column; background: var(--panel); border-right: 1px solid var(--line); padding: 16px 12px 12px; box-sizing: border-box; gap: 4px">
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 4px 16px">
+      <img src="assets/menu-picture.jpg" alt="Onde Onde menu picture" style="width: 200px; height: 100px; object-fit: cover; border-radius: 10px; display: block">
+      <div style="font-size: 16px; font-weight: 700; letter-spacing: -0.01em">Onde Onde</div>
+    </div>
+    <a href="Home.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; background: var(--tint); color: var(--atext); font-weight: 600; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5M10 20v-5h4v5"></path></svg>Home</a>
+    <a href="{{ordersHref}}" class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"></path></svg>Orders<sc-if value="{{live}}" hint-placeholder-val="{{ true }}"><span class="tn" style="margin-left: auto; font-size: 12px; font-weight: 600">11</span></sc-if></a>
+    <a href="Kitchen.dc.html" class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3"></path></svg>Kitchen</a>
+    <a href="Handover.dc.html" class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="M3 7.5l9-4.5 9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9"></path></svg>Pickup &amp; delivery</a>
+    <a href="Menu-Home.dc.html" class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z"></path></svg>Menu<sc-if value="{{draftBadge}}" hint-placeholder-val="{{ false }}"><span style="margin-left: auto; font-size: 11px; font-weight: 600; color: var(--muted)">Not published</span></sc-if></a>
+    <a href="Settings.dc.html" class="nav" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 10px; color: var(--muted); font-weight: 500; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"></path></svg>Settings</a>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 0 4px">
+        <div aria-hidden="true" style="width: 32px; height: 32px; border-radius: 16px; background: var(--tint); color: var(--atext); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex: none">IR</div>
+        <div style="display: flex; flex-direction: column; min-width: 0; flex: 1">
+          <span style="font-weight: 600; font-size: 13px">Ira</span>
+          <span style="font-size: 12px; color: var(--muted)">Owner</span>
+        </div>
+        <button style="min-height: 44px; padding: 0 8px; color: var(--atext); font-size: 13px; font-weight: 600">Switch</button>
+      </div>
+      <div role="group" aria-label="Language" style="display: flex; border: 1px solid var(--ctrl); border-radius: 10px; overflow: hidden">
+        <button aria-pressed="true" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; background: var(--tint); color: var(--atext)">EN</button>
+        <button aria-pressed="false" style="flex: 1; min-height: 40px; text-align: center; font-weight: 600; font-size: 13px; color: var(--muted)">ID</button>
+      </div>
+      <button style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; color: var(--muted); font-size: 13px; font-weight: 500">
+        <svg class="i" viewBox="0 0 24 24"><path d="M11 6l-6 6 6 6M19 6l-6 6 6 6"></path></svg>Collapse menu
+      </button>
+    </div>
+  </nav>
+
+  <main class="kbg" style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+    <div style="height: {{bannerH}}px; flex: none; overflow: hidden; transition: height .25s ease">
+      <img src="assets/banner.jpg" alt="Onde Onde, Indonesian homemade food" style="width: 100%; height: 100%; object-fit: {{bannerFit}}; object-position: center 35%; display: block">
+    </div>
+
+    <section aria-label="Home" style="flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--surf); border-radius: 16px 16px 0 0; overflow: hidden; box-shadow: {{sheetShadow}}">
+    <div onScroll="{{onScroll}}" style="flex: 1; min-height: 0; overflow-y: auto">
+
+      <!-- HEADER: where are we, one next step -->
+      <div style="padding: 18px 28px 16px; display: flex; align-items: flex-end; gap: 16px">
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: {{eyeColor}}"><svg viewBox="0 0 8 8" style="width: 8px; height: 8px" aria-hidden="true"><circle cx="4" cy="4" r="3.25" fill="{{dotFill}}" stroke="currentColor" stroke-width="1.5"></circle></svg>{{eyebrow}}</span>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em">{{title}}</h1>
+          <span style="font-size: 13px; color: var(--muted)">{{sub}}</span>
+        </div>
+        <sc-if value="{{ctaIsLink}}" hint-placeholder-val="{{ false }}"><a href="{{ctaHref}}" style="flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="{{ctaIcon}}"></path></svg>{{ctaLabel}}</a></sc-if>
+        <sc-if value="{{ctaIsButton}}" hint-placeholder-val="{{ true }}"><button onClick="{{ctaAction}}" style="flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700; text-decoration: none"><svg class="i" viewBox="0 0 24 24"><path d="{{ctaIcon}}"></path></svg>{{ctaLabel}}</button></sc-if>
+      </div>
+
+      <!-- PHASE STRIP -->
+      <sc-if value="{{hasStrip}}" hint-placeholder-val="{{ true }}">
+        <ol aria-label="Where this menu is" style="list-style: none; margin: 0; padding: 0 28px 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; border-bottom: 1px solid var(--line)">
+          <sc-for list="{{phases}}" as="p" hint-placeholder-count="4">
+            <li aria-current="{{p.cur}}" style="display: flex; flex-direction: column; gap: 6px">
+              <span style="height: 4px; border-radius: 2px; background: {{p.bar}}"></span>
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: {{p.weight}}; color: {{p.color}}"><svg class="i i-s" viewBox="0 0 24 24"><path d="{{p.icon}}"></path></svg>{{p.label}}</span>
+              <span style="font-size: 12px; color: var(--muted)">{{p.when}}</span>
+            </li>
+          </sc-for>
+        </ol>
+      </sc-if>
+      <sc-if value="{{noStrip}}" hint-placeholder-val="{{ false }}"><div style="border-bottom: 1px solid var(--line)"></div></sc-if>
+
+      <!-- ===== NOT PUBLISHED ===== -->
+      <sc-if value="{{sDraft}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 20px 28px; display: flex; gap: 40px">
+          <div style="flex: 1; display: flex; flex-direction: column">
+            <h2 class="cap" style="margin: 0 0 6px">Making the menu</h2>
+            <sc-for list="{{steps}}" as="s" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 12px; min-height: 48px; border-top: 1px solid var(--line)">
+                <svg class="i" viewBox="0 0 24 24" style="color: {{s.color}}"><path d="{{s.icon}}"></path></svg>
+                <span style="flex: 1; font-weight: 600; color: {{s.textColor}}">{{s.label}}</span>
+                <span style="font-size: 13px; color: var(--muted)">{{s.note}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="width: 300px; flex: none; display: flex; flex-direction: column; gap: 6px">
+            <h2 class="cap" style="margin: 0">Customers can't order yet</h2>
+            <p style="margin: 0; font-size: 14px; color: var(--muted)">Nothing is shared until you publish. Everything is saved, so you can stop and come back.</p>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== TAKING ORDERS (prep days) ===== -->
+      <sc-if value="{{sLive}}" hint-placeholder-val="{{ false }}">
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 1px solid var(--line)">
+          <sc-for list="{{liveStats}}" as="st" hint-placeholder-count="4">
+            <a href="Main.dc.html" class="stat" style="display: flex; flex-direction: column; gap: 2px; padding: 14px 28px; text-decoration: none; color: var(--text); border-right: 1px solid var(--line)">
+              <span style="display: inline-flex; align-items: center; gap: 6px; color: {{st.color}}"><sc-if value="{{st.hasIcon}}" hint-placeholder-val="{{ false }}"><svg class="i" viewBox="0 0 24 24"><path d="{{st.icon}}"></path></svg></sc-if><span class="tn" style="font-size: 24px; font-weight: 700">{{st.n}}</span></span>
+              <span style="font-size: 13px; color: var(--muted)">{{st.label}}</span>
+            </a>
+          </sc-for>
+        </div>
+        <div style="display: flex">
+          <div style="flex: 1; min-width: 0; padding: 16px 28px 20px; border-right: 1px solid var(--line)">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px">
+              <h2 style="margin: 0; font-size: 16px; font-weight: 700">Dishes</h2>
+              <a href="Menu-Home.dc.html" style="margin-left: auto; font-size: 13px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Go to Menu to change limits</a>
+            </div>
+            <sc-for list="{{dishes}}" as="d" hint-placeholder-count="6">
+              <div style="display: grid; grid-template-columns: 1fr 140px 92px; align-items: center; column-gap: 16px; min-height: 44px; border-top: 1px solid var(--line)">
+                <span style="font-weight: 600; {{d.nameStyle}}">{{d.name}}</span>
+                <span style="height: 6px; border-radius: 3px; background: var(--surf2); overflow: hidden"><span style="display: block; height: 100%; width: {{d.pct}}%; background: {{d.barColor}}"></span></span>
+                <span class="tn" style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: {{d.leftColor}}"><sc-if value="{{d.low}}" hint-placeholder-val="{{ false }}"><svg class="i i-s" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v4M12 17h.01"></path></svg></sc-if>{{d.left}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="width: 280px; flex: none; padding: 16px 24px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px">
+            <h2 style="margin: 0 0 4px; font-size: 16px; font-weight: 700">Cooking day</h2>
+            <span style="font-size: 13px; color: var(--muted); margin-bottom: 8px">Sat 17 Oct</span>
+            <sc-for list="{{places}}" as="pl" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 10px; min-height: 48px; border-top: 1px solid var(--line)">
+                <svg class="i" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{pl.icon}}"></path></svg>
+                <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600">{{pl.name}}</span><span style="font-size: 12px; color: var(--muted)">{{pl.time}}</span></span>
+                <span class="tn" style="font-weight: 600">{{pl.n}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== COOKING DAY ===== -->
+      <sc-if value="{{sDay}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 18px 28px 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+          <sc-for list="{{progress}}" as="g" hint-placeholder-count="3">
+            <a href="{{g.href}}" style="display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: var(--text)">
+              <span style="display: flex; align-items: baseline; gap: 8px"><span style="font-weight: 700">{{g.label}}</span><span class="tn" style="margin-left: auto; font-weight: 700; font-size: 18px">{{g.n}}</span><span class="tn" style="font-size: 13px; color: var(--muted)">of {{g.of}}</span></span>
+              <span style="height: 8px; border-radius: 4px; background: var(--surf2); overflow: hidden"><span style="display: block; height: 100%; width: {{g.pct}}%; background: var(--fill)"></span></span>
+              <span style="font-size: 12px; color: var(--muted)">{{g.note}}</span>
+            </a>
+          </sc-for>
+        </div>
+        <div style="padding: 14px 28px 4px; display: flex; align-items: center; gap: 12px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 700">Handover</h2>
+          <a href="Handover.dc.html" style="margin-left: auto; font-size: 13px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Go to Pickup &amp; delivery</a>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 120px 90px 90px 110px; column-gap: 16px; padding: 0 28px 6px" class="cap"><span>Place</span><span>Time</span><span style="text-align: right">Orders</span><span style="text-align: right">Packed</span><span style="text-align: right">Handed over</span></div>
+        <sc-for list="{{dayPlaces}}" as="dp" hint-placeholder-count="3">
+          <div style="display: grid; grid-template-columns: 1fr 120px 90px 90px 110px; column-gap: 16px; align-items: center; padding: 0 28px; min-height: 48px; border-top: 1px solid var(--line)">
+            <span style="display: inline-flex; align-items: center; gap: 10px; font-weight: 600"><svg class="i" viewBox="0 0 24 24" style="color: var(--muted)"><path d="{{dp.icon}}"></path></svg>{{dp.name}}</span>
+            <span style="font-size: 13px; color: {{dp.timeColor}}; font-weight: {{dp.timeWeight}}">{{dp.time}}</span>
+            <span class="tn" style="text-align: right; font-weight: 600">{{dp.n}}</span>
+            <span class="tn" style="text-align: right; color: var(--muted)">{{dp.packed}}</span>
+            <span class="tn" style="text-align: right; color: var(--muted)">{{dp.done}}</span>
+          </div>
+        </sc-for>
+        <div style="margin: 12px 28px 20px; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; background: var(--warnTint)">
+          <svg class="i" viewBox="0 0 24 24" style="color: var(--warn)"><path d="M3 7h18v10H3zM12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4z"></path></svg>
+          <span style="flex: 1; font-size: 14px"><strong style="font-weight: 600">4 orders not paid yet</strong> <span class="tn" style="color: var(--muted)">· $148.50</span></span>
+          <a href="Main.dc.html" style="font-size: 13px; font-weight: 600; min-height: 40px; display: inline-flex; align-items: center">See who</a>
+        </div>
+      </sc-if>
+
+      <!-- ===== FIRST TIME EVER ===== -->
+      <sc-if value="{{sFirst}}" hint-placeholder-val="{{ false }}">
+        <div style="padding: 20px 28px 24px; display: flex; gap: 40px">
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+            <h2 class="cap" style="margin: 0 0 6px">Get your first menu out</h2>
+            <sc-for list="{{setup}}" as="u" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 14px; min-height: 64px; border-top: 1px solid var(--line)">
+                <svg class="i" viewBox="0 0 24 24" style="color: {{u.color}}"><path d="{{u.icon}}"></path></svg>
+                <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600; color: {{u.textColor}}">{{u.label}}</span><span style="font-size: 13px; color: var(--muted)">{{u.note}}</span></span>
+                <sc-if value="{{u.hasAction}}" hint-placeholder-val="{{ true }}"><button onClick="{{u.open}}" style="display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--ctrl); color: var(--text); font-weight: 600; font-size: 13px">{{u.action}}</button></sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="width: 280px; flex: none; display: flex; flex-direction: column; gap: 10px">
+            <h2 class="cap" style="margin: 0">How it works</h2>
+            <p style="margin: 0; font-size: 14px">1. You share the menu post on WhatsApp, with an order link.</p>
+            <p style="margin: 0; font-size: 14px">2. Customers order from the link and send you their order number.</p>
+            <p style="margin: 0; font-size: 14px">3. You cook from Kitchen and hand over on the day.</p>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== FINISHED / NOTHING RUNNING: the last menu, highlighted by how recent it is ===== -->
+      <sc-if value="{{sDone}}" hint-placeholder-val="{{ false }}">
+        <div style="margin: 18px 28px 0; border-radius: 12px; border: 1px solid {{lastBorder}}; overflow: hidden">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: {{ageBg}}">
+            <svg class="i i-s" viewBox="0 0 24 24" style="color: {{ageColor}}"><path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 7v5l3 2"></path></svg>
+            <span style="font-size: 13px; font-weight: 700; color: {{ageColor}}">{{ageLabel}}</span>
+            <span style="flex: 1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; max-width: 220px; margin-left: 8px" aria-hidden="true"><span style="display: block; height: 100%; width: {{agePct}}%; background: {{ageColor}}"></span></span>
+            <span style="margin-left: auto; font-size: 12px; color: var(--muted)">{{ageNote}}</span>
+          </div>
+          <div style="padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; align-items: baseline; gap: 12px">
+              <span style="font-size: 20px; font-weight: 700">Menu for Sat 10 Oct</span>
+              <a href="Main-Finished.dc.html" style="margin-left: auto; font-size: 13px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Go to its orders</a>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+              <div style="display: flex; flex-direction: column; gap: 2px"><span class="tn" style="font-size: 22px; font-weight: 700">24</span><span style="font-size: 13px; color: var(--muted)">orders · 2 cancelled</span></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span class="tn" style="font-size: 22px; font-weight: 700">$1,196.50</span><span style="font-size: 13px; color: var(--muted)">total</span></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span class="tn" style="font-size: 22px; font-weight: 700">15 · 7</span><span style="font-size: 13px; color: var(--muted)">collected · delivered</span></div>
+              <div style="display: flex; flex-direction: column; gap: 2px"><span class="tn" style="font-size: 22px; font-weight: 700; color: var(--warn)">$29.00</span><span style="font-size: 13px; color: var(--muted)">not paid · 1 order</span></div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 13px; color: var(--muted)"><span>Onde onde <strong class="tn" style="color: var(--text)">126</strong></span><span>Rendang <strong class="tn" style="color: var(--text)">38</strong></span><span>Nasi Ayam Bali <strong class="tn" style="color: var(--text)">31</strong></span><span>Kue lapis <strong class="tn" style="color: var(--text)">22</strong></span><span>Sayur urab <strong class="tn" style="color: var(--text)">19</strong></span><span>Sambal matah <strong class="tn" style="color: var(--text)">14</strong></span></div>
+          </div>
+        </div>
+
+        <div style="padding: 18px 28px 8px; display: flex; align-items: center; gap: 12px">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 700">Earlier menus</h2>
+          <a href="Menu-Home.dc.html" style="margin-left: auto; font-size: 13px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">Go to Menu · all 34 menus</a>
+        </div>
+        <sc-for list="{{past}}" as="e" hint-placeholder-count="3">
+          <button onClick="{{e.open}}" class="row" style="display: grid; grid-template-columns: 110px 1fr 84px 104px 80px 18px; align-items: center; column-gap: 16px; width: 100%; box-sizing: border-box; padding: 0 28px; min-height: 52px; border-top: 1px solid var(--line); color: var(--text)">
+            <span style="font-size: 15px; font-weight: 600">{{e.day}}</span>
+            <span style="font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{e.dishes}}</span>
+            <span class="tn" style="font-size: 13px; color: var(--muted); text-align: right">{{e.orders}} orders</span>
+            <span class="tn" style="font-size: 15px; font-weight: 600; text-align: right">{{e.total}}</span>
+            <span style="font-size: 12px; font-weight: 600; text-align: right; color: {{e.payColor}}">{{e.pay}}</span>
+            <svg class="i i-s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="M9 6l6 6-6 6"></path></svg>
+          </button>
+        </sc-for>
+        <div style="height: 20px; border-top: 1px solid var(--line)"></div>
+      </sc-if>
+
+    </div>
+    </section>
+  </main>
+
+  <!-- ===== DIALOGS: actions start here, on Home ===== -->
+  <sc-if value="{{dlgNew}}" hint-placeholder-val="{{ false }}">
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center">
+    <div role="dialog" aria-modal="true" aria-labelledby="nm-t" style="width: 520px; background: var(--surf); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 48px rgba(0,0,0,.35); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; padding: 18px 12px 6px 24px">
+        <h2 id="nm-t" style="margin: 0; flex: 1; font-size: 20px; font-weight: 700">{{newTitle}}</h2>
+        <button onClick="{{closeDlg}}" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <div style="padding: 6px 24px 20px; display: flex; flex-direction: column; gap: 16px">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Cooking day
+            <span style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; font-weight: 500; font-size: 15px"><svg class="i i-s" viewBox="0 0 24 24" style="color: var(--muted)"><path d="M4 6h16v14H4zM4 10h16M9 3v4M15 3v4"></path></svg>Sat 24 Oct</span>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600">Orders close
+            <span style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; font-weight: 500; font-size: 15px">Thu 22 Oct, 8:00 pm</span>
+          </label>
+        </div>
+        <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+          <legend style="font-size: 13px; font-weight: 600; margin-bottom: 6px">Start from</legend>
+          <sc-for list="{{startOpts}}" as="o" hint-placeholder-count="3">
+            <button role="radio" aria-checked="{{o.sel}}" onClick="{{o.pick}}" style="display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 14px; border-radius: 10px; border: 1px solid {{o.border}}; background: {{o.bg}}">
+              <span style="width: 18px; height: 18px; border-radius: 9px; box-sizing: border-box; border: 2px solid {{o.ring}}; display: flex; align-items: center; justify-content: center"><span style="width: 8px; height: 8px; border-radius: 4px; background: {{o.dot}}"></span></span>
+              <span style="display: flex; flex-direction: column"><span style="font-weight: 600">{{o.label}}</span><span style="font-size: 12px; color: var(--muted)">{{o.note}}</span></span>
+            </button>
+          </sc-for>
+        </fieldset>
+        <p style="margin: 0; font-size: 13px; color: var(--muted)">It stays "Not published" until you publish it. Customers see nothing yet.</p>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 14px 24px 18px; border-top: 1px solid var(--line)">
+        <button onClick="{{closeDlg}}" style="min-height: 44px; padding: 0 16px; border-radius: 10px; font-weight: 600">Cancel</button>
+        <button onClick="{{createMenu}}" style="min-height: 44px; padding: 0 18px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700">Create menu</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{dlgWa}}" hint-placeholder-val="{{ false }}">
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center">
+    <div role="dialog" aria-modal="true" aria-labelledby="wa-t" style="width: 460px; background: var(--surf); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 48px rgba(0,0,0,.35)">
+      <div style="display: flex; align-items: center; padding: 18px 12px 6px 24px">
+        <h2 id="wa-t" style="margin: 0; flex: 1; font-size: 20px; font-weight: 700">Your WhatsApp number</h2>
+        <button onClick="{{closeDlg}}" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <div style="padding: 6px 24px 20px; display: flex; flex-direction: column; gap: 8px">
+        <label for="wa-n" style="font-size: 13px; font-weight: 600">Number customers send their order number to</label>
+        <input id="wa-n" value="+61 412 345 678" style="height: 44px; padding: 0 12px; border: 1px solid var(--ctrl); border-radius: 10px; background: var(--surf); color: var(--text); font-size: 15px; box-sizing: border-box">
+        <span style="font-size: 13px; color: var(--muted)">Greeting and closing for your posts are in Settings · WhatsApp post.</span>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; padding: 14px 24px 18px; border-top: 1px solid var(--line)">
+        <button onClick="{{closeDlg}}" style="min-height: 44px; padding: 0 16px; border-radius: 10px; font-weight: 600">Cancel</button>
+        <button onClick="{{saveWa}}" style="min-height: 44px; padding: 0 18px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700">Save</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{dlgPast}}" hint-placeholder-val="{{ false }}">
+  <div style="position: absolute; inset: 0; background: rgba(0,0,0,.4); display: flex; justify-content: flex-end">
+    <aside role="dialog" aria-modal="true" aria-labelledby="pm-t" style="width: 440px; height: 100%; background: var(--surf); border-left: 1px solid var(--line); display: flex; flex-direction: column">
+      <div style="display: flex; align-items: flex-start; padding: 18px 12px 14px 24px; border-bottom: 1px solid var(--line)">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span class="cap">Past menu</span><h2 id="pm-t" style="margin: 0; font-size: 22px; font-weight: 700">{{pm.day}}</h2><span class="tn" style="font-size: 13px; color: var(--muted)">{{pm.orders}} orders · {{pm.total}} · <span style="color: {{pm.payColor}}; font-weight: 600">{{pm.pay}}</span></span></div>
+        <button onClick="{{closeDlg}}" aria-label="Close" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted)"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <div style="flex: 1; min-height: 0; overflow-y: auto; padding: 14px 24px">
+        <h3 class="cap" style="margin: 0 0 6px">Dishes sold</h3>
+        <sc-for list="{{pm.sold}}" as="x" hint-placeholder-count="5">
+          <div style="display: flex; justify-content: space-between; min-height: 40px; align-items: center; border-top: 1px solid var(--line)"><span>{{x.name}}</span><span class="tn" style="font-weight: 600">{{x.n}}</span></div>
+        </sc-for>
+      </div>
+      <div style="padding: 12px 16px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+        <button onClick="{{reuse}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 10px; background: var(--fill); color: var(--on); font-weight: 700"><svg class="i" viewBox="0 0 24 24"><path d="M8 4h10a2 2 0 0 1 2 2v10M4 8h12v12H4z"></path></svg>New menu with these dishes</button>
+        <a href="Main-Finished.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 10px; border: 1px solid var(--ctrl); color: var(--text); font-weight: 600; text-decoration: none">Go to its orders</a>
+      </div>
+    </aside>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["first time","not published","taking orders","cooking day","finished"],"default":"finished","section":"State"},"finishedAgo":{"editor":"enum","options":["yesterday","2 weeks ago"],"default":"yesterday","section":"State"},"dialog":{"editor":"enum","options":["none","new menu","whatsapp number","past menu"],"default":"none","section":"State"},"scrolled":{"editor":"boolean","default":false,"section":"Layout"},"theme":{"editor":"enum","options":["dark","light"],"default":"dark","section":"Theme"},"brand":{"editor":"enum","options":["onde","bali","sumatra","sunda","jawa"],"default":"onde","section":"Theme"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const brand = this.props.brand ?? 'onde';
+    const st = this.state.st ?? this.props.state ?? 'finished';
+    const dlgMap = { 'new menu':'new', 'whatsapp number':'wa', 'past menu':'past' };
+    const dlg = this.state.dlg !== undefined ? this.state.dlg : (dlgMap[this.props.dialog] || null);
+    const openDlg = (d, extra) => this.setState(Object.assign({ dlg: d }, extra || {}));
+    const recent = (this.props.finishedAgo ?? 'yesterday') === 'yesterday';
+    // Content slides up over the banner as you scroll; the banner keeps a 72px strip.
+    const scrolled = this.state.scrolled ?? this.props.scrolled ?? false;
+    const onScroll = (e) => { const v = e.currentTarget.scrollTop > 8; if (v !== scrolled) this.setState({ scrolled: v }); };
+    const N = {
+      dark: { bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', ctrl:'#6B7266', text:'#F1EEE6', muted:'#A9AFA3', kbg:'#1D2A1A', conf:'#7EC4B0', ready:'#8DB4E8', warn:'#E9B949', warnTint:'rgba(233,185,73,.10)', danger:'#EE8B78' },
+      light:{ bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', ctrl:'#7F857A', text:'#1C1F1A', muted:'#5D6358', kbg:'#E9E3CF', conf:'#1F6B5C', ready:'#2B5C9E', warn:'#8A5A00', warnTint:'#FBF1D9', danger:'#A93724' }
+    };
+    const B = {
+      onde: { dark:{ fill:'#8CC08A', on:'#0F1E10', atext:'#93C590', tint:'rgba(140,192,138,.14)', bg:'#121411', panel:'#0E100D', surf:'#181A16', surf2:'#20231E', line:'#2A2E27', kbg:'#1D2A1A' }, light:{ fill:'#2F6B36', on:'#FFFFFF', atext:'#2A5F30', tint:'#E5EFE2', bg:'#F6F2E8', panel:'#EFEADD', surf:'#FFFDF8', surf2:'#F4F0E6', line:'#E4DED0', kbg:'#E9E3CF' } },
+      bali: { dark:{ fill:'#84C3D6', on:'#0B2129', atext:'#8CC6D8', tint:'rgba(132,195,214,.14)', bg:'#101417', panel:'#0C1013', surf:'#161B1F', surf2:'#1E2429', line:'#283037', kbg:'#17262E' }, light:{ fill:'#1D5C73', on:'#FFFFFF', atext:'#1A5469', tint:'#E0EDF1', bg:'#F1F4F4', panel:'#E7EDEE', surf:'#FCFEFE', surf2:'#EEF3F4', line:'#DAE2E4', kbg:'#DCE8EB' } },
+      sumatra: { dark:{ fill:'#EBA0AA', on:'#2B0A10', atext:'#EDA6AF', tint:'rgba(235,160,170,.14)', bg:'#161112', panel:'#110D0E', surf:'#1C1617', surf2:'#251D1F', line:'#322729', kbg:'#2A171B' }, light:{ fill:'#8A2232', on:'#FFFFFF', atext:'#7E1F2E', tint:'#F5E1E3', bg:'#F7F0EE', panel:'#F0E6E3', surf:'#FFFBFA', surf2:'#F6EEEC', line:'#E6D9D6', kbg:'#EED9D6' } },
+      sunda: { dark:{ fill:'#A9B6EC', on:'#121A3A', atext:'#AEBBEE', tint:'rgba(169,182,236,.15)', bg:'#111219', panel:'#0D0E14', surf:'#17181F', surf2:'#1F2029', line:'#2A2C37', kbg:'#1A1D33' }, light:{ fill:'#3A4C96', on:'#FFFFFF', atext:'#34448A', tint:'#E4E7F4', bg:'#F2F2F7', panel:'#E9EAF2', surf:'#FDFDFF', surf2:'#F0F1F7', line:'#DDDFEA', kbg:'#DFE2F1' } },
+      jawa: { dark:{ fill:'#D9AE7E', on:'#2A1A08', atext:'#DDB38A', tint:'rgba(217,174,126,.15)', bg:'#15120E', panel:'#100E0B', surf:'#1B1813', surf2:'#24201A', line:'#312B23', kbg:'#2A2015' }, light:{ fill:'#7A4A1E', on:'#FFFFFF', atext:'#6E431B', tint:'#F2E7DA', bg:'#F6F0E6', panel:'#EEE5D7', surf:'#FFFBF4', surf2:'#F5EEE2', line:'#E5DACA', kbg:'#EBDCC4' } }
+    };
+    const t = Object.assign({}, N[theme], B[brand][theme]);
+    const vars = Object.keys(t).map(k => '--' + k + ':' + t[k]).join(';');
+
+    const I = {
+      plus:'M12 5v14M5 12h14', next:'M9 6l6 6-6 6', list:'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+      pot:'M4 10h16v4a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6zM2 10h20M9 4.5c0 1-1 1.5-1 3M14 4.5c0 1-1 1.5-1 3',
+      pen:'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4', check:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM8 12.5l2.5 2.5L16 9.5',
+      circle:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z', half:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18zM12 3v18',
+      bag:'M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2', truck:'M2 6h12v10H2zM14 10h4l3 3v3h-7zM5 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0M15 18.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0',
+      cart:'M3 7h18v10H3zM12 10a2 2 0 1 0 0 4a2 2 0 1 0 0-4z'
+    };
+
+    // the event's four phases; index of the current one per state
+    const phaseIdx = { 'not published':0, 'taking orders':1, 'cooking day':2, 'finished':3 }[st];
+    const when = st === 'not published'
+      ? ['Step 2 of 4', 'Until Thu 22 Oct', 'Sat 24 Oct', '']
+      : st === 'finished' ? ['Done', 'Closed Thu 8 Oct', 'Sat 10 Oct', 'Today'] : ['Done', 'Until Thu 15 Oct, 8 pm', 'Sat 17 Oct', ''];
+    const phases = ['Make the menu','Taking orders','Cooking day','Finished'].map((label, i) => {
+      const done = i < phaseIdx, cur = i === phaseIdx;
+      return { label, when: when[i], cur: cur ? 'step' : 'false',
+        bar: done || cur ? 'var(--fill)' : 'var(--line)',
+        color: cur ? 'var(--text)' : (done ? 'var(--muted)' : 'var(--muted)'),
+        weight: cur ? '700' : '500',
+        icon: done ? I.check : (cur ? I.half : I.circle) };
+    });
+
+    const H = {
+      'first time': { eyebrow:'Welcome to Onde Onde', eyeColor:'var(--atext)', dotFill:'none', title:'Nothing on yet', sub:'Set up your kitchen once, then make your first menu. You can change everything later.', ctaLabel:'Make your first menu', ctaIcon:I.plus, ctaHref:'', act:'new' },
+      'not published': { eyebrow:'Not published', eyeColor:'var(--muted)', dotFill:'none', title:'Menu for Sat 24 Oct', sub:'6 dishes · last saved Fri 9 Oct, 4:12 pm', ctaLabel:'Continue making it', ctaIcon:I.next, ctaHref:'Menu-Details.dc.html' },
+      'taking orders': { eyebrow:'Taking orders', eyeColor:'var(--atext)', dotFill:'currentColor', title:'Menu for Sat 17 Oct', sub:'Orders close Thu 15 Oct, 8:00 pm · 1 day 6 hours left', ctaLabel:'Go to Orders · 4 to confirm', ctaIcon:I.list, ctaHref:'Main.dc.html' },
+      'cooking day': { eyebrow:'Cooking day · today', eyeColor:'var(--atext)', dotFill:'currentColor', title:'Sat 17 Oct', sub:'Orders closed Thu 8 pm · 10 orders · first pickup Glenelg at 10:00', ctaLabel:'Go to Kitchen', ctaIcon:I.pot, ctaHref:'Kitchen.dc.html' },
+      'finished': { eyebrow:'No menu running', eyeColor:'var(--muted)', dotFill:'none', title:'Nothing on right now', sub: recent ? 'Your last menu finished yesterday. Customers can\'t order until you publish the next one.' : 'Your last menu finished 2 weeks ago. Customers can\'t order until you publish the next one.', ctaLabel:'New menu', ctaIcon:I.plus, ctaHref:'', act:'new' }
+    }[st];
+
+    const steps = [
+      ['Dishes', '6 dishes', 'done'], ['Details', 'Cooking day, pickup places', 'now'], ['Check', '', 'todo'], ['Publish & share', '', 'todo']
+    ].map(s => ({ label:s[0], note: s[2] === 'now' ? 'You stopped here' : s[1],
+      icon: s[2] === 'done' ? I.check : (s[2] === 'now' ? I.half : I.circle),
+      color: s[2] === 'todo' ? 'var(--muted)' : 'var(--atext)', textColor: s[2] === 'todo' ? 'var(--muted)' : 'var(--text)' }));
+
+    const liveStats = [
+      { n:'11', label:'orders · 1 cancelled', color:'var(--text)', hasIcon:false },
+      { n:'$454.50', label:'total · $178 paid', color:'var(--text)', hasIcon:false },
+      { n:'4', label:'to confirm · 2 changed', color:'var(--text)', hasIcon:true, icon:I.circle },
+      { n:'6', label:'not paid · $276.50', color:'var(--warn)', hasIcon:true, icon:I.cart }
+    ];
+    const dishes = [['Rendang',11,20,false],['Nasi Ayam Bali',10,12,false],['Onde onde',7,30,false],['Sayur urab',6,0,false],['Sambal matah',4,10,false],['Kue lapis',8,8,true]].map(d => {
+      const left = d[2] ? d[2] - d[1] : null, low = !d[3] && left !== null && left <= 5;
+      return { name:d[0], nameStyle: d[3] ? 'color: var(--muted)' : '',
+        pct: d[3] ? 100 : (d[2] ? Math.round(d[1] / d[2] * 100) : 30),
+        barColor: d[3] ? 'var(--ctrl)' : (low ? 'var(--warn)' : 'var(--fill)'),
+        left: d[3] ? 'Sold out' : (left === null ? d[1] + ' · no limit' : left + ' left'),
+        leftColor: low ? 'var(--warn)' : 'var(--muted)', low };
+    });
+    const places = [['Glenelg','Pickup 10:00–12:00',4,I.bag],['Clayton','Pickup 11:00–13:00',2,I.bag],['Delivery','From 4:00 pm',4,I.truck]].map(p => ({ name:p[0], time:p[1], n:p[2], icon:p[3] }));
+
+    const progress = [
+      { label:'Packed', n:6, of:10, pct:60, note:'Kitchen · Pack', href:'Kitchen-Pack.dc.html' },
+      { label:'Collected', n:1, of:6, pct:17, note:'Customers confirm on their phone', href:'Handover.dc.html' },
+      { label:'Delivered', n:0, of:4, pct:0, note:'Deliveries start at 4:00 pm', href:'Handover.dc.html' }
+    ];
+    const dayPlaces = [
+      ['Glenelg','Now · until 12:00',4,'4 packed','1 collected',I.bag,true],
+      ['Clayton','11:00–13:00',2,'2 packed','0 collected',I.bag,false],
+      ['Delivery','From 4:00 pm',4,'0 packed','0 delivered',I.truck,false]
+    ].map(p => ({ name:p[0], time:p[1], n:p[2], packed:p[3], done:p[4], icon:p[5], timeColor: p[6] ? 'var(--atext)' : 'var(--muted)', timeWeight: p[6] ? '600' : '400' }));
+
+    const pastRaw = [
+      { day:'Sat 3 Oct', dishes:'Nasi Ayam Bali · Rendang · Onde onde · Sayur urab · Gado-gado · Es cendol', orders:'31', total:'$1,602.50', pay:'All paid', payColor:'var(--conf)' },
+      { day:'Sun 27 Sep', dishes:'Soto ayam · Gado-gado · Es cendol · Onde onde · Lemper ayam', orders:'18', total:'$905.00', pay:'All paid', payColor:'var(--conf)' },
+      { day:'Sat 19 Sep', dishes:'Rendang · Gado-gado · Kue lapis · Sayur urab · Onde onde', orders:'27', total:'$1,388.00', pay:'All paid', payColor:'var(--conf)' }
+    ];
+    const soldBy = [
+      [['Onde onde',148],['Nasi Ayam Bali',36],['Rendang',33],['Sayur urab',21],['Gado-gado',18],['Es cendol',16]],
+      [['Soto ayam',30],['Onde onde',84],['Gado-gado',14],['Es cendol',12],['Lemper ayam',20]],
+      [['Rendang',35],['Onde onde',110],['Kue lapis',24],['Gado-gado',15],['Sayur urab',17]]
+    ];
+    const past = pastRaw.map((e, i) => Object.assign({}, e, { open: () => openDlg('past', { pmI: i }), sold: soldBy[i].map(x => ({ name:x[0], n:x[1] })) }));
+    const pm = past[this.state.pmI ?? 0];
+    const first = st === 'first time';
+    const start = this.state.start ?? (first ? 'empty' : 'copy');
+    const startOpts = [
+      ['empty', 'Empty menu', 'Pick dishes from your library'],
+      ['copy', this.state.fromPast ? 'Dishes from ' + this.state.fromPast : 'Dishes from Sat 10 Oct', 'Prices and limits copied; change anything'],
+      ['set', 'A saved set', 'Weekend favourites · 6 dishes']
+    ].filter(o => !first || o[0] === 'empty').map(o => { const sel = start === o[0]; return { label:o[1], note:o[2], sel: sel ? 'true' : 'false',
+      border: sel ? 'var(--fill)' : 'var(--line)', bg: sel ? 'var(--tint)' : 'transparent', ring: sel ? 'var(--fill)' : 'var(--ctrl)', dot: sel ? 'var(--fill)' : 'transparent',
+      pick: () => this.setState({ start: o[0] }) }; });
+    const setup = [
+      ['Kitchen pictures', 'Banner, small icon and menu picture', 'done', '', ''],
+      ['Your WhatsApp number', this.state.waDone ? 'Customers send their order number here' : 'Customers send their order number here', this.state.waDone ? 'done' : 'todo', this.state.waDone ? '' : 'Set up', 'wa'],
+      ['Make your first menu', 'Dishes, prices, cooking day, pickup places', 'todo', 'Make a menu', 'new'],
+      ['Publish and share on WhatsApp', 'Orders start coming in here', 'todo', '', '']
+    ].map(u => ({ label:u[0], note: u[2] === 'done' ? u[1] + ' · done' : u[1],
+      icon: u[2] === 'done' ? I.check : I.circle, color: u[2] === 'done' ? 'var(--atext)' : 'var(--muted)',
+      textColor: 'var(--text)', hasAction: !!u[3], action:u[3], open: () => openDlg(u[4]) }));
+
+    return {
+      vars, eyebrow:H.eyebrow, eyeColor:H.eyeColor, dotFill:H.dotFill, title:H.title, sub:H.sub,
+      ctaLabel:H.ctaLabel, ctaIcon:H.ctaIcon, ctaHref:H.ctaHref,
+      hasStrip: st !== 'first time' && st !== 'finished', noStrip: st === 'first time' || st === 'finished', phases,
+      sFirst: st === 'first time', sDraft: st === 'not published', sLive: st === 'taking orders', sDay: st === 'cooking day', sDone: st === 'finished',
+      steps, liveStats, dishes, places, progress, dayPlaces,
+      past, setup, onScroll, pm, startOpts,
+      ctaIsLink: !!H.ctaHref, ctaIsButton: !H.ctaHref, ctaAction: () => openDlg(H.act || 'new'),
+      dlgNew: dlg === 'new', dlgWa: dlg === 'wa', dlgPast: dlg === 'past',
+      newTitle: st === 'first time' ? 'Your first menu' : 'New menu',
+      closeDlg: () => this.setState({ dlg: null }),
+      createMenu: () => this.setState({ dlg: null, st: 'not published' }),
+      saveWa: () => this.setState({ dlg: null, waDone: true }),
+      reuse: () => this.setState({ dlg: 'new', start: 'copy', fromPast: pm.day }),
+      bannerH: scrolled ? 72 : 190, bannerFit: scrolled ? 'cover' : 'contain', sheetShadow: scrolled ? '0 -6px 16px rgba(0,0,0,.25)' : 'none',
+      ageLabel: recent ? 'Finished yesterday' : 'Finished 2 weeks ago',
+      ageNote: recent ? 'Sat 10 Oct · just handed over' : 'Sat 10 Oct',
+      agePct: recent ? 95 : 15,
+      ageColor: recent ? 'var(--atext)' : 'var(--muted)',
+      ageBg: recent ? 'var(--tint)' : 'var(--surf2)',
+      lastBorder: recent ? 'var(--fill)' : 'var(--line)',
+      live: st === 'taking orders' || st === 'cooking day',
+      draftBadge: st === 'not published',
+      ordersHref: (st === 'taking orders' || st === 'cooking day') ? 'Main.dc.html' : 'Main-Finished.dc.html'
+    };
+  }
+}
+</script>
+</body>
+</html>

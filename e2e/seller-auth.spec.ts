@@ -206,7 +206,7 @@ async function setUpWithPasskey(page: Page, key: string) {
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
   await page.getByRole('button', { name: createPasskeyName }).click();
-  await expect(page).toHaveURL(/\/seller$/);
+  await expect(page).toHaveURL(/\/seller(\/orders)?$/);
 }
 
 /** D-050: the rail button on a tablet or desktop, the top of the More tab on a phone. */

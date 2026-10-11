@@ -211,7 +211,7 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
   const [asking, setAsking] = useState(false);
   const confirming = a.forward.includes('confirmed');
   // Collected is the quiet button below (D-069 Q4), so it is never the main step here.
-  const main = a.forward.find((status) => status !== 'collected');
+  const main = a.readOnly ? undefined : a.forward.find((status) => status !== 'collected');
   const canCollect = order.fulfilment === 'pickup' && !a.final;
   const send = useCallback(
     () => openOrderLink(i18n, order, getContactDigits(currentSellerSlug(), order.code)),
@@ -229,31 +229,33 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
           <Button onClick={a.onRetry}>{t('error.retry')}</Button>
         </ErrorBox>
       ) : null}
-      <Rows>
-        <Row
-          icon="lock"
-          label={order.locked ? t('panel.unlock') : t('panel.lock')}
-          hint={order.locked ? t('phone.unlockHint') : t('phone.lockHint')}
-          disabled={a.saving || a.final}
-          onClick={a.onLock}
-        />
-        <Row
-          icon="bell"
-          label={t('panel.nudge')}
-          hint={t('phone.nudgeHint')}
-          disabled={a.saving || a.final}
-          onClick={a.onNudge}
-        />
-        {a.canCancel ? (
+      {a.readOnly ? null : (
+        <Rows>
           <Row
-            icon="x"
-            label={t('detail.cancel')}
-            danger
-            disabled={a.saving}
-            onClick={() => setAsking(true)}
+            icon="lock"
+            label={order.locked ? t('panel.unlock') : t('panel.lock')}
+            hint={order.locked ? t('phone.unlockHint') : t('phone.lockHint')}
+            disabled={a.saving || a.final}
+            onClick={a.onLock}
           />
-        ) : null}
-      </Rows>
+          <Row
+            icon="bell"
+            label={t('panel.nudge')}
+            hint={t('phone.nudgeHint')}
+            disabled={a.saving || a.final}
+            onClick={a.onNudge}
+          />
+          {a.canCancel ? (
+            <Row
+              icon="x"
+              label={t('detail.cancel')}
+              danger
+              disabled={a.saving}
+              onClick={() => setAsking(true)}
+            />
+          ) : null}
+        </Rows>
+      )}
       {asking ? (
         <WarningDialog
           title={t('panel.cancelTitle', { name: order.firstName })}
@@ -269,7 +271,7 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
         </WarningDialog>
       ) : null}
       <Foot>
-        {confirming ? (
+        {a.readOnly ? null : confirming ? (
           <Button variant="primary" fullWidth disabled={a.saving} onClick={confirmAndSend}>
             <Icon name="chat" />
             {t('phone.confirmSend')}
@@ -280,23 +282,25 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
             {t(`detail.action.${main}`)}
           </Button>
         ) : null}
-        <Pair>
-          {confirming ? (
-            <Button disabled={a.saving} onClick={() => a.onStep('confirmed')}>
-              <Icon name="check" />
-              {t('phone.confirmOnly')}
+        {a.readOnly ? null : (
+          <Pair>
+            {confirming ? (
+              <Button disabled={a.saving} onClick={() => a.onStep('confirmed')}>
+                <Icon name="check" />
+                {t('phone.confirmOnly')}
+              </Button>
+            ) : (
+              <Button onClick={send}>
+                <Icon name="chat" />
+                {t('detail.sendLink')}
+              </Button>
+            )}
+            <Button disabled={a.saving} onClick={() => a.setPaid(!order.paid)}>
+              <Icon name="coin" />
+              {order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
             </Button>
-          ) : (
-            <Button onClick={send}>
-              <Icon name="chat" />
-              {t('detail.sendLink')}
-            </Button>
-          )}
-          <Button disabled={a.saving} onClick={() => a.setPaid(!order.paid)}>
-            <Icon name="coin" />
-            {order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
-          </Button>
-        </Pair>
+          </Pair>
+        )}
         {canCollect ? (
           <Quiet variant="quiet" fullWidth disabled={a.saving} onClick={a.onCollected}>
             {t('detail.action.collected')}

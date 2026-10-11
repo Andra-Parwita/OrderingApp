@@ -18,3 +18,8 @@ export function parseStep(value: string | undefined): Step | null {
 export function parseTab(value: string | undefined): Tab | null {
   return TABS.find((tab) => tab === value) ?? null;
 }
+
+/** Whether an address is a wizard step: it is shown as a layer over another screen (plan 037). */
+export function isWizardPath(pathname: string): boolean {
+  return /^\/seller\/menu\/(make|edit)\/[^/]+\/?$/.test(pathname);
+}

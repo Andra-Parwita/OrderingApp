@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { appVersion } from '../../shared/buildInfo';
@@ -5,7 +6,7 @@ import { brandColour, brandSize } from '../theme/brandTokens';
 import { BrandLogo } from './BrandLogo';
 import { WalkingMascot } from './BrandMascot';
 
-// Plan 028: the developer (ShaggyBobo) branding on the admin pages and the seller's first set-up
+// Plan 036: the developer (ShaggyBobo) branding on the admin pages and the seller's first set-up
 // from an invitation. Its colours and sizes are the brand's own (src/theme/brandTokens.ts).
 
 export type BrandPage = 'admin' | 'sellerSetup';
@@ -21,6 +22,7 @@ const BAR_HEIGHT = brandSize.bar;
 const PHONE_BAR_HEIGHT = brandSize.phoneBar;
 
 const Column = styled.div`
+  position: relative;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -37,6 +39,19 @@ const Bar = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   height: ${BAR_HEIGHT};
   padding: 0 ${({ theme }) => theme.size.pagePadTablet / 16}rem;
+`;
+// Tablet and desktop: the header floats over the scene, which runs to the top of the column.
+const OverlayBar = styled(Bar)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+
+  & > * {
+    pointer-events: auto;
+  }
 `;
 const PhoneBar = styled(Bar)`
   height: calc(${PHONE_BAR_HEIGHT} + env(safe-area-inset-top));
@@ -135,7 +150,7 @@ function BrandHeaderParts({ page }: Readonly<{ page: BrandPage }>) {
   const { t } = useTranslation();
   return (
     <>
-      <BrandLogo />
+      <BrandLogo onBeige />
       {page === 'sellerSetup' ? <Pill>{t('app.brand.sellerSetup')}</Pill> : null}
     </>
   );
@@ -164,9 +179,9 @@ function BrandFooterParts() {
 export function BrandColumn({ page }: Readonly<{ page: BrandPage }>) {
   return (
     <Column>
-      <Bar>
+      <OverlayBar data-testid="brand-header">
         <BrandHeaderParts page={page} />
-      </Bar>
+      </OverlayBar>
       <Body>
         <Stage>
           <Scene src={SCENE_SRC} alt="" />
@@ -181,10 +196,14 @@ export function BrandColumn({ page }: Readonly<{ page: BrandPage }>) {
 }
 
 /** Phone: the header as a bar on top (no mascot). */
-export function BrandTopBar({ page }: Readonly<{ page: BrandPage }>) {
+export function BrandTopBar({
+  page,
+  children,
+}: Readonly<{ page: BrandPage; children?: ReactNode }>) {
   return (
     <PhoneBar as="header">
       <BrandHeaderParts page={page} />
+      {children}
     </PhoneBar>
   );
 }

@@ -16,13 +16,11 @@
     "removeConfirm": "Tap again to remove",
     "working": "Getting your picture ready…",
     "fileFor": "Choose a picture for {{name}}",
-    "guide": "Best size {{width}} × {{height}} px",
-    "guideKeep": "Best size {{width}} × {{height}} px. Keep faces and the logo in the middle {{keepWidth}} × {{keepHeight}} px.",
     "slots": {
       "desktopBanner": "Wide banner (tablet and computer)",
       "phoneBanner": "Phone banner",
       "railImage": "Menu image (left menu)",
-      "railIcon": "Small icon (closed menu)",
+      "railIcon": "App icon (phone home screen and closed menu)",
       "bannerBackgroundImage": "Background (wide screens)"
     },
     "warn": {
@@ -47,7 +45,39 @@
     "altHelper": "Read aloud for people who cannot see the picture.",
     "saveStyle": "Save colour and text",
     "saving": "Saving…",
-    "styleFailed": "Could not save. Please try again."
+    "styleFailed": "Could not save. Please try again.",
+    "spec": "{{width}} × {{height}} px · JPEG, PNG or WebP · up to {{kb}} KB",
+    "specKeep": "{{width}} × {{height}} px · keep faces and the logo in the middle {{keepWidth}} × {{keepHeight}} px · JPEG, PNG or WebP · up to {{kb}} KB",
+    "help": {
+      "open": "How to make this picture",
+      "label": "How to make: {{name}}",
+      "close": "Close",
+      "download": "Download template",
+      "templateAlt": "Template for {{name}}: the framed area is the safe zone",
+      "desktopBanner": [
+        "The template is the full picture. Put faces, the logo and text inside the framed middle zone.",
+        "iPad (landscape) shows exactly the middle zone. Wider screens show more of the sides, so keep the sides as scenery only.",
+        "On a portrait screen the banner gets shorter, but the middle zone is never cut."
+      ],
+      "phoneBanner": [
+        "The template is the full picture. Put faces, the logo and text inside the framed middle zone.",
+        "Phones show the whole picture, so the edges are seen too."
+      ],
+      "railImage": [
+        "The logo fills its block in the left menu, edge to edge, with the kitchen name below it.",
+        "Keep the logo inside the framed centre; the edges may be trimmed a little."
+      ],
+      "railIcon": [
+        "iPhone rounds the corners itself, so draw the picture square, full-bleed.",
+        "Android may cut it into a circle, so keep the mark inside the middle 80%.",
+        "The closed left menu shows it at 72 × 72."
+      ],
+      "bannerBackgroundImage": [
+        "Shown behind the banner on very wide screens.",
+        "Use scenery or a pattern only, with no text or faces."
+      ]
+    },
+    "specIcon": "{{width}} × {{height}} px · keep the mark in the middle {{keepWidth}} × {{keepHeight}} · square, no transparency, no rounded corners · JPEG, PNG or WebP · up to {{kb}} KB"
   },
   "chefs": {
     "title": "Chefs",
@@ -73,6 +103,7 @@
     "title": "Team",
     "you": "you",
     "roleOwner": "Owner",
+    "roleHelper": "Helper",
     "roleChef": "Chef",
     "cook": "cooks as {{name}}",
     "devices_zero": "Not signed in on any device",
@@ -99,7 +130,14 @@
     "inviteCopied": "Copied",
     "inviteCopyFailed": "Could not copy. Select the key and copy it by hand.",
     "inviteWhatsapp": "Send on WhatsApp",
-    "inviteMessage": "Join my kitchen on {{app}}: {{link}} (works once, within 24 hours)",
+    "greet": "Hi {{name}}!",
+    "greetAnon": "Hi!",
+    "messageOwner": "{{greet}} 👋 You're invited to run *{{kitchen}}* on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.",
+    "messageChef": "{{greet}} 👋 You're invited to join *{{kitchen}}* as a chef on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.",
+    "messageHelper": "{{greet}} 👋 You're invited to join *{{kitchen}}* as a helper on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.",
+    "messageLang": "Message language",
+    "messagePreview": "Message (you can edit it before sending)",
+    "inviteCopyMessage": "Copy message",
     "inviteDone": "Done",
     "cooks": "Cooks",
     "cooksHint": "The people who can be given items on the menu."

@@ -168,7 +168,7 @@ describe('new order toast and highlight (plan 021 stage 2)', () => {
     });
     expect(screen.getByText('3 new orders')).toBeDefined();
     fireEvent.click(screen.getByRole('button', { name: 'Show' }));
-    expect(screen.getByTestId('where').textContent).toBe('/seller');
+    expect(screen.getByTestId('where').textContent).toBe('/seller/orders');
   });
 
   it('speaks Indonesian too', async () => {

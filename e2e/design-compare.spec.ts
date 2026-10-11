@@ -29,7 +29,7 @@ const harness = (screen: string): string => `/?harness=seller-menu&screen=${scre
 
 const ENTRIES: ReadonlyArray<Entry> = [
   { board: 'Patterns', state: 'default', url: '/?harness=patterns', viewport: TABLET },
-  { board: 'Main', state: 'default', url: '/seller', viewport: TABLET, signedIn: true },
+  { board: 'Main', state: 'default', url: '/seller/orders', viewport: TABLET, signedIn: true },
   { board: 'Phone-Orders', state: 'default', url: '/seller', viewport: PHONE, signedIn: true },
   {
     board: 'Signin',

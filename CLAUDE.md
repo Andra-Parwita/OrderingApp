@@ -4,6 +4,7 @@ A home cook publishes a menu whenever they like, for pickup or delivery on its c
 
 ## Start here (current work)
 
+- **Read [docs/HANDOVER.md](docs/HANDOVER.md) first.** It is the hand-over from the last session (the owner's or the builder's): where things stand, what to do next, and a ready prompt. **Every session ends by rewriting it** before the commit (owner, 2026-10-11).
 - **The app is live** at https://order.shaggybobo.app (D-077), deployed by the builder; it also runs locally (seller, customer, admin; Cloudflare Worker with local D1/R2). Before a release, read the latest `docs/plans/release-*.md` checklist.
 - **Plans:** [docs/plans/](docs/plans/README.md) lists every plan and its status; [the board](docs/plan/board.md) "Start here" says what is current. Plans 001 (seller redesign) and 004 (customer redesign + web push) are done.
 - **Web push is done** (plan 004). Agents never deploy or run `--remote` commands; the builder does.

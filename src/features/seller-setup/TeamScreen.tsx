@@ -66,7 +66,7 @@ const Notice = styled.div`
 `;
 
 type Load = 'loading' | 'ready' | 'error';
-type Shown = Readonly<{ name: string; key: string }>;
+type Shown = Readonly<{ name: string; key: string; role: MembershipRole }>;
 
 /** Settings → Team (plan 033): who is in this kitchen, invite by name and role, remove. Cooks follow below. */
 export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }>) {
@@ -123,7 +123,7 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
         setFailure('invite');
         return;
       }
-      setShown({ name: displayName, key: result.data.key });
+      setShown({ name: displayName, key: result.data.key, role });
       setName('');
       setSubmitted(false);
       setCookId('');
@@ -148,7 +148,8 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
     [cooks.counts, reload, slug],
   );
 
-  const roleLabel = (r: MembershipRole) => t(r === 'owner' ? 'team.roleOwner' : 'team.roleChef');
+  const roleLabel = (r: MembershipRole) =>
+    t(r === 'owner' ? 'team.roleOwner' : r === 'helper' ? 'team.roleHelper' : 'team.roleChef');
 
   return (
     <>
@@ -216,6 +217,7 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
                 onChange={setRole}
                 options={[
                   { value: 'chef', label: t('team.roleChef') },
+                  { value: 'helper', label: t('team.roleHelper') },
                   { value: 'owner', label: t('team.roleOwner') },
                 ]}
               />
@@ -245,6 +247,8 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
               <InviteBox
                 name={shown.name}
                 slug={slug}
+                kitchen={cooks.kitchenName || slug}
+                role={shown.role}
                 keyText={shown.key}
                 onDone={() => setShown(null)}
               />

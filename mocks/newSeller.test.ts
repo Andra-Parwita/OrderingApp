@@ -12,8 +12,8 @@ describe('a new seller pictures (D-054)', () => {
     await world.repo.addSeller('Kedai Gambar', 'kedai-gambar', { sampleImages: true });
     const images = await (await world.repo.sellerBySlug('kedai-gambar'))?.getImages();
     expect(images).toMatchObject({
-      desktopBanner: '/samples/banner-wide.jpg',
-      phoneBanner: '/samples/banner-phone.jpg',
+      desktopBanner: '/samples/banner-wide-3840x328.jpg',
+      phoneBanner: '/samples/banner-phone-3x1.jpg',
       railImage: '/samples/rail.png',
       railIcon: '/samples/icon-512.jpg',
       bannerBackgroundImage: '/samples/banner-bg.jpg',

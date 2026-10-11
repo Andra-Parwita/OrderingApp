@@ -32,6 +32,11 @@ export type ItemDraft = {
   /** '' means no chef. */
   chefId: string;
   soldOut: boolean;
+  /** Plan 029: can be pre-ordered (its limit is the pre-order limit). */
+  preorder: boolean;
+  /** Plan 029: also sold at the stall on the day, with `dayStock` portions. */
+  onTheDay: boolean;
+  dayStock: string;
 };
 
 export const EMPTY_DRAFT: ItemDraft = {
@@ -45,6 +50,9 @@ export const EMPTY_DRAFT: ItemDraft = {
   limit: '',
   chefId: '',
   soldOut: false,
+  preorder: true,
+  onTheDay: false,
+  dayStock: '',
 };
 
 export function draftOf(item: SellerMenuItemView): ItemDraft {
@@ -59,6 +67,9 @@ export function draftOf(item: SellerMenuItemView): ItemDraft {
     limit: item.limit === undefined ? '' : String(item.limit),
     chefId: item.chefId ?? '',
     soldOut: item.manualSoldOut === true,
+    preorder: item.preorder !== false,
+    onTheDay: item.dayStock !== undefined,
+    dayStock: item.dayStock === undefined ? '' : String(item.dayStock),
   };
 }
 
@@ -70,12 +81,16 @@ export type ItemErrors = Partial<{
   sizeId: 'tooLong';
   price: 'invalid';
   limit: 'invalid';
+  dayStock: 'invalid';
+  /** Switching pre-order off needs "Sold on the day" on. */
+  preorder: 'needsDay';
 }>;
 
 export function validateDraft(draft: ItemDraft): {
   errors: ItemErrors;
   priceCents: number;
   limit: number | null;
+  dayStock: number | null;
 } {
   const errors: ItemErrors = {};
   const nameEn = draft.nameEn.trim();
@@ -95,13 +110,19 @@ export function validateDraft(draft: ItemDraft): {
     if (value < 1 || value > LIMIT_MAX) errors.limit = 'invalid';
     else limit = value;
   }
-  return { errors, priceCents: priceCents ?? 0, limit };
+  let dayStock: number | null = null;
+  if (draft.onTheDay) {
+    const stockText = draft.dayStock.trim();
+    if (/^\d{1,4}$/.test(stockText)) dayStock = Number(stockText);
+    else errors.dayStock = 'invalid';
+  } else if (!draft.preorder) errors.preorder = 'needsDay';
+  return { errors, priceCents: priceCents ?? 0, limit, dayStock };
 }
 
 const text = (en: string, id: string) => ({ en: en.trim(), id: id.trim() });
 
 export function createRequestOf(draft: ItemDraft): CreateItemRequest | null {
-  const { errors, priceCents, limit } = validateDraft(draft);
+  const { errors, priceCents, limit, dayStock } = validateDraft(draft);
   if (Object.keys(errors).length > 0) return null;
   return {
     name: text(draft.nameEn, draft.nameId),
@@ -110,12 +131,14 @@ export function createRequestOf(draft: ItemDraft): CreateItemRequest | null {
     priceCents,
     ...(limit !== null ? { limit } : {}),
     ...(draft.chefId !== '' ? { chefId: draft.chefId } : {}),
+    ...(draft.preorder ? {} : { preorder: false }),
+    ...(dayStock !== null ? { dayStock } : {}),
   };
 }
 
 /** Every field is sent, so an emptied limit or chef is removed. */
 export function updateRequestOf(draft: ItemDraft): UpdateItemRequest | null {
-  const { errors, priceCents, limit } = validateDraft(draft);
+  const { errors, priceCents, limit, dayStock } = validateDraft(draft);
   if (Object.keys(errors).length > 0) return null;
   return {
     name: text(draft.nameEn, draft.nameId),
@@ -123,6 +146,8 @@ export function updateRequestOf(draft: ItemDraft): UpdateItemRequest | null {
     size: text(draft.sizeEn, draft.sizeId),
     priceCents,
     limit,
+    preorder: draft.preorder,
+    dayStock,
     chefId: draft.chefId === '' ? null : draft.chefId,
     soldOut: draft.soldOut,
   };
@@ -140,6 +165,9 @@ export function draftOfDish(dish: Dish): ItemDraft {
     limit: dish.limit === undefined ? '' : String(dish.limit),
     chefId: dish.chefId ?? '',
     soldOut: false,
+    preorder: dish.preorder !== false,
+    onTheDay: dish.dayStock !== undefined,
+    dayStock: dish.dayStock === undefined ? '' : String(dish.dayStock),
   };
 }
 

@@ -1,5 +1,6 @@
 {
   "errors": {
+    "paused": "Dapur ini sedang dijeda. Hubungi admin.",
     "wrong": "Tidak berhasil. Periksa lagi lalu coba lagi.",
     "triesLeft_one": "Sisa {{count}} kesempatan.",
     "triesLeft_other": "Sisa {{count}} kesempatan.",

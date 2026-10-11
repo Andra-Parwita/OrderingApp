@@ -1,3 +1,4 @@
+import type { DaySaleEntry } from './daySalesContract';
 import type { SellerOrder } from './domain';
 import { formatOrderCode } from './orderCode';
 import { orderTotalCents } from './pastWeeks';
@@ -41,5 +42,34 @@ export function ordersToCsv(orders: ReadonlyArray<SellerOrder>): string {
     ].map(csvField);
   });
   const lines = [[...ORDERS_CSV_HEADER].map(csvField), ...rows].map((row) => row.join(','));
+  return `${CSV_BOM}${lines.join('\r\n')}\r\n`;
+}
+
+export const DAY_SALES_CSV_HEADER = [
+  'time',
+  'type',
+  'dish',
+  'person',
+  'change',
+  'stock after',
+  'undone',
+] as const;
+
+/** The day's sales log as CSV (same encoding as the orders file): one row per log entry, oldest first. */
+export function daySalesToCsv(
+  entries: ReadonlyArray<DaySaleEntry>,
+  dishName: (itemId: string) => string,
+): string {
+  const rows = [...entries].reverse().map((entry) => [
+    csvField(entry.at),
+    csvField(entry.kind),
+    csvField(dishName(entry.itemId)),
+    csvField(entry.by),
+    // Numbers are written as they are: a minus sign is not a formula here.
+    String(entry.change),
+    String(entry.stockAfter),
+    entry.undone ? 'yes' : 'no',
+  ]);
+  const lines = [[...DAY_SALES_CSV_HEADER].map(csvField), ...rows].map((row) => row.join(','));
   return `${CSV_BOM}${lines.join('\r\n')}\r\n`;
 }

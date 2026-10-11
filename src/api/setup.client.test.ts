@@ -99,7 +99,9 @@ describe('seller setup client', () => {
       bannerBackground: '#223344',
     });
     expect(data(await removeImage('railIcon', undefined, B)).images.railIcon).toBeUndefined();
-    expect(data(await fetchImages()).images.desktopBanner).toBe('/samples/banner-wide.jpg');
+    expect(data(await fetchImages()).images.desktopBanner).toBe(
+      '/samples/banner-wide-3840x328.jpg',
+    );
   });
 
   it('finishes a menu into past menus, and backs up and restores', async () => {

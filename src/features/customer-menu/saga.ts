@@ -46,7 +46,8 @@ export function* refreshMenuAfter(code: string, slug: string | null) {
     code === 'sold_out' ||
     code === 'exceeds_remaining' ||
     code === 'cutoff_passed' ||
-    code === 'ordering_closed'
+    code === 'ordering_closed' ||
+    code === 'kitchen_closed'
   ) {
     yield put(menuRequested(slug));
   }

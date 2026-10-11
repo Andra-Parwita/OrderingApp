@@ -9,6 +9,7 @@ import type {
   SellerMenuItemView,
   Week,
 } from './domain';
+import { DAY_STOCK_MAX } from './daySalesContract';
 import { isImageSlot, type ImageSlot } from './imageSlots';
 import {
   CHEF_NAME_MAX,
@@ -127,6 +128,10 @@ export type CreateItemRequest = {
   priceCents: number;
   limit?: number;
   chefId?: string;
+  /** Plan 029: can be pre-ordered (default true). Off needs a `dayStock`. */
+  preorder?: boolean;
+  /** Plan 029: portions sold at the stall on the day (absent = not sold on the day). */
+  dayStock?: number;
 };
 
 /**
@@ -141,6 +146,9 @@ export type UpdateItemRequest = {
   limit?: number | null;
   chefId?: string | null;
   soldOut?: boolean;
+  preorder?: boolean;
+  /** `null` stops selling it on the day. */
+  dayStock?: number | null;
 };
 
 /** PUT /api/seller/menu/order: every item id once, in the new order. */
@@ -173,6 +181,10 @@ export function parseCreateItemRequest(input: unknown): CreateItemRequest | null
   }
   if (limit !== undefined && !isInt(limit, 1, LIMIT_MAX)) return null;
   if (chefId !== undefined && (typeof chefId !== 'string' || chefId === '')) return null;
+  const { preorder, dayStock } = input;
+  if (preorder !== undefined && typeof preorder !== 'boolean') return null;
+  if (dayStock !== undefined && !isInt(dayStock, 0, DAY_STOCK_MAX)) return null;
+  if (preorder === false && dayStock === undefined) return null; // on the day only needs a stock
   return {
     name,
     ...(description ? { description } : {}),
@@ -180,6 +192,8 @@ export function parseCreateItemRequest(input: unknown): CreateItemRequest | null
     priceCents,
     ...(limit !== undefined ? { limit } : {}),
     ...(chefId !== undefined ? { chefId } : {}),
+    ...(preorder !== undefined ? { preorder } : {}),
+    ...(dayStock !== undefined ? { dayStock } : {}),
   };
 }
 
@@ -218,6 +232,14 @@ export function parseUpdateItemRequest(input: unknown): UpdateItemRequest | null
     if (typeof input['soldOut'] !== 'boolean') return null;
     out.soldOut = input['soldOut'];
   }
+  if (input['preorder'] !== undefined) {
+    if (typeof input['preorder'] !== 'boolean') return null;
+    out.preorder = input['preorder'];
+  }
+  if (input['dayStock'] !== undefined) {
+    if (input['dayStock'] !== null && !isInt(input['dayStock'], 0, DAY_STOCK_MAX)) return null;
+    out.dayStock = input['dayStock'];
+  }
   return Object.keys(out).length > 0 ? out : null;
 }
 
@@ -240,6 +262,9 @@ export function parseMenuItem(input: unknown): MenuItem | null {
   if (limit !== undefined && !isInt(limit, 1, LIMIT_MAX)) return null;
   if (chefId !== undefined && typeof chefId !== 'string') return null;
   if (soldOut !== undefined && typeof soldOut !== 'boolean') return null;
+  const { preorder, dayStock } = input;
+  if (preorder !== undefined && typeof preorder !== 'boolean') return null;
+  if (dayStock !== undefined && !isInt(dayStock, 0, DAY_STOCK_MAX)) return null;
   return {
     id,
     name,
@@ -249,6 +274,8 @@ export function parseMenuItem(input: unknown): MenuItem | null {
     ...(limit !== undefined ? { limit } : {}),
     ...(chefId !== undefined ? { chefId } : {}),
     ...(soldOut !== undefined ? { soldOut } : {}),
+    ...(preorder !== undefined ? { preorder } : {}),
+    ...(dayStock !== undefined ? { dayStock } : {}),
   };
 }
 

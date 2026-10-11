@@ -23,7 +23,7 @@ test('menu, then Settings: pictures and backup, and Kitchen: print labels', asyn
   const seller = page.getByRole('navigation', { name: 'Seller' });
 
   // Menu: the live menu with its dishes and the tools around it.
-  await open(page, '/seller');
+  await open(page, '/seller/orders');
   await seller.getByRole('link', { name: 'Menu', exact: true }).click();
   await expect(page).toHaveURL(/\/seller\/menu$/);
   await expect(seller.getByRole('link', { name: 'Menu', exact: true })).toHaveAttribute(
@@ -45,15 +45,15 @@ test('menu, then Settings: pictures and backup, and Kitchen: print labels', asyn
     'page',
   );
   const sizes: Record<string, string> = {
-    'Wide banner (tablet and computer)': 'Best size 2000 × 400 px',
-    'Phone banner': 'Best size 1200 × 400 px',
-    'Menu image (left menu)': 'Best size 1200 × 600 px',
-    'Small icon (closed menu)': 'Best size 512 × 512 px',
-    'Background (wide screens)': 'Best size 1280 × 256 px',
+    'Wide banner (tablet and computer)': '3840 × 328 px',
+    'Phone banner': '1200 × 400 px',
+    'Menu image (left menu)': '1200 × 600 px',
+    'App icon (phone home screen and closed menu)': '512 × 512 px',
+    'Background (wide screens)': '1280 × 256 px',
   };
   for (const [slot, size] of Object.entries(sizes)) {
     await expect(page.getByRole('heading', { name: slot })).toBeVisible();
-    await expect(page.getByText(size)).toBeVisible();
+    await expect(page.getByText(new RegExp(`^${size} · `))).toBeVisible();
   }
   await page.screenshot({ path: `captures/b3-images-${project}.png`, fullPage: true });
 

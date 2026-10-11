@@ -39,15 +39,31 @@ function stubMe(me: Record<string, unknown> | null) {
   );
 }
 
-function renderSeller() {
+function renderSeller(path = '/seller/menu') {
   localStorage.setItem('signedIn', '1'); // the hint a sign-in leaves; the session itself is a cookie
   return render(
     <AppThemeProvider>
-      <MemoryRouter initialEntries={['/seller/menu']}>
+      <MemoryRouter initialEntries={[path]}>
         <SessionProvider>
           <Routes>
             <Route path="/seller/setup" element={<p>setup page</p>} />
             <Route path="/seller/sign-in" element={<p>sign-in page</p>} />
+            <Route
+              path="/seller/orders"
+              element={
+                <SellerGuard>
+                  <p>orders page</p>
+                </SellerGuard>
+              }
+            />
+            <Route
+              path="/seller/settings/kitchen"
+              element={
+                <SellerGuard>
+                  <p>settings page</p>
+                </SellerGuard>
+              }
+            />
             <Route
               path="/seller/menu"
               element={
@@ -91,5 +107,17 @@ describe('route guards', () => {
     stubMe({ ...SELLER, stage: 'setup' });
     renderSeller();
     expect(await screen.findByText('setup page')).toBeInTheDocument();
+  });
+  it('sends a helper who opens settings (or Home, or New order) to Orders', async () => {
+    stubMe({ ...SELLER, role: 'helper', displayName: 'Dewi' });
+    renderSeller('/seller/settings/kitchen');
+    expect(await screen.findByText('orders page')).toBeInTheDocument();
+    expect(screen.queryByText('settings page')).not.toBeInTheDocument();
+  });
+
+  it('lets a helper open Orders', async () => {
+    stubMe({ ...SELLER, role: 'helper', displayName: 'Dewi' });
+    renderSeller('/seller/orders');
+    expect(await screen.findByText('orders page')).toBeInTheDocument();
   });
 });

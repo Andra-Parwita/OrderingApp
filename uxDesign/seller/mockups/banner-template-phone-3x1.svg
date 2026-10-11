@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" font-family="Segoe UI, Arial, sans-serif">
+  <!-- Owner's phone banner template (2026-10-11): 3:1 artwork, 1200 x 400, shown whole on the phone. -->
+  <rect width="1200" height="400" fill="#D9CDB4"/>
+  <rect x="0" y="0" width="1200" height="400" fill="none" stroke="#C9705A" stroke-width="60" opacity=".45"/>
+  <rect x="60" y="30" width="1080" height="340" fill="#9BC79A" stroke="#2A5F30" stroke-width="6" stroke-dasharray="24 12"/>
+  <text x="600" y="20" font-size="18" fill="#5B1E10" text-anchor="middle">edge margin 60 / 30 px · near the screen edge, keep it calm</text>
+  <text x="600" y="170" font-size="42" font-weight="800" fill="#1C1F1A" text-anchor="middle">SAFE AREA 1080 × 340</text>
+  <text x="600" y="220" font-size="26" fill="#1C1F1A" text-anchor="middle">logo, kitchen name, any text</text>
+  <text x="600" y="262" font-size="24" fill="#2A5F30" text-anchor="middle">phone banner 1200 × 400 (3:1) · shown whole, 390 × 130 on an iPhone</text>
+  <text x="600" y="300" font-size="22" fill="#2A5F30" text-anchor="middle">text at least 36 px tall</text>
+</svg>

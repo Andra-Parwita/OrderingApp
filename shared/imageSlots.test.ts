@@ -4,7 +4,12 @@ import { checkImageUpload, IMAGE_SLOTS, isImageSlot, readImageSize, slotSpec } f
 
 describe('slotSpec', () => {
   it('gives the D-038 / D-040 sizes, ratios and 600 KB cap', () => {
-    expect(slotSpec('desktopBanner')).toEqual({ width: 2000, height: 400, ratio: 5, maxKB: 600 });
+    expect(slotSpec('desktopBanner')).toEqual({
+      width: 3840,
+      height: 328,
+      ratio: 3840 / 328,
+      maxKB: 600,
+    });
     expect(slotSpec('phoneBanner')).toMatchObject({ width: 1200, height: 400, ratio: 3 });
     expect(slotSpec('railImage')).toMatchObject({ width: 1200, height: 600, ratio: 2 });
     expect(slotSpec('railIcon')).toMatchObject({ width: 512, height: 512, ratio: 1 });
@@ -55,8 +60,13 @@ describe('checkImageUpload', () => {
   });
 
   it('accepts a ratio within 5% and refuses one beyond it', () => {
-    expect(checkImageUpload('desktopBanner', fakePng(1600, 335))).toMatchObject({ ok: true });
-    expect(checkImageUpload('desktopBanner', fakePng(1600, 350))).toEqual({
+    expect(checkImageUpload('desktopBanner', fakePng(3840, 340))).toMatchObject({ ok: true });
+    expect(checkImageUpload('desktopBanner', fakePng(3840, 400))).toEqual({
+      ok: false,
+      error: 'image_ratio',
+    });
+    // The old 5:1 banner is refused now (D-093).
+    expect(checkImageUpload('desktopBanner', fakePng(2000, 400))).toEqual({
       ok: false,
       error: 'image_ratio',
     });

@@ -121,18 +121,26 @@ test('pictures: upload a small icon and see it in the preview', async ({
   };
   try {
     await open(page, seller, 'kitchen');
-    await expect(page.getByRole('heading', { name: 'Small icon (closed menu)' })).toBeVisible();
-    await expect(page.getByText('Best size 512 × 512 px')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'App icon (phone home screen and closed menu)' }),
+    ).toBeVisible();
+    await expect(page.getByText(/^512 × 512 px · /)).toBeVisible();
 
-    await page.getByLabel('Choose a picture for Small icon (closed menu)').setInputFiles({
-      name: 'icon.png',
-      mimeType: 'image/png',
-      buffer: solidPng(512, 512, [200, 90, 40]),
+    await page
+      .getByLabel('Choose a picture for App icon (phone home screen and closed menu)')
+      .setInputFiles({
+        name: 'icon.png',
+        mimeType: 'image/png',
+        buffer: solidPng(512, 512, [200, 90, 40]),
+      });
+    const preview = page.getByAltText('Preview of App icon (phone home screen and closed menu)', {
+      exact: true,
     });
-    const preview = page.getByAltText('Preview of Small icon (closed menu)', { exact: true });
     const imageSrc = /^\/images\/sellers\/[^/]+\/railIcon-[0-9a-f]{16}\.(jpg|png)$/;
     await expect(preview).toHaveAttribute('src', imageSrc);
-    const railIcon = page.getByAltText('Small icon (closed menu)', { exact: true });
+    const railIcon = page.getByAltText('App icon (phone home screen and closed menu)', {
+      exact: true,
+    });
     await expect(railIcon).toHaveAttribute('src', imageSrc);
     const src = (await preview.getAttribute('src')) as string;
     const served = await page.request.get(src);

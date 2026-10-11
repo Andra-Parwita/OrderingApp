@@ -52,6 +52,7 @@ const BASKET_PROBLEMS: ReadonlyArray<FailureCode> = [
   'exceeds_remaining',
   'cutoff_passed',
   'ordering_closed',
+  'kitchen_closed',
 ];
 
 function otherErrorKey(code: FailureCode): string {
@@ -306,10 +307,12 @@ function BasketContent({
 
   const { ordering } = data;
   const closed: ClosedReason | null = !ordering.open
-    ? (ordering.reason ?? 'closed_by_seller')
+    ? ordering.reason === 'kitchen_closed'
+      ? 'closed_by_seller'
+      : (ordering.reason ?? 'closed_by_seller')
     : failedCode === 'cutoff_passed'
       ? 'cutoff_passed'
-      : failedCode === 'ordering_closed'
+      : failedCode === 'ordering_closed' || failedCode === 'kitchen_closed'
         ? 'closed_by_seller'
         : null;
   return (

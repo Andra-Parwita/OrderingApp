@@ -59,7 +59,8 @@ function renderAt(path: string) {
       <MemoryRouter initialEntries={[path]}>
         <Routes>
           <Route path="/seller" element={<SellerLayout />}>
-            <Route index element={<p>Orders page</p>} />
+            <Route index element={<p>Home page</p>} />
+            <Route path="orders" element={<p>Orders page</p>} />
             <Route path="cook" element={<p>Cook page</p>} />
             <Route path="menu" element={<p>Menu page</p>} />
             <Route path="hand-over" element={<p>Hand-over page</p>} />
@@ -76,28 +77,50 @@ const linkNames = (nav: HTMLElement) =>
     .map((link) => link.textContent);
 
 describe('seller shell, tablet', () => {
-  it('lists Orders, Kitchen, Pickup & delivery, Menu and Settings for the seller', () => {
+  it('lists Home, Orders, Kitchen, Pickup & delivery, Sell, Menu and Settings for the seller', () => {
     me = SELLER;
     renderAt('/seller');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
     expect(linkNames(nav).map((text) => text?.replace('Not published', ''))).toEqual([
+      'Home',
       'Orders',
       'Kitchen',
       'Pickup & delivery',
+      'Sell',
       'Menu',
       'Settings',
     ]);
+    // /seller is Home on a tablet; Orders is /seller/orders.
+    expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+    expect(within(nav).getByRole('link', { name: 'Orders' })).toHaveAttribute(
+      'href',
+      '/seller/orders',
+    );
+  });
+
+  it('marks Orders, not Home, on /seller/orders', () => {
+    me = SELLER;
+    renderAt('/seller/orders');
+    const nav = screen.getByRole('navigation', { name: 'Seller' });
     expect(within(nav).getByRole('link', { name: 'Orders' })).toHaveAttribute(
       'aria-current',
       'page',
     );
+    expect(within(nav).getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
   });
 
-  it('shows no Menu and no Settings to a chef', () => {
+  it('shows Menu (own dishes) but no Settings to a chef', () => {
     me = CHEF;
     renderAt('/seller');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
-    expect(linkNames(nav)).toEqual(['Orders', 'Kitchen', 'Pickup & delivery']);
+    expect(linkNames(nav)).toEqual(['Orders', 'Kitchen', 'Pickup & delivery', 'Menu']);
+  });
+
+  it('shows a helper only Orders, Pickup & delivery and Sell', () => {
+    me = { role: 'helper', stage: 'full', sellerName: 'Delave', displayName: 'Dewi' };
+    renderAt('/seller/orders');
+    const nav = screen.getByRole('navigation', { name: 'Seller' });
+    expect(linkNames(nav)).toEqual(['Orders', 'Pickup & delivery', 'Sell']);
   });
 
   it('marks Menu "Not published" with a word while the week is a draft', async () => {
@@ -112,9 +135,11 @@ describe('seller shell, tablet', () => {
     renderAt('/seller');
     const nav = screen.getByRole('navigation', { name: 'Penjual' });
     expect(linkNames(nav).map((text) => text?.replace('Belum terbit', ''))).toEqual([
+      'Beranda',
       'Pesanan',
       'Dapur',
       'Serah terima',
+      'Jual',
       'Menu',
       'Pengaturan',
     ]);
