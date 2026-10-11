@@ -47,6 +47,8 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 | 033 | [People and memberships: one kitchen passkey, switcher, invite links](033-people-and-memberships.md) | done (2026-10-11); not deployed; screenshots to approve |
 | 034 | [Kitchen: "who ordered this dish" panel](034-kitchen-who-ordered.md) | done (2026-10-11); not deployed |
 | 035 | [Kitchen and Pack on the phone, shared progress, labels never cut](035-kitchen-on-phone-and-labels.md) | done (2026-10-11); not deployed |
+| 027 | [Admin sign-in: an empty left panel](027-admin-sign-in-panel.md) | replaced by 028 |
+| 028 | [ShaggyBobo branding on admin and seller first set-up](028-developer-branding-sign-in.md) | done (2026-10-11); end gate pending |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

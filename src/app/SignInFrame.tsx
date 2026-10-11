@@ -9,6 +9,9 @@ import { lastKitchen } from '../api/device/lastKitchen';
 import { cssUrl } from '../components/cssUrl';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { useMediaQuery } from '../components/useMediaQuery';
+import { brandColour, brandSize } from '../theme/brandTokens';
+import { BrandLogo } from './BrandLogo';
+import { BrandBottomBar, BrandColumn, BrandTopBar, type BrandPage } from './BrandPanel';
 import { SPLIT_QUERY } from './layout';
 
 // D-051: sign-in and set-up pages show the phone banner of the last kitchen this device used,
@@ -18,10 +21,13 @@ import { SPLIT_QUERY } from './layout';
 // of the form on a tablet and on top of it on a phone; the EN / ID switch is top right, and the
 // kitchen's logo and name sit above the form (the app name when there is no last kitchen).
 
-/** The last kitchen this device used, from the public menu; null if none or it cannot be read. */
-function useLastKitchen(): Kitchen | null {
+// Plan 028: the admin pages and the seller's first set-up carry ShaggyBobo's branding instead.
+
+/** The last kitchen this device used, from the public menu; null if none, it cannot be read, or off. */
+function useLastKitchen(enabled: boolean): Kitchen | null {
   const [kitchen, setKitchen] = useState<Kitchen | null>(null);
   useEffect(() => {
+    if (!enabled) return;
     const slug = lastKitchen();
     if (slug === null) return;
     let live = true;
@@ -31,7 +37,7 @@ function useLastKitchen(): Kitchen | null {
     return () => {
       live = false;
     };
-  }, []);
+  }, [enabled]);
   return kitchen;
 }
 
@@ -76,7 +82,23 @@ const Name = styled.p`
   text-align: center;
   color: ${({ theme }) => theme.c.text};
 `;
+// Plan 028: the logo's own colours on the form side. In dark mode it sits in the brand's dark
+// brown box with a light "Shaggy" (the owner's dark logo variant).
+const LogoBox = styled.span`
+  display: inline-flex;
+  color: ${brandColour.logoInk};
+  ${({ theme }) =>
+    theme.mode === 'dark'
+      ? `color: ${brandColour.logoInkOnDark}; background: ${brandColour.logoBoxDark}; padding: ${brandSize.logoBoxPadding}; border-radius: ${theme.radius.md};`
+      : ''}
+`;
+const BrandSide = styled.div`
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+`;
 const FormSide = styled.div<{ $split: boolean }>`
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -139,14 +161,17 @@ const KitchenTitle = styled.p`
 export function SignInFrame({
   children,
   kitchenName,
+  brand,
 }: Readonly<{
   children: ReactNode;
   /** The kitchen's name from this device's memory, shown until the public menu has loaded. */
   kitchenName?: string | undefined;
+  /** Admin pages and the seller's first set-up: ShaggyBobo branding, no kitchen (plan 028). */
+  brand?: BrandPage | undefined;
 }>) {
   const { i18n } = useTranslation();
   const split = useMediaQuery(SPLIT_QUERY);
-  const kitchen = useLastKitchen();
+  const kitchen = useLastKitchen(brand === undefined);
   const lang = i18n.language.startsWith('id') ? 'id' : 'en';
   const picture = kitchen?.images?.phoneBanner;
   const background = picture ? kitchen?.images?.bannerBackground : undefined;
@@ -155,19 +180,35 @@ export function SignInFrame({
   const logo = kitchen?.images?.railIcon;
   return (
     <Split $split={split}>
-      <Panel $split={split} $background={background} $image={backgroundImage}>
-        {picture && kitchen ? (
-          <Picture src={picture} alt={bannerAlt(kitchen, lang)} />
+      {brand ? (
+        split ? (
+          <BrandSide>
+            <BrandColumn page={brand} />
+          </BrandSide>
         ) : (
-          <Name>{APP_NAME}</Name>
-        )}
-      </Panel>
+          <BrandTopBar page={brand} />
+        )
+      ) : (
+        <Panel $split={split} $background={background} $image={backgroundImage}>
+          {picture && kitchen ? (
+            <Picture src={picture} alt={bannerAlt(kitchen, lang)} />
+          ) : (
+            <Name>{APP_NAME}</Name>
+          )}
+        </Panel>
+      )}
       <FormSide $split={split}>
         <TopBar>
           <LanguageSwitch compact />
         </TopBar>
         <FormArea>
-          {kitchen || kitchenName ? (
+          {brand ? (
+            <Head>
+              <LogoBox>
+                <BrandLogo />
+              </LogoBox>
+            </Head>
+          ) : kitchen || kitchenName ? (
             <Head>
               {logo ? <Logo src={logo} alt="" /> : <Initial>{name.slice(0, 1)}</Initial>}
               <KitchenTitle>{name}</KitchenTitle>
@@ -176,6 +217,7 @@ export function SignInFrame({
           {children}
         </FormArea>
       </FormSide>
+      {brand && !split ? <BrandBottomBar /> : null}
     </Split>
   );
 }

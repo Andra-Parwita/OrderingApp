@@ -1,6 +1,14 @@
 {
   "app": {
-    "name": "ShaggyBobo's Order"
+    "name": "ShaggyBobo's Order",
+    "brand": {
+      "sellerSetup": "Pengaturan penjual",
+      "build": "build {{commit}}",
+      "production": "produksi",
+      "development": "pengembangan",
+      "draft": "draf",
+      "copyright": "© {{year}} ShaggyBobo"
+    }
   },
   "language": {
     "label": "Bahasa",

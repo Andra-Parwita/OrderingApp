@@ -1,6 +1,14 @@
 {
   "app": {
-    "name": "ShaggyBobo's Order"
+    "name": "ShaggyBobo's Order",
+    "brand": {
+      "sellerSetup": "Seller setup",
+      "build": "build {{commit}}",
+      "production": "production",
+      "development": "development",
+      "draft": "draft",
+      "copyright": "© {{year}} ShaggyBobo"
+    }
   },
   "language": {
     "label": "Language",
