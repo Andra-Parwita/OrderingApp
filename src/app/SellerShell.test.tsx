@@ -61,6 +61,7 @@ function renderAt(path: string) {
           <Route path="/seller" element={<SellerLayout />}>
             <Route index element={<p>Orders page</p>} />
             <Route path="cook" element={<p>Cook page</p>} />
+            <Route path="menu" element={<p>Menu page</p>} />
             <Route path="hand-over" element={<p>Hand-over page</p>} />
           </Route>
         </Routes>
@@ -137,17 +138,24 @@ describe('seller shell, phone', () => {
     expect(screen.queryByRole('navigation', { name: 'Seller' })).not.toBeInTheDocument();
   });
 
-  it('says "Open this on a tablet or computer" instead of the Kitchen', () => {
+  it('says "Open this on a tablet or computer" instead of the Menu', () => {
     tablet = false;
     me = SELLER;
-    renderAt('/seller/cook');
+    renderAt('/seller/menu');
     expect(
       screen.getByRole('heading', { name: 'Open this on a tablet or computer' }),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Cook page')).not.toBeInTheDocument();
+    expect(screen.queryByText('Menu page')).not.toBeInTheDocument();
   });
 
   it('shows the Kitchen page itself on a tablet', () => {
+    me = SELLER;
+    renderAt('/seller/cook');
+    expect(screen.getByText('Cook page')).toBeInTheDocument();
+  });
+
+  it('shows the Kitchen page on a phone too (plan 035)', () => {
+    tablet = false;
     me = SELLER;
     renderAt('/seller/cook');
     expect(screen.getByText('Cook page')).toBeInTheDocument();
@@ -157,7 +165,7 @@ describe('seller shell, phone', () => {
     await i18n.changeLanguage('id');
     tablet = false;
     me = SELLER;
-    renderAt('/seller/cook');
+    renderAt('/seller/menu');
     expect(
       screen.getByRole('heading', { name: 'Buka ini di tablet atau komputer' }),
     ).toBeInTheDocument();

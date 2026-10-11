@@ -92,9 +92,11 @@ export type Database = {
   /** Marks the database as just fully reset (after the repository's own `dev.reset`). */
   markFresh(now: Date): void;
   close(): Promise<void>;
+  /** Applies the migrations a partial open (`upTo`) left out. */
+  migrateAll(): Promise<void>;
 };
 
-export async function openDatabase(name: string): Promise<Database> {
+export async function openDatabase(name: string, upTo?: string): Promise<Database> {
   const dir = scratchDir(name);
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
@@ -108,7 +110,10 @@ export async function openDatabase(name: string): Promise<Database> {
     name: file,
     sql: readFileSync(path.join(MIGRATIONS, file), 'utf8'),
   }));
-  await applyMigrations(d1, migrations);
+  await applyMigrations(
+    d1,
+    upTo === undefined ? migrations : migrations.filter((migration) => migration.name <= upTo),
+  );
   const tracked = trackWrites(
     d1,
     migrations.map((migration) => migration.sql),
@@ -117,6 +122,9 @@ export async function openDatabase(name: string): Promise<Database> {
     d1: tracked.d1,
     reset: (now) => tracked.reset(now),
     markFresh: (now) => tracked.markFresh(now),
+    migrateAll: async () => {
+      await applyMigrations(d1, migrations);
+    },
     close: async () => {
       await proxy.dispose();
       rmSync(dir, { recursive: true, force: true });

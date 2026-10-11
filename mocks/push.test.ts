@@ -608,10 +608,11 @@ describe('web push and kitchen files', () => {
     });
 
     it('a signed-in seller page head has the seller links; no session, no links', async () => {
-      const invite = await world.repo.auth.createKey(
-        { role: 'seller', sellerId: 'seller-onde-onde' },
-        'invite',
-      );
+      const invite = await world.repo.auth.createKey({
+        role: 'owner',
+        sellerId: 'seller-onde-onde',
+        displayName: 'Bu Ani',
+      });
       const redeemed = await world.repo.auth.redeemKey(invite.key, 'device-seller-0001');
       if (!redeemed.ok) throw new Error(JSON.stringify(redeemed));
       const full = await world.repo.auth.register(redeemed.value.token, {

@@ -34,10 +34,21 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 | 020 | [App version on every deploy](020-app-version.md) | done (11:48) |
 | 021 | [Seller: notice new orders while the app is open](021-seller-new-order-alert.md) | done (12:28) |
 | 022 | [Orders header: nothing overlaps on the iPad](022-orders-header-fit.md) | done (12:00); narrow-portrait list follow-up open |
-| 023 | [Text size: smaller, normal, larger](023-text-size.md) | approved (11:47); after 020 and 021 |
+| 023 | [Text size: smaller, normal, larger](023-text-size.md) | done (2026-10-11); not deployed |
 | 024 | [Customer pages show the current kitchen theme from the first paint](024-customer-theme-first-paint.md) | approved (11:49); after 021 and 023 |
 | 025 | [Add a device: use the existing passkey or password](025-add-device-existing-login.md) | done (12:28); iPad check pending |
 | 026 | [A small error log sent to the server (last 500)](026-client-error-log.md) | approved (12:15); after 025 |
+| 027 | [Admin access: two people, codes on the admin side, device names](027-admin-access.md) | done (2026-10-10); deploys with 033 (builder) |
+| 028 | [A Helper role for the kitchen team](028-helper-role.md) | approved (2026-10-10); after 033 and 032 (D-089) |
+| 029 | [Selling on the day: stock, sales log, end-of-day summary](029-on-the-day-selling.md) | approved (2026-10-10); after 028 |
+| 030 | [Chefs add and edit their own dishes](030-chef-own-dishes.md) | approved (2026-10-10); after 028 |
+| 031 | [Admins open a kitchen as its owner would](031-admin-views-kitchen.md) | approved (2026-10-10); after 027-030 |
+| 032 | [Invite links, single-use keys, pausing a kitchen](032-invite-links-and-pause.md) | draft (2026-10-10); stages 1-2 move into 033, stages 3-4 after 033 (D-089) |
+| 033 | [People and memberships: one kitchen passkey, switcher, invite links](033-people-and-memberships.md) | done (2026-10-11); not deployed; screenshots to approve |
+| 034 | [Kitchen: "who ordered this dish" panel](034-kitchen-who-ordered.md) | done (2026-10-11); not deployed |
+| 035 | [Kitchen and Pack on the phone, shared progress, labels never cut](035-kitchen-on-phone-and-labels.md) | done (2026-10-11); not deployed |
+
+**Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 
 ## Template
 

@@ -76,6 +76,9 @@ describe('input helpers', () => {
     expect(guessDevice('Mozilla/5.0 (iPad; CPU OS 17_0)')).toBe('ipad');
     expect(guessDevice('Mozilla/5.0 (Linux; Android 14; Pixel 7)')).toBe('android');
     expect(guessDevice('Mozilla/5.0 (Windows NT 10.0; Win64; x64)')).toBe('computer');
+    const mac = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15';
+    expect(guessDevice(mac, 5)).toBe('ipad');
+    expect(guessDevice(mac, 0)).toBe('computer');
   });
 });
 
@@ -336,6 +339,7 @@ describe('add a device when the account already has a login (plan 025)', () => {
     const onDone = vi.fn();
     renderScreen(<PasswordSetupScreen setup={setup} onDone={onDone} />);
     expect(screen.queryByLabelText('New password')).not.toBeInTheDocument();
+    await screen.findByLabelText('Password');
     type('Password', 'not the password at all');
     press('Sign in');
     expect(
@@ -459,7 +463,7 @@ describe('SignInScreen', () => {
     );
     // The message sits under the password field, in words.
     expect(await screen.findByText(/The passkey prompt was closed/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Password')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText(/Nobody in this kitchen uses a password/)).toBeInTheDocument();
     press('Back');
     expect(screen.getByText('First time on this device? Use your invite key')).toBeInTheDocument();
     expect(screen.getByText('Lost access? Ask the owner for a new invite.')).toBeInTheDocument();
@@ -471,7 +475,7 @@ describe('SignInScreen', () => {
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
     press('Sign in with face or fingerprint');
     expect(await screen.findByText(/The passkey prompt was closed/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByText(/Nobody in this kitchen uses a password/)).toBeInTheDocument();
   });
 
   it('signs in with nothing stored (discoverable), and refuses the admin passkey here', async () => {
@@ -496,13 +500,16 @@ describe('SignInScreen', () => {
     expect(getCredentialId('admin')).not.toBeNull();
   });
 
-  it('hides the passkey button on an IP-address web address and shows the password', () => {
+  it('hides the passkey button on an IP-address web address and shows the name and password', async () => {
+    await signInAsSeller('password');
+    clearCookies();
     vi.stubGlobal('location', { ...window.location, hostname: '192.168.1.20' });
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
     expect(
       screen.queryByRole('button', { name: 'Sign in with face or fingerprint' }),
     ).not.toBeInTheDocument();
     expect(screen.getByText(/does not work on this web address/)).toBeInTheDocument();
+    expect(await screen.findByLabelText('Who are you?')).toHaveDisplayValue('Bu Ani');
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
   });
 
@@ -524,6 +531,7 @@ describe('SignInScreen', () => {
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={onSignedIn} />);
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
     press('Use password instead');
+    await screen.findByLabelText('Password');
     type('Password', 'not the password');
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(
@@ -540,6 +548,7 @@ describe('SignInScreen', () => {
     clearCookies();
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
     press('Use password instead');
+    await screen.findByLabelText('Password');
     type('Password', 'nope nope nope');
     for (let i = 0; i < 5; i++) {
       fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
@@ -553,11 +562,61 @@ describe('SignInScreen', () => {
   });
 });
 
+describe('joining a kitchen with an invite (plan 033)', () => {
+  const ONDE = 'seller-onde-onde';
+  const keyFor = async () =>
+    (await mockStores.auth.createKey({ role: 'owner', sellerId: ONDE, displayName: 'Bu Ani' })).key;
+
+  it('fills the key from an invite link', () => {
+    renderScreen(<SetupKeyScreen initialKey="ABCD-EFGH" onSession={vi.fn()} onUseCode={vi.fn()} />);
+    expect(screen.getByLabelText(/Invite key/)).toHaveValue('ABCD-EFGH');
+  });
+
+  it('a signed-in person sees "Join <kitchen>" and the key adds the kitchen, no new login', async () => {
+    await signInAsSeller('password');
+    const onSession = vi.fn();
+    renderScreen(
+      <SetupKeyScreen
+        joinKitchen="onde-onde"
+        initialKey={await keyFor()}
+        onSession={onSession}
+        onUseCode={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole('heading', { name: 'Join onde-onde' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Sign in to join/ })).not.toBeInTheDocument();
+    press('Join');
+    await waitFor(() => expect(onSession).toHaveBeenCalledTimes(1));
+    expect(onSession.mock.calls[0]?.[0]).toMatchObject({ stage: 'full', slug: 'onde-onde' });
+  });
+
+  it('"Already have a login?" signs in with the passkey, then the key joins', async () => {
+    await signInAsSeller('passkey');
+    await signOut();
+    const onSession = vi.fn();
+    renderScreen(
+      <SetupKeyScreen initialKey={await keyFor()} onSession={onSession} onUseCode={vi.fn()} />,
+    );
+    press('Already have a login? Sign in to join');
+    await waitFor(() => expect(onSession).toHaveBeenCalledTimes(1));
+    expect(onSession.mock.calls[0]?.[0]).toMatchObject({ stage: 'full', slug: 'onde-onde' });
+  });
+
+  it('a key works once', async () => {
+    const key = await keyFor();
+    expect((await signInWithKey(key)).ok).toBe(true);
+    clearCookies();
+    expect((await signInWithKey(key)).ok).toBe(false);
+  });
+});
+
 describe('DevicesScreen', () => {
   async function otherDevice(name: string) {
+    const [person] = await mockStores.auth.teamNames(await sellerId());
     const added = await mockStores.auth.signInPassword({
       deviceId: 'other-device-1',
       slug: 'dapur-demo',
+      accountId: person?.accountId ?? '',
       password: PASSWORD,
       deviceName: name,
     });
@@ -681,10 +740,11 @@ describe('Indonesian', () => {
 describe('ordering while signed in as a seller', () => {
   it('a signed-in Onde Onde seller orders at Dapur Demo as a plain customer', async () => {
     // Signed in as Onde Onde's seller, with a session cookie on every request.
-    const made = await mockStores.auth.createKey(
-      { role: 'seller', sellerId: await sellerId('onde-onde') },
-      'invite',
-    );
+    const made = await mockStores.auth.createKey({
+      role: 'owner',
+      sellerId: await sellerId('onde-onde'),
+      displayName: 'Bu Ani',
+    });
     const started = await signInWithKey(made.key);
     if (!started.ok) throw new Error(started.error);
     const done = await registerDevice({

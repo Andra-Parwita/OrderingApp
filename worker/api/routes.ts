@@ -100,7 +100,11 @@ import {
   ORDER_LOOKUP_MAX_FAILS,
   ORDER_LOOKUP_MAX_FAILS_PER_CLIENT,
   parseChefInviteRequest,
+  DISPLAY_NAME_MAX,
+  parseInviteRequest,
   type KeyResponse,
+  type MembersResponse,
+  type TeamNamesResponse,
 } from '../../shared/authContract';
 import {
   parseSendUpdatesRequest,
@@ -110,6 +114,7 @@ import {
 import { LIVE_PATH, type LiveEventType } from '../../shared/liveContract';
 import { deleteImageRefs, putUploadedImage, type ImageBucket } from '../images/r2';
 import type { LiveNotifier } from '../live/hub';
+import { parseAddMadeRequest, type MadeResponse } from '../../shared/madeContract';
 import { chefAccess, handleAdmin, handleAuth } from './authRoutes';
 import { sessionTokenOf } from '../auth/cookie';
 import { sha256Hex } from '../db/crypto';
@@ -306,6 +311,12 @@ export async function handleApiRequest(
     }
     // D-075: a lost order back by code and first name, in this kitchen. Two wrong tries lock it for
     // 15 minutes per kitchen-and-code; ten lock a client address. Every miss answers alike.
+    // Plan 033: the picker for password sign-in (names and ids of people who have a password).
+    if (b === 'team-names' && !c && method === 'GET') {
+      return Response.json({
+        names: await store.auth.teamNames(sellerStore.seller.id),
+      } satisfies TeamNamesResponse);
+    }
     if (b === 'orders' && c === 'find' && method === 'POST') {
       const input = parseFindOrderRequest(await readJson(request));
       if (!input) return bad();
@@ -489,7 +500,16 @@ export async function handleApiRequest(
         if (result.added > 0) await signal(context, sellerStore.seller.id, 'order.created');
         return Response.json(result satisfies SampleOrdersResponse);
       }
-      return handleSeller(store, sellerStore, request, [a, b, c], bad, actor, context);
+      return handleSeller(
+        store,
+        sellerStore,
+        request,
+        [a, b, c],
+        bad,
+        actor,
+        context,
+        caller.accountId,
+      );
     }
     // DEV_TOOLS only: without a session the X-Seller / X-Actor headers choose the seller and the
     // audit name, with full seller rights (no chef limits). Production answers 401.
@@ -528,6 +548,7 @@ export async function handleApiRequest(
  */
 function chefMayNot(method: string, a: string | undefined): boolean {
   if (a === 'backup' || a === 'chef-invites' || a === 'chef-devices') return true;
+  if (a === 'invites' || a === 'team') return true;
   const closed = [
     'menu',
     'chefs',
@@ -581,6 +602,8 @@ async function handleSeller(
   bad: () => Response,
   actor: StaffActor,
   context: RouteContext,
+  /** The signed-in person (absent in a DEV_TOOLS header call). */
+  accountId?: string,
 ): Promise<Response | null> {
   const method = request.method;
   const sellerId = store.seller.id;
@@ -596,11 +619,52 @@ async function handleSeller(
     if (!(await store.listChefs()).some((chef) => chef.id === input.chefId)) {
       return error('unknown_chef', 'Unknown chef');
     }
-    const key = await repo.auth.createKey(
-      { role: 'chef', sellerId: store.seller.id, chefId: input.chefId },
-      'invite',
-    );
+    const chef = (await store.listChefs()).find((row) => row.id === input.chefId);
+    const key = await repo.auth.createKey({
+      role: 'chef',
+      sellerId: store.seller.id,
+      chefId: input.chefId,
+      displayName: (chef?.name ?? 'Chef').slice(0, DISPLAY_NAME_MAX),
+    });
     return Response.json(key satisfies KeyResponse, { status: 201 });
+  }
+
+  // Plan 033: the owner invites a person by name and role (a chef invite may add the cook row).
+  if (a === 'invites' && !b && method === 'POST') {
+    const input = parseInviteRequest(await readJson(request));
+    if (!input) return bad();
+    let chefId = input.chefId;
+    if (input.role === 'chef') {
+      if (chefId === undefined) {
+        const added = await store.addChef(input.displayName);
+        if (!added.ok) return error(added.error, added.message);
+        chefId = added.value.id;
+      } else if (!(await store.listChefs()).some((chef) => chef.id === chefId)) {
+        return error('unknown_chef', 'Unknown chef');
+      }
+    }
+    const key = await repo.auth.createKey({
+      role: input.role,
+      sellerId,
+      displayName: input.displayName,
+      ...(chefId !== undefined ? { chefId } : {}),
+    });
+    return Response.json(key satisfies KeyResponse, { status: 201 });
+  }
+
+  // The kitchen's people. Removing one ends their sessions here at once (not for a dev-header call).
+  if (a === 'team' && accountId !== undefined) {
+    if (!b && method === 'GET') {
+      return Response.json({
+        members: await repo.auth.members(sellerId, accountId),
+      } satisfies MembersResponse);
+    }
+    if (b && method === 'DELETE') {
+      if (b === accountId) return bad();
+      return (await repo.auth.removeMember(sellerId, b))
+        ? Response.json({ ok: true })
+        : error('not_found', 'Member not found');
+    }
   }
 
   // How many devices each chef has signed in (the chefs screen shows it next to the invite).
@@ -877,6 +941,23 @@ async function handleSeller(
     return Response.json({
       name: await store.setKitchenName(input.name),
     } satisfies KitchenNameResponse);
+  }
+
+  // Plan 035: shared made counts. Chefs cook, so chefs may write (not in chefMayNot).
+  if (a === 'made' && !b) {
+    if (method === 'GET') {
+      const got = await store.getMade();
+      return got.ok ? Response.json({ made: got.value } satisfies MadeResponse) : refusal(got);
+    }
+    if (method === 'POST') {
+      const input = parseAddMadeRequest(await readJson(request));
+      if (!input) return bad();
+      const added = await store.addMade(input);
+      if (!added.ok) return refusal(added);
+      await signal(context, sellerId, 'order.changed');
+      return Response.json({ made: added.value } satisfies MadeResponse);
+    }
+    return null;
   }
 
   if (a === 'chefs') {

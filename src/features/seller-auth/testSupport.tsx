@@ -36,10 +36,11 @@ export async function sellerId(slug = 'dapur-demo'): Promise<string> {
 
 /** A fresh invite key for Dapur Demo, made straight in the repository (no admin session needed). */
 export async function inviteKey(): Promise<string> {
-  const made = await mockStores.auth.createKey(
-    { role: 'seller', sellerId: await sellerId() },
-    'invite',
-  );
+  const made = await mockStores.auth.createKey({
+    role: 'owner',
+    sellerId: await sellerId(),
+    displayName: 'Bu Ani',
+  });
   return made.key;
 }
 

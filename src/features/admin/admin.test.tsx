@@ -4,11 +4,18 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { browserPasskeys } from '../../../mocks/browserPasskeys';
 import { clearCookies, installCookieJar, sessionCookie } from '../../../mocks/cookieJar';
 import { DEV_ADMIN_SETUP_KEY, mockStores } from '../../../mocks/handlers';
-import { adminSetup, registerDevice, signInWithKey, signOut } from '../../api/auth';
+import {
+  adminSetup,
+  createDeviceCode,
+  registerDevice,
+  signInWithCode,
+  signInWithKey,
+  signOut,
+} from '../../api/auth';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { AdminHomeScreen } from './AdminHomeScreen';
-import { AdminSetupScreen } from './AdminSetupScreen';
+import { AdminSetupScreen, type AdminSetupScreenProps } from './AdminSetupScreen';
 import { AdminSignInScreen } from './AdminSignInScreen';
 import { registerAdminI18n } from './i18n/register';
 
@@ -24,34 +31,27 @@ async function signInAsAdmin() {
 }
 
 /**
- * Devices for an account, set up straight in the mock store (a key, then a password): no browser
- * session is touched, so the admin stays signed in.
+ * A person with one device, set up straight in the mock store (a key, then a password): no browser
+ * session is touched, so the admin stays signed in. One key admits one device (D-085).
  */
-async function addDevices(
-  target: { role: 'seller'; sellerId: string } | { role: 'chef'; sellerId: string; chefId: string },
-  names: Array<string>,
+async function addPerson(
+  target: { role: 'owner'; sellerId: string } | { role: 'chef'; sellerId: string; chefId: string },
+  deviceName: string,
+  displayName = 'Test person',
 ) {
-  const issued = await mockStores.auth.createKey(target, 'invite');
-  for (const [index, deviceName] of names.entries()) {
-    const started = await mockStores.auth.redeemKey(issued.key, `dev-${String(index)}-abcd-efgh`);
-    if (!started.ok) throw new Error(started.error);
-    const done = await mockStores.auth.register(started.value.token, {
-      kind: 'password',
-      password: 'long enough password',
-      deviceName,
-    });
-    if (!done.ok) throw new Error(done.error);
-  }
+  const issued = await mockStores.auth.createKey({ ...target, displayName });
+  const started = await mockStores.auth.redeemKey(issued.key, 'dev-0-abcd-efgh');
+  if (!started.ok) throw new Error(started.error);
+  const done = await mockStores.auth.register(started.value.token, {
+    kind: 'password',
+    password: 'long enough password',
+    deviceName,
+  });
+  if (!done.ok) throw new Error(done.error);
 }
 
 const addSellerDevice = (deviceName: string) =>
-  addDevices({ role: 'seller', sellerId: 'seller-onde-onde' }, [deviceName]);
-
-const addChefDevices = (chefId: string, count: number) =>
-  addDevices(
-    { role: 'chef', sellerId: 'seller-onde-onde', chefId },
-    Array.from({ length: count }, (_, n) => `Chef phone ${String(n + 1)}`),
-  );
+  addPerson({ role: 'owner', sellerId: 'seller-onde-onde' }, deviceName);
 
 // The browser's passkey prompt is a software authenticator; the server's checks are the real ones.
 vi.mock(
@@ -165,10 +165,11 @@ describe('AdminSignInScreen', () => {
 
   it('a seller passkey picked here is refused with a clear message, and nothing is forgotten', async () => {
     await signInAsAdmin();
-    const invite = await mockStores.auth.createKey(
-      { role: 'seller', sellerId: 'seller-onde-onde' },
-      'invite',
-    );
+    const invite = await mockStores.auth.createKey({
+      role: 'owner',
+      sellerId: 'seller-onde-onde',
+      displayName: 'Bu Ani',
+    });
     await signOut();
     expect((await signInWithKey(invite.key)).ok).toBe(true);
     expect((await registerDevice({ kind: 'passkey', deviceName: 'Seller PC' })).ok).toBe(true);
@@ -256,7 +257,7 @@ describe('AdminHomeScreen', () => {
     expect(await mockStores.sellerBySlug('warung-baru')).toBeDefined();
   });
 
-  it('shows an invite key once, with the 24 hour rule, Copy and a WhatsApp link without a number', async () => {
+  it('asks for a name, then shows the invite once: link, key, the one-use rule, WhatsApp without a number', async () => {
     await signInAsAdmin();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
@@ -266,19 +267,26 @@ describe('AdminHomeScreen', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Create invite key' }));
 
     const box = await screen.findByRole('region', { name: 'Invite key for Onde Onde' });
+    fireEvent.change(within(box).getByLabelText('Name of the person'), {
+      target: { value: 'Bu Sari' },
+    });
+    fireEvent.click(within(box).getByRole('button', { name: 'Create invite' }));
     expect(
-      within(box).getByText('Valid for 24 hours, works on up to 3 devices.'),
+      await within(box).findByText('Works once, on one device, within 24 hours.'),
     ).toBeInTheDocument();
     const key = box.querySelector('code')?.textContent ?? '';
     expect(key).toMatch(/^[A-Z0-9]{3,}(-[A-Z0-9]{3,})+$/);
+    const link = `https://${location.host}/seller/setup?kitchen=onde-onde#key=${key}`;
 
     const whatsapp = within(box).getByRole('link', { name: 'Send on WhatsApp' });
     const href = whatsapp.getAttribute('href') ?? '';
     expect(href.startsWith('https://wa.me/?text=')).toBe(true);
-    expect(decodeURIComponent(href)).toContain(key);
+    expect(decodeURIComponent(href)).toContain(link);
 
-    fireEvent.click(within(box).getByRole('button', { name: 'Copy' }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(key));
+    fireEvent.click(within(box).getByRole('button', { name: 'Copy link with key' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(link));
+    fireEvent.click(within(box).getByRole('button', { name: 'Copy key' }));
+    await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(key));
     expect(await within(box).findByText('Copied')).toBeInTheDocument();
 
     // Shown once: after Done the key is gone and nothing else on the page carries it.
@@ -287,20 +295,21 @@ describe('AdminHomeScreen', () => {
     expect(document.body.textContent).not.toContain(key);
   });
 
-  it('signs a seller device out on the second tap only', async () => {
+  it('lists the people of a kitchen and removes one on the second tap only', async () => {
     await signInAsAdmin();
-    await addSellerDevice('iPad');
+    await addPerson({ role: 'owner', sellerId: 'seller-onde-onde' }, 'iPad', 'Bu Ani');
     renderThemed(<AdminHomeScreen />);
     const table = await screen.findByRole('table', { name: 'Sellers' });
     fireEvent.click(within(table).getByRole('row', { name: /Onde Onde/ }));
-    const list = await screen.findByRole('list', { name: 'Devices' });
-    expect(within(list).getByText('iPad')).toBeInTheDocument();
+    const list = await screen.findByRole('list', { name: 'People' });
+    expect(await within(list).findByText('Bu Ani')).toBeInTheDocument();
+    expect(within(list).getByText('Owner · 1 device')).toBeInTheDocument();
 
-    fireEvent.click(within(list).getByRole('button', { name: 'Sign out' }));
+    fireEvent.click(within(list).getByRole('button', { name: 'Remove' }));
     // First tap only asks again.
-    expect(within(list).getByText('iPad')).toBeInTheDocument();
-    fireEvent.click(within(list).getByRole('button', { name: 'Tap again to sign out' }));
-    expect(await screen.findByText('No devices yet.')).toBeInTheDocument();
+    expect(within(list).getByText('Bu Ani')).toBeInTheDocument();
+    fireEvent.click(within(list).getByRole('button', { name: 'Tap again to remove' }));
+    expect(await screen.findByText('Nobody has joined yet.')).toBeInTheDocument();
   });
 
   it('switches a kitchen into and out of demo mode (plan 013), in both languages', async () => {
@@ -324,37 +333,118 @@ describe('AdminHomeScreen', () => {
     expect(await screen.findByRole('checkbox', { name: 'Dapur demo' })).toBeInTheDocument();
   });
 
-  it('lists chefs read-only with devices, and signs a chef out everywhere on the second tap', async () => {
-    await signInAsAdmin();
-    await addChefDevices('wati', 2);
-    renderThemed(<AdminHomeScreen />);
-    const table = await screen.findByRole('table', { name: 'Sellers' });
-    fireEvent.click(within(table).getByRole('row', { name: /Onde Onde/ }));
-    const list = await screen.findByRole('list', { name: 'Chefs' });
-    expect(await within(list).findByText('Chef Wati · 2 devices')).toBeInTheDocument();
-    expect(
-      screen.getByText('Read-only list. The seller adds and invites chefs.'),
-    ).toBeInTheDocument();
-    expect(within(list).queryByRole('button', { name: /rename|delete|add|invite/i })).toBeNull();
-
-    fireEvent.click(within(list).getByRole('button', { name: 'Sign out all' }));
-    expect(within(list).getByText('Chef Wati · 2 devices')).toBeInTheDocument();
-    fireEvent.click(within(list).getByRole('button', { name: 'Tap again to sign out all' }));
-    expect(await within(list).findByText('Chef Wati · 0 devices')).toBeInTheDocument();
-    expect(within(list).queryByRole('button')).toBeNull();
-    expect(await screen.findByText('No devices yet.')).toBeInTheDocument();
-  });
-
-  it('speaks Indonesian in the Created column and the chefs section', async () => {
+  it('speaks Indonesian in the Created column and the people section', async () => {
     await i18n.changeLanguage('id');
     await signInAsAdmin();
-    await addChefDevices('wati', 1);
+    await addPerson(
+      { role: 'chef', sellerId: 'seller-onde-onde', chefId: 'wati' },
+      'Chef phone',
+      'Wati',
+    );
     renderThemed(<AdminHomeScreen />);
     const table = await screen.findByRole('table', { name: 'Penjual' });
     expect(within(table).getByRole('columnheader', { name: 'Dibuat' })).toBeInTheDocument();
     fireEvent.click(within(table).getByRole('row', { name: /Onde Onde/ }));
-    const list = await screen.findByRole('list', { name: 'Koki' });
-    expect(await within(list).findByText('Chef Wati · 1 perangkat')).toBeInTheDocument();
-    expect(within(list).getByRole('button', { name: 'Keluarkan semua' })).toBeInTheDocument();
+    const list = await screen.findByRole('list', { name: 'Orang' });
+    expect(await within(list).findByText('Koki · 1 perangkat')).toBeInTheDocument();
+    expect(within(list).getByRole('button', { name: 'Hapus' })).toBeInTheDocument();
+  });
+});
+
+/** An admin on this browser makes a code, then the browser forgets its session (the new device). */
+async function adminCode(): Promise<string> {
+  await signInAsAdmin();
+  const made = await createDeviceCode();
+  if (!made.ok) throw new Error('no code');
+  clearCookies();
+  return made.data.code;
+}
+
+/** A stand-in for the seller screen the app layer supplies: one button that redeems the code. */
+const fakeCodeScreen =
+  (code: string): NonNullable<AdminSetupScreenProps['codeScreen']> =>
+  ({ onSession }) => (
+    <button
+      type="button"
+      onClick={() =>
+        void signInWithCode(code).then((result) => {
+          if (result.ok) onSession(result.data.me);
+        })
+      }
+    >
+      Use code
+    </button>
+  );
+
+describe('AdminSetupScreen with a 6-digit code (plan 027)', () => {
+  it('takes an admin code, offers the guessed device name, and finishes', async () => {
+    const code = await adminCode();
+    const onDone = vi.fn();
+    renderThemed(
+      <AdminSetupScreen onDone={onDone} initialMethod="code" codeScreen={fakeCodeScreen(code)} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Use code' }));
+    const name = await screen.findByLabelText('Name of this device');
+    expect(name).toHaveValue('Computer');
+    fireEvent.change(name, { target: { value: 'Andra laptop' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create admin passkey' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the admin page' }));
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a kitchen code and ends that session', async () => {
+    const started = await signInWithKey(
+      (
+        await mockStores.auth.createKey({
+          role: 'owner',
+          sellerId: 'seller-onde-onde',
+          displayName: 'Bu Ani',
+        })
+      ).key,
+    );
+    expect(started.ok).toBe(true);
+    expect(
+      (
+        await registerDevice({
+          kind: 'password',
+          password: 'long enough password',
+          deviceName: 'Seller PC 2',
+        })
+      ).ok,
+    ).toBe(true);
+    const made = await createDeviceCode();
+    if (!made.ok) throw new Error('no code');
+    clearCookies();
+    renderThemed(
+      <AdminSetupScreen
+        onDone={vi.fn()}
+        initialMethod="code"
+        codeScreen={fakeCodeScreen(made.data.code)}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Use code' }));
+    expect(
+      await screen.findByText(
+        'This code is for a kitchen, not the admin. Use it on the seller sign-in page.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText('Name of this device')).not.toBeInTheDocument();
+    expect(sessionCookie()).toBeNull();
+  });
+});
+
+describe('AdminHomeScreen own devices (plan 027)', () => {
+  it('renames this device and shows the new name', async () => {
+    await signInAsAdmin();
+    renderThemed(<AdminHomeScreen />);
+    const list = await screen.findByRole('list', { name: 'Your admin devices' });
+    expect(within(list).getByText('Test PC')).toBeInTheDocument();
+    fireEvent.click(within(list).getByRole('button', { name: 'Rename' }));
+    fireEvent.change(screen.getByLabelText('New name for Test PC'), {
+      target: { value: 'Andra iPad' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save name' }));
+    expect(await screen.findByText('Andra iPad')).toBeInTheDocument();
+    expect(screen.queryByText('Test PC')).not.toBeInTheDocument();
   });
 });

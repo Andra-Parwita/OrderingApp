@@ -5,10 +5,16 @@ import type { CookMenu } from './cookModel';
 export type CookListState =
   { status: 'loading' } | { status: 'ready'; live: 'ok' | 'error' } | { status: 'error' };
 
-export type CookState = { list: CookListState; orders: Array<Order>; menu: CookMenu | null };
+export type CookState = {
+  list: CookListState;
+  orders: Array<Order>;
+  menu: CookMenu | null;
+  /** Dishes made so far, from the server (shared by every device). */
+  made: Record<string, number>;
+};
 export type CookRootState = { sellerCook: CookState };
 
-const initialState: CookState = { list: { status: 'loading' }, orders: [], menu: null };
+const initialState: CookState = { list: { status: 'loading' }, orders: [], menu: null, made: {} };
 
 const cookSlice = createSlice({
   name: 'sellerCook',
@@ -20,7 +26,14 @@ const cookSlice = createSlice({
     refreshRequested(state) {
       if (state.list.status === 'error') state.list = { status: 'loading' };
     },
-    loaded(state, action: PayloadAction<{ orders: Array<Order>; menu: CookMenu }>) {
+    loaded(
+      state,
+      action: PayloadAction<{
+        orders: Array<Order>;
+        menu: CookMenu;
+        made?: Record<string, number>;
+      }>,
+    ) {
       // Keep the old objects when nothing changed, so memoised selectors do not recompute.
       if (JSON.stringify(state.orders) !== JSON.stringify(action.payload.orders)) {
         state.orders = action.payload.orders;
@@ -28,7 +41,17 @@ const cookSlice = createSlice({
       if (JSON.stringify(state.menu) !== JSON.stringify(action.payload.menu)) {
         state.menu = action.payload.menu;
       }
+      if (
+        action.payload.made &&
+        JSON.stringify(state.made) !== JSON.stringify(action.payload.made)
+      ) {
+        state.made = action.payload.made;
+      }
       state.list = { status: 'ready', live: 'ok' };
+    },
+    /** Made counts changed (this device's tap, or the server's answer). */
+    madeReplaced(state, action: PayloadAction<Record<string, number>>) {
+      state.made = action.payload;
     },
     /** One order changed on this device (a tick or "Packed"); the next live reload confirms it. */
     orderReplaced(state, action: PayloadAction<Order>) {
@@ -49,5 +72,6 @@ export const {
   loaded,
   loadFailed,
   orderReplaced,
+  madeReplaced,
 } = cookSlice.actions;
 export const cookReducer = cookSlice.reducer;

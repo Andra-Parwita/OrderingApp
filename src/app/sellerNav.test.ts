@@ -44,11 +44,18 @@ describe('phone', () => {
     expect(activePhoneNav('/seller/hand-over')).toBe('handover');
     expect(activePhoneNav('/seller')).toBe('orders');
   });
-  it('sends Kitchen, Menu and Settings pages to the tablet-only page, not the phone subset', () => {
-    for (const path of ['/seller/cook', '/seller/menu', '/seller/menu/items/x', '/seller/backup']) {
+  it('sends Menu and Settings pages to the tablet-only page, not the phone subset', () => {
+    for (const path of ['/seller/menu', '/seller/menu/items/x', '/seller/backup']) {
       expect(isTabletOnly(path)).toBe(true);
     }
-    for (const path of ['/seller', '/seller/orders/K7F2QX', '/seller/new', '/seller/more']) {
+    for (const path of [
+      '/seller',
+      '/seller/orders/K7F2QX',
+      '/seller/new',
+      '/seller/more',
+      '/seller/cook',
+      '/seller/labels',
+    ]) {
       expect(isTabletOnly(path)).toBe(false);
     }
     expect(isTabletOnly('/seller/hand-over/delivery')).toBe(false);

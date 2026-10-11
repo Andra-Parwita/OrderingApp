@@ -55,6 +55,15 @@ describe('CustomerSettingsView', () => {
     expect(screen.getByText('Auto · follows phone')).toBeVisible();
   });
 
+  it('picks a text size and applies it to the page', () => {
+    show();
+    expect(screen.getByRole('radio', { name: 'Normal' })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: 'Larger' }));
+    expect(document.documentElement.style.fontSize).toBe('112.5%');
+    expect(screen.getByRole('radio', { name: 'Larger' })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: 'Normal' }));
+  });
+
   it('shows Order updates On when subscribed, and a tap on the switch turns it off', () => {
     show({ install: { env: { ...base, permission: 'granted' }, subscribed: true } });
     const updates = screen.getByRole('switch', { name: 'Order updates' });

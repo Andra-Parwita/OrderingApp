@@ -4,7 +4,8 @@ import { mockStore } from '../../../mocks/handlers';
 import * as kitchen from '../../api/kitchen';
 import { CookScreen } from './CookScreen';
 import { selectCookGroups } from './cookSelectors';
-import { rememberSignedIn } from '../../api/device/sellerContext';
+import { currentSellerSlug, rememberSignedIn } from '../../api/device/sellerContext';
+import { fetchMade } from '../../api/made';
 import { loaded, pollingStarted, pollingStopped } from './cookSlice';
 import {
   MENU,
@@ -47,14 +48,19 @@ describe('Kitchen · Cook', () => {
     expect(within(row).getByText('0/5')).toBeInTheDocument();
   });
 
-  it('counts made portions with + and − and keeps them on the device', () => {
-    renderKitchen();
+  it('counts made portions with + and − and saves them on the server', async () => {
+    const store = renderKitchen();
     const row = screen.getByText('Chicken lemper').closest('li');
     if (!row) throw new Error('row');
     fireEvent.click(within(row).getByRole('button', { name: 'One more Chicken lemper' }));
     fireEvent.click(within(row).getByRole('button', { name: 'One more Chicken lemper' }));
     expect(within(row).getByText('2/5')).toBeInTheDocument();
-    expect(window.localStorage.getItem('cook-made:2026-10-10')).toBe('{"lemper":2}');
+    await waitFor(() => store.getState().sellerCook.made['lemper'] === 2);
+    // Another device reads the same count from the server.
+    expect((await fetchMade(undefined, currentSellerSlug())).ok).toBe(true);
+    expect(await fetchMade(undefined, currentSellerSlug())).toMatchObject({
+      data: { made: { lemper: 2 } },
+    });
     fireEvent.click(within(row).getByRole('button', { name: 'One less Chicken lemper' }));
     expect(within(row).getByText('1/5')).toBeInTheDocument();
   });
@@ -141,6 +147,20 @@ describe('Kitchen · Pack', () => {
     ).toHaveLength(3);
   });
 
+  it('prints just the open bag with Print label', () => {
+    let labels = -1;
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {
+      labels = document.querySelectorAll('[data-testid="print-job"] article').length;
+    });
+    openPack();
+    fireEvent.click(screen.getByRole('button', { name: 'Print label' }));
+    expect(print).toHaveBeenCalledTimes(1);
+    expect(labels).toBe(1);
+    // The job is removed once printed, so it cannot print again on the next render.
+    expect(screen.queryByTestId('print-job')).not.toBeInTheDocument();
+    print.mockRestore();
+  });
+
   it('ticks an item and saves the whole ticked set', async () => {
     const pack = vi.spyOn(kitchen, 'packOrder').mockImplementation((code) => {
       const order = sampleOrders().find((candidate) => candidate.code === code);
@@ -220,5 +240,43 @@ describe('cook polling', () => {
     await order('Dewi');
     await sleep(100);
     expect(store.getState().sellerCook.orders).toHaveLength(2);
+  });
+});
+
+describe('Kitchen · who ordered', () => {
+  function openWho(dish: string) {
+    fireEvent.click(screen.getByRole('tab', { name: /Cook/ }));
+    fireEvent.click(screen.getByRole('button', { name: `Who ordered ${dish}` }));
+    return screen.getByRole('dialog');
+  }
+
+  it('lists the people, quantities and fulfilment, sorted by first name', () => {
+    renderKitchen();
+    const dialog = openWho('Chicken lemper');
+    expect(within(dialog).getByText('5 portions · 2 customers')).toBeInTheDocument();
+    const rows = within(dialog).getAllByRole('link');
+    expect(rows).toHaveLength(2); // Dewi is cancelled
+    expect(rows[0]).toHaveTextContent('Rina');
+    expect(rows[0]).toHaveTextContent('K7F-2QX');
+    expect(rows[0]).toHaveTextContent('×2');
+    expect(rows[0]).toHaveTextContent('Pickup');
+    expect(rows[1]).toHaveTextContent('Tom');
+    expect(rows[1]).toHaveTextContent('×3');
+    expect(rows[1]).toHaveTextContent('Delivery');
+  });
+
+  it('follows the chef filter', () => {
+    renderKitchen();
+    fireEvent.click(screen.getByRole('radio', { name: 'Chef Wati' }));
+    expect(
+      screen.queryByRole('button', { name: 'Who ordered Mixed rice' }),
+    ).not.toBeInTheDocument();
+    expect(within(openWho('Tempeh')).getAllByRole('link')).toHaveLength(1);
+  });
+
+  it('opens the order when a person is tapped', () => {
+    renderKitchen();
+    fireEvent.click(within(openWho('Chicken lemper')).getByRole('link', { name: /Tom/ }));
+    expect(screen.getByTestId('where').textContent).toBe('/seller/orders/M3H9TD');
   });
 });

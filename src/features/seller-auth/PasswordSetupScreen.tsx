@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { registerDevice, signInWithPassword } from '../../api/auth';
+import { registerDevice } from '../../api/auth';
 import { checkPassword, type Me } from '../../../shared/authContract';
 import { Button } from '../../ui';
-import { failureMessage, guessDevice } from './authText';
+import { failureMessage } from './authText';
 import { AUTH_NS } from './i18n/register';
 import {
   AuthForm,
@@ -17,6 +17,7 @@ import {
   PasswordField,
   useDeviceName,
 } from './parts';
+import { TeamPasswordForm } from './TeamPasswordForm';
 
 export type PasswordSetupScreenProps = Readonly<{
   onDone: (me: Me) => void;
@@ -32,65 +33,21 @@ export type PasswordSetupScreenProps = Readonly<{
  */
 function ExistingPasswordSignIn({
   slug,
-  chefId,
+  name,
   onDone,
   onUsePasskey,
 }: Readonly<{
   slug: string;
-  chefId?: string | undefined;
+  name?: string | undefined;
   onDone: (me: Me) => void;
   onUsePasskey?: (() => void) | undefined;
 }>) {
   const { t } = useTranslation(AUTH_NS);
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const submit = useCallback(async () => {
-    if (password === '') {
-      setError(t('signIn.empty'));
-      return;
-    }
-    setError(null);
-    setBusy(true);
-    const result = await signInWithPassword({
-      slug,
-      password,
-      deviceName: t(`deviceName.${guessDevice()}`),
-      ...(chefId ? { chefId } : {}),
-    });
-    setBusy(false);
-    if (result.ok) onDone(result.data.me);
-    else setError(failureMessage(t, result));
-  }, [chefId, onDone, password, slug, t]);
-
   return (
     <AuthPanel>
       {onUsePasskey ? <BackButton onClick={onUsePasskey} /> : null}
       <AuthTitle>{t('signIn.passwordTitle')}</AuthTitle>
-      <AuthForm
-        onSubmit={(event: { preventDefault: () => void }) => {
-          event.preventDefault();
-          void submit();
-        }}
-        noValidate
-      >
-        <PasswordField
-          label={t('signIn.passwordLabel')}
-          value={password}
-          onChange={(next) => {
-            setPassword(next);
-            setError(null);
-          }}
-          autoComplete="current-password"
-          {...(error ? { error } : {})}
-        />
-        <BigAction>
-          <Button type="submit" variant="primary" fullWidth disabled={busy}>
-            {busy ? t('signIn.working') : t('signIn.submit')}
-          </Button>
-        </BigAction>
-      </AuthForm>
+      <TeamPasswordForm slug={slug} preferName={name} onDone={onDone} />
     </AuthPanel>
   );
 }
@@ -98,7 +55,7 @@ function ExistingPasswordSignIn({
 /** A2b: a password of at least 10 characters, typed twice (or the existing one, plan 025). */
 export function PasswordSetupScreen({ setup, ...rest }: PasswordSetupScreenProps) {
   return setup?.hasPassword === true && setup.slug ? (
-    <ExistingPasswordSignIn slug={setup.slug} chefId={setup.chefId} {...rest} />
+    <ExistingPasswordSignIn slug={setup.slug} name={setup.displayName} {...rest} />
   ) : (
     <NewPasswordForm {...rest} />
   );

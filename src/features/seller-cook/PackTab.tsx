@@ -3,9 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Language, Order } from '../../../shared/domain';
+import { formatDay } from '../../../shared/dates';
 import { pickText } from '../../../shared/text';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { packOrder } from '../../api/kitchen';
+import { PrintJob, type LabelText } from '../../components/labels/LabelSheets';
+import { splitOrder } from '../../components/labels/labelModel';
+import { useLabelPaper } from '../../components/labels/useLabelPaper';
 import { Button, Icon, Segmented, WarningDialog, type SegmentedOption } from '../../ui';
 import { COOK_NS } from './i18n/register';
 import {
@@ -215,8 +219,17 @@ const Hint = styled.p`
 `;
 const Actions = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: 40rem) {
+    width: 100%;
+
+    > button {
+      flex: 1 1 auto;
+    }
+  }
 `;
 const Centered = styled.p`
   margin: 0;
@@ -235,6 +248,9 @@ export function PackTab() {
   const [sort, setSort] = useState<PackSort>('time');
   const [openCode, setOpenCode] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [paper] = useLabelPaper();
+  const [printing, setPrinting] = useState<Order | null>(null);
+  const printed = useCallback(() => setPrinting(null), []);
   const [warn, setWarn] = useState<{ code: string; count: number } | null>(null);
 
   const sorted = useMemo(() => sortBags(bags, sort), [bags, sort]);
@@ -243,6 +259,12 @@ export function PackTab() {
     sorted.find((bag) => !bag.packed) ??
     sorted[0];
 
+  const day = menu ? formatDay(menu.cookingDate, lang) : '';
+  const labelText: LabelText = {
+    qrName: t('label.qrName'),
+    where: (fulfilment) => t(fulfilment === 'pickup' ? 'label.pickup' : 'label.delivery', { day }),
+    part: (index, of) => t('label.part', { index, of }),
+  };
   const sortOptions: ReadonlyArray<SegmentedOption<PackSort>> = SORTS.map((value) => ({
     value,
     label: t(`pack.sort.${value}`),
@@ -425,6 +447,10 @@ export function PackTab() {
                   : t('pack.notTicked', { count: untickedCount })}
           </Hint>
           <Actions>
+            <Button onClick={() => setPrinting(open.order)}>
+              <Icon name="print" />
+              {t('pack.printLabel')}
+            </Button>
             {open.packed ? (
               <Button variant="quiet" onClick={() => void unpack(open)}>
                 {t('pack.unpack')}
@@ -443,6 +469,15 @@ export function PackTab() {
           </Actions>
         </Footer>
       </Detail>
+
+      {printing ? (
+        <PrintJob
+          parts={splitOrder(printing, paper)}
+          paper={paper}
+          text={labelText}
+          onDone={printed}
+        />
+      ) : null}
 
       {warn ? (
         <WarningDialog

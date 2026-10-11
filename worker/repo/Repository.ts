@@ -16,6 +16,7 @@ import type {
   MessagePlaceResponse,
   PackRequest,
 } from '../../shared/handoverContract';
+import type { AddMadeRequest } from '../../shared/madeContract';
 import type {
   Chef,
   KitchenImages,
@@ -66,9 +67,13 @@ import type {
   DeviceView,
   KeyResponse,
   Me,
+  Membership,
+  MembershipRole,
   PasswordSignInRequest,
   Role,
   SessionResponse,
+  TeamMember,
+  TeamName,
 } from '../../shared/authContract';
 
 // ---- Results ----
@@ -231,6 +236,10 @@ export type SellerRepository = {
   // refusing; `force` (in the request) goes ahead (D-062).
   /** Ticks and the packed flag. Never changes the status or `updatedAt` (D-066). */
   packOrder(code: string, request: PackRequest): Promise<StoreResult<SellerOrder>>;
+  /** Plan 035: made counts per dish for the current menu (shared by every device). */
+  getMade(): Promise<StoreResult<Record<string, number>>>;
+  /** Adds `delta` to one dish's made count in SQL (so concurrent taps all count); returns all counts. */
+  addMade(request: AddMadeRequest): Promise<StoreResult<Record<string, number>>>;
   /** The current menu's log, newest first. */
   listMessages(): Promise<Array<MessageLogEntry>>;
   /** Message every not-finished order of a pickup place; `ready_now` also sets them Ready (D-069 Q3). */
@@ -305,13 +314,39 @@ export type AuthRepository = {
   adminExists(): Promise<boolean>;
   adminSetup(setupKey: string, deviceId: string): Promise<AuthResult<SessionGrant>>;
 
-  /** Invite key (admin, for a seller) or chef invite (seller, for a chef). Shown once. */
-  createKey(
-    target:
-      { role: 'seller'; sellerId: string } | { role: 'chef'; sellerId: string; chefId: string },
-    kind: 'invite' | 'recovery',
-  ): Promise<KeyResponse>;
-  redeemKey(key: string, deviceId: string): Promise<AuthResult<SessionGrant>>;
+  /**
+   * An invite (admin for a first owner, owner for an owner or a chef): one device, 24 hours. The
+   * key adds a membership of `role` in `sellerId` to whoever redeems it. Shown once.
+   */
+  createKey(target: {
+    sellerId: string;
+    role: MembershipRole;
+    chefId?: string;
+    displayName: string;
+  }): Promise<KeyResponse>;
+  /**
+   * With `join` (a full person session) the membership is added to that person and the session
+   * moves to the new kitchen; otherwise a new person is made (named `displayName`, else the
+   * invite's name) and gets a setup session.
+   */
+  redeemKey(
+    key: string,
+    deviceId: string,
+    options?: { join?: Caller; displayName?: string },
+  ): Promise<AuthResult<SessionGrant>>;
+  /** The kitchens of the caller's person, oldest first. */
+  memberships(caller: Caller): Promise<Array<Membership>>;
+  /** False when the person is not a member of that kitchen (nothing changes). */
+  switchKitchen(caller: Caller, sellerId: string): Promise<boolean>;
+  /** People of a kitchen who have a password (for the password sign-in picker). */
+  teamNames(sellerId: string): Promise<Array<TeamName>>;
+  /** All members of a kitchen with their device counts; `youAccountId` marks the caller's row. */
+  members(sellerId: string, youAccountId?: string): Promise<Array<TeamMember>>;
+  /**
+   * Ends a membership: that person's sessions in this kitchen go at once, other kitchens stay.
+   * A person left with no kitchen is deleted. False when they were not a member.
+   */
+  removeMember(sellerId: string, accountId: string): Promise<boolean>;
   createCode(caller: Caller): Promise<CodeResponse>;
   redeemCode(code: string, deviceId: string): Promise<AuthResult<SessionGrant>>;
 
@@ -327,6 +362,7 @@ export type AuthRepository = {
     clientDeviceId: string,
     credentialId: string,
     verify: (passkey: StoredPasskey) => Promise<number | null>,
+    slug?: string,
   ): Promise<AuthResult<SessionGrant>>;
   signOut(token: string): Promise<void>;
 
@@ -366,7 +402,7 @@ export type AuthRepository = {
   chefDeviceCount(sellerId: string, chefId: string): Promise<number>;
   /** Signs a chef out everywhere: devices and sessions go, the account and password stay. */
   signOutChef(sellerId: string, chefId: string): Promise<number>;
-  /** A removed chef loses their account, devices, sessions and open keys. */
+  /** A removed cook loses their chef membership(s), those sessions and open keys; owners keep theirs. */
   revokeChef(sellerId: string, chefId: string): Promise<void>;
 };
 

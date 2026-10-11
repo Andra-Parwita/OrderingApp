@@ -28,7 +28,7 @@
     "method": "Cara kamu mendapat akses",
     "tab": "Kunci undangan",
     "label": "Kunci undangan dari pemilik dapur",
-    "helper": "Tempel dari WhatsApp. Tanda hubung dan huruf kecil boleh. Kunci berlaku 24 jam.",
+    "helper": "Tempel dari WhatsApp. Tanda hubung dan huruf kecil boleh. Kunci hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
     "empty": "Ketik kunci yang kamu terima.",
     "submit": "Lanjut",
     "checking": "Memeriksa…"
@@ -90,10 +90,13 @@
     "firstTime": "Pertama kali di perangkat ini? Pakai kunci undanganmu",
     "alreadySetUp": "Sudah diatur? Masuk",
     "lost": "Tidak bisa masuk? Minta undangan baru ke pemilik.",
-    "noPasskeysHere": "Wajah atau sidik jari tidak bisa dipakai di alamat web ini (alamat IP). Pakai kata sandimu."
+    "noPasskeysHere": "Wajah atau sidik jari tidak bisa dipakai di alamat web ini (alamat IP). Pakai kata sandimu.",
+    "who": "Siapa kamu?",
+    "pickName": "Pilih namamu",
+    "nobodyPassword": "Tidak ada orang di dapur ini yang memakai kata sandi. Pakai wajah atau sidik jari, atau minta undangan ke pemilik."
   },
   "devices": {
-    "title": "Perangkat",
+    "title": "Perangkatmu",
     "loading": "Memuat…",
     "loadFailed": "Perangkatmu tidak bisa dimuat.",
     "retry": "Coba lagi",
@@ -121,5 +124,11 @@
     "signOutHere": "Keluar dari perangkat ini",
     "signOutHereConfirm": "Ketuk lagi untuk keluar",
     "signOutHereHint": "Kamu perlu passkey atau kata sandi untuk masuk lagi."
+  },
+  "join": {
+    "title": "Gabung ke {{kitchen}}",
+    "submit": "Gabung",
+    "signInToJoin": "Sudah punya login? Masuk untuk bergabung",
+    "thisKitchen": "dapur ini"
   }
 }

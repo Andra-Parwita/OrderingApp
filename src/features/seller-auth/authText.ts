@@ -11,15 +11,8 @@ export function cleanCode(raw: string): string {
   return raw.replace(/\D/g, '').slice(0, 6);
 }
 
-export type DeviceKind = 'iphone' | 'ipad' | 'android' | 'computer';
-
-/** A first guess at what this device is, from the browser's user agent. */
-export function guessDevice(userAgent: string = navigator.userAgent): DeviceKind {
-  if (/iPad/i.test(userAgent)) return 'ipad';
-  if (/iPhone|iPod/i.test(userAgent)) return 'iphone';
-  if (/Android/i.test(userAgent)) return 'android';
-  return 'computer';
-}
+// Moved to api/device so the admin feature can share it; re-exported for this feature's callers.
+export { guessDevice, type DeviceKind } from '../../api/device/guessDevice';
 
 /** One plain sentence for a failed call; never says which part of a key or password was wrong. */
 export function failureMessage(t: TFunction, failure: ApiFailure): string {

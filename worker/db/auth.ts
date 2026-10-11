@@ -17,8 +17,12 @@ import {
   type DeviceView,
   type KeyResponse,
   type Me,
+  type Membership,
+  type MembershipRole,
   type PasswordSignInRequest,
   type Role,
+  type TeamMember,
+  type TeamName,
 } from '../../shared/authContract';
 import type {
   AuthFail,
@@ -53,13 +57,20 @@ type Via = 'admin-setup' | 'key' | 'code';
 
 type AccountRow = {
   id: string;
-  role: Role;
-  seller_id: string | null;
-  chef_id: string | null;
+  role: 'admin' | 'person';
+  display_name: string | null;
   password_salt: string | null;
   password_hash: string | null;
   password_iterations: number | null;
 };
+type MembershipRow = {
+  account_id: string;
+  seller_id: string;
+  role: MembershipRole;
+  chef_id: string | null;
+};
+/** An owner acts as the seller always did; a chef as a chef (plan 033). */
+const callerRoleOf = (role: MembershipRole): Role => (role === 'owner' ? 'seller' : 'chef');
 type DeviceRow = {
   id: string;
   account_id: string;
@@ -183,40 +194,69 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
   /** The add-device code lockout scope of a kitchen (`admin` for the admin's codes). */
   const codeScope = (sellerId: string | null) => `codes:${sellerId ?? 'admin'}`;
 
-  // ---- Accounts, sessions and devices ----
+  // ---- Accounts, memberships, sessions and devices ----
 
-  const accountId = (role: Role, sellerId?: string, chefId?: string) =>
-    role === 'admin'
-      ? 'admin'
-      : role === 'seller'
-        ? `seller:${sellerId}`
-        : `chef:${sellerId}:${chefId}`;
+  const ADMIN_ID = 'admin';
+  const newPersonId = () => `person:${randomChars(14).toLowerCase()}`;
 
   async function getAccount(id: string): Promise<AccountRow | undefined> {
     return (await db.first<AccountRow>('SELECT * FROM accounts WHERE id = ?', id)) ?? undefined;
   }
 
-  async function accountFor(role: Role, sellerId?: string, chefId?: string): Promise<AccountRow> {
-    const id = accountId(role, sellerId, chefId);
+  async function adminAccount(): Promise<AccountRow> {
     await db
       .stmt(
-        `INSERT OR IGNORE INTO accounts (id, role, seller_id, chef_id, created_at) VALUES (?, ?, ?, ?, ?)`,
-        id,
-        role,
-        sellerId ?? null,
-        chefId ?? null,
+        `INSERT OR IGNORE INTO accounts (id, role, created_at) VALUES (?, 'admin', ?)`,
+        ADMIN_ID,
         iso(now()),
       )
       .run();
-    return (await getAccount(id)) as AccountRow;
+    return (await getAccount(ADMIN_ID)) as AccountRow;
+  }
+
+  async function membershipOf(
+    accountId: string,
+    sellerId: string | null,
+  ): Promise<MembershipRow | undefined> {
+    if (sellerId === null) return undefined;
+    return (
+      (await db.first<MembershipRow>(
+        'SELECT * FROM memberships WHERE account_id = ? AND seller_id = ?',
+        accountId,
+        sellerId,
+      )) ?? undefined
+    );
+  }
+
+  /** The kitchen a sign-in opens: the asked one if the person belongs to it, else the oldest. */
+  async function activeKitchen(
+    accountId: string,
+    slug: string | undefined,
+  ): Promise<string | null> {
+    if (slug) {
+      const wanted = await db.first<{ seller_id: string }>(
+        `SELECT m.seller_id FROM memberships m JOIN sellers s ON s.id = m.seller_id
+         WHERE m.account_id = ? AND s.slug = ?`,
+        accountId,
+        slug,
+      );
+      if (wanted) return wanted.seller_id;
+    }
+    const first = await db.first<{ seller_id: string }>(
+      'SELECT seller_id FROM memberships WHERE account_id = ? ORDER BY created_at, rowid LIMIT 1',
+      accountId,
+    );
+    return first?.seller_id ?? null;
   }
 
   async function meOf(
     account: AccountRow,
+    sellerId: string | null,
     device: { id: string; name: string } | undefined,
     setup: boolean,
   ): Promise<Me> {
-    const row = account.seller_id
+    const membership = await membershipOf(account.id, sellerId);
+    const row = membership
       ? await db.first<{
           id: string;
           slug: string;
@@ -226,8 +266,8 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         }>(
           `SELECT s.id, s.slug, s.name, s.demo, c.name AS chef_name FROM sellers s
            LEFT JOIN chefs c ON c.seller_id = s.id AND c.id = ? WHERE s.id = ?`,
-          account.chef_id,
-          account.seller_id,
+          membership.chef_id,
+          membership.seller_id,
         )
       : null;
     // Plan 025: a setup session says what login the account already has (booleans only), so the
@@ -239,12 +279,14 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         )) !== null
       : false;
     return {
-      role: account.role,
+      role:
+        account.role === 'admin' ? 'admin' : membership ? callerRoleOf(membership.role) : 'chef',
       stage: setup ? 'setup' : 'full',
+      ...(account.display_name !== null ? { displayName: account.display_name } : {}),
       ...(setup ? { hasPassword: account.password_hash !== null, hasPasskey } : {}),
       ...(row ? { sellerId: row.id, slug: row.slug, sellerName: row.name } : {}),
       ...(row?.demo === 1 ? { demo: true as const } : {}),
-      ...(account.chef_id ? { chefId: account.chef_id } : {}),
+      ...(membership?.chef_id ? { chefId: membership.chef_id } : {}),
       ...(row?.chef_name ? { chefName: row.chef_name } : {}),
       ...(device ? { deviceId: device.id, deviceName: device.name } : {}),
     };
@@ -253,6 +295,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
   /** A setup session has no device yet; it may only finish registering. */
   async function newSetupSession(
     account: AccountRow,
+    sellerId: string | null,
     via: Via,
   ): Promise<{ token: string; statement: D1Statement }> {
     const token = randomChars(40);
@@ -263,7 +306,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
          VALUES (?, ?, NULL, ?, ?, ?, ?)`,
         await sha256Hex(token),
         account.id,
-        account.seller_id,
+        sellerId,
         via,
         iso(now()),
         iso(now() + SETUP_SESSION_MINUTES * MINUTE),
@@ -271,15 +314,20 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     };
   }
 
-  async function startSetup(account: AccountRow, via: Via): Promise<SessionGrant> {
-    const session = await newSetupSession(account, via);
+  async function startSetup(
+    account: AccountRow,
+    sellerId: string | null,
+    via: Via,
+  ): Promise<SessionGrant> {
+    const session = await newSetupSession(account, sellerId, via);
     await session.statement.run();
-    return { token: session.token, me: await meOf(account, undefined, true) };
+    return { token: session.token, me: await meOf(account, sellerId, undefined, true) };
   }
 
   /** One session per device: signing in again replaces the old token. */
   async function newDeviceSession(
     account: AccountRow,
+    sellerId: string | null,
     deviceId: string,
   ): Promise<{ token: string; statements: Array<D1Statement> }> {
     const token = randomChars(40);
@@ -294,7 +342,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
           await sha256Hex(token),
           account.id,
           deviceId,
-          account.seller_id,
+          sellerId,
           iso(now()),
           iso(now() + SESSION_DAYS * 24 * 60 * MINUTE),
         ),
@@ -309,12 +357,11 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     passkey: StoredPasskey | undefined,
   ): D1Statement {
     return db.stmt(
-      `INSERT INTO devices (id, account_id, seller_id, name, credential_id, credential_public_key,
+      `INSERT INTO devices (id, account_id, name, credential_id, credential_public_key,
          credential_counter, credential_transports, created_at, last_used_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       account.id,
-      account.seller_id,
       name,
       passkey?.credentialId ?? null,
       passkey?.publicKey ?? null,
@@ -333,17 +380,27 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     ];
   }
 
-  type DeviceListRow = DeviceRow & { role: Role; chef_id: string | null; chef_name: string | null };
+  type DeviceListRow = DeviceRow & {
+    role: 'admin' | 'person';
+    m_role: MembershipRole | null;
+    chef_id: string | null;
+    chef_name: string | null;
+  };
 
-  const DEVICE_SELECT = `SELECT d.*, a.role AS role, a.chef_id AS chef_id, c.name AS chef_name
+  /** Devices of a kitchen's members (the membership gives the role and the cook). */
+  const KITCHEN_DEVICE_SELECT = `SELECT d.*, a.role AS role, m.role AS m_role, m.chef_id AS chef_id,
+      c.name AS chef_name
     FROM devices d JOIN accounts a ON a.id = d.account_id
-    LEFT JOIN chefs c ON c.seller_id = a.seller_id AND c.id = a.chef_id`;
+    JOIN memberships m ON m.account_id = a.id AND m.seller_id = ?
+    LEFT JOIN chefs c ON c.seller_id = m.seller_id AND c.id = m.chef_id`;
 
-  function viewOf(device: DeviceListRow, currentId?: string): DeviceView {
+  function viewOf(device: DeviceListRow, currentId?: string, ownRole?: Role): DeviceView {
+    const role: Role =
+      device.role === 'admin' ? 'admin' : (ownRole ?? callerRoleOf(device.m_role ?? 'chef'));
     return {
       id: device.id,
       name: device.name,
-      role: device.role,
+      role,
       ...(device.chef_id ? { chefId: device.chef_id } : {}),
       ...(device.chef_name ? { chefName: device.chef_name } : {}),
       createdAt: device.created_at,
@@ -359,17 +416,32 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
     return row !== null;
   }
 
-  async function makeKey(account: AccountRow, kind: 'invite' | 'recovery'): Promise<KeyResponse> {
+  /** A person with no kitchen left has nothing to sign in to: the account goes, with its devices. */
+  const dropOrphanPerson = (accountId: string) =>
+    db.stmt(
+      `DELETE FROM accounts WHERE id = ? AND role = 'person'
+       AND NOT EXISTS (SELECT 1 FROM memberships WHERE account_id = ?)`,
+      accountId,
+      accountId,
+    );
+
+  async function makeKey(target: {
+    sellerId: string;
+    role: MembershipRole;
+    chefId?: string;
+    displayName: string;
+  }): Promise<KeyResponse> {
     const body = randomChars(16);
     const expiresAt = now() + KEY_TTL_HOURS * 60 * MINUTE;
     await db
       .stmt(
-        `INSERT INTO auth_keys (key_hash, account_id, seller_id, kind, created_at, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO auth_keys (key_hash, seller_id, role, chef_id, display_name, created_at, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         await sha256Hex(normaliseKey(body)),
-        account.id,
-        account.seller_id,
-        kind,
+        target.sellerId,
+        target.role,
+        target.role === 'chef' ? (target.chefId ?? null) : null,
+        target.displayName,
         iso(now()),
         iso(expiresAt),
       )
@@ -380,7 +452,11 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
   return {
     // ---- Reading a session ----
 
-    /** The live session for a token, renewed on use (full sessions: 30 days from now). */
+    /**
+     * The live session for a token, renewed on use (full sessions: 30 days from now). A person's
+     * role is read from their membership of the session's kitchen on every call, so a removed
+     * member is refused at once.
+     */
     async resolve(token) {
       if (!token) return undefined;
       const hash = await sha256Hex(token);
@@ -388,18 +464,26 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         expires_at: string;
         device_id: string | null;
         account_id: string;
-        role: Role;
+        role: 'admin' | 'person';
         seller_id: string | null;
         chef_id: string | null;
+        m_role: MembershipRole | null;
         has_device: number | null;
       }>(
-        `SELECT s.expires_at, s.device_id, a.id AS account_id, a.role, a.seller_id, a.chef_id, d.id AS has_device
-         FROM sessions s JOIN accounts a ON a.id = s.account_id LEFT JOIN devices d ON d.id = s.device_id
+        `SELECT s.expires_at, s.device_id, s.seller_id, a.id AS account_id, a.role, m.chef_id,
+           m.role AS m_role, d.id AS has_device
+         FROM sessions s JOIN accounts a ON a.id = s.account_id
+         LEFT JOIN devices d ON d.id = s.device_id
+         LEFT JOIN memberships m ON m.account_id = a.id AND m.seller_id = s.seller_id
          WHERE s.token_hash = ?`,
         hash,
       );
       if (!row) return undefined;
-      if (Date.parse(row.expires_at) <= now() || (row.device_id && !row.has_device)) {
+      if (
+        Date.parse(row.expires_at) <= now() ||
+        (row.device_id && !row.has_device) ||
+        (row.role === 'person' && !row.m_role)
+      ) {
         await db.stmt('DELETE FROM sessions WHERE token_hash = ?', hash).run();
         return undefined;
       }
@@ -415,7 +499,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       }
       const caller: Caller = {
         token,
-        role: row.role,
+        role: row.role === 'admin' || !row.m_role ? 'admin' : callerRoleOf(row.m_role),
         setup: row.device_id === null,
         accountId: row.account_id,
         ...(row.seller_id !== null ? { sellerId: row.seller_id } : {}),
@@ -433,7 +517,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
             caller.deviceId,
           )
         : null;
-      return meOf(account, device ?? undefined, caller.setup);
+      return meOf(account, caller.sellerId ?? null, device ?? undefined, caller.setup);
     },
 
     // ---- Admin setup and keys ----
@@ -447,34 +531,33 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         normaliseKey(setupKey) === normaliseKey(deps.adminSetupKey) ? true : null,
       );
       if (!result.ok) return result;
-      return ok(await startSetup(await accountFor('admin'), 'admin-setup'));
+      return ok(await startSetup(await adminAccount(), null, 'admin-setup'));
     },
 
-    /** Invite key (admin, for a seller) or chef invite (seller, for a chef). Shown once. */
-    async createKey(target, kind) {
-      const account = await accountFor(
-        target.role,
-        target.sellerId,
-        target.role === 'chef' ? target.chefId : undefined,
-      );
-      return makeKey(account, kind);
+    /** Invite (admin for a first owner, owner for an owner or a chef). Shown once. */
+    async createKey(target) {
+      return makeKey(target);
     },
 
     /**
-     * A key becomes a setup session. Wrong, expired, used-up or already used on this browser: one
-     * plain error. Each redemption takes one of the key's 3 device slots.
+     * A key becomes a setup session for a NEW person, or (with `join`) adds the membership to a
+     * signed-in person. Wrong, expired, used-up or already used on this browser: one plain error.
+     * The key admits one device (D-085).
      */
-    async redeemKey(key: string, deviceId: string) {
+    async redeemKey(key: string, deviceId: string, options = {}) {
       const hash = await sha256Hex(normaliseKey(key));
       const record = await db.first<{
-        account_id: string;
         expires_at: string;
-        seller_id: string | null;
-      }>('SELECT account_id, expires_at, seller_id FROM auth_keys WHERE key_hash = ?', hash);
-      const scopes = [
-        `device:${deviceId}`,
-        ...(record?.seller_id ? [`seller:${record.seller_id}`] : []),
-      ];
+        seller_id: string;
+        role: MembershipRole;
+        chef_id: string | null;
+        display_name: string;
+      }>(
+        'SELECT expires_at, seller_id, role, chef_id, display_name FROM auth_keys WHERE key_hash = ?',
+        hash,
+      );
+      const scopes = [`device:${deviceId}`, ...(record ? [`seller:${record.seller_id}`] : [])];
+      const spentElsewhere = () => recordFailure(scopes);
       const result = await guarded(scopes, async () => {
         if (!record || Date.parse(record.expires_at) <= now()) return null;
         const used = await db.all<{ client_device_id: string }>(
@@ -486,18 +569,72 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         return record;
       });
       if (!result.ok) return result;
-      const account = (await getAccount(result.value.account_id)) as AccountRow;
-      const session = await newSetupSession(account, 'key');
-      await db.batch([
+      const invite = result.value;
+      const redemption = db.stmt(
+        'INSERT INTO auth_key_redemptions (key_hash, client_device_id, redeemed_at) VALUES (?, ?, ?)',
+        hash,
+        deviceId,
+        iso(now()),
+      );
+      const addMembership = (accountId: string) =>
         db.stmt(
-          'INSERT INTO auth_key_redemptions (key_hash, client_device_id, redeemed_at) VALUES (?, ?, ?)',
-          hash,
-          deviceId,
+          `INSERT INTO memberships (account_id, seller_id, role, chef_id, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          accountId,
+          invite.seller_id,
+          invite.role,
+          invite.role === 'chef' ? invite.chef_id : null,
           iso(now()),
-        ),
-        session.statement,
-      ]);
-      return ok({ token: session.token, me: await meOf(account, undefined, true) });
+        );
+
+      const joiner = options.join;
+      if (joiner && !joiner.setup && joiner.role !== 'admin') {
+        if (await membershipOf(joiner.accountId, invite.seller_id)) {
+          return fail('invalid_request', 'You already belong to this kitchen');
+        }
+        try {
+          await db.batch([
+            redemption,
+            addMembership(joiner.accountId),
+            db.stmt(
+              'UPDATE sessions SET seller_id = ? WHERE token_hash = ?',
+              invite.seller_id,
+              await sha256Hex(joiner.token),
+            ),
+          ]);
+        } catch {
+          return spentElsewhere(); // lost the race: the key's row already exists
+        }
+        const account = (await getAccount(joiner.accountId)) as AccountRow;
+        const device = joiner.deviceId
+          ? await db.first<{ id: string; name: string }>(
+              'SELECT id, name FROM devices WHERE id = ?',
+              joiner.deviceId,
+            )
+          : null;
+        return ok({
+          token: joiner.token,
+          me: await meOf(account, invite.seller_id, device ?? undefined, false),
+        });
+      }
+
+      const id = newPersonId();
+      try {
+        await db.batch([
+          db.stmt(
+            `INSERT INTO accounts (id, role, display_name, created_at) VALUES (?, 'person', ?, ?)`,
+            id,
+            options.displayName ?? invite.display_name,
+            iso(now()),
+          ),
+          addMembership(id),
+          redemption,
+        ]);
+      } catch {
+        return spentElsewhere();
+      }
+      const account = (await getAccount(id)) as AccountRow;
+      return ok(await startSetup(account, invite.seller_id, 'key'));
     },
 
     // ---- Add-device codes ----
@@ -556,9 +693,12 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         if (!taken) return INVALID;
         await clearFailures([device]);
         const account = (await getAccount(record.account_id)) as AccountRow;
-        const session = await newSetupSession(account, 'code');
+        const session = await newSetupSession(account, record.seller_id, 'code');
         await session.statement.run();
-        return ok({ token: session.token, me: await meOf(account, undefined, true) });
+        return ok({
+          token: session.token,
+          me: await meOf(account, record.seller_id, undefined, true),
+        });
       }
       // Wrong, expired or used code. Stale counts (older than a code's life) and ended locks go first.
       await db
@@ -606,9 +746,13 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       const session = await db.first<{
         account_id: string;
         device_id: string | null;
+        seller_id: string | null;
         via: Via | null;
         expires_at: string;
-      }>('SELECT account_id, device_id, via, expires_at FROM sessions WHERE token_hash = ?', hash);
+      }>(
+        'SELECT account_id, device_id, seller_id, via, expires_at FROM sessions WHERE token_hash = ?',
+        hash,
+      );
       if (!session || Date.parse(session.expires_at) <= now() || session.device_id) {
         return fail('unauthorized', 'Sign in first');
       }
@@ -639,7 +783,7 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         if (taken) return fail('passkey_exists', 'This passkey is already registered');
       }
       const deviceId = newDeviceId();
-      const full = await newDeviceSession(account, deviceId);
+      const full = await newDeviceSession(account, session.seller_id, deviceId);
       await db.batch([
         ...statements,
         deviceStatement(account, deviceId, request.deviceName, passkey),
@@ -648,12 +792,17 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       ]);
       return ok({
         token: full.token,
-        me: await meOf(account, { id: deviceId, name: request.deviceName }, false),
+        me: await meOf(
+          account,
+          session.seller_id,
+          { id: deviceId, name: request.deviceName },
+          false,
+        ),
         ...(passkey ? { credentialId: passkey.credentialId } : {}),
       });
     },
 
-    /** Seller or chef by password. A new device is added; the failure is the same for any cause. */
+    /** A person of the kitchen by password. A new device is added; the failure is the same for any cause. */
     async signInPassword(request: PasswordSignInRequest) {
       const seller = await db.first<{ id: string }>(
         'SELECT id FROM sellers WHERE slug = ?',
@@ -662,8 +811,11 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       const scopes = [`device:${request.deviceId}`, ...(seller ? [`seller:${seller.id}`] : [])];
       const result = await guarded(scopes, async () => {
         if (!seller) return null;
-        const account = await getAccount(
-          request.chefId ? `chef:${seller.id}:${request.chefId}` : `seller:${seller.id}`,
+        const account = await db.first<AccountRow>(
+          `SELECT a.* FROM accounts a JOIN memberships m ON m.account_id = a.id
+           WHERE a.id = ? AND m.seller_id = ? AND a.role = 'person'`,
+          request.accountId,
+          seller.id,
         );
         if (!account || !account.password_hash || !account.password_salt) return null;
         const hash = await pbkdf2Hex(
@@ -674,26 +826,30 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         return hash === account.password_hash ? account : null;
       });
       if (!result.ok) return result;
+      const sellerId = (seller as { id: string }).id;
       const deviceId = newDeviceId();
-      const full = await newDeviceSession(result.value, deviceId);
+      const full = await newDeviceSession(result.value, sellerId, deviceId);
       await db.batch([
         deviceStatement(result.value, deviceId, request.deviceName, undefined),
         ...full.statements,
       ]);
       return ok({
         token: full.token,
-        me: await meOf(result.value, { id: deviceId, name: request.deviceName }, false),
+        me: await meOf(result.value, sellerId, { id: deviceId, name: request.deviceName }, false),
       });
     },
 
     /** Passkey sign-in: `verify` checks the signature; the new counter is kept on success. */
-    async signInPasskey(clientDeviceId, credentialId, verify) {
+    async signInPasskey(clientDeviceId, credentialId, verify, slug) {
       const result = await guarded([`device:${clientDeviceId}`], async () => {
         const row = await db.first<DeviceRow>(
           'SELECT * FROM devices WHERE credential_id = ? AND credential_public_key IS NOT NULL',
           credentialId,
         );
         if (!row?.credential_public_key) return null;
+        const account = (await getAccount(row.account_id)) as AccountRow;
+        const sellerId = account.role === 'admin' ? null : await activeKitchen(account.id, slug);
+        if (account.role === 'person' && sellerId === null) return null;
         const counter = await verify({
           credentialId,
           publicKey: row.credential_public_key,
@@ -704,17 +860,107 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
         await db
           .stmt('UPDATE devices SET credential_counter = ? WHERE id = ?', counter, row.id)
           .run();
-        return row;
+        return { row, account, sellerId };
       });
       if (!result.ok) return result;
-      const account = (await getAccount(result.value.account_id)) as AccountRow;
-      const full = await newDeviceSession(account, result.value.id);
+      const { row, account, sellerId } = result.value;
+      const full = await newDeviceSession(account, sellerId, row.id);
       await db.batch(full.statements);
       return ok({
         token: full.token,
-        me: await meOf(account, result.value, false),
+        me: await meOf(account, sellerId, row, false),
         credentialId,
       });
+    },
+
+    // ---- Kitchens of a person ----
+
+    async memberships(caller: Caller): Promise<Array<Membership>> {
+      const rows = await db.all<{
+        seller_id: string;
+        slug: string;
+        name: string;
+        demo: number;
+        role: MembershipRole;
+        chef_id: string | null;
+      }>(
+        `SELECT m.seller_id, s.slug, s.name, s.demo, m.role, m.chef_id
+         FROM memberships m JOIN sellers s ON s.id = m.seller_id
+         WHERE m.account_id = ? ORDER BY m.created_at, m.rowid`,
+        caller.accountId,
+      );
+      return rows.map((row) => ({
+        sellerId: row.seller_id,
+        slug: row.slug,
+        sellerName: row.name,
+        role: row.role,
+        ...(row.chef_id ? { chefId: row.chef_id } : {}),
+        ...(row.demo === 1 ? { demo: true as const } : {}),
+      }));
+    },
+
+    async switchKitchen(caller: Caller, sellerId: string) {
+      if (!(await membershipOf(caller.accountId, sellerId))) return false;
+      await db
+        .stmt(
+          'UPDATE sessions SET seller_id = ? WHERE token_hash = ?',
+          sellerId,
+          await sha256Hex(caller.token),
+        )
+        .run();
+      return true;
+    },
+
+    async teamNames(sellerId: string): Promise<Array<TeamName>> {
+      const rows = await db.all<{ id: string; display_name: string }>(
+        `SELECT a.id, a.display_name FROM accounts a JOIN memberships m ON m.account_id = a.id
+         WHERE m.seller_id = ? AND a.password_hash IS NOT NULL ORDER BY m.created_at, m.rowid`,
+        sellerId,
+      );
+      return rows.map((row) => ({ accountId: row.id, displayName: row.display_name }));
+    },
+
+    async members(sellerId: string, youAccountId?: string): Promise<Array<TeamMember>> {
+      const rows = await db.all<{
+        id: string;
+        display_name: string;
+        role: MembershipRole;
+        chef_id: string | null;
+        chef_name: string | null;
+        created_at: string;
+        devices: number;
+      }>(
+        `SELECT a.id, a.display_name, m.role, m.chef_id, c.name AS chef_name, m.created_at,
+           (SELECT COUNT(*) FROM devices d WHERE d.account_id = a.id) AS devices
+         FROM memberships m JOIN accounts a ON a.id = m.account_id
+         LEFT JOIN chefs c ON c.seller_id = m.seller_id AND c.id = m.chef_id
+         WHERE m.seller_id = ? ORDER BY m.created_at, m.rowid`,
+        sellerId,
+      );
+      return rows.map((row) => ({
+        accountId: row.id,
+        displayName: row.display_name,
+        role: row.role,
+        ...(row.chef_id ? { chefId: row.chef_id } : {}),
+        ...(row.chef_name ? { chefName: row.chef_name } : {}),
+        devices: row.devices,
+        createdAt: row.created_at,
+        ...(row.id === youAccountId ? { you: true as const } : {}),
+      }));
+    },
+
+    async removeMember(sellerId: string, accountId: string) {
+      if (!(await membershipOf(accountId, sellerId))) return false;
+      await db.batch([
+        db.stmt('DELETE FROM sessions WHERE account_id = ? AND seller_id = ?', accountId, sellerId),
+        db.stmt(
+          'DELETE FROM memberships WHERE account_id = ? AND seller_id = ?',
+          accountId,
+          sellerId,
+        ),
+        dropOrphanPerson(accountId),
+      ]);
+      return true;
     },
 
     // ---- WebAuthn support ----
@@ -844,13 +1090,18 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       await db.stmt('DELETE FROM sessions WHERE token_hash = ?', await sha256Hex(token)).run();
     },
 
-    /** The caller's own account devices (admin: the admin's), newest first. */
+    /** The caller's own devices (a person's span all their kitchens; admin: the admin's), newest first. */
     async devicesOf(caller: Caller) {
       const rows = await db.all<DeviceListRow>(
-        `${DEVICE_SELECT} WHERE d.account_id = ? ORDER BY d.rowid DESC`,
+        `SELECT d.*, a.role AS role, m.role AS m_role, m.chef_id AS chef_id, c.name AS chef_name
+         FROM devices d JOIN accounts a ON a.id = d.account_id
+         LEFT JOIN memberships m ON m.account_id = a.id AND m.seller_id = ?
+         LEFT JOIN chefs c ON c.seller_id = m.seller_id AND c.id = m.chef_id
+         WHERE d.account_id = ? ORDER BY d.rowid DESC`,
+        caller.sellerId ?? '',
         caller.accountId,
       );
-      return rows.map((row) => viewOf(row, caller.deviceId));
+      return rows.map((row) => viewOf(row, caller.deviceId, caller.role));
     },
 
     /** False when the device is not on the caller's own account. */
@@ -876,10 +1127,10 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       return true;
     },
 
-    /** All devices of a seller and its chefs, for the admin. */
+    /** All devices of the people of a kitchen, for the admin. */
     async devicesOfSeller(sellerId: string) {
       const rows = await db.all<DeviceListRow>(
-        `${DEVICE_SELECT} WHERE d.seller_id = ? ORDER BY d.rowid DESC`,
+        `${KITCHEN_DEVICE_SELECT} ORDER BY d.rowid DESC`,
         sellerId,
       );
       return rows.map((row) => viewOf(row));
@@ -887,7 +1138,8 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
 
     async revokeSellerDevice(sellerId: string, deviceId: string) {
       const own = await db.first(
-        'SELECT 1 AS hit FROM devices WHERE id = ? AND seller_id = ?',
+        `SELECT 1 AS hit FROM devices d JOIN memberships m ON m.account_id = d.account_id
+         WHERE d.id = ? AND m.seller_id = ?`,
         deviceId,
         sellerId,
       );
@@ -896,42 +1148,70 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       return true;
     },
 
-    /** How many devices are registered for one chef (0 when they never signed in). */
+    /** How many devices are registered for people who are this cook (0 when they never signed in). */
     async chefDeviceCount(sellerId: string, chefId: string) {
       const row = await db.first<{ n: number }>(
-        'SELECT COUNT(*) AS n FROM devices WHERE account_id = ?',
-        accountId('chef', sellerId, chefId),
+        `SELECT COUNT(*) AS n FROM devices d JOIN memberships m ON m.account_id = d.account_id
+         WHERE m.seller_id = ? AND m.chef_id = ?`,
+        sellerId,
+        chefId,
       );
       return row?.n ?? 0;
     },
 
-    /** Signs a chef out everywhere: devices and sessions go, the account and password stay. */
+    /**
+     * Signs a cook out of this kitchen: their sessions here end. Their devices and other kitchens
+     * stay (a device is the person's). Removing the member is what shuts the door.
+     */
     async signOutChef(sellerId: string, chefId: string) {
-      const id = accountId('chef', sellerId, chefId);
-      const row = await db.first<{ n: number }>(
-        'SELECT COUNT(*) AS n FROM devices WHERE account_id = ?',
-        id,
-      );
-      await db.batch([
-        db.stmt('DELETE FROM sessions WHERE account_id = ?', id),
-        db.stmt('DELETE FROM devices WHERE account_id = ?', id),
-      ]);
-      return row?.n ?? 0;
+      const n = await this.chefDeviceCount(sellerId, chefId);
+      await db
+        .stmt(
+          `DELETE FROM sessions WHERE seller_id = ? AND account_id IN
+           (SELECT account_id FROM memberships WHERE seller_id = ? AND chef_id = ?)`,
+          sellerId,
+          sellerId,
+          chefId,
+        )
+        .run();
+      return n;
     },
 
-    /** A removed chef loses their account, devices, sessions and open keys. */
+    /**
+     * A removed cook: chef members lose their membership (and sessions) here, owners who also
+     * cooked keep theirs without the link, open invites for the cook go.
+     */
     async revokeChef(sellerId: string, chefId: string) {
-      const id = accountId('chef', sellerId, chefId);
+      const chefs = await db.all<{ account_id: string }>(
+        "SELECT account_id FROM memberships WHERE seller_id = ? AND chef_id = ? AND role = 'chef'",
+        sellerId,
+        chefId,
+      );
       await db.batch([
-        db.stmt('DELETE FROM sessions WHERE account_id = ?', id),
-        db.stmt('DELETE FROM devices WHERE account_id = ?', id),
         db.stmt(
-          'DELETE FROM auth_key_redemptions WHERE key_hash IN (SELECT key_hash FROM auth_keys WHERE account_id = ?)',
-          id,
+          `DELETE FROM sessions WHERE seller_id = ? AND account_id IN
+           (SELECT account_id FROM memberships WHERE seller_id = ? AND chef_id = ? AND role = 'chef')`,
+          sellerId,
+          sellerId,
+          chefId,
         ),
-        db.stmt('DELETE FROM auth_keys WHERE account_id = ?', id),
-        db.stmt('DELETE FROM auth_codes WHERE account_id = ?', id),
-        db.stmt('DELETE FROM accounts WHERE id = ?', id),
+        db.stmt(
+          "DELETE FROM memberships WHERE seller_id = ? AND chef_id = ? AND role = 'chef'",
+          sellerId,
+          chefId,
+        ),
+        db.stmt(
+          'UPDATE memberships SET chef_id = NULL WHERE seller_id = ? AND chef_id = ?',
+          sellerId,
+          chefId,
+        ),
+        db.stmt(
+          'DELETE FROM auth_key_redemptions WHERE key_hash IN (SELECT key_hash FROM auth_keys WHERE seller_id = ? AND chef_id = ?)',
+          sellerId,
+          chefId,
+        ),
+        db.stmt('DELETE FROM auth_keys WHERE seller_id = ? AND chef_id = ?', sellerId, chefId),
+        ...chefs.map((chef) => dropOrphanPerson(chef.account_id)),
       ]);
     },
   };

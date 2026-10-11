@@ -151,14 +151,22 @@ test('pictures: upload a small icon and see it in the preview', async ({
   expect(errors).toEqual([]);
 });
 
-test('chefs: add and rename a chef', async ({ page, request }, testInfo) => {
+test('chefs: add and rename a cook (Team screen)', async ({ page, request }, testInfo) => {
   const errors = collectErrors(page);
+  // The dev X-Seller header has no account, so the worker answers GET /api/seller/team with 404
+  // (the people list needs a real sign-in); that is the only 404 expected here.
+  const teamMisses: Array<string> = [];
+  page.on('response', (response) => {
+    if (response.status() === 404) teamMisses.push(new URL(response.url()).pathname);
+  });
   const seller = sellerFor(testInfo.project.name);
   const name = `Chef E2E ${testInfo.project.name}`;
   const renamed = `${name} B`;
   try {
     await open(page, seller, 'chefs');
-    await expect(page.getByRole('heading', { name: 'Chefs', level: 2 })).toBeVisible();
+    // Plan 033: the pane is the Team screen; the cooks list follows under "Cooks".
+    await expect(page.getByRole('heading', { name: 'Team', level: 2 })).toBeVisible();
+    await expect(page.getByText('Cooks', { exact: true })).toBeVisible();
     await page.getByLabel('Chef name').fill(name);
     await page.getByRole('button', { name: 'Add chef', exact: true }).click();
     await expect(page.getByText(name, { exact: true })).toBeVisible();
@@ -182,5 +190,6 @@ test('chefs: add and rename a chef', async ({ page, request }, testInfo) => {
       }
     }
   }
-  expect(errors).toEqual([]);
+  expect(teamMisses.every((path) => path === '/api/seller/team')).toBe(true);
+  expect(errors.filter((text) => !text.includes('status of 404'))).toEqual([]);
 });

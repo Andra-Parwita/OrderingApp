@@ -6,12 +6,20 @@ import type { Seller } from './domain';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray } from './parse';
 import { parseSeller } from './seller';
 
+/**
+ * What a session can do in its active kitchen. 'seller' is a kitchen OWNER (plan 033: a person with
+ * an `owner` membership); 'chef' is a person with a `chef` membership; 'admin' is the separate admin.
+ */
 export const ROLES = ['admin', 'seller', 'chef'] as const;
 export type Role = (typeof ROLES)[number];
+/** A person's role in one kitchen (a membership). */
+export const MEMBERSHIP_ROLES = ['owner', 'chef'] as const;
+export type MembershipRole = (typeof MEMBERSHIP_ROLES)[number];
 
-/** Invite and recovery keys: valid 24 hours, usable on up to 3 devices. */
+/** Invite keys: valid 24 hours, admit ONE device (D-085); more devices come with a 6-digit code. */
 export const KEY_TTL_HOURS = 24;
-export const KEY_MAX_DEVICES = 3;
+export const KEY_MAX_DEVICES = 1;
+export const DISPLAY_NAME_MAX = 40;
 /** Add-device code: 6 digits, 10 minutes, one use. */
 export const CODE_TTL_MINUTES = 10;
 export const CODE_LENGTH = 6;
@@ -60,7 +68,9 @@ export function checkPassword(password: string): PasswordStrength {
 export type Me = {
   role: Role;
   stage: 'setup' | 'full';
-  /** Not for admin. */
+  /** Persons only (plan 033): the name the team list shows. */
+  displayName?: string;
+  /** Not for admin. The ACTIVE kitchen of this session. */
   sellerId?: string;
   slug?: string;
   sellerName?: string;
@@ -94,11 +104,13 @@ export type DeviceView = {
 /** `deviceId` is the random id the client keeps per browser; lockouts are counted on it. */
 export type DeviceIdField = { deviceId: string };
 export type AdminSetupRequest = DeviceIdField & { setupKey: string };
-export type KeySignInRequest = DeviceIdField & { key: string };
+/** `displayName`: the person's own edit of the invite's name, for a NEW person (ignored when joining). */
+export type KeySignInRequest = DeviceIdField & { key: string; displayName?: string };
 export type CodeSignInRequest = DeviceIdField & { code: string };
 export type PasswordSignInRequest = DeviceIdField & {
   slug: string;
-  chefId?: string;
+  /** The person, picked from `GET /api/s/:slug/team-names`. */
+  accountId: string;
   password: string;
   deviceName: string;
 };
@@ -106,13 +118,18 @@ export type PasswordSignInRequest = DeviceIdField & {
 export type WebAuthnResponse = Record<string, unknown> & { id: string };
 /** Asks for passkey sign-in options; `credentialId` is the one this browser kept, if any. */
 export type PasskeyOptionsRequest = DeviceIdField & { credentialId?: string };
-export type PasskeySignInRequest = DeviceIdField & { response: WebAuthnResponse };
+/** `slug`: the kitchen to open, if the person belongs to it (else their first kitchen). */
+export type PasskeySignInRequest = DeviceIdField & { response: WebAuthnResponse; slug?: string };
 export type RegisterRequest =
   | { kind: 'passkey'; deviceName: string; response: WebAuthnResponse }
   | { kind: 'password'; password: string; deviceName: string };
 export type RenameDeviceRequest = { name: string };
 export type CreateSellerRequest = { name: string; slug: string };
 export type ChefInviteRequest = { chefId: string };
+/** POST /api/seller/invites (owner). The admin's invite-key takes just `{ displayName? }`. */
+export type InviteRequest = { displayName: string; role: MembershipRole; chefId?: string };
+/** POST /api/auth/switch: make another kitchen of mine the active one. */
+export type SwitchRequest = { sellerId: string };
 /** PATCH /api/admin/sellers/:slug (plan 013): switch the demo kitchen mode. */
 export type SetDemoRequest = { demo: boolean };
 
@@ -129,6 +146,32 @@ export type PasskeyOptionsResponse = { options: Record<string, unknown> };
 export type MeResponse = { me: Me };
 export type DevicesResponse = { devices: Array<DeviceView> };
 export type KeyResponse = { key: string; expiresAt: string; maxDevices: number };
+/** One kitchen a person belongs to. */
+export type Membership = {
+  sellerId: string;
+  slug: string;
+  sellerName: string;
+  role: MembershipRole;
+  chefId?: string;
+  demo?: true;
+};
+export type MembershipsResponse = { memberships: Array<Membership> };
+/** Names for the password sign-in picker (people of one kitchen who have a password). */
+export type TeamName = { accountId: string; displayName: string };
+export type TeamNamesResponse = { names: Array<TeamName> };
+/** A member of one kitchen, for the owner's and the admin's team list. */
+export type TeamMember = {
+  accountId: string;
+  displayName: string;
+  role: MembershipRole;
+  chefId?: string;
+  chefName?: string;
+  devices: number;
+  createdAt: string;
+  /** True on the caller's own row. */
+  you?: true;
+};
+export type MembersResponse = { members: Array<TeamMember> };
 export type CodeResponse = { code: string; expiresAt: string };
 /** A seller as the admin lists it: when it was added is shown there only. */
 export type AdminSeller = Seller & { createdAt: string };
@@ -164,7 +207,10 @@ export function parseKeySignInRequest(input: unknown): KeySignInRequest | null {
   if (!isRecord(input)) return null;
   const deviceId = deviceIdOf(input);
   const key = text(input['key'], 100);
-  return deviceId && key ? { deviceId, key } : null;
+  if (!deviceId || !key) return null;
+  if (input['displayName'] === undefined) return { deviceId, key };
+  const displayName = text(input['displayName'], DISPLAY_NAME_MAX);
+  return displayName ? { deviceId, key, displayName } : null;
 }
 
 export function parseCodeSignInRequest(input: unknown): CodeSignInRequest | null {
@@ -196,7 +242,10 @@ export function parsePasskeySignInRequest(input: unknown): PasskeySignInRequest 
   if (!isRecord(input)) return null;
   const deviceId = deviceIdOf(input);
   const response = webAuthnResponseOf(input['response']);
-  return deviceId && response ? { deviceId, response } : null;
+  if (!deviceId || !response) return null;
+  if (input['slug'] === undefined) return { deviceId, response };
+  const slug = text(input['slug'], 100);
+  return slug ? { deviceId, response, slug } : null;
 }
 
 /** The password is not trimmed; only its length is bounded at sign-in (no hints about strength). */
@@ -205,13 +254,13 @@ export function parsePasswordSignInRequest(input: unknown): PasswordSignInReques
   const deviceId = deviceIdOf(input);
   const slug = text(input['slug'], 100);
   const deviceName = text(input['deviceName'], DEVICE_NAME_MAX);
-  const { password, chefId } = input;
-  if (!deviceId || !slug || !deviceName) return null;
+  const accountId = text(input['accountId'], 100);
+  const { password } = input;
+  if (!deviceId || !slug || !deviceName || !accountId) return null;
   if (typeof password !== 'string' || password.length < 1 || password.length > PASSWORD_MAX) {
     return null;
   }
-  if (chefId !== undefined && (typeof chefId !== 'string' || chefId === '')) return null;
-  return { deviceId, slug, password, deviceName, ...(chefId !== undefined ? { chefId } : {}) };
+  return { deviceId, slug, accountId, password, deviceName };
 }
 
 /** A password shorter than PASSWORD_MIN is rejected here (400 `invalid_request`). */
@@ -253,16 +302,49 @@ export function parseChefInviteRequest(input: unknown): ChefInviteRequest | null
   return chefId ? { chefId } : null;
 }
 
+export function parseInviteRequest(input: unknown): InviteRequest | null {
+  if (!isRecord(input)) return null;
+  const displayName = text(input['displayName'], DISPLAY_NAME_MAX);
+  const role = input['role'];
+  if (!displayName || !isOneOf(MEMBERSHIP_ROLES, role)) return null;
+  if (input['chefId'] === undefined) return { displayName, role };
+  const chefId = text(input['chefId'], 100);
+  return chefId && role === 'chef' ? { displayName, role, chefId } : null;
+}
+
+export function parseSwitchRequest(input: unknown): SwitchRequest | null {
+  if (!isRecord(input)) return null;
+  const sellerId = text(input['sellerId'], 100);
+  return sellerId ? { sellerId } : null;
+}
+
+/** The optional name on the admin's invite-key call; null when absent or invalid. */
+export function parseOptionalDisplayName(input: unknown): string | null {
+  return isRecord(input) ? text(input['displayName'], DISPLAY_NAME_MAX) : null;
+}
+
 export function parseMe(input: unknown): Me | null {
   if (!isRecord(input)) return null;
   const { role, stage, sellerId, slug, sellerName, chefId, chefName, deviceId, deviceName } = input;
+  const { displayName } = input;
   if (!isOneOf(ROLES, role) || (stage !== 'setup' && stage !== 'full')) return null;
-  for (const value of [sellerId, slug, sellerName, chefId, chefName, deviceId, deviceName]) {
+  const optional = [
+    sellerId,
+    slug,
+    sellerName,
+    chefId,
+    chefName,
+    deviceId,
+    deviceName,
+    displayName,
+  ];
+  for (const value of optional) {
     if (value !== undefined && typeof value !== 'string') return null;
   }
   return {
     role,
     stage,
+    ...(typeof displayName === 'string' ? { displayName } : {}),
     ...(typeof sellerId === 'string' ? { sellerId } : {}),
     ...(typeof slug === 'string' ? { slug } : {}),
     ...(typeof sellerName === 'string' ? { sellerName } : {}),
@@ -364,4 +446,69 @@ export function parseChefAccessResponse(input: unknown): ChefAccessResponse | nu
   if (!isRecord(input)) return null;
   const chefs = parseArray(input['chefs'], parseChefAccess);
   return chefs ? { chefs } : null;
+}
+
+function parseMembership(input: unknown): Membership | null {
+  if (!isRecord(input)) return null;
+  const { sellerId, slug, sellerName, role, chefId } = input;
+  if (typeof sellerId !== 'string' || typeof slug !== 'string' || typeof sellerName !== 'string') {
+    return null;
+  }
+  if (!isOneOf(MEMBERSHIP_ROLES, role)) return null;
+  if (chefId !== undefined && typeof chefId !== 'string') return null;
+  return {
+    sellerId,
+    slug,
+    sellerName,
+    role,
+    ...(typeof chefId === 'string' ? { chefId } : {}),
+    ...(input['demo'] === true ? { demo: true as const } : {}),
+  };
+}
+
+export function parseMembershipsResponse(input: unknown): MembershipsResponse | null {
+  if (!isRecord(input)) return null;
+  const memberships = parseArray(input['memberships'], parseMembership);
+  return memberships ? { memberships } : null;
+}
+
+function parseTeamName(input: unknown): TeamName | null {
+  if (!isRecord(input)) return null;
+  const { accountId, displayName } = input;
+  return typeof accountId === 'string' && typeof displayName === 'string'
+    ? { accountId, displayName }
+    : null;
+}
+
+export function parseTeamNamesResponse(input: unknown): TeamNamesResponse | null {
+  if (!isRecord(input)) return null;
+  const names = parseArray(input['names'], parseTeamName);
+  return names ? { names } : null;
+}
+
+function parseTeamMember(input: unknown): TeamMember | null {
+  if (!isRecord(input)) return null;
+  const { accountId, displayName, role, chefId, chefName, devices, createdAt, you } = input;
+  if (typeof accountId !== 'string' || typeof displayName !== 'string') return null;
+  if (!isOneOf(MEMBERSHIP_ROLES, role) || !isInt(devices, 0, 1000) || !isIsoDate(createdAt)) {
+    return null;
+  }
+  if (chefId !== undefined && typeof chefId !== 'string') return null;
+  if (chefName !== undefined && typeof chefName !== 'string') return null;
+  return {
+    accountId,
+    displayName,
+    role,
+    devices,
+    createdAt,
+    ...(typeof chefId === 'string' ? { chefId } : {}),
+    ...(typeof chefName === 'string' ? { chefName } : {}),
+    ...(you === true ? { you: true as const } : {}),
+  };
+}
+
+export function parseMembersResponse(input: unknown): MembersResponse | null {
+  if (!isRecord(input)) return null;
+  const members = parseArray(input['members'], parseTeamMember);
+  return members ? { members } : null;
 }

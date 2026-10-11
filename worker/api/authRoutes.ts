@@ -4,9 +4,12 @@ import {
   AUTH_RATE_MAX,
   AUTH_RATE_WINDOW_SECONDS,
   parseAdminSetupRequest,
+  DISPLAY_NAME_MAX,
   parseCodeSignInRequest,
   parseCreateSellerRequest,
   parseKeySignInRequest,
+  parseOptionalDisplayName,
+  parseSwitchRequest,
   parsePasskeyOptionsRequest,
   parsePasskeySignInRequest,
   parsePasswordSignInRequest,
@@ -15,6 +18,8 @@ import {
   parseSetDemoRequest,
   type ChefAccessResponse,
   type DevicesResponse,
+  type MembersResponse,
+  type MembershipsResponse,
   type MeResponse,
   type PasskeyOptionsResponse,
   type SellerResponse,
@@ -33,6 +38,7 @@ import {
   type RelyingParty,
 } from '../auth/webauthn';
 import type {
+  AuthRepository,
   AuthResult,
   Caller,
   Repository,
@@ -90,6 +96,15 @@ function rpOrRefusal(request: Request): RelyingParty | Response {
   return relyingParty(request) ?? noPasskeyHere();
 }
 
+/** A full person session sent with a key redemption: the person who joins. */
+async function joinerOf(
+  auth: AuthRepository,
+  request: Request,
+): Promise<{ join: Caller } | Record<string, never>> {
+  const caller = await auth.resolve(sessionTokenOf(request));
+  return caller && !caller.setup && caller.role !== 'admin' ? { join: caller } : {};
+}
+
 /** Everything under /api/auth/*. */
 export async function handleAuth(
   store: Repository,
@@ -127,7 +142,13 @@ export async function handleAuth(
       if (!input) return bad();
       return (
         (await limited(store, input.deviceId)) ??
-        sessionResult(await auth.redeemKey(input.key, input.deviceId))
+        sessionResult(
+          await auth.redeemKey(input.key, input.deviceId, {
+            // A person already signed in joins the kitchen with this key (no new passkey).
+            ...(await joinerOf(auth, request)),
+            ...(input.displayName ? { displayName: input.displayName } : {}),
+          }),
+        )
       );
     }
     if (a === 'code') {
@@ -152,7 +173,9 @@ export async function handleAuth(
       if (slowDown) return slowDown;
       const rp = rpOrRefusal(request);
       if (rp instanceof Response) return rp;
-      return sessionResult(await signInWithPasskey(auth, rp, input.deviceId, input.response));
+      return sessionResult(
+        await signInWithPasskey(auth, rp, input.deviceId, input.response, input.slug),
+      );
     }
     if (a === 'register') {
       const input = parseRegisterRequest(body);
@@ -177,6 +200,17 @@ export async function handleAuth(
       if (token) await auth.signOut(token);
       return withCookie(Response.json({ ok: true } satisfies OkResponse), clearedSessionCookie());
     }
+    if (a === 'switch') {
+      const session = await requireSession(store, request);
+      if ('response' in session) return session.response;
+      const input = parseSwitchRequest(body);
+      if (!input) return bad();
+      if (!(await auth.switchKitchen(session.caller, input.sellerId))) {
+        return error('forbidden', 'You do not belong to that kitchen');
+      }
+      const me = await auth.me({ ...session.caller, sellerId: input.sellerId });
+      return Response.json({ me } satisfies MeResponse);
+    }
     if (a === 'device-codes') {
       const session = await requireSession(store, request);
       return 'response' in session
@@ -198,6 +232,14 @@ export async function handleAuth(
     const answer = Response.json({ me } satisfies MeResponse);
     // A full session slides: the server renewed it, so the cookie is renewed too.
     return caller.setup ? answer : withCookie(answer, sessionCookie(token, 'full'));
+  }
+
+  if (a === 'memberships' && !b && method === 'GET') {
+    const session = await requireSession(store, request);
+    if ('response' in session) return session.response;
+    return Response.json({
+      memberships: await auth.memberships(session.caller),
+    } satisfies MembershipsResponse);
   }
 
   if (a === 'devices') {
@@ -298,12 +340,26 @@ export async function handleAdmin(
         ? Response.json({ seller } satisfies SellerResponse)
         : error('seller_not_found', 'Seller not found');
     }
-    if (b && (c === 'invite-key' || c === 'recovery-key') && !d && method === 'POST') {
-      const key = await store.auth.createKey(
-        { role: 'seller', sellerId: b },
-        c === 'invite-key' ? 'invite' : 'recovery',
-      );
+    // The admin invites a first owner by name. `recovery-key` is the same call (D-090: recovery
+    // is a re-invite). Without a body the kitchen's name is the person's starting name.
+    if (b && target && (c === 'invite-key' || c === 'recovery-key') && !d && method === 'POST') {
+      const displayName =
+        parseOptionalDisplayName(await readJson(request)) ??
+        target.seller.name.slice(0, DISPLAY_NAME_MAX);
+      const key = await store.auth.createKey({ role: 'owner', sellerId: b, displayName });
       return Response.json(key, { status: 201 });
+    }
+    if (b && c === 'members') {
+      if (!d && method === 'GET') {
+        return Response.json({
+          members: await store.auth.members(b),
+        } satisfies MembersResponse);
+      }
+      if (d && method === 'DELETE') {
+        return (await store.auth.removeMember(b, d))
+          ? Response.json({ ok: true } satisfies OkResponse)
+          : error('not_found', 'Member not found');
+      }
     }
     if (b && target && c === 'chefs') {
       const sellerStore = target;

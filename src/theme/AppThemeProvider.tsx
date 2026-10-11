@@ -5,6 +5,7 @@ import type { Brand } from './designTokens';
 import { useKitchenBrand } from './kitchenBrand';
 import { makeTheme } from './themes';
 import { useThemePreference } from './themePreference';
+import './textSize'; // sets the saved text size on <html> when the app loads, before the first paint
 
 const QUERY = '(prefers-color-scheme: dark)';
 

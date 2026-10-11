@@ -32,13 +32,24 @@
     "doneText": "This device can now sign in as admin.",
     "open": "Open the admin page",
     "closes": "This page stops working once an admin exists.",
-    "noPasskeysHere": "Passkeys do not work on an IP address. Open this page from a web address, such as https://localhost, to set up the admin."
+    "noPasskeysHere": "Passkeys do not work on an IP address. Open this page from a web address, such as https://localhost, to set up the admin.",
+    "method": "How to set up",
+    "tabKey": "Setup key",
+    "tabCode": "6-digit code",
+    "notAdminCode": "This code is for a kitchen, not the admin. Use it on the seller sign-in page.",
+    "deviceGuess": {
+      "iphone": "iPhone",
+      "ipad": "iPad",
+      "android": "Android phone",
+      "computer": "Computer"
+    }
   },
   "signIn": {
     "title": "Admin sign-in",
     "text": "Sign in with the passkey on this device.",
     "button": "Sign in with passkey",
-    "noPasskeysHere": "Passkeys do not work on an IP address. Open this page from a web address, such as https://localhost."
+    "noPasskeysHere": "Passkeys do not work on an IP address. Open this page from a web address, such as https://localhost.",
+    "newDevice": "New device? Use a 6-digit code"
   },
   "home": {
     "title": "Admin",
@@ -50,7 +61,7 @@
     "colCreated": "Created",
     "colDevices": "Devices",
     "noSellers": "No sellers yet.",
-    "selectHint": "Select a seller to create keys and manage devices.",
+    "selectHint": "Select a seller to create invites and manage people.",
     "add": {
       "title": "Add a seller",
       "name": "Seller name",
@@ -71,38 +82,47 @@
       "recovery": "Create recovery key",
       "demo": "Demo kitchen",
       "demoNote": "On: the seller can add 50 sample orders and clear them, and customers see this is a demo. Never switch it on for a real kitchen.",
-      "devices": "Devices",
-      "noDevices": "No devices yet.",
-      "chef": "Chef {{name}}",
       "lastUsed": "Last used {{when}}",
       "signOut": "Sign out",
       "signOutConfirm": "Tap again to sign out",
-      "chefs": "Chefs",
-      "noChefs": "No chefs yet.",
-      "chefLine_other": "{{name}} · {{count}} devices",
-      "chefLine_one": "{{name}} · {{count}} device",
-      "chefsNote": "Read-only list. The seller adds and invites chefs.",
-      "signOutAll": "Sign out all",
-      "signOutAllConfirm": "Tap again to sign out all"
+      "members": "People",
+      "noMembers": "Nobody has joined yet.",
+      "role": {
+        "owner": "Owner",
+        "chef": "Chef"
+      },
+      "remove": "Remove",
+      "removeConfirm": "Tap again to remove",
+      "memberLine_other": "{{role}} · {{count}} devices",
+      "memberLine_one": "{{role}} · {{count}} device"
     },
     "key": {
       "inviteTitle": "Invite key for {{name}}",
       "recoveryTitle": "Recovery key for {{name}}",
       "once": "Shown once. Copy it now: it cannot be shown again.",
-      "rule": "Valid for 24 hours, works on up to 3 devices.",
-      "copy": "Copy",
+      "rule": "Works once, on one device, within 24 hours.",
+      "copy": "Copy key",
       "copied": "Copied",
       "copyFailed": "Could not copy. Select the key and copy it by hand.",
       "whatsapp": "Send on WhatsApp",
-      "message": "Your {{app}} sign-in key: {{key}} (valid for 24 hours, works on up to 3 devices)",
-      "done": "Done"
+      "message": "Your {{app}} invite: {{link}} (works once, on one device, within 24 hours)",
+      "done": "Done",
+      "nameLabel": "Name of the person",
+      "nameHelper": "Shown on the team list. Optional.",
+      "create": "Create invite",
+      "cancel": "Cancel",
+      "copyLink": "Copy link with key"
     },
     "mine": {
       "title": "Your admin devices",
       "thisDevice": "this device",
       "addDevice": "Add a device",
       "code": "Code for the new device: {{code}}. Use it within 10 minutes.",
-      "none": "No devices."
+      "none": "No devices.",
+      "rename": "Rename",
+      "renameField": "New name for {{name}}",
+      "saveName": "Save name",
+      "cancel": "Cancel"
     },
     "privacy": "This page manages access only. It shows no orders, customers or menus."
   }

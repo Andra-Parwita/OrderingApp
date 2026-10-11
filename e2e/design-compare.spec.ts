@@ -21,6 +21,8 @@ interface Entry {
   visitFirst?: string;
   /** Then click the visible link or button whose text matches this. */
   click?: RegExp;
+  /** The click may be absent: where passkeys are unsupported (WebKit) the page already is that step. */
+  clickOptional?: boolean;
 }
 
 const harness = (screen: string): string => `/?harness=seller-menu&screen=${screen}`;
@@ -42,6 +44,7 @@ const ENTRIES: ReadonlyArray<Entry> = [
     url: '/seller/sign-in?kitchen=onde-onde',
     visitFirst: '/onde-onde',
     click: /Use password instead/i,
+    clickOptional: true,
     viewport: TABLET,
   },
   {
@@ -174,7 +177,12 @@ test('design compare: app screens beside the references', async ({ browser }, te
       }
       await page.goto(entry.url, { waitUntil: 'load' });
       if (entry.click) {
-        await page.getByText(entry.click).first().click({ timeout: 10_000 });
+        const target = page.getByText(entry.click).first();
+        if (entry.clickOptional) {
+          // Wait for the screen to settle on either step before deciding.
+          await page.getByRole('heading').first().waitFor();
+          if (await target.isVisible()) await target.click();
+        } else await target.click({ timeout: 10_000 });
       }
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined);
       await page.waitForTimeout(800);

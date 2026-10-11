@@ -6,6 +6,7 @@ import type { Language } from '../../../shared/domain';
 import { pickText } from '../../../shared/text';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { COOK_NS } from './i18n/register';
+import { WhoOrderedPanel } from './WhoOrderedPanel';
 import { ChefFilterControl, useChefFilter } from './ChefFilterControl';
 import type { CookRow, GroupBy } from './cookModel';
 import { selectCookGroups, selectCookNotes } from './cookSelectors';
@@ -21,6 +22,10 @@ const Tools = styled.div`
   gap: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+
+  @media (max-width: 40rem) {
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  }
 `;
 const Inline = styled.div`
   display: flex;
@@ -77,6 +82,10 @@ const RowBox = styled.li<{ $done: boolean }>`
   @media (max-width: 52rem) {
     grid-template-columns: 3rem minmax(0, 1fr) auto;
   }
+
+  @media (max-width: 40rem) {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  }
 `;
 const Big = styled.span`
   font-size: 1.5rem;
@@ -101,12 +110,27 @@ const Split = styled.span`
   color: ${({ theme }) => theme.c.muted};
   white-space: nowrap;
 `;
+const Aside = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+
+  /* Phone: the split and the who button take a row of their own under the dish. */
+  @media (max-width: 40rem) {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+`;
 const Made = styled.span`
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+
+  @media (max-width: 40rem) {
+    grid-column: 1 / 3;
+  }
 `;
 const Bar = styled.span`
   display: inline-block;
@@ -146,9 +170,10 @@ type RowProps = Readonly<{
   counting: boolean;
   made: number;
   onChange: (itemId: string, delta: number, total: number) => void;
+  onWho: (itemId: string) => void;
 }>;
 
-const Row = memo(function Row({ row, lang, counting, made, onChange }: RowProps) {
+const Row = memo(function Row({ row, lang, counting, made, onChange, onWho }: RowProps) {
   const { t } = useTranslation(COOK_NS);
   const shown = pickText(row.name, lang);
   const pickup = row.who
@@ -169,7 +194,13 @@ const Row = memo(function Row({ row, lang, counting, made, onChange }: RowProps)
         <span>{shown}</span>
         <Sub>{pickText(row.size, lang)}</Sub>
       </Name>
-      <Split>{split}</Split>
+      <Aside>
+        <Split>{split}</Split>
+        <Button aria-label={t('who.open', { name: shown })} onClick={() => onWho(row.itemId)}>
+          <Icon name="person" />
+          {row.who.length}
+        </Button>
+      </Aside>
       {counting ? (
         <>
           <Made>
@@ -203,21 +234,22 @@ const Row = memo(function Row({ row, lang, counting, made, onChange }: RowProps)
 
 /** Kitchen · Cook: how many of each dish to make, by dish or by chef; count mode ticks them off. */
 export function CookTab({
-  cookingDate,
   status,
   onRetry,
-}: Readonly<{ cookingDate: string; status: 'loading' | 'ready' | 'error'; onRetry: () => void }>) {
+}: Readonly<{ status: 'loading' | 'ready' | 'error'; onRetry: () => void }>) {
   const { t, i18n } = useTranslation(COOK_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [groupBy, setGroupBy] = useState<GroupBy>('item');
   const [counting, setCounting] = useCountMode();
-  const { made, change } = useMadeCounts(cookingDate);
+  const { made, change } = useMadeCounts();
   const chef = useChefFilter();
+  const [whoItem, setWhoItem] = useState<string | null>(null);
   const groups = useSelector((state: CookRootState) =>
     selectCookGroups(state, 'all', groupBy, chef.filter),
   );
   const notes = useSelector((state: CookRootState) => selectCookNotes(state, 'all', chef.filter));
 
+  const whoRow = groups.flatMap((g) => g.rows).find((r) => r.itemId === whoItem);
   const groupOptions: ReadonlyArray<SegmentedOption<GroupBy>> = GROUPS.map((value) => ({
     value,
     label: t(`group.${value === 'item' ? 'dish' : value}`),
@@ -281,11 +313,16 @@ export function CookTab({
                 counting={counting}
                 made={made[row.itemId] ?? 0}
                 onChange={change}
+                onWho={setWhoItem}
               />
             ))}
           </List>
         </section>
       ))}
+
+      {whoRow ? (
+        <WhoOrderedPanel row={whoRow} lang={lang} onClose={() => setWhoItem(null)} />
+      ) : null}
 
       {notes.length > 0 ? (
         <section aria-label={t('notes', { count: notes.length })}>

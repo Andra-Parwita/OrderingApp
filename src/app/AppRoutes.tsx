@@ -59,7 +59,7 @@ import {
 import { SettingsPanes, paneHref, parsePane, type PaneId } from '../features/seller-settings';
 import { DevicesScreen } from '../features/seller-auth';
 import { HandOverScreen } from '../features/seller-saturday';
-import { ChefsScreen, ImagesScreen } from '../features/seller-setup';
+import { ImagesScreen, TeamScreen } from '../features/seller-setup';
 import { ShareComposer, ShareScreen } from '../features/seller-share';
 import { Button, ListRow, PageHeader } from '../ui';
 import {
@@ -76,6 +76,7 @@ import { DESKTOP_QUERY } from './layout';
 import { isValidSlug } from '../../shared/seller';
 import { HomePage, KitchenNotFoundPage, NotFoundPage } from './pages';
 import { SellerLayout } from './SellerLayout';
+import { KitchenSwitcher } from './KitchenSwitcher';
 import { MoreSwitchPerson } from './SwitchPerson';
 
 // Route wrappers: the screens only get callbacks; where they lead is decided here.
@@ -406,7 +407,7 @@ function SettingsRoute() {
       pane={id}
       devices={<DevicesScreen embedded onSignedOut={signedOut} signOutHere={end} />}
       images={<ImagesScreen embedded />}
-      chefs={<ChefsScreen embedded />}
+      chefs={<TeamScreen embedded />}
       backup={<BackupScreen embedded />}
     />
   );
@@ -461,6 +462,11 @@ const MORE_LINKS = [
   ['shareMenu', '/seller/share'],
   ['devices', '/seller/devices'],
 ] as const;
+// Phone: Kitchen and Labels are reached from More (plan 035); the rest is tablet-only.
+const PHONE_LINKS = [
+  ['kitchen', '/seller/cook'],
+  ['labels', '/seller/labels'],
+] as const;
 // What the server closes to a chef (D-013); the chef does not see these.
 const CHEF_HIDDEN: ReadonlySet<string> = new Set([
   'settings',
@@ -505,7 +511,18 @@ function MoreRoute() {
     return (
       <>
         <PageHeader title={t('sellerNav.moreTitle')} />
+        <nav aria-label={t('sellerNav.moreTitle')}>
+          {PHONE_LINKS.map(([key, to]) => (
+            <ListRow
+              key={key}
+              primary={t(`sellerNav.${key}`)}
+              trailing="›"
+              onClick={() => void navigate(to)}
+            />
+          ))}
+        </nav>
         <PhoneBlocks>
+          <KitchenSwitcher />
           <MoreSwitchPerson />
           <PhoneLanguageRow />
           {me === null ? null : (

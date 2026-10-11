@@ -8,6 +8,48 @@ export const LABEL_NOTE_MAX = 70;
 /** A4 sheet of 2 columns by 7 rows. */
 export const LABELS_PER_SHEET = 14;
 
+/**
+ * Item lines that fit one printed label (D-091). Worked out from the print CSS: content height
+ * (38 mm A4 / 40 mm roll, less 2 × 2 mm padding) minus the 16 mm code/name/QR block and the
+ * 8 pt where line leaves 13.75 mm; at 8 pt × 1.15 each line is 3.25 mm, so 4 lines. The 7 pt
+ * note row costs one line, so the last part of an order with a note holds one fewer.
+ */
+export const LINES_PER_LABEL: Readonly<Record<LabelPaper, number>> = { a4: 4, roll: 4 };
+
+export type LabelPart = Readonly<{
+  order: SellerOrder;
+  lines: ReadonlyArray<OrderLine>;
+  /** 1-based. */
+  index: number;
+  of: number;
+  /** The note prints on the last part only. */
+  showNote: boolean;
+}>;
+
+/** An order as one or more labels, split by whole item lines, never mid-line. */
+export function splitOrder(order: SellerOrder, paper: LabelPaper): Array<LabelPart> {
+  const size = LINES_PER_LABEL[paper];
+  const chunks = chunk(order.lines, size);
+  const hasNote = truncateNote(order.note ?? '') !== '';
+  const last = chunks.at(-1);
+  // The last part needs room for the note row: move its final line to a part of its own.
+  const moved = hasNote && last && last.length >= size ? last.pop() : undefined;
+  if (moved) chunks.push([moved]);
+  if (chunks.length === 0) chunks.push([]);
+  return chunks.map((lines, i) => ({
+    order,
+    lines,
+    index: i + 1,
+    of: chunks.length,
+    showNote: hasNote && i === chunks.length - 1,
+  }));
+}
+
+/** Every label to print, in order, parts of one order together. */
+export function labelsFor(orders: ReadonlyArray<SellerOrder>, paper: LabelPaper): Array<LabelPart> {
+  return orders.flatMap((order) => splitOrder(order, paper));
+}
+
 /** The note cut to at most `max` characters in total, ending in an ellipsis when it was cut. */
 export function truncateNote(note: string, max: number = LABEL_NOTE_MAX): string {
   const text = note.trim();

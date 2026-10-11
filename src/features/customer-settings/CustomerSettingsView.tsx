@@ -11,6 +11,7 @@ import {
   useSavedOrdersInstall,
   type InstallOverride,
 } from '../../components/install';
+import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import type { ThemePreference } from '../../theme/themePreference';
 import { Icon, Segmented, type SegmentedOption } from '../../ui';
 
@@ -247,6 +248,15 @@ export function CustomerSettingsView({
     ],
     [t],
   );
+  const textSize = useTextSize();
+  const textSizes = useMemo<Array<SegmentedOption<TextSize>>>(
+    () => [
+      { value: 'smaller', label: t('customerSettings.textSmaller') },
+      { value: 'normal', label: t('customerSettings.textNormal') },
+      { value: 'larger', label: t('customerSettings.textLarger') },
+    ],
+    [t],
+  );
   const { status, env, busy } = install;
   const onToggle = useCallback(() => {
     if (status === 'on') install.disable();
@@ -295,6 +305,17 @@ export function CustomerSettingsView({
             value={theme}
             onChange={onTheme}
             label={t('customerSettings.theme')}
+          />
+        </Row>
+        <Row>
+          <Label>
+            <Name>{t('customerSettings.textSize')}</Name>
+          </Label>
+          <Segmented
+            options={textSizes}
+            value={textSize}
+            onChange={setTextSize}
+            label={t('customerSettings.textSize')}
           />
         </Row>
         <Row>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { passkeysSupported, signInWithPasskey, signOut } from '../../api/auth';
 import { Button } from '../../ui';
@@ -9,10 +9,16 @@ export type AdminSignInScreenProps = Readonly<{
   onSignedIn: () => void;
   /** Start the passkey prompt on arrival (from "Already set up? Sign in"). */
   autoStart?: boolean;
+  /** A link under the button ("New device? Use a 6-digit code"). */
+  footer?: ReactNode;
 }>;
 
 /** Admin sign-in: the passkey only; admins have no password (D-011). */
-export function AdminSignInScreen({ onSignedIn, autoStart = false }: AdminSignInScreenProps) {
+export function AdminSignInScreen({
+  onSignedIn,
+  autoStart = false,
+  footer,
+}: AdminSignInScreenProps) {
   const { t } = useTranslation(ADMIN_NS);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
@@ -67,6 +73,7 @@ export function AdminSignInScreen({ onSignedIn, autoStart = false }: AdminSignIn
         ) : (
           <Message $bad>{t('signIn.noPasskeysHere')}</Message>
         )}
+        {footer}
       </Section>
     </Narrow>
   );

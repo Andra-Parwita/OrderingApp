@@ -63,7 +63,11 @@ describe('demo kitchen', () => {
   }
 
   async function sellerToken(sellerId: string) {
-    const invite = await world.repo.auth.createKey({ role: 'seller', sellerId }, 'invite');
+    const invite = await world.repo.auth.createKey({
+      role: 'owner',
+      sellerId,
+      displayName: 'Bu Ani',
+    });
     tokenCounter++;
     return sessionToken(
       world.repo.auth.redeemKey(invite.key, `device-seller-${String(tokenCounter)}`),

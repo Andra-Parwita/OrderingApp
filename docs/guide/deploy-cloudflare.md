@@ -108,3 +108,20 @@ Addresses:
   ```
 
   A rollback does not undo database migrations, so add migrations only in a way that the old version still works with.
+
+- **All admin devices are lost** (no device can sign in at `/admin/sign-in`, so nobody can make a 6-digit code). If any admin device still works, don't do this: make a code on `/admin` → **Your devices** → **Add a device** instead. Otherwise the owner, in their own terminal:
+  1. Remove the admin's devices and sessions. Kitchens, orders and seller logins are untouched.
+
+     ```bash
+     pnpm exec wrangler d1 execute shaggybobo-order --remote --command "DELETE FROM sessions WHERE account_id = 'admin'; DELETE FROM devices WHERE account_id = 'admin';"
+     ```
+
+  2. Set a new setup key (the old one is useless once used):
+
+     ```bash
+     pnpm exec wrangler secret put ADMIN_SETUP_KEY
+     ```
+
+  3. Open `https://order.shaggybobo.app/admin/setup`, enter the new key and create a passkey. Then add the second admin's device with a 6-digit code (plan 027, D-080).
+
+  The statement was checked on a copy of the schema (plan 027, stage 4): it leaves no admin devices or sessions, which is exactly when `/admin/setup` accepts a key again.

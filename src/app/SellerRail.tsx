@@ -11,6 +11,7 @@ import {
   type SellerOrdersRootState,
 } from '../features/seller-orders';
 import { SellerPicker } from '../components/SellerPicker';
+import { KitchenSwitcher } from './KitchenSwitcher';
 import { Icon, ImageSlot, Tooltip } from '../ui';
 import { HREF, ICON, type NavId } from './sellerNav';
 import { RailSwitchPerson } from './SwitchPerson';
@@ -283,6 +284,7 @@ export function SellerRail({
           </ImageBox>
         )}
         {collapsed ? null : <KitchenName>{kitchenName}</KitchenName>}
+        {collapsed ? null : <KitchenSwitcher />}
         <List>
           {ids.map((id) => {
             const flagged = id === 'menu' && menuNotPublished;

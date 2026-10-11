@@ -1,6 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { chunk, itemText, LABEL_NOTE_MAX, pickOrders, truncateNote } from './labelModel';
-import { line, sampleOrders } from './testSupport';
+import type { OrderLine, SellerOrder } from '../../../shared/domain';
+import {
+  chunk,
+  itemText,
+  LABEL_NOTE_MAX,
+  labelsFor,
+  LINES_PER_LABEL,
+  pickOrders,
+  splitOrder,
+  truncateNote,
+} from './labelModel';
+
+function line(itemId: string, en: string, id: string, qty: number): OrderLine {
+  return { itemId, name: { en, id }, size: { en: '1', id: '1' }, priceCents: 1000, qty };
+}
+function order(id: string, status: SellerOrder['status'], lines: Array<OrderLine>, note?: string) {
+  return {
+    id,
+    code: id.toUpperCase().padEnd(6, 'X'),
+    firstName: id,
+    status,
+    lines,
+    ...(note ? { note } : {}),
+  } as SellerOrder;
+}
+const lines = (n: number) =>
+  Array.from({ length: n }, (_, i) => line(`i${i}`, `Dish ${i}`, `Hidangan ${i}`, 1));
+function sampleOrders(): Array<SellerOrder> {
+  return [
+    order('rina', 'confirmed', lines(1)),
+    order('tom', 'ordered', lines(1)),
+    order('dewi', 'cancelled', lines(1)),
+    order('sari', 'confirmed', lines(1)),
+  ];
+}
 
 describe('truncateNote', () => {
   it('keeps a short note and cuts a long one to 70 characters with an ellipsis', () => {
@@ -27,16 +60,16 @@ describe('pickOrders', () => {
   it('filters by status or by selection', () => {
     const orders = sampleOrders();
     expect(pickOrders(orders, 'confirmed', new Set()).map((o) => o.firstName)).toEqual([
-      'Rina',
-      'Sari',
+      'rina',
+      'sari',
     ]);
     expect(pickOrders(orders, 'notCancelled', new Set()).map((o) => o.firstName)).toEqual([
-      'Rina',
-      'Tom',
-      'Sari',
+      'rina',
+      'tom',
+      'sari',
     ]);
-    expect(pickOrders(orders, 'selected', new Set(['o2'])).map((o) => o.firstName)).toEqual([
-      'Tom',
+    expect(pickOrders(orders, 'selected', new Set(['tom'])).map((o) => o.firstName)).toEqual([
+      'tom',
     ]);
   });
 });
@@ -45,5 +78,72 @@ describe('chunk', () => {
   it('splits into pages', () => {
     expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
     expect(chunk([], 14)).toEqual([]);
+  });
+});
+
+describe('splitOrder', () => {
+  it('keeps a short order on one label', () => {
+    const parts = splitOrder(order('a', 'confirmed', lines(3), 'No chilli'), 'a4');
+    expect(parts).toHaveLength(1);
+    expect(parts[0]).toMatchObject({ index: 1, of: 1, showNote: true });
+  });
+
+  it('splits 12 lines over labels with every line exactly once, in order', () => {
+    for (const paper of ['a4', 'roll'] as const) {
+      const all = lines(12);
+      const parts = splitOrder(order('a', 'confirmed', all), paper);
+      expect(parts).toHaveLength(Math.ceil(12 / LINES_PER_LABEL[paper]));
+      expect(parts.flatMap((p) => p.lines.map((l) => l.itemId))).toEqual(all.map((l) => l.itemId));
+      expect(parts.map((p) => p.index)).toEqual(parts.map((_, i) => i + 1));
+      expect(parts.every((p) => p.of === parts.length)).toBe(true);
+    }
+  });
+
+  it('puts the note on the last part only, and gives it room', () => {
+    const parts = splitOrder(order('a', 'confirmed', lines(8), 'Allergic'), 'a4');
+    expect(parts).toHaveLength(3);
+    expect(parts.map((p) => p.showNote)).toEqual([false, false, true]);
+    expect(parts.every((p) => p.lines.length <= LINES_PER_LABEL.a4)).toBe(true);
+    expect(splitOrder(order('b', 'confirmed', lines(8)), 'a4')).toHaveLength(2);
+  });
+
+  it('counts labels over orders and still makes one label for an order with no lines', () => {
+    const orders = [order('a', 'confirmed', lines(12)), order('b', 'confirmed', lines(1))];
+    expect(labelsFor(orders, 'a4')).toHaveLength(4);
+    expect(splitOrder(order('c', 'confirmed', []), 'roll')).toHaveLength(1);
+  });
+});
+
+describe('splitOrder', () => {
+  it('keeps a short order on one label with no "1 of 1"', () => {
+    const parts = splitOrder(order('a', 'confirmed', lines(3), 'No chilli'), 'a4');
+    expect(parts).toHaveLength(1);
+    expect(parts[0]).toMatchObject({ index: 1, of: 1, showNote: true });
+  });
+
+  it('splits 12 lines over labels with every line exactly once, in order', () => {
+    for (const paper of ['a4', 'roll'] as const) {
+      const all = lines(12);
+      const parts = splitOrder(order('a', 'confirmed', all), paper);
+      expect(parts).toHaveLength(Math.ceil(12 / LINES_PER_LABEL[paper]));
+      expect(parts.flatMap((p) => p.lines.map((l) => l.itemId))).toEqual(all.map((l) => l.itemId));
+      expect(parts.map((p) => p.index)).toEqual(parts.map((_, i) => i + 1));
+      expect(parts.every((p) => p.of === parts.length)).toBe(true);
+    }
+  });
+
+  it('puts the note on the last part only, and gives it room', () => {
+    const parts = splitOrder(order('a', 'confirmed', lines(8), 'Allergic'), 'a4');
+    expect(parts).toHaveLength(3);
+    expect(parts.map((p) => p.showNote)).toEqual([false, false, true]);
+    expect(parts.every((p) => p.lines.length <= LINES_PER_LABEL.a4)).toBe(true);
+    expect(parts.at(-1)?.lines.length).toBeLessThan(LINES_PER_LABEL.a4);
+    expect(splitOrder(order('b', 'confirmed', lines(8)), 'a4')).toHaveLength(2);
+  });
+
+  it('counts labels over orders and still makes one label for an order with no lines', () => {
+    const orders = [order('a', 'confirmed', lines(12)), order('b', 'confirmed', lines(1))];
+    expect(labelsFor(orders, 'a4')).toHaveLength(4);
+    expect(splitOrder(order('c', 'confirmed', []), 'roll')).toHaveLength(1);
   });
 });

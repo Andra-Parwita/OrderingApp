@@ -49,16 +49,18 @@ test('admin sets up or signs in, adds a seller and sees an invite key once', asy
   await expect(page.getByText(`Warung Test was added. The link is /${slug}.`)).toBeVisible();
   await expect(page.getByRole('row', { name: new RegExp(`/${slug}`) })).toBeVisible();
 
-  // The Created column shows a date, and the new seller has no chefs (read-only section).
+  // The Created column shows a date, and the new seller has nobody yet (the People list).
   await expect(page.getByRole('columnheader', { name: 'Created' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Chefs' })).toBeVisible();
-  await expect(page.getByText('No chefs yet.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'People' })).toBeVisible();
+  await expect(page.getByText('Nobody has joined yet.')).toBeVisible();
 
-  // The new seller is selected: an invite key is shown once.
+  // The new seller is selected: an invite for a named person, key shown once.
   await page.getByRole('button', { name: 'Create invite key' }).click();
   const box = page.getByRole('region', { name: 'Invite key for Warung Test' });
-  await expect(box).toBeVisible();
-  await expect(box.getByText('Valid for 24 hours, works on up to 3 devices.')).toBeVisible();
+  await box.getByLabel('Name of the person').fill('Bu Warung');
+  await box.getByRole('button', { name: 'Create invite' }).click();
+  await expect(box.getByText('Works once, on one device, within 24 hours.')).toBeVisible();
+  await expect(box.getByRole('button', { name: 'Copy link with key' })).toBeVisible();
   const key = (await box.locator('code').textContent()) ?? '';
   expect(key.length).toBeGreaterThan(8);
   await expect(box.getByRole('link', { name: 'Send on WhatsApp' })).toHaveAttribute(

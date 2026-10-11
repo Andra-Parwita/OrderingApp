@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { passkeysSupported, signInWithPasskey, signInWithPassword, signOut } from '../../api/auth';
+import { passkeysSupported, signInWithPasskey, signOut } from '../../api/auth';
 import type { Me } from '../../../shared/authContract';
 import { Button } from '../../ui';
-import { failureMessage, guessDevice } from './authText';
+import { failureMessage } from './authText';
 import { AUTH_NS } from './i18n/register';
 import {
   Actions,
-  AuthForm,
   AuthNote,
   AuthPanel,
   AuthTitle,
@@ -16,8 +15,8 @@ import {
   Divider,
   ErrorText,
   FaceIcon,
-  PasswordField,
 } from './parts';
+import { TeamPasswordForm } from './TeamPasswordForm';
 
 export type SignInScreenProps = Readonly<{
   /**
@@ -27,8 +26,6 @@ export type SignInScreenProps = Readonly<{
   slug?: string | undefined;
   /** The frame above shows the kitchen's logo and name; kept so callers need not change. */
   kitchenName?: string;
-  /** A chef signs in to the seller's kitchen with their own password. */
-  chefId?: string;
   onSignedIn: (me: Me) => void;
   /** A link shown under the sign-in options (first time on this device, "Use your invite key"). */
   footer?: ReactNode;
@@ -42,12 +39,10 @@ export type SignInScreenProps = Readonly<{
 /**
  * Sign in: the passkey this device kept (one big button), or the kitchen's password on a second
  * step. On an IP-address web address (the home Wi-Fi test of a phone) passkeys cannot work (D-046):
- * only the password shows. The seller API takes no username: the kitchen (and a chef's id) is
- * already known, so the password step asks for the password alone.
+ * only the password shows. The password step asks who you are (a name from the kitchen's team).
  */
 export function SignInScreen({
   slug,
-  chefId,
   onSignedIn,
   footer,
   switchPerson = false,
@@ -58,9 +53,8 @@ export function SignInScreen({
   const [step, setStep] = useState<'main' | 'password'>(
     !passkeys && canUsePassword ? 'password' : 'main',
   );
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null); // under the big button
-  const [passwordError, setPasswordError] = useState<string | null>(null); // under the password
+  const [passwordError, setPasswordError] = useState<string | null>(null); // shown with the password step
   const [busy, setBusy] = useState(false);
 
   const withPasskey = useCallback(
@@ -103,59 +97,19 @@ export function SignInScreen({
     void withPasskey(true);
   }, [switchPerson, passkeys, withPasskey]);
 
-  const withPassword = useCallback(
-    async (event: FormEvent) => {
-      event.preventDefault();
-      if (slug === undefined) return;
-      if (password === '') {
-        setPasswordError(t('signIn.empty'));
-        return;
-      }
-      setPasswordError(null);
-      setBusy(true);
-      // A returning device is added under its guessed name; Devices lets the person rename it.
-      const result = await signInWithPassword({
-        slug,
-        password,
-        deviceName: t(`deviceName.${guessDevice()}`),
-        ...(chefId ? { chefId } : {}),
-      });
-      setBusy(false);
-      if (result.ok) onSignedIn(result.data.me);
-      else setPasswordError(failureMessage(t, result));
-    },
-    [chefId, onSignedIn, password, slug, t],
-  );
-
   const goTo = (next: 'main' | 'password') => {
     setError(null);
     setPasswordError(null);
     setStep(next);
   };
 
-  if (step === 'password' && canUsePassword) {
+  if (step === 'password' && slug !== undefined) {
     return (
       <AuthPanel>
         {passkeys ? <BackButton onClick={() => goTo('main')} /> : null}
         <AuthTitle>{t('signIn.passwordTitle')}</AuthTitle>
         {!passkeys ? <AuthNote>{t('signIn.noPasskeysHere')}</AuthNote> : null}
-        <AuthForm onSubmit={(event: FormEvent) => void withPassword(event)} noValidate>
-          <PasswordField
-            label={t('signIn.passwordLabel')}
-            value={password}
-            onChange={(next) => {
-              setPassword(next);
-              setPasswordError(null);
-            }}
-            autoComplete="current-password"
-            {...(passwordError ? { error: passwordError } : {})}
-          />
-          <BigAction>
-            <Button type="submit" variant="primary" fullWidth disabled={busy}>
-              {busy ? t('signIn.working') : t('signIn.submit')}
-            </Button>
-          </BigAction>
-        </AuthForm>
+        <TeamPasswordForm slug={slug} initialError={passwordError} onDone={onSignedIn} />
         {!passkeys ? (
           <>
             <Divider />

@@ -65,7 +65,7 @@ test('banner, rail and customer images are never cropped', async ({ browser }, t
       await showsWholeImage(image);
       const slot = image.locator('xpath=..');
       expect(await colourOf(slot)).toBe(BACKGROUND);
-      const strip = slot.locator('xpath=../..');
+      const strip = slot.locator('xpath=../../..'); // slot > area > clip > strip (the clip is the collapsible part)
       expect(await colourOf(strip)).toBe(BACKGROUND);
       const stripBox = await strip.boundingBox();
       const slotBox = await slot.boundingBox();

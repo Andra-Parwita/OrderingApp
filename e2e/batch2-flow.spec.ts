@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { goToName, markHowItWorksSeen } from './customerHelpers';
 import { orderRow, pageScrollWidth, sampleDay, searchFor } from './sellerHelpers';
 
 function watchConsole(page: Page): Array<string> {
@@ -22,13 +23,14 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
   const firstName = `Nudge-${Date.now()}`;
 
   // Customer orders (tempeh has no portion limit, so parallel runs never sell it out).
-  await page.goto('/onde-onde');
+  await markHowItWorksSeen(page.context());
+  await page.goto('/onde-onde/dishes');
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
-  await page.getByRole('button', { name: /View basket/ }).click();
-  await page.getByLabel('Your first name').fill(firstName);
+  await goToName(page);
+  await page.getByLabel('First name').fill(firstName);
   await page.getByRole('button', { name: /^Place order/ }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
-  await page.getByRole('button', { name: 'Change or cancel order' }).click();
+  await page.getByRole('button', { name: 'Change or cancel' }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+$/);
   await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
   await page.screenshot({ path: 'captures/b2flow-1-customer-order.png', fullPage: true });

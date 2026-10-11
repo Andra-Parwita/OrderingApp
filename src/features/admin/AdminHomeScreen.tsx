@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { appVersion } from '../../../shared/buildInfo';
-import type { AdminSeller, ChefAccess, DeviceView } from '../../../shared/authContract';
+import type { AdminSeller, DeviceView, TeamMember } from '../../../shared/authContract';
 import type { Language } from '../../../shared/domain';
 import { formatDay, formatDayTime } from '../../../shared/dates';
-import { SELLER_NAME_MAX } from '../../../shared/authContract';
+import { DEVICE_NAME_MAX, SELLER_NAME_MAX } from '../../../shared/authContract';
 import { SLUG_MAX } from '../../../shared/seller';
 import {
   createDeviceCode,
@@ -13,13 +13,12 @@ import {
   createRecoveryKey,
   createSeller,
   fetchMyDevices,
-  fetchSellerChefs,
-  fetchSellerDevices,
+  fetchSellerMembers,
   fetchSellers,
+  removeSellerMember,
+  renameMyDevice,
   signOut,
-  signOutChefEverywhere,
   signOutDevice,
-  signOutSellerDevice,
   setSellerDemo,
 } from '../../api/auth';
 import type { ApiFailure } from '../../api/http';
@@ -45,7 +44,7 @@ export type AdminHomeScreenProps = Readonly<{
   onSignInNeeded?: () => void;
 }>;
 
-type ShownKey = Readonly<{ sellerId: string; kind: 'invite' | 'recovery'; key: string }>;
+type ShownKey = Readonly<{ sellerId: string; kind: 'invite' | 'recovery' }>;
 
 const DeviceList = styled.ul`
   display: flex;
@@ -101,12 +100,12 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loadProblem, setLoadProblem] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [devices, setDevices] = useState<Array<DeviceView> | null>(null);
-  const [chefs, setChefs] = useState<Array<ChefAccess> | null>(null);
+  const [members, setMembers] = useState<Array<TeamMember> | null>(null);
   const [shown, setShown] = useState<ShownKey | null>(null);
   const [keyProblem, setKeyProblem] = useState<string | null>(null);
   const [mine, setMine] = useState<Array<DeviceView> | null>(null);
   const [code, setCode] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [addProblem, setAddProblem] = useState<string | null>(null);
@@ -131,8 +130,9 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
     setSellers(result.data.sellers);
     const entries = await Promise.all(
       result.data.sellers.map(async (seller) => {
-        const list = await fetchSellerDevices(seller.id);
-        return [seller.id, list.ok ? list.data.devices.length : 0] as const;
+        const list = await fetchSellerMembers(seller.id);
+        const count = list.ok ? list.data.members.reduce((sum, m) => sum + m.devices, 0) : 0;
+        return [seller.id, count] as const;
       }),
     );
     setCounts(Object.fromEntries(entries));
@@ -150,30 +150,23 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
     void loadMine();
   }, [loadSellers, loadMine]);
 
-  const loadDevices = useCallback(async (sellerId: string) => {
-    const result = await fetchSellerDevices(sellerId);
-    if (result.ok) {
-      setDevices(result.data.devices);
-      setCounts((current) => ({ ...current, [sellerId]: result.data.devices.length }));
-    }
-  }, []);
-
-  const loadChefs = useCallback(async (sellerId: string) => {
-    const result = await fetchSellerChefs(sellerId);
-    if (result.ok) setChefs(result.data.chefs);
+  const loadMembers = useCallback(async (sellerId: string) => {
+    const result = await fetchSellerMembers(sellerId);
+    if (!result.ok) return;
+    setMembers(result.data.members);
+    const devices = result.data.members.reduce((sum, member) => sum + member.devices, 0);
+    setCounts((current) => ({ ...current, [sellerId]: devices }));
   }, []);
 
   const select = useCallback(
     (sellerId: string) => {
       setSelectedId(sellerId);
-      setDevices(null);
-      setChefs(null);
+      setMembers(null);
       setShown(null);
       setKeyProblem(null);
-      void loadDevices(sellerId);
-      void loadChefs(sellerId);
+      void loadMembers(sellerId);
     },
-    [loadDevices, loadChefs],
+    [loadMembers],
   );
 
   const selected = sellers?.find((seller) => seller.id === selectedId) ?? null;
@@ -205,40 +198,28 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
     [canAdd, name, slug, refusedHere, select, t],
   );
 
+  /** The invite box calls this with the typed name; the key itself stays inside the box. */
   const makeKey = useCallback(
-    async (kind: 'invite' | 'recovery') => {
-      if (!selected) return;
-      setBusy(true);
+    async (kind: 'invite' | 'recovery', displayName: string): Promise<string | null> => {
+      if (!selected) return null;
       setKeyProblem(null);
-      const result =
-        kind === 'invite'
-          ? await createInviteKey(selected.id)
-          : await createRecoveryKey(selected.id);
-      setBusy(false);
-      if (result.ok) setShown({ sellerId: selected.id, kind, key: result.data.key });
-      else setKeyProblem(refusedHere(result));
+      const make = kind === 'invite' ? createInviteKey : createRecoveryKey;
+      const result = await make(selected.id, displayName || undefined);
+      if (result.ok) return result.data.key;
+      setKeyProblem(refusedHere(result));
+      return null;
     },
     [selected, refusedHere],
   );
 
-  const signOutSeller = useCallback(
-    async (deviceId: string) => {
+  const removeMember = useCallback(
+    async (accountId: string) => {
       if (!selected) return;
-      const result = await signOutSellerDevice(selected.id, deviceId);
-      if (result.ok) await loadDevices(selected.id);
+      const result = await removeSellerMember(selected.id, accountId);
+      if (result.ok) await loadMembers(selected.id);
       else setKeyProblem(refusedHere(result));
     },
-    [selected, loadDevices, refusedHere],
-  );
-
-  const signOutChef = useCallback(
-    async (chefId: string) => {
-      if (!selected) return;
-      const result = await signOutChefEverywhere(selected.id, chefId);
-      if (result.ok) await Promise.all([loadChefs(selected.id), loadDevices(selected.id)]);
-      else setKeyProblem(refusedHere(result));
-    },
-    [selected, loadChefs, loadDevices, refusedHere],
+    [selected, loadMembers, refusedHere],
   );
 
   const changeDemo = useCallback(
@@ -261,6 +242,14 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
   const signOutMine = useCallback(
     async (deviceId: string) => {
       const result = await signOutDevice(deviceId);
+      if (result.ok) await loadMine();
+    },
+    [loadMine],
+  );
+
+  const renameMine = useCallback(
+    async (deviceId: string, next: string) => {
+      const result = await renameMyDevice(deviceId, next);
       if (result.ok) await loadMine();
     },
     [loadMine],
@@ -328,10 +317,17 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
               <SmallHeading>{t('home.seller.title', { name: selected.name })}</SmallHeading>
               <Muted>{t('home.seller.link', { slug: selected.slug })}</Muted>
               <Row>
-                <Button variant="primary" disabled={busy} onClick={() => void makeKey('invite')}>
+                <Button
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() => setShown({ sellerId: selected.id, kind: 'invite' })}
+                >
                   {t('home.seller.invite')}
                 </Button>
-                <Button disabled={busy} onClick={() => void makeKey('recovery')}>
+                <Button
+                  disabled={busy}
+                  onClick={() => setShown({ sellerId: selected.id, kind: 'recovery' })}
+                >
                   {t('home.seller.recovery')}
                 </Button>
               </Row>
@@ -352,50 +348,32 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
                     shown.kind === 'invite' ? 'home.key.inviteTitle' : 'home.key.recoveryTitle',
                     { name: selected.name },
                   )}
-                  keyText={shown.key}
+                  key={shown.kind}
+                  slug={selected.slug}
+                  create={(displayName) => makeKey(shown.kind, displayName)}
                   onDone={() => setShown(null)}
                 />
               ) : null}
-              <SmallHeading>{t('home.seller.chefs')}</SmallHeading>
-              <Muted>{t('home.seller.chefsNote')}</Muted>
-              {chefs === null ? <Muted>{t('loading')}</Muted> : null}
-              {chefs && chefs.length === 0 ? <Muted>{t('home.seller.noChefs')}</Muted> : null}
-              {chefs && chefs.length > 0 ? (
-                <DeviceList aria-label={t('home.seller.chefs')}>
-                  {chefs.map((chef) => (
-                    <DeviceItem key={chef.id}>
-                      <strong>
-                        {t('home.seller.chefLine', { name: chef.name, count: chef.devices })}
-                      </strong>
-                      {chef.devices > 0 ? (
-                        <ConfirmButton
-                          label={t('home.seller.signOutAll')}
-                          confirmLabel={t('home.seller.signOutAllConfirm')}
-                          onConfirm={() => void signOutChef(chef.id)}
-                        />
-                      ) : null}
-                    </DeviceItem>
-                  ))}
-                </DeviceList>
-              ) : null}
-              <SmallHeading>{t('home.seller.devices')}</SmallHeading>
-              {devices === null ? <Muted>{t('loading')}</Muted> : null}
-              {devices && devices.length === 0 ? <Muted>{t('home.seller.noDevices')}</Muted> : null}
-              {devices && devices.length > 0 ? (
-                <DeviceList aria-label={t('home.seller.devices')}>
-                  {devices.map((device) => (
-                    <DeviceItem key={device.id}>
+              <SmallHeading>{t('home.seller.members')}</SmallHeading>
+              {members === null ? <Muted>{t('loading')}</Muted> : null}
+              {members && members.length === 0 ? <Muted>{t('home.seller.noMembers')}</Muted> : null}
+              {members && members.length > 0 ? (
+                <DeviceList aria-label={t('home.seller.members')}>
+                  {members.map((member) => (
+                    <DeviceItem key={member.accountId}>
                       <span>
-                        <strong>{device.name}</strong>
-                        {device.chefName
-                          ? ` · ${t('home.seller.chef', { name: device.chefName })}`
-                          : ''}
-                        <Muted>{when(device)}</Muted>
+                        <strong>{member.displayName}</strong>
+                        <Muted>
+                          {t('home.seller.memberLine', {
+                            role: t(`home.seller.role.${member.role}`),
+                            count: member.devices,
+                          })}
+                        </Muted>
                       </span>
                       <ConfirmButton
-                        label={t('home.seller.signOut')}
-                        confirmLabel={t('home.seller.signOutConfirm')}
-                        onConfirm={() => void signOutSeller(device.id)}
+                        label={t('home.seller.remove')}
+                        confirmLabel={t('home.seller.removeConfirm')}
+                        onConfirm={() => void removeMember(member.accountId)}
                       />
                     </DeviceItem>
                   ))}
@@ -440,17 +418,55 @@ export function AdminHomeScreen({ onSignedOut, onSignInNeeded }: AdminHomeScreen
             <DeviceList aria-label={t('home.mine.title')}>
               {mine.map((device) => (
                 <DeviceItem key={device.id}>
-                  <span>
-                    <strong>{device.name}</strong>
-                    {device.current ? ` · ${t('home.mine.thisDevice')}` : ''}
-                    <Muted>{when(device)}</Muted>
-                  </span>
-                  {device.current ? null : (
-                    <ConfirmButton
-                      label={t('home.seller.signOut')}
-                      confirmLabel={t('home.seller.signOutConfirm')}
-                      onConfirm={() => void signOutMine(device.id)}
-                    />
+                  {renaming?.id === device.id ? (
+                    <FormSection
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const next = renaming.name.trim();
+                        setRenaming(null);
+                        if (next !== '' && next !== device.name) void renameMine(device.id, next);
+                      }}
+                    >
+                      <TextField
+                        label={t('home.mine.renameField', { name: device.name })}
+                        value={renaming.name}
+                        maxLength={DEVICE_NAME_MAX}
+                        autoComplete="off"
+                        onChange={(event) =>
+                          setRenaming({ id: device.id, name: event.target.value })
+                        }
+                      />
+                      <Row>
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          disabled={renaming.name.trim() === ''}
+                        >
+                          {t('home.mine.saveName')}
+                        </Button>
+                        <Button onClick={() => setRenaming(null)}>{t('home.mine.cancel')}</Button>
+                      </Row>
+                    </FormSection>
+                  ) : (
+                    <>
+                      <span>
+                        <strong>{device.name}</strong>
+                        {device.current ? ` · ${t('home.mine.thisDevice')}` : ''}
+                        <Muted>{when(device)}</Muted>
+                      </span>
+                      <Row>
+                        <Button onClick={() => setRenaming({ id: device.id, name: device.name })}>
+                          {t('home.mine.rename')}
+                        </Button>
+                        {device.current ? null : (
+                          <ConfirmButton
+                            label={t('home.seller.signOut')}
+                            confirmLabel={t('home.seller.signOutConfirm')}
+                            onConfirm={() => void signOutMine(device.id)}
+                          />
+                        )}
+                      </Row>
+                    </>
                   )}
                 </DeviceItem>
               ))}

@@ -71,15 +71,14 @@ export function activePhoneNav(pathname: string): PhoneNavId {
 }
 
 // Phone: these routes say "Open this on a tablet or computer" (handoff, Layout shell → Phone).
+// Kitchen and Labels are not here: they work on a phone (plan 035).
 const TABLET_ONLY = [
-  '/seller/cook',
   '/seller/menu',
   '/seller/share',
   '/seller/settings',
   '/seller/week',
   '/seller/images',
   '/seller/chefs',
-  '/seller/labels',
   '/seller/past-weeks',
   '/seller/backup',
   '/seller/devices',

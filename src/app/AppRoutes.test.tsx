@@ -195,6 +195,9 @@ describe('AppRoutes', () => {
     const phone = renderAt('/seller/more');
     expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { name: 'More' })).toBeInTheDocument();
+    const entries = within(screen.getByRole('navigation', { name: 'More' }));
+    expect(entries.getByText('Kitchen')).toBeInTheDocument();
+    expect(entries.getByText('Labels')).toBeInTheDocument();
     phone.unmount();
 
     wide = true;
