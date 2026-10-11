@@ -38,6 +38,8 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 | 024 | [Customer pages show the current kitchen theme from the first paint](024-customer-theme-first-paint.md) | approved (11:49); after 021 and 023 |
 | 025 | [Add a device: use the existing passkey or password](025-add-device-existing-login.md) | done (12:28); iPad check pending |
 | 026 | [A small error log sent to the server (last 500)](026-client-error-log.md) | approved (12:15); after 025 |
+| 027 | [Admin sign-in: an empty left panel](027-admin-sign-in-panel.md) | replaced by 028 |
+| 028 | [ShaggyBobo branding on admin and seller first set-up](028-developer-branding-sign-in.md) | done (2026-10-11); end gate pending |
 
 ## Template
 

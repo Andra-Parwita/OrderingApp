@@ -68,3 +68,6 @@ graphify-out/
 
 # graphify knowledge graph output (regenerate with /graphify)
 graphify-out/
+
+# Playwright MCP browser logs (Claude Code screenshots)
+.playwright-mcp/

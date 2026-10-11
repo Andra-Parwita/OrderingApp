@@ -61,7 +61,7 @@ export function SellerSetupRoute() {
   }, [navigate, refresh]);
   const alreadySetUp = <FootLink to={SWITCH_SIGN_IN}>{t('signIn.alreadySetUp')}</FootLink>;
   return (
-    <SignInFrame>
+    <SignInFrame brand="sellerSetup">
       {step === 'key' ? (
         <SetupKeyScreen
           onSession={toPasskey}
@@ -131,7 +131,7 @@ export function AdminSetupRoute() {
   const navigate = useNavigate();
   const done = useCallback(() => void navigate('/admin', { replace: true }), [navigate]);
   return (
-    <SignInFrame>
+    <SignInFrame brand="admin">
       <AdminSetupScreen
         onDone={done}
         footer={<FootLink to="/admin/sign-in?switch=1">{t('sellerNav.alreadySetUp')}</FootLink>}
@@ -145,7 +145,7 @@ export function AdminSignInRoute() {
   const [params] = useSearchParams();
   const done = useCallback(() => void navigate('/admin', { replace: true }), [navigate]);
   return (
-    <SignInFrame>
+    <SignInFrame brand="admin">
       <AdminSignInScreen onSignedIn={done} autoStart={params.get('switch') === '1'} />
     </SignInFrame>
   );

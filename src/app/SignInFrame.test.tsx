@@ -25,11 +25,11 @@ afterEach(() => {
   fetchMenu.mockReset();
 });
 
-function renderFrame() {
+function renderFrame(brand?: 'admin' | 'sellerSetup') {
   return render(
     <AppThemeProvider>
       <MemoryRouter>
-        <SignInFrame>
+        <SignInFrame brand={brand}>
           <main>form</main>
         </SignInFrame>
       </MemoryRouter>
@@ -70,4 +70,19 @@ describe('SignInFrame (D-051)', () => {
     expect(screen.getByText(APP_NAME)).toBeInTheDocument();
     expect(screen.queryByRole('img')).toBeNull();
   });
+
+  it.each(['admin', 'sellerSetup'] as const)(
+    'shows ShaggyBobo branding on %s and ignores the last kitchen (plan 028)',
+    (page) => {
+      localStorage.setItem('lastKitchen', 'onde-onde');
+      renderFrame(page);
+      expect(fetchMenu).not.toHaveBeenCalled();
+      expect(screen.queryByText('Onde Onde')).toBeNull();
+      if (page === 'sellerSetup') expect(screen.getByText('Seller setup')).toBeInTheDocument();
+      else expect(screen.queryByText('Seller setup')).toBeNull();
+      expect(screen.getAllByRole('img', { name: 'ShaggyBobo' }).length).toBeGreaterThan(0);
+      expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
+      expect(screen.getByText('vdev')).toBeInTheDocument();
+    },
+  );
 });
