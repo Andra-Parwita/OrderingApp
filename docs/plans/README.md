@@ -73,7 +73,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 041 | ✅ | [The admin sets a kitchen's images](041-admin-sets-kitchen-images.md) | done (2026-10-11); not deployed |
 | 042 | ✅ | [Print the current menu's orders on A4](042-print-orders-a4.md) | done (2026-10-11); not deployed |
 | 043 | ✅ | [A friendly invite message, in English or Indonesian](043-invite-message.md) | done (2026-10-11); not deployed |
-| 044 | ⬜ | [The new ShaggyBobo mascot and logo icon](044-new-mascot-and-logo.md) | approved (2026-10-11); in this round |
+| 044 | ✅ | [The new ShaggyBobo mascot and logo icon](044-new-mascot-and-logo.md) | done (2026-10-11); not deployed |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

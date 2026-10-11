@@ -10,7 +10,7 @@ import { cssUrl } from '../components/cssUrl';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { BrandLogo } from './BrandLogo';
-import { BrandBottomBar, BrandColumn, BrandTopBar, type BrandPage } from './BrandPanel';
+import { BrandColumn, BrandFootLine, type BrandPage } from './BrandPanel';
 import { SPLIT_QUERY } from './layout';
 
 // D-051: sign-in and set-up pages show the phone banner of the last kitchen this device used,
@@ -176,9 +176,7 @@ export function SignInFrame({
           <BrandSide>
             <BrandColumn page={brand} />
           </BrandSide>
-        ) : (
-          <BrandTopBar page={brand} />
-        )
+        ) : null
       ) : (
         <Panel $split={split} $background={background} $image={backgroundImage}>
           {picture && kitchen ? (
@@ -206,7 +204,7 @@ export function SignInFrame({
           {children}
         </FormArea>
       </FormSide>
-      {brand && !split ? <BrandBottomBar /> : null}
+      {brand && !split ? <BrandFootLine /> : null}
     </Split>
   );
 }

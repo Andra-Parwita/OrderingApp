@@ -1,10 +1,13 @@
 import { createGlobalStyle } from 'styled-components';
+import { brandSize } from './brandTokens';
 
 export const GlobalStyle = createGlobalStyle`
   *, *::before, *::after { box-sizing: border-box; }
   :root {
     --sat: env(safe-area-inset-top, 0px);
     --sab: env(safe-area-inset-bottom, 0px);
+    /* The mascot's legs shifted right (plan 044): edit it on <html> in DevTools to try values live. */
+    --legs-x: ${brandSize.legsX};
   }
   html { color-scheme: ${({ theme }) => theme.mode}; }
   body {

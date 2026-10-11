@@ -1,5 +1,5 @@
 import { keyframes, styled } from 'styled-components';
-import { brandColour, brandSize } from '../theme/brandTokens';
+import { brandShadow, brandSize } from '../theme/brandTokens';
 
 // Plan 044: the ShaggyBobo mascot in layers (public/brand/mascot-*.webp, one 900 x 635 canvas with
 // the figure in the same place, so every layer is stacked full size). It jumps on the spot with a
@@ -70,18 +70,22 @@ const Figure = styled.div`
   & .jumper {
     transform-origin: 50% 99%;
   }
+  & .leg-l,
+  & .leg-r {
+    translate: var(--legs-x, ${brandSize.legsX}) 0;
+  }
   & .lids {
     opacity: 0;
   }
   & .shadow {
     position: absolute;
-    left: 50%;
-    bottom: -1%;
+    left: calc(50% + var(--legs-x, ${brandSize.legsX}));
+    bottom: -4%;
     width: 46%;
-    height: 6%;
+    height: 8%;
     translate: -50% 0;
     border-radius: 50%;
-    background: ${brandColour.mascotShadow};
+    background: ${brandShadow.ground};
     filter: blur(${brandSize.mascotShadowBlur});
   }
 
@@ -113,7 +117,7 @@ const Figure = styled.div`
 /** The mascot, standing on the footer line of the brand column (decorative). */
 export function WalkingMascot() {
   return (
-    <Figure aria-hidden="true" data-testid="mascot">
+    <Figure className="mascot" data-mascot aria-hidden="true" data-testid="mascot">
       <span className="shadow" />
       <div className="jumper">
         <img className="leg-r" src={`${SRC}leg-right.webp`} alt="" />

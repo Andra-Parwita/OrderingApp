@@ -8,8 +8,6 @@ export const brandColour = {
   bobo: '#d9772b',
   /** The version pill's status dot. */
   dot: '#7FAF6E',
-  /** The mascot's ground shadow. */
-  mascotShadow: 'rgb(0 0 0 / 22%)',
 } as const;
 
 /** The pill around the icon and wordmark (plan 044), light and dark: background, border, "Shaggy", shadow. */
@@ -40,5 +38,12 @@ export const brandSize = {
   /** The mascot's feet above the footer (owner: "like 50px from footer top"), and its widest. */
   mascotBottom: '50px',
   mascotMaxWidth: '380px',
-  mascotShadowBlur: '2px',
+  /** Both legs shifted right on the canvas (`--legs-x`, try it in DevTools). */
+  legsX: '15px',
+  mascotShadowBlur: '3px',
+} as const;
+
+/** The mascot's ground shadow (one number to tune the darkness). */
+export const brandShadow = {
+  ground: 'rgba(0, 0, 0, 0.7)',
 } as const;

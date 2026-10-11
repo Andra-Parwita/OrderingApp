@@ -109,4 +109,13 @@ describe('SignInFrame (D-051)', () => {
     expect(pill.querySelector('img')).toHaveAttribute('src', '/brand/logo-icon.webp');
     expect(pill.querySelector('svg')).toBeNull();
   });
+
+  it('on a phone has no brand top or bottom bar, only a small version line', () => {
+    deviceIsDark = false; // the mock answers every media query alike: false = no split = phone
+    renderFrame('admin');
+    expect(screen.queryByRole('banner')).toBeNull();
+    expect(screen.getAllByRole('img', { name: 'ShaggyBobo' })).toHaveLength(1);
+    expect(screen.getByText('vdev')).toBeInTheDocument();
+    expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
+  });
 });

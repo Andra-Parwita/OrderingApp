@@ -25,7 +25,7 @@ Everything below is built and checked on this PC: typecheck, lint, format, 1796 
 | 043 | a friendly **invite message** in EN or ID (editable preview, Copy message), also for chef/helper invites; the admin sees the **newest 20 invites** per kitchen (waiting / used / expired) |
 | — | the ShaggyBobo logo above the sign-in form sits in a beige box in light mode too |
 
-**Not in this commit:** plan 044, the new mascot and logo icon. It waits for the owner's corrected assets (a mock-up is at `temp/shaggybobo-new/mockup-admin-page.html` (git-ignored, beside the assets); build it after the new files land in `temp/`, then run only the admin e2e). 
+**Plan 044 (second commit):** the new bean mascot (jumps on the spot, blinks every 2 s), the happy-face logo icon in a pill, the left column's top bar over the scene, phones without beige bars. Its assets are placeholder quality from the owner's lab (`temp/shaggybobo-mascot/`); the designer's final files keep the same names (see guide/update-brand-logo.md). `--legs-x` on `:root` moves the legs; the owner is choosing the final value.
 **Postponed by the owner:** 031 (admin opens a kitchen as its owner). It may come back later as a read-only "view as".
 **Decisions recorded today:** D-092 (helper role, labelled chef in history; helper invites like every invite), D-093 (the wide banner is 3840 × 328, designed for iPad landscape).
 **Live plan status with every agent and time:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md).

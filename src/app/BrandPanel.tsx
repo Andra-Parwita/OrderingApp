@@ -216,3 +216,25 @@ export function BrandBottomBar() {
     </FootBar>
   );
 }
+
+const FootLine = styled.footer`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: ${brandSize.footerRowGap} ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg}
+    calc(${({ theme }) => theme.spacing.md} + env(safe-area-inset-bottom));
+  color: ${({ theme }) => theme.colour.textMuted};
+  font-family: ${({ theme }) => theme.font.mono};
+  font-size: 0.6875rem;
+`;
+
+/** Phone sign-in pages: the version and copyright as one small muted line at the bottom. */
+export function BrandFootLine() {
+  return (
+    <FootLine>
+      <BrandFooterParts />
+    </FootLine>
+  );
+}

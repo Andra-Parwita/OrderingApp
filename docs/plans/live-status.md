@@ -17,7 +17,6 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 
 
-| 044 · waiting for the owner's OK on the mock-up | — | 20:52 | | | | | | ⏸ |
 
 ## Before "ready to merge" (checked stage by stage against every plan, 18:35)
 
@@ -52,6 +51,7 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-11 | 044 · new mascot (jump + blink), happy-face logo pill, top bar over the scene, phone without bars, `--legs-x` | builder · sonnet | 20:58 | 30 min | 21:30 | 32 min | +2 min | ~12 files, 6 new images | ✅ 139 tests, admin e2e 2/2, typecheck/lint/format clean |
 | 2026-10-11 | sign-in form logo: beige container in light mode too | builder · sonnet | 20:46 | 8 min | 20:50 | 4 min | −4 min | 2 files | ✅ 8/8 |
 | 2026-10-11 | the whole sequential chain (+ seller-auth / chef-dishes URL fixes) | builder · sonnet | 20:38 | 15 min | 20:50 | 12 min | −3 min | 2 specs | ✅ 28 passed, 0 failed, 9 skipped (mobile-only skips) |
 | 2026-10-11 | 044 mock-up `temp/shaggybobo-new/mockup-admin-page.html` (git-ignored, beside the assets) | coordinator · opus | 20:45 | 10 min | 20:50 | 5 min | −5 min | 1 mock-up | ✅ light + dark sent |
