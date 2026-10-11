@@ -1,7 +1,9 @@
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { adminSetup, passkeysSupported, registerDevice } from '../../api/auth';
-import { Button, TextField } from '../../ui';
+import { adminSetup, passkeysSupported, registerDevice, signOut } from '../../api/auth';
+import { guessDevice } from '../../api/device/guessDevice';
+import type { Me } from '../../../shared/authContract';
+import { Button, Segmented, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { failureText, FormSection, Message, Muted, Narrow, Section, Sub, Title } from './shared';
 
@@ -10,14 +12,29 @@ export type AdminSetupScreenProps = Readonly<{
   onDone: () => void;
   /** A link under the key form ("Already set up? Sign in"). */
   footer?: ReactNode;
+  /** Which tab opens first: the setup key, or the 6-digit code from another admin device. */
+  initialMethod?: Method;
+  /** The 6-digit code screen, supplied by the app layer (a feature may not import another). */
+  codeScreen?: (props: {
+    onSession: (me: Me) => void;
+    onUseKey: () => void;
+    footer?: ReactNode;
+  }) => ReactNode;
 }>;
 
+type Method = 'key' | 'code';
 type Step = 'key' | 'passkey' | 'done';
 
 /** First-time admin setup: the setup key, then a passkey. Route-agnostic. */
-export function AdminSetupScreen({ onDone, footer }: AdminSetupScreenProps) {
+export function AdminSetupScreen({
+  onDone,
+  footer,
+  initialMethod = 'key',
+  codeScreen,
+}: AdminSetupScreenProps) {
   const { t } = useTranslation(ADMIN_NS);
   const [step, setStep] = useState<Step>('key');
+  const [method, setMethod] = useState<Method>(initialMethod);
   const [key, setKey] = useState('');
   const [deviceName, setDeviceName] = useState(() => t('setup.deviceDefault'));
   const [busy, setBusy] = useState(false);
@@ -37,6 +54,21 @@ export function AdminSetupScreen({ onDone, footer }: AdminSetupScreenProps) {
     [key, t],
   );
 
+  // The code of a kitchen is refused here: end that session and say where it belongs.
+  const codeAccepted = useCallback(
+    async (me: Me) => {
+      if (me.role !== 'admin') {
+        await signOut();
+        setProblem(t('setup.notAdminCode'));
+        return;
+      }
+      setProblem(null);
+      setDeviceName(t(`setup.deviceGuess.${guessDevice()}`));
+      setStep('passkey');
+    },
+    [t],
+  );
+
   const createPasskey = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
@@ -54,7 +86,31 @@ export function AdminSetupScreen({ onDone, footer }: AdminSetupScreenProps) {
   return (
     <Narrow>
       <Title>{t('setup.title')}</Title>
-      {step === 'key' ? (
+      {step === 'key' && method === 'key' && codeScreen ? (
+        <Segmented
+          label={t('setup.method')}
+          value={method}
+          onChange={(next) => {
+            setMethod(next);
+            setProblem(null);
+          }}
+          options={[
+            { value: 'key', label: t('setup.tabKey') },
+            { value: 'code', label: t('setup.tabCode') },
+          ]}
+        />
+      ) : null}
+      {step === 'key' && method === 'code' && codeScreen ? (
+        <>
+          {problem ? <Message $bad>{problem}</Message> : null}
+          {codeScreen({
+            onSession: (me) => void codeAccepted(me),
+            onUseKey: () => setMethod('key'),
+            footer,
+          })}
+        </>
+      ) : null}
+      {step === 'key' && method === 'key' ? (
         <FormSection onSubmit={(event) => void submitKey(event)}>
           <Sub>{t('setup.keyTitle')}</Sub>
           <TextField

@@ -124,5 +124,41 @@
       "title": "Go ahead anyway?",
       "body": "Something looks unusual. You can still send it."
     }
+  },
+  "sell": {
+    "title": "Sell",
+    "tabsLabel": "Sell or summary",
+    "tabSell": "Sell",
+    "tabSummary": "Summary",
+    "none": "No dish is sold on the day yet. Set \"Sold on the day\" in the dish editor, or use Set count.",
+    "left": "{{name}}: portions left",
+    "soldOut": "Sold out at the stall",
+    "minusOne": "Sell one {{name}}",
+    "minusN": "Sell the number of {{name}}",
+    "setCountFor": "Set the count of {{name}}",
+    "number": "Number",
+    "setCount": "Set count",
+    "sold": "Sold {{count}} × {{name}}",
+    "undo": "Undo",
+    "undoEntry": "Undo: {{text}}",
+    "undoRefused": "That sale cannot be undone any more.",
+    "soldOutNote": "Not enough left. The count was updated.",
+    "byDish": "By dish",
+    "dish": "Dish",
+    "preordered": "Pre-ordered",
+    "soldOnDay": "On the day",
+    "leftCol": "Left",
+    "totalSold": "Sold on the day: {{count}}",
+    "byPerson": "By person",
+    "noSales": "No sales yet.",
+    "portions_one": "{{count}} portion",
+    "portions_other": "{{count}} portions",
+    "log": "Log",
+    "csv": "Download CSV",
+    "kind": {
+      "sale": "Sale",
+      "count": "Set count",
+      "undo": "Undo"
+    }
   }
 }

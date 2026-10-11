@@ -10,6 +10,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   cutoff_passed: 409,
   week_not_published: 409,
   sold_out: 409,
+  not_preorderable: 409,
   exceeds_remaining: 409,
   invalid_status: 409,
   order_locked: 409,
@@ -37,6 +38,8 @@ const STATUS: Record<ApiErrorCode, number> = {
   password_exists: 409,
   passkey_exists: 409,
   bad_origin: 403,
+  kitchen_paused: 403,
+  kitchen_closed: 409,
 };
 
 export function error(

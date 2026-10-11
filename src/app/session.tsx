@@ -33,9 +33,13 @@ const SessionContext = createContext<SessionValue>(NONE);
 
 export const useSession = (): SessionValue => useContext(SessionContext);
 
-/** A seller or chef with a finished (not setup) session. */
+/** A seller, chef or helper with a finished (not setup) session. */
 export function isStaff(me: Me | null): me is Me {
-  return me !== null && me.stage === 'full' && (me.role === 'seller' || me.role === 'chef');
+  return (
+    me !== null &&
+    me.stage === 'full' &&
+    (me.role === 'seller' || me.role === 'chef' || me.role === 'helper')
+  );
 }
 
 /** Seller screens act for the session's seller; the device remembers who signed in last. */

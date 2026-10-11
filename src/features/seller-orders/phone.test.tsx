@@ -189,4 +189,25 @@ describe('Home for a deleted menu', () => {
     expect(homeKindOf(deleted, [], [])).toBe('first_run');
     expect(homeKindOf(makeMenuView('finished'), [], [])).toBe('finished');
   });
+
+  it('a phone has no Home: with no menu running it keeps a "Make a menu" way to Menu', () => {
+    const store = createTestStore({ saga: false });
+    seed(store, []);
+    seedMenu(store, { ...makeMenuView('not_published', { wizardStep: 0 }), dishes: [] });
+    renderWithStore(
+      <PhoneOrdersScreen
+        filter="all"
+        query=""
+        onFilterChange={noop}
+        onQueryChange={noop}
+        onOpenOrder={noop}
+        onNewOrder={noop}
+        toggles={{ changed: false, unpaid: false }}
+        onToggle={noop}
+      />,
+      store,
+    );
+    expect(screen.getByRole('button', { name: 'Make a menu' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /from Home/ })).not.toBeInTheDocument();
+  });
 });

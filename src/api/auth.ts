@@ -14,6 +14,10 @@ import {
   parseDevicesResponse,
   parseKeyResponse,
   parseMeResponse,
+  parseInvitesResponse,
+  parseMembersResponse,
+  parseMembershipsResponse,
+  parseTeamNamesResponse,
   parsePasskeyOptionsResponse,
   parseSellerResponse,
   passkeysAvailable,
@@ -22,13 +26,30 @@ import {
   type ChefAccessResponse,
   type CodeResponse,
   type DevicesResponse,
+  type InviteRequest,
   type KeyResponse,
+  type InvitesResponse,
+  type MembersResponse,
+  type MembershipsResponse,
   type MeResponse,
   type SellerResponse,
   type SellersResponse,
   type SessionResponse,
+  type TeamNamesResponse,
 } from '../../shared/authContract';
-import { parseOkResponse, type OkResponse } from '../../shared/setupContract';
+import {
+  parseLogListResponse,
+  type LogListResponse,
+  type LogQuery,
+} from '../../shared/logContract';
+import type { PauseKind } from '../../shared/domain';
+import type { ImageSlot } from '../../shared/imageSlots';
+import {
+  parseImagesResponse,
+  parseOkResponse,
+  type ImagesResponse,
+  type OkResponse,
+} from '../../shared/setupContract';
 import {
   clearCredentialId,
   getCredentialId,
@@ -37,6 +58,7 @@ import {
   setSessionHint,
   type CredentialRole,
 } from './device/session';
+import { reportPasskeyError } from './clientLog';
 import { request, type ApiResult } from './http';
 
 const enc = encodeURIComponent;
@@ -76,6 +98,7 @@ async function ceremony<T>(run: () => Promise<T>): Promise<ApiResult<T>> {
     const cancelled = name === 'NotAllowedError' || name === 'AbortError';
     // Plan 025: creating a passkey is refused when this device already holds one for the account.
     const held = name === 'InvalidStateError';
+    if (!cancelled && !held) reportPasskeyError(name, cause instanceof Error ? cause.message : '');
     return {
       ok: false,
       error: held ? 'passkey_exists' : cancelled ? 'passkey_cancelled' : 'passkey_failed',
@@ -88,9 +111,19 @@ async function ceremony<T>(run: () => Promise<T>): Promise<ApiResult<T>> {
 const post = (path: string, body: unknown) =>
   keepSession(request(path, parseSessionResponse, { method: 'POST', body }));
 
-/** Seller or chef: an invite or recovery key starts setup (a short session). */
-export function signInWithKey(key: string): Promise<ApiResult<SessionResponse>> {
-  return post('/api/auth/invite', { key, deviceId: getDeviceId() });
+/**
+ * An invite key. Signed out: starts setup for a NEW person (`displayName` is their edit of the
+ * invite's name). Signed in as a person: joins the kitchen (the answer is a full session in it).
+ */
+export function signInWithKey(
+  key: string,
+  displayName?: string,
+): Promise<ApiResult<SessionResponse>> {
+  return post('/api/auth/invite', {
+    key,
+    deviceId: getDeviceId(),
+    ...(displayName ? { displayName } : {}),
+  });
 }
 
 /** The 6-digit add-device code from another signed-in device starts setup on this one. */
@@ -125,9 +158,10 @@ export async function registerDevice(input: RegisterInput): Promise<ApiResult<Se
   });
 }
 
+/** A person of the kitchen (`accountId` from `fetchTeamNames`) by password. */
 export function signInWithPassword(input: {
   slug: string;
-  chefId?: string;
+  accountId: string;
   password: string;
   deviceName: string;
 }): Promise<ApiResult<SessionResponse>> {
@@ -142,6 +176,7 @@ export function signInWithPassword(input: {
 export async function signInWithPasskey(
   role: CredentialRole,
   discoverable = false,
+  slug?: string,
 ): Promise<ApiResult<SessionResponse>> {
   const credentialId = discoverable ? null : getCredentialId(role);
   const deviceId = getDeviceId();
@@ -156,7 +191,7 @@ export async function signInWithPasskey(
     }),
   );
   if (!made.ok) return made;
-  return post('/api/auth/passkey', { deviceId, response: made.data });
+  return post('/api/auth/passkey', { deviceId, response: made.data, ...(slug ? { slug } : {}) });
 }
 
 export function fetchMe(): Promise<ApiResult<MeResponse>> {
@@ -192,6 +227,21 @@ export function createDeviceCode(): Promise<ApiResult<CodeResponse>> {
   return request('/api/auth/device-codes', parseCodeResponse, { method: 'POST' });
 }
 
+/** The kitchens of the signed-in person (empty for the admin). */
+export function fetchMemberships(): Promise<ApiResult<MembershipsResponse>> {
+  return request('/api/auth/memberships', parseMembershipsResponse);
+}
+
+/** Makes another kitchen of this person the active one; the answer is the new `me`. */
+export function switchKitchen(sellerId: string): Promise<ApiResult<MeResponse>> {
+  return request('/api/auth/switch', parseMeResponse, { method: 'POST', body: { sellerId } });
+}
+
+/** Public: people of a kitchen who have a password, for the password sign-in picker. */
+export function fetchTeamNames(slug: string): Promise<ApiResult<TeamNamesResponse>> {
+  return request(`/api/s/${enc(slug)}/team-names`, parseTeamNamesResponse);
+}
+
 /** Forgets the kept passkey hint of one kind of account (sign-out of a revoked device). */
 export function forgetPasskey(role: CredentialRole): void {
   clearCredentialId(role);
@@ -202,6 +252,21 @@ export function forgetPasskey(role: CredentialRole): void {
 /** First-time admin: the setup key starts a setup session; then `registerDevice` with a passkey. */
 export function adminSetup(setupKey: string): Promise<ApiResult<SessionResponse>> {
   return post('/api/admin/setup', { setupKey, deviceId: getDeviceId() });
+}
+
+/** The newest client problems (plan 026), admin only. */
+export function fetchAdminLog(query: LogQuery): Promise<ApiResult<LogListResponse>> {
+  const params = new URLSearchParams();
+  if (query.app) params.set('app', query.app);
+  if (query.slug) params.set('slug', query.slug);
+  if (query.offset > 0) params.set('offset', String(query.offset));
+  const text = params.toString();
+  return request(`/api/admin/log${text ? `?${text}` : ''}`, parseLogListResponse);
+}
+
+/** Deletes every logged problem (admin only). */
+export function clearAdminLog(): Promise<ApiResult<OkResponse>> {
+  return request('/api/admin/log', parseOkResponse, { method: 'DELETE' });
 }
 
 export function fetchSellers(): Promise<ApiResult<SellersResponse>> {
@@ -224,16 +289,55 @@ export function setSellerDemo(sellerId: string, demo: boolean): Promise<ApiResul
   });
 }
 
-/** Shown once; only its hash is kept. */
-export function createInviteKey(sellerId: string): Promise<ApiResult<KeyResponse>> {
+/** Plan 032: pause a kitchen (`full` signs everyone out) or resume it (admin only). */
+export function setSellerPaused(
+  sellerId: string,
+  kind: PauseKind | null,
+): Promise<ApiResult<SellerResponse>> {
+  return request(
+    `/api/admin/sellers/${enc(sellerId)}/${kind === null ? 'resume' : 'pause'}`,
+    parseSellerResponse,
+    { method: 'POST', ...(kind === null ? {} : { body: { kind } }) },
+  );
+}
+
+/** An invite for a first owner (one device, 24 hours). Shown once; only its hash is kept. */
+export function createInviteKey(
+  sellerId: string,
+  displayName?: string,
+): Promise<ApiResult<KeyResponse>> {
   return request(`/api/admin/sellers/${enc(sellerId)}/invite-key`, parseKeyResponse, {
     method: 'POST',
+    ...(displayName ? { body: { displayName } } : {}),
   });
 }
 
-export function createRecoveryKey(sellerId: string): Promise<ApiResult<KeyResponse>> {
+/** The same call as an invite (D-090: recovery is a re-invite). */
+export function createRecoveryKey(
+  sellerId: string,
+  displayName?: string,
+): Promise<ApiResult<KeyResponse>> {
   return request(`/api/admin/sellers/${enc(sellerId)}/recovery-key`, parseKeyResponse, {
     method: 'POST',
+    ...(displayName ? { body: { displayName } } : {}),
+  });
+}
+
+/** The people of a kitchen: name, role, device count (the admin's replacement for the devices view). */
+export function fetchSellerInvites(sellerId: string): Promise<ApiResult<InvitesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/invites`, parseInvitesResponse);
+}
+
+export function fetchSellerMembers(sellerId: string): Promise<ApiResult<MembersResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/members`, parseMembersResponse);
+}
+
+export function removeSellerMember(
+  sellerId: string,
+  accountId: string,
+): Promise<ApiResult<OkResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/members/${enc(accountId)}`, parseOkResponse, {
+    method: 'DELETE',
   });
 }
 
@@ -267,6 +371,32 @@ export function signOutChefEverywhere(
   );
 }
 
+/** Plan 041: a kitchen's five pictures, set by the admin (the same slots as the seller's). */
+export function fetchSellerImages(sellerId: string): Promise<ApiResult<ImagesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/images`, parseImagesResponse);
+}
+
+/** `dataUrl` is already resized to the slot's size; the server checks type, size and shape. */
+export function uploadSellerImage(
+  sellerId: string,
+  slot: ImageSlot,
+  dataUrl: string,
+): Promise<ApiResult<ImagesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/images/${enc(slot)}`, parseImagesResponse, {
+    method: 'PUT',
+    body: { dataUrl },
+  });
+}
+
+export function removeSellerImage(
+  sellerId: string,
+  slot: ImageSlot,
+): Promise<ApiResult<ImagesResponse>> {
+  return request(`/api/admin/sellers/${enc(sellerId)}/images/${enc(slot)}`, parseImagesResponse, {
+    method: 'DELETE',
+  });
+}
+
 // ---- Seller ----
 
 /** The seller invites a chef from the chefs list (not for chefs themselves). */
@@ -281,6 +411,34 @@ export function createChefInvite(chefId: string, seller?: string): Promise<ApiRe
 /** Each chef with the number of devices signed in as them (seller only). */
 export function fetchChefDevices(seller?: string): Promise<ApiResult<ChefAccessResponse>> {
   return request('/api/seller/chef-devices', parseChefAccessResponse, {
+    ...(seller ? { seller } : {}),
+  });
+}
+
+/** The owner invites a person by name and role (a chef without `chefId` also becomes a cook). */
+export function createInvite(
+  input: InviteRequest,
+  seller?: string,
+): Promise<ApiResult<KeyResponse>> {
+  return request('/api/seller/invites', parseKeyResponse, {
+    method: 'POST',
+    body: input,
+    ...(seller ? { seller } : {}),
+  });
+}
+
+/** The kitchen's people (owner only). */
+export function fetchTeam(seller?: string): Promise<ApiResult<MembersResponse>> {
+  return request('/api/seller/team', parseMembersResponse, { ...(seller ? { seller } : {}) });
+}
+
+/** Removes a member (owner only, not yourself): their sessions here end at once. */
+export function removeTeamMember(
+  accountId: string,
+  seller?: string,
+): Promise<ApiResult<OkResponse>> {
+  return request(`/api/seller/team/${enc(accountId)}`, parseOkResponse, {
+    method: 'DELETE',
     ...(seller ? { seller } : {}),
   });
 }

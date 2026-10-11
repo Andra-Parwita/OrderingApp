@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { goToName, markHowItWorksSeen } from './customerHelpers';
 import { orderRow, searchFor } from './sellerHelpers';
 
 function watchConsole(page: Page): Array<string> {
@@ -17,13 +18,14 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   page,
   browser,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-webkit', 'one run, on the iPhone project');
+  test.skip(testInfo.project.name !== 'iphone-chromium', 'one run, on the iPhone project');
   const customerErrors = watchConsole(page);
   const firstName = `Flow-${Date.now()}`;
   const note = 'Less spicy please';
 
   // Customer (iPhone): two pesmol, one tempe, a name and a note.
-  await page.goto('/onde-onde');
+  await markHowItWorksSeen(page.context());
+  await page.goto('/onde-onde/dishes');
   const addPesmol = page.getByRole('button', { name: 'Add one Tilapia pesmol' });
   await addPesmol.click();
   await addPesmol.click();
@@ -31,17 +33,15 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   await expect(page.getByText('3 items · $40.00')).toBeVisible();
   await page.screenshot({ path: 'captures/flow-1-menu.png', fullPage: true });
 
-  await page.getByRole('button', { name: /View basket/ }).click();
-  await expect(page).toHaveURL(/\/basket$/);
-  await page.getByLabel('Your first name').fill(firstName);
-  await page.getByLabel('Note for the seller (optional)').fill(note);
+  await goToName(page);
+  await page.getByLabel('First name').fill(firstName);
+  await page.getByLabel('Note (optional)').fill(note);
   await page.screenshot({ path: 'captures/flow-2-basket.png', fullPage: true });
   await page.getByRole('button', { name: 'Place order · $40.00' }).click();
 
   await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
   const code = page.getByTestId('order-code');
   await expect(code).toHaveText(/^[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}$/);
-  await expect(page.getByText(`Note: ${note}`)).toBeVisible();
   await page.screenshot({ path: 'captures/flow-3-order-placed.png', fullPage: true });
   const orderCode = (await code.textContent()) ?? '';
 
@@ -53,10 +53,10 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   try {
     const sellerPage = await seller.newPage();
     const sellerErrors = watchConsole(sellerPage);
-    await sellerPage.goto('/seller');
+    await sellerPage.goto('/seller/orders');
     await expect(sellerPage.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
     await searchFor(sellerPage, firstName);
-    await expect(sellerPage).toHaveURL(/\/seller\?q=Flow-/);
+    await expect(sellerPage).toHaveURL(/\/seller\/orders\?q=Flow-/);
     const row = orderRow(sellerPage, new RegExp(firstName));
     await expect(row).toBeVisible();
     await expect(row).toContainText(orderCode);
@@ -66,8 +66,8 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
     await row.click();
     await expect(sellerPage).toHaveURL(/\/seller\/orders\/[A-Z0-9]+\?q=/);
     await expect(sellerPage.getByText(note)).toBeVisible();
-    await expect(sellerPage.getByText('2× Tilapia pesmol')).toBeVisible();
-    await expect(sellerPage.getByText('1× Thin battered tempeh')).toBeVisible();
+    await expect(sellerPage.getByText(/Tilapia pesmol · 1 portion/)).toBeVisible();
+    await expect(sellerPage.getByText(/Thin battered tempeh · 4 pieces/)).toBeVisible();
 
     await sellerPage.getByRole('button', { name: 'Confirm order', exact: true }).click();
     const ready = sellerPage.getByRole('button', { name: 'Mark ready for pickup', exact: true });
@@ -85,7 +85,8 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
 
   // The customer's order page picks up the new status on reload.
   await page.reload();
-  await expect(page.getByText('Ready for pickup')).toBeVisible();
+  await page.getByRole('button', { name: 'View order details' }).click();
+  await expect(page.getByText(/Ready for pickup/).first()).toBeVisible();
   await page.screenshot({ path: 'captures/flow-6-customer-ready.png', fullPage: true });
   expect(customerErrors).toEqual([]);
 });

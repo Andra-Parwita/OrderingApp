@@ -4,7 +4,9 @@ import { liveRefreshLoop, type LiveMessage } from '../../api/live';
 import type { ApiResult } from '../../api/http';
 import { staffSignedOut } from '../../api/staffSignedOut';
 import { currentSellerSlug } from '../../api/device/sellerContext';
+import { fetchMade } from '../../api/made';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
+import type { MadeResponse } from '../../../shared/madeContract';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
 import type { SellerOrdersResponse } from '../../../shared/orderContract';
 import { loaded, loadFailed, pollingStarted, pollingStopped, refreshRequested } from './cookSlice';
@@ -13,14 +15,16 @@ import { loaded, loadFailed, pollingStarted, pollingStopped, refreshRequested } 
 export const COOK_POLL_MS = 60_000;
 
 export function* loadCook() {
-  const [orders, menu] = (yield all([
+  const [orders, menu, made] = (yield all([
     call(fetchSellerOrders, undefined, currentSellerSlug()),
     call(fetchSellerMenu, undefined, currentSellerSlug()),
-  ])) as [ApiResult<SellerOrdersResponse>, ApiResult<SellerMenuResponse>];
-  if (orders.ok && menu.ok) {
+    call(fetchMade, undefined, currentSellerSlug()),
+  ])) as [ApiResult<SellerOrdersResponse>, ApiResult<SellerMenuResponse>, ApiResult<MadeResponse>];
+  if (orders.ok && menu.ok && made.ok) {
     yield put(
       loaded({
         orders: orders.data.orders,
+        made: made.data.made,
         menu: {
           kitchenName: menu.data.kitchen.name,
           cookingDate: menu.data.week.cookingDate,

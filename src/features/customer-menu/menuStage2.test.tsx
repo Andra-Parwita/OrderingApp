@@ -80,7 +80,7 @@ describe('menu home', () => {
   it('shows the phone banner with its alt text in the current language', async () => {
     renderHome();
     const banner = await screen.findByRole('img', { name: 'Onde Onde — Indonesian homemade food' });
-    expect(banner).toHaveAttribute('src', '/samples/banner-phone.jpg');
+    expect(banner).toHaveAttribute('src', '/samples/banner-phone-3x1.jpg');
     await act(() => i18n.changeLanguage('id'));
     expect(
       await screen.findByRole('img', { name: 'Onde Onde — masakan rumahan Indonesia' }),
@@ -162,6 +162,18 @@ describe('menu states', () => {
     expect(onSeeDishes).toHaveBeenCalledTimes(1);
   });
 
+  it('kitchen closed by the admin: says so in both languages and offers no dishes (plan 032)', async () => {
+    await useMenu(withOrdering({ open: false, reason: 'kitchen_closed' }));
+    const onSeeDishes = vi.fn();
+    renderHome(onSeeDishes);
+    expect(await screen.findByText('This kitchen is closed for now')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'See the dishes anyway' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Message the seller on WhatsApp' })).toBeVisible();
+    await act(() => i18n.changeLanguage('id'));
+    expect(await screen.findByText('Dapur ini sedang tutup')).toBeVisible();
+    await act(() => i18n.changeLanguage('en'));
+  });
+
   it('closed: uses the date and the cut-off, never a weekday word', async () => {
     await useMenu(withOrdering({ open: false, reason: 'cutoff_passed' }));
     renderHome();
@@ -214,6 +226,46 @@ describe('dishes', () => {
     expect(screen.getByRole('button', { name: 'Remove one Chicken lemper' })).toBeVisible();
     expect(screen.getByText('3 items · $30.00')).toBeVisible();
     expect(screen.getByRole('button', { name: /View basket/ })).toBeVisible();
+  });
+
+  it('plan 029: day-only has no Add button, both-ways says Also at the stall, sold out at 0', async () => {
+    await useMenu((menu) => ({
+      ...menu,
+      items: menu.items.map((item) =>
+        item.name.en === 'Chicken lemper'
+          ? { ...item, preorder: false, onTheDay: 'available' as const }
+          : item.name.en === 'Thin battered tempeh'
+            ? { ...item, onTheDay: 'sold_out' as const }
+            : item.name.en === 'Tilapia pesmol'
+              ? { ...item, onTheDay: 'available' as const }
+              : item,
+      ),
+    }));
+    renderDishes();
+    await screen.findByText('Chicken lemper');
+    expect(screen.getByText('Available on the day')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Add one Chicken lemper' })).toBeNull();
+    expect(screen.getByText('Sold out at the stall')).toBeVisible();
+    expect(screen.getByText('Also at the stall')).toBeVisible();
+    // Sold out at the stall does not stop the pre-order.
+    expect(screen.getByRole('button', { name: 'Add one Thin battered tempeh' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Add one Tilapia pesmol' })).toBeEnabled();
+  });
+
+  it('plan 029: a day-only dish at 0 reads Sold out', async () => {
+    await useMenu((menu) => ({
+      ...menu,
+      items: menu.items.map((item) =>
+        item.name.en === 'Chicken lemper'
+          ? { ...item, preorder: false, onTheDay: 'sold_out' as const }
+          : item,
+      ),
+    }));
+    renderDishes();
+    await screen.findByText('Chicken lemper');
+    expect(screen.queryByText('Available on the day')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Add one Chicken lemper' })).toBeNull();
+    expect(screen.getAllByText('Sold out').length).toBeGreaterThan(0);
   });
 
   it('stops a limited dish at its portions left', async () => {

@@ -43,7 +43,7 @@ test('message a pickup place, and walk a delivery through its steps', async ({
   page,
   request,
 }, testInfo) => {
-  test.skip(testInfo.project.name.includes('webkit'), 'Android and desktop only');
+  test.skip(testInfo.project.name.includes('iphone'), 'Android and desktop only');
   const errors = collectErrors(page);
   const project = testInfo.project.name;
   const minutes = project.includes('desktop') ? 20 : 15;
@@ -72,6 +72,17 @@ test('message a pickup place, and walk a delivery through its steps', async ({
   await expect(dialog.getByText('This does not change any order')).toBeVisible();
   await page.screenshot({ path: `captures/saturday-update-${project}.png`, fullPage: true });
   await dialog.getByRole('button', { name: /^Send to \d+ orders?$/ }).click();
+  // The other project may have sent the same kind of message here in the last 10 minutes.
+  const again = page.getByRole('alertdialog', { name: 'Send this again?' });
+  const asked = await again.waitFor({ timeout: 1500 }).then(
+    () => true,
+    () => false,
+  );
+  if (asked) {
+    // The first send was refused with 409 (the guard); the browser logs that as a console error.
+    errors.splice(0, errors.length, ...errors.filter((text) => !text.includes('status of 409')));
+    await again.getByRole('button', { name: 'Send anyway' }).click();
+  }
   await expect(page.getByText(/^Sent to \d+ orders? at Glen Waverley\.$/)).toBeVisible();
 
   // The customer sees it in Updates.

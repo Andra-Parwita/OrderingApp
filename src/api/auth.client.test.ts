@@ -12,6 +12,7 @@ import {
   fetchMyDevices,
   fetchSellerDevices,
   fetchSellers,
+  fetchTeamNames,
   registerDevice,
   signInWithCode,
   signInWithKey,
@@ -108,9 +109,11 @@ describe('sign-in client', () => {
     await signOut();
     expect(data(await signInWithPasskey('staff')).me.role).toBe('seller');
     await signOut();
+    const [person] = data(await fetchTeamNames('warung-baru')).names;
     const again = data(
       await signInWithPassword({
         slug: 'warung-baru',
+        accountId: person?.accountId ?? '',
         password: 'long enough password',
         deviceName: 'Phone 2',
       }),

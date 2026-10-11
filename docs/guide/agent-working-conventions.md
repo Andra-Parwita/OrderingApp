@@ -107,6 +107,7 @@ New asks for a running agent go in a **fresh brief**, not a mid-task message (an
 - **Cap a wave at ~3 concurrent agents.** Coordination cost grows faster than throughput beyond that.
 - **Check the working tree** (`git status` on the folders a wave will touch) before writing its briefs; work may have landed since the plan.
 - **In a parallel wave, builders don't run the end-to-end suite.** They write the spec, run typecheck and scoped unit tests, and report the exact spec command. A test run while another agent edits the tree hot-reloads under the test and fails as a false regression.
+- **One Playwright run at a time on this machine** (one e2e server and database). To run one spec: `playwright test <file> --project=<project> --no-deps`; without `--project` and `--no-deps` the project dependencies pull in the whole suite. A spec that resets or changes shared data (a dev reset, a demo kitchen's stock or settings) runs in a sequential project or on its own kitchen, never beside others ([lesson 20](../plan/lessons.md)).
 - **The coordinator gates once, at the end, on a quiet tree:** the specs of everything changed (and every importer of a changed shared component) plus the project's quality check. The full suite only when the owner asks.
 - **Serial stages get a cheap gate every 2nd–3rd stage** (typecheck + lint + format): a serial stage ends on a quiet tree, so nothing stops it.
 - **A wave with a schema change:** the schema builder applies the change to **every** scratch database the wave uses, because regenerating the shared client breaks every database copy that lacks the column.
@@ -165,9 +166,10 @@ Files changed (± lines) · decisions made (one line each) · deviations **with 
 - **Two homes:** durable docs (committed) and scratch (ignored). Nothing durable lives only in scratch.
 - **Decisions** are numbered, quote the owner's words, state the trade-off and a "revisit when" trigger, and get amended (not silently rewritten) when overturned.
 - **A live board** per round: a short summary (≤ 5 rows) on top, then every item with agent · tier · started · ETA · landed · diff · state, using **real clock times** at every start and landing.
+- **Plan live status** ([docs/plans/live-status.md](../plans/live-status.md), owner 2026-10-11): while a plan is being worked on, one row per stage or check with agent · tier · started · est. · ended · took · ± est. · diff · state, updated at every agent start and finish.
 - **Findings:** a defect found next to the work is **recorded, not fixed** (finish, don't widen), with severity and a fix suggestion.
 - **Lessons:** each entry opens with a one-line "do this instead", then what happened and what it cost.
-- **A start-here block** for the next session: where things stand, what's pending, and a ready prompt to paste.
+- **A start-here block** for the next session: where things stand, what's pending, and a ready prompt to paste. In this project it is **`docs/HANDOVER.md`**, rewritten at the end of every session before the commit, whoever ran it (the owner or the builder), so the next person can start a fresh session from it.
 - **Persistent memory** (if the assistant has one) holds the owner's working preferences and corrections, with the why; update it when corrected, delete it when wrong.
 
 ---

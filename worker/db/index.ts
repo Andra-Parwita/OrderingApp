@@ -5,7 +5,8 @@ import { keepsOrderDetails } from '../../shared/pastWeeks';
 import { generateOrderCode, generateToken } from '../../shared/orderCode';
 import type { Repository, SellerRepository, TokenLookup } from '../repo/Repository';
 import type { CustomerChange } from '../push/dispatch';
-import { createAuthRepository } from './auth';
+import { createAuthRepository, sellerSummaries } from './auth';
+import { createClientLogRepository } from './clientLog';
 import { Db, marks, type D1Like } from './d1';
 import { assembleOrders, orderReadStatements } from './orders';
 import { dropExpiredDetails } from './retention';
@@ -31,7 +32,14 @@ export type D1RepositoryOptions = {
   onCustomerChange?: (changes: Array<CustomerChange>) => void;
 };
 
-type SellerRow = { id: string; slug: string; name: string; demo: number; created_at: string };
+type SellerRow = {
+  id: string;
+  slug: string;
+  name: string;
+  demo: number;
+  paused: 'full' | 'customers' | null;
+  created_at: string;
+};
 
 /** A sellers row as a Seller (the demo flag is 0/1 in D1). */
 const toSeller = (row: Omit<SellerRow, 'created_at'>): Seller => ({
@@ -39,6 +47,7 @@ const toSeller = (row: Omit<SellerRow, 'created_at'>): Seller => ({
   slug: row.slug,
   name: row.name,
   demo: row.demo === 1,
+  ...(row.paused ? { paused: row.paused } : {}),
 });
 
 export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Repository {
@@ -60,7 +69,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
   const handle = (row: Seller | undefined): SellerRepository | undefined => internal(row)?.repo;
   const byId = (id: string) =>
     db
-      .first<SellerRow>('SELECT id, slug, name, demo FROM sellers WHERE id = ?', id)
+      .first<SellerRow>('SELECT id, slug, name, demo, paused FROM sellers WHERE id = ?', id)
       .then((r) => (r ? toSeller(r) : undefined));
 
   const requireDevTools = () => {
@@ -89,7 +98,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
         ...tokens,
       ),
       db.stmt(
-        `SELECT id, slug, name, demo FROM sellers WHERE id IN
+        `SELECT id, slug, name, demo, paused FROM sellers WHERE id IN
            (SELECT seller_id FROM orders WHERE token IN (${m}) UNION SELECT seller_id FROM expired_orders WHERE token IN (${m}))`,
         ...tokens,
         ...tokens,
@@ -149,23 +158,24 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
   return {
     async listSellers() {
       return (
-        await db.all<SellerRow>('SELECT id, slug, name, demo FROM sellers ORDER BY rowid')
+        await db.all<SellerRow>('SELECT id, slug, name, demo, paused FROM sellers ORDER BY rowid')
       ).map(toSeller);
     },
 
     async adminSellers() {
       const rows = await db.all<SellerRow>(
-        'SELECT id, slug, name, demo, created_at FROM sellers ORDER BY rowid',
+        'SELECT id, slug, name, demo, paused, created_at FROM sellers ORDER BY rowid',
       );
-      return rows.map((row) => ({
-        ...toSeller(row),
-        createdAt: row.created_at,
-      }));
+      const summaries = await sellerSummaries(db);
+      return rows.map((row) => {
+        const summary = summaries.get(row.id);
+        return { ...toSeller(row), createdAt: row.created_at, ...(summary ? { summary } : {}) };
+      });
     },
 
     async sellerBySlug(slug) {
       const row = await db.first<SellerRow>(
-        'SELECT id, slug, name, demo FROM sellers WHERE slug = ?',
+        'SELECT id, slug, name, demo, paused FROM sellers WHERE slug = ?',
         slug,
       );
       return handle(row ? toSeller(row) : undefined);
@@ -185,6 +195,14 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
 
     async setSellerDemo(sellerId, demo) {
       await db.stmt('UPDATE sellers SET demo = ? WHERE id = ?', demo ? 1 : 0, sellerId).run();
+    },
+
+    /** Plan 032: pause (`full` also deletes every session of the kitchen) or resume (null). */
+    async setSellerPaused(sellerId, kind) {
+      await db.batch([
+        db.stmt('UPDATE sellers SET paused = ? WHERE id = ?', kind, sellerId),
+        ...(kind === 'full' ? [db.stmt('DELETE FROM sessions WHERE seller_id = ?', sellerId)] : []),
+      ]);
     },
 
     /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */
@@ -222,6 +240,8 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
       now: options.now,
       adminSetupKey: options.adminSetupKey,
     }),
+
+    log: createClientLogRepository(db, options.now),
 
     dev: {
       async addSampleOrders(sellerId, count) {

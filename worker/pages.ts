@@ -1,6 +1,6 @@
 // Pages from the static assets, with the kitchen's manifest and icon links added to the head (plan 011).
 // Apart from api/ because HTMLRewriter exists only in the Worker runtime, not in the unit tests.
-import { kitchenHeadFor } from './api/kitchenPage';
+import { kitchenPageFor } from './api/kitchenPage';
 import { sessionTokenOf } from './auth/cookie';
 import { createD1Repository } from './db';
 import type { D1Like } from './db/d1';
@@ -22,12 +22,22 @@ export async function withKitchenLinks(
       now: () => new Date(),
       adminSetupKey: crypto.randomUUID(), // never used: this only reads
     });
-    const html = await kitchenHeadFor(repo, new URL(request.url).pathname, sessionTokenOf(request));
-    if (html === null) return page;
+    const found = await kitchenPageFor(
+      repo,
+      new URL(request.url).pathname,
+      sessionTokenOf(request),
+    );
+    if (found === null) return page;
+    const { head: html, theme } = found;
     const rewritten = new HTMLRewriter()
       .on('head', {
         element(head) {
           head.append(html, { html: true });
+        },
+      })
+      .on('html', {
+        element(root) {
+          if (theme !== undefined) root.setAttribute('data-brand', theme);
         },
       })
       .transform(page);

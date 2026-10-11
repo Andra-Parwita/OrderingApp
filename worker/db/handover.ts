@@ -20,6 +20,7 @@ import {
   type MessageType,
 } from '../../shared/handoverContract';
 import { AUDIT_MAX, INBOX_MAX } from '../../shared/limits';
+import { MADE_MAX } from '../../shared/madeContract';
 import { isFinalStatus } from '../../shared/status';
 import type { SellerRepository, StoreResult } from '../repo/Repository';
 import { marks, type D1Statement } from './d1';
@@ -29,6 +30,8 @@ import { changeStatements, readLiveOrder, readOrders, type OrderChange } from '.
 export type HandoverOps = Pick<
   SellerRepository,
   | 'packOrder'
+  | 'getMade'
+  | 'addMade'
   | 'listMessages'
   | 'messagePlace'
   | 'deliveryStep'
@@ -132,6 +135,15 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
   ): OrderChange {
     const moved: OrderChange = { ...d, order: { ...d.order, status: to, changed: false } };
     return withAudit(withInbox(moved, { kind: 'status', status: to }, at), by, to, at);
+  }
+
+  async function readMade(menuId: string): Promise<Record<string, number>> {
+    const rows = await db.all<{ item_id: string; made: number }>(
+      'SELECT item_id, made FROM made_counts WHERE seller_id = ? AND menu_id = ? AND made > 0',
+      sid,
+      menuId,
+    );
+    return Object.fromEntries(rows.map((row) => [row.item_id, row.made]));
   }
 
   // ---- The log ----
@@ -322,6 +334,32 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
       if (packed) next.packed = true;
       else delete next.packed;
       return ok(next);
+    },
+
+    async getMade() {
+      const menuId = await currentMenuId();
+      return ok(menuId ? await readMade(menuId) : {});
+    },
+
+    async addMade(request) {
+      const menuId = await currentMenuId();
+      if (!menuId) return fail('not_found', 'No menu');
+      // One upsert that adds in SQL, so two taps at once both count (never read-then-write).
+      await db.batch([
+        db.stmt('DELETE FROM made_counts WHERE seller_id = ? AND menu_id <> ?', sid, menuId),
+        db.stmt(
+          `INSERT INTO made_counts (seller_id, menu_id, item_id, made) VALUES (?, ?, ?, MIN(?, MAX(0, ?)))
+           ON CONFLICT (seller_id, menu_id, item_id) DO UPDATE SET made = MIN(?, MAX(0, made + ?))`,
+          sid,
+          menuId,
+          request.itemId,
+          MADE_MAX,
+          request.delta,
+          MADE_MAX,
+          request.delta,
+        ),
+      ]);
+      return ok(await readMade(menuId));
     },
 
     async listMessages() {

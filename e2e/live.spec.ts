@@ -20,7 +20,7 @@ test('a customer order appears on the open seller screen within 2 seconds, witho
     sockets += 1;
     socket.on('framereceived', (data) => frames.push(data.payload.toString()));
   });
-  await page.goto('/seller');
+  await page.goto('/seller/orders');
   await expect.poll(() => sockets).toBeGreaterThan(0);
   await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
   // Let the Durable Object accept the socket; the connect also reloads the list once.

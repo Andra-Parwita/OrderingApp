@@ -597,6 +597,8 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
         priceCents: input.priceCents,
         ...(input.limit !== undefined ? { limit: input.limit } : {}),
         ...(input.chefId !== undefined ? { chefId: input.chefId } : {}),
+        ...(input.preorder === false ? { preorder: false } : {}),
+        ...(input.dayStock !== undefined ? { dayStock: input.dayStock } : {}),
       };
       await dishStatement(db, sid, dish, nowIso()).run();
       return ok(dish);
@@ -617,10 +619,18 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       else if (patch.limit !== undefined) next.limit = patch.limit;
       if (patch.chefId === null) delete next.chefId;
       else if (patch.chefId !== undefined) next.chefId = patch.chefId;
+      if (patch.preorder === true) delete next.preorder;
+      else if (patch.preorder === false) next.preorder = false;
+      if (patch.dayStock === null) delete next.dayStock;
+      else if (patch.dayStock !== undefined) next.dayStock = patch.dayStock;
+      if (next.preorder === false && next.dayStock === undefined) {
+        return fail('invalid_request', 'On the day only needs a day stock');
+      }
       await db
         .stmt(
           `UPDATE dishes SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
-             price_cents = ?, portion_limit = ?, chef_id = ? WHERE seller_id = ? AND id = ?`,
+             price_cents = ?, portion_limit = ?, chef_id = ?, preorder = ?, day_stock = ?
+           WHERE seller_id = ? AND id = ?`,
           next.name.en,
           next.name.id,
           next.description.en,
@@ -630,6 +640,8 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
           next.priceCents,
           next.limit ?? null,
           next.chefId ?? null,
+          next.preorder !== false,
+          next.dayStock ?? null,
           sid,
           id,
         )

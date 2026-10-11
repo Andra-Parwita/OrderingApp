@@ -56,8 +56,8 @@ async function userHandle(accountId: string): Promise<Uint8Array<ArrayBuffer>> {
 
 function labelOf(me: Me): string {
   if (me.role === 'admin') return `${APP_NAME} admin`;
-  if (me.role === 'chef') return `${me.chefName ?? 'Chef'} (${me.sellerName ?? APP_NAME})`;
-  return me.sellerName ?? me.slug ?? APP_NAME;
+  // One passkey per person across kitchens (plan 033): the name, not the kitchen.
+  return me.displayName ?? me.sellerName ?? APP_NAME;
 }
 
 // ---- Registration ----
@@ -165,31 +165,37 @@ export function signInWithPasskey(
   rp: RelyingParty,
   clientDeviceId: string,
   response: Record<string, unknown> & { id: string },
+  slug?: string,
 ): Promise<AuthResult<SessionGrant>> {
-  return auth.signInPasskey(clientDeviceId, response.id, async (passkey) => {
-    const challenge = challengeOf(response);
-    if (!challenge) return null;
-    if (!(await auth.takeChallenge(challenge, { purpose: 'authenticate', clientDeviceId }))) {
-      return null;
-    }
-    try {
-      const checked = await verifyAuthenticationResponse({
-        response: response as unknown as AuthenticationResponseJSON,
-        expectedChallenge: challenge,
-        expectedOrigin: rp.origin,
-        expectedRPID: rp.id,
-        credential: {
-          id: passkey.credentialId,
-          publicKey: isoBase64URL.toBuffer(passkey.publicKey),
-          counter: passkey.counter,
-          transports: passkey.transports,
-        },
-        requireUserVerification: false,
-      });
-      // The library already refuses a counter that did not go up (when either side is non-zero).
-      return checked.verified ? checked.authenticationInfo.newCounter : null;
-    } catch {
-      return null;
-    }
-  });
+  return auth.signInPasskey(
+    clientDeviceId,
+    response.id,
+    async (passkey) => {
+      const challenge = challengeOf(response);
+      if (!challenge) return null;
+      if (!(await auth.takeChallenge(challenge, { purpose: 'authenticate', clientDeviceId }))) {
+        return null;
+      }
+      try {
+        const checked = await verifyAuthenticationResponse({
+          response: response as unknown as AuthenticationResponseJSON,
+          expectedChallenge: challenge,
+          expectedOrigin: rp.origin,
+          expectedRPID: rp.id,
+          credential: {
+            id: passkey.credentialId,
+            publicKey: isoBase64URL.toBuffer(passkey.publicKey),
+            counter: passkey.counter,
+            transports: passkey.transports,
+          },
+          requireUserVerification: false,
+        });
+        // The library already refuses a counter that did not go up (when either side is non-zero).
+        return checked.verified ? checked.authenticationInfo.newCounter : null;
+      } catch {
+        return null;
+      }
+    },
+    slug,
+  );
 }

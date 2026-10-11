@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="328" viewBox="0 0 3840 328" font-family="Segoe UI, Arial, sans-serif">
+  <!-- Owner's idea (2026-10-11): the real content sits in the iPad zone; the sides only show on wider screens. -->
+  <rect width="3840" height="328" fill="#E3D6BC"/>
+  <rect x="0" y="0" width="232" height="328" fill="#B9A7C9"/><rect x="3608" y="0" width="232" height="328" fill="#B9A7C9"/>
+  <rect x="232" y="0" width="554" height="328" fill="#9CB6D6"/><rect x="3054" y="0" width="554" height="328" fill="#9CB6D6"/>
+  <rect x="786" y="0" width="186" height="328" fill="#E7B98F"/><rect x="2868" y="0" width="186" height="328" fill="#E7B98F"/>
+  <rect x="972" y="0" width="1896" height="328" fill="#9BC79A" stroke="#2A5F30" stroke-width="8"/>
+  <text x="1920" y="130" font-size="56" font-weight="800" fill="#1C1F1A" text-anchor="middle">iPad landscape · 1896 × 328 · ALWAYS SHOWN</text>
+  <text x="1920" y="190" font-size="34" fill="#1C1F1A" text-anchor="middle">the real content: logo, kitchen name, faces, chalkboard, any text</text>
+  <text x="1920" y="240" font-size="30" fill="#2A5F30" text-anchor="middle">keep about 40 px from the green edges</text>
+  <text x="879" y="150" font-size="26" font-weight="700" fill="#5B2E10" text-anchor="middle">laptop</text>
+  <text x="879" y="184" font-size="22" fill="#5B2E10" text-anchor="middle">1366 wide</text>
+  <text x="2961" y="150" font-size="26" font-weight="700" fill="#5B2E10" text-anchor="middle">laptop</text>
+  <text x="2961" y="184" font-size="22" fill="#5B2E10" text-anchor="middle">1366 wide</text>
+  <text x="509" y="150" font-size="30" font-weight="700" fill="#14304F" text-anchor="middle">desktop 1920 wide</text>
+  <text x="509" y="188" font-size="24" fill="#14304F" text-anchor="middle">extra scenery only</text>
+  <text x="3331" y="150" font-size="30" font-weight="700" fill="#14304F" text-anchor="middle">desktop 1920 wide</text>
+  <text x="3331" y="188" font-size="24" fill="#14304F" text-anchor="middle">extra scenery only</text>
+  <text x="116" y="150" font-size="24" font-weight="700" fill="#3A2550" text-anchor="middle">very wide</text>
+  <text x="116" y="182" font-size="20" fill="#3A2550" text-anchor="middle">screens</text>
+  <text x="3724" y="150" font-size="24" font-weight="700" fill="#3A2550" text-anchor="middle">very wide</text>
+  <text x="3724" y="182" font-size="20" fill="#3A2550" text-anchor="middle">screens</text>
+  <text x="1920" y="306" font-size="26" fill="#1C1F1A" text-anchor="middle">whole artwork 3840 × 328 · the height is never cropped · the sides appear as the screen gets wider</text>
+</svg>

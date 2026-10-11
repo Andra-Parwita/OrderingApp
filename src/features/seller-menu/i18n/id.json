@@ -91,6 +91,7 @@
     "finishAnyway": "Selesaikan menu"
   },
   "make": {
+    "layer": "Buat menu",
     "title": "Menu untuk {{date}}",
     "live": "Tayang",
     "notPublished": "Belum dipublikasikan · tersimpan",
@@ -161,6 +162,12 @@
     "limit": "Batas (opsional)",
     "noLimit": "Tanpa batas",
     "limitHelper": "Pelanggan melihat \"sisa N\" saat tinggal 5 atau kurang; hidangan habis di 0.",
+    "preorder": "Pre-order",
+    "preorderHelper": "Pelanggan bisa memesannya lebih dulu. Batas di atas adalah batas pre-order.",
+    "onTheDay": "Dijual di hari-H",
+    "onTheDayHelper": "Dijual di lapak pada hari memasak. Pre-order tidak mengambil dari jumlah ini.",
+    "dayStock": "Porsi untuk hari-H",
+    "dayStockOnly": "Pre-order mati: pelanggan melihat \"Tersedia di hari-H\" dan tidak bisa menambahkannya.",
     "chef": "Koki",
     "wholeKitchen": "Seluruh dapur",
     "editChefs": "Ubah koki",
@@ -182,6 +189,8 @@
       "name": "Isi nama di setidaknya satu bahasa.",
       "price": "Isi harga seperti 10, 10.00 atau 10,50.",
       "limit": "Isi bilangan bulat 1 atau lebih, atau kosongkan.",
+      "dayStock": "Isi bilangan bulat 0 sampai 9999.",
+      "preorder": "Nyalakan Dijual di hari-H, atau biarkan Pre-order menyala.",
       "tooLong": "Terlalu panjang: maksimal {{max}} karakter."
     }
   },
@@ -306,5 +315,10 @@
     "use": "Tambahkan ke menu ini",
     "added_other": "{{count}} hidangan ditambahkan ke menu.",
     "addFailed": "Paket tidak bisa ditambahkan. Satu menu maksimal 10 hidangan."
+  },
+  "chef": {
+    "title": "Hidangan Anda",
+    "help": "Tambahkan hidangan Anda dan ubah harga, batas, dan fotonya. Pemilik yang memasukkannya ke menu. Perubahan pada hidangan di menu yang sedang tayang langsung terlihat oleh pelanggan.",
+    "notOnMenu": "Tidak ada di menu ini"
   }
 }

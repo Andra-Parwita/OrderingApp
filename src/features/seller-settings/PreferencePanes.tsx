@@ -18,6 +18,7 @@ import {
   useThemePreference,
   type ThemePreference,
 } from '../../theme/themePreference';
+import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import { makeColors } from '../../theme/designTokens';
 import { SETTINGS_NS } from './i18n/register';
 import { ErrorLine, GroupTitle, Muted, PaneForm, PaneGroup, Two } from './paneParts';
@@ -284,6 +285,12 @@ export function AppearancePane({ onToast }: Readonly<{ onToast: () => void }>) {
     { value: 'dark', label: t('look.dark') },
     { value: 'auto', label: t('look.auto') },
   ];
+  const textSize = useTextSize();
+  const textOptions: ReadonlyArray<SegmentedOption<TextSize>> = [
+    { value: 'smaller', label: t('look.textSmaller') },
+    { value: 'normal', label: t('look.textNormal') },
+    { value: 'larger', label: t('look.textLarger') },
+  ];
   const sound = useSoundPreference();
   const soundOptions: ReadonlyArray<SegmentedOption<'on' | 'off'>> = [
     { value: 'on', label: t('look.soundOn') },
@@ -321,6 +328,18 @@ export function AppearancePane({ onToast }: Readonly<{ onToast: () => void }>) {
           />
         </div>
         <Muted>{t('look.modeHelper')}</Muted>
+      </PaneGroup>
+      <PaneGroup>
+        <GroupTitle>{t('look.textTitle')}</GroupTitle>
+        <div>
+          <Segmented
+            options={textOptions}
+            value={textSize}
+            onChange={setTextSize}
+            label={t('look.textTitle')}
+          />
+        </div>
+        <Muted>{t('look.textHelper')}</Muted>
       </PaneGroup>
       <PaneGroup>
         <GroupTitle>{t('look.soundTitle')}</GroupTitle>

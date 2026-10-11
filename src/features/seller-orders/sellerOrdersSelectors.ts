@@ -125,6 +125,8 @@ export function newCustomerOrders(before: ReadonlyArray<Order>, after: ReadonlyA
   );
 }
 
-/** How many orders the live menu has, for the nav; null until the first load. */
+/** How many orders (not cancelled) the live menu has, for the nav; null until the first load. */
 export const selectOrdersCount = (state: SellerOrdersRootState): number | null =>
-  state.sellerOrders.list.status === 'ready' ? state.sellerOrders.orders.length : null;
+  state.sellerOrders.list.status === 'ready'
+    ? state.sellerOrders.orders.filter((o) => o.status !== 'cancelled').length
+    : null;

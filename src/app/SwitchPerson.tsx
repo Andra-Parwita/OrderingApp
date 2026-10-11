@@ -26,7 +26,9 @@ function usePerson(): Person | null {
   const label =
     me.role === 'chef'
       ? t('sellerNav.personChef', { name: me.chefName ?? '' })
-      : t('sellerNav.personSeller', { name: me.sellerName ?? '' });
+      : me.role === 'helper'
+        ? t('sellerNav.personHelper', { name: me.displayName ?? '' })
+        : t('sellerNav.personSeller', { name: me.sellerName ?? '' });
   return { label, switchNow };
 }
 

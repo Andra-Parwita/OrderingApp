@@ -1,9 +1,8 @@
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { styled } from 'styled-components';
-import { LanguageSwitch } from '../components/LanguageSwitch';
-import { AdminHomeScreen, AdminSetupScreen, AdminSignInScreen } from '../features/admin';
+import { ADMIN_NS, AdminHomeScreen, AdminSetupScreen, AdminSignInScreen } from '../features/admin';
 import {
   AUTH_NS,
   DeviceCodeScreen,
@@ -12,25 +11,18 @@ import {
   SetupKeyScreen,
   SignInScreen,
 } from '../features/seller-auth';
+import { KitchenImagesEditor, type ResizeFn } from '../features/seller-setup';
 import type { Me } from '../../shared/authContract';
+import type { ImageSlot } from '../../shared/imageSlots';
 import { isValidSlug } from '../../shared/seller';
+import { fetchSellerImages, removeSellerImage, uploadSellerImage } from '../api/auth';
 import { lastSignedIn } from '../api/device/sellerContext';
-import { PageHeader } from '../ui';
+import { BrandBottomBar, BrandTopBar } from './BrandPanel';
 import { useSession } from './session';
 import { SignInFrame } from './SignInFrame';
 import { SWITCH_SIGN_IN } from './SwitchPerson';
 
-// Sign-in, setup and admin pages: outside the seller shell, each under a bar with the language
-// switch. Where each screen leads is decided here.
-
-function AuthFrame({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <>
-      <PageHeader title="" titleHidden trailing={<LanguageSwitch compact />} />
-      {children}
-    </>
-  );
-}
+// Sign-in, setup and admin pages: outside the seller shell. Where each screen leads is decided here.
 
 const FootLink = styled(Link)`
   display: inline-flex;
@@ -42,28 +34,64 @@ const FootLink = styled(Link)`
 
 type SetupStep = 'key' | 'code' | 'passkey' | 'password';
 
-/** /seller/setup: invite key (or add-device code), then a passkey or a password, then in. */
+/** The key of an invite link (`#key=`); read once, the address is cleaned in an effect. */
+function keyFromAddress(): string {
+  return new URLSearchParams(location.hash.slice(1)).get('key') ?? '';
+}
+
+/**
+ * /seller/setup: invite key (or add-device code), then a passkey or a password, then in. A person
+ * already signed in joins the kitchen with the key and goes straight to it. `#key=` fills the key.
+ */
 export function SellerSetupRoute() {
   const navigate = useNavigate();
-  const { refresh } = useSession();
+  const { me, refresh, adopt } = useSession();
   const { t } = useTranslation(AUTH_NS);
+  const [params] = useSearchParams();
+  const [linkKey] = useState(keyFromAddress);
+  useEffect(() => {
+    // The key was read above; keep it out of the address bar and the history.
+    if (location.hash !== '') history.replaceState(null, '', location.pathname + location.search);
+    void refresh(); // is a person already signed in here? Then the key joins a kitchen
+  }, [refresh]);
+  const person = me?.stage === 'full' && me.role !== 'admin' ? me : null;
+  const kitchen = params.get('kitchen') ?? undefined;
+  const joined = useCallback(
+    (next: Me) => {
+      if (next.stage !== 'full') return false;
+      adopt(next);
+      void navigate('/seller', { replace: true });
+      return true;
+    },
+    [adopt, navigate],
+  );
   const [step, setStep] = useState<SetupStep>('key');
-  // "Welcome, <first name>": only a chef's invite carries a person's name.
+  // "Welcome, <first name>": the invite carries the person's name.
   const [firstName, setFirstName] = useState<string | undefined>(undefined);
   const [setup, setSetup] = useState<Me | undefined>(undefined);
-  const toPasskey = useCallback((me: Me) => {
-    setSetup(me);
-    setFirstName(me.chefName?.trim().split(/\s+/)[0] || undefined);
-    setStep('passkey');
-  }, []);
+  const toPasskey = useCallback(
+    (next: Me) => {
+      // A joined person is signed in already; a new one (or a code) still sets up a login.
+      if (joined(next)) return;
+      setSetup(next);
+      setFirstName(next.displayName?.trim().split(/\s+/)[0] || undefined);
+      setStep('passkey');
+    },
+    [joined],
+  );
   const done = useCallback(() => {
-    void refresh().then(() => navigate('/seller', { replace: true }));
-  }, [navigate, refresh]);
+    // An admin's 6-digit code opened this setup: that person belongs on the admin page.
+    void refresh().then(() =>
+      navigate(setup?.role === 'admin' ? '/admin' : '/seller', { replace: true }),
+    );
+  }, [navigate, refresh, setup]);
   const alreadySetUp = <FootLink to={SWITCH_SIGN_IN}>{t('signIn.alreadySetUp')}</FootLink>;
   return (
-    <SignInFrame>
+    <SignInFrame brand="sellerSetup">
       {step === 'key' ? (
         <SetupKeyScreen
+          initialKey={linkKey}
+          {...(person ? { joinKitchen: kitchen ?? t('join.thisKitchen') } : {})}
           onSession={toPasskey}
           onUseCode={() => setStep('code')}
           footer={alreadySetUp}
@@ -100,8 +128,6 @@ export function SellerSignInRoute() {
   const last = lastSignedIn();
   const asked = params.get('kitchen');
   const slug = isValidSlug(asked) ? asked : last?.slug;
-  const chefParam = params.get('chef');
-  const chefId = chefParam ?? (asked === null || asked === last?.slug ? last?.chefId : undefined);
   const signedIn = useCallback(
     (me: Parameters<typeof adopt>[0]) => {
       adopt(me);
@@ -117,7 +143,6 @@ export function SellerSignInRoute() {
     <SignInFrame kitchenName={kitchenName}>
       <SignInScreen
         {...(slug ? { slug } : {})}
-        {...(chefId ? { chefId } : {})}
         onSignedIn={signedIn}
         switchPerson={switching}
         footer={<FootLink to="/seller/setup">{t('signIn.firstTime')}</FootLink>}
@@ -128,12 +153,16 @@ export function SellerSignInRoute() {
 
 export function AdminSetupRoute() {
   const { t } = useTranslation();
+  const { t: tAdmin } = useTranslation(ADMIN_NS);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const done = useCallback(() => void navigate('/admin', { replace: true }), [navigate]);
   return (
-    <SignInFrame>
+    <SignInFrame brand="admin">
       <AdminSetupScreen
         onDone={done}
+        codeScreen={(props) => <DeviceCodeScreen {...props} keyTabLabel={tAdmin('setup.tabKey')} />}
+        initialMethod={params.get('method') === 'code' ? 'code' : 'key'}
         footer={<FootLink to="/admin/sign-in?switch=1">{t('sellerNav.alreadySetUp')}</FootLink>}
       />
     </SignInFrame>
@@ -142,14 +171,40 @@ export function AdminSetupRoute() {
 
 export function AdminSignInRoute() {
   const navigate = useNavigate();
+  const { t } = useTranslation(ADMIN_NS);
   const [params] = useSearchParams();
   const done = useCallback(() => void navigate('/admin', { replace: true }), [navigate]);
   return (
-    <SignInFrame>
-      <AdminSignInScreen onSignedIn={done} autoStart={params.get('switch') === '1'} />
+    <SignInFrame brand="admin">
+      <AdminSignInScreen
+        onSignedIn={done}
+        autoStart={params.get('switch') === '1'}
+        footer={<FootLink to="/admin/setup?method=code">{t('signIn.newDevice')}</FootLink>}
+      />
     </SignInFrame>
   );
 }
+
+/** The brand bar and footer the app layer gives the admin page (features may not import app). */
+export const ADMIN_TOP = (tools: ReactNode) => <BrandTopBar page="admin">{tools}</BrandTopBar>;
+export const ADMIN_BOTTOM = <BrandBottomBar />;
+
+/** The pictures editor of one kitchen, wired to the admin's image calls (plan 041). */
+export function AdminKitchenImages({
+  sellerId,
+  resize,
+}: Readonly<{ sellerId: string; resize?: ResizeFn }>) {
+  const calls = useMemo(
+    () => ({
+      load: () => fetchSellerImages(sellerId),
+      upload: (slot: ImageSlot, dataUrl: string) => uploadSellerImage(sellerId, slot, dataUrl),
+      remove: (slot: ImageSlot) => removeSellerImage(sellerId, slot),
+    }),
+    [sellerId],
+  );
+  return <KitchenImagesEditor calls={calls} {...(resize ? { resize } : {})} />;
+}
+const ADMIN_IMAGES = (sellerId: string) => <AdminKitchenImages sellerId={sellerId} />;
 
 export function AdminHomeRoute() {
   const navigate = useNavigate();
@@ -158,9 +213,14 @@ export function AdminHomeRoute() {
     adopt(null);
     void navigate('/admin/sign-in', { replace: true });
   }, [adopt, navigate]);
+  // The admin page carries its own brand bar (plan 038), with the language switch and Sign out.
   return (
-    <AuthFrame>
-      <AdminHomeScreen onSignedOut={toSignIn} onSignInNeeded={toSignIn} />
-    </AuthFrame>
+    <AdminHomeScreen
+      onSignedOut={toSignIn}
+      onSignInNeeded={toSignIn}
+      top={ADMIN_TOP}
+      bottom={ADMIN_BOTTOM}
+      images={ADMIN_IMAGES}
+    />
   );
 }

@@ -1,6 +1,14 @@
 {
   "app": {
-    "name": "ShaggyBobo's Order"
+    "name": "ShaggyBobo's Order",
+    "brand": {
+      "sellerSetup": "Seller setup",
+      "build": "build {{commit}}",
+      "production": "production",
+      "development": "development",
+      "draft": "draft",
+      "copyright": "© {{year}} ShaggyBobo"
+    }
   },
   "language": {
     "label": "Language",
@@ -53,9 +61,17 @@
     "devices": "Devices",
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{name}}",
+    "noticePausedCustomers": "Customers can't see your kitchen right now.",
     "signedInChef": "Chef {{name}}",
+    "signedInHelper": "Helper {{name}}",
     "signedInLabel": "Signed in as",
+    "kitchenSwitch": "Kitchen",
+    "kitchenSwitchFailed": "Could not switch kitchen. Please try again.",
+    "roleOwner": "Owner",
+    "roleHelper": "Helper",
+    "roleChef": "Chef",
     "personChef": "{{name}} · chef",
+    "personHelper": "{{name}} · helper",
     "personSeller": "{{name}} · seller",
     "switchPerson": "Switch person",
     "notForChefs": "Not available for chefs",
@@ -68,6 +84,7 @@
     "delivery": "Delivery run",
     "updates": "Send an update",
     "backToSaturday": "Back to Hand-over",
+    "navHome": "Home",
     "navOrders": "Orders",
     "newOrders": "new orders",
     "navKitchen": "Kitchen",
@@ -81,7 +98,10 @@
     "tabletOnlyBody": "This part of the app needs a bigger screen. Orders and Pickup & delivery work on your phone.",
     "tabletOnlyOrders": "Go to orders",
     "switchPersonShort": "Switch",
-    "signedInWho": "Signed in"
+    "signedInWho": "Signed in",
+    "navSell": "Sell",
+    "sell": "Sell",
+    "printOrders": "Print orders"
   },
   "customerNav": {
     "label": "Customer",
@@ -99,6 +119,10 @@
     "theme": "Appearance",
     "themeAuto": "Auto",
     "themeAutoHint": "Auto · follows phone",
+    "textSize": "Text size",
+    "textSmaller": "Smaller",
+    "textNormal": "Normal",
+    "textLarger": "Larger",
     "updatesTitle": "Order updates",
     "homeTitle": "Put it on your home screen",
     "homeBody": "Opens like an app, one tap away.",

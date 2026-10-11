@@ -14,9 +14,14 @@ import {
   parseMeResponse,
   parseSellerResponse,
   parseSellersResponse,
+  parseInvitesResponse,
+  parseMembersResponse,
+  parseMembershipsResponse,
   parseSessionResponse,
+  parseTeamNamesResponse,
   type SessionResponse,
 } from '../shared/authContract';
+import { parseLogListResponse } from '../shared/logContract';
 import { parseSellerOrderResponse, parseSellerOrdersResponse } from '../shared/orderContract';
 
 import { DEV_ADMIN_SETUP_KEY, devApi, useWorld, type World } from './impl';
@@ -160,6 +165,19 @@ describe('sign-in', () => {
     return { admin, invite, full };
   }
 
+  /** The account id of a kitchen person who has a password, picked by name (the sign-in picker). */
+  async function personId(slug: string, displayName: string): Promise<string> {
+    const reply = await call('GET', `/api/s/${slug}/team-names`);
+    const found = parseTeamNamesResponse(reply.body)?.names.find(
+      (name) => name.displayName === displayName,
+    );
+    if (!found) throw new Error(`no ${displayName} in ${slug}: ${JSON.stringify(reply.body)}`);
+    return found.accountId;
+  }
+
+  /** The kitchen's name is the owner's starting name when the admin sends none. */
+  const OWNER_A = 'Onde Onde';
+
   const newToken = () => `token-${String(++tokenCounter)}`;
 
   beforeEach(async () => {
@@ -228,7 +246,76 @@ describe('sign-in', () => {
     });
   });
 
+  describe('admin: client log (plan 026)', () => {
+    const logged = (message: string) => ({
+      app: 'customer' as const,
+      version: 'dev',
+      slug: null,
+      path: '/',
+      kind: 'js_error' as const,
+      code: 'TypeError',
+      message,
+      agent: 'Safari iOS 17',
+      standalone: false,
+    });
+
+    it('refuses anonymous callers and sellers', async () => {
+      expect((await call('GET', '/api/admin/log')).status).toBe(401);
+      const { full } = await sellerSignedIn(A_ID);
+      expect((await call('GET', '/api/admin/log', { token: full.token })).status).toBe(403);
+    });
+
+    it('gives the admin the newest entries first', async () => {
+      const admin = await adminSignedIn();
+      await world.repo.log.record([logged('older')]);
+      await world.repo.log.record([logged('newer')]);
+      const reply = await call('GET', '/api/admin/log', admin);
+      expect(reply.status).toBe(200);
+      const parsed = parseLogListResponse(reply.body);
+      expect(parsed?.entries.map((e) => e.message)).toEqual(['newer', 'older']);
+      expect(parsed?.total).toBe(2);
+    });
+
+    it('filters by app and kitchen, pages 50 at a time, and clears (admin only)', async () => {
+      const admin = await adminSignedIn();
+      const { full } = await sellerSignedIn(A_ID);
+      for (let n = 1; n <= 55; n += 1) await world.repo.log.record([logged(`c${String(n)}`)]);
+      await world.repo.log.record([{ ...logged('s1'), app: 'seller', slug: 'onde-onde' }]);
+      const get = async (query: string) =>
+        parseLogListResponse((await call('GET', `/api/admin/log${query}`, admin)).body);
+      const first = await get('');
+      expect([first?.entries.length, first?.total]).toEqual([50, 56]);
+      const second = await get('?offset=50');
+      expect(second?.entries.map((e) => e.message)).toEqual(['c6', 'c5', 'c4', 'c3', 'c2', 'c1']);
+      expect((await get('?app=seller'))?.entries.map((e) => e.message)).toEqual(['s1']);
+      const kitchen = await get('?slug=onde-onde');
+      expect([kitchen?.total, kitchen?.entries[0]?.message]).toEqual([1, 's1']);
+      expect((await get('?app=admin'))?.total).toBe(0);
+      // A bad filter or offset is ignored.
+      expect((await get('?app=nope&offset=-3'))?.entries).toHaveLength(50);
+
+      expect((await call('DELETE', '/api/admin/log')).status).toBe(401);
+      expect((await call('DELETE', '/api/admin/log', { token: full.token })).status).toBe(403);
+      expect((await get(''))?.total).toBe(56);
+      expect((await call('DELETE', '/api/admin/log', admin)).status).toBe(200);
+      expect((await get(''))?.total).toBe(0);
+    });
+  });
+
   describe('admin: sellers', () => {
+    it('answers a newly added seller with its summary line', async () => {
+      const admin = await adminSignedIn();
+      const reply = await call('POST', '/api/admin/sellers', {
+        ...admin,
+        body: { name: 'Warung Baru', slug: 'warung-baru' },
+      });
+      expect(reply.status).toBe(201);
+      expect(parseSellerResponse(reply.body)?.seller.summary).toMatchObject({
+        people: 0,
+        orders: 0,
+      });
+    });
+
     it('lists and creates sellers with slug rules, unique slugs and an empty kitchen', async () => {
       const admin = await adminSignedIn();
       const listed = parseSellersResponse((await call('GET', '/api/admin/sellers', admin)).body);
@@ -286,6 +373,7 @@ describe('sign-in', () => {
         ['POST', `/api/admin/sellers/${A_ID}/invite-key`],
         ['POST', `/api/admin/sellers/${A_ID}/recovery-key`],
         ['GET', `/api/admin/sellers/${A_ID}/devices`],
+        ['GET', `/api/admin/sellers/${A_ID}/invites`],
         ['GET', `/api/admin/sellers/${A_ID}/chefs`],
         ['POST', `/api/admin/sellers/${A_ID}/chefs/wati/sign-out-all`],
       ];
@@ -334,7 +422,7 @@ describe('sign-in', () => {
       const admin = await adminSignedIn();
       const invite = key(await call('POST', `/api/admin/sellers/${A_ID}/invite-key`, admin));
       expect(invite.key).toMatch(/^DLV-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-      expect(invite.maxDevices).toBe(3);
+      expect(invite.maxDevices).toBe(1);
       expect(Date.parse(invite.expiresAt)).toBe(START + DAY);
       const plain = invite.key.replace(/-/g, '');
       const kept = await world.dumpSecrets();
@@ -375,16 +463,14 @@ describe('sign-in', () => {
       expect(errorOf(expired)?.message).toBe(errorOf(wrong)?.message);
     });
 
-    it('works on up to 3 devices, once per device', async () => {
+    it('works once (D-085): one device, then it is spent', async () => {
       const admin = await adminSignedIn();
       const invite = key(await call('POST', `/api/admin/sellers/${A_ID}/invite-key`, admin));
       const redeem = (deviceId: string) =>
         call('POST', '/api/auth/invite', { body: { key: invite.key, deviceId } });
       expect((await redeem('phone-0001-aaaa')).status).toBe(200);
       expect((await redeem('phone-0001-aaaa')).status).toBe(401); // same device again
-      expect((await redeem('phone-0002-bbbb')).status).toBe(200);
-      expect((await redeem('phone-0003-cccc')).status).toBe(200);
-      expect((await redeem('phone-0004-dddd')).status).toBe(401); // used up
+      expect((await redeem('phone-0002-bbbb')).status).toBe(401); // spent
     });
 
     it('issues a recovery key the same way', async () => {
@@ -421,8 +507,9 @@ describe('sign-in', () => {
       });
       expect(twice.status).toBe(401);
       // And a setup session expires after an hour.
+      const second = key(await call('POST', `/api/admin/sellers/${A_ID}/invite-key`, admin));
       const another = session(
-        await call('POST', '/api/auth/invite', { body: { key: invite.key, deviceId: DEVICE_2 } }),
+        await call('POST', '/api/auth/invite', { body: { key: second.key, deviceId: DEVICE_2 } }),
       );
       nowMs += 61 * MIN;
       const late = await call('POST', '/api/auth/register', {
@@ -454,16 +541,28 @@ describe('sign-in', () => {
       expect(kept).not.toContain(password);
       expect(kept).toContain('"iterations":100000');
 
+      const accountId = await personId(A, OWNER_A);
       const signIn = await call('POST', '/api/auth/password', {
-        body: { slug: A, password, deviceId: DEVICE_2, deviceName: 'Tablet' },
+        body: { slug: A, accountId, password, deviceId: DEVICE_2, deviceName: 'Tablet' },
       });
-      expect(session(signIn).me).toMatchObject({ role: 'seller', slug: A, deviceName: 'Tablet' });
+      expect(session(signIn).me).toMatchObject({
+        role: 'seller',
+        slug: A,
+        displayName: OWNER_A,
+        deviceName: 'Tablet',
+      });
       const wrong = await call('POST', '/api/auth/password', {
-        body: { slug: A, password: 'not the password', deviceId: DEVICE_2, deviceName: 'Tablet' },
+        body: {
+          slug: A,
+          accountId,
+          password: 'not the password',
+          deviceId: DEVICE_2,
+          deviceName: 'Tablet',
+        },
       });
       expect(errorOf(wrong)).toMatchObject({ error: 'invalid_credentials', triesLeft: 4 });
       const unknown = await call('POST', '/api/auth/password', {
-        body: { slug: 'nobody', password, deviceId: DEVICE_2, deviceName: 'Tablet' },
+        body: { slug: 'nobody', accountId, password, deviceId: DEVICE_2, deviceName: 'Tablet' },
       });
       expect(errorOf(unknown)?.error).toBe('invalid_credentials');
     });
@@ -1125,9 +1224,10 @@ describe('sign-in', () => {
 
     it('also locks per seller across devices for password tries', async () => {
       await sellerSignedIn(A_ID);
+      const accountId = await personId(A, OWNER_A);
       const wrong = (deviceId: string) =>
         call('POST', '/api/auth/password', {
-          body: { slug: A, password: 'wrong password!', deviceId, deviceName: 'X' },
+          body: { slug: A, accountId, password: 'wrong password!', deviceId, deviceName: 'X' },
         });
       for (let i = 0; i < 4; i++) await wrong(`phone-000${String(i)}-xxxx`);
       const fifth = await wrong('phone-0005-xxxx');
@@ -1136,6 +1236,7 @@ describe('sign-in', () => {
       const sixth = await call('POST', '/api/auth/password', {
         body: {
           slug: A,
+          accountId,
           password: 'correct horse battery',
           deviceId: 'phone-0009-yyyy',
           deviceName: 'X',
@@ -1144,7 +1245,13 @@ describe('sign-in', () => {
       expect(errorOf(sixth)?.error).toBe('locked_out');
       // The other seller is unaffected.
       const b = await call('POST', '/api/auth/password', {
-        body: { slug: B, password: 'whatever it is', deviceId: 'phone-0009-yyyy', deviceName: 'X' },
+        body: {
+          slug: B,
+          accountId,
+          password: 'whatever it is',
+          deviceId: 'phone-0009-yyyy',
+          deviceName: 'X',
+        },
       });
       expect(errorOf(b)).toMatchObject({ error: 'invalid_credentials', triesLeft: 4 });
     });
@@ -1293,13 +1400,14 @@ describe('sign-in', () => {
       expect(await world.dumpSecrets()).not.toContain(invite.key);
     });
 
-    it('signs the chef in by password with the chef id, and audits under the chef name', async () => {
+    it('signs the chef in by password, picked by name, and audits under the chef name', async () => {
       const { chef } = await chefSession();
       expect(chef.me).toMatchObject({ role: 'chef', chefName: 'Chef Wati' });
+      const chefAccount = await personId(A, 'Chef Wati');
       const signIn = await call('POST', '/api/auth/password', {
         body: {
           slug: A,
-          chefId: 'wati',
+          accountId: chefAccount,
           password: 'chef long password',
           deviceId: DEVICE,
           deviceName: 'Second phone',
@@ -1310,13 +1418,24 @@ describe('sign-in', () => {
       const mixed = await call('POST', '/api/auth/password', {
         body: {
           slug: A,
-          chefId: 'wati',
+          accountId: chefAccount,
           password: 'correct horse battery',
           deviceId: DEVICE_2,
           deviceName: 'X',
         },
       });
       expect(errorOf(mixed)?.error).toBe('invalid_credentials');
+    });
+
+    it('lets a chef add made counts, and the seller sees them (plan 035)', async () => {
+      const { seller, chef } = await chefSession();
+      const add = await call('POST', '/api/seller/made', {
+        ...chef,
+        body: { itemId: 'pesmol', delta: 2 },
+      });
+      expect(add).toMatchObject({ status: 200, body: { made: { pesmol: 2 } } });
+      const read = await call('GET', '/api/seller/made', seller.full);
+      expect(read.body).toEqual({ made: { pesmol: 2 } });
     });
 
     it('does everything the seller does with orders', async () => {
@@ -1381,7 +1500,7 @@ describe('sign-in', () => {
     it('refuses every forbidden route with 403 forbidden, and the seller may use them', async () => {
       const { chef, seller } = await chefSession();
       const forbidden: Array<[string, string, unknown?]> = [
-        ['POST', '/api/seller/dishes', { name: { en: 'x', id: 'x' }, priceCents: 100 }],
+        // POST /api/seller/dishes is open to a chef since plan 030 (mocks/chefDishes.test.ts)
         ['PATCH', '/api/seller/dishes/pesmol', { priceCents: 200 }],
         ['DELETE', '/api/seller/dishes/pesmol'],
         ['PUT', '/api/seller/menus/current', { dishIds: [] }],
@@ -1430,15 +1549,16 @@ describe('sign-in', () => {
   describe('admin: chefs (read-only) and sign out all', () => {
     async function chefOnTwoDevices() {
       const seller = await sellerSignedIn(A_ID);
-      const invite = key(
-        await call('POST', '/api/seller/chef-invites', {
-          ...seller.full,
-          body: { chefId: 'wati' },
-        }),
-      );
       const devices = ['chef-0001-aaaa', 'chef-0002-bbbb'];
       const tokens: Array<string> = [];
+      // A key admits one device (D-085), so two phones are two invites.
       for (const [index, deviceId] of devices.entries()) {
+        const invite = key(
+          await call('POST', '/api/seller/chef-invites', {
+            ...seller.full,
+            body: { chefId: 'wati' },
+          }),
+        );
         const setup = session(
           await call('POST', '/api/auth/invite', { body: { key: invite.key, deviceId } }),
         );
@@ -1478,7 +1598,7 @@ describe('sign-in', () => {
       expect((await call('GET', '/api/seller/orders', admin)).status).toBe(403);
     });
 
-    it('signs out every device of the chef, and the others stay signed in', async () => {
+    it('signs out every session of the chef here, and the others stay signed in', async () => {
       const { seller, tokens } = await chefOnTwoDevices();
       const admin = await adminSignedIn();
       const path = `/api/admin/sellers/${A_ID}/chefs/wati/sign-out-all`;
@@ -1486,8 +1606,9 @@ describe('sign-in', () => {
       for (const token of tokens) {
         expect((await call('GET', '/api/auth/me', { token })).status).toBe(401);
       }
+      // Sessions end; the devices stay on the people (removing the member is what shuts the door).
       const list = await call('GET', `/api/admin/sellers/${A_ID}/chefs`, admin);
-      expect(parseChefAccessResponse(list.body)?.chefs[0]?.devices).toBe(0);
+      expect(parseChefAccessResponse(list.body)?.chefs[0]?.devices).toBe(2);
       expect((await call('GET', '/api/auth/me', seller.full)).status).toBe(200);
       expect(
         errorOf(await call('POST', `/api/admin/sellers/${A_ID}/chefs/nobody/sign-out-all`, admin))
@@ -1503,6 +1624,351 @@ describe('sign-in', () => {
       ]);
       const asChef = await call('GET', '/api/seller/chef-devices', { token: tokens[0] ?? '' });
       expect(asChef.status).toBe(403);
+    });
+  });
+
+  describe('people and memberships (plan 033)', () => {
+    const placeOrder = (slug: string, itemId: string, firstName: string) =>
+      call('POST', `/api/s/${slug}/orders`, {
+        body: { firstName, language: 'en', fulfilment: 'pickup', lines: [{ itemId, qty: 1 }] },
+      });
+    const namesOf = async (token: string) =>
+      (
+        parseSellerOrdersResponse((await call('GET', '/api/seller/orders', { token })).body)
+          ?.orders ?? []
+      ).map((order) => order.firstName);
+    const adminInvite = async (admin: Login, sellerId: string, displayName?: string) =>
+      key(
+        await call('POST', `/api/admin/sellers/${sellerId}/invite-key`, {
+          ...admin,
+          ...(displayName ? { body: { displayName } } : {}),
+        }),
+      );
+    const redeem = (inviteKey: string, deviceId: string, token?: string, displayName?: string) =>
+      call('POST', '/api/auth/invite', {
+        ...(token ? { token } : {}),
+        body: { key: inviteKey, deviceId, ...(displayName ? { displayName } : {}) },
+      });
+    /** A new person from an admin invite, finished with a password. */
+    async function newOwner(admin: Login, sellerId: string, name: string, deviceId: string) {
+      const invite = await adminInvite(admin, sellerId, name);
+      const setup = session(await redeem(invite.key, deviceId));
+      return session(
+        await call('POST', '/api/auth/register', {
+          token: setup.token,
+          body: { kind: 'password', password: 'correct horse battery', deviceName: 'Phone' },
+        }),
+      );
+    }
+
+    it('lists the newest 20 invites of a kitchen: waiting, used and expired, never the key (plan 043)', async () => {
+      const admin = await adminSignedIn();
+      const invitesOf = async (sellerId: string) =>
+        parseInvitesResponse(
+          (await call('GET', `/api/admin/sellers/${sellerId}/invites`, admin)).body,
+        )?.invites ?? [];
+      expect(await invitesOf(A_ID)).toEqual([]);
+
+      const used = await adminInvite(admin, A_ID, 'Used one');
+      expect((await redeem(used.key, 'dev-used-0001')).status).toBe(200);
+      await adminInvite(admin, A_ID, 'Old one');
+      nowMs += 25 * 60 * MIN;
+      await adminInvite(admin, A_ID, 'Fresh one');
+      await adminInvite(admin, B_ID, 'Other kitchen');
+
+      const invites = await invitesOf(A_ID);
+      expect(invites.map((invite) => [invite.displayName, invite.status])).toEqual([
+        ['Fresh one', 'waiting'],
+        ['Old one', 'expired'],
+        ['Used one', 'used'],
+      ]);
+      expect(invites[2]?.usedAt).toBeDefined();
+      expect(invites.every((invite) => invite.role === 'owner')).toBe(true);
+      expect(JSON.stringify(invites)).not.toContain(used.key);
+
+      for (let i = 0; i < 22; i += 1) await adminInvite(admin, A_ID, `Many ${i}`);
+      const newest = await invitesOf(A_ID);
+      expect(newest).toHaveLength(20);
+      expect(newest[0]?.displayName).toBe('Many 21');
+    });
+
+    it('a key redeemed from two devices at once admits exactly one', async () => {
+      const admin = await adminSignedIn();
+      const invite = await adminInvite(admin, A_ID, 'Race');
+      const replies = await Promise.all([
+        redeem(invite.key, 'racer-0001-aaaa'),
+        redeem(invite.key, 'racer-0002-bbbb'),
+      ]);
+      expect(replies.map((reply) => reply.status).sort()).toEqual([200, 401]);
+    });
+
+    it('one person in two kitchens: joining adds a membership without a new passkey, and switching shows only each kitchen data', async () => {
+      const { admin, full } = await sellerSignedIn(A_ID);
+      await placeOrder(A, 'pesmol', 'Rina');
+      await placeOrder(B, 'soto-ayam', 'Tono');
+      const inviteB = await adminInvite(admin, B_ID);
+      const joined = await redeem(inviteB.key, DEVICE, full.token);
+      expect(joined.status).toBe(200);
+      const joinedSession = session(joined);
+      // The same session (cookie), the same single device: nothing new to register.
+      expect(joinedSession.token).toBe(full.token);
+      expect(joinedSession.me).toMatchObject({ stage: 'full', slug: B, role: 'seller' });
+      const devices = parseDevicesResponse(
+        (await call('GET', '/api/auth/devices', full)).body,
+      )?.devices;
+      expect(devices).toHaveLength(1);
+
+      const list = parseMembershipsResponse(
+        (await call('GET', '/api/auth/memberships', full)).body,
+      );
+      expect(list?.memberships.map((row) => [row.slug, row.role])).toEqual([
+        [A, 'owner'],
+        [B, 'owner'],
+      ]);
+
+      expect(await namesOf(full.token)).toEqual(['Tono']);
+      const toA = await call('POST', '/api/auth/switch', { ...full, body: { sellerId: A_ID } });
+      expect(parseMeResponse(toA.body)?.me).toMatchObject({ slug: A, sellerId: A_ID });
+      expect(await namesOf(full.token)).toEqual(['Rina']);
+      expect(parseMeResponse((await call('GET', '/api/auth/me', full)).body)?.me.slug).toBe(A);
+
+      // A kitchen the person does not belong to cannot be switched to.
+      const made = await call('POST', '/api/admin/sellers', {
+        ...admin,
+        body: { name: 'Third', slug: 'third' },
+      });
+      expect(made.status).toBe(201);
+      const third = await call('POST', '/api/auth/switch', {
+        ...full,
+        body: { sellerId: 'seller-third' },
+      });
+      expect(errorOf(third)?.error).toBe('forbidden');
+      const unknown = await call('POST', '/api/auth/switch', { ...full, body: { sellerId: 'x' } });
+      expect(unknown.status).toBe(403);
+      expect(parseMeResponse((await call('GET', '/api/auth/me', full)).body)?.me.slug).toBe(A);
+    });
+
+    it('joins only once: the key is spent, and a member cannot join the same kitchen again', async () => {
+      const { admin, full } = await sellerSignedIn(A_ID);
+      const inviteB = await adminInvite(admin, B_ID);
+      expect((await redeem(inviteB.key, DEVICE, full.token)).status).toBe(200);
+      expect((await redeem(inviteB.key, DEVICE_2, full.token)).status).toBe(401);
+      expect((await redeem(inviteB.key, DEVICE_2)).status).toBe(401);
+      const again = await adminInvite(admin, B_ID);
+      const twice = await redeem(again.key, 'phone-0003-cccc', full.token);
+      expect(errorOf(twice)?.error).toBe('invalid_request');
+      // The refused join did not spend the key.
+      const stranger = await redeem(again.key, 'phone-0004-dddd');
+      expect(session(stranger).me.stage).toBe('setup');
+    });
+
+    it('makes a new person with the invite name, or the name they edited', async () => {
+      const admin = await adminSignedIn();
+      const named = await adminInvite(admin, A_ID, 'Bu Sari');
+      expect(session(await redeem(named.key, DEVICE)).me).toMatchObject({
+        displayName: 'Bu Sari',
+        role: 'seller',
+        stage: 'setup',
+      });
+      const edited = await adminInvite(admin, A_ID, 'Bu Sari');
+      expect(session(await redeem(edited.key, DEVICE_2, undefined, 'Sari W')).me.displayName).toBe(
+        'Sari W',
+      );
+    });
+
+    it('lists password sign-in names for that kitchen only, people with a password', async () => {
+      const admin = await adminSignedIn();
+      const none = await call('GET', `/api/s/${A}/team-names`);
+      expect(parseTeamNamesResponse(none.body)?.names).toEqual([]);
+      await newOwner(admin, A_ID, 'Bu Sari', DEVICE);
+      const names = parseTeamNamesResponse((await call('GET', `/api/s/${A}/team-names`)).body);
+      expect(names?.names.map((name) => name.displayName)).toEqual(['Bu Sari']);
+      expect(
+        parseTeamNamesResponse((await call('GET', `/api/s/${B}/team-names`)).body)?.names,
+      ).toEqual([]);
+      expect((await call('GET', '/api/s/nobody/team-names')).status).toBe(404);
+      // A person of kitchen A cannot sign in to kitchen B by password.
+      const accountId = await personId(A, 'Bu Sari');
+      const cross = await call('POST', '/api/auth/password', {
+        body: {
+          slug: B,
+          accountId,
+          password: 'correct horse battery',
+          deviceId: DEVICE_2,
+          deviceName: 'X',
+        },
+      });
+      expect(errorOf(cross)?.error).toBe('invalid_credentials');
+    });
+
+    it('opens the asked kitchen at passkey sign-in, else the first one', async () => {
+      const admin = await adminSignedIn();
+      const mine = new SoftAuthenticator(SITE);
+      const invite = await adminInvite(admin, A_ID, 'Bu Sari');
+      const setup = session(await redeem(invite.key, 'phone-0001-aaaa'));
+      const full = await registerPasskey(setup.token, 'Phone', mine);
+      const inviteB = await adminInvite(admin, B_ID);
+      expect((await redeem(inviteB.key, 'phone-0001-aaaa', full.token)).status).toBe(200);
+
+      const signIn = async (deviceId: string, slug?: string) => {
+        const asked = await call('POST', '/api/auth/passkey/options', {
+          body: { deviceId, credentialId: mine.lastId },
+        });
+        const options = (asked.body as { options: Record<string, unknown> }).options;
+        return call('POST', '/api/auth/passkey', {
+          body: { deviceId, response: mine.get(options as never), ...(slug ? { slug } : {}) },
+        });
+      };
+      expect(session(await signIn('phone-0002-bbbb')).me).toMatchObject({ slug: A });
+      const second = session(await signIn('phone-0003-cccc', B));
+      expect(second.me).toMatchObject({ slug: B, displayName: 'Bu Sari' });
+      // A kitchen they do not belong to falls back to the first one.
+      await call('POST', '/api/admin/sellers', {
+        ...admin,
+        body: { name: 'Third', slug: 'third' },
+      });
+      expect(session(await signIn('phone-0004-dddd', 'third')).me.slug).toBe(A);
+    });
+
+    it('refuses a removed member on the next request, and leaves their other kitchens', async () => {
+      const { admin, full } = await sellerSignedIn(A_ID);
+      const inviteB = await adminInvite(admin, B_ID);
+      expect((await redeem(inviteB.key, DEVICE, full.token)).status).toBe(200);
+      const me = parseMeResponse((await call('GET', '/api/auth/me', full)).body)?.me;
+      expect(me?.slug).toBe(B);
+      const members = parseMembersResponse(
+        (await call('GET', `/api/admin/sellers/${A_ID}/members`, admin)).body,
+      )?.members;
+      expect(members).toEqual([
+        expect.objectContaining({ displayName: OWNER_A, role: 'owner', devices: 1 }),
+      ]);
+      const accountId = members?.[0]?.accountId ?? '';
+
+      // Active in B: removing from A leaves this session alone.
+      expect(
+        (await call('DELETE', `/api/admin/sellers/${A_ID}/members/${accountId}`, admin)).status,
+      ).toBe(200);
+      expect((await call('GET', '/api/seller/orders', full)).status).toBe(200);
+      const toA = await call('POST', '/api/auth/switch', { ...full, body: { sellerId: A_ID } });
+      expect(toA.status).toBe(403);
+      expect(
+        (await call('DELETE', `/api/admin/sellers/${A_ID}/members/${accountId}`, admin)).status,
+      ).toBe(404);
+
+      // Removed from the kitchen the session is in: refused at once.
+      expect(
+        (await call('DELETE', `/api/admin/sellers/${B_ID}/members/${accountId}`, admin)).status,
+      ).toBe(200);
+      expect((await call('GET', '/api/seller/orders', full)).status).toBe(401);
+      expect((await call('GET', '/api/auth/me', full)).status).toBe(401);
+      // With no kitchen left the person is gone, devices included.
+      expect(
+        (
+          await call('POST', '/api/auth/password', {
+            body: {
+              slug: A,
+              accountId,
+              password: 'correct horse battery',
+              deviceId: DEVICE_2,
+              deviceName: 'X',
+            },
+          })
+        ).status,
+      ).toBe(401);
+      const list = parseDevicesResponse(
+        (await call('GET', `/api/admin/sellers/${A_ID}/devices`, admin)).body,
+      );
+      expect(list?.devices).toEqual([]);
+    });
+
+    it('the owner invites by name and role, sees the team, and removes a member', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      const chefInvite = key(
+        await call('POST', '/api/seller/invites', {
+          ...full,
+          body: { displayName: 'Dewi', role: 'chef' },
+        }),
+      );
+      expect(chefInvite.maxDevices).toBe(1);
+      // A chef invite with no cook makes the cook row.
+      const cooks = (
+        (await call('GET', '/api/seller/chefs', full)).body as { chefs: Array<{ name: string }> }
+      ).chefs;
+      expect(cooks.map((cook) => cook.name)).toContain('Dewi');
+      const setup = session(await redeem(chefInvite.key, 'chef-0001-aaaa'));
+      const dewi = session(
+        await call('POST', '/api/auth/register', {
+          token: setup.token,
+          body: { kind: 'password', password: 'chef long password', deviceName: 'Dewi phone' },
+        }),
+      );
+      expect(dewi.me).toMatchObject({ role: 'chef', chefName: 'Dewi', displayName: 'Dewi' });
+
+      const team = parseMembersResponse((await call('GET', '/api/seller/team', full)).body);
+      expect(team?.members.map((m) => [m.displayName, m.role, m.devices, m.you === true])).toEqual([
+        [OWNER_A, 'owner', 1, true],
+        ['Dewi', 'chef', 1, false],
+      ]);
+      // The chef cannot invite, see the team, or remove anyone.
+      const chefTries: Array<[string, string, unknown?]> = [
+        ['POST', '/api/seller/invites', { displayName: 'X', role: 'owner' }],
+        ['GET', '/api/seller/team'],
+        ['DELETE', `/api/seller/team/${team?.members[0]?.accountId ?? ''}`],
+      ];
+      for (const [method, path, body] of chefTries) {
+        const reply = await call(method, path, { ...dewi, ...(body ? { body } : {}) });
+        expect(reply.status, `${method} ${path}`).toBe(403);
+      }
+      // An owner invite makes an owner.
+      const ownerInvite = key(
+        await call('POST', '/api/seller/invites', {
+          ...full,
+          body: { displayName: 'Pak Budi', role: 'owner' },
+        }),
+      );
+      expect(session(await redeem(ownerInvite.key, 'owner-0002-bbbb')).me.role).toBe('seller');
+
+      // Removing a member ends their access at once; the owner cannot remove themselves.
+      const own = team?.members[0]?.accountId ?? '';
+      expect((await call('DELETE', `/api/seller/team/${own}`, full)).status).toBe(400);
+      const dewiId = team?.members[1]?.accountId ?? '';
+      expect((await call('DELETE', `/api/seller/team/${dewiId}`, full)).status).toBe(200);
+      expect((await call('GET', '/api/seller/orders', dewi)).status).toBe(401);
+      expect((await call('DELETE', `/api/seller/team/${dewiId}`, full)).status).toBe(404);
+    });
+
+    it('a chef membership is closed out of owner routes, and an owner of another kitchen cannot reach this one', async () => {
+      const { admin, full } = await sellerSignedIn(A_ID);
+      const other = await newOwner(admin, B_ID, 'Pak Budi', 'phone-0007-gggg');
+      // Pak Budi owns B only: his session never sees A's data.
+      await placeOrder(A, 'pesmol', 'Rina');
+      expect(await namesOf(other.token)).toEqual([]);
+      expect(await namesOf(full.token)).toEqual(['Rina']);
+      const chefInvite = key(
+        await call('POST', '/api/seller/chef-invites', { ...full, body: { chefId: 'wati' } }),
+      );
+      const setup = session(await redeem(chefInvite.key, 'chef-0001-aaaa'));
+      const chef = session(
+        await call('POST', '/api/auth/register', {
+          token: setup.token,
+          body: { kind: 'password', password: 'chef long password', deviceName: 'Phone' },
+        }),
+      );
+      for (const [method, path] of [
+        ['PATCH', '/api/seller/settings'],
+        ['POST', '/api/seller/chefs'],
+        ['DELETE', '/api/seller/chefs/wati'],
+        ['GET', '/api/seller/backup'],
+      ] as const) {
+        expect(
+          (await call(method, path, { ...chef, ...(method === 'GET' ? {} : { body: {} }) })).status,
+          path,
+        ).toBe(403);
+      }
+      // Admin routes stay for the admin only.
+      expect((await call('GET', '/api/admin/sellers', chef)).status).toBe(403);
+      expect((await call('GET', '/api/admin/sellers', full)).status).toBe(403);
+      expect((await call('GET', `/api/admin/sellers/${A_ID}/members`, chef)).status).toBe(403);
     });
   });
 });

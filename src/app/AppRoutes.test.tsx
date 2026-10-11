@@ -128,12 +128,35 @@ describe('AppRoutes', () => {
     phone.unmount();
 
     wide = true;
-    renderAt('/seller');
+    renderAt('/seller/orders');
     expect(screen.getByRole('navigation', { name: 'Seller' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { level: 1, name: 'Orders' })).toBeInTheDocument();
     expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('lands on Home at /seller on a tablet (Home marked, no Orders list) and on Orders on a phone', async () => {
+    const phone = renderAt('/seller');
+    // Phone: no Home anywhere; the Orders tab is current and the Orders list is the page.
+    expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Orders' })).toBeInTheDocument();
+    phone.unmount();
+
+    wide = true;
+    renderAt('/seller');
+    const rail = screen.getByRole('navigation', { name: 'Seller' });
+    expect(within(rail).getByRole('link', { name: 'Home' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(within(rail).getByRole('link', { name: 'Orders' })).not.toHaveAttribute('aria-current');
+    expect(screen.queryByRole('heading', { level: 1, name: 'Orders' })).not.toBeInTheDocument();
+    // Home loads the menu first (the test has no server, so it shows the load message or error).
+    expect(
+      await screen.findByText(/Loading the menu|Could not load the menu/, {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
   });
 
   it('collapses the rail to icons, remembers it, and names every item on focus', () => {
@@ -147,15 +170,15 @@ describe('AppRoutes', () => {
     expect(expand).toHaveAttribute('aria-expanded', 'false');
     expect(localStorage.getItem('sellerRailCollapsed')).toBe('1');
     // Names stay for assistive tech; the current page is still marked.
-    const orders = within(rail).getByRole('link', { name: 'Orders' });
+    const orders = within(rail).getByRole('link', { name: 'Home' });
     expect(orders).toHaveAttribute('aria-current', 'page');
     expect(within(rail).getByRole('link', { name: 'Kitchen' })).toBeInTheDocument();
     expect(within(rail).getByRole('link', { name: 'Pickup & delivery' })).toBeInTheDocument();
     expect(within(rail).queryByRole('radiogroup')).not.toBeInTheDocument();
     expect(within(rail).getByRole('button', { name: /Language: EN/ })).toBeInTheDocument();
-    expect(within(rail).queryByText('Orders', { selector: '[aria-hidden]' })).toBeNull();
+    expect(within(rail).queryByText('Home', { selector: '[aria-hidden]' })).toBeNull();
     fireEvent.focus(orders);
-    expect(within(rail).getByText('Orders', { selector: 'span[aria-hidden]' })).toBeInTheDocument();
+    expect(within(rail).getByText('Home', { selector: 'span[aria-hidden]' })).toBeInTheDocument();
     first.unmount();
 
     // A new visit starts collapsed, and the button expands it again.
@@ -195,6 +218,9 @@ describe('AppRoutes', () => {
     const phone = renderAt('/seller/more');
     expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { name: 'More' })).toBeInTheDocument();
+    const entries = within(screen.getByRole('navigation', { name: 'More' }));
+    expect(entries.getByText('Kitchen')).toBeInTheDocument();
+    expect(entries.getByText('Labels')).toBeInTheDocument();
     phone.unmount();
 
     wide = true;
@@ -219,7 +245,7 @@ describe('AppRoutes', () => {
 
   it('opens the share page from the Orders header', async () => {
     wide = true;
-    renderAt('/seller');
+    renderAt('/seller/orders');
     fireEvent.click(await screen.findByRole('button', { name: 'More' }, { timeout: 5000 }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Share menu' }));
     expect(screen.getByTestId('where')).toHaveTextContent('/seller/share');
@@ -227,7 +253,7 @@ describe('AppRoutes', () => {
 
   it('reads the seller filter and search from the URL', async () => {
     wide = true;
-    renderAt('/seller?status=ready&q=rina');
+    renderAt('/seller/orders?status=ready&q=rina');
     expect(await screen.findByLabelText('Name or code', {}, { timeout: 5000 })).toHaveValue('rina');
     // The search is open, so it stands in for the tabs; closing it keeps the status.
     fireEvent.click(screen.getAllByRole('button', { name: 'Close search' })[0] as HTMLElement);
@@ -236,16 +262,16 @@ describe('AppRoutes', () => {
 
   it('writes the seller filter and search to the URL, dropping the defaults', async () => {
     wide = true;
-    renderAt('/seller');
+    renderAt('/seller/orders');
     fireEvent.click(await screen.findByRole('button', { name: /^Done/ }, { timeout: 5000 }));
-    expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done');
+    expect(screen.getByTestId('where')).toHaveTextContent('/seller/orders?status=done');
     fireEvent.click(screen.getByRole('button', { name: 'Search orders' }));
     fireEvent.change(screen.getByLabelText('Name or code'), { target: { value: 'tom' } });
-    expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done&q=tom');
+    expect(screen.getByTestId('where')).toHaveTextContent('/seller/orders?status=done&q=tom');
     fireEvent.click(screen.getAllByRole('button', { name: 'Close search' })[0] as HTMLElement);
-    expect(screen.getByTestId('where')).toHaveTextContent('/seller?status=done');
+    expect(screen.getByTestId('where')).toHaveTextContent('/seller/orders?status=done');
     fireEvent.click(screen.getByRole('button', { name: /^All/ }));
-    expect(screen.getByTestId('where')).toHaveTextContent(/^\/seller$/);
+    expect(screen.getByTestId('where')).toHaveTextContent(/^\/seller\/orders$/);
   });
 
   it('shows the rail image placeholder and the desktop banner on a desktop seller page', async () => {
@@ -259,19 +285,19 @@ describe('AppRoutes', () => {
     expect(within(rail).getByText('Rail image — coming soon')).toBeInTheDocument();
   });
 
-  it('shows the whole desktop banner on the seller background colour, never cropped', async () => {
+  it('fills the desktop banner strip edge to edge, on the seller colour as its fallback', async () => {
     stubMenu({ ...MENU.kitchen.images, bannerBackground: '#835937' });
     wide = true;
     renderAt('/seller');
     const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
     const slot = banner.parentElement as HTMLElement;
-    expect(slot).toHaveAttribute('data-fit', 'contain');
-    expect(slot).toHaveAttribute('data-ratio', '5 / 1');
+    expect(slot).toHaveAttribute('data-fit', 'cover');
+    expect(slot).toHaveAttribute('data-ratio', '3840 / 328');
     expect(slot).toHaveStyle({ background: 'rgb(131, 89, 55)' });
     expect(slot.parentElement?.parentElement?.parentElement).toHaveStyle({
       backgroundColor: 'rgb(131, 89, 55)',
     });
-    expect(banner).toHaveStyle({ objectFit: 'contain' });
+    expect(banner).toHaveStyle({ objectFit: 'cover' });
   });
 
   it('shows the rail image, expanded, at 2:1', async () => {

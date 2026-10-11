@@ -130,3 +130,16 @@ describe('neighbourCodes', () => {
     expect(neighbourCodes([], 'ZZZ999')).toEqual({ previous: null, next: null });
   });
 });
+
+describe('selectOrdersCount', () => {
+  it('counts orders that are not cancelled', async () => {
+    const { createTestStore, makeOrder, seed } = await import('./testSupport');
+    const { selectOrdersCount } = await import('./sellerOrdersSelectors');
+    const store = createTestStore({ saga: false });
+    seed(store, [
+      makeOrder({ id: '1', code: 'AAA222' }),
+      makeOrder({ id: '2', code: 'BBB222', status: 'cancelled' }),
+    ]);
+    expect(selectOrdersCount(store.getState())).toBe(1);
+  });
+});

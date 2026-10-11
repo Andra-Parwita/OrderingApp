@@ -69,7 +69,8 @@ export function createPushDispatcher(options: {
         rows.push(
           ...(await db.all<SubRow>(
             `SELECT seller_id, order_id, endpoint, p256dh, auth FROM push_subscriptions
-             WHERE seller_id = ? AND order_id IN (${marks(group.length)})`,
+             WHERE seller_id = ? AND order_id IN (${marks(group.length)})
+             AND seller_id NOT IN (SELECT id FROM sellers WHERE paused = 'full')`,
             sellerId,
             ...group,
           )),

@@ -62,7 +62,7 @@ test('Orders header fits at 1180, 1024 and 820 px wide', async ({ browser, reque
       await context.addInitScript((slug) => localStorage.setItem('devSeller', slug), SELLER);
       const page = await context.newPage();
       const errors = collectErrors(page);
-      await page.goto('/seller');
+      await page.goto('/seller/orders');
       await expect(page.getByRole('heading', { level: 1, name: 'Orders' })).toBeVisible();
       await page.locator('[data-row-id]').nth(3).click();
       await expect(page.getByRole('complementary')).toBeVisible();

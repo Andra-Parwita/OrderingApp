@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { isDesktopProject } from './sellerHelpers';
 
 // This spec briefly closes ordering on the shared mock server, which would break any spec placing
 // orders at the same time. playwright.config.ts runs it in its own projects, after all the others,
@@ -17,6 +18,7 @@ test('settings saves the WhatsApp number normalised; Orders pauses and resumes t
   page,
   request,
 }, testInfo) => {
+  test.skip(!isDesktopProject(testInfo.project.name), 'Settings is tablet-only on a phone (D-057)');
   const errors = watchConsole(page);
   try {
     await page.goto('/seller/settings/kitchen');
@@ -34,7 +36,7 @@ test('settings saves the WhatsApp number normalised; Orders pauses and resumes t
 
     // The ordering switch is "Taking orders" on Orders now: pause, then resume (other tests share
     // this server).
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     const taking = page.getByRole('switch', { name: 'Taking orders' });
     await expect(taking).toHaveAttribute('aria-checked', 'true');
     await taking.click();

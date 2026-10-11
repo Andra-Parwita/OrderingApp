@@ -24,6 +24,9 @@
   "label": {
     "qrName": "Kode QR pesanan",
     "pickup": "Ambil · {{day}}",
-    "delivery": "Antar · {{day}}"
-  }
+    "delivery": "Antar · {{day}}",
+    "part": "{{index}} dari {{of}}"
+  },
+  "previewCount_other": "{{count}} label untuk {{orders}}",
+  "ordersCount_other": "{{count}} pesanan"
 }

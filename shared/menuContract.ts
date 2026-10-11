@@ -9,6 +9,7 @@ import type {
   SellerMenuItemView,
   Week,
 } from './domain';
+import { DAY_STOCK_MAX } from './daySalesContract';
 import { isHexColour } from './kitchenImages';
 import { MAX_MENU_ITEMS } from './limits';
 import { parseSeller } from './seller';
@@ -136,7 +137,10 @@ function parseMenuItemView(input: unknown): MenuItemView | null {
   const name = parseLocalText(input['name']);
   const description = parseLocalText(input['description']);
   const size = parseLocalText(input['size']);
-  const { id, priceCents, limit, remaining, soldOut } = input;
+  const { id, priceCents, limit, remaining, soldOut, preorder, onTheDay } = input;
+  if ('dayStock' in input) return null; // customers never see the count (plan 029)
+  if (preorder !== undefined && typeof preorder !== 'boolean') return null;
+  if (onTheDay !== undefined && !isOneOf(['available', 'sold_out'], onTheDay)) return null;
   if (typeof id !== 'string' || !name || !description || !size) return null;
   if (!isInt(priceCents, 0, 1_000_000)) return null;
   if (limit !== undefined && !isInt(limit, 1, 10_000)) return null;
@@ -151,19 +155,23 @@ function parseMenuItemView(input: unknown): MenuItemView | null {
     ...(limit !== undefined ? { limit } : {}),
     remaining,
     soldOut,
+    ...(preorder !== undefined ? { preorder } : {}),
+    ...(onTheDay !== undefined ? { onTheDay } : {}),
   };
 }
 
 function parseSellerMenuItemView(input: unknown): SellerMenuItemView | null {
   if (!isRecord(input)) return null;
-  const { chefId, manualSoldOut, ...rest } = input;
+  const { chefId, manualSoldOut, dayStock, ...rest } = input;
   if (chefId !== undefined && typeof chefId !== 'string') return null;
+  if (dayStock !== undefined && !isInt(dayStock, 0, DAY_STOCK_MAX)) return null;
   if (manualSoldOut !== undefined && typeof manualSoldOut !== 'boolean') return null;
   const item = parseMenuItemView(rest);
   return item
     ? {
         ...item,
         ...(chefId !== undefined ? { chefId } : {}),
+        ...(dayStock !== undefined ? { dayStock } : {}),
         ...(manualSoldOut !== undefined ? { manualSoldOut } : {}),
       }
     : null;
@@ -174,7 +182,9 @@ function parseOrderingState(input: unknown): OrderingState | null {
   const { open, reason } = input;
   if (typeof open !== 'boolean') return null;
   if (reason === undefined) return { open };
-  return isOneOf(['closed_by_seller', 'cutoff_passed'], reason) ? { open, reason } : null;
+  return isOneOf(['closed_by_seller', 'cutoff_passed', 'kitchen_closed'], reason)
+    ? { open, reason }
+    : null;
 }
 
 export function parseMenuResponse(input: unknown): MenuResponse | null {

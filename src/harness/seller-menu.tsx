@@ -19,6 +19,7 @@ import {
   MenuPreview as CustomerMenuPreview,
   registerCustomerI18n,
 } from '../features/customer-menu';
+import { NewMenuDialog } from '../features/seller-home';
 import {
   ShareComposer,
   registerShareI18n,
@@ -38,6 +39,7 @@ registerCustomerI18n();
 const slots: MenuSlots = {
   preview: ({ slug, menu }) => <CustomerMenuPreview slug={slug} menu={menu} />,
   share: ({ onGoToOrders }) => <ShareComposer withLink onGoToOrders={onGoToOrders} />,
+  newMenu: (props) => <NewMenuDialog {...props} />,
 };
 
 function createHarnessStore() {
@@ -66,7 +68,7 @@ export function SellerMenuHarness() {
       <AppThemeProvider>
         <MemoryRouter initialEntries={[start]}>
           <Routes>
-            <Route path="/seller/menu" element={<MenuScreen />} />
+            <Route path="/seller/menu" element={<MenuScreen slots={slots} />} />
             <Route path="/seller/menu/make/:step" element={<Make mode="make" />} />
             <Route path="/seller/menu/edit/:step" element={<Make mode="edit" />} />
             <Route path="/seller/menu/dishes" element={<DishesScreen />} />

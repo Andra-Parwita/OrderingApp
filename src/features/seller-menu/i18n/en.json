@@ -94,6 +94,7 @@
     "finishAnyway": "Finish menu"
   },
   "make": {
+    "layer": "Make a menu",
     "title": "Menu for {{date}}",
     "live": "Live",
     "notPublished": "Not published · saved",
@@ -168,6 +169,12 @@
     "limit": "Limit (optional)",
     "noLimit": "No limit",
     "limitHelper": "Customers see \"N left\" once 5 or fewer remain; the dish sells out at 0.",
+    "preorder": "Pre-order",
+    "preorderHelper": "Customers can order it ahead. The limit above is the pre-order limit.",
+    "onTheDay": "Sold on the day",
+    "onTheDayHelper": "Sold at the stall on the cooking day. Pre-orders never take from this.",
+    "dayStock": "Portions for the day",
+    "dayStockOnly": "Pre-order is off: customers see \"Available on the day\" and cannot add it.",
     "chef": "Chef",
     "wholeKitchen": "Whole kitchen",
     "editChefs": "Edit chefs",
@@ -189,6 +196,8 @@
       "name": "Add a name in at least one language.",
       "price": "Enter a price like 10, 10.00 or 10,50.",
       "limit": "Enter a whole number of 1 or more, or leave it empty.",
+      "dayStock": "Enter a whole number from 0 to 9999.",
+      "preorder": "Turn on Sold on the day, or keep Pre-order on.",
       "tooLong": "Too long: at most {{max}} characters."
     }
   },
@@ -319,5 +328,10 @@
     "added_one": "{{count}} dish added to the menu.",
     "added_other": "{{count}} dishes added to the menu.",
     "addFailed": "Could not add the set. A menu holds at most 10 dishes."
+  },
+  "chef": {
+    "title": "Your dishes",
+    "help": "Add your dishes and change their price, limit and picture. The owner puts them on the menu. A change to a dish on the live menu shows to customers at once.",
+    "notOnMenu": "Not on this menu"
   }
 }

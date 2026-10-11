@@ -2,25 +2,49 @@ import { describe, expect, it } from 'vitest';
 import {
   activeNav,
   activePhoneNav,
+  fixesPage,
   hidesPhoneBar,
+  HREF,
+  isPhoneOrdersList,
   isTabletOnly,
   isTaskScreen,
+  helperMayOpen,
   navIdsFor,
   PHONE_NAV_IDS,
 } from './sellerNav';
 
 describe('navIdsFor', () => {
-  it('gives the seller all five items, in order', () => {
-    expect(navIdsFor('seller')).toEqual(['orders', 'kitchen', 'handover', 'menu', 'settings']);
+  it('gives the seller all seven items, Home first', () => {
+    expect(navIdsFor('seller')).toEqual([
+      'home',
+      'orders',
+      'kitchen',
+      'handover',
+      'sell',
+      'menu',
+      'settings',
+    ]);
+    expect(HREF.sell).toBe('/seller/sell');
+    expect(HREF.home).toBe('/seller');
+    expect(HREF.orders).toBe('/seller/orders');
   });
-  it('hides Menu and Settings from a chef', () => {
-    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover']);
+  it('shows a helper Orders, Pickup & delivery and Sell only', () => {
+    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell']);
+  });
+  it('shows a chef Menu (own dishes, plan 030) but not Home, Sell or Settings', () => {
+    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu']);
   });
 });
 
 describe('activeNav', () => {
+  it('marks Sell for /seller/sell', () => {
+    expect(activeNav('/seller/sell')).toBe('sell');
+  });
+
   it.each([
-    ['/seller', 'orders'],
+    ['/seller', 'home'],
+    ['/seller/', 'home'],
+    ['/seller/orders', 'orders'],
     ['/seller/orders/K7F2QX', 'orders'],
     ['/seller/new', 'orders'],
     ['/seller/cook', 'kitchen'],
@@ -42,13 +66,22 @@ describe('phone', () => {
   it('folds Kitchen, Menu and Settings into More', () => {
     expect(activePhoneNav('/seller/cook')).toBe('more');
     expect(activePhoneNav('/seller/hand-over')).toBe('handover');
+    // A phone has no Home: /seller is its Orders list.
     expect(activePhoneNav('/seller')).toBe('orders');
+    expect(activePhoneNav('/seller/orders')).toBe('orders');
   });
-  it('sends Kitchen, Menu and Settings pages to the tablet-only page, not the phone subset', () => {
-    for (const path of ['/seller/cook', '/seller/menu', '/seller/menu/items/x', '/seller/backup']) {
+  it('sends Menu and Settings pages to the tablet-only page, not the phone subset', () => {
+    for (const path of ['/seller/menu', '/seller/menu/items/x', '/seller/backup']) {
       expect(isTabletOnly(path)).toBe(true);
     }
-    for (const path of ['/seller', '/seller/orders/K7F2QX', '/seller/new', '/seller/more']) {
+    for (const path of [
+      '/seller',
+      '/seller/orders/K7F2QX',
+      '/seller/new',
+      '/seller/more',
+      '/seller/cook',
+      '/seller/labels',
+    ]) {
       expect(isTabletOnly(path)).toBe(false);
     }
     expect(isTabletOnly('/seller/hand-over/delivery')).toBe(false);
@@ -61,8 +94,9 @@ describe('isTaskScreen', () => {
       expect(isTaskScreen(path)).toBe(true);
     }
   });
-  it('keeps the whole banner on Orders', () => {
+  it('keeps the whole banner on Home and Orders', () => {
     expect(isTaskScreen('/seller')).toBe(false);
+    expect(isTaskScreen('/seller/orders')).toBe(false);
     expect(isTaskScreen('/seller/orders/K7F2QX')).toBe(false);
   });
 });
@@ -74,5 +108,45 @@ describe('hidesPhoneBar', () => {
     expect(hidesPhoneBar('/seller')).toBe(false);
     expect(hidesPhoneBar('/seller/hand-over')).toBe(false);
     expect(hidesPhoneBar('/seller/more')).toBe(false);
+  });
+});
+
+describe('fixesPage', () => {
+  it('fixes the page on the Orders list and one order, never on Home (a tablet at /seller)', () => {
+    expect(fixesPage('/seller', true)).toBe(false);
+    expect(fixesPage('/seller/orders', true)).toBe(true);
+    expect(fixesPage('/seller/orders/K7F2QX', true)).toBe(true);
+    expect(fixesPage('/seller/new', true)).toBe(true);
+    expect(fixesPage('/seller/cook', true)).toBe(false);
+  });
+  it('on a phone /seller is the Orders list, so it is fixed there; one order is its own page', () => {
+    expect(fixesPage('/seller', false)).toBe(true);
+    expect(fixesPage('/seller/orders', false)).toBe(true);
+    expect(fixesPage('/seller/orders/K7F2QX', false)).toBe(false);
+    expect(isPhoneOrdersList('/seller')).toBe(true);
+    expect(isPhoneOrdersList('/seller/orders')).toBe(true);
+    expect(isPhoneOrdersList('/seller/cook')).toBe(false);
+  });
+});
+
+describe('helperMayOpen', () => {
+  it.each([
+    ['/seller/orders', true],
+    ['/seller/orders/K7F2QX', true],
+    ['/seller/hand-over', true],
+    ['/seller/sell', true],
+    ['/seller/more', true],
+    ['/seller', false],
+    ['/seller/new', false],
+    ['/seller/cook', false],
+    ['/seller/menu', false],
+    ['/seller/menu/make/1', false],
+    ['/seller/settings/kitchen', false],
+    ['/seller/share', false],
+    ['/seller/labels', false],
+    ['/seller/past-weeks', false],
+    ['/seller/backup', false],
+  ])('%s -> %s', (path, ok) => {
+    expect(helperMayOpen(path)).toBe(ok);
   });
 });

@@ -21,14 +21,22 @@ export type ImageSlotProps = Readonly<{
   width?: string;
   /** Round the slot into a circle (use with a square ratio). */
   round?: boolean;
+  /** Fill the parent's box (its height decides the shape); the ratio then only labels the slot. */
+  fill?: boolean;
 }>;
 
 // The box keeps its shape before the image loads, so nothing jumps.
-const Box = styled.div<{ $ratio: string; $background?: string; $width?: string; $round: boolean }>`
+const Box = styled.div<{
+  $ratio: string;
+  $background?: string;
+  $width?: string;
+  $round: boolean;
+  $fill: boolean;
+}>`
   position: relative;
   box-sizing: border-box;
   width: ${({ $width }) => $width ?? '100%'};
-  aspect-ratio: ${({ $ratio }) => $ratio};
+  ${({ $fill, $ratio }) => ($fill ? 'height: 100%;' : `aspect-ratio: ${$ratio};`)}
   overflow: hidden;
   flex: none;
   border-radius: ${({ $round }) => ($round ? '50%' : '0')};
@@ -64,6 +72,7 @@ export const ImageSlot = memo(function ImageSlot({
   background,
   width,
   round = false,
+  fill = false,
 }: ImageSlotProps) {
   return (
     <Box
@@ -73,6 +82,7 @@ export const ImageSlot = memo(function ImageSlot({
       $background={background}
       $width={width}
       $round={round}
+      $fill={fill}
     >
       {src ? (
         <Img src={src} alt={alt} loading="lazy" decoding="async" $fit={fit} />

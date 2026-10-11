@@ -632,7 +632,7 @@ describe('seller setup', () => {
       expect((done.body as { images: Record<string, unknown> }).images).toMatchObject({
         bannerBackground: '#112233',
         alt: text('Our kitchen', 'Dapur kami'),
-        desktopBanner: '/samples/banner-wide.jpg',
+        desktopBanner: '/samples/banner-wide-3840x328.jpg',
       });
       expect(await put({ bannerBackground: 'red' })).toMatchObject(ERR(400, 'invalid_request'));
       expect(await put({})).toMatchObject(ERR(400, 'invalid_request'));

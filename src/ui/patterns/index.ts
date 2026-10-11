@@ -6,3 +6,4 @@ export { PAGE_SIZE, Pager, pageItems, type PagerProps } from './Pager';
 export { SlideOverEditor, type SlideOverEditorProps } from './SlideOverEditor';
 export { UNDO_MS, UndoToast, type UndoToastProps } from './UndoToast';
 export { WarningDialog, type WarningDialogProps } from './WarningDialog';
+export { FullLayer, type FullLayerProps } from './FullLayer';

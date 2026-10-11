@@ -498,3 +498,86 @@ Format for each entry:
 **Decision:** the version is `<major>.<minor>.<git commit count>` plus the short commit id, with "· draft" for uncommitted builds. Major and minor are raised by hand in package.json for big releases. It shows in /api/health, the seller Settings and admin footers, and the customer About page (plan 020).
 **Trade-off:** the build number counts commits, so two deploys of the same commit share a number (the draft tag tells uncommitted ones apart).
 **Revisit when:** a CI pipeline deploys without git history.
+
+## D-080 · Two admins share one admin account, each on their own named devices (2026-10-10; builder)
+**Ruling:** "A for now" (the handover doc's "two admins" rule).
+**Decision:** there stays one admin account. The owner and the builder each add their own named devices (a 6-digit code from the admin page), and either can add a device for the other, so one lost passkey never locks the platform out (plan 027).
+**Trade-off:** the admin page can't show which person did something; both have the same rights.
+**Revisit when:** admins get different rights or an audit of who did what is needed.
+
+## D-081 · Chefs can scan the customer's QR and mark an order collected (2026-10-10; builder)
+**Ruling:** "A" (the handover doc's roles table: Chef, "Scan QR, mark collected" = Yes).
+**Decision:** owners, chefs and helpers can all hand an order over. Chefs keep what they have today; plan 028 adds helpers.
+**Trade-off:** none for chefs; the handover's leftover "assumed; confirm" bullet and open question are settled by this.
+**Revisit when:** a kitchen wants hand-over limited to owners and helpers.
+
+## D-082 · Sold out: helpers any dish, chefs only their own (2026-10-10; builder)
+**Ruling:** "A" (as the handover doc's roles table says).
+**Decision:** owners and helpers can mark any dish sold out; a chef only the dishes assigned to them (plans 028 and 030).
+**Trade-off:** a helper has a right a chef lacks; on purpose, since helpers run the stall and see what has run out.
+**Revisit when:** a kitchen finds helpers marking pre-order dishes sold out by mistake.
+
+## D-083 · A dish can be pre-ordered and sold on the day, counted apart (2026-10-10; builder)
+**Ruling:** "A" (the handover doc: "Pre-order quantities shown separately from on-the-day stock").
+**Decision:** each dish has a pre-order switch (with its existing portion limit) and an optional on-the-day stock. Either or both. Pre-orders never take from the day stock; the kitchen view shows the two apart (plan 029).
+**Trade-off:** two numbers per dish instead of one type; the dish editor gets one more field.
+**Revisit when:** kitchens want unsold pre-order portions moved into the day stock automatically.
+
+## D-084 · Admins may open any kitchen with the owner's rights, logged (2026-10-10; builder)
+**Ruling:** "A" (the owner's updated handover doc: admins see and manage any kitchen's menu and orders).
+**Decision:** replaces "the admin sees no order data". An admin enters a kitchen from the admin page and works as its owner under a "Viewing as admin" banner; every admin change is logged with the admin device's name; the customer privacy note says administrators can see orders (plan 031).
+**Trade-off:** two more people can see customers' first names and notes; the log and the privacy line make that visible.
+**Revisit when:** more admins join, or a kitchen asks for admins to be kept out.
+
+## D-085 · Invite keys work once, for 24 hours (2026-10-10; builder)
+**Ruling:** "A" (asked while planning invite links, plan 032).
+**Decision:** an invite key (admin → seller, owner → chef) lets exactly one device in, within 24 hours; then it is spent. Further devices are added with a 6-digit code from Settings → Devices. Replaces "up to 3 devices per key" (`KEY_MAX_DEVICES`).
+**Trade-off:** a seller who sets up the iPad and the phone needs one code after the key; in return a forwarded invite message is useless once used.
+**Revisit when:** sellers find the extra code step a burden.
+
+## D-086 · The admin can pause a kitchen two ways (2026-10-10; builder)
+**Ruling:** "A and C .. so admin can choose the kind of pause".
+**Decision:** **Paused** (full): the kitchen's devices are signed out, its staff can't sign in, customers see "closed for now", no push is sent. **Closed to customers**: staff work as normal (for example to get ready), customers see "closed for now". In both, customers' existing order pages still open, nothing is deleted, and Resume restores the kitchen (plan 032).
+**Trade-off:** a full pause signs everyone out, so resuming needs each person to sign in again.
+**Revisit when:** a kitchen needs removing for good (a separate plan with a backup step).
+
+## D-087 · One passkey across kitchens is for kitchen staff only; admin keeps its own passkey (2026-10-10; builder)
+**Ruling:** "the admin can have its own passkey .. and seller is one that can be one .. so easier for them .. for me .. I want to have admin passkey separately".
+**Decision:** when kitchens become memberships (the later sign-in rework), a person's one passkey covers all their kitchens and roles (owner, chef, helper) behind a kitchen switcher. The admin stays a separate login with its own passkey (D-080), never joined to a kitchen person. An admin who also runs kitchens has two passkeys: admin and staff.
+**Trade-off:** admins pick between two passkeys on their devices; in return a stolen staff passkey never opens the admin pages.
+**Revisit when:** the sign-in rework is planned (this sets its scope).
+
+## D-088 · Today's seller and chef logins are demo only; the sign-in rework may clear them (2026-10-10; builder)
+**Ruling:** "note so far all logins on seller are just demonstration. They can be revoked and cleared to allow the new login or sign-in workflow".
+**Decision:** the sign-in rework (D-087) does not migrate or join existing kitchen logins. When it ships, every seller and chef account, device and session is cleared, and staff join again by invite link. Kitchens, menus, dishes, images, orders and the admin login are kept.
+**Trade-off:** everyone signs in again once; in return the rework needs no "join my other login" step and no account migration.
+**Revisit when:** a real seller relies on their login before the rework ships.
+
+## D-089 · The sign-in rework comes next, before helpers and the rest (2026-10-10; builder)
+**Ruling:** "A" (rework first: easier, safer, faster overall, since there is no real seller yet).
+**Decision:** order: deploy 027 → plan 033 (people and memberships, one kitchen passkey, switcher, invite links; absorbs 032 stages 1–2) → 032 pause → 028 helpers → 030 chefs' dishes → 031 admin opens a kitchen → 029 selling on the day.
+**Trade-off:** the next visible feature (helpers) arrives later; nothing is built twice.
+**Revisit when:** a real seller needs helpers before 033 is done.
+
+## D-090 · A kitchen person is known by a display name only (2026-10-10; builder)
+**Ruling:** "A" (display name, usually prefilled from the invite; not a unique username, not an email).
+**Decision:** a person's login has a display name, prefilled from the name the owner (or admin) typed on the invite and editable when joining. No email, no phone (D-007). Password sign-in is: open the kitchen's sign-in page, pick your name from its team list, type the password. Recovery is a re-invite by the owner, or the admin for owners (plan 033).
+**Trade-off:** password sign-in starts from a kitchen's page rather than anywhere; passkey sign-in is unaffected.
+**Revisit when:** kitchens grow beyond teams that know each other, or self-service recovery is needed.
+
+## D-091 · A long order continues on the next label, never cut (2026-10-10; builder)
+**Ruling:** "A" ("some may have many orders so be careful").
+**Decision:** an order whose items don't fit one label prints on as many labels as needed, each with code, name, QR and "1 of 2"; the note goes on the last; the preview counts labels and orders (plan 035). Replaces silently hiding the overflow.
+**Trade-off:** a big order's bag gets two or more stickers.
+**Revisit when:** a kitchen uses bigger labels.
+
+## D-092 · A helper is a third membership role; history labels it "chef" for now (2026-10-11; owner)
+**Ruling:** "A". Plan 028, re-planned after 033: a helper is a membership role (`owner | chef | helper`), not a kind on the `chefs` table. In order history a helper's actions carry the role `chef`, with the helper's own display name.
+**Trade-off:** no rebuild of the large `orders` table (its `entered_by_role` CHECK allows only seller and chef); the cost is that history says "chef" for a helper.
+**Revisit when:** the owner needs to tell helpers and chefs apart in an order's history.
+**Also (owner, "A"):** a helper's invite follows D-085 like every invite (one key, one device, 24 hours; more devices by 6-digit code).
+
+## D-093 · The seller's wide banner is 3840 × 328, designed for iPad landscape (2026-10-11; owner)
+**Ruling:** "A" (plan 040). The real content sits in the middle 1896 × 328, exactly what iPad landscape shows at the left menu's top height (164 px, 2× for retina); the sides are scenery that wider screens reveal; narrower screens shrink the banner rather than cut the middle. No side bands anywhere (owner: "I don't want to have ugly bg on left and right"). The left-menu logo fills its block at the same height. The phone banner stays a separate 1200 × 400.
+**Trade-off:** the seller's designer draws a wider canvas with scenery on the sides; existing 5:1 banners must be re-uploaded (not deployed to real sellers yet). Replaces the 5:1 sizes of D-038 for the wide banner.
+**Revisit when:** sellers mostly use another device than iPad landscape.

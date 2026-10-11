@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Navigate } from 'react-router';
+import { Link, Navigate, useLocation } from 'react-router';
 import { styled } from 'styled-components';
 import type { Me } from '../../shared/authContract';
 import { adminSetup } from '../api/auth';
 import { useDevTools } from '../api/devTools';
 import { lastSignedIn } from '../api/device/sellerContext';
 import { getCredentialId, hasSessionHint } from '../api/device/session';
+import { HELPER_HOME, helperMayOpen } from './sellerNav';
 import { isStaff, useSession } from './session';
 
 // Route guards. Each asks the server who this is once, when its area is entered (a sign-in, a
@@ -40,7 +41,12 @@ function useEntryCheck(): { done: boolean; me: Me | null } {
 export function SellerGuard({ children }: Readonly<{ children: ReactNode }>) {
   const { done, me } = useEntryCheck();
   const devTools = useDevTools();
+  const { pathname } = useLocation();
   if (!done) return null;
+  // A helper (plan 028) opens a few pages only; a link to any other goes to Orders.
+  if (isStaff(me) && me.role === 'helper' && !helperMayOpen(pathname)) {
+    return <Navigate to={HELPER_HOME} replace />;
+  }
   if (isStaff(me)) return <>{children}</>;
   if (me === null && !hasSessionHint()) {
     if (devTools === undefined) return null; // the server has not said yet
@@ -108,7 +114,7 @@ export function SellerOnly({ children }: Readonly<{ children: ReactNode }>) {
     <Notice>
       <NoticeTitle>{t('sellerNav.notForChefs')}</NoticeTitle>
       <span>{t('sellerNav.notForChefsBody')}</span>
-      <Back to="/seller">{t('sellerNav.toOrders')}</Back>
+      <Back to="/seller/orders">{t('sellerNav.toOrders')}</Back>
     </Notice>
   );
 }

@@ -3,6 +3,9 @@ import { parseApiError } from './apiError';
 import {
   checkPassword,
   parseChefAccessResponse,
+  parseInviteRequest,
+  parseMembersResponse,
+  parseSwitchRequest,
   parseKeySignInRequest,
   parsePasskeyOptionsRequest,
   parsePasskeySignInRequest,
@@ -31,6 +34,29 @@ describe('admin responses', () => {
       createdAt,
     );
     expect(parseSellerResponse({ seller })).toBeNull();
+  });
+
+  it('reads the summary when present and still parses without it (an older server)', () => {
+    const createdAt = '2026-08-15T09:00:00.000Z';
+    const summary = {
+      people: 2,
+      menu: { state: 'live', cookingDate: '2026-10-17' },
+      orders: 3,
+      lastActiveAt: '2026-10-10T09:00:00.000Z',
+    };
+    expect(
+      parseSellersResponse({ sellers: [{ ...seller, createdAt, summary }] })?.sellers[0]?.summary,
+    ).toEqual(summary);
+    const none = { people: 0, menu: null, orders: 0, lastActiveAt: null };
+    expect(
+      parseSellersResponse({ sellers: [{ ...seller, createdAt, summary: none }] })?.sellers[0]
+        ?.summary,
+    ).toEqual(none);
+    // Missing or malformed: the seller still parses, just without a summary.
+    for (const bad of [undefined, { people: 'two' }, { ...summary, menu: { state: 'x' } }]) {
+      const parsed = parseSellersResponse({ sellers: [{ ...seller, createdAt, summary: bad }] });
+      expect(parsed?.sellers[0]).toEqual({ ...seller, createdAt });
+    }
   });
 
   it('parses chefs with a device count', () => {
@@ -147,5 +173,61 @@ describe('auth contract', () => {
     expect(
       parseSendUpdatesRequest({ template: 'ready', codes: ['ABC234'], alsoSetStatus: 'yes' }),
     ).toBeNull();
+  });
+});
+
+describe('people and memberships (plan 033)', () => {
+  it('reads an invite by name and role; only a chef carries a cook', () => {
+    expect(parseInviteRequest({ displayName: ' Dewi ', role: 'chef' })).toEqual({
+      displayName: 'Dewi',
+      role: 'chef',
+    });
+    expect(parseInviteRequest({ displayName: 'Dewi', role: 'chef', chefId: 'wati' })?.chefId).toBe(
+      'wati',
+    );
+    expect(parseInviteRequest({ displayName: 'Budi', role: 'owner', chefId: 'wati' })).toBeNull();
+    expect(parseInviteRequest({ displayName: '', role: 'owner' })).toBeNull();
+    expect(parseInviteRequest({ displayName: 'X', role: 'seller' })).toBeNull();
+  });
+
+  it('takes a helper invite by name, and never with a cook (plan 028)', () => {
+    expect(parseInviteRequest({ displayName: 'Dewi', role: 'helper' })).toEqual({
+      displayName: 'Dewi',
+      role: 'helper',
+    });
+    expect(parseInviteRequest({ displayName: 'Dewi', role: 'helper', chefId: 'wati' })).toBeNull();
+  });
+
+  it('needs the person on a password sign-in, and takes an optional kitchen on a passkey one', () => {
+    const base = { deviceId, slug: 'onde-onde', password: 'pw', deviceName: 'Phone' };
+    expect(parsePasswordSignInRequest(base)).toBeNull();
+    expect(parsePasswordSignInRequest({ ...base, accountId: 'person:a' })?.accountId).toBe(
+      'person:a',
+    );
+    const response = { id: 'cred' };
+    expect(parsePasskeySignInRequest({ deviceId, response })).toEqual({ deviceId, response });
+    expect(parsePasskeySignInRequest({ deviceId, response, slug: 'two' })?.slug).toBe('two');
+    expect(parsePasskeySignInRequest({ deviceId, response, slug: 3 })).toBeNull();
+    expect(parseSwitchRequest({ sellerId: 's1' })).toEqual({ sellerId: 's1' });
+    expect(parseSwitchRequest({})).toBeNull();
+  });
+
+  it('lets the key carry an edited name', () => {
+    expect(parseKeySignInRequest({ deviceId, key: 'K', displayName: 'Sari W' })?.displayName).toBe(
+      'Sari W',
+    );
+    expect(parseKeySignInRequest({ deviceId, key: 'K', displayName: 5 })).toBeNull();
+  });
+
+  it('reads the member list', () => {
+    const member = {
+      accountId: 'person:a',
+      displayName: 'Dewi',
+      role: 'chef',
+      devices: 1,
+      createdAt: '2026-10-10T00:00:00.000Z',
+    };
+    expect(parseMembersResponse({ members: [member] })?.members[0]?.displayName).toBe('Dewi');
+    expect(parseMembersResponse({ members: [{ ...member, role: 'seller' }] })).toBeNull();
   });
 });

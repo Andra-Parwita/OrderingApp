@@ -16,6 +16,7 @@ import {
   type MessagesResponse,
 } from '../../shared/handoverContract';
 import { parseBackupFile } from '../../shared/backup';
+import { isRecord } from '../../shared/parse';
 import type {
   Chef,
   CustomerOrder,
@@ -24,7 +25,7 @@ import type {
   SellerRef,
   StaffActor,
 } from '../../shared/domain';
-import { IMAGE_SLOTS, isImageSlot } from '../../shared/imageSlots';
+import { isImageSlot } from '../../shared/imageSlots';
 import {
   parseCreateDishRequest,
   parseCreateDishSetRequest,
@@ -100,7 +101,11 @@ import {
   ORDER_LOOKUP_MAX_FAILS,
   ORDER_LOOKUP_MAX_FAILS_PER_CLIENT,
   parseChefInviteRequest,
+  DISPLAY_NAME_MAX,
+  parseInviteRequest,
   type KeyResponse,
+  type MembersResponse,
+  type TeamNamesResponse,
 } from '../../shared/authContract';
 import {
   parseSendUpdatesRequest,
@@ -108,9 +113,18 @@ import {
   type UpdateResult,
 } from '../../shared/updateContract';
 import { LIVE_PATH, type LiveEventType } from '../../shared/liveContract';
-import { deleteImageRefs, putUploadedImage, type ImageBucket } from '../images/r2';
+import { dropUnusedImageRefs, putUploadedImage, type ImageBucket } from '../images/r2';
 import type { LiveNotifier } from '../live/hub';
+import {
+  parseDayCountRequest,
+  parseDaySaleRequest,
+  parseDayUndoRequest,
+  type DayLogResponse,
+  type DayStockResponse,
+} from '../../shared/daySalesContract';
+import { parseAddMadeRequest, type MadeResponse } from '../../shared/madeContract';
 import { chefAccess, handleAdmin, handleAuth } from './authRoutes';
+import { handleAdminLog, handleLog } from './logRoutes';
 import { sessionTokenOf } from '../auth/cookie';
 import { sha256Hex } from '../db/crypto';
 import { authError, error, readJson } from './respond';
@@ -306,6 +320,12 @@ export async function handleApiRequest(
     }
     // D-075: a lost order back by code and first name, in this kitchen. Two wrong tries lock it for
     // 15 minutes per kitchen-and-code; ten lock a client address. Every miss answers alike.
+    // Plan 033: the picker for password sign-in (names and ids of people who have a password).
+    if (b === 'team-names' && !c && method === 'GET') {
+      return Response.json({
+        names: await store.auth.teamNames(sellerStore.seller.id),
+      } satisfies TeamNamesResponse);
+    }
     if (b === 'orders' && c === 'find' && method === 'POST') {
       const input = parseFindOrderRequest(await readJson(request));
       if (!input) return bad();
@@ -433,13 +453,16 @@ export async function handleApiRequest(
       : error('not_found', 'Notifications are not set up');
   }
 
+  if (area === 'log' && !a) return handleLog(store, request);
   if (area === 'auth') return handleAuth(store, request, [a, b]);
+  if (area === 'admin' && a === 'log' && !b) return handleAdminLog(store, request);
   if (area === 'admin')
     return handleAdmin(
       store,
       request,
       [a, b, c, segments[5], segments[6]],
       context.devTools === true,
+      context.images,
     );
 
   if (pathname === LIVE_PATH) {
@@ -467,12 +490,22 @@ export async function handleApiRequest(
           ? (await sellerStore.listChefs()).find((chef) => chef.id === caller.chefId)?.name
           : undefined;
       if (caller.role === 'chef' && !chefName) return error('unauthorized', 'Sign in first');
+      // Plan 028 (D-092): a helper is recorded as role `chef`, under their own display name.
       const actor: StaffActor =
         caller.role === 'chef'
           ? { role: 'chef', name: chefName as string }
-          : { role: 'seller', name: sellerStore.seller.name };
-      if (caller.role === 'chef' && chefMayNot(request.method, a)) {
+          : caller.role === 'helper'
+            ? { role: 'chef', name: caller.displayName ?? 'Helper' }
+            : { role: 'seller', name: sellerStore.seller.name };
+      if (
+        caller.role === 'chef' &&
+        chefMayNot(request.method, a) &&
+        !(await chefOwnDishMay(request, sellerStore, a, b, c, caller.chefId))
+      ) {
         return error('forbidden', 'Chefs cannot do this');
+      }
+      if (caller.role === 'helper' && !(await helperMay(request, a, b, c))) {
+        return error('forbidden', 'Helpers cannot do this');
       }
       // Plan 013: sample orders on a demo kitchen. A session of this kitchen (seller or chef) is
       // needed (we are past that check) and the kitchen must be a demo one; the origin check is at
@@ -489,7 +522,18 @@ export async function handleApiRequest(
         if (result.added > 0) await signal(context, sellerStore.seller.id, 'order.created');
         return Response.json(result satisfies SampleOrdersResponse);
       }
-      return handleSeller(store, sellerStore, request, [a, b, c], bad, actor, context);
+      return handleSeller(
+        store,
+        sellerStore,
+        request,
+        [a, b, c],
+        bad,
+        actor,
+        context,
+        caller.accountId,
+        caller.role === 'chef' ? caller.chefId : undefined,
+        caller.displayName,
+      );
     }
     // DEV_TOOLS only: without a session the X-Seller / X-Actor headers choose the seller and the
     // audit name, with full seller rights (no chef limits). Production answers 401.
@@ -528,6 +572,9 @@ export async function handleApiRequest(
  */
 function chefMayNot(method: string, a: string | undefined): boolean {
   if (a === 'backup' || a === 'chef-invites' || a === 'chef-devices') return true;
+  if (a === 'invites' || a === 'team') return true;
+  // Plan 029: selling on the day is for owners and helpers; a chef gets 403 on every method.
+  if (a === 'day') return true;
   const closed = [
     'menu',
     'chefs',
@@ -537,7 +584,7 @@ function chefMayNot(method: string, a: string | undefined): boolean {
     'settings',
     // plan 001, stage 3
     'menus',
-    'dishes',
+    'dishes', // plan 030: chefOwnDishMay lets a chef through for their own dishes
     'saved-sets',
     'pickup-places',
     'preferences',
@@ -547,29 +594,77 @@ function chefMayNot(method: string, a: string | undefined): boolean {
 }
 
 /**
- * Deletes the R2 objects behind these refs unless something still shows them: the kitchen's
- * slots, or a saved set (sets keep their own copy of the refs, and "use set" copies them back).
+ * Plan 030: the few dish writes a chef may make, on top of chefMayNot. A chef adds a dish (the
+ * handler forces chef = self), edits a dish, or sells out / edits a menu item, only when the
+ * STORED dish or item belongs to them (never the body), and may never reassign it. Delete,
+ * publish and every other menu write stay closed.
  */
-async function dropUnusedImages(
-  bucket: ImageBucket,
+async function chefOwnDishMay(
+  request: Request,
   store: SellerRepository,
-  refs: ReadonlyArray<string | undefined>,
-  sellerId: string,
-): Promise<void> {
-  const backup = await store.exportBackup();
-  const inUse = new Set<string>();
-  for (const images of [backup.kitchen.images, ...backup.sets.map((set) => set.images)]) {
-    for (const slot of IMAGE_SLOTS) {
-      const ref = images?.[slot];
-      if (ref !== undefined) inUse.add(ref);
-    }
+  a: string | undefined,
+  b: string | undefined,
+  c: string | undefined,
+  chefId: string | undefined,
+): Promise<boolean> {
+  if (!chefId) return false;
+  const method = request.method;
+  const dishRoute = a === 'dishes' && (method === 'POST' ? !b : method === 'PATCH' && !!b && !c);
+  const itemRoute = a === 'menu' && b === 'items' && !!c && method === 'PATCH';
+  if (!dishRoute && !itemRoute) return false;
+  const body: unknown = await request
+    .clone()
+    .json()
+    .catch(() => null);
+  if (method === 'POST') return true; // the handler forces chef = self
+  // A chef never reassigns: a chef field is allowed only when it names themselves.
+  if (isRecord(body) && body['chefId'] !== undefined && body['chefId'] !== chefId) return false;
+  if (dishRoute) return (await store.listDishes()).find((d) => d.id === b)?.chefId === chefId;
+  return (await store.getSellerMenu()).items.find((i) => i.id === c)?.chefId === chefId;
+}
+
+/**
+ * What a helper may do (plan 028), deny by default: read orders (and the menu the screens show),
+ * mark an item sold out, and move an order along (status, collected). Everything else,
+ * including every other read (backup, team,
+ * settings) and the demo samples, is refused.
+ */
+async function helperMay(
+  request: Request,
+  a: string | undefined,
+  b: string | undefined,
+  c: string | undefined,
+): Promise<boolean> {
+  const method = request.method;
+  if (a === 'orders') {
+    if (method === 'GET') return !c;
+    return method === 'POST' && !!b && (c === 'status' || c === 'collected');
   }
-  if (backup.menu?.pictureRef !== undefined) inUse.add(backup.menu.pictureRef);
-  await deleteImageRefs(
-    bucket,
-    refs.filter((ref) => ref !== undefined && !inUse.has(ref)),
-    sellerId,
-  );
+  // The read-only GETs the helper's screens fetch (Orders, Dishes, Hand over, Sell): the seller
+  // menu, the current menu, the message log and the kitchen colour theme (preferences). Settings, team, backup and past weeks stay closed.
+  if (
+    method === 'GET' &&
+    ((a === 'menu' && !b) ||
+      (a === 'menus' && b === 'current' && !c) ||
+      (a === 'messages' && !b) ||
+      (a === 'preferences' && !b))
+  ) {
+    return true;
+  }
+  // Plan 029: a helper sells on the day (sale, set count) and reads the day's log.
+  if (a === 'day' && !c) {
+    if (method === 'GET') return b === 'log';
+    return method === 'POST' && (b === 'sale' || b === 'count' || b === 'undo');
+  }
+  if (method === 'PATCH' && a === 'menu' && b === 'items' && !!c) {
+    // The item PATCH also edits name and price: a helper may send the sold-out switch alone.
+    const body: unknown = await request
+      .clone()
+      .json()
+      .catch(() => null);
+    return isRecord(body) && Object.keys(body).length === 1 && typeof body['soldOut'] === 'boolean';
+  }
+  return false;
 }
 
 /** Everything under /api/seller/*, for the one seller the request is scoped to. */
@@ -581,6 +676,12 @@ async function handleSeller(
   bad: () => Response,
   actor: StaffActor,
   context: RouteContext,
+  /** The signed-in person (absent in a DEV_TOOLS header call). */
+  accountId?: string,
+  /** A signed-in chef's id: their new dishes are always theirs (plan 030). */
+  chefId?: string,
+  /** The signed-in person's name (the day-sales log records it; plan 029). */
+  personName?: string,
 ): Promise<Response | null> {
   const method = request.method;
   const sellerId = store.seller.id;
@@ -596,11 +697,52 @@ async function handleSeller(
     if (!(await store.listChefs()).some((chef) => chef.id === input.chefId)) {
       return error('unknown_chef', 'Unknown chef');
     }
-    const key = await repo.auth.createKey(
-      { role: 'chef', sellerId: store.seller.id, chefId: input.chefId },
-      'invite',
-    );
+    const chef = (await store.listChefs()).find((row) => row.id === input.chefId);
+    const key = await repo.auth.createKey({
+      role: 'chef',
+      sellerId: store.seller.id,
+      chefId: input.chefId,
+      displayName: (chef?.name ?? 'Chef').slice(0, DISPLAY_NAME_MAX),
+    });
     return Response.json(key satisfies KeyResponse, { status: 201 });
+  }
+
+  // Plan 033: the owner invites a person by name and role (a chef invite may add the cook row).
+  if (a === 'invites' && !b && method === 'POST') {
+    const input = parseInviteRequest(await readJson(request));
+    if (!input) return bad();
+    let chefId = input.chefId;
+    if (input.role === 'chef') {
+      if (chefId === undefined) {
+        const added = await store.addChef(input.displayName);
+        if (!added.ok) return error(added.error, added.message);
+        chefId = added.value.id;
+      } else if (!(await store.listChefs()).some((chef) => chef.id === chefId)) {
+        return error('unknown_chef', 'Unknown chef');
+      }
+    }
+    const key = await repo.auth.createKey({
+      role: input.role,
+      sellerId,
+      displayName: input.displayName,
+      ...(chefId !== undefined ? { chefId } : {}),
+    });
+    return Response.json(key satisfies KeyResponse, { status: 201 });
+  }
+
+  // The kitchen's people. Removing one ends their sessions here at once (not for a dev-header call).
+  if (a === 'team' && accountId !== undefined) {
+    if (!b && method === 'GET') {
+      return Response.json({
+        members: await repo.auth.members(sellerId, accountId),
+      } satisfies MembersResponse);
+    }
+    if (b && method === 'DELETE') {
+      if (b === accountId) return bad();
+      return (await repo.auth.removeMember(sellerId, b))
+        ? Response.json({ ok: true })
+        : error('not_found', 'Member not found');
+    }
   }
 
   // How many devices each chef has signed in (the chefs screen shows it next to the invite).
@@ -718,7 +860,7 @@ async function handleSeller(
       const result = await store.deleteMenu();
       if (!result.ok) return error(result.error, result.message);
       if (context.images) {
-        await dropUnusedImages(context.images, store, [result.value.before], sellerId);
+        await dropUnusedImageRefs(context.images, store, [result.value.before], sellerId);
       }
       await menuChanged();
       return Response.json({ menu: result.value.view } satisfies MenuViewResponse);
@@ -739,19 +881,20 @@ async function handleSeller(
       const result = await store.setMenuPicture(input.dataUrl, stored?.ref);
       if (!result.ok) {
         if (stored && context.images) {
-          await dropUnusedImages(context.images, store, [stored.ref], sellerId);
+          await dropUnusedImageRefs(context.images, store, [stored.ref], sellerId);
         }
         return error(result.error, result.message);
       }
       if (context.images) {
-        await dropUnusedImages(context.images, store, [result.value.before], sellerId);
+        await dropUnusedImageRefs(context.images, store, [result.value.before], sellerId);
       }
       await menuChanged();
       return Response.json({ menu: result.value.view } satisfies MenuViewResponse);
     }
     if (c === 'picture' && method === 'DELETE') {
       const removed = await store.removeMenuPicture();
-      if (context.images) await dropUnusedImages(context.images, store, [removed.before], sellerId);
+      if (context.images)
+        await dropUnusedImageRefs(context.images, store, [removed.before], sellerId);
       await menuChanged();
       return Response.json({ menu: removed.view } satisfies MenuViewResponse);
     }
@@ -774,7 +917,7 @@ async function handleSeller(
     if (!b && method === 'POST') {
       const input = parseCreateDishRequest(await readJson(request));
       if (!input) return bad();
-      const result = await store.createDish(input);
+      const result = await store.createDish(chefId ? { ...input, chefId } : input);
       if (!result.ok) return error(result.error, result.message);
       return Response.json({ dish: result.value } satisfies DishResponse, { status: 201 });
     }
@@ -879,6 +1022,60 @@ async function handleSeller(
     } satisfies KitchenNameResponse);
   }
 
+  // Plan 029 stage 2: selling on the day. Owners and helpers only (chefMayNot / helperMay guard it).
+  if (a === 'day' && !c) {
+    const by = {
+      ...(accountId ? { accountId } : {}),
+      name: personName ?? actor.name,
+      owner: actor.role === 'seller',
+    };
+    if (b === 'log' && method === 'GET') {
+      return Response.json({ entries: await store.listDaySales() } satisfies DayLogResponse);
+    }
+    if (b === 'sale' && method === 'POST') {
+      const input = parseDaySaleRequest(await readJson(request));
+      if (!input) return bad();
+      const sold = await store.sellOnDay(input, by);
+      if (!sold.ok) return refusal(sold);
+      await signal(context, sellerId, 'stock.changed');
+      return Response.json(sold.value satisfies DayStockResponse);
+    }
+    if (b === 'undo' && method === 'POST') {
+      const input = parseDayUndoRequest(await readJson(request));
+      if (!input) return bad();
+      const undone = await store.undoDaySale(input, by);
+      if (!undone.ok) return refusal(undone);
+      await signal(context, sellerId, 'stock.changed');
+      return Response.json(undone.value satisfies DayStockResponse);
+    }
+    if (b === 'count' && method === 'POST') {
+      const input = parseDayCountRequest(await readJson(request));
+      if (!input) return bad();
+      const set = await store.setDayCount(input, by);
+      if (!set.ok) return refusal(set);
+      await signal(context, sellerId, 'stock.changed');
+      return Response.json(set.value satisfies DayStockResponse);
+    }
+    return null;
+  }
+
+  // Plan 035: shared made counts. Chefs cook, so chefs may write (not in chefMayNot).
+  if (a === 'made' && !b) {
+    if (method === 'GET') {
+      const got = await store.getMade();
+      return got.ok ? Response.json({ made: got.value } satisfies MadeResponse) : refusal(got);
+    }
+    if (method === 'POST') {
+      const input = parseAddMadeRequest(await readJson(request));
+      if (!input) return bad();
+      const added = await store.addMade(input);
+      if (!added.ok) return refusal(added);
+      await signal(context, sellerId, 'order.changed');
+      return Response.json({ made: added.value } satisfies MadeResponse);
+    }
+    return null;
+  }
+
   if (a === 'chefs') {
     if (!b && method === 'GET') {
       return Response.json({ chefs: await store.listChefs() } satisfies ChefsResponse);
@@ -923,17 +1120,17 @@ async function handleSeller(
         const result = await store.setImage(b, input.dataUrl, stored?.ref);
         if (!result.ok) {
           if (stored && context.images) {
-            await dropUnusedImages(context.images, store, [stored.ref], sellerId);
+            await dropUnusedImageRefs(context.images, store, [stored.ref], sellerId);
           }
           return error(result.error, result.message);
         }
-        if (context.images) await dropUnusedImages(context.images, store, [before[b]], sellerId);
+        if (context.images) await dropUnusedImageRefs(context.images, store, [before[b]], sellerId);
         return Response.json({ images: result.value } satisfies ImagesResponse);
       }
       if (method === 'DELETE') {
         const before = await store.getImages();
         const images = await store.removeImage(b);
-        if (context.images) await dropUnusedImages(context.images, store, [before[b]], sellerId);
+        if (context.images) await dropUnusedImageRefs(context.images, store, [before[b]], sellerId);
         return Response.json({ images } satisfies ImagesResponse);
       }
     }

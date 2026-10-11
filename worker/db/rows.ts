@@ -72,6 +72,8 @@ export type DishRow = {
   portion_limit: number | null;
   chef_id: string | null;
   last_used_at: string | null;
+  preorder: number;
+  day_stock: number | null;
 };
 export type PickupRow = {
   id: string;
@@ -95,6 +97,8 @@ export type ItemRow = {
   chef_id: string | null;
   sold_out: number;
   dish_id: string | null;
+  preorder: number;
+  day_stock: number | null;
 };
 export type ChefRow = { id: string; name: string };
 export type SetRow = {
@@ -254,6 +258,8 @@ export function dishOf(row: DishRow): Dish {
     priceCents: row.price_cents,
     ...(row.portion_limit !== null ? { limit: row.portion_limit } : {}),
     ...(row.chef_id !== null ? { chefId: row.chef_id } : {}),
+    ...(row.preorder === 0 ? { preorder: false } : {}),
+    ...(row.day_stock !== null ? { dayStock: row.day_stock } : {}),
     ...(row.last_used_at !== null ? { lastUsedAt: row.last_used_at } : {}),
   };
 }
@@ -292,6 +298,8 @@ export function itemOf(row: ItemRow): MenuItem {
     ...(row.portion_limit !== null ? { limit: row.portion_limit } : {}),
     ...(row.chef_id !== null ? { chefId: row.chef_id } : {}),
     ...(row.sold_out === 1 ? { soldOut: true as const } : {}),
+    ...(row.preorder === 0 ? { preorder: false } : {}),
+    ...(row.day_stock !== null ? { dayStock: row.day_stock } : {}),
   };
 }
 

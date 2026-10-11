@@ -1,5 +1,6 @@
 import { parseApiError, type ApiErrorCode, type ApiWarning } from '../../shared/apiError';
 import type { StaffActor } from '../../shared/domain';
+import { reportApiFailure } from './clientLog';
 import { dropLegacySessionToken, setSessionHint } from './device/session';
 
 export type ApiFailure = {
@@ -66,6 +67,7 @@ async function failureOf(response: Response): Promise<ApiFailure> {
   const apiError = parseApiError(json);
   // The server no longer knows this session (expired, signed out elsewhere, revoked): forget the hint.
   if (apiError?.error === 'unauthorized') setSessionHint(false);
+  reportApiFailure(response.url, response.status, apiError?.error ?? 'bad_response');
   return apiError
     ? {
         ok: false,

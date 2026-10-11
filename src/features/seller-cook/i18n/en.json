@@ -61,6 +61,20 @@
     "warnBody_one": "{{count}} item in this bag isn't ticked. Mark the bag packed anyway?",
     "warnBody_other": "{{count}} items in this bag aren't ticked. Mark the bag packed anyway?",
     "warnCancel": "Keep packing",
-    "warnContinue": "Mark packed anyway"
+    "warnContinue": "Mark packed anyway",
+    "printLabel": "Print label"
+  },
+  "who": {
+    "open": "Who ordered {{name}}",
+    "close": "Close",
+    "summary": "{{portions}} portions · {{customers}} customers",
+    "pickup": "Pickup",
+    "delivery": "Delivery"
+  },
+  "label": {
+    "qrName": "Order QR code",
+    "pickup": "Pickup · {{day}}",
+    "delivery": "Delivery · {{day}}",
+    "part": "{{index}} of {{of}}"
   }
 }

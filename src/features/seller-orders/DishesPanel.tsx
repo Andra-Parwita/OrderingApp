@@ -7,6 +7,7 @@ import { pickText } from '../../../shared/text';
 import type { MenuDishView } from '../../../shared/menusContract';
 import { Button, SlideOver, TextField } from '../../ui';
 import { SELLER_NS } from './i18n/register';
+import { useReadOnlyOrders } from './orderAccess';
 import { useLang } from './orderText';
 import { selectCurrent, selectSoldByItem } from './sellerOrdersSelectors';
 import { dishPatchRequested } from './sellerOrdersSlice';
@@ -104,6 +105,7 @@ function DishRow({ dish, sold }: Readonly<{ dish: MenuDishView; sold: number }>)
   const { t } = useTranslation(SELLER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
+  const readOnly = useReadOnlyOrders();
   const [editing, setEditing] = useState(false);
   const stop = useCallback(() => setEditing(false), []);
   const start = useCallback(() => setEditing(true), []);
@@ -128,9 +130,11 @@ function DishRow({ dish, sold }: Readonly<{ dish: MenuDishView; sold: number }>)
         <small>{detail}</small>
       </Names>
       <Buttons>
-        <Button onClick={start} aria-label={`${t('dishes.editLimit')}: ${name}`}>
-          {t('dishes.editLimit')}
-        </Button>
+        {readOnly ? null : (
+          <Button onClick={start} aria-label={`${t('dishes.editLimit')}: ${name}`}>
+            {t('dishes.editLimit')}
+          </Button>
+        )}
         <Button onClick={toggleSoldOut} aria-pressed={dish.manualSoldOut === true}>
           {dish.manualSoldOut === true ? t('dishes.backOn') : t('dishes.markSoldOut')}
         </Button>

@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import i18n from 'i18next';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
+import { MemoryRouter, useLocation } from 'react-router';
 import createSagaMiddleware, { type EventChannel } from 'redux-saga';
 import type { LiveMessage } from '../../api/live';
 import type { Order, OrderLine, SellerMenuItemView } from '../../../shared/domain';
@@ -152,11 +153,20 @@ export async function setupI18n(): Promise<void> {
 export function renderWithStore(ui: ReactNode, store: TestStore) {
   return render(
     <Provider store={store}>
-      <AppThemeProvider>{ui}</AppThemeProvider>
+      <AppThemeProvider>
+        <MemoryRouter>
+          {ui}
+          <Where />
+        </MemoryRouter>
+      </AppThemeProvider>
     </Provider>,
   );
 }
 
 export function seed(store: TestStore, orders: Array<Order>): void {
   store.dispatch(loaded({ orders, menu: MENU }));
+}
+
+function Where() {
+  return <output data-testid="where">{useLocation().pathname}</output>;
 }

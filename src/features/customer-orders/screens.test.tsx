@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import i18n from 'i18next';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MOCK_NOW } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 import type { CustomerOrder } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
@@ -19,6 +20,7 @@ const NUMBER = '61412345678';
 beforeAll(() => setupI18n('en'));
 beforeEach(() => localStorage.removeItem(MY_ORDERS_KEY));
 afterEach(async () => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   await i18n.changeLanguage('en');
 });
@@ -66,6 +68,8 @@ describe('MyOrdersScreen', () => {
   });
 
   it('lists a saved order in "Current" with status, summary, fulfilment and total', async () => {
+    // "Current" depends on today's date: pin it to the mock menu's week (cooking date Sat 10 Oct).
+    vi.useFakeTimers({ toFake: ['Date'], now: MOCK_NOW });
     const placed = await place();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
     expect(await screen.findByText('Current')).toBeVisible();

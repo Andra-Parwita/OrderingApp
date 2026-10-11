@@ -9,13 +9,8 @@ import { ScanEntry } from '../../components/scan';
 import { BannerToggle } from './BannerToggle';
 import { DishesSlideOver, useSoldTotal } from './DishesPanel';
 import { FeedbackHost } from './FeedbackHost';
-import {
-  FinishedHome,
-  HomeMessage,
-  NotPublishedHome,
-  SetupChecklist,
-  useEarlierMenus,
-} from './HomeStates';
+import { FinishedHome, HomeMessage, NoMenuRunning, useEarlierMenus } from './HomeStates';
+import { useReadOnlyOrders } from './orderAccess';
 import { SELLER_NS } from './i18n/register';
 import { homeKindOf } from './homeState';
 import { STATUS_FILTERS, type StatusFilter } from './orderStatus';
@@ -276,6 +271,8 @@ function PhoneOrdersContent({
   const unpaid = useSelector(selectUnpaidCount);
   const current = useSelector(selectCurrent);
   const past = useSelector(selectPast);
+  // A helper may not read earlier menus: for them there are none to wait for.
+  const readOnly = useReadOnlyOrders();
   const orders = useSelector(selectOrders);
   const visible = useVisibleOrders(filter, query, toggles);
   const [sheet, setSheet] = useState(false);
@@ -310,7 +307,7 @@ function PhoneOrdersContent({
   const fetchFailed = list.status === 'error' || (list.status === 'ready' && list.live === 'error');
   const view = current.status === 'ready' ? current.view : null;
   const kind = view
-    ? homeKindOf(view, past.status === 'ready' ? past.weeks : null, orders)
+    ? homeKindOf(view, past.status === 'ready' ? past.weeks : readOnly ? [] : null, orders)
     : 'checking';
   const live = kind === 'live';
   const noOrdersAtAll = list.status === 'ready' && counts.all === 0;
@@ -427,14 +424,17 @@ function PhoneOrdersContent({
     );
   } else if (!view || kind === 'checking') {
     body = <HomeMessage text={t('home.loading')} />;
-  } else if (kind === 'first_run') {
-    body = <SetupChecklist view={view} />;
-  } else if (kind === 'not_published') {
-    body = <NotPublishedHome view={view} />;
+  } else if (kind === 'first_run' || kind === 'not_published') {
+    body = <NoMenuRunning phone={true} />;
   } else if (kind === 'finished') {
     body = (
       <>
-        <FinishedHome view={view} showAll={showAll} onToggleAll={() => setShowAll((on) => !on)} />
+        <FinishedHome
+          view={view}
+          showAll={showAll}
+          onToggleAll={() => setShowAll((on) => !on)}
+          phone={true}
+        />
         {showAll ? board : null}
       </>
     );

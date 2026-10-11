@@ -4,25 +4,39 @@ import {
   AUTH_RATE_MAX,
   AUTH_RATE_WINDOW_SECONDS,
   parseAdminSetupRequest,
+  DISPLAY_NAME_MAX,
+  INVITES_SHOWN,
   parseCodeSignInRequest,
   parseCreateSellerRequest,
   parseKeySignInRequest,
+  parseOptionalDisplayName,
+  parseSwitchRequest,
   parsePasskeyOptionsRequest,
   parsePasskeySignInRequest,
   parsePasswordSignInRequest,
   parseRegisterRequest,
   parseRenameDeviceRequest,
+  parsePauseRequest,
   parseSetDemoRequest,
   type ChefAccessResponse,
   type DevicesResponse,
+  type InvitesResponse,
+  type MembersResponse,
+  type MembershipsResponse,
   type MeResponse,
   type PasskeyOptionsResponse,
   type SellerResponse,
   type SellersResponse,
   type SessionResponse,
 } from '../../shared/authContract';
+import { isImageSlot } from '../../shared/imageSlots';
 import { isValidSlug } from '../../shared/seller';
-import type { OkResponse } from '../../shared/setupContract';
+import {
+  parseUploadImageRequest,
+  type ImagesResponse,
+  type OkResponse,
+} from '../../shared/setupContract';
+import { dropUnusedImageRefs, putUploadedImage, type ImageBucket } from '../images/r2';
 import { clearedSessionCookie, sessionCookie, sessionTokenOf, withCookie } from '../auth/cookie';
 import {
   authenticationOptions,
@@ -33,6 +47,7 @@ import {
   type RelyingParty,
 } from '../auth/webauthn';
 import type {
+  AuthRepository,
   AuthResult,
   Caller,
   Repository,
@@ -90,6 +105,15 @@ function rpOrRefusal(request: Request): RelyingParty | Response {
   return relyingParty(request) ?? noPasskeyHere();
 }
 
+/** A full person session sent with a key redemption: the person who joins. */
+async function joinerOf(
+  auth: AuthRepository,
+  request: Request,
+): Promise<{ join: Caller } | Record<string, never>> {
+  const caller = await auth.resolve(sessionTokenOf(request));
+  return caller && !caller.setup && caller.role !== 'admin' ? { join: caller } : {};
+}
+
 /** Everything under /api/auth/*. */
 export async function handleAuth(
   store: Repository,
@@ -127,7 +151,13 @@ export async function handleAuth(
       if (!input) return bad();
       return (
         (await limited(store, input.deviceId)) ??
-        sessionResult(await auth.redeemKey(input.key, input.deviceId))
+        sessionResult(
+          await auth.redeemKey(input.key, input.deviceId, {
+            // A person already signed in joins the kitchen with this key (no new passkey).
+            ...(await joinerOf(auth, request)),
+            ...(input.displayName ? { displayName: input.displayName } : {}),
+          }),
+        )
       );
     }
     if (a === 'code') {
@@ -152,7 +182,9 @@ export async function handleAuth(
       if (slowDown) return slowDown;
       const rp = rpOrRefusal(request);
       if (rp instanceof Response) return rp;
-      return sessionResult(await signInWithPasskey(auth, rp, input.deviceId, input.response));
+      return sessionResult(
+        await signInWithPasskey(auth, rp, input.deviceId, input.response, input.slug),
+      );
     }
     if (a === 'register') {
       const input = parseRegisterRequest(body);
@@ -177,6 +209,17 @@ export async function handleAuth(
       if (token) await auth.signOut(token);
       return withCookie(Response.json({ ok: true } satisfies OkResponse), clearedSessionCookie());
     }
+    if (a === 'switch') {
+      const session = await requireSession(store, request);
+      if ('response' in session) return session.response;
+      const input = parseSwitchRequest(body);
+      if (!input) return bad();
+      if (!(await auth.switchKitchen(session.caller, input.sellerId))) {
+        return error('forbidden', 'You do not belong to that kitchen');
+      }
+      const me = await auth.me({ ...session.caller, sellerId: input.sellerId });
+      return Response.json({ me } satisfies MeResponse);
+    }
     if (a === 'device-codes') {
       const session = await requireSession(store, request);
       return 'response' in session
@@ -198,6 +241,14 @@ export async function handleAuth(
     const answer = Response.json({ me } satisfies MeResponse);
     // A full session slides: the server renewed it, so the cookie is renewed too.
     return caller.setup ? answer : withCookie(answer, sessionCookie(token, 'full'));
+  }
+
+  if (a === 'memberships' && !b && method === 'GET') {
+    const session = await requireSession(store, request);
+    if ('response' in session) return session.response;
+    return Response.json({
+      memberships: await auth.memberships(session.caller),
+    } satisfies MembershipsResponse);
   }
 
   if (a === 'devices') {
@@ -236,6 +287,13 @@ export async function chefAccess(
   return { chefs };
 }
 
+async function sellerReply(store: Repository, sellerId: string): Promise<Response> {
+  const seller = (await store.adminSellers()).find((row) => row.id === sellerId);
+  return seller
+    ? Response.json({ seller } satisfies SellerResponse)
+    : error('seller_not_found', 'Seller not found');
+}
+
 /** Everything under /api/admin/*. The admin sees sellers, keys and devices, never order data. */
 export async function handleAdmin(
   store: Repository,
@@ -248,6 +306,7 @@ export async function handleAdmin(
     string | undefined,
   ],
   devTools = false,
+  images?: ImageBucket,
 ): Promise<Response | null> {
   const method = request.method;
 
@@ -275,16 +334,10 @@ export async function handleAdmin(
       if (await store.sellerBySlug(input.slug)) {
         return error('slug_taken', 'That link is already taken');
       }
-      return Response.json(
-        {
-          seller: await store.addSeller(input.name, input.slug, {
-            sampleImages: devTools,
-          }),
-        } satisfies SellerResponse,
-        {
-          status: 201,
-        },
-      );
+      const added = await store.addSeller(input.name, input.slug, { sampleImages: devTools });
+      // The row's summary line shows at once (the same shape the list gives).
+      const listed = (await store.adminSellers()).find((row) => row.id === added.id);
+      return Response.json({ seller: listed ?? added } satisfies SellerResponse, { status: 201 });
     }
     const target = b ? await store.sellerById(b) : undefined;
     if (b && !target) return error('seller_not_found', 'Seller not found');
@@ -293,17 +346,44 @@ export async function handleAdmin(
       const input = parseSetDemoRequest(await readJson(request));
       if (!input) return bad();
       await store.setSellerDemo(target.seller.id, input.demo);
-      const seller = (await store.adminSellers()).find((row) => row.id === target.seller.id);
-      return seller
-        ? Response.json({ seller } satisfies SellerResponse)
-        : error('seller_not_found', 'Seller not found');
+      return sellerReply(store, target.seller.id);
     }
-    if (b && (c === 'invite-key' || c === 'recovery-key') && !d && method === 'POST') {
-      const key = await store.auth.createKey(
-        { role: 'seller', sellerId: b },
-        c === 'invite-key' ? 'invite' : 'recovery',
-      );
+    // Plan 032: pause a kitchen in one of two ways, or resume it. A full pause signs everyone out.
+    if (b && target && c === 'pause' && !d && method === 'POST') {
+      const input = parsePauseRequest(await readJson(request));
+      if (!input) return bad();
+      await store.setSellerPaused(target.seller.id, input.kind);
+      return sellerReply(store, target.seller.id);
+    }
+    if (b && target && c === 'resume' && !d && method === 'POST') {
+      await store.setSellerPaused(target.seller.id, null);
+      return sellerReply(store, target.seller.id);
+    }
+    // The admin invites a first owner by name. `recovery-key` is the same call (D-090: recovery
+    // is a re-invite). Without a body the kitchen's name is the person's starting name.
+    if (b && target && (c === 'invite-key' || c === 'recovery-key') && !d && method === 'POST') {
+      const displayName =
+        parseOptionalDisplayName(await readJson(request)) ??
+        target.seller.name.slice(0, DISPLAY_NAME_MAX);
+      const key = await store.auth.createKey({ role: 'owner', sellerId: b, displayName });
       return Response.json(key, { status: 201 });
+    }
+    if (b && c === 'invites' && !d && method === 'GET') {
+      return Response.json({
+        invites: await store.auth.listInvites(b, INVITES_SHOWN),
+      } satisfies InvitesResponse);
+    }
+    if (b && c === 'members') {
+      if (!d && method === 'GET') {
+        return Response.json({
+          members: await store.auth.members(b),
+        } satisfies MembersResponse);
+      }
+      if (d && method === 'DELETE') {
+        return (await store.auth.removeMember(b, d))
+          ? Response.json({ ok: true } satisfies OkResponse)
+          : error('not_found', 'Member not found');
+      }
     }
     if (b && target && c === 'chefs') {
       const sellerStore = target;
@@ -317,6 +397,36 @@ export async function handleAdmin(
         }
         await store.auth.signOutChef(b, chefId);
         return Response.json({ ok: true } satisfies OkResponse);
+      }
+    }
+    // Plan 041: the admin sets a kitchen's five pictures: the same checks as the seller's upload,
+    // the same seller-scoped R2 prefix, and the old object goes once nothing shows it.
+    if (b && target && c === 'images') {
+      const sellerId = target.seller.id;
+      if (!d && method === 'GET') {
+        return Response.json({ images: await target.getImages() } satisfies ImagesResponse);
+      }
+      if (d && !e) {
+        if (!isImageSlot(d)) return error('not_found', 'Unknown image place');
+        if (method === 'PUT') {
+          const input = parseUploadImageRequest(await readJson(request));
+          if (!input) return bad();
+          const before = await target.getImages();
+          const stored = images ? await putUploadedImage(images, sellerId, d, input.dataUrl) : null;
+          const result = await target.setImage(d, input.dataUrl, stored?.ref);
+          if (!result.ok) {
+            if (stored && images) await dropUnusedImageRefs(images, target, [stored.ref], sellerId);
+            return error(result.error, result.message);
+          }
+          if (images) await dropUnusedImageRefs(images, target, [before[d]], sellerId);
+          return Response.json({ images: result.value } satisfies ImagesResponse);
+        }
+        if (method === 'DELETE') {
+          const before = await target.getImages();
+          const next = await target.removeImage(d);
+          if (images) await dropUnusedImageRefs(images, target, [before[d]], sellerId);
+          return Response.json({ images: next } satisfies ImagesResponse);
+        }
       }
     }
     if (b && c === 'devices') {

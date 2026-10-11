@@ -283,6 +283,7 @@ export function MenuHomeView({
     ) : null;
 
   if (!open) {
+    const kitchenClosed = ordering.reason === 'kitchen_closed';
     const paused = ordering.reason !== 'cutoff_passed';
     return (
       <Screen>
@@ -302,12 +303,20 @@ export function MenuHomeView({
         <StatusCard role="status">
           <CardHead $tone="warn">
             <MenuIcon name={paused ? 'pause' : 'clock'} size="1.5rem" />
-            <h2>{paused ? t('states.pausedTitle') : t('states.closedTitle', { date })}</h2>
+            <h2>
+              {kitchenClosed
+                ? t('states.kitchenClosedTitle')
+                : paused
+                  ? t('states.pausedTitle')
+                  : t('states.closedTitle', { date })}
+            </h2>
           </CardHead>
           <CardBody>
-            {paused
-              ? t('states.pausedBody', { cook })
-              : t('states.closedBody', { dateTime: cutoff, cook })}
+            {kitchenClosed
+              ? t('states.kitchenClosedBody', { cook })
+              : paused
+                ? t('states.pausedBody', { cook })
+                : t('states.closedBody', { dateTime: cutoff, cook })}
           </CardBody>
           <MainButton type="button" onClick={onMessageSeller}>
             <MenuIcon name="chat" />
@@ -315,7 +324,7 @@ export function MenuHomeView({
           </MainButton>
         </StatusCard>
         <Spacer />
-        {onSeeDishes ? (
+        {onSeeDishes && !kitchenClosed ? (
           <TextLink type="button" onClick={onSeeDishes}>
             {t('states.seeAnyway')}
           </TextLink>

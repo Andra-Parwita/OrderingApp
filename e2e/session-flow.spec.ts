@@ -2,12 +2,14 @@ import { expect, test, type Page } from '@playwright/test';
 import { keepAdminPasskey } from './adminSession';
 import { collectErrors } from './sellerHelpers';
 
-// The real routes (plan 001: Devices is a Settings pane, chefs have no Menu or Settings). The admin invites Dapur Demo, the seller sets up with the key and a
-// password, sees Devices, signs out and in again; then a chef is invited and has no Menu (D-013).
+// The real routes (plan 001: Devices is a Settings pane, chefs have no Menu or Settings). The admin invites Dapur Demo
+// by name, the seller sets up with the key (it works once) and a password, sees Devices, signs out
+// and in again (picking their name); then a chef is invited as a new person and has no Menu (D-013).
 // Desktop only. Runs in its own project after the other sign-in specs (same Dapur Demo account).
 
 const PASSWORD = 'session flow long password';
 const CHEF_PASSWORD = 'chef flow long password';
+const PERSON = `Bu Flow ${Date.now().toString(36)}`;
 
 async function setUpWithKey(page: Page, key: string, password: string, device: string) {
   await page.goto('/seller/setup');
@@ -29,10 +31,13 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/admin\/sign-in$/);
   await page.getByRole('button', { name: 'Sign in with passkey' }).click();
-  await expect(page.getByRole('table', { name: 'Sellers' })).toBeVisible();
-  await page.getByRole('row', { name: /Dapur Demo/ }).click();
+  await expect(page.getByRole('list', { name: 'Sellers' })).toBeVisible();
+  await page.getByRole('button', { name: /\/dapur-demo/ }).click();
   await page.getByRole('button', { name: 'Create invite key' }).click();
   const box = page.getByRole('region', { name: 'Invite key for Dapur Demo' });
+  await box.getByLabel('Name of the person').fill(PERSON);
+  await box.getByRole('button', { name: 'Create invite' }).click();
+  await expect(box.locator('code')).toBeVisible();
   const key = ((await box.locator('code').textContent()) ?? '').trim();
   expect(key.length).toBeGreaterThan(8);
 
@@ -75,6 +80,8 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.screenshot({ path: 'captures/session-flow-sign-in.png', fullPage: true });
 
   await page.getByRole('button', { name: 'Use password instead' }).click();
+  // Other specs left people with passwords in Dapur Demo: pick this one by name.
+  await page.getByLabel('Who are you?').selectOption({ label: PERSON });
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/seller$/);
@@ -94,7 +101,7 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await expect(rail.getByRole('link', { name: 'Orders' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Kitchen' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Pickup & delivery' })).toBeVisible();
-  await expect(rail.getByRole('link', { name: 'Menu', exact: true })).toHaveCount(0);
+  await expect(rail.getByRole('link', { name: 'Menu', exact: true })).toBeVisible(); // plan 030
   await expect(rail.getByRole('link', { name: 'Settings', exact: true })).toHaveCount(0);
   await page.screenshot({ path: 'captures/session-flow-chef.png', fullPage: true });
 
@@ -105,6 +112,8 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.screenshot({ path: 'captures/session-flow-hand-over.png', fullPage: true });
 
   await page.goto('/seller/menu');
+  await expect(page.getByRole('heading', { level: 1, name: 'Your dishes' })).toBeVisible();
+  await page.goto('/seller/settings/kitchen');
   await expect(page.getByRole('heading', { name: 'Not available for chefs' })).toBeVisible();
   await page.goto('/seller/more');
   await expect(page.getByRole('button', { name: 'Devices' })).toBeVisible();

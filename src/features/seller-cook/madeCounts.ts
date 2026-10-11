@@ -1,9 +1,13 @@
 import { useCallback, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addMade } from '../../api/made';
+import { currentSellerSlug } from '../../api/device/sellerContext';
+import { madeReplaced, type CookRootState } from './cookSlice';
 
-// "Count mode" and how many of each dish are made, kept on this device only (not on the server).
+// "Count mode" stays on this device. How many of each dish are made is on the server (plan 035),
+// so every phone and tablet of the kitchen shows the same numbers.
 
 const MODE_KEY = 'cook-count-mode';
-const madeKey = (cookingDate: string) => `cook-made:${cookingDate}`;
 
 function read(key: string): string | null {
   try {
@@ -21,21 +25,6 @@ function write(key: string, value: string): void {
   }
 }
 
-export function parseMade(raw: string | null): Record<string, number> {
-  if (!raw) return {};
-  try {
-    const value: unknown = JSON.parse(raw);
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) return {};
-    const out: Record<string, number> = {};
-    for (const [id, count] of Object.entries(value)) {
-      if (typeof count === 'number' && Number.isInteger(count) && count > 0) out[id] = count;
-    }
-    return out;
-  } catch {
-    return {};
-  }
-}
-
 export function useCountMode(): [boolean, (next: boolean) => void] {
   const [on, setOn] = useState(() => read(MODE_KEY) !== 'off');
   const set = useCallback((next: boolean) => {
@@ -45,18 +34,23 @@ export function useCountMode(): [boolean, (next: boolean) => void] {
   return [on, set];
 }
 
-/** Made count per dish for one cooking day; `change` moves it by ±1 within 0..total. */
-export function useMadeCounts(cookingDate: string) {
-  const [made, setMade] = useState(() => parseMade(read(madeKey(cookingDate))));
+/** Made count per dish, from the server; `change` moves it by ±1 within 0..total. */
+export function useMadeCounts() {
+  const made = useSelector((state: CookRootState) => state.sellerCook.made);
+  const dispatch = useDispatch();
   const change = useCallback(
     (itemId: string, delta: number, total: number) => {
-      setMade((now) => {
-        const next = { ...now, [itemId]: Math.max(0, Math.min(total, (now[itemId] ?? 0) + delta)) };
-        write(madeKey(cookingDate), JSON.stringify(next));
-        return next;
+      const before = made[itemId] ?? 0;
+      const step = Math.max(0, Math.min(total, before + delta)) - before;
+      if (step === 0) return;
+      dispatch(madeReplaced({ ...made, [itemId]: before + step }));
+      void addMade({ itemId, delta: step }, undefined, currentSellerSlug()).then((result) => {
+        // The server adds, so its answer is the truth (it includes other devices' taps).
+        if (result.ok) dispatch(madeReplaced(result.data.made));
+        else dispatch(madeReplaced(made));
       });
     },
-    [cookingDate],
+    [made, dispatch],
   );
   return { made, change };
 }

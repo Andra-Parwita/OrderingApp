@@ -186,21 +186,7 @@
     "menuFor": "Menu untuk {{date}} · Pesanan ditutup {{cutoff}}",
     "loading": "Memuat…",
     "loadError": "Menu tidak bisa dimuat.",
-    "setup": {
-      "title": "Siapkan dapur Anda",
-      "why": "Empat langkah singkat, lalu pelanggan bisa memesan.",
-      "pictures": "Tambah gambar",
-      "whatsapp": "Tambah nomor WhatsApp",
-      "menu": "Buat menu",
-      "publish": "Terbitkan dan bagikan",
-      "go": "Buka",
-      "action": "Buat menu"
-    },
-    "notPublished": "Menu Anda untuk {{date}} belum diterbitkan.",
-    "stepOf": "Langkah {{step}} dari 4 · tersimpan",
-    "continue": "Lanjutkan",
     "justFinished": "Baru selesai",
-    "lastMenu": "Menu terakhir",
     "closedNote": "Menu ditutup di akhir hari memasak.",
     "seeAll": "Lihat semua {{count}} pesanan",
     "hideAll": "Sembunyikan pesanan",
@@ -213,15 +199,9 @@
     "dishesSold": "Hidangan terjual",
     "unpaidLine": "{{name}} belum membayar {{amount}}",
     "markPaid": "Tandai lunas",
-    "useDishes": "Pakai hidangan ini untuk menu baru",
-    "earlier": "Menu sebelumnya",
-    "earlierHint": "Rincian pesanan disimpan 4 minggu, lalu hanya totalnya.",
-    "earlierRow": "{{orders}} pesanan · {{dishes}} hidangan",
-    "allPaid": "Semua lunas",
-    "unpaidAmount": "{{amount}} belum dibayar",
-    "noEarlier": "Belum ada menu sebelumnya.",
-    "allMenus": "Semua menu sebelumnya",
-    "noMenu": "Belum ada menu yang dibuka."
+    "noMenu": "Belum ada menu yang dibuka.",
+    "startFromHome": "Mulai menu berikutnya dari Beranda",
+    "makeMenu": "Buat menu"
   },
   "live": {
     "search": "Nama atau kode",
@@ -392,5 +372,37 @@
     "importBad": "File itu bukan ekspor kontak.",
     "count_one": "{{count}} kontak tersimpan di ponsel ini",
     "count_other": "{{count}} kontak tersimpan di ponsel ini"
+  },
+  "print": {
+    "title": "Cetak pesanan",
+    "print": "Cetak",
+    "back": "Kembali",
+    "loading": "Memuat pesanan…",
+    "empty": "Tidak ada pesanan untuk dicetak.",
+    "notAllowed": "Cetak pesanan hanya untuk pemilik dan koki.",
+    "hint_one": "{{count}} halaman A4. Cetak, lalu pilih \"Simpan sebagai PDF\" di jendela cetak bila ingin berkas.",
+    "hint_other": "{{count}} halaman A4. Cetak, lalu pilih \"Simpan sebagai PDF\" di jendela cetak bila ingin berkas.",
+    "which": {
+      "label": "Pesanan mana",
+      "all": "Semua",
+      "notCollected": "Belum diambil",
+      "notPaid": "Belum dibayar"
+    },
+    "sort": {
+      "label": "Urutkan",
+      "place": "Tempat",
+      "code": "Kode"
+    },
+    "menuFor": "Menu untuk {{day}}",
+    "printedAt": "Dicetak {{time}}",
+    "page": "Halaman {{n}} dari {{total}}",
+    "continued": "lanjutan",
+    "otherPlace": "Tempat lain",
+    "paid": "Lunas",
+    "notPaid": "Belum dibayar",
+    "totals": "Total (pra-pesan)",
+    "total": "Total",
+    "ordersCount_one": "{{count}} pesanan",
+    "ordersCount_other": "{{count}} pesanan"
   }
 }

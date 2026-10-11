@@ -83,8 +83,8 @@ export const DEMO_ID = 'seller-dapur-demo';
  */
 export function sampleImages(altEn: string, altId: string): KitchenImages {
   return {
-    desktopBanner: '/samples/banner-wide.jpg',
-    phoneBanner: '/samples/banner-phone.jpg',
+    desktopBanner: '/samples/banner-wide-3840x328.jpg',
+    phoneBanner: '/samples/banner-phone-3x1.jpg',
     railImage: '/samples/rail.png',
     // The small icon (512 x 512, full-bleed art): the seller rail's tile and the home-screen icon
     // (plan 004 stage 6). public/samples/rail-icon.png stays for reference.

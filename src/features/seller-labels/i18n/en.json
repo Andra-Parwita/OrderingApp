@@ -24,6 +24,11 @@
   "label": {
     "qrName": "Order QR code",
     "pickup": "Pickup · {{day}}",
-    "delivery": "Delivery · {{day}}"
-  }
+    "delivery": "Delivery · {{day}}",
+    "part": "{{index}} of {{of}}"
+  },
+  "previewCount_one": "{{count}} label for {{orders}}",
+  "previewCount_other": "{{count}} labels for {{orders}}",
+  "ordersCount_one": "{{count}} order",
+  "ordersCount_other": "{{count}} orders"
 }

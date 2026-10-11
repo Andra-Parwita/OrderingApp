@@ -1,6 +1,14 @@
 {
   "app": {
-    "name": "ShaggyBobo's Order"
+    "name": "ShaggyBobo's Order",
+    "brand": {
+      "sellerSetup": "Pengaturan penjual",
+      "build": "build {{commit}}",
+      "production": "produksi",
+      "development": "pengembangan",
+      "draft": "draf",
+      "copyright": "© {{year}} ShaggyBobo"
+    }
   },
   "language": {
     "label": "Bahasa",
@@ -53,9 +61,17 @@
     "devices": "Perangkat",
     "signOut": "Keluar",
     "signedInAs": "Masuk sebagai {{name}}",
+    "noticePausedCustomers": "Pelanggan tidak bisa melihat dapur Anda saat ini.",
     "signedInChef": "Chef {{name}}",
+    "signedInHelper": "Asisten {{name}}",
     "signedInLabel": "Masuk sebagai",
+    "kitchenSwitch": "Dapur",
+    "kitchenSwitchFailed": "Tidak bisa ganti dapur. Silakan coba lagi.",
+    "roleOwner": "Pemilik",
+    "roleHelper": "Asisten",
+    "roleChef": "Koki",
     "personChef": "{{name}} · chef",
+    "personHelper": "{{name}} · asisten",
     "personSeller": "{{name}} · penjual",
     "switchPerson": "Ganti orang",
     "notForChefs": "Tidak tersedia untuk chef",
@@ -68,6 +84,7 @@
     "delivery": "Antar pesanan",
     "updates": "Kirim kabar",
     "backToSaturday": "Kembali ke Serah terima",
+    "navHome": "Beranda",
     "navOrders": "Pesanan",
     "newOrders": "pesanan baru",
     "navKitchen": "Dapur",
@@ -81,7 +98,10 @@
     "tabletOnlyBody": "Bagian aplikasi ini perlu layar yang lebih besar. Pesanan dan Serah terima bisa dipakai di ponsel.",
     "tabletOnlyOrders": "Ke pesanan",
     "switchPersonShort": "Ganti",
-    "signedInWho": "Masuk sebagai"
+    "signedInWho": "Masuk sebagai",
+    "navSell": "Jual",
+    "sell": "Jual",
+    "printOrders": "Cetak pesanan"
   },
   "customerNav": {
     "label": "Pelanggan",
@@ -99,6 +119,10 @@
     "theme": "Tampilan",
     "themeAuto": "Otomatis",
     "themeAutoHint": "Otomatis · ikut ponsel",
+    "textSize": "Ukuran teks",
+    "textSmaller": "Lebih kecil",
+    "textNormal": "Normal",
+    "textLarger": "Lebih besar",
     "updatesTitle": "Kabar pesanan",
     "homeTitle": "Pasang di layar utama",
     "homeBody": "Terbuka seperti aplikasi, cukup sekali ketuk.",

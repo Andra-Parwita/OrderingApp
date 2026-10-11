@@ -1,12 +1,13 @@
 // Test-only: a hand-driven live channel for the saga tests (no socket, no timers).
 import { buffers, eventChannel, type EventChannel } from 'redux-saga';
+import type { LiveEventType } from '../../shared/liveContract';
 import type { LiveMessage, LiveStatus } from './live';
 
 export type FakeLive = {
   /** Pass to the saga as its `channel` option. */
   channel: () => EventChannel<LiveMessage>;
   status: (status: LiveStatus) => void;
-  event: (type: 'order.created' | 'order.changed' | 'menu.changed', code?: string) => void;
+  event: (type: LiveEventType, code?: string) => void;
   /** How many times a saga opened the channel, and how many of those are still open. */
   opened: () => number;
   open: () => number;

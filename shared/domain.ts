@@ -3,7 +3,16 @@ export type LocalText = { en: string; id: string };
 
 /** A kitchen on Delave (D-036). `slug` is the customer link `/<slug>` (D-037); see shared/seller.ts. */
 /** `demo` (plan 013): the admin made this a demo kitchen. The server always sets it; fixtures may omit it. */
-export type Seller = { id: string; slug: string; name: string; demo?: boolean };
+export type Seller = {
+  id: string;
+  slug: string;
+  name: string;
+  demo?: boolean;
+  /** Plan 032: set by the admin. `customers`: closed to customers only; `full`: staff are out too. */
+  paused?: PauseKind;
+};
+/** The two ways to pause a kitchen (D-086). */
+export type PauseKind = 'full' | 'customers';
 /** What an order tells a customer about its seller. */
 export type SellerRef = Pick<Seller, 'slug' | 'name'>;
 
@@ -157,6 +166,10 @@ export type MenuItem = {
   chefId?: string;
   /** Manual "Sold out" switch (D-020), distinct from the portion limit running out. */
   soldOut?: boolean;
+  /** Plan 029 (D-083): can be pre-ordered. Absent = yes; `false` = on the day only. */
+  preorder?: boolean;
+  /** Plan 029: portions sold at the stall on the day. Absent = not sold on the day. Never sent to customers. */
+  dayStock?: number;
 };
 
 /** Seller images and colour (D-035, D-038). Each is optional; the phone banner falls back to the desktop one. */
@@ -185,7 +198,10 @@ export type Kitchen = {
 };
 
 /** Whether customers can order right now (the switch and the cut-off). */
-export type OrderingState = { open: boolean; reason?: 'closed_by_seller' | 'cutoff_passed' };
+export type OrderingState = {
+  open: boolean;
+  reason?: 'closed_by_seller' | 'cutoff_passed' | 'kitchen_closed';
+};
 
 /** Seller-editable kitchen settings (D-027). */
 export type KitchenSettings = {
@@ -216,14 +232,18 @@ export type Week = {
 };
 
 /** A menu item as customers see it: what is left of its limit (null = unlimited), no chef (D-012). */
-export type MenuItemView = Omit<MenuItem, 'chefId'> & {
+export type MenuItemView = Omit<MenuItem, 'chefId' | 'dayStock'> & {
   remaining: number | null;
   soldOut: boolean;
+  /** Plan 029: also sold on the day. Only this flag, never the count. */
+  onTheDay?: 'available' | 'sold_out';
 };
 
 /** The same item as the seller sees it, with the chef grouping. */
 export type SellerMenuItemView = MenuItemView & {
   chefId?: string;
+  /** Plan 029: the day stock left (absent = not sold on the day). */
+  dayStock?: number;
   /** The seller switched it to sold out (`soldOut` is also true when the limit ran out). */
   manualSoldOut?: boolean;
 };

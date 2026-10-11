@@ -26,6 +26,9 @@
     "previewOff": "Pemesanan dimatikan di pratinjau",
     "left": "Sisa {{count}}",
     "soldOut": "Habis",
+    "availableOnDay": "Tersedia di hari-H",
+    "alsoAtStall": "Juga dijual di lapak",
+    "stallSoldOut": "Habis di lapak",
     "decrease": "Kurangi {{name}}",
     "increase": "Tambah {{name}}",
     "items_other": "{{count}} item",
@@ -61,6 +64,8 @@
   "states": {
     "theSeller": "Penjual",
     "pausedTitle": "Belum menerima pesanan saat ini",
+    "kitchenClosedTitle": "Dapur ini sedang tutup",
+    "kitchenClosedBody": "{{cook}} sedang tidak menerima pesanan. Cek lagi nanti, atau kirim pesan.",
     "pausedBody": "{{cook}} sedang menghentikan pesanan. Cek lagi nanti, atau kirim pesan.",
     "closedTitle": "Pesanan untuk {{date}} sudah ditutup",
     "closedBody": "Batas pesan {{dateTime}}. Mungkin {{cook}} masih bisa menerima.",

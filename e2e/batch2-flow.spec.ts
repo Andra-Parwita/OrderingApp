@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { goToName, markHowItWorksSeen } from './customerHelpers';
 import { orderRow, pageScrollWidth, sampleDay, searchFor } from './sellerHelpers';
 
 function watchConsole(page: Page): Array<string> {
@@ -16,19 +17,20 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
   page,
   browser,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile-webkit', 'one run, on the iPhone project');
+  test.skip(testInfo.project.name !== 'iphone-chromium', 'one run, on the iPhone project');
   test.setTimeout(120_000);
   const customerErrors = watchConsole(page);
   const firstName = `Nudge-${Date.now()}`;
 
   // Customer orders (tempeh has no portion limit, so parallel runs never sell it out).
-  await page.goto('/onde-onde');
+  await markHowItWorksSeen(page.context());
+  await page.goto('/onde-onde/dishes');
   await page.getByRole('button', { name: 'Add one Thin battered tempeh' }).click();
-  await page.getByRole('button', { name: /View basket/ }).click();
-  await page.getByLabel('Your first name').fill(firstName);
+  await goToName(page);
+  await page.getByLabel('First name').fill(firstName);
   await page.getByRole('button', { name: /^Place order/ }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
-  await page.getByRole('button', { name: 'Change or cancel order' }).click();
+  await page.getByRole('button', { name: 'Change or cancel' }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+$/);
   await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
   await page.screenshot({ path: 'captures/b2flow-1-customer-order.png', fullPage: true });
@@ -42,7 +44,7 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
     const sellerErrors = watchConsole(sellerPage);
 
     // Seller (desktop) finds the order and sees it is from a new customer.
-    await sellerPage.goto('/seller');
+    await sellerPage.goto('/seller/orders');
     await expect(sellerPage.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
     await searchFor(sellerPage, firstName);
     const row = orderRow(sellerPage, new RegExp(firstName));
@@ -144,7 +146,7 @@ test('seller desktop: list and panel, kitchen, empty state; tablet and phone lay
   try {
     const page = await wide.newPage();
     const errors = watchConsole(page);
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
 
     // Left panel: current page marked, the one language switch in its footer.
@@ -190,7 +192,7 @@ test('seller desktop: list and panel, kitchen, empty state; tablet and phone lay
     await expect(page).toHaveURL(new RegExp(`/seller/orders/${second.replace('-', '')}\\?`));
     await panel.getByRole('button', { name: 'Close' }).click();
     await expect(panel).toHaveCount(0);
-    await expect(page).toHaveURL(/\/seller\?/);
+    await expect(page).toHaveURL(/\/seller\/orders\?/);
 
     // 1024 px is still the tablet layout and nothing spills sideways.
     await page.setViewportSize({ width: 1024, height: 800 });
@@ -231,7 +233,7 @@ test('seller desktop: list and panel, kitchen, empty state; tablet and phone lay
   const mid = await browser.newContext({ baseURL, viewport: { width: 900, height: 800 } });
   try {
     const page = await mid.newPage();
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     const rail = page.getByRole('navigation', { name: 'Seller' });
     await expect(rail.getByRole('link', { name: 'Kitchen' })).toBeVisible();
     await expect(rail.getByRole('link', { name: 'More' })).toHaveCount(0);
@@ -246,7 +248,7 @@ test('seller desktop: list and panel, kitchen, empty state; tablet and phone lay
   try {
     const page = await narrow.newPage();
     const errors = watchConsole(page);
-    await page.goto('/seller');
+    await page.goto('/seller/orders');
     const tabs = page.getByRole('navigation', { name: 'Seller (phone)' });
     await expect(tabs.getByRole('link', { name: 'Orders' })).toHaveAttribute(
       'aria-current',

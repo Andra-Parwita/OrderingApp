@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type UIEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router';
 import { styled } from 'styled-components';
@@ -10,9 +10,17 @@ import { cssUrl } from '../components/cssUrl';
 import { sellerManifestTarget, useManifestLinks } from '../components/install';
 import { useBannerCollapsed } from '../components/useBannerCollapsed';
 import { useMediaQuery } from '../components/useMediaQuery';
-import { useNewOrderTitle } from '../features/seller-orders';
+import { ReadOnlyOrdersProvider, useNewOrderTitle } from '../features/seller-orders';
 import { ImageSlot } from '../ui';
-import { BANNER_MAX_WIDTH, BANNER_STRIP_HEIGHT, DESKTOP_QUERY } from './layout';
+import {
+  BANNER_RATIO,
+  BANNER_SCROLL_PX,
+  BANNER_STRIP_HEIGHT,
+  DESKTOP_QUERY,
+  RAIL_TOP_COLLAPSED_PX,
+  RAIL_TOP_PX,
+} from './layout';
+import { KitchenNotices } from './kitchenNotice';
 import { PhoneBar } from './PhoneBar';
 import { useRailCollapsed } from './railPreference';
 import { SellerRail } from './SellerRail';
@@ -21,6 +29,7 @@ import {
   activePhoneNav,
   fixesPage,
   hidesPhoneBar,
+  isPhoneOrdersList,
   isTabletOnly,
   isTaskScreen,
   navIdsFor,
@@ -61,9 +70,8 @@ const Who = styled.p`
   font-size: 0.8125rem;
   text-align: right;
 `;
-// The strip fills the full width with the seller's background picture (D-040), on their colour
-// while it loads or if there is none; the banner sits centred in it at most 1600 px wide, so on a
-// wide screen the sides are background, never a cropped banner (D-038).
+// The strip fills the full content width with the wide banner (plan 040): no side bands. The
+// seller's colour and background picture stay only as the loading fallback behind the image.
 const BannerStrip = styled.div<{ $background?: string; $image?: string }>`
   background-color: ${({ theme, $background }) => $background ?? theme.c.surf2};
   ${({ $image }) =>
@@ -71,17 +79,20 @@ const BannerStrip = styled.div<{ $background?: string; $image?: string }>`
       ? `background-image: ${cssUrl($image)}; background-size: cover; background-position: center;`
       : ''}
 `;
-const BannerArea = styled.div`
-  max-width: ${BANNER_MAX_WIDTH};
-  margin: 0 auto;
+// The banner at full size: as tall as the left menu's top, or shorter when the content is too
+// narrow for the middle 1896 x 328 to show uncut (height = min(menu top, width x 328 / 1896)).
+const BannerFull = styled.div`
+  width: 100%;
+  aspect-ratio: ${BANNER_RATIO};
+  max-height: ${RAIL_TOP_PX}px;
 `;
-// Plan 014: the Orders home banner slides up to a 50 px strip (the picture cropped around its
-// middle) on the toggle in the Orders header. The max-height only has to exceed the tallest banner
-// (1600 px wide at 5:1 = 20 rem); reduced motion is switched off globally.
-const BannerClip = styled.div<{ $collapsed: boolean }>`
+// Plan 014 / 040: the banner area slides up to a strip while the image keeps its size, so only its
+// top shows (the sheet slides over it). Expanded, the max-height is the tallest the banner gets;
+// reduced motion is switched off globally.
+const BannerClip = styled.div<{ $collapsed: boolean; $open: string; $closed: string }>`
   display: flex;
-  align-items: center;
-  max-height: ${({ $collapsed }) => ($collapsed ? '50px' : '24rem')};
+  align-items: flex-start;
+  max-height: ${({ $collapsed, $open, $closed }) => ($collapsed ? $closed : $open)};
   overflow: hidden;
   transition: max-height ${({ theme }) => theme.motion.fast};
 
@@ -105,6 +116,11 @@ const Sheet = styled.div<{ $tablet: boolean; $fixed: boolean }>`
   background: ${({ theme }) => theme.c.bg};
 `;
 
+// Tablet Home scrolls inside the sheet (like Orders), so the sheet can slide over the banner.
+const Scroller = styled.div<{ $on: boolean }>`
+  ${({ $on }) => ($on ? 'flex: 1; min-height: 0; overflow-y: auto;' : 'display: contents;')}
+`;
+
 /** The kitchen (name and images) from the public menu; null until it arrives. */
 function useKitchen(): Kitchen | null {
   const [kitchen, setKitchen] = useState<Kitchen | null>(null);
@@ -126,6 +142,7 @@ function useWho(): string | null {
   const { me } = useSession();
   if (me === null) return null;
   if (me.role === 'chef') return t('sellerNav.signedInChef', { name: me.chefName ?? '' });
+  if (me.role === 'helper') return t('sellerNav.signedInHelper', { name: me.displayName ?? '' });
   return me.sellerName ?? null;
 }
 
@@ -137,7 +154,8 @@ export function SellerLayout() {
   const { me } = useSession();
   const who = useWho();
   useManifestLinks(me?.stage === 'full' ? sellerManifestTarget(me.slug) : null);
-  const role = me?.role === 'chef' ? 'chef' : me?.role === 'seller' ? 'seller' : undefined;
+  const role =
+    me?.role === 'chef' || me?.role === 'helper' || me?.role === 'seller' ? me.role : undefined;
   const navIds = useMemo(() => navIdsFor(role), [role]);
   const kitchen = useKitchen();
   const notPublished = useNotPublished(role === 'seller', pathname);
@@ -156,9 +174,24 @@ export function SellerLayout() {
   const nameShownElsewhere = tablet ? !collapsed : pathname === '/seller/more';
   const tabletOnlyHere = !tablet && isTabletOnly(pathname);
   // Phone: the 3:1 banner belongs to the Orders list only; other phone screens have none.
-  const phoneBanner = !tablet && pathname === '/seller';
-  const fixed = fixesPage(pathname, tablet);
-  const bannerCollapsed = useBannerCollapsed() && fixed;
+  const phoneBanner = !tablet && isPhoneOrdersList(pathname);
+  const homeTablet = tablet && pathname === '/seller';
+  const fixed = fixesPage(pathname, tablet) || homeTablet;
+  // The banner slides under the sheet by the button (Orders, remembered) or by scrolling the sheet
+  // content on tablet Home and Orders (plan 040); back at the top it returns.
+  const slides = tablet && (homeTablet || pathname === '/seller/orders');
+  // Remembered with the page it happened on, so a new page starts at the top.
+  const [scrolledOn, setScrolledOn] = useState<string | null>(null);
+  const scrolled = scrolledOn === pathname;
+  const onSheetScroll = (event: UIEvent<HTMLElement>) => {
+    if (slides && event.target instanceof HTMLElement) {
+      setScrolledOn(event.target.scrollTop > BANNER_SCROLL_PX ? pathname : null);
+    }
+  };
+  const stored = useBannerCollapsed();
+  // The banner follows the left menu's top: a collapsed menu gives the short strip too.
+  const bannerCollapsed =
+    (stored && fixesPage(pathname, tablet)) || (slides && scrolled) || (tablet && collapsed);
 
   return (
     <Shell $tablet={tablet} $fixed={fixed}>
@@ -175,6 +208,7 @@ export function SellerLayout() {
       ) : null}
       <Main $tablet={tablet} $fixed={fixed}>
         <Top>
+          <KitchenNotices />
           {who && !nameShownElsewhere ? (
             <Who>{t('sellerNav.signedInAs', { name: who })}</Who>
           ) : null}
@@ -183,21 +217,27 @@ export function SellerLayout() {
           ) : null}
           {tablet && !isTaskScreen(pathname) ? (
             <BannerStrip $background={background} $image={backgroundImage}>
-              <BannerClip $collapsed={bannerCollapsed}>
-                <BannerArea>
+              <BannerClip
+                $collapsed={bannerCollapsed}
+                $open={`${RAIL_TOP_PX}px`}
+                $closed={`${RAIL_TOP_COLLAPSED_PX}px`}
+              >
+                <BannerFull>
                   <ImageSlot
-                    aspectRatio="5 / 1"
+                    fill
+                    fit="cover"
+                    aspectRatio="3840 / 328"
                     background={background}
                     src={kitchen?.images?.desktopBanner}
                     alt={bannerText}
                     placeholder={placeholder}
                   />
-                </BannerArea>
+                </BannerFull>
               </BannerClip>
             </BannerStrip>
           ) : null}
           {phoneBanner ? (
-            <BannerClip $collapsed={bannerCollapsed}>
+            <BannerClip $collapsed={bannerCollapsed} $open="24rem" $closed="50px">
               <ImageSlot
                 aspectRatio="3 / 1"
                 background={background}
@@ -208,8 +248,10 @@ export function SellerLayout() {
             </BannerClip>
           ) : null}
         </Top>
-        <Sheet $tablet={tablet} $fixed={fixed}>
-          {tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}
+        <Sheet $tablet={tablet} $fixed={fixed} onScrollCapture={onSheetScroll}>
+          <ReadOnlyOrdersProvider value={me?.role === 'helper'}>
+            <Scroller $on={homeTablet}>{tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}</Scroller>
+          </ReadOnlyOrdersProvider>
         </Sheet>
       </Main>
       {tablet || hidesPhoneBar(pathname) ? null : <PhoneBar activeId={activePhoneNav(pathname)} />}

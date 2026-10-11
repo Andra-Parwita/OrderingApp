@@ -9,13 +9,18 @@ import { credentialsOf, virtualAuthenticator } from './virtualAuthenticator';
 // made and used in Chrome's virtual authenticator; the password path stays covered.
 
 test.skip(({ browserName }) => browserName !== 'chromium', 'Android (Chromium) and desktop only');
-// Both tests use the same admin device and Dapur Demo's account: one after the other.
+// The tests share the admin device and Dapur Demo: one after the other. Every invite key makes a
+// NEW person (plan 033), so each test gives its person a name of its own; a key works once (D-085).
 test.describe.configure({ mode: 'serial' });
 
 const PASSWORD = 'e2e long enough password';
 
 /** An invite key for Dapur Demo, made by this project's admin device (signed in by passkey). */
-async function inviteKeyFor(request: APIRequestContext, project: string): Promise<string> {
+async function inviteKeyFor(
+  request: APIRequestContext,
+  project: string,
+  displayName: string,
+): Promise<string> {
   const kind = project.includes('desktop') ? 'desktop-chromium' : 'mobile-chromium';
   await adminSignIn(request, `seller-auth-${kind}` as AdminLabel);
   const sellers = await request.get('/api/admin/sellers');
@@ -24,6 +29,7 @@ async function inviteKeyFor(request: APIRequestContext, project: string): Promis
   if (!seller) throw new Error('Dapur Demo is not in the mock');
   const invite = await request.post(`/api/admin/sellers/${seller.id}/invite-key`, {
     headers: originHeaders,
+    data: { displayName },
   });
   expect(invite.ok()).toBe(true);
   return ((await invite.json()) as { key: string }).key;
@@ -56,7 +62,7 @@ test('a real passkey: create it, sign out, sign back in with it', async ({
 }, testInfo) => {
   const errors = collectErrors(page);
   const project = testInfo.project.name;
-  const key = await inviteKeyFor(request, project);
+  const key = await inviteKeyFor(request, project, `Passkey ${project}`);
   const authenticator = await virtualAuthenticator(page);
 
   await page.goto('/seller/setup');
@@ -65,7 +71,7 @@ test('a real passkey: create it, sign out, sign back in with it', async ({
   await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
   await expect(page.getByText(/simulated/i)).toHaveCount(0);
   // One tap makes the passkey under a guessed device name (Devices renames it).
-  await page.getByRole('button', { name: /Face or fingerprint/ }).click();
+  await page.getByRole('button', { name: createPasskeyName }).click();
   await expect(page).toHaveURL(/\/seller$/);
   if (isWide(page)) {
     await page.goto('/seller/settings/devices');
@@ -111,7 +117,8 @@ test('key, password, devices and add-device code, then sign out and back in', as
   const errors = collectErrors(page);
   const project = testInfo.project.name;
   const deviceName = `E2E ${project}`;
-  const key = await inviteKeyFor(request, project);
+  const personName = `Pwd ${project} ${Date.now().toString(36)}`;
+  const key = await inviteKeyFor(request, project, personName);
 
   await page.goto('/seller/setup');
   await expect(page.getByRole('heading', { name: 'First time on this device' })).toBeVisible();
@@ -127,6 +134,7 @@ test('key, password, devices and add-device code, then sign out and back in', as
   await expect(page.getByText(/simulated/i)).toHaveCount(0);
   await capture(page, 'passkey', project);
 
+  // A new person every time: there is no earlier password to sign in with.
   await page.getByRole('button', { name: /Set a password/ }).click();
   await expect(page.getByRole('heading', { name: 'Set a password' })).toBeVisible();
   await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
@@ -148,9 +156,19 @@ test('key, password, devices and add-device code, then sign out and back in', as
     await capture(page, 'devices', project);
   }
 
-  // Sign out of this device, then back in with the password.
+  // Sign out of this device. The key worked once: typing it again is refused.
   await signOutThisDevice(page);
+  await page.goto('/seller/setup');
+  await page.getByLabel('Invite key from the kitchen owner').fill(key);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByText(/That did not work/)).toBeVisible();
+  // The reused key is refused with 401; the browser logs that as a console error.
+  errors.splice(0, errors.length, ...errors.filter((text) => !text.includes('status of 401')));
+
+  // Back in with the password: pick your name from the kitchen's team, then type it.
+  await page.goto('/seller/sign-in?kitchen=dapur-demo');
   await page.getByRole('button', { name: 'Use password instead' }).click();
+  await page.getByLabel('Who are you?').selectOption({ label: personName });
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await capture(page, 'signin', project);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -163,14 +181,32 @@ test('key, password, devices and add-device code, then sign out and back in', as
   expect(errors).toEqual([]);
 });
 
+test('an invite link fills the key and clears it from the address', async ({
+  page,
+  request,
+}, testInfo) => {
+  const errors = collectErrors(page);
+  const project = testInfo.project.name;
+  const key = await inviteKeyFor(request, project, `Link ${project}`);
+  await page.goto(`/seller/setup?kitchen=dapur-demo#key=${key}`);
+  await expect(page.getByLabel('Invite key from the kitchen owner')).toHaveValue(key);
+  expect(page.url()).not.toContain('#');
+  expect(page.url()).not.toContain(key);
+  expect(page.url()).toContain('kitchen=dapur-demo');
+  expect(errors).toEqual([]);
+});
+
+/** The create button: "Face or fingerprint" first time, "Add a new passkey" once the account has one (not "Sign in with ..."). */
+const createPasskeyName = /^(Face or fingerprint|Add a new passkey)/;
+
 /** Setup with a key and a real passkey, on the real route; lands on the seller home. */
 async function setUpWithPasskey(page: Page, key: string) {
   await page.goto('/seller/setup');
   await page.getByLabel('Invite key from the kitchen owner').fill(key);
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
-  await page.getByRole('button', { name: /Face or fingerprint/ }).click();
-  await expect(page).toHaveURL(/\/seller$/);
+  await page.getByRole('button', { name: createPasskeyName }).click();
+  await expect(page).toHaveURL(/\/seller(\/orders)?$/);
 }
 
 /** D-050: the rail button on a tablet or desktop, the top of the More tab on a phone. */
@@ -202,7 +238,7 @@ test('two staff passkeys on one device: Switch person goes between them', async 
   const authenticator = await virtualAuthenticator(page);
 
   // The seller, then a chef, each make a passkey on this one device.
-  await setUpWithPasskey(page, await inviteKeyFor(request, project));
+  await setUpWithPasskey(page, await inviteKeyFor(request, project, `Owner ${project}`));
   await expect(
     page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
   ).toBeVisible();
@@ -214,6 +250,11 @@ test('two staff passkeys on one device: Switch person goes between them', async 
   });
   expect(invited.ok()).toBe(true);
   const chefKey = ((await invited.json()) as { key: string }).key;
+  // Signed in, a key would JOIN the owner to a kitchen; the chef is a different person: sign out first.
+  await page.waitForTimeout(600); // let the screen's first loads finish: a sign-out mid-load is a 401
+  expect((await page.request.post('/api/auth/sign-out')).ok()).toBe(true);
+  // The app's own sign-out also drops this hint; without it the setup page asks /me and gets a 401.
+  await page.evaluate(() => localStorage.removeItem('signedIn'));
   await setUpWithPasskey(page, chefKey);
   await expect(
     page.getByText(`Signed in as Chef ${chefName}`).or(page.getByText(`${chefName} · chef`)),

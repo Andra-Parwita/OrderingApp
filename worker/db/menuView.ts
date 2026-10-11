@@ -38,5 +38,7 @@ export function itemFromDish(dish: Dish, id: string): MenuItem {
     priceCents: dish.priceCents,
     ...(dish.limit !== undefined ? { limit: dish.limit } : {}),
     ...(dish.chefId !== undefined ? { chefId: dish.chefId } : {}),
+    ...(dish.preorder === false ? { preorder: false } : {}),
+    ...(dish.dayStock !== undefined ? { dayStock: dish.dayStock } : {}),
   };
 }

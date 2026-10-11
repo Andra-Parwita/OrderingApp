@@ -17,10 +17,19 @@ import type {
   PackRequest,
 } from '../../shared/handoverContract';
 import type {
+  DayCountRequest,
+  DaySaleEntry,
+  DaySaleRequest,
+  DayStockResponse,
+  DayUndoRequest,
+} from '../../shared/daySalesContract';
+import type { AddMadeRequest } from '../../shared/madeContract';
+import type {
   Chef,
   KitchenImages,
   KitchenSettings,
   OrderStatus,
+  PauseKind,
   Seller,
   SellerMenuItemView,
   SellerOrder,
@@ -60,15 +69,21 @@ import type {
   UpdateItemRequest,
 } from '../../shared/setupContract';
 import type { SendUpdatesRequest, UpdateResult } from '../../shared/updateContract';
+import type { ClientLogRepository } from '../db/clientLog';
 import type {
   AdminSeller,
   CodeResponse,
   DeviceView,
   KeyResponse,
   Me,
+  Membership,
+  MembershipRole,
   PasswordSignInRequest,
   Role,
   SessionResponse,
+  InviteInfo,
+  TeamMember,
+  TeamName,
 } from '../../shared/authContract';
 
 // ---- Results ----
@@ -101,8 +116,13 @@ export type Caller = {
   sellerId?: string;
   chefId?: string;
   accountId: string;
+  /** A person's name (plan 028: a helper's audit name); absent for the admin. */
+  displayName?: string;
   deviceId?: string;
 };
+
+/** Who recorded a day sale or count: the signed-in person (no account in a DEV_TOOLS header call). */
+export type DayActor = { accountId?: string; name: string; owner?: boolean };
 
 // ---- One seller ----
 
@@ -231,6 +251,18 @@ export type SellerRepository = {
   // refusing; `force` (in the request) goes ahead (D-062).
   /** Ticks and the packed flag. Never changes the status or `updatedAt` (D-066). */
   packOrder(code: string, request: PackRequest): Promise<StoreResult<SellerOrder>>;
+  /** Plan 035: made counts per dish for the current menu (shared by every device). */
+  getMade(): Promise<StoreResult<Record<string, number>>>;
+  /** Adds `delta` to one dish's made count in SQL (so concurrent taps all count); returns all counts. */
+  addMade(request: AddMadeRequest): Promise<StoreResult<Record<string, number>>>;
+  /** Plan 029: takes `qty` off a dish's day stock in one atomic step and logs it; `sold_out` when too few are left. */
+  sellOnDay(request: DaySaleRequest, by: DayActor): Promise<StoreResult<DayStockResponse>>;
+  /** Plan 029: "Set count": the stock becomes `count`; the difference is logged. */
+  setDayCount(request: DayCountRequest, by: DayActor): Promise<StoreResult<DayStockResponse>>;
+  /** Plan 029: reverses one sale (stock comes back, the log gets an undo row). Owners any time; others only their own, within the window. */
+  undoDaySale(request: DayUndoRequest, by: DayActor): Promise<StoreResult<DayStockResponse>>;
+  /** Plan 029: the current menu's day-sales log, newest first. */
+  listDaySales(): Promise<Array<DaySaleEntry>>;
   /** The current menu's log, newest first. */
   listMessages(): Promise<Array<MessageLogEntry>>;
   /** Message every not-finished order of a pickup place; `ready_now` also sets them Ready (D-069 Q3). */
@@ -305,13 +337,41 @@ export type AuthRepository = {
   adminExists(): Promise<boolean>;
   adminSetup(setupKey: string, deviceId: string): Promise<AuthResult<SessionGrant>>;
 
-  /** Invite key (admin, for a seller) or chef invite (seller, for a chef). Shown once. */
-  createKey(
-    target:
-      { role: 'seller'; sellerId: string } | { role: 'chef'; sellerId: string; chefId: string },
-    kind: 'invite' | 'recovery',
-  ): Promise<KeyResponse>;
-  redeemKey(key: string, deviceId: string): Promise<AuthResult<SessionGrant>>;
+  /**
+   * An invite (admin for a first owner, owner for an owner or a chef): one device, 24 hours. The
+   * key adds a membership of `role` in `sellerId` to whoever redeems it. Shown once.
+   */
+  createKey(target: {
+    sellerId: string;
+    role: MembershipRole;
+    chefId?: string;
+    displayName: string;
+  }): Promise<KeyResponse>;
+  /**
+   * With `join` (a full person session) the membership is added to that person and the session
+   * moves to the new kitchen; otherwise a new person is made (named `displayName`, else the
+   * invite's name) and gets a setup session.
+   */
+  redeemKey(
+    key: string,
+    deviceId: string,
+    options?: { join?: Caller; displayName?: string },
+  ): Promise<AuthResult<SessionGrant>>;
+  /** The kitchens of the caller's person, oldest first. */
+  memberships(caller: Caller): Promise<Array<Membership>>;
+  /** False when the person is not a member of that kitchen (nothing changes). */
+  switchKitchen(caller: Caller, sellerId: string): Promise<boolean>;
+  /** People of a kitchen who have a password (for the password sign-in picker). */
+  teamNames(sellerId: string): Promise<Array<TeamName>>;
+  /** All members of a kitchen with their device counts; `youAccountId` marks the caller's row. */
+  members(sellerId: string, youAccountId?: string): Promise<Array<TeamMember>>;
+  /** The newest invites of a kitchen, with how each ended up (plan 043). */
+  listInvites(sellerId: string, limit: number): Promise<Array<InviteInfo>>;
+  /**
+   * Ends a membership: that person's sessions in this kitchen go at once, other kitchens stay.
+   * A person left with no kitchen is deleted. False when they were not a member.
+   */
+  removeMember(sellerId: string, accountId: string): Promise<boolean>;
   createCode(caller: Caller): Promise<CodeResponse>;
   redeemCode(code: string, deviceId: string): Promise<AuthResult<SessionGrant>>;
 
@@ -327,6 +387,7 @@ export type AuthRepository = {
     clientDeviceId: string,
     credentialId: string,
     verify: (passkey: StoredPasskey) => Promise<number | null>,
+    slug?: string,
   ): Promise<AuthResult<SessionGrant>>;
   signOut(token: string): Promise<void>;
 
@@ -366,7 +427,7 @@ export type AuthRepository = {
   chefDeviceCount(sellerId: string, chefId: string): Promise<number>;
   /** Signs a chef out everywhere: devices and sessions go, the account and password stay. */
   signOutChef(sellerId: string, chefId: string): Promise<number>;
-  /** A removed chef loses their account, devices, sessions and open keys. */
+  /** A removed cook loses their chef membership(s), those sessions and open keys; owners keep theirs. */
   revokeChef(sellerId: string, chefId: string): Promise<void>;
 };
 
@@ -386,6 +447,8 @@ export type Repository = {
   addSeller(name: string, slug: string, options?: { sampleImages?: boolean }): Promise<AdminSeller>;
   /** Plan 013: the admin switches a kitchen into or out of demo mode. */
   setSellerDemo(sellerId: string, demo: boolean): Promise<void>;
+  /** Plan 032: pause a kitchen (`full` also signs everyone of it out) or resume it (null). */
+  setSellerPaused(sellerId: string, kind: PauseKind | null): Promise<void>;
 
   /** Tokens are globally unique: the lookup finds the order's seller. Live, then archived. */
   lookupByToken(token: string): Promise<TokenLookup | undefined>;
@@ -395,6 +458,9 @@ export type Repository = {
   liveOrderOwners(tokens: ReadonlyArray<string>): Promise<Map<string, string>>;
 
   auth: AuthRepository;
+
+  /** Plan 026: the client error log (a ring of the newest 500). */
+  log: ClientLogRepository;
 
   /** Dev tools: only for a local database, and only when DEV_TOOLS is on (see worker/api). */
   dev: {

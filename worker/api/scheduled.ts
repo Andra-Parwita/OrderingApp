@@ -5,8 +5,9 @@
 //     first run after its midnight.
 //   - Weekly (Mondays 03:00 UTC): retention (stage 8.4b, D-027 row 6, D-044). Order details of a
 //     closed week are dropped 4 weeks after its cooking date; totals stay, and each dropped order
-//     leaves a stub so its old link says "archived".
+//     leaves a stub so its old link says "archived". The day-sales log (plan 029) is cut to 10 weeks.
 import { Db, type D1Like } from '../db/d1';
+import { dropOldDaySales } from '../db/daySales';
 import { finishDueMenus } from '../db/menus';
 import { dropExpiredDetails, dropStaleFindAttempts, type RetentionCounts } from '../db/retention';
 
@@ -29,10 +30,14 @@ export async function runRetention(
     console.log(line);
   },
 ): Promise<RetentionCounts> {
-  const counts = await dropExpiredDetails(new Db(env.DB), now);
+  const db = new Db(env.DB);
+  const counts = await dropExpiredDetails(db, now);
   log(
     `retention: ${String(counts.weeks)} week(s) archived, ${String(counts.orders)} order(s) dropped`,
   );
+  // Plan 029: the day-sales log is kept 10 weeks per kitchen.
+  const sales = await dropOldDaySales(db, now);
+  if (sales > 0) log(`retention: ${String(sales)} day-sales row(s) dropped`);
   return counts;
 }
 

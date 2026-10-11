@@ -27,7 +27,7 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
   });
   expect(created.ok()).toBe(true);
 
-  await page.goto('/seller');
+  await page.goto('/seller/orders');
   await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
 
   await searchFor(page, firstName);
@@ -78,7 +78,7 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
       .getByRole('complementary', { name: /^Order / })
       .getByRole('button', { name: 'Close' })
       .click();
-    await expect(page).toHaveURL(/\/seller\?q=/);
+    await expect(page).toHaveURL(/\/seller\/orders\?q=/);
     await page.getByRole('radio', { name: 'ID', exact: true }).click();
     await orderRow(page, new RegExp(firstName)).click();
     // Cancel now sits in the panel's ⋯ menu (Lainnya).
@@ -90,21 +90,21 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
     await page.keyboard.press('Escape');
     await expect(page.getByRole('heading', { name: 'Perubahan terakhir' })).toBeVisible();
     await page.getByRole('button', { name: 'Tutup', exact: true }).click();
-    await expect(page).toHaveURL(/\/seller\?q=/);
+    await expect(page).toHaveURL(/\/seller\/orders\?q=/);
     await expect(
       searchBox(page).or(page.getByRole('searchbox', { name: 'Nama atau kode' })),
     ).toHaveValue(firstName);
   } else {
     // A phone changes language in More; back restores the list with the search in the URL.
     await page.getByRole('button', { name: '‹ Orders' }).click();
-    await expect(page).toHaveURL(/\/seller\?q=/);
+    await expect(page).toHaveURL(/\/seller\/orders\?q=/);
     await page.getByRole('link', { name: 'More' }).click();
     await page.getByRole('radio', { name: 'ID', exact: true }).click();
     await page.goto(order);
     await expect(page.getByRole('heading', { name: 'Perubahan terakhir' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Batalkan pesanan' })).toBeVisible();
     await page.getByRole('button', { name: '‹ Pesanan' }).click();
-    await expect(page).toHaveURL(/\/seller\?q=/);
+    await expect(page).toHaveURL(/\/seller\/orders\?q=/);
     await expect(page.getByRole('searchbox', { name: 'Nama atau kode' })).toHaveValue(firstName);
   }
 

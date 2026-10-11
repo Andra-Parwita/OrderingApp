@@ -1,5 +1,6 @@
 {
   "errors": {
+    "paused": "This kitchen is paused. Contact the admin.",
     "wrong": "That did not work. Check it and try again.",
     "triesLeft_one": "{{count}} try left.",
     "triesLeft_other": "{{count}} tries left.",
@@ -28,7 +29,7 @@
     "method": "How you got access",
     "tab": "Invite key",
     "label": "Invite key from the kitchen owner",
-    "helper": "Paste it from WhatsApp. Dashes and lowercase are fine. A key works for 24 hours.",
+    "helper": "Paste it from WhatsApp. Dashes and lowercase are fine. A key works once, on one device, within 24 hours.",
     "empty": "Type the key you were sent.",
     "submit": "Continue",
     "checking": "Checking…"
@@ -90,10 +91,13 @@
     "firstTime": "First time on this device? Use your invite key",
     "alreadySetUp": "Already set up? Sign in",
     "lost": "Lost access? Ask the owner for a new invite.",
-    "noPasskeysHere": "Face or fingerprint does not work on this web address (it is an IP address). Use your password."
+    "noPasskeysHere": "Face or fingerprint does not work on this web address (it is an IP address). Use your password.",
+    "who": "Who are you?",
+    "pickName": "Pick your name",
+    "nobodyPassword": "Nobody in this kitchen uses a password. Use face or fingerprint, or ask the owner for an invite."
   },
   "devices": {
-    "title": "Devices",
+    "title": "Your devices",
     "loading": "Loading…",
     "loadFailed": "Could not load your devices.",
     "retry": "Try again",
@@ -121,5 +125,11 @@
     "signOutHere": "Sign out of this device",
     "signOutHereConfirm": "Tap again to sign out",
     "signOutHereHint": "You will need your passkey or password to sign in again."
+  },
+  "join": {
+    "title": "Join {{kitchen}}",
+    "submit": "Join",
+    "signInToJoin": "Already have a login? Sign in to join",
+    "thisKitchen": "this kitchen"
   }
 }

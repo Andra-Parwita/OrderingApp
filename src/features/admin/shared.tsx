@@ -78,3 +78,35 @@ export function failureText(t: TFunction, failure: ApiFailure): string {
       return t('error.generic');
   }
 }
+
+export const DeviceList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`;
+export const DeviceItem = styled.li`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  min-height: 3.5rem;
+  border-bottom: ${({ theme }) => theme.border.hairline} solid
+    ${({ theme }) => theme.colour.hairline};
+`;
+export const SmallHeading = styled.h3`
+  margin: 0;
+  font-size: ${({ theme }) => theme.type.size.base};
+`;
+/** Text for screen readers only. */
+export const HiddenText = styled.span`
+  position: absolute;
+  width: ${({ theme }) => theme.border.hairline};
+  height: ${({ theme }) => theme.border.hairline};
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+`;

@@ -29,6 +29,11 @@ const Head = styled.header`
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl} 0;
+
+  @media (max-width: 40rem) {
+    flex-wrap: wrap;
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg} 0;
+  }
 `;
 const Title = styled.h1`
   display: flex;
@@ -37,6 +42,10 @@ const Title = styled.h1`
   margin: 0;
   font-size: 1.75rem;
   line-height: 1.2;
+
+  @media (max-width: 40rem) {
+    font-size: 1.375rem;
+  }
 `;
 const Sub = styled.p`
   margin: ${({ theme }) => theme.spacing.xs} 0 0;
@@ -46,6 +55,7 @@ const Side = styled.div`
   display: flex;
   flex: none;
   align-items: center;
+  flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.lg};
   color: ${({ theme }) => theme.c.muted};
 `;
@@ -54,6 +64,11 @@ const Tabs = styled.div`
   gap: ${({ theme }) => theme.spacing.lg};
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl} 0;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+
+  @media (max-width: 40rem) {
+    gap: ${({ theme }) => theme.spacing.sm};
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg} 0;
+  }
 `;
 const TabButton = styled.button<{ $active: boolean }>`
   display: inline-flex;
@@ -69,10 +84,19 @@ const TabButton = styled.button<{ $active: boolean }>`
   font: inherit;
   font-weight: ${({ $active }) => ($active ? 700 : 500)};
   cursor: pointer;
+
+  @media (max-width: 40rem) {
+    flex: 1;
+    justify-content: center;
+  }
 `;
 const TabHint = styled.span`
   font-size: 0.875rem;
   font-weight: 400;
+
+  @media (max-width: 40rem) {
+    display: none;
+  }
 `;
 const Body = styled.div`
   display: flex;
@@ -174,12 +198,7 @@ export function CookScreen() {
 
       <Body role="tabpanel">
         {tab === 'cook' ? (
-          <CookTab
-            key={menu?.cookingDate ?? ''}
-            cookingDate={menu?.cookingDate ?? ''}
-            status={list.status}
-            onRetry={retry}
-          />
+          <CookTab key={menu?.cookingDate ?? ''} status={list.status} onRetry={retry} />
         ) : list.status === 'ready' ? (
           <PackTab />
         ) : (

@@ -3,6 +3,8 @@
 // after navigation (src/components/install/manifestLinks.ts) with the same hrefs.
 import { appleTouchIconPath, sellerAppName, sellerManifestPath } from './kitchenManifest';
 import { isValidSlug } from './seller';
+import { THEME_BAR_COLOUR } from './themeColours';
+import type { ThemeName } from './themes';
 
 export const manifestHref = (slug: string, start: string = `/${slug}`): string =>
   `/k/${encodeURIComponent(slug)}/manifest.webmanifest?start=${encodeURIComponent(start)}`;
@@ -45,3 +47,10 @@ export function kitchenHeadHtml(slug: string, name?: string, start?: string): st
       : `<meta name="apple-mobile-web-app-title" content="${escapeAttr(name)}">`)
   );
 }
+
+/** The kitchen's page background in light mode: the browser bar colour until React sets the real one (plan 024). */
+export const themeColour = (theme: ThemeName): string => THEME_BAR_COLOUR[theme];
+
+/** `<meta name="theme-color">` for a kitchen or order page (plan 024). */
+export const themeColourHtml = (theme: ThemeName): string =>
+  `<meta name="theme-color" content="${escapeAttr(themeColour(theme))}">`;

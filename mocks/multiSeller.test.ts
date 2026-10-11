@@ -103,10 +103,10 @@ describe('multi-seller', () => {
         name: 'Onde Onde',
         tagline: { en: 'Indonesian homemade food', id: 'Masakan rumahan Indonesia' },
       });
-      expect(a?.kitchen.images?.desktopBanner).toBe('/samples/banner-wide.jpg');
+      expect(a?.kitchen.images?.desktopBanner).toBe('/samples/banner-wide-3840x328.jpg');
       expect(a?.items).toHaveLength(6);
       expect(b?.kitchen.name).toBe('Dapur Demo');
-      expect(b?.kitchen.images?.desktopBanner).toBe('/samples/banner-wide.jpg');
+      expect(b?.kitchen.images?.desktopBanner).toBe('/samples/banner-wide-3840x328.jpg');
       expect(b?.items.map((item) => item.id)).toEqual(['soto-ayam', 'martabak', 'es-teh']);
       expect(a?.seller.id).toBe(a?.kitchen.sellerId);
       expect(b?.seller.id).toBe(b?.kitchen.sellerId);

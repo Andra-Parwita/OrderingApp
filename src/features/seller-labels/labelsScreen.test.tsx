@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { server } from '../../../mocks/server';
 import { LabelsScreen } from './LabelsScreen';
-import { LONG_NOTE, renderThemed, sampleOrders, setupI18n } from './testSupport';
+import { LONG_NOTE, line, makeOrder, renderThemed, sampleOrders, setupI18n } from './testSupport';
 
 beforeAll(setupI18n);
 afterEach(async () => {
@@ -83,6 +83,25 @@ describe('LabelsScreen', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'A4 sheet (2 × 7 labels)' }));
     expect(sheets).toHaveAttribute('data-paper', 'a4');
     expect(sheets.children).toHaveLength(1);
+  });
+
+  it('continues a long order on a second label instead of cutting items', async () => {
+    const lines = Array.from({ length: 6 }, (_, i) =>
+      line(`d${i}`, `Dish ${i}`, `Hidangan ${i}`, 1),
+    );
+    server.use(
+      http.get('*/api/seller/orders', () =>
+        HttpResponse.json({ orders: [makeOrder({ lines, note: 'No nuts' })] }),
+      ),
+    );
+    renderThemed(<LabelsScreen />);
+    const first = await screen.findByRole('article', { name: 'K7F-2QX 1 of 2' });
+    const second = screen.getByRole('article', { name: 'K7F-2QX 2 of 2' });
+    expect(within(first).getAllByRole('listitem')).toHaveLength(4);
+    expect(within(second).getAllByRole('listitem')).toHaveLength(2);
+    expect(within(first).queryByText('No nuts')).not.toBeInTheDocument();
+    expect(within(second).getByText('No nuts')).toBeInTheDocument();
+    expect(screen.getByText('2 labels for 1 order')).toBeInTheDocument();
   });
 
   it('Print opens the browser print dialog', async () => {

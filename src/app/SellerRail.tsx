@@ -11,17 +11,41 @@ import {
   type SellerOrdersRootState,
 } from '../features/seller-orders';
 import { SellerPicker } from '../components/SellerPicker';
+import { KitchenSwitcher } from './KitchenSwitcher';
 import { Icon, ImageSlot, Tooltip } from '../ui';
-import { HREF, ICON, type NavId } from './sellerNav';
+import { RAIL_LOGO_PX, RAIL_TOP_COLLAPSED_PX, RAIL_TOP_PX } from './layout';
+import { HOME_ICON_PATH, HREF, ICON, type NavId } from './sellerNav';
 import { RailSwitchPerson } from './SwitchPerson';
 
 const LABEL_KEY: Readonly<Record<NavId, string>> = {
+  home: 'sellerNav.navHome',
   orders: 'sellerNav.navOrders',
   kitchen: 'sellerNav.navKitchen',
   handover: 'sellerNav.navHandover',
+  sell: 'sellerNav.navSell',
   menu: 'sellerNav.navMenu',
   settings: 'sellerNav.navSettings',
 };
+
+// Home's icon is not in the kit (src/ui); it is drawn like the others (outline, current colour).
+const HomeSvg = styled.svg`
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+`;
+function NavIcon({ id }: Readonly<{ id: NavId }>) {
+  if (id !== 'home') return <Icon name={ICON[id]} />;
+  return (
+    <HomeSvg viewBox="0 0 24 24" aria-hidden="true">
+      <path d={HOME_ICON_PATH} />
+    </HomeSvg>
+  );
+}
 
 const Column = styled.div`
   border-right: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
@@ -36,21 +60,47 @@ const Rail = styled.nav<{ $collapsed: boolean }>`
   gap: ${({ theme }) => theme.spacing.sm};
   width: ${({ $collapsed, theme }) => ($collapsed ? theme.size.navCollapsed : theme.size.navOpen)}px;
   height: 100dvh;
-  padding: ${({ theme }) => theme.spacing.lg}
-    ${({ $collapsed, theme }) => ($collapsed ? theme.spacing.sm : theme.spacing.md)};
+  padding: 0 ${({ $collapsed, theme }) => ($collapsed ? theme.spacing.sm : theme.spacing.md)}
+    ${({ theme }) => theme.spacing.lg};
   overflow-x: clip;
   overflow-y: auto;
   transition: width 150ms ease;
 `;
+// The top block (plan 040): no card, no padding. The logo fills its block edge to edge, the kitchen
+// name sits below it; together they are RAIL_TOP_PX tall, the same as the banner.
+const TopBlock = styled.div<{ $collapsed: boolean }>`
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  height: ${({ $collapsed }) => ($collapsed ? RAIL_TOP_COLLAPSED_PX : RAIL_TOP_PX)}px;
+  margin: 0
+    calc(-1 * ${({ $collapsed, theme }) => ($collapsed ? theme.spacing.sm : theme.spacing.md)});
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+`;
+const LogoBox = styled.div<{ $collapsed: boolean }>`
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: ${({ $collapsed }) => ($collapsed ? RAIL_TOP_COLLAPSED_PX - 1 : RAIL_LOGO_PX)}px;
+`;
 const KitchenName = styled.p`
+  display: flex;
+  flex: 1;
+  align-items: center;
   margin: 0;
-  padding: 0 ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  padding: 0 ${({ theme }) => theme.spacing.md};
   overflow: hidden;
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.25;
-  text-overflow: ellipsis;
   white-space: nowrap;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 const List = styled.ul`
   display: flex;
@@ -177,14 +227,6 @@ const FootButton = styled.button<{ $collapsed: boolean }>`
 const ExpandedLanguage = styled.div`
   align-self: flex-start;
 `;
-const ImageBox = styled.div`
-  margin: calc(-1 * ${({ theme }) => theme.spacing.lg})
-    calc(-1 * ${({ theme }) => theme.spacing.md}) 0;
-`;
-const IconBox = styled.div`
-  display: flex;
-  justify-content: center;
-`;
 const Initial = styled.div`
   display: flex;
   align-items: center;
@@ -255,34 +297,41 @@ export function SellerRail({
   return (
     <Column>
       <Rail aria-label={t('sellerNav.label')} $collapsed={collapsed}>
-        {collapsed ? (
-          <IconBox>
-            {kitchen?.images?.railIcon ? (
-              <ImageSlot
-                aspectRatio="1 / 1"
-                width="2.5rem"
-                round
-                src={kitchen.images.railIcon}
-                alt={kitchenName}
-                placeholder=""
-              />
+        <TopBlock $collapsed={collapsed}>
+          <LogoBox $collapsed={collapsed}>
+            {collapsed ? (
+              kitchen?.images?.railIcon ? (
+                <ImageSlot
+                  fill
+                  fit="cover"
+                  aspectRatio="1 / 1"
+                  src={kitchen.images.railIcon}
+                  alt={kitchenName}
+                  placeholder=""
+                />
+              ) : (
+                <Initial role="img" aria-label={kitchenName}>
+                  <span aria-hidden="true">{initialOf(kitchenName)}</span>
+                </Initial>
+              )
             ) : (
-              <Initial role="img" aria-label={kitchenName}>
-                <span aria-hidden="true">{initialOf(kitchenName)}</span>
-              </Initial>
+              <ImageSlot
+                fill
+                fit="cover"
+                aspectRatio="2 / 1"
+                src={kitchen?.images?.railImage}
+                alt={`${kitchenName} — ${t('sellerNav.railImage')}`}
+                placeholder={t('sellerNav.railImageSoon')}
+              />
             )}
-          </IconBox>
-        ) : (
-          <ImageBox>
-            <ImageSlot
-              aspectRatio="2 / 1"
-              src={kitchen?.images?.railImage}
-              alt={`${kitchenName} — ${t('sellerNav.railImage')}`}
-              placeholder={t('sellerNav.railImageSoon')}
-            />
-          </ImageBox>
-        )}
-        {collapsed ? null : <KitchenName>{kitchenName}</KitchenName>}
+          </LogoBox>
+          {collapsed ? null : (
+            <KitchenName>
+              <span>{kitchenName}</span>
+            </KitchenName>
+          )}
+        </TopBlock>
+        {collapsed ? null : <KitchenSwitcher />}
         <List>
           {ids.map((id) => {
             const flagged = id === 'menu' && menuNotPublished;
@@ -296,7 +345,7 @@ export function SellerRail({
                     $collapsed={collapsed}
                     aria-current={id === activeId ? 'page' : undefined}
                   >
-                    <Icon name={ICON[id]} />
+                    <NavIcon id={id} />
                     {collapsed ? <Hidden>{tip}</Hidden> : label(id)}
                     {id === 'orders' && ordersCount !== null && !collapsed ? (
                       <Count>{ordersCount}</Count>

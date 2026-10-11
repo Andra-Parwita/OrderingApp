@@ -74,8 +74,10 @@ export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty, closed = 
         label={name}
         decreaseLabel={t('menu.decrease', { name })}
         increaseLabel={t('menu.increase', { name })}
-        max={item.soldOut ? 0 : Math.min(MAX_QTY, item.remaining ?? MAX_QTY)}
-        disabled={item.soldOut || closed}
+        max={
+          item.soldOut || item.preorder === false ? 0 : Math.min(MAX_QTY, item.remaining ?? MAX_QTY)
+        }
+        disabled={item.soldOut || item.preorder === false || closed}
       />
     </Row>
   );

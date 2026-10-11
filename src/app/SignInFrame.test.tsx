@@ -4,16 +4,18 @@ import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { APP_NAME } from '../../shared/appName';
 import { initI18n } from '../i18n/init';
+import { brandPill } from '../theme/brandTokens';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import { SignInFrame } from './SignInFrame';
 
 const fetchMenu = vi.fn();
 vi.mock('../api/client', () => ({ fetchMenu: (slug: string) => fetchMenu(slug) as unknown }));
 
+let deviceIsDark = true;
 beforeAll(async () => {
   window.matchMedia = () =>
     ({
-      matches: true,
+      matches: deviceIsDark,
       addEventListener: () => undefined,
       removeEventListener: () => undefined,
     }) as unknown as MediaQueryList;
@@ -21,15 +23,16 @@ beforeAll(async () => {
   await i18n.changeLanguage('en');
 });
 afterEach(() => {
+  deviceIsDark = true;
   localStorage.clear();
   fetchMenu.mockReset();
 });
 
-function renderFrame() {
+function renderFrame(brand?: 'admin' | 'sellerSetup') {
   return render(
     <AppThemeProvider>
       <MemoryRouter>
-        <SignInFrame>
+        <SignInFrame brand={brand}>
           <main>form</main>
         </SignInFrame>
       </MemoryRouter>
@@ -69,5 +72,50 @@ describe('SignInFrame (D-051)', () => {
     await waitFor(() => expect(fetchMenu).toHaveBeenCalled());
     expect(screen.getByText(APP_NAME)).toBeInTheDocument();
     expect(screen.queryByRole('img')).toBeNull();
+  });
+
+  it.each(['admin', 'sellerSetup'] as const)(
+    'shows ShaggyBobo branding on %s and ignores the last kitchen (plan 036)',
+    (page) => {
+      localStorage.setItem('lastKitchen', 'onde-onde');
+      renderFrame(page);
+      expect(fetchMenu).not.toHaveBeenCalled();
+      expect(screen.queryByText('Onde Onde')).toBeNull();
+      if (page === 'sellerSetup') expect(screen.getByText('Seller setup')).toBeInTheDocument();
+      else expect(screen.queryByText('Seller setup')).toBeNull();
+      expect(screen.getAllByRole('img', { name: 'ShaggyBobo' }).length).toBeGreaterThan(0);
+      expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
+      expect(screen.getByText('vdev')).toBeInTheDocument();
+    },
+  );
+
+  it('puts the logo in the light pill in light mode and the dark pill in dark mode', () => {
+    deviceIsDark = false;
+    const light = renderFrame('admin');
+    const lightPill = screen.getAllByRole('img', { name: 'ShaggyBobo' }).at(-1)!;
+    expect(lightPill).toHaveStyle({ background: 'var(--brand-bg)' });
+    expect(lightPill.getAttribute('class')).toBeTruthy();
+    expect(getComputedStyle(lightPill).getPropertyValue('--brand-bg')).toBe(brandPill.light.bg);
+    light.unmount();
+    deviceIsDark = true;
+    renderFrame('admin');
+    const darkPill = screen.getAllByRole('img', { name: 'ShaggyBobo' }).at(-1)!;
+    expect(getComputedStyle(darkPill).getPropertyValue('--brand-bg')).toBe(brandPill.dark.bg);
+  });
+
+  it('shows the happy-face icon, no leaf', () => {
+    renderFrame('admin');
+    const pill = screen.getAllByRole('img', { name: 'ShaggyBobo' }).at(-1)!;
+    expect(pill.querySelector('img')).toHaveAttribute('src', '/brand/logo-icon.webp');
+    expect(pill.querySelector('svg')).toBeNull();
+  });
+
+  it('on a phone has no brand top or bottom bar, only a small version line', () => {
+    deviceIsDark = false; // the mock answers every media query alike: false = no split = phone
+    renderFrame('admin');
+    expect(screen.queryByRole('banner')).toBeNull();
+    expect(screen.getAllByRole('img', { name: 'ShaggyBobo' })).toHaveLength(1);
+    expect(screen.getByText('vdev')).toBeInTheDocument();
+    expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
   });
 });

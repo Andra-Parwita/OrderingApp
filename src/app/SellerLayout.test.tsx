@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import i18n from 'i18next';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
+import type { Me } from '../../shared/authContract';
 import { SellerLayout } from './SellerLayout';
+import { SessionProvider, useSession } from './session';
 
 // A matchMedia whose "(min-width: …)" answer can be flipped while the page is open.
 let wide = false;
@@ -119,7 +121,7 @@ describe('SellerLayout', () => {
       '/samples/banner-bg.jpg',
     );
     expect(getComputedStyle(strip).backgroundSize).toBe('cover');
-    expect(banner).toHaveStyle({ objectFit: 'contain' });
+    expect(banner).toHaveStyle({ objectFit: 'cover' });
   });
 
   it('shows only the colour when the seller has no background image', async () => {
@@ -133,5 +135,89 @@ describe('SellerLayout', () => {
     const strip = banner.parentElement?.parentElement?.parentElement?.parentElement as HTMLElement;
     expect(strip).toHaveStyle({ backgroundColor: 'rgb(131, 89, 55)' });
     expect(getComputedStyle(strip).backgroundImage).not.toContain('url');
+  });
+
+  it('slides the sheet over the banner past 8 px of scrolling and back at the top (plan 040)', async () => {
+    stubKitchen();
+    wide = true;
+    renderLayout();
+    const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
+    const full = banner.parentElement?.parentElement as HTMLElement;
+    const clip = full.parentElement as HTMLElement;
+    // Full size: as tall as the left menu's top (116 logo + 48 name), shorter if the width is narrow.
+    expect(full).toHaveStyle({ maxHeight: '164px' });
+    expect(clip).toHaveStyle({ maxHeight: '164px' });
+    const content = screen.getByLabelText('Draft');
+    const scrollTo = (top: number) => {
+      content.scrollTop = top;
+      fireEvent.scroll(content);
+    };
+    scrollTo(8);
+    expect(clip).toHaveStyle({ maxHeight: '164px' });
+    scrollTo(9);
+    expect(clip).toHaveStyle({ maxHeight: '73px' });
+    // The image keeps its size: only the strip around it shortens.
+    expect(full).toHaveStyle({ maxHeight: '164px' });
+    scrollTo(0);
+    expect(clip).toHaveStyle({ maxHeight: '164px' });
+  });
+
+  it('shows the short strip while the left menu is collapsed, image at full size', async () => {
+    localStorage.setItem('sellerRailCollapsed', '1');
+    stubKitchen();
+    wide = true;
+    renderLayout();
+    const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
+    const full = banner.parentElement?.parentElement as HTMLElement;
+    expect(full.parentElement).toHaveStyle({ maxHeight: '73px' });
+    expect(full).toHaveStyle({ maxHeight: '164px' });
+    localStorage.clear();
+  });
+
+  it('shows the paused-kitchen notice in the notice slot, in both languages (plan 032)', async () => {
+    stubKitchen();
+    const me: Me = {
+      role: 'seller',
+      stage: 'full',
+      sellerId: 's1',
+      slug: 'onde-onde',
+      sellerName: 'Delave',
+      paused: 'customers',
+    };
+    function Adopt() {
+      const { adopt } = useSession();
+      useEffect(() => {
+        adopt(me);
+      }, [adopt]);
+      return null;
+    }
+    render(
+      <AppThemeProvider>
+        <SessionProvider>
+          <Adopt />
+          <MemoryRouter initialEntries={['/seller']}>
+            <Routes>
+              <Route path="/seller" element={<SellerLayout />}>
+                <Route index element={<Draft />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </SessionProvider>
+      </AppThemeProvider>,
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      "Customers can't see your kitchen right now.",
+    );
+    await act(() => i18n.changeLanguage('id'));
+    expect(
+      await screen.findByText('Pelanggan tidak bisa melihat dapur Anda saat ini.'),
+    ).toBeVisible();
+    await act(() => i18n.changeLanguage('en'));
+  });
+
+  it('shows no notice for an open kitchen', () => {
+    stubKitchen();
+    renderLayout();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });

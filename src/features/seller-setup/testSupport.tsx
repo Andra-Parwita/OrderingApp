@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import i18n from 'i18next';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router';
 import createSagaMiddleware from 'redux-saga';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
@@ -38,7 +39,9 @@ export async function setupI18n(): Promise<void> {
 export function renderWithStore(ui: ReactNode, store: TestStore) {
   return render(
     <Provider store={store}>
-      <AppThemeProvider>{ui}</AppThemeProvider>
+      <MemoryRouter>
+        <AppThemeProvider>{ui}</AppThemeProvider>
+      </MemoryRouter>
     </Provider>,
   );
 }

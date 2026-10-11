@@ -17,3 +17,6 @@ time · app (seller / customer / admin) · app version (plan 020) · kitchen slu
 
 ## End of phase
 - [ ] typecheck · lint · format · `mocks`, `shared`, admin and `src/api` unit tests · the D-007 privacy rule checked by the coordinator against a real entry · the plan 019 privacy note updated with one line ("When the app hits an error, a short technical note without personal details is sent so we can fix it")
+
+## Built (2026-10-11)
+Stages 1–4 built on this PC (migration `0009_client_log.sql`, `POST /api/log`, `GET /api/admin/log`, the admin's "Problems" panel with the newest 50). **Not built yet from stage 4:** the filter by app and kitchen, paging, and a Clear button.

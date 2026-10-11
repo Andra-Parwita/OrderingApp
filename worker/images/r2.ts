@@ -6,7 +6,8 @@
 //
 // The hash is in the key, so a key never changes its bytes and can be cached for a year; a new
 // upload is a new key, and the old object is deleted once nothing refers to it.
-import { checkImageUpload, type UploadSlot } from '../../shared/imageSlots';
+import { checkImageUpload, IMAGE_SLOTS, type UploadSlot } from '../../shared/imageSlots';
+import type { SellerRepository } from '../repo/Repository';
 
 /** The part of an R2 bucket that is used; the real binding fits it. */
 export type ImageBucket = {
@@ -115,4 +116,30 @@ export async function deleteImageRefs(
     const key = keyOfRef(ref);
     if (key && key.startsWith(`sellers/${sellerId}/`)) await bucket.delete(key);
   }
+}
+
+/**
+ * Deletes the R2 objects behind these refs unless something still shows them: the kitchen's
+ * slots, a saved set (sets keep their own copy of the refs) or the menu picture.
+ */
+export async function dropUnusedImageRefs(
+  bucket: ImageBucket,
+  store: Pick<SellerRepository, 'exportBackup'>,
+  refs: ReadonlyArray<string | undefined>,
+  sellerId: string,
+): Promise<void> {
+  const backup = await store.exportBackup();
+  const inUse = new Set<string>();
+  for (const images of [backup.kitchen.images, ...backup.sets.map((set) => set.images)]) {
+    for (const slot of IMAGE_SLOTS) {
+      const ref = images?.[slot];
+      if (ref !== undefined) inUse.add(ref);
+    }
+  }
+  if (backup.menu?.pictureRef !== undefined) inUse.add(backup.menu.pictureRef);
+  await deleteImageRefs(
+    bucket,
+    refs.filter((ref) => ref !== undefined && !inUse.has(ref)),
+    sellerId,
+  );
 }

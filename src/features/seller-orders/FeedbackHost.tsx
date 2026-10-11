@@ -36,7 +36,7 @@ export function FeedbackHost() {
     // Plan 021: a new-order toast's button opens the order, or shows the list.
     if (toast?.open) {
       dispatch(toastCleared());
-      void navigate(toast.open.code ? `/seller/orders/${toast.open.code}` : '/seller');
+      void navigate(toast.open.code ? `/seller/orders/${toast.open.code}` : '/seller/orders');
       return;
     }
     const action = toast?.undo;

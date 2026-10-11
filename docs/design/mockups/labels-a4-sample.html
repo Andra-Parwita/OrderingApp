@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label sheet sample</title>
+<style>
+  /* Same sizes as the app's Labels screen (src/features/seller-labels/LabelsScreen.tsx):
+     A4, 2 × 7 labels of 99 × 38 mm, 2 mm between columns, 5 mm side and 15.5 mm top/bottom margins.
+     Fits standard 14-per-sheet sticker paper (e.g. Avery L7163 / J8163), or plain paper to cut. */
+  @page { size: A4 portrait; margin: 0; }
+  :root { color-scheme: light; }
+  body { margin: 0; background: #e9e7e3; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #111; }
+  .bar { max-width: 210mm; margin: 16px auto; padding: 0 16px; font-size: 14px; color: #444; }
+  .bar button { font: inherit; padding: 6px 14px; border: 1px solid #999; border-radius: 6px; background: #fff; cursor: pointer; }
+  .sheet { box-sizing: border-box; width: 210mm; height: 297mm; margin: 0 auto 24px; padding: 15.5mm 5mm;
+    background: #fff; display: grid; grid-template-columns: repeat(2, 99mm); grid-auto-rows: 38mm; gap: 0 2mm;
+    box-shadow: 0 1px 6px rgba(0,0,0,.15); }
+  .label { box-sizing: border-box; width: 99mm; height: 38mm; padding: 2mm 3mm; overflow: hidden;
+    display: grid; grid-template-columns: minmax(0,1fr) auto;
+    grid-template-areas: 'code qr' 'name qr' 'items items' 'where where' 'note note';
+    align-content: start; gap: .5mm 2mm; font-size: 8pt; line-height: 1.15;
+    outline: .2mm dashed #bbb; outline-offset: -.1mm; /* cut guide on screen and print */ }
+  .code { grid-area: code; font-size: 17pt; font-weight: 700; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+  .qr { grid-area: qr; width: 16mm; height: 16mm; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .name { grid-area: name; font-size: 11pt; font-weight: 700; }
+  .items { grid-area: items; margin: 0; padding: 0; list-style: none; }
+  .where { grid-area: where; font-weight: 700; }
+  .note { grid-area: note; border-top: .2mm solid #000; font-size: 7pt; }
+  @media print { body { background: #fff; } .bar { display: none; } .sheet { margin: 0; box-shadow: none; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <p><strong>Sample A4 label sheet</strong> · the same layout the app prints from <em>Labels → A4 sheet (2 × 7)</em>. Sample orders, not real data. The QR squares stand in for each order's real QR code. Dashed lines are cut guides.</p>
+  <button onclick="window.print()">Print this sample</button>
+</div>
+<div class="sheet" id="sheet"></div>
+<script>
+  const orders = [
+    ['V34-P42', 'Lenny', ['2× Lemper ayam / Chicken lemper', '1× Klepon'], 'pickup', 'No peanuts please'],
+    ['K7M-2QX', 'Rina', ['3× Onde-onde', '2× Dadar gulung / Pandan crepe'], 'delivery', ''],
+    ['H9T-D4A', 'Tom', ['1× Nasi kuning / Yellow rice', '1× Sambal goreng'], 'pickup', 'Extra sambal on the side'],
+    ['B2N-7RL', 'Sari', ['4× Kue lapis / Layer cake'], 'pickup', ''],
+    ['F6W-Q3E', 'Michael', ['2× Risoles', '2× Pastel', '1× Es cendol'], 'delivery', 'Ring the bell twice, side gate'],
+    ['C8J-5YT', 'Ayu', ['1× Rendang', '1× Nasi putih / Steamed rice'], 'pickup', ''],
+    ['P4K-8VD', 'Grace', ['6× Onde-onde'], 'pickup', 'Birthday, please pack in a box'],
+    ['M3H-9TD', 'Budi', ['2× Lemper ayam / Chicken lemper', '2× Klepon', '1× Bubur sumsum'], 'delivery', ''],
+    ['R5S-1GH', 'Emma', ['1× Soto ayam / Chicken soup'], 'pickup', 'Soup separate from rice'],
+    ['T2V-6NB', 'Wayan', ['3× Martabak manis'], 'pickup', ''],
+  ];
+  const day = 'Sat 17 Oct';
+  // A deterministic pattern standing in for the order's QR code.
+  function fakeQr(seed) {
+    let s = [...seed].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+    let cells = '';
+    for (let y = 0; y < 21; y++) for (let x = 0; x < 21; x++) {
+      const finder = (x < 7 && y < 7) || (x > 13 && y < 7) || (x < 7 && y > 13);
+      let on;
+      if (finder) { const fx = x > 13 ? x - 14 : x, fy = y > 13 ? y - 14 : y;
+        on = fx === 0 || fx === 6 || fy === 0 || fy === 6 || (fx > 1 && fx < 5 && fy > 1 && fy < 5); }
+      else { s = (s * 1103515245 + 12345) >>> 0; on = (s >> 16) & 1; }
+      if (on) cells += `<rect x="${x + 2}" y="${y + 2}" width="1" height="1"/>`;
+    }
+    return `<svg viewBox="0 0 25 25" shape-rendering="crispEdges" aria-hidden="true"><rect width="25" height="25" fill="#fff"/><g fill="#000">${cells}</g></svg>`;
+  }
+  const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const sheet = document.getElementById('sheet');
+  for (let i = 0; i < 14; i++) {
+    const o = orders[i];
+    const el = document.createElement('article');
+    el.className = 'label';
+    if (o) {
+      const [code, name, items, how, note] = o;
+      el.innerHTML = `<div class="code">${esc(code)}</div><div class="qr">${fakeQr(code)}</div>
+        <div class="name">${esc(name)}</div>
+        <ul class="items">${items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+        <div class="where">${how === 'pickup' ? 'Pickup' : 'Delivery'} · ${day}</div>
+        ${note ? `<div class="note">${esc(note)}</div>` : ''}`;
+    }
+    sheet.appendChild(el);
+  }
+</script>
+</body>
+</html>

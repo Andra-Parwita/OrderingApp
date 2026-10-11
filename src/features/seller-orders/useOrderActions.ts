@@ -7,6 +7,7 @@ import { formatOrderCode } from '../../../shared/orderCode';
 import { nextStatuses } from '../../../shared/status';
 import { SELLER_NS } from './i18n/register';
 import { customerKind, latestDiff } from './customerKind';
+import { useReadOnlyOrders } from './orderAccess';
 import { useLang } from './orderText';
 import { selectChange } from './sellerOrdersSelectors';
 import {
@@ -58,7 +59,8 @@ export function useOrderActions(order: Order) {
 
   const steps = nextStatuses(order);
   const forward = steps.filter((status) => status !== 'cancelled');
-  const canCancel = steps.includes('cancelled');
+  const readOnly = useReadOnlyOrders();
+  const canCancel = !readOnly && steps.includes('cancelled');
   const final = steps.length === 0;
   const audit = useMemo(() => sortedAudit(order.audit), [order.audit]);
   const kind = customerKind(order);
@@ -146,6 +148,7 @@ export function useOrderActions(order: Order) {
     failed,
     forward,
     canCancel,
+    readOnly,
     final,
     audit,
     kind,

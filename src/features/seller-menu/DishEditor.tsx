@@ -34,6 +34,8 @@ export type DishEditorProps = Readonly<{
   data: MenuData;
   target: DishTarget;
   onClose: () => void;
+  /** Plan 030: a chef's editor (their own dish): no chef picker, no add-to-menu, no delete. */
+  asChef?: boolean;
 }>;
 
 const Form = styled.form`
@@ -92,7 +94,7 @@ const ChefHead = styled.div`
 `;
 
 /** The dish editor (560 px slide-over). Used from the wizard, the live menu and Your dishes. */
-export function DishEditor({ data, target, onClose }: DishEditorProps) {
+export function DishEditor({ data, target, onClose, asChef = false }: DishEditorProps) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
   const navigate = useNavigate();
@@ -113,7 +115,7 @@ export function DishEditor({ data, target, onClose }: DishEditorProps) {
   const [asking, setAsking] = useState(false);
   const menuOpen = view.menu.state !== 'finished';
   const menuFull = view.dishes.length >= MAX_MENU_ITEMS;
-  const [addToMenu, setAddToMenu] = useState(menuOpen && !menuFull);
+  const [addToMenu, setAddToMenu] = useState(!asChef && menuOpen && !menuFull);
   const { errors } = validateDraft(draft);
   const set =
     (key: keyof ItemDraft) =>
@@ -265,16 +267,51 @@ export function DishEditor({ data, target, onClose }: DishEditorProps) {
               {...(submitted && errors.limit ? { error: err('limit') } : {})}
             />
           </Cols>
-          <ChefField
-            value={draft.chefId}
-            chefs={data.chefs}
-            kitchen={t('dish.wholeKitchen')}
-            label={t('dish.chef')}
-            editLabel={t('dish.editChefs')}
-            onChange={set('chefId')}
-            onEdit={() => void navigate('/seller/chefs')}
-          />
-          {isNew && menuOpen ? (
+          <Check>
+            <input
+              type="checkbox"
+              checked={draft.preorder}
+              onChange={(event) => setDraft((p) => ({ ...p, preorder: event.target.checked }))}
+            />
+            <span>
+              {t('dish.preorder')} <Muted as="span">{t('dish.preorderHelper')}</Muted>
+            </span>
+          </Check>
+          <Check>
+            <input
+              type="checkbox"
+              checked={draft.onTheDay}
+              onChange={(event) => setDraft((p) => ({ ...p, onTheDay: event.target.checked }))}
+            />
+            <span>
+              {t('dish.onTheDay')} <Muted as="span">{t('dish.onTheDayHelper')}</Muted>
+            </span>
+          </Check>
+          {draft.onTheDay ? (
+            <TextField
+              label={t('dish.dayStock')}
+              value={draft.dayStock}
+              inputMode="numeric"
+              onChange={set('dayStock')}
+              {...(!draft.preorder ? { helper: t('dish.dayStockOnly') } : {})}
+              {...(submitted && errors.dayStock ? { error: err('dayStock') } : {})}
+            />
+          ) : null}
+          {submitted && errors.preorder ? (
+            <ErrorText role="alert">{err('preorder')}</ErrorText>
+          ) : null}
+          {asChef ? null : (
+            <ChefField
+              value={draft.chefId}
+              chefs={data.chefs}
+              kitchen={t('dish.wholeKitchen')}
+              label={t('dish.chef')}
+              editLabel={t('dish.editChefs')}
+              onChange={set('chefId')}
+              onEdit={() => void navigate('/seller/chefs')}
+            />
+          )}
+          {!asChef && isNew && menuOpen ? (
             <Check>
               <input
                 type="checkbox"
@@ -287,7 +324,7 @@ export function DishEditor({ data, target, onClose }: DishEditorProps) {
               </span>
             </Check>
           ) : null}
-          {isNew && menuOpen && menuFull ? <Muted>{t('dish.menuFull')}</Muted> : null}
+          {!asChef && isNew && menuOpen && menuFull ? <Muted>{t('dish.menuFull')}</Muted> : null}
           {!isNew ? (
             <Muted>
               {onThisMenu
@@ -298,7 +335,7 @@ export function DishEditor({ data, target, onClose }: DishEditorProps) {
             </Muted>
           ) : null}
           {failure ? <ErrorText role="alert">{failure}</ErrorText> : null}
-          {libraryDishId ? (
+          {libraryDishId && !asChef ? (
             <div>
               <Button variant="destructive" onClick={() => setAsking(true)}>
                 {t('dish.delete')}
