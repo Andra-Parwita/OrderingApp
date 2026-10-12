@@ -81,6 +81,7 @@
   },
   "chefs": {
     "title": "Koki",
+    "close": "Tutup",
     "items_one": "{{count}} menu minggu ini",
     "items_other": "{{count}} menu minggu ini",
     "empty": "Belum ada koki. Tambahkan yang pertama di bawah.",

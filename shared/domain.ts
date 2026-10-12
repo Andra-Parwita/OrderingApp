@@ -200,7 +200,7 @@ export type Kitchen = {
 /** Whether customers can order right now (the switch and the cut-off). */
 export type OrderingState = {
   open: boolean;
-  reason?: 'closed_by_seller' | 'cutoff_passed' | 'kitchen_closed';
+  reason?: 'closed_by_seller' | 'cutoff_passed' | 'kitchen_closed' | 'not_published';
 };
 
 /** Seller-editable kitchen settings (D-027). */

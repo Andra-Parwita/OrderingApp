@@ -60,14 +60,14 @@ describe('ShareScreen', () => {
     expect(share).toHaveBeenCalledWith({ text });
   });
 
-  it('opens a wa.me link when there is no share sheet', async () => {
+  it('opens a WhatsApp link when there is no share sheet', async () => {
     vi.stubGlobal('navigator', { ...navigator, share: undefined });
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     renderShare();
     const text = await previewText();
     fireEvent.click(screen.getByRole('button', { name: 'Share to WhatsApp' }));
     expect(open).toHaveBeenCalledWith(
-      `https://wa.me/?text=${encodeURIComponent(text)}`,
+      `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`,
       '_blank',
       'noopener',
     );

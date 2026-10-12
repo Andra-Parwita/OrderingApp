@@ -1,6 +1,6 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useDispatch } from 'react-redux';
 import { styled } from 'styled-components';
 import {
   MAX_MENU_ITEMS,
@@ -24,7 +24,8 @@ import {
   type ItemDraft,
 } from './itemForm';
 import { ErrorText, LinkButton, Muted, useLang, useOpWatch, useRunOp } from './menuShared';
-import type { MenuData } from './menuSlice';
+import { loadRequested, type MenuData } from './menuSlice';
+import type { MenuSlots } from './slots';
 
 /** What the editor changes: a dish in Your dishes (null id = a new one), or one dish on this menu. */
 export type DishTarget =
@@ -36,6 +37,8 @@ export type DishEditorProps = Readonly<{
   onClose: () => void;
   /** Plan 030: a chef's editor (their own dish): no chef picker, no add-to-menu, no delete. */
   asChef?: boolean;
+  /** Edit chefs opens this over the editor (the app injects the Chefs screen); without it the link is hidden. */
+  renderChefs?: MenuSlots['chefs'];
 }>;
 
 const Form = styled.form`
@@ -44,6 +47,10 @@ const Form = styled.form`
   gap: ${({ theme }) => theme.spacing.lg};
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px
     ${({ theme }) => theme.size.pagePadTablet}px;
+
+  @media (max-width: 37.4375rem) {
+    padding-inline: ${({ theme }) => theme.spacing.lg};
+  }
 `;
 const Heading = styled.h2`
   margin: 0;
@@ -51,16 +58,25 @@ const Heading = styled.h2`
   font-weight: 700;
   line-height: 1.25;
 `;
+// On a phone (plan 051) every field takes the full width: one column.
 const Pair = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const Cols = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${({ theme }) => theme.spacing.md};
   align-items: start;
+
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const LangLabel = styled.div`
   display: grid;
@@ -71,6 +87,10 @@ const LangLabel = styled.div`
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+
+  @media (max-width: 37.4375rem) {
+    display: none;
+  }
 `;
 const Select = styled.select<{ $invalid: boolean }>`
   ${fieldControlStyle}
@@ -94,10 +114,16 @@ const ChefHead = styled.div`
 `;
 
 /** The dish editor (560 px slide-over). Used from the wizard, the live menu and Your dishes. */
-export function DishEditor({ data, target, onClose, asChef = false }: DishEditorProps) {
+export function DishEditor({
+  data,
+  target,
+  onClose,
+  asChef = false,
+  renderChefs,
+}: DishEditorProps) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { run, busy } = useRunOp();
   const { view } = data;
   const dish: Dish | undefined =
@@ -121,13 +147,41 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
     (key: keyof ItemDraft) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setDraft((previous) => ({ ...previous, [key]: event.target.value }));
+  const [editingChefs, setEditingChefs] = useState(false);
+  // The cooks that existed when Edit chefs opened: one that is not among them afterwards is new.
+  const chefsBefore = useRef<ReadonlyArray<string> | null>(null);
+  const openChefs = () => {
+    chefsBefore.current = data.chefs.map((c) => c.id);
+    setEditingChefs(true);
+  };
+  const closeChefs = () => {
+    setEditingChefs(false);
+    dispatch(loadRequested());
+  };
+  useEffect(() => {
+    const before = chefsBefore.current;
+    if (before === null || editingChefs) return;
+    const added = data.chefs.find((c) => !before.includes(c.id));
+    if (added) {
+      chefsBefore.current = null;
+      setDraft((previous) => ({ ...previous, chefId: added.id }));
+    } else if (draft.chefId !== '' && !data.chefs.some((c) => c.id === draft.chefId)) {
+      setDraft((previous) => ({ ...previous, chefId: '' }));
+    }
+  }, [data.chefs, editingChefs, draft.chefId]);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(start), [draft, start]);
 
   useOpWatch(['createDish', 'updateDish', 'updateMenuDish', 'deleteDish'], {
     onDone: () => onClose(),
     onFail: (result) => {
       // A new dish is saved even when "add to this menu" was refused: say so, and close.
-      setFailure(result.code === 'limit_reached' ? t('dish.menuFull') : t('genericError'));
+      setFailure(
+        result.code === 'limit_reached'
+          ? t('dish.menuFull')
+          : result.code === 'forbidden'
+            ? t('chef.ownerOnly')
+            : t('genericError'),
+      );
     },
   });
 
@@ -308,10 +362,10 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
               label={t('dish.chef')}
               editLabel={t('dish.editChefs')}
               onChange={set('chefId')}
-              onEdit={() => void navigate('/seller/chefs')}
+              onEdit={renderChefs ? openChefs : undefined}
             />
           )}
-          {!asChef && isNew && menuOpen ? (
+          {isNew && menuOpen ? (
             <Check>
               <input
                 type="checkbox"
@@ -320,11 +374,12 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
                 onChange={(event) => setAddToMenu(event.target.checked)}
               />
               <span>
-                {t('dish.addToMenu')} <Muted as="span">{t('dish.savedAnyway')}</Muted>
+                {asChef ? t('dish.addToCurrent') : t('dish.addToMenu')}{' '}
+                <Muted as="span">{t('dish.savedAnyway')}</Muted>
               </span>
             </Check>
           ) : null}
-          {!asChef && isNew && menuOpen && menuFull ? <Muted>{t('dish.menuFull')}</Muted> : null}
+          {isNew && menuOpen && menuFull ? <Muted>{t('dish.menuFull')}</Muted> : null}
           {!isNew ? (
             <Muted>
               {onThisMenu
@@ -344,6 +399,7 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
           ) : null}
         </Form>
       </SlideOverEditor>
+      {editingChefs && renderChefs ? renderChefs({ onClose: closeChefs }) : null}
       {asking && libraryDishId ? (
         <WarningDialog
           title={t('dish.deleteTitle', { name: (draft.nameEn || draft.nameId).trim() })}
@@ -377,16 +433,18 @@ function ChefField({
   label: string;
   editLabel: string;
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  onEdit: () => void;
+  onEdit: (() => void) | undefined;
 }>) {
   const { id } = useFieldIds(undefined, undefined);
   return (
     <FieldFrame label={label} id={id} helperId={undefined} errorId={undefined} counter={undefined}>
       <ChefHead>
         <span />
-        <LinkButton type="button" onClick={onEdit}>
-          {editLabel}
-        </LinkButton>
+        {onEdit ? (
+          <LinkButton type="button" onClick={onEdit}>
+            {editLabel}
+          </LinkButton>
+        ) : null}
       </ChefHead>
       <Select id={id} value={value} $invalid={false} onChange={onChange}>
         <option value="">{kitchen}</option>

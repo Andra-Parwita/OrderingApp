@@ -69,6 +69,8 @@
     "pausedBody": "{{cook}} sedang menghentikan pesanan. Cek lagi nanti, atau kirim pesan.",
     "closedTitle": "Pesanan untuk {{date}} sudah ditutup",
     "closedBody": "Batas pesan {{dateTime}}. Mungkin {{cook}} masih bisa menerima.",
+    "comingSoonTitle": "Menu berikutnya segera hadir",
+    "comingSoonBody": "Buka tautan ini lagi nanti untuk melihat menunya.",
     "notOutTitle": "Menu belum keluar",
     "notOutBody": "{{cook}} akan membagikannya di WhatsApp. Buka tautan yang sama nanti.",
     "errorTitle": "Menu tidak bisa dimuat",

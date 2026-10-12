@@ -137,5 +137,20 @@
     "homeInstall": "Pasang",
     "homeShow": "Tunjukkan caranya",
     "homeFallback": "Tidak ada tombol Pasang? Ketuk ⋮ di Chrome, lalu <b>Tambahkan ke layar utama</b>."
+  },
+  "homeCard": {
+    "label": "Layar utama",
+    "customerTitle": "Taruh {{name}} di layar utama",
+    "customerBody": "Pesan lagi dengan satu ketukan dan dapat pesan saat pesananmu siap.",
+    "sellerTitle": "Taruh aplikasi penjual di layar utama",
+    "sellerBody": "Buka dengan satu ketukan di hari memasak.",
+    "add": "Tambah ke layar utama",
+    "showMe": "Tunjukkan caranya",
+    "openInChrome": "Buka halaman ini di Chrome untuk menambahkannya ke layar utama."
+  },
+  "sellerInstall": {
+    "name": "ShaggyBobo Penjual",
+    "title": "Pasang aplikasi",
+    "sub": "Tambahkan aplikasi penjual ke layar utama"
   }
 }

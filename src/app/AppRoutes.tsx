@@ -66,8 +66,9 @@ import {
 import { SettingsPanes, paneHref, parsePane, type PaneId } from '../features/seller-settings';
 import { DevicesScreen } from '../features/seller-auth';
 import { HandOverScreen, SellScreen } from '../features/seller-saturday';
-import { ImagesScreen, TeamScreen } from '../features/seller-setup';
+import { ChefsModal, ImagesScreen, TeamScreen } from '../features/seller-setup';
 import { ShareComposer, ShareScreen } from '../features/seller-share';
+import { useSellerInstall } from '../components/install';
 import { Button, FullLayer, ListRow, PageHeader } from '../ui';
 import { NewMenuDialog } from '../features/seller-home';
 import {
@@ -498,6 +499,7 @@ const MORE_LINKS = [
 ] as const;
 // Phone: Kitchen and Labels are reached from More (plan 035); the rest is tablet-only.
 const PHONE_LINKS = [
+  ['dishes', '/seller/menu/dishes'],
   ['kitchen', '/seller/cook'],
   ['sell', '/seller/sell'],
   ['labels', '/seller/labels'],
@@ -534,6 +536,7 @@ function MoreRoute() {
   const navigate = useNavigate();
   const { me, end } = useSession();
   const desktop = useMediaQuery(DESKTOP_QUERY);
+  const sellerInstall = useSellerInstall();
   const helper = me?.role === 'helper';
   const links = MORE_LINKS.filter(([key]) =>
     helper
@@ -558,10 +561,20 @@ function MoreRoute() {
               key={key}
               primary={t(`sellerNav.${key}`)}
               trailing="›"
-              onClick={() => void navigate(to)}
+              onClick={() =>
+                void navigate(key === 'dishes' && me?.role === 'chef' ? '/seller/menu' : to)
+              }
             />
           ))}
+          {sellerInstall.available ? (
+            <ListRow
+              primary={sellerInstall.title}
+              secondary={sellerInstall.sub}
+              onClick={sellerInstall.install}
+            />
+          ) : null}
         </nav>
+        {sellerInstall.overlay}
         <PhoneBlocks>
           <KitchenSwitcher />
           <MoreSwitchPerson />
@@ -589,7 +602,15 @@ function MoreRoute() {
             onClick={() => void navigate(to)}
           />
         ))}
+        {sellerInstall.available ? (
+          <ListRow
+            primary={sellerInstall.title}
+            secondary={sellerInstall.sub}
+            onClick={sellerInstall.install}
+          />
+        ) : null}
       </nav>
+      {sellerInstall.overlay}
       {me === null ? null : (
         <SignOutBlock>
           <Button onClick={() => void signOutNow()}>{t('sellerNav.signOut')}</Button>
@@ -619,6 +640,7 @@ function HandOverRoute() {
 const MENU_SLOTS: MenuSlots = {
   preview: ({ slug, menu }) => <MenuPreview slug={slug} menu={menu} />,
   share: ({ onGoToOrders }) => <ShareComposer withLink onGoToOrders={onGoToOrders} />,
+  chefs: ({ onClose }) => <ChefsModal onClose={onClose} />,
   newMenu: (props) => <NewMenuDialog {...props} />,
 };
 
@@ -758,7 +780,7 @@ export function AppRoutes() {
               path="menu/dishes"
               element={
                 <SellerOnly>
-                  <DishesScreen />
+                  <DishesScreen slots={MENU_SLOTS} />
                 </SellerOnly>
               }
             />

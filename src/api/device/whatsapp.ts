@@ -30,8 +30,14 @@ export function buildWhatsAppText(order: CustomerOrder, t: TFunction, when: stri
   return order.fulfilment === 'delivery' ? `${text} ${t('wa.addAddress')}` : text;
 }
 
-/** The seller's chat when the number is known, else WhatsApp's own chat picker. */
+/**
+ * The seller's chat when the number is known, else WhatsApp's own chat picker. Not `wa.me`: that
+ * short link breaks emojis on WhatsApp for desktop (plan 047).
+ */
 export function whatsAppUrl(text?: string, number?: string): string {
-  const base = `https://wa.me/${number ?? ''}`;
-  return text === undefined ? base : `${base}?text=${encodeURIComponent(text)}`;
+  const params = [
+    number ? `phone=${encodeURIComponent(number)}` : '',
+    text === undefined ? '' : `text=${encodeURIComponent(text)}`,
+  ].filter(Boolean);
+  return `https://api.whatsapp.com/send${params.length ? `?${params.join('&')}` : ''}`;
 }

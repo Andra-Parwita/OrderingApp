@@ -105,7 +105,7 @@ export function getContact(slug: string, code: string): Contact | null {
   return entry ? { phone: entry.phone, address: entry.address } : null;
 }
 
-/** The saved number as `61…` digits for `wa.me/<number>`, or null (the chat picker opens instead). */
+/** The saved number as `61…` digits for the WhatsApp link, or null (the chat picker opens instead). */
 export function getContactDigits(slug: string, code: string): string | null {
   const phone = getContact(slug, code)?.phone;
   return phone ? phone : null;

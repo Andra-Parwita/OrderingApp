@@ -39,6 +39,8 @@ registerCustomerI18n();
 const slots: MenuSlots = {
   preview: ({ slug, menu }) => <CustomerMenuPreview slug={slug} menu={menu} />,
   share: ({ onGoToOrders }) => <ShareComposer withLink onGoToOrders={onGoToOrders} />,
+  // This harness has no setup store, so Edit chefs shows nothing here.
+  chefs: () => null,
   newMenu: (props) => <NewMenuDialog {...props} />,
 };
 

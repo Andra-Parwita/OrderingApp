@@ -28,7 +28,8 @@ import {
 import type { MenuData } from './menuSlice';
 import { PastDetail, PastList } from './PastMenusPanel';
 import type { MenuSlots } from './slots';
-import { STEPS, type Tab } from './steps';
+import { StepTabs } from './StepTabs';
+import type { Step, Tab } from './steps';
 import { useMenuWizard, type NewMenuSource } from './useMenuWizard';
 import { useSold } from './useSold';
 
@@ -78,35 +79,6 @@ const Top = styled.div`
   align-items: flex-end;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.lg};
-`;
-const Progress = styled.ol`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.xl};
-  margin: ${({ theme }) => theme.spacing.lg} 0;
-  padding: 0;
-  list-style: none;
-`;
-const ProgressStep = styled.li<{ $done: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  color: ${({ $done, theme }) => ($done ? theme.c.text : theme.c.muted)};
-  font-weight: 600;
-
-  i {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
-    border-radius: 50%;
-    background: ${({ $done, theme }) => ($done ? theme.c.fill : 'transparent')};
-    color: ${({ $done, theme }) => ($done ? theme.c.on : 'inherit')};
-    font-size: 0.8125rem;
-    font-style: normal;
-  }
 `;
 const Actions = styled.div`
   display: flex;
@@ -316,13 +288,12 @@ function pickSize(dish: MenuDishView, lang: Language): string {
 function NotPublished({
   data,
   lang,
-  onContinue,
-}: Readonly<{ data: MenuData; lang: Language; onContinue: (step: number) => void }>) {
+  onOpen,
+}: Readonly<{ data: MenuData; lang: Language; onOpen: (step: Step) => void }>) {
   const { t } = useTranslation(MENU_NS);
   const { run } = useRunOp();
   const [asking, setAsking] = useState(false);
   const { menu } = data.view;
-  const next = Math.min(menu.wizardStep, STEPS.length - 1);
   return (
     <Section>
       <Kicker>
@@ -331,19 +302,8 @@ function NotPublished({
       </Kicker>
       <Big>{t('draft.title', { date: formatDay(menu.cookingDate, lang) })}</Big>
       <Muted>{t('draft.saved', { dishes: data.view.dishes.length })}</Muted>
-      <Progress aria-label={t('draft.progress')}>
-        {STEPS.map((step, index) => (
-          <ProgressStep key={step} $done={index < menu.wizardStep}>
-            <i>{index < menu.wizardStep ? <Icon name="check" /> : index + 1}</i>
-            {t(`step.${step}`)}
-          </ProgressStep>
-        ))}
-      </Progress>
-      <Actions>
-        <Button variant="primary" onClick={() => onContinue(next)}>
-          {t('draft.continue', { n: next + 1 })}
-          <Icon name="forward" />
-        </Button>
+      <StepTabs data={data} lang={lang} onOpen={onOpen} />
+      <Actions style={{ marginTop: '1rem' }}>
         <Button variant="quiet" onClick={() => setAsking(true)}>
           {t('draft.delete')}
         </Button>
@@ -370,11 +330,11 @@ function NotPublished({
 export function MenuScreen({
   slots,
   chefId,
-}: Readonly<{ slots: Pick<MenuSlots, 'newMenu'>; chefId?: string }>) {
+}: Readonly<{ slots: Pick<MenuSlots, 'newMenu' | 'chefs'>; chefId?: string }>) {
   return chefId ? <ChefMenu chefId={chefId} /> : <OwnerMenu slots={slots} />;
 }
 
-function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu'> }>) {
+function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu' | 'chefs'> }>) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
   const wizard = useMenuWizard();
@@ -431,7 +391,7 @@ function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu'> }>) {
         onEditTab={wizard.edit}
       />
     ) : state === 'not_published' ? (
-      <NotPublished data={data} lang={lang} onContinue={wizard.open} />
+      <NotPublished data={data} lang={lang} onOpen={wizard.open} />
     ) : (
       <Section>
         <Top>
@@ -506,7 +466,12 @@ function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu'> }>) {
           })
         : null}
       {wizard.failed ? <Muted role="alert">{t('genericError')}</Muted> : null}
-      <DishEditorHost data={data} value={editor.value} onClose={editor.close} />
+      <DishEditorHost
+        data={data}
+        value={editor.value}
+        onClose={editor.close}
+        renderChefs={slots.chefs}
+      />
     </Page>
   );
 }

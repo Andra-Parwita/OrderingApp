@@ -31,6 +31,9 @@ import {
   type UpdateMenuRequest,
   type UpdateMenuResponse,
   type UpdatePickupPlaceRequest,
+  parseImportDishesResponse,
+  type ImportDishesRequest,
+  type ImportDishesResponse,
 } from '../../shared/menusContract';
 import type { PickupPointInput } from '../../shared/setupContract';
 import { request } from './http';
@@ -66,6 +69,19 @@ export function updateCurrentMenu(
   return request('/api/seller/menus/current', parseUpdateMenuResponse, {
     method: 'PUT',
     body: input,
+    ...who(actor, seller),
+  });
+}
+
+/** D-094: appends one library dish to the current menu; the other items stay as they are. */
+export function addDishToMenu(
+  dishId: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<MenuViewResponse>> {
+  return request('/api/seller/menus/current/items', parseMenuViewResponse, {
+    method: 'POST',
+    body: { dishId },
     ...who(actor, seller),
   });
 }
@@ -153,6 +169,19 @@ export function createDish(
   seller?: string,
 ): Promise<ApiResult<DishResponse>> {
   return request('/api/seller/dishes', parseDishResponse, {
+    method: 'POST',
+    body: input,
+    ...who(actor, seller),
+  });
+}
+
+/** Plan 050: `apply: false` previews the rows, `apply: true` writes the valid ones. */
+export function importDishes(
+  input: ImportDishesRequest,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<ImportDishesResponse>> {
+  return request('/api/seller/dishes/import', parseImportDishesResponse, {
     method: 'POST',
     body: input,
     ...who(actor, seller),

@@ -349,8 +349,8 @@ describe('seller batch 2: new order', () => {
     await waitFor(() => expect(done).toHaveBeenCalled());
 
     const url = String(open.mock.calls[0]?.[0]);
-    expect(url.startsWith('https://wa.me/61412345678?text=')).toBe(true);
-    const text = decodeURIComponent(url.split('?text=')[1] ?? '');
+    expect(url.startsWith('https://api.whatsapp.com/send?phone=61412345678&text=')).toBe(true);
+    const text = decodeURIComponent(url.split('&text=')[1] ?? '');
     expect(text).toContain('Hi Lisa');
     expect(text).toContain('2× Chicken lemper');
     expect(text).toContain('Total $20.00');
@@ -379,7 +379,9 @@ describe('seller batch 2: new order', () => {
     fireEvent.change(phone, { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create & send link on WhatsApp' }));
     await waitFor(() => expect(done).toHaveBeenCalled());
-    expect(String(open.mock.calls[0]?.[0]).startsWith('https://wa.me/?text=')).toBe(true);
+    expect(String(open.mock.calls[0]?.[0]).startsWith('https://api.whatsapp.com/send?text=')).toBe(
+      true,
+    );
   });
 
   it('shows a clear message when an item sold out meanwhile', async () => {

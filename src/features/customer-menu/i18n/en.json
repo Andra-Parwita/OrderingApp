@@ -72,6 +72,8 @@
     "pausedBody": "{{cook}} has paused ordering. Check back soon, or send a message.",
     "closedTitle": "Orders for {{date}} are closed",
     "closedBody": "The cut-off was {{dateTime}}. {{cook}} may still fit you in.",
+    "comingSoonTitle": "The next menu is coming soon",
+    "comingSoonBody": "Open this link again later to see what's cooking.",
     "notOutTitle": "The menu isn't out yet",
     "notOutBody": "{{cook}} will share it on WhatsApp when it's ready. Open the same link again then.",
     "errorTitle": "We couldn't load the menu",

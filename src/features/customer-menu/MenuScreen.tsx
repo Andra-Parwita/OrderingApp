@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { MenuResponse } from '../../../shared/menuContract';
+import { HomeScreenCard } from '../../components/install';
 import { whatsAppUrl } from '../../api/device/whatsapp';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
 import { menuRequested, quantitySet } from './customerSlice';
@@ -64,7 +65,25 @@ function MenuGate({
 }: Readonly<{ menu: MenuData; load: () => void; children: (data: MenuResponse) => ReactNode }>) {
   const lang = useLang();
   const onMessage = useCallback(() => openWhatsApp(undefined), []);
-  if (menu.status === 'ready') return children(menu.data);
+  if (menu.status === 'ready') {
+    const { data } = menu;
+    if (data.ordering.reason === 'not_published') {
+      return (
+        <NotPublishedView
+          kitchen={data.kitchen}
+          cook={data.seller.name}
+          lang={lang}
+          soon
+          onMessageSeller={
+            data.kitchen.whatsappNumber
+              ? () => openWhatsApp(data.kitchen.whatsappNumber)
+              : undefined
+          }
+        />
+      );
+    }
+    return children(data);
+  }
   if (menu.status === 'error') {
     return menu.code === 'week_not_published' ? (
       <NotPublishedView lang={lang} onMessageSeller={onMessage} />
@@ -104,13 +123,16 @@ function HomeContent({ slug, onSeeDishes, onHowItWorks, preview }: HomeProps) {
   return (
     <MenuGate menu={menu} load={load}>
       {(data) => (
-        <MenuHomeView
-          data={data}
-          lang={lang}
-          onSeeDishes={preview ? undefined : onSeeDishes}
-          onHowItWorks={preview ? undefined : onHowItWorks}
-          onMessageSeller={() => openWhatsApp(data.kitchen.whatsappNumber)}
-        />
+        <>
+          {preview ? null : <HomeScreenCard who="customer" kitchenName={data.kitchen.name} />}
+          <MenuHomeView
+            data={data}
+            lang={lang}
+            onSeeDishes={preview ? undefined : onSeeDishes}
+            onHowItWorks={preview ? undefined : onHowItWorks}
+            onMessageSeller={() => openWhatsApp(data.kitchen.whatsappNumber)}
+          />
+        </>
       )}
     </MenuGate>
   );

@@ -182,7 +182,7 @@ function parseOrderingState(input: unknown): OrderingState | null {
   const { open, reason } = input;
   if (typeof open !== 'boolean') return null;
   if (reason === undefined) return { open };
-  return isOneOf(['closed_by_seller', 'cutoff_passed', 'kitchen_closed'], reason)
+  return isOneOf(['closed_by_seller', 'cutoff_passed', 'kitchen_closed', 'not_published'], reason)
     ? { open, reason }
     : null;
 }

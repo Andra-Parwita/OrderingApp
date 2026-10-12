@@ -62,7 +62,7 @@ describe('SettingsPanes', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const url = String(open.mock.calls[0]![0]);
-    expect(url.startsWith('https://wa.me/?text=')).toBe(true);
+    expect(url.startsWith('https://api.whatsapp.com/send?text=')).toBe(true);
     expect(decodeURIComponent(url)).toContain(link);
     open.mockRestore();
   });

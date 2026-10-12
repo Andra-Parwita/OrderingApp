@@ -42,6 +42,8 @@ import type { ImageSlot } from '../../shared/imageSlots';
 import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
 import type {
   CreateDishRequest,
+  ImportDishesRequest,
+  ImportDishesResponse,
   CreateDishSetRequest,
   CreateMenuRequest,
   Dish,
@@ -162,12 +164,26 @@ export type SellerRepository = {
   listDishes(): Promise<Array<Dish>>;
   createDish(input: CreateDishRequest): Promise<StoreResult<Dish>>;
   updateDish(id: string, patch: UpdateDishRequest): Promise<StoreResult<Dish>>;
+  /**
+   * Plan 050: CSV import. Rows match a dish by name_en (any case) and cook together. `asChefId` is a
+   * signed-in chef: only their own dishes (an empty cook means them). `apply: true` writes the valid
+   * rows in one batch; over the library limit it answers `limit_reached`.
+   */
+  importDishes(
+    input: ImportDishesRequest,
+    asChefId?: string,
+  ): Promise<StoreResult<ImportDishesResponse>>;
   /** Always allowed (D-062); `usedOnLiveMenu` is the warning flag. */
   deleteDish(id: string): Promise<StoreResult<{ usedOnLiveMenu: boolean }>>;
 
   // Saved sets as lists of dishes (the older `listSets` etc. below keep their item-copy shape)
   listDishSets(): Promise<Array<DishSet>>;
   createDishSet(input: CreateDishSetRequest): Promise<StoreResult<DishSet>>;
+  /**
+   * D-094: appends one library dish to the current menu (draft or live), leaving the other items
+   * alone. `already_on_menu`, `limit_reached` (menu full), `week_closed` (finished), `unknown_item`.
+   */
+  addDishToMenu(dishId: string): Promise<StoreResult<MenuView>>;
   /** Adds the set's dishes to the menu and counts a use. */
   useDishSet(id: string): Promise<StoreResult<UseDishSetResponse>>;
 

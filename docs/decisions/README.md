@@ -581,3 +581,8 @@ Format for each entry:
 **Ruling:** "A" (plan 040). The real content sits in the middle 1896 × 328, exactly what iPad landscape shows at the left menu's top height (164 px, 2× for retina); the sides are scenery that wider screens reveal; narrower screens shrink the banner rather than cut the middle. No side bands anywhere (owner: "I don't want to have ugly bg on left and right"). The left-menu logo fills its block at the same height. The phone banner stays a separate 1200 × 400.
 **Trade-off:** the seller's designer draws a wider canvas with scenery on the sides; existing 5:1 banners must be re-uploaded (not deployed to real sellers yet). Replaces the 5:1 sizes of D-038 for the wide banner.
 **Revisit when:** sellers mostly use another device than iPad landscape.
+
+## D-094 · A chef may put her own dish on the current menu (2026-10-12; owner)
+**Ruling:** "A" ("yes"). Amends plan 030 (chefs worked in the library only). A chef may add **her own** dish (dish chef = herself) to the current menu, whether it is still being made or already live; on a live menu customers see it at once, like a chef's edits (plan 030 ruling A). She still cannot publish, finish, change the menu's details, or add another chef's dish. The owner sees it on the menu and can remove it. Same dish names from different chefs are separate dishes (no unique name), and the CSV import matches by name + chef (plan 050).
+**Trade-off:** a chef can change what customers see on a live menu without the owner; acceptable for a family team.
+**Revisit when:** an owner wants to approve chef additions first.

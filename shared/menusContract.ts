@@ -4,7 +4,14 @@
 // could once be refused for orders, it now answers with a warning flag.
 import { DAY_STOCK_MAX } from './daySalesContract';
 import type { Delivery, LocalText, PickupPoint, SellerMenuItemView } from './domain';
-import { MAX_MENU_ITEMS, MAX_PICKUP_PLACES, SET_NAME_MAX } from './limits';
+import {
+  ITEM_DESCRIPTION_MAX,
+  ITEM_NAME_MAX,
+  ITEM_SIZE_MAX,
+  MAX_MENU_ITEMS,
+  MAX_PICKUP_PLACES,
+  SET_NAME_MAX,
+} from './limits';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
 import { DEFAULT_THEME, THEMES, type ThemeName } from './themes';
 import {
@@ -232,6 +239,178 @@ export function parseDishesResponse(input: unknown): DishesResponse | null {
 export function parseDeleteDishResponse(input: unknown): DeleteDishResponse | null {
   return isRecord(input) && input['ok'] === true && typeof input['usedOnLiveMenu'] === 'boolean'
     ? { ok: true, usedOnLiveMenu: input['usedOnLiveMenu'] }
+    : null;
+}
+
+// ---- Dish CSV import (plan 050) --------------------------------------------------------------
+
+/** What is wrong with a row or a file. `message` is English; the screen can translate by `code`. */
+export const IMPORT_PROBLEM_CODES = [
+  'no_header',
+  'too_many_rows',
+  'name_required',
+  'text_too_long',
+  'price_invalid',
+  'limit_invalid',
+  'day_stock_invalid',
+  'preorder_invalid',
+  'preorder_needs_stock',
+  'unknown_chef',
+  'not_yours',
+  /** The same name and cook appear twice in the file. */
+  'duplicate',
+  /** The name and cook match more than one dish in the library. */
+  'ambiguous',
+] as const;
+export type ImportProblemCode = (typeof IMPORT_PROBLEM_CODES)[number];
+export type ImportProblem = { code: ImportProblemCode; message: string };
+
+/** Most rows in one import. */
+export const IMPORT_MAX_ROWS = 500;
+
+/** One dish row of the CSV, already read: `chef` is a cook's name ('' = the whole kitchen). */
+export type ImportDishRow = {
+  nameEn: string;
+  nameId: string;
+  descriptionEn: string;
+  descriptionId: string;
+  size: string;
+  priceCents: number;
+  limit?: number;
+  chef: string;
+  preorder: boolean;
+  dayStock?: number;
+};
+
+/** The first thing wrong with a row on its own (no library or cooks involved), or null. */
+export function importRowProblem(row: ImportDishRow): ImportProblem | null {
+  const problem = (code: ImportProblemCode, message: string) => ({ code, message });
+  if (row.nameEn.trim() === '') return problem('name_required', 'name_en is required');
+  if (
+    row.nameEn.length > ITEM_NAME_MAX ||
+    row.nameId.length > ITEM_NAME_MAX ||
+    row.descriptionEn.length > ITEM_DESCRIPTION_MAX ||
+    row.descriptionId.length > ITEM_DESCRIPTION_MAX ||
+    row.size.length > ITEM_SIZE_MAX
+  ) {
+    return problem('text_too_long', 'A name, description or size is too long');
+  }
+  if (!isInt(row.priceCents, 0, PRICE_MAX)) return problem('price_invalid', 'Price is not valid');
+  if (row.limit !== undefined && !isInt(row.limit, 1, LIMIT_MAX)) {
+    return problem('limit_invalid', `Limit must be a whole number from 1 to ${String(LIMIT_MAX)}`);
+  }
+  if (row.dayStock !== undefined && !isInt(row.dayStock, 0, DAY_STOCK_MAX)) {
+    return problem(
+      'day_stock_invalid',
+      `day_stock must be a whole number from 0 to ${String(DAY_STOCK_MAX)}`,
+    );
+  }
+  if (!row.preorder && row.dayStock === undefined) {
+    return problem('preorder_needs_stock', 'preorder "no" needs a day_stock');
+  }
+  return null;
+}
+
+/** POST /api/seller/dishes/import: `apply: false` previews, `apply: true` writes the valid rows. */
+export type ImportDishesRequest = { rows: Array<ImportDishRow>; apply: boolean };
+
+/** One answer per request row, in order. `dishId` is the library dish an update changes. */
+export type ImportRowResult = {
+  status: 'new' | 'update' | 'error';
+  name: string;
+  dishId?: string;
+  problem?: ImportProblem;
+};
+
+export type ImportDishesResponse = {
+  /** True when the valid rows were written. */
+  applied: boolean;
+  rows: Array<ImportRowResult>;
+  counts: { new: number; update: number; error: number };
+  /** The new dishes would not fit in the library (an apply is refused with `limit_reached`). */
+  overLimit: boolean;
+};
+
+function parseImportDishRow(input: unknown): ImportDishRow | null {
+  if (!isRecord(input)) return null;
+  const { nameEn, nameId, descriptionEn, descriptionId, size, priceCents, limit, chef } = input;
+  const { preorder, dayStock } = input;
+  if (
+    typeof nameEn !== 'string' ||
+    typeof nameId !== 'string' ||
+    typeof descriptionEn !== 'string' ||
+    typeof descriptionId !== 'string' ||
+    typeof size !== 'string' ||
+    typeof chef !== 'string' ||
+    typeof preorder !== 'boolean' ||
+    typeof priceCents !== 'number'
+  ) {
+    return null;
+  }
+  if (limit !== undefined && typeof limit !== 'number') return null;
+  if (dayStock !== undefined && typeof dayStock !== 'number') return null;
+  return {
+    nameEn,
+    nameId,
+    descriptionEn,
+    descriptionId,
+    size,
+    priceCents,
+    ...(limit !== undefined ? { limit } : {}),
+    chef,
+    preorder,
+    ...(dayStock !== undefined ? { dayStock } : {}),
+  };
+}
+
+export function parseImportDishesRequest(input: unknown): ImportDishesRequest | null {
+  if (!isRecord(input) || typeof input['apply'] !== 'boolean') return null;
+  const rows = parseArray(input['rows'], parseImportDishRow);
+  return rows && rows.length <= IMPORT_MAX_ROWS ? { rows, apply: input['apply'] } : null;
+}
+
+function parseImportRowResult(input: unknown): ImportRowResult | null {
+  if (!isRecord(input) || typeof input['name'] !== 'string') return null;
+  const { status, dishId, problem } = input;
+  if (!isOneOf(['new', 'update', 'error'] as const, status)) return null;
+  if (dishId !== undefined && typeof dishId !== 'string') return null;
+  let parsed: ImportProblem | undefined;
+  if (problem !== undefined) {
+    if (!isRecord(problem) || !isOneOf(IMPORT_PROBLEM_CODES, problem['code'])) return null;
+    if (typeof problem['message'] !== 'string') return null;
+    parsed = { code: problem['code'], message: problem['message'] };
+  }
+  return {
+    status,
+    name: input['name'],
+    ...(dishId !== undefined ? { dishId } : {}),
+    ...(parsed ? { problem: parsed } : {}),
+  };
+}
+
+export function parseImportDishesResponse(input: unknown): ImportDishesResponse | null {
+  if (!isRecord(input) || typeof input['applied'] !== 'boolean') return null;
+  if (typeof input['overLimit'] !== 'boolean') return null;
+  const rows = parseArray(input['rows'], parseImportRowResult);
+  const counts = input['counts'];
+  if (!rows || !isRecord(counts)) return null;
+  const { new: added, update, error } = counts;
+  if (!isInt(added, 0, IMPORT_MAX_ROWS) || !isInt(update, 0, IMPORT_MAX_ROWS)) return null;
+  if (!isInt(error, 0, IMPORT_MAX_ROWS)) return null;
+  return {
+    applied: input['applied'],
+    rows,
+    counts: { new: added, update, error },
+    overLimit: input['overLimit'],
+  };
+}
+
+/** POST /api/seller/menus/current/items (D-094): appends one library dish to the current menu. */
+export type AddMenuDishRequest = { dishId: string };
+
+export function parseAddMenuDishRequest(input: unknown): AddMenuDishRequest | null {
+  return isRecord(input) && typeof input['dishId'] === 'string' && input['dishId'] !== ''
+    ? { dishId: input['dishId'] }
     : null;
 }
 

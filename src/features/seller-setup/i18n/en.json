@@ -81,6 +81,7 @@
   },
   "chefs": {
     "title": "Chefs",
+    "close": "Close",
     "items_one": "{{count}} item this week",
     "items_other": "{{count}} items this week",
     "empty": "No chefs yet. Add the first one below.",

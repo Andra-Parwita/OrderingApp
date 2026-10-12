@@ -117,7 +117,7 @@ export function activePhoneNav(pathname: string): PhoneNavId {
 }
 
 // Phone: these routes say "Open this on a tablet or computer" (handoff, Layout shell → Phone).
-// Kitchen and Labels are not here: they work on a phone (plan 035).
+// Kitchen and Labels are not here: they work on a phone (plan 035); nor are Your dishes (plan 051).
 const TABLET_ONLY = [
   '/seller/menu',
   '/seller/share',
@@ -130,7 +130,12 @@ const TABLET_ONLY = [
   '/seller/devices',
 ];
 
-export function isTabletOnly(pathname: string): boolean {
+// Plan 051: Your dishes work on a phone: /seller/menu/dishes for owners, and a chef's /seller/menu
+// (which is her Your dishes). The wizard, sets, share and Settings stay tablet-only.
+export function isTabletOnly(pathname: string, role?: Role): boolean {
+  const path = pathname.replace(/\/+$/, '');
+  if (under(path, '/seller/menu/dishes')) return false;
+  if (role === 'chef' && path === '/seller/menu') return false;
   return TABLET_ONLY.some((path) => under(pathname, path));
 }
 

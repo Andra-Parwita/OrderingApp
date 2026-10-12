@@ -19,6 +19,7 @@ import {
   uploadImage,
 } from './client';
 import {
+  addDishToMenu,
   createDish,
   finishMenu,
   publishMenu,
@@ -137,5 +138,20 @@ describe('seller setup client', () => {
     const csv = data(await fetchOrdersCsv());
     expect(csv.startsWith('﻿code,first name')).toBe(true);
     expect(csv).toContain('Rina');
+  });
+});
+
+describe('addDishToMenu', () => {
+  it('appends one library dish through POST menus/current/items, and a repeat is refused', async () => {
+    const before = data(await fetchCurrentMenu()).menu.dishes.length;
+    const dish = data(
+      await createDish({ name: { en: 'Pastel', id: 'Pastel' }, priceCents: 1200 }),
+    ).dish;
+    const view = data(await addDishToMenu(dish.id)).menu;
+    expect(view.dishes).toHaveLength(before + 1);
+    expect(view.dishes.some((d) => d.dishId === dish.id)).toBe(true);
+    const again = await addDishToMenu(dish.id);
+    expect(again.ok).toBe(false);
+    if (!again.ok) expect(again.error).toBe('already_on_menu');
   });
 });

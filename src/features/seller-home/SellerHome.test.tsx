@@ -249,6 +249,12 @@ describe('Home, menu not published (state 2)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue making it' }));
     expect(onContinue).toHaveBeenCalledWith(1);
   });
+
+  it('links each making step to the matching tab of the Menu screen (plan 053)', () => {
+    const { onGo } = renderHome({ data: data({ view: view({ wizardStep: 1 }, 6), past: PAST }) });
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    expect(onGo).toHaveBeenCalledWith('menu', 'step=check');
+  });
 });
 
 describe('Home, no menu running (states 5 and 6)', () => {

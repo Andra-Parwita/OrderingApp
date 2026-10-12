@@ -42,12 +42,25 @@
     "title": "Menu untuk {{date}}",
     "saved": "Tersimpan otomatis · {{dishes}} hidangan dipilih",
     "progress": "Kemajuan",
-    "continue": "Lanjut · langkah {{n}}",
+    "continue": "Lanjut ke langkah {{n}}",
     "delete": "Hapus",
     "deleteTitle": "Hapus menu ini?",
     "deleteBody": "Hidangan dan tempat di menu ini dihapus. Hidangan Anda dan paket tersimpan tetap ada.",
     "keep": "Simpan menu",
-    "deleteAnyway": "Hapus menu"
+    "deleteAnyway": "Hapus menu",
+    "stepDishes_one": "{{count}} hidangan",
+    "stepDishes_other": "{{count}} hidangan",
+    "todo": "Belum",
+    "checked": "Sudah dicek",
+    "pickupPlaces_one": "{{count}} tempat ambil",
+    "pickupPlaces_other": "{{count}} tempat ambil",
+    "readOnly": "Hanya lihat",
+    "edit": "Ubah {{step}}",
+    "noDishes": "Belum ada hidangan di menu ini.",
+    "limitOf_one": "batas {{count}}",
+    "limitOf_other": "batas {{count}}",
+    "publishInfo": "Belum diterbitkan. Setelah diterbitkan, pelanggan bisa memesan, dan Anda bisa membagikan postingan menu di WhatsApp.",
+    "stoppedHere": "Anda berhenti di sini"
   },
   "step": {
     "dishes": "Hidangan",
@@ -171,6 +184,7 @@
     "chef": "Koki",
     "wholeKitchen": "Seluruh dapur",
     "editChefs": "Ubah koki",
+    "addToCurrent": "Tambahkan juga ke menu saat ini",
     "addToMenu": "Tambahkan juga ke menu ini",
     "savedAnyway": "(tetap tersimpan di Hidangan Anda)",
     "menuFull": "Menu ini sudah berisi 10 hidangan, jadi hidangan disimpan tetapi tidak ditambahkan.",
@@ -305,6 +319,41 @@
     "addDishes": "Tambah hidangan",
     "emptyAnyway": "Tetap publikasikan"
   },
+  "import": {
+    "button": "Impor",
+    "export": "Ekspor CSV",
+    "template": "Unduh templat",
+    "file": "Pilih file CSV hidangan",
+    "title": "Impor hidangan",
+    "close": "Tutup",
+    "cancel": "Batal",
+    "apply": "Impor",
+    "counts": "{{new}} baru, {{update}} diperbarui, {{error}} bermasalah",
+    "skipped": "Baris yang bermasalah dilewati; yang lain diimpor.",
+    "overLimit": "Hidangan baru ini tidak muat di Hidangan Anda. Kurangi baris atau hidangan lalu coba lagi.",
+    "failed": "Tidak bisa mengimpor. Coba lagi.",
+    "done": "Diimpor: {{new}} baru, {{update}} diperbarui.",
+    "status": {
+      "new": "Baru",
+      "update": "Perbarui",
+      "error": "Masalah"
+    },
+    "problem": {
+      "no_header": "Baris pertama harus berisi nama kolom, diawali name_en.",
+      "too_many_rows": "Terlalu banyak hidangan dalam satu file (maksimal 500).",
+      "name_required": "name_en wajib diisi.",
+      "text_too_long": "Nama, deskripsi, atau ukuran terlalu panjang.",
+      "price_invalid": "Harga bukan angka seperti 12.50.",
+      "limit_invalid": "Batas harus berupa bilangan bulat.",
+      "day_stock_invalid": "day_stock harus berupa bilangan bulat.",
+      "preorder_invalid": "preorder harus yes atau no.",
+      "preorder_needs_stock": "preorder \"no\" memerlukan day_stock.",
+      "unknown_chef": "Koki ini tidak ada. Tambahkan kokinya dulu.",
+      "not_yours": "Anda hanya bisa mengimpor hidangan Anda sendiri.",
+      "duplicate": "Nama dan koki yang sama muncul dua kali di file.",
+      "ambiguous": "Lebih dari satu hidangan di Hidangan Anda memiliki nama dan koki ini."
+    }
+  },
   "library": {
     "title": "Hidangan Anda",
     "help": "Semua hidangan yang pernah Anda simpan. Menu menyimpan salinan harga dan batasnya sendiri."
@@ -319,6 +368,9 @@
   "chef": {
     "title": "Hidangan Anda",
     "help": "Tambahkan hidangan Anda dan ubah harga, batas, dan fotonya. Pemilik yang memasukkannya ke menu. Perubahan pada hidangan di menu yang sedang tayang langsung terlihat oleh pelanggan.",
-    "notOnMenu": "Tidak ada di menu ini"
+    "notOnMenu": "Tidak ada di menu ini",
+    "ownerOnly": "Saat ini hanya pemilik yang dapat mengubah menu ini.",
+    "addToMenu": "Tambah ke menu",
+    "addToMenuFor": "Tambahkan {{name}} ke menu saat ini"
   }
 }

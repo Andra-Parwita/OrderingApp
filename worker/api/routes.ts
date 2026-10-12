@@ -28,6 +28,8 @@ import type {
 import { isImageSlot } from '../../shared/imageSlots';
 import {
   parseCreateDishRequest,
+  parseAddMenuDishRequest,
+  parseImportDishesRequest,
   parseCreateDishSetRequest,
   parseCreateMenuRequest,
   parseUpdateDishRequest,
@@ -37,6 +39,7 @@ import {
   type DeleteDishResponse,
   type DeletePickupPlaceResponse,
   type DishesResponse,
+  type ImportDishesResponse,
   type DishResponse,
   type DishSetResponse,
   type DishSetsResponse,
@@ -611,6 +614,20 @@ async function chefOwnDishMay(
   const method = request.method;
   const dishRoute = a === 'dishes' && (method === 'POST' ? !b : method === 'PATCH' && !!b && !c);
   const itemRoute = a === 'menu' && b === 'items' && !!c && method === 'PATCH';
+  // Plan 050: the dish CSV import; the store limits a chef to their own dishes.
+  if (a === 'dishes' && b === 'import' && !c && method === 'POST') return true;
+  // D-094: a chef appends her own library dish to the current menu.
+  if (a === 'menus' && b === 'current' && c === 'items' && method === 'POST') {
+    const body: unknown = await request
+      .clone()
+      .json()
+      .catch(() => null);
+    const dishId = isRecord(body) ? body['dishId'] : undefined;
+    return (
+      typeof dishId === 'string' &&
+      (await store.listDishes()).find((d) => d.id === dishId)?.chefId === chefId
+    );
+  }
   if (!dishRoute && !itemRoute) return false;
   const body: unknown = await request
     .clone()
@@ -848,6 +865,14 @@ async function handleSeller(
       await menuChanged();
       return Response.json(result.value satisfies UpdateMenuResponse);
     }
+    if (c === 'items' && method === 'POST') {
+      const input = parseAddMenuDishRequest(await readJson(request));
+      if (!input) return bad();
+      const result = await store.addDishToMenu(input.dishId);
+      if (!result.ok) return error(result.error, result.message);
+      await menuChanged();
+      return Response.json({ menu: result.value } satisfies MenuViewResponse, { status: 201 });
+    }
     if (c === 'publish' && method === 'POST') {
       const force = parseForce(await readJson(request));
       if (force === null) return bad();
@@ -913,6 +938,13 @@ async function handleSeller(
   if (a === 'dishes') {
     if (!b && method === 'GET') {
       return Response.json({ dishes: await store.listDishes() } satisfies DishesResponse);
+    }
+    if (b === 'import' && !c && method === 'POST') {
+      const input = parseImportDishesRequest(await readJson(request));
+      if (!input) return bad();
+      const result = await store.importDishes(input, chefId);
+      if (!result.ok) return error(result.error, result.message);
+      return Response.json(result.value satisfies ImportDishesResponse);
     }
     if (!b && method === 'POST') {
       const input = parseCreateDishRequest(await readJson(request));

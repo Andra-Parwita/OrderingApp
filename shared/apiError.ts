@@ -32,6 +32,8 @@ export const API_ERROR_CODES = [
   'menu_in_progress',
   /** Finish now was asked for a menu that is not live. */
   'menu_not_live',
+  /** D-094: the dish is already on the current menu. */
+  'already_on_menu',
   // Sign-in (stage 7.1)
   /** No valid session for a call that needs one. */
   'unauthorized',

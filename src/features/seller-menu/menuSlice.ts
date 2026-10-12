@@ -30,6 +30,8 @@ export type MenuOp =
   | { kind: 'createDish'; request: CreateDishRequest; addToMenu: boolean }
   | { kind: 'updateDish'; id: string; request: UpdateDishRequest }
   | { kind: 'deleteDish'; id: string }
+  /** D-094: put a library dish on the current menu (PUT dishIds; a chef may for her own dishes). */
+  | { kind: 'addDishToMenu'; dishId: string }
   | { kind: 'createSet'; name: string; dishIds: Array<string> }
   | { kind: 'useSet'; setId: string }
   | { kind: 'usePast'; weekId: string }

@@ -111,7 +111,7 @@ describe('returning customer', () => {
     renderWithStore(<OrderPlacedScreen token={current.token} onChange={noop} />);
     fireEvent.click(await screen.findByRole('button', { name: /Send to .* on WhatsApp/ }));
     const url = String(open.mock.calls[0]?.[0]);
-    expect(url.startsWith(`https://wa.me/${NUMBER}?text=`)).toBe(true);
+    expect(url.startsWith(`https://api.whatsapp.com/send?phone=${NUMBER}&text=`)).toBe(true);
     expect(decodeURIComponent(url)).toContain('1× Chicken lemper');
   });
 });

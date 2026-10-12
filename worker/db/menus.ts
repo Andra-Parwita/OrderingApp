@@ -5,7 +5,15 @@
 import { comingSaturday, cutoffAtFor, menuFinishesAt } from '../../shared/dates';
 import type { InboxEntry, PickupPoint, SellerOrder } from '../../shared/domain';
 import { MAX_DISHES, MAX_MENU_ITEMS, MAX_PICKUP_PLACES, MAX_SETS } from '../../shared/limits';
-import type { FinishMenuResponse, MenuView, Preferences } from '../../shared/menusContract';
+import {
+  importRowProblem,
+  type Dish,
+  type FinishMenuResponse,
+  type ImportProblem,
+  type ImportRowResult,
+  type MenuView,
+  type Preferences,
+} from '../../shared/menusContract';
 import { summariseOrders } from '../../shared/pastWeeks';
 import { isFinalStatus } from '../../shared/status';
 import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
@@ -60,10 +68,12 @@ export type MenuOps = Pick<
   | 'listDishes'
   | 'createDish'
   | 'updateDish'
+  | 'importDishes'
   | 'deleteDish'
   | 'listDishSets'
   | 'createDishSet'
   | 'useDishSet'
+  | 'addDishToMenu'
   | 'listPickupPlaces'
   | 'createPickupPlace'
   | 'updatePickupPlace'
@@ -604,6 +614,108 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       return ok(dish);
     },
 
+    async importDishes(input, asChefId) {
+      const [dishes, chefs] = await Promise.all([
+        db
+          .all<DishRow>('SELECT * FROM dishes WHERE seller_id = ?', sid)
+          .then((found) => found.map(dishOf)),
+        db.all<{ id: string; name: string }>('SELECT id, name FROM chefs WHERE seller_id = ?', sid),
+      ]);
+      const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+      const problem = (code: ImportProblem['code'], message: string): ImportProblem => ({
+        code,
+        message,
+      });
+      const myName = chefs.find((chef) => chef.id === asChefId)?.name;
+      const seen = new Set<string>();
+      const writes: Array<{ dish: Dish; isNew: boolean }> = [];
+      const rows = input.rows.map((row): ImportRowResult => {
+        const name = row.nameEn.trim();
+        const error = (p: ImportProblem): ImportRowResult => ({
+          status: 'error',
+          name,
+          problem: p,
+        });
+        const wrong = importRowProblem(row);
+        if (wrong) return error(wrong);
+        // A signed-in chef: only their own dishes; an empty cook means themselves (as on create).
+        let chefName = row.chef.trim();
+        if (asChefId !== undefined) {
+          if (chefName === '') chefName = myName ?? '';
+          else if (!same(chefName, myName ?? '')) {
+            return error(problem('not_yours', `Only your own dishes (not ${chefName})`));
+          }
+        }
+        const chef = chefName === '' ? undefined : chefs.find((c) => same(c.name, chefName));
+        if (chefName !== '' && !chef)
+          return error(problem('unknown_chef', `Unknown cook "${chefName}"`));
+        const key = JSON.stringify([name.toLowerCase(), chef?.id ?? '']);
+        if (seen.has(key)) {
+          return error(problem('duplicate', `${name} appears twice for this cook in the file`));
+        }
+        seen.add(key);
+        const matches = dishes.filter(
+          (d) => same(d.name.en, name) && (d.chefId ?? '') === (chef?.id ?? ''),
+        );
+        if (matches.length > 1) {
+          return error(problem('ambiguous', `More than one dish called ${name} for this cook`));
+        }
+        const dish: Dish = {
+          id: matches[0]?.id ?? deps.newId(),
+          name: { en: name, id: row.nameId.trim() || name },
+          description: { en: row.descriptionEn.trim(), id: row.descriptionId.trim() },
+          size: { en: row.size.trim(), id: row.size.trim() },
+          priceCents: row.priceCents,
+          ...(row.limit !== undefined ? { limit: row.limit } : {}),
+          ...(chef ? { chefId: chef.id } : {}),
+          ...(!row.preorder ? { preorder: false } : {}),
+          ...(row.dayStock !== undefined ? { dayStock: row.dayStock } : {}),
+        };
+        writes.push({ dish, isNew: matches.length === 0 });
+        return { status: matches.length === 0 ? 'new' : 'update', name, dishId: dish.id };
+      });
+      const counts = {
+        new: rows.filter((r) => r.status === 'new').length,
+        update: rows.filter((r) => r.status === 'update').length,
+        error: rows.filter((r) => r.status === 'error').length,
+      };
+      const overLimit = dishes.length + counts.new > MAX_DISHES;
+      if (input.apply) {
+        if (overLimit) {
+          return fail(
+            'limit_reached',
+            `At most ${String(MAX_DISHES)} dishes: you have ${String(dishes.length)} and this adds ${String(counts.new)}`,
+          );
+        }
+        const at = nowIso();
+        await db.batch(
+          writes.map(({ dish, isNew }) =>
+            isNew
+              ? dishStatement(db, sid, dish, at)
+              : db.stmt(
+                  `UPDATE dishes SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
+                     price_cents = ?, portion_limit = ?, chef_id = ?, preorder = ?, day_stock = ?
+                   WHERE seller_id = ? AND id = ?`,
+                  dish.name.en,
+                  dish.name.id,
+                  dish.description.en,
+                  dish.description.id,
+                  dish.size.en,
+                  dish.size.id,
+                  dish.priceCents,
+                  dish.limit ?? null,
+                  dish.chefId ?? null,
+                  dish.preorder !== false,
+                  dish.dayStock ?? null,
+                  sid,
+                  dish.id,
+                ),
+          ),
+        );
+      }
+      return ok({ applied: input.apply, rows, counts, overLimit });
+    },
+
     async updateDish(id, patch) {
       const row = await dishRow(id);
       if (!row) return fail('not_found', 'Dish not found');
@@ -708,6 +820,26 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
         setStatements(db, sid, { ...set, dishIds: [...set.dishIds], images: {} }, count?.n ?? 0),
       );
       return ok({ ...set, dishIds: [...set.dishIds] });
+    },
+
+    /** D-094: appends one library dish to the menu; the other items are not touched. */
+    async addDishToMenu(dishId) {
+      const [row, items, dish] = await Promise.all([
+        menuRow(),
+        db.all<ItemRow>('SELECT * FROM menu_items WHERE seller_id = ? ORDER BY position', sid),
+        dishRow(dishId),
+      ]);
+      if (row.state === 'finished') return fail('week_closed', 'This menu is finished');
+      if (!dish) return fail('unknown_item', 'Unknown dish');
+      if (items.some((item) => item.dish_id === dishId)) {
+        return fail('already_on_menu', 'This dish is already on the menu');
+      }
+      if (items.length >= MAX_MENU_ITEMS) {
+        return fail('limit_reached', `At most ${String(MAX_MENU_ITEMS)} dishes on a menu`);
+      }
+      const top = items.reduce((max, item) => Math.max(max, item.position), -1);
+      await db.batch(copyStatements([dish], top + 1));
+      return ok(await readView());
     },
 
     /** Adds the set's dishes to the menu (those already on it stay as they are). */

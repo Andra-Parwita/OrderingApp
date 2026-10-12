@@ -449,12 +449,16 @@ export function NotPublishedView({
   cook,
   lang,
   onMessageSeller,
+  soon,
 }: Readonly<{
   /** Absent when the server only said "not published" and sent no kitchen. */
   kitchen?: Kitchen;
   cook?: string;
   lang: Language;
-  onMessageSeller: () => void;
+  /** Without it there is no WhatsApp button (the kitchen has no number). */
+  onMessageSeller?: () => void;
+  /** The next menu is a draft: "coming soon" instead of "not out yet". */
+  soon?: boolean;
 }>) {
   const { t } = useTranslation(CUSTOMER_NS);
   const who = cook || t('states.theSeller');
@@ -471,12 +475,14 @@ export function NotPublishedView({
         <BigIcon>
           <MenuIcon name="calendar" size="2rem" />
         </BigIcon>
-        <h2>{t('states.notOutTitle')}</h2>
-        <p>{t('states.notOutBody', { cook: who })}</p>
-        <OutlineButton type="button" onClick={onMessageSeller}>
-          <MenuIcon name="chat" />
-          {t('states.messageSeller')}
-        </OutlineButton>
+        <h2>{t(soon ? 'states.comingSoonTitle' : 'states.notOutTitle')}</h2>
+        <p>{t(soon ? 'states.comingSoonBody' : 'states.notOutBody', { cook: who })}</p>
+        {onMessageSeller ? (
+          <OutlineButton type="button" onClick={onMessageSeller}>
+            <MenuIcon name="chat" />
+            {t('states.messageSeller')}
+          </OutlineButton>
+        ) : null}
       </Centered>
     </Screen>
   );

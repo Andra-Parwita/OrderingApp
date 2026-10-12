@@ -13,7 +13,7 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
   // WhatsApp is never contacted from tests.
-  await context.route('https://wa.me/**', (route) =>
+  await context.route('https://api.whatsapp.com/**', (route) =>
     route.fulfill({ contentType: 'text/html', body: '<p>wa</p>' }),
   );
 
@@ -27,7 +27,7 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   // C1 menu home, then the dishes
   await markHowItWorksSeen(context);
   await page.goto('/onde-onde');
-  await expect(page.getByRole('heading', { name: 'Onde Onde' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Onde Onde', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'See dishes and order' }).click();
   await expect(page).toHaveURL(/\/onde-onde\/dishes$/);
   const addPesmol = page.getByRole('button', { name: 'Add one Tilapia pesmol' });
@@ -62,7 +62,7 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
     page.getByRole('button', { name: /^Send to .* on WhatsApp$/ }).click(),
   ]);
   const url = new URL(popup.url());
-  expect(url.origin + url.pathname).toBe('https://wa.me/');
+  expect(url.origin + url.pathname).toBe('https://api.whatsapp.com/send');
   const text = url.searchParams.get('text') ?? '';
   expect(text).toContain(`my order is ${(await code.textContent()) ?? ''}`);
   expect(text).toContain('2× Tilapia pesmol, 1× Thin battered tempeh');

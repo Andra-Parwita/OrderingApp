@@ -47,10 +47,31 @@ The plan work in progress, one row per stage or check, kept current by the coord
 - 027 a named admin device on the iPad · 028 invite a helper and try it on a phone · 029 a pretend stall day on two devices · 030 a chef adds a dish · 031 open the demo kitchen as admin · 032 an invite link on the phone, pause and resume · 042 a real print or PDF
 
 
+
+
+
+
+
+
+| gate: typecheck · lint · format · all unit tests, then full e2e parallel | coordinator · shell | 20:22 | 25 min | | | | — | ⏳ |
+
+
 ## Done (newest first)
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-12 | bug fix: draft menu hidden from customers ("coming soon") + 054 home-screen card | builder · sonnet | 20:09 | 60 min | 20:21 | 12 min | −48 min | ~14 files, 2 new | ✅ 667 tests, e2e customer-batch1 3/3 |
+| 2026-10-12 | seller sign-in shows ShaggyBobo when no kitchen is remembered | builder · sonnet | 20:17 | 15 min | 20:21 | 4 min | −11 min | 4 files | ✅ 10 tests; captures/sign-in-fresh |
+| 2026-10-12 | 050 · 3 CSV Import / Export / Template + 053 menu step tabs + phone More note | builder · sonnet | 20:08 | 65 min | 20:22 | 14 min | −51 min | 3 new, ~10 edited | ✅ 206 tests; captures/p050, p053 |
+| 2026-10-12 | 051 · append-one-dish route (owner + chef own dish), client switched | builder · sonnet | 20:05 | 15 min | 20:14 | 9 min | −6 min | ~8 files | ✅ 47 tests; new error code already_on_menu |
+| 2026-10-12 | 051 · dishes on the phone + chef "Add to menu" | builder · sonnet | 19:52 | 30 min | 20:06 | 14 min | −16 min | ~12 files, 1 new test | ✅ 180 tests; captures/p051 |
+| 2026-10-12 | 040 · banner unlinked from left-menu collapse | builder · sonnet | 19:58 | 10 min | 20:04 | 6 min | −4 min | 4 files | ✅ 7 unit, e2e banners 3/3 |
+| 2026-10-12 | 050 · 1–2 dish CSV parser + import endpoint (name + chef matching), and the D-094 server rule | builder · sonnet | 19:48 | 30 min | 20:02 | 14 min | −16 min | 3 new, 4 edited | ✅ 48 tests; no migration |
+| 2026-10-12 | 052 · admin e2e WhatsApp URL + Refresh step | builder · sonnet | 19:51 | 8 min | 19:58 | 7 min | −1 min | 1 spec | ✅ admin e2e 2/2; no wa.me left in e2e |
+| 2026-10-12 | 049 · Edit chefs in a modal over the dish editor | builder · sonnet | 19:45 | 25 min | 19:52 | 7 min | −18 min | ~14 files, 1 new test | ✅ 55 tests; e2e chef-dishes + seller-setup pass |
+| 2026-10-12 | 052 · admin Last updated + Refresh (1/min) | builder · sonnet | 19:48 | 20 min | 20:04 | 16 min | −4 min | 1 new, 5 edited | ✅ 28 tests; admin e2e caught a wa.me expectation 047 missed |
+| 2026-10-12 | 048 · seller app installable on every /seller page + in-app "Install the app" | builder · sonnet | 19:22 | 45 min | 19:48 | 26 min | −19 min | ~14 files, 3 icons, 1 manifest | ✅ 971 tests; Chrome install check: no errors on 3 seller pages |
+| 2026-10-12 | 047 · link previews (small square: ShaggyBobo face / kitchen app icon) + WhatsApp via api.whatsapp.com | builder · sonnet | 19:06 | 35 min | 19:20 | 14 min | −21 min | ~20 files, 1 image | ✅ 1369 tests, e2e customer-batch1/2 |
 | 2026-10-11 | 044 · new mascot (jump + blink), happy-face logo pill, top bar over the scene, phone without bars, `--legs-x` | builder · sonnet | 20:58 | 30 min | 21:30 | 32 min | +2 min | ~12 files, 6 new images | ✅ 139 tests, admin e2e 2/2, typecheck/lint/format clean |
 | 2026-10-11 | sign-in form logo: beige container in light mode too | builder · sonnet | 20:46 | 8 min | 20:50 | 4 min | −4 min | 2 files | ✅ 8/8 |
 | 2026-10-11 | the whole sequential chain (+ seller-auth / chef-dishes URL fixes) | builder · sonnet | 20:38 | 15 min | 20:50 | 12 min | −3 min | 2 specs | ✅ 28 passed, 0 failed, 9 skipped (mobile-only skips) |

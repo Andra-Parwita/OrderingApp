@@ -137,5 +137,20 @@
     "homeInstall": "Install",
     "homeShow": "Show me how",
     "homeFallback": "No Install button? Tap ⋮ in Chrome, then <b>Add to home screen</b>."
+  },
+  "homeCard": {
+    "label": "Home screen",
+    "customerTitle": "Put {{name}} on your home screen",
+    "customerBody": "Order again with one tap and get a message when your order is ready.",
+    "sellerTitle": "Put the seller app on your home screen",
+    "sellerBody": "Open it with one tap on cooking day.",
+    "add": "Add to home screen",
+    "showMe": "Show me how",
+    "openInChrome": "Open this page in Chrome to add it to your home screen."
+  },
+  "sellerInstall": {
+    "name": "ShaggyBobo Seller",
+    "title": "Install the app",
+    "sub": "Add the seller app to your home screen"
   }
 }

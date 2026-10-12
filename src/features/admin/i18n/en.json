@@ -58,6 +58,17 @@
     "noSellers": "No sellers yet.",
     "devicesCount_one": "{{count}} device",
     "devicesCount_other": "{{count}} devices",
+    "refresh": {
+      "button": "Refresh",
+      "wait": "Refresh in {{seconds}} s",
+      "updated": "Last updated {{time}} · {{ago}}",
+      "never": "Loading…",
+      "justNow": "just now",
+      "minutesAgo_one": "{{count}} minute ago",
+      "minutesAgo_other": "{{count}} minutes ago",
+      "hoursAgo_one": "{{count}} hour ago",
+      "hoursAgo_other": "{{count}} hours ago"
+    },
     "createdOn": "Created {{date}}",
     "close": "Close",
     "add": {

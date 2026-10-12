@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router';
 import { styled } from 'styled-components';
 import { appVersion } from '../../../shared/buildInfo';
+import { useSellerInstall } from '../../components/install';
 import { Toast } from '../../ui';
 import { Version } from './paneParts';
 import { SETTINGS_NS } from './i18n/register';
@@ -62,6 +63,26 @@ const PaneLink = styled(Link)<{ $active: boolean }>`
     outline-offset: ${({ theme }) => theme.border.focus};
   }
 `;
+// The "Install the app" row: looks like a pane link, but is a button (it opens no pane).
+const PaneAction = styled.button`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: ${({ theme }) => theme.minTapTarget};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border: 0;
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: transparent;
+  color: ${({ theme }) => theme.c.text};
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.fill};
+    outline-offset: ${({ theme }) => theme.border.focus};
+  }
+`;
 const PaneName = styled.span`
   font-weight: ${({ theme }) => theme.type.weight.strong};
 `;
@@ -109,6 +130,7 @@ type Props = Readonly<{
 export function SettingsPanes({ pane, devices, images, chefs, backup }: Props) {
   const { t } = useTranslation(SETTINGS_NS);
   const dispatch = useDispatch();
+  const sellerInstall = useSellerInstall();
   const sliceToast = useSelector((state: SettingsRootState) => state.sellerSettings.toast);
   // The pane the "saved" toast belongs to: leaving that pane hides it.
   const [flashPane, setFlashPane] = useState<PaneId | null>(null);
@@ -150,7 +172,14 @@ export function SettingsPanes({ pane, devices, images, chefs, backup }: Props) {
           {PANE_IDS.filter((id) => !SECOND_GROUP.includes(id)).map(link)}
           <Divider />
           {SECOND_GROUP.map(link)}
+          {sellerInstall.available ? (
+            <PaneAction type="button" onClick={sellerInstall.install}>
+              <PaneName>{sellerInstall.title}</PaneName>
+              <PaneSub>{sellerInstall.sub}</PaneSub>
+            </PaneAction>
+          ) : null}
         </List>
+        {sellerInstall.overlay}
         <Content>
           <PaneTitle>{t(`panes.${pane}.title`)}</PaneTitle>
           {content[pane]}

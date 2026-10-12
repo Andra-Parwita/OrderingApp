@@ -11,9 +11,11 @@ describe('kitchen page theme', () => {
     const first = await kitchenPageFor(world.repo, '/onde-onde');
     expect(first?.theme).toBe('onde');
     await world.db.stmt("UPDATE kitchen_settings SET theme = 'bali'").run();
-    const page = await kitchenPageFor(world.repo, '/onde-onde/basket');
+    const page = await kitchenPageFor(world.repo, '/onde-onde/basket', 'https://x.test');
     expect(page?.theme).toBe('bali');
     expect(page?.head).toContain('<meta name="theme-color" content="#');
+    expect(page?.head).toContain('property="og:title" content="');
+    expect(page?.head).toContain('property="og:image" content="https://x.test/');
     expect(await kitchenPageFor(world.repo, '/nobody-here')).toBeNull();
     expect((await kitchenPageFor(world.repo, '/seller/orders'))?.theme).toBeUndefined();
   });

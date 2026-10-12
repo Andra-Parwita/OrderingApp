@@ -38,6 +38,9 @@ test('admin sets up or signs in, adds a seller and sees an invite key once', asy
   await page.getByRole('button', { name: 'Sign in with passkey' }).click();
 
   await expect(page.getByRole('list', { name: 'Sellers' })).toBeVisible();
+  await expect(page.getByText(/^Last updated \d\d:\d\d/)).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(page.getByRole('button', { name: /^Refresh in \d+ s$/ })).toBeDisabled();
 
   // The harness has no brand bar or pictures editor: carry on in the real admin route, which
   // the sign-in just opened a session for.
@@ -75,7 +78,7 @@ test('admin sets up or signs in, adds a seller and sees an invite key once', asy
   expect(key.length).toBeGreaterThan(8);
   await expect(box.getByRole('link', { name: 'Send on WhatsApp' })).toHaveAttribute(
     'href',
-    /^https:\/\/wa\.me\/\?text=/,
+    /^https:\/\/api\.whatsapp\.com\/send\?text=/,
   );
   await page.screenshot({
     path: `captures/admin-home-${testInfo.project.name}.png`,

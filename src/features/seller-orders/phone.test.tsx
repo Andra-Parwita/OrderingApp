@@ -98,14 +98,16 @@ describe('Phone orders', () => {
   it("opens the chat picker when no number is saved, and the customer's chat when one is", () => {
     renderList();
     fireEvent.click(screen.getByRole('button', { name: "Send Rina's order link on WhatsApp" }));
-    expect(String(open.mock.calls[0]?.[0])).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    expect(String(open.mock.calls[0]?.[0])).toMatch(/^https:\/\/api\.whatsapp\.com\/send\?text=/);
 
     saveContact(SLUG, 'AAA222', { phone: '0412 345 678', address: '' });
     fireEvent.click(screen.getByRole('button', { name: "Send Rina's order link on WhatsApp" }));
-    expect(String(open.mock.calls[1]?.[0])).toMatch(/^https:\/\/wa\.me\/61412345678\?text=/);
+    expect(String(open.mock.calls[1]?.[0])).toMatch(
+      /^https:\/\/api\.whatsapp\.com\/send\?phone=61412345678&text=/,
+    );
     // The other customer has no number: still the picker.
     fireEvent.click(screen.getByRole('button', { name: "Send Budi's order link on WhatsApp" }));
-    expect(String(open.mock.calls[2]?.[0])).toMatch(/^https:\/\/wa\.me\/\?text=/);
+    expect(String(open.mock.calls[2]?.[0])).toMatch(/^https:\/\/api\.whatsapp\.com\/send\?text=/);
   });
 });
 

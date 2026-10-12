@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { browserPasskeys } from '../../../mocks/browserPasskeys';
@@ -360,7 +360,7 @@ describe('AdminHomeScreen', () => {
 
     const whatsapp = within(box).getByRole('link', { name: 'Send on WhatsApp' });
     const href = whatsapp.getAttribute('href') ?? '';
-    expect(href.startsWith('https://wa.me/?text=')).toBe(true);
+    expect(href.startsWith('https://api.whatsapp.com/send?text=')).toBe(true);
     expect(decodeURIComponent(href)).toContain(link);
 
     fireEvent.click(within(box).getByRole('button', { name: 'Copy link with key' }));
@@ -405,7 +405,7 @@ describe('AdminHomeScreen', () => {
     // An edit is what WhatsApp and Copy message get.
     fireEvent.change(preview, { target: { value: `Edited ${link}` } });
     const href = within(box).getByRole('link', { name: 'Send on WhatsApp' }).getAttribute('href');
-    expect(href).toBe(`https://wa.me/?text=${encodeURIComponent(`Edited ${link}`)}`);
+    expect(href).toBe(`https://api.whatsapp.com/send?text=${encodeURIComponent(`Edited ${link}`)}`);
     fireEvent.click(within(box).getByRole('button', { name: 'Copy message' }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(`Edited ${link}`));
   });
@@ -698,5 +698,53 @@ describe('AdminHomeScreen own devices (plan 027)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save name' }));
     expect(await screen.findByText('Andra iPad')).toBeInTheDocument();
     expect(screen.queryByText('Test PC')).not.toBeInTheDocument();
+  });
+});
+
+describe('AdminHomeScreen refresh (plan 052)', () => {
+  const calls = (spy: { mock: { calls: Array<Array<unknown>> } }, part: string) =>
+    spy.mock.calls.filter(([input]) => String(input).includes(part)).length;
+
+  it('shows when it was updated, refreshes list, problems and the open panel, and waits 60 s', async () => {
+    await signInAsAdmin();
+    await addPerson({ role: 'owner', sellerId: 'seller-onde-onde' }, 'iPad', 'Bu Ani');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    renderThemed(<AdminHomeScreen />);
+    const sellers = await screen.findByRole('list', { name: 'Sellers' });
+    await waitFor(() =>
+      expect(screen.getByText(/Last updated \d\d:\d\d · just now/)).toBeVisible(),
+    );
+    fireEvent.click(within(sellers).getByRole('button', { name: /Onde Onde/ }));
+    await screen.findByRole('list', { name: 'People' });
+    await waitFor(() => expect(calls(fetchSpy, '/invites')).toBe(1));
+
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
+    try {
+      const before = {
+        list: calls(fetchSpy, '/api/admin/sellers') - calls(fetchSpy, '/sellers/'),
+        log: calls(fetchSpy, '/api/admin/log'),
+        invites: calls(fetchSpy, '/invites'),
+      };
+      const button = screen.getByRole('button', { name: 'Refresh' });
+      fireEvent.click(button);
+      await waitFor(() => expect(calls(fetchSpy, '/invites')).toBe(before.invites + 1));
+      expect(calls(fetchSpy, '/api/admin/log')).toBe(before.log + 1);
+      expect(calls(fetchSpy, '/api/admin/sellers') - calls(fetchSpy, '/sellers/')).toBe(
+        before.list + 1,
+      );
+      expect(screen.getByRole('button', { name: 'Refresh in 60 s' })).toBeDisabled();
+
+      act(() => {
+        vi.advanceTimersByTime(45_000);
+      });
+      expect(screen.getByRole('button', { name: 'Refresh in 15 s' })).toBeDisabled();
+      act(() => {
+        vi.advanceTimersByTime(15_000);
+      });
+      expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled();
+      expect(screen.getByText(/Last updated \d\d:\d\d · 1 minute ago/)).toBeVisible();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

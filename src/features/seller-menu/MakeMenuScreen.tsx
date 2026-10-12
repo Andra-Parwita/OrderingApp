@@ -280,7 +280,12 @@ export function MakeMenuScreen({
           </>
         )}
       </Foot>
-      <DishEditorHost data={data} value={editor.value} onClose={editor.close} />
+      <DishEditorHost
+        data={data}
+        value={editor.value}
+        onClose={editor.close}
+        renderChefs={slots.chefs}
+      />
     </Page>
   );
 }

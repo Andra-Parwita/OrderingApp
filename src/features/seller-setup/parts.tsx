@@ -6,6 +6,7 @@ export const Page = styled.main`
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  width: 100%;
   max-width: min(100%, 45rem);
   margin: 0 auto;
 `;

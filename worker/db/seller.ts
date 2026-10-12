@@ -386,7 +386,9 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       : { ...copy, onTheDay: dayStock > 0 ? ('available' as const) : ('sold_out' as const) };
   }
 
-  function publicMenu(s: State): MenuResponse {
+  function publicMenu(s: State, forSeller = false): MenuResponse {
+    // A draft is the seller's private work: customers get the kitchen, no dishes, no ordering.
+    const draft = !forSeller && s.week.status !== 'published';
     return {
       seller: { ...seller },
       kitchen: {
@@ -394,10 +396,10 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         ...(s.settings.whatsappNumber ? { whatsappNumber: s.settings.whatsappNumber } : {}),
       },
       week: s.week,
-      items: s.items.map((item) => view(item, s.used)),
-      ordering: ordering(s),
+      items: draft ? [] : s.items.map((item) => view(item, s.used)),
+      ordering: draft ? { open: false, reason: 'not_published' } : ordering(s),
       theme: s.theme,
-      ...(s.pictureUrl !== undefined ? { pictureUrl: s.pictureUrl } : {}),
+      ...(!draft && s.pictureUrl !== undefined ? { pictureUrl: s.pictureUrl } : {}),
     };
   }
 
@@ -921,7 +923,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
     async getSellerMenu(): Promise<SellerMenuResponse> {
       const s = await loadState();
-      const menu = publicMenu(s);
+      const menu = publicMenu(s, true);
       return { ...menu, chefs: s.chefs, items: s.items.map((item) => sellerView(item, s.used)) };
     },
 

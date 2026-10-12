@@ -9,7 +9,7 @@ import { WalkingMascot } from './BrandMascot';
 // Plan 036: the developer (ShaggyBobo) branding on the admin pages and the seller's first set-up
 // from an invitation. Its colours and sizes are the brand's own (src/theme/brandTokens.ts).
 
-export type BrandPage = 'admin' | 'sellerSetup';
+export type BrandPage = 'admin' | 'sellerSetup' | 'sellerSignIn';
 
 /** The Nusantara market scene behind the mascot (1200 x 2000, shown with cover). */
 const SCENE_SRC = '/brand/nusantara-market.webp';
@@ -152,6 +152,7 @@ function BrandHeaderParts({ page }: Readonly<{ page: BrandPage }>) {
     <>
       <BrandLogo onBeige />
       {page === 'sellerSetup' ? <Pill>{t('app.brand.sellerSetup')}</Pill> : null}
+      {page === 'sellerSignIn' ? <Pill>{t('app.brand.sellerSignIn')}</Pill> : null}
     </>
   );
 }

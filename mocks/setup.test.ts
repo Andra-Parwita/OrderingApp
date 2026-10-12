@@ -167,7 +167,14 @@ describe('seller setup', () => {
       const down = await call('POST', '/api/seller/menus/current/unpublish', A_);
       expect(down.status).toBe(200);
       expect((await view(A)).menu['state']).toBe('not_published');
-      expect((await publicMenu(A)).week.status).not.toBe('published');
+      const draft = await publicMenu(A);
+      expect(draft.week.status).not.toBe('published');
+      // A draft shows customers the kitchen only: no dishes, no prices, ordering off.
+      expect(draft.items).toEqual([]);
+      expect(draft.ordering).toEqual({ open: false, reason: 'not_published' });
+      expect(draft.kitchen.name).toBeTruthy();
+      // The seller's own preview still sees the draft's dishes.
+      expect((await menu(A)).items.length).toBeGreaterThan(0);
       const blocked = await call('POST', `/api/s/${A}/orders`, {
         body: {
           firstName: 'Rina',
@@ -179,7 +186,10 @@ describe('seller setup', () => {
       expect(blocked).toMatchObject(ERR(409, 'week_not_published'));
       expect((await call('POST', '/api/seller/menus/current/publish', A_)).status).toBe(200);
       expect((await view(A)).menu['state']).toBe('live');
-      expect((await publicMenu(A)).week.status).toBe('published');
+      const live = await publicMenu(A);
+      expect(live.week.status).toBe('published');
+      expect(live.items.length).toBeGreaterThan(0);
+      expect(live.ordering.reason).not.toBe('not_published');
     });
 
     it('warns before publishing an empty menu, and publishes it only with force (D-062)', async () => {

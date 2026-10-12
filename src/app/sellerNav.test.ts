@@ -86,6 +86,19 @@ describe('phone', () => {
     }
     expect(isTabletOnly('/seller/hand-over/delivery')).toBe(false);
   });
+  it('lets a phone open Your dishes, and the wizard stays tablet-only (plan 051)', () => {
+    expect(isTabletOnly('/seller/menu/dishes')).toBe(false);
+    expect(isTabletOnly('/seller/menu', 'chef')).toBe(false);
+    expect(isTabletOnly('/seller/menu', 'seller')).toBe(true);
+    for (const path of [
+      '/seller/menu/make/dishes',
+      '/seller/menu/edit/details',
+      '/seller/menu/sets',
+    ]) {
+      expect(isTabletOnly(path)).toBe(true);
+      expect(isTabletOnly(path, 'chef')).toBe(true);
+    }
+  });
 });
 
 describe('isTaskScreen', () => {

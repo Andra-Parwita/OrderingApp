@@ -31,6 +31,10 @@ export const sellerAppName = (kitchenName: string): string => `${kitchenName} ·
 export const sellerManifestPath = (slug: string): string =>
   `/k/${encodeURIComponent(slug)}/seller.webmanifest`;
 
+/** The seller app before any kitchen is known (plan 048): a static manifest and PNG icon in public/. */
+export const DEFAULT_SELLER_MANIFEST_PATH = '/seller.webmanifest';
+export const DEFAULT_SELLER_ICON_PATH = '/brand/app-icon-192.png';
+
 /** The shared default icon (public/), served for kitchens without an uploaded one. */
 export const DEFAULT_ICON_PATH = '/app-icon.png';
 

@@ -7,7 +7,7 @@
 <!-- Phone view: resize the window to a phone width (390) to see it as on a phone; wider windows show the app's 480 px column.
      Owner's mock-up (2026-10-11): try the seller banner shapes and the collapse at any window size.
      Open this file in a browser and resize the window (iPad landscape = 1180 x 820).
-     Images: public/samples/ (banner-wide-3840x328.webp, banner-template-wide.jpg, banner-wide.jpg 5:1, banner-bg.jpg, banner-phone-3x1.jpg). -->
+     Images: public/samples/ (./banner-wide-3840x328.webp and ./banner-template-wide.jpg here; public/samples/: banner-wide.jpg 5:1, banner-bg.jpg, banner-phone-3x1.jpg). -->
 <style>
   :root {
     --bg: #F6F2E8; --surf: #FFFDF7; --surf2: #EFE9DB; --line: #E4DED0; --text: #1C1F1A; --muted: #5D6358;
@@ -173,7 +173,7 @@ let lastFull = 164;
 const RATIO = { A: 6, B: 5, C: 5, R: 6, X: 5 };
 const artKey = () => (val('shape') === 'R' ? $('art').value : String(RATIO[val('shape')]));
 const artRatio = () => (artKey() === 'T' || artKey() === 'W' ? 3840 / 328 : Number(artKey()));
-const SRC = { W: '../../../public/samples/banner-wide-3840x328.webp', T: '../../../public/samples/banner-template-wide.jpg', 5: '../../../public/samples/banner-wide.jpg' };
+const SRC = { W: './banner-wide-3840x328.webp', T: './banner-template-wide.jpg', 5: '../../../public/samples/banner-wide.jpg' };
 const UPLOAD = { W: '3840 × 328 (content in the middle 1896)', 8: '2560 × 320 (8:1)', 6: '1920 × 320 (6:1)', 5: '2000 × 400 (5:1)' };
 
 for (let i = 0; i < 40; i++) {

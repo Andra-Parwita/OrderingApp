@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { MAX_MENU_ITEMS } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { Button, Icon } from '../../ui';
+import { DishCsvTools } from './DishCsvTools';
 import { DishEditorHost, useDishEditor } from './DishEditorHost';
 import { MENU_NS } from './i18n/register';
 import {
+  ErrorText,
   Head,
   Muted,
   Page,
@@ -14,6 +18,7 @@ import {
   Title,
   useLang,
   useMenuData,
+  useOpWatch,
   useRunOp,
 } from './menuShared';
 
@@ -43,6 +48,17 @@ const Row = styled.div<{ $off?: boolean }>`
   .num {
     text-align: right;
   }
+
+  /* Phone: name, price, pencil; the menu status or Add to menu sits on a line of its own. */
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: minmax(0, 1fr) auto 3rem;
+    padding: ${({ theme }) => theme.spacing.sm} 0;
+
+    > span:nth-child(3) {
+      grid-column: 1 / 3;
+      grid-row: 2;
+    }
+  }
 `;
 const Pencil = styled.button`
   display: inline-flex;
@@ -62,6 +78,12 @@ export function ChefMenu({ chefId }: Readonly<{ chefId: string }>) {
   const { data, status } = useMenuData();
   const { run, busy } = useRunOp();
   const editor = useDishEditor();
+  const [refused, setRefused] = useState<string | null>(null);
+  useOpWatch(['addDishToMenu'], {
+    onDone: () => setRefused(null),
+    onFail: (result) =>
+      setRefused(result.code === 'forbidden' ? t('chef.ownerOnly') : t('genericError')),
+  });
   if (!data) {
     return (
       <Page>
@@ -74,6 +96,7 @@ export function ChefMenu({ chefId }: Readonly<{ chefId: string }>) {
   }
   const mine = data.dishes.filter((dish) => dish.chefId === chefId);
   const menuOpen = data.view.menu.state !== 'finished';
+  const menuFull = data.view.dishes.length >= MAX_MENU_ITEMS;
   const onMenu = menuOpen ? data.view.dishes.filter((item) => item.chefId === chefId) : [];
   return (
     <Page>
@@ -86,6 +109,8 @@ export function ChefMenu({ chefId }: Readonly<{ chefId: string }>) {
       </Head>
       <Section>
         <Muted style={{ marginBottom: '1rem' }}>{t('chef.help')}</Muted>
+        <DishCsvTools dishes={mine} chefs={data.chefs.filter((chef) => chef.id === chefId)} />
+        {refused ? <ErrorText role="alert">{refused}</ErrorText> : null}
         {mine.length === 0 ? <Muted>{t('dishes.noneYet')}</Muted> : null}
         {mine.map((dish) => {
           const name = pickText(dish.name, lang);
@@ -119,6 +144,14 @@ export function ChefMenu({ chefId }: Readonly<{ chefId: string }>) {
                     <i />
                     <span>{item.manualSoldOut === true ? t('live.yes') : t('live.no')}</span>
                   </SwitchButton>
+                ) : menuOpen && !menuFull ? (
+                  <Button
+                    disabled={busy}
+                    aria-label={t('chef.addToMenuFor', { name })}
+                    onClick={() => run({ kind: 'addDishToMenu', dishId: dish.id })}
+                  >
+                    {t('chef.addToMenu')}
+                  </Button>
                 ) : (
                   <Muted as="span">{t('chef.notOnMenu')}</Muted>
                 )}
