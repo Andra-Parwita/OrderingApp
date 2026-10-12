@@ -5,7 +5,7 @@
 **Last session:** 2026-10-12 evening, the owner's PC (Adelaide), with Claude as coordinator. Branch `indra/brand_logo_ux` = `main` (release **1.0.24**, `e056995`, deployed) + the builder's plans 045/046 (`09268ac`) + **this session's uncommitted work** below. GitHub's copy of the branch still has the old history: push it with `git push --force-with-lease origin indra/brand_logo_ux`.
 
 ## Where things stand
-Built on this PC tonight, **not committed or deployed yet**. Each builder ran typecheck, eslint, its unit tests and its own e2e specs. The final gate: typecheck ✅, lint ✅, format ✅ (one file fixed at 20:26), **all unit tests pass: 1852 of 1852 in 164 files** (20:34, before plan 055), and **the full e2e suite has not run on the whole set yet** (see "First thing next session").
+Built on this PC on 12 Oct and **committed by the owner as `c89fbfd`** (during the final e2e run); the e2e spec fixes and these docs are a second small commit. **Not deployed yet.** **The final gate passed (22:08):** typecheck ✅, lint ✅, format ✅, **unit 1897 / 1897** ✅ (172 files), **e2e 74 passed, 0 failed** ✅ (`scratch/g5-e2e.log`; 28 skipped = captures and opt-ins). The e2e fixes were test updates only (the home-screen card is dismissed in customer specs; `/seller` now has the seller manifest; a chef lands on `/seller/orders` after setup). No app code changed in the fix round.
 
 | plan | what |
 |---|---|
@@ -42,10 +42,9 @@ Built on this PC tonight, **not committed or deployed yet**. Each builder ran ty
 | signed-in people | ✅ nobody is signed out |
 | beta testers with the app open | ⚠️ **this** deploy: an old home-screen app keeps the old version until it is **fully closed and reopened** (swipe it away). Tell them once. From this version on, the new-version bar (plan 059) tells them |
 
-## First thing next session (before the commit)
-1. Check plan 055 finished (its report / `docs/plans/live-status.md`), then re-run the unit tests it touched (`pnpm exec vitest run src/features/seller-menu mocks`). The rest passed (1852/1852 at 20:34). A miniflare "fetch failed" / EADDRINUSE in one file is a known flake: re-run that file alone.
-2. Run the **full e2e suite** once on a quiet tree (parallel, see "Running e2e" in [guide/tech-stack.md](guide/tech-stack.md)): `NODE_EXTRA_CA_CERTS="$LOCALAPPDATA/mkcert/rootCA.pem" pnpm exec playwright test > scratch/gate-e2e.log 2>&1`. Fix only real failures; expected-URL or wording changes from tonight are spec updates.
-3. Then the owner commits (message below), pushes with `--force-with-lease`, opens a PR / merges `indra/brand_logo_ux` into `main`.
+## First thing next session
+1. The owner commits the last spec fixes + docs, pushes with `git push --force-with-lease origin indra/brand_logo_ux`, then merges into `main`.
+2. Nothing else is outstanding for this round. If anything changed since 22:08, re-run only typecheck and the touched unit tests.
 
 **Suggested commit message** (owner's rule: no mention of Claude):
 ```
@@ -86,4 +85,4 @@ Link previews, seller app install, dish CSV, chef menu additions, menu step tabs
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Finish "First thing next session": check the unit result, run the full e2e suite once and fix real failures, then give me the commit message. After I merge and my son deploys, we'll start the next round (never lose typed data, graceful network handling, then the customer app). Ask me one question at a time.
+> Read docs/HANDOVER.md and CLAUDE.md. The 12 Oct round (plans 047–059) is merged and deployed. Help me check the live app against "The owner's checks after the deploy", then plan the next round (never lose typed data, graceful network handling, more real Help screenshots, then the customer app). Ask me one question at a time.

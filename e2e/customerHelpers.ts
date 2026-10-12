@@ -8,6 +8,8 @@ export async function markHowItWorksSeen(context: BrowserContext): Promise<void>
   await context.addInitScript(() => {
     try {
       localStorage.setItem('howItWorksSeen', '1');
+      // Plan 054: the "put it on your home screen" card is not what these specs are about ("Not now").
+      localStorage.setItem('homeScreenCardUntil', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
     } catch {
       // Storage blocked: nothing to mark.
     }

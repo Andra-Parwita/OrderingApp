@@ -61,12 +61,13 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 
 
-| final gate: lint · format · all unit, then full e2e | coordinator · shell | 21:22 | 35 min | | | | — | ⏳ |
+
 
 ## Done (newest first)
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-12 | final gate: typecheck · lint · format · unit 1897 · e2e 74/74 (fixer: 3 spec updates, 4 load flakes) | coordinator + fixer · sonnet | 21:20 | 35 min | 22:08 | 48 min | +13 min | 3 spec files | ✅ |
 | 2026-10-12 | 058 · 1 seller Help page (public hidden address, 6 real screenshots, links everywhere, waving mascot) | builder · sonnet | 21:01 | 50 min | 21:20 | 19 min | −31 min | ~25 files, 6 webp | ✅ 9 tests |
 | 2026-10-12 | 059 · new-version bar, version.json (no-store), stale-chunk reload once | builder · sonnet | 21:05 | 30 min | 21:16 | 11 min | −19 min | 8 new, 3 edited | ✅ 6 tests, build ok |
 | 2026-10-12 | editor round: 056·3 one field per text, 057·2 ⇄ in dish editor, sold-out names, language storage fix, setting descriptions | builder · sonnet | 21:01 | 40 min | 21:12 | 11 min | −29 min | ~18 files, 2 new | ✅ 159 tests |
