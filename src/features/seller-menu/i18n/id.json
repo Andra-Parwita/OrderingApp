@@ -35,7 +35,9 @@
     "notPaid": "belum dibayar",
     "use": "Pakai hidangan ini untuk menu baru",
     "addToThis": "Tambahkan hidangan ini ke menu ini",
-    "panel": "Menu lalu"
+    "panel": "Menu lalu",
+    "noPicture": "Tidak ada gambar tersimpan",
+    "picture": "Gambar menu"
   },
   "draft": {
     "kicker": "Menu Anda · belum dipublikasikan",
@@ -265,10 +267,22 @@
       "replace": "Ganti gambar",
       "remove": "Hapus",
       "alt": "Gambar menu",
-      "foot": "Setiap menu baru dimulai tanpa gambar.",
+      "foot": "Menu baru dimulai tanpa gambar, kecuali dimulai dari menu lalu.",
       "image_type": "File itu bukan gambar yang bisa dipakai. Coba JPEG, PNG atau WebP.",
       "image_too_big": "Gambar terlalu besar. Coba yang lebih kecil.",
-      "image_ratio": "Bentuk gambar salah. Pakai gambar 3:2."
+      "image_ratio": "Bentuk gambar salah. Pakai gambar 3:2.",
+      "usePast": "Pakai gambar menu lalu",
+      "fromPast": "Menu {{date}}"
+    },
+    "how": {
+      "title": "Bagaimana pelanggan mendapat makanannya?",
+      "pickup": "Ambil sendiri",
+      "delivery": "Diantar",
+      "both": "Keduanya",
+      "removeTitle": "Hapus tempat ambil dari menu ini?",
+      "removeBody": "Hanya diantar berarti pelanggan tidak bisa memilih tempat ambil. Tempat tersimpan tetap ada di Pengaturan.",
+      "keep": "Pertahankan tempat",
+      "remove": "Hapus"
     }
   },
   "check": {
@@ -287,7 +301,12 @@
     "off": "Tidak",
     "worth": "Perlu dilihat",
     "allGood": "Tidak ada yang perlu diperiksa. Siap kapan saja.",
-    "neverBlock": "Tidak satu pun menghalangi Anda mempublikasikan."
+    "neverBlock": "Tidak satu pun menghalangi Anda mempublikasikan.",
+    "how": "Cara mendapat makanan",
+    "pickupOnly": "Hanya ambil sendiri",
+    "deliveryOnly": "Hanya diantar",
+    "pickupOrDelivery": "Ambil sendiri atau diantar",
+    "noWay": "belum dipilih"
   },
   "worry": {
     "noDishes": "Menu ini belum punya hidangan.",

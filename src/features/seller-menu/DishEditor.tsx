@@ -11,6 +11,8 @@ import {
 import { formatDay } from '../../../shared/dates';
 import type { Dish } from '../../../shared/menusContract';
 import { useSellerLanguages } from '../../api/useSellerLanguages';
+import { currentSellerSlug } from '../../api/device/sellerContext';
+import { DRAFT_NS, DraftNotice, draftKey, fingerprint, useDraft } from '../../components/draft';
 import { TranslateButton } from '../../components/translate';
 import { Button, SlideOverEditor, TextArea, TextField, WarningDialog } from '../../ui';
 import { FieldFrame, fieldControlStyle, useFieldIds } from '../../ui/Field';
@@ -145,10 +147,16 @@ export function DishEditor({
       : undefined;
   const item = target.kind === 'menu' ? view.dishes.find((d) => d.id === target.itemId) : undefined;
   const isNew = target.kind === 'library' && target.dishId === null;
-  const [draft, setDraft] = useState<ItemDraft>(() =>
+  const [start] = useState<ItemDraft>(() =>
     item ? draftOf(item) : dish ? draftOfDish(dish) : EMPTY_DRAFT,
   );
-  const [start] = useState(draft);
+  // Plan 061: what is typed survives a reload or a closed editor, until Save or Discard.
+  const [draft, setDraft, saved] = useDraft<ItemDraft>(
+    draftKey(currentSellerSlug(), 'dish', item ? `menu-${item.id}` : dish ? dish.id : 'new'),
+    start,
+    { baseline: fingerprint(start) },
+  );
+  const { t: tDraft } = useTranslation(DRAFT_NS);
   const [submitted, setSubmitted] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
@@ -203,11 +211,14 @@ export function DishEditor({
     } else if (draft.chefId !== '' && !data.chefs.some((c) => c.id === draft.chefId)) {
       setDraft((previous) => ({ ...previous, chefId: '' }));
     }
-  }, [data.chefs, editingChefs, draft.chefId]);
+  }, [data.chefs, editingChefs, draft.chefId, setDraft]);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(start), [draft, start]);
 
   useOpWatch(['createDish', 'updateDish', 'updateMenuDish', 'deleteDish'], {
-    onDone: () => onClose(),
+    onDone: () => {
+      saved.clear();
+      onClose();
+    },
     onFail: (result) => {
       // A new dish is saved even when "add to this menu" was refused: say so, and close.
       setFailure(
@@ -268,6 +279,11 @@ export function DishEditor({
         saveLabel={isNew ? t('dish.add') : t('dish.save')}
         saving={busy}
         onCancel={onClose}
+        onDiscard={() => {
+          saved.discard();
+          onClose();
+        }}
+        keepDraftLabel={tDraft('keepDraft')}
         onSave={save}
       >
         <Form
@@ -278,6 +294,7 @@ export function DishEditor({
         >
           <Heading>{title}</Heading>
           <Muted>{isNew ? t('dish.subNew') : t('dish.subEdit')}</Muted>
+          <DraftNotice draft={saved} />
           {oneLanguage ? (
             <>
               <TextField

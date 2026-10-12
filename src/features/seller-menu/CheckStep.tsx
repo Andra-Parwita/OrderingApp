@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
+import { MAX_MENU_ITEMS } from '../../../shared/limits';
 import { Icon } from '../../ui';
 import { MENU_NS } from './i18n/register';
 import { GroupLabel, LinkButton, Muted } from './menuShared';
@@ -108,13 +109,17 @@ export function CheckStep({
   const places = view.pickupPoints
     .map((place) => `${place.place} ${formatWindow(place.window.start, place.window.end, lang)}`)
     .join(', ');
+  const pickup = view.pickupPoints.length > 0;
+  const how = menu.delivery.available
+    ? t(pickup ? 'check.pickupOrDelivery' : 'check.deliveryOnly')
+    : t(pickup ? 'check.pickupOnly' : 'check.noWay');
   return (
     <Layout>
       <Left>
         <Head>
           <h2>
             {t('check.dishesOn')}{' '}
-            <Muted as="span">{t('live.nOf', { n: view.dishes.length, max: 10 })}</Muted>
+            <Muted as="span">{t('live.nOf', { n: view.dishes.length, max: MAX_MENU_ITEMS })}</Muted>
           </h2>
           <LinkButton onClick={() => onGo('dishes')}>{t('check.addOrRemove')}</LinkButton>
         </Head>
@@ -134,13 +139,15 @@ export function CheckStep({
               <dd>{formatCutoff(menu.cutoffAt, lang)}</dd>
             </div>
             <div>
-              <dt>{t('check.pickup')}</dt>
-              <dd>{places || t('check.nowhere')}</dd>
+              <dt>{t('check.how')}</dt>
+              <dd>{how}</dd>
             </div>
-            <div>
-              <dt>{t('check.delivery')}</dt>
-              <dd>{menu.delivery.available ? t('check.on') : t('check.off')}</dd>
-            </div>
+            {places ? (
+              <div>
+                <dt>{t('check.pickup')}</dt>
+                <dd>{places}</dd>
+              </div>
+            ) : null}
           </Summary>
         </div>
         <div>

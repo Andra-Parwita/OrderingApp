@@ -83,6 +83,14 @@ const Lines = styled.ul`
     color: ${({ theme }) => theme.c.muted};
   }
 `;
+const PastPicture = styled.img`
+  display: block;
+  width: 100%;
+  max-width: 24rem;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+`;
 const BackLink = styled.button`
   display: inline-flex;
   align-items: center;
@@ -194,6 +202,11 @@ export function PastDetail({
           <span>{t('past.unpaid')}</span>
         </div>
       </Stats>
+      {summary.pictureUrl ? (
+        <PastPicture src={summary.pictureUrl} alt={t('past.picture')} loading="lazy" />
+      ) : (
+        <Muted>{t('past.noPicture')}</Muted>
+      )}
       <GroupLabel>{t('past.dishes')}</GroupLabel>
       <Lines>
         {summary.totals.items.map((item) => (

@@ -86,6 +86,7 @@ describe('phone', () => {
       expect(isTabletOnly(path)).toBe(false);
     }
     expect(isTabletOnly('/seller/hand-over/delivery')).toBe(false);
+    expect(isTabletOnly('/seller/devices')).toBe(false);
   });
   it('lets a phone open Your dishes, and the wizard stays tablet-only (plan 051)', () => {
     expect(isTabletOnly('/seller/menu/dishes')).toBe(false);

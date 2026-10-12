@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import {
@@ -11,6 +11,7 @@ import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchPreferences } from '../../api/menus';
 import { updatePreferences } from '../../api/settings';
 import { setSoundPreference, useSoundPreference } from '../../components/chime';
+import { DraftNotice, draftKey, fingerprint, useDraft } from '../../components/draft';
 import { Button, Segmented, TextField, type SegmentedOption } from '../../ui';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
 import {
@@ -84,11 +85,26 @@ type DefaultsFormProps = Readonly<{
 
 function DefaultsForm({ defaults, onSaved, onToast }: DefaultsFormProps) {
   const { t } = useTranslation(SETTINGS_NS);
-  const [days, setDays] = useState(String(defaults.cutoffDaysBefore));
-  const [time, setTime] = useState(defaults.cutoffTime);
-  const [available, setAvailable] = useState(defaults.delivery.available);
-  const [noteEn, setNoteEn] = useState(defaults.delivery.note.en);
-  const [noteId, setNoteId] = useState(defaults.delivery.note.id);
+  // Plan 061: the typed rules survive a reload until Save.
+  const start = useMemo(
+    () => ({
+      days: String(defaults.cutoffDaysBefore),
+      time: defaults.cutoffTime,
+      available: defaults.delivery.available,
+      noteEn: defaults.delivery.note.en,
+      noteId: defaults.delivery.note.id,
+    }),
+    [defaults],
+  );
+  const [typed, setTyped, typedDraft] = useDraft(draftKey(currentSellerSlug(), 'defaults'), start, {
+    baseline: fingerprint(start),
+  });
+  const { days, time, available, noteEn, noteId } = typed;
+  const setDays = (value: string) => setTyped((p) => ({ ...p, days: value }));
+  const setTime = (value: string) => setTyped((p) => ({ ...p, time: value }));
+  const setAvailable = (value: boolean) => setTyped((p) => ({ ...p, available: value }));
+  const setNoteEn = (value: string) => setTyped((p) => ({ ...p, noteEn: value }));
+  const setNoteId = (value: string) => setTyped((p) => ({ ...p, noteId: value }));
   const [state, setState] = useState<'idle' | 'saving' | 'invalid' | 'failed'>('idle');
 
   const options: ReadonlyArray<SegmentedOption<'on' | 'off'>> = [
@@ -110,6 +126,7 @@ function DefaultsForm({ defaults, onSaved, onToast }: DefaultsFormProps) {
     };
     const result = await updatePreferences({ menuDefaults: next }, undefined, currentSellerSlug());
     if (result.ok) {
+      typedDraft.clear();
       setState('idle');
       onSaved(result.data.preferences.menuDefaults);
       onToast();
@@ -118,6 +135,7 @@ function DefaultsForm({ defaults, onSaved, onToast }: DefaultsFormProps) {
 
   return (
     <PaneForm onSubmit={(event) => void submit(event)} noValidate>
+      <DraftNotice draft={typedDraft} />
       <Muted>{t('defaults.intro')}</Muted>
       <PaneGroup>
         <GroupTitle>{t('defaults.cutoffTitle')}</GroupTitle>

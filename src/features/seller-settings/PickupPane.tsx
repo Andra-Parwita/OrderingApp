@@ -10,6 +10,7 @@ import {
   fetchPickupPlaces,
   updatePickupPlace,
 } from '../../api/menus';
+import { DraftNotice, draftKey, fingerprint, useDraft } from '../../components/draft';
 import { Button, ConfirmButton, TextField } from '../../ui';
 import { SETTINGS_NS } from './i18n/register';
 import { ButtonRow, ErrorLine, Muted, NoticeLine, PaneForm, Two } from './paneParts';
@@ -72,23 +73,31 @@ type EditorProps = Readonly<{
   existing: boolean;
   busy: boolean;
   error: string | null;
-  onSave: (draft: Draft) => void;
+  /** Resolves true when the server accepted the place. */
+  onSave: (draft: Draft) => Promise<boolean>;
   onCancel: () => void;
+  /** Plan 061: 'new' or the place's id: one draft each. */
+  draftId: string;
 }>;
 
-function PlaceEditor({ initial, existing, busy, error, onSave, onCancel }: EditorProps) {
+function PlaceEditor({ initial, existing, busy, error, onSave, onCancel, draftId }: EditorProps) {
   const { t } = useTranslation(SETTINGS_NS);
-  const [draft, setDraft] = useState(initial);
+  const [draft, setDraft, typedDraft] = useDraft(
+    draftKey(currentSellerSlug(), 'pickup', draftId),
+    initial,
+    { baseline: fingerprint(initial) },
+  );
   const [submitted, setSubmitted] = useState(false);
   const field = (key: keyof Draft) => (event: ChangeEvent<HTMLInputElement>) =>
     setDraft((d) => ({ ...d, [key]: event.target.value }));
   const submit = (event: { preventDefault: () => void }) => {
     event.preventDefault();
     setSubmitted(true);
-    if (draftValid(draft)) onSave(draft);
+    if (draftValid(draft)) void onSave(draft).then((ok) => ok && typedDraft.clear());
   };
   return (
     <PaneForm onSubmit={submit} noValidate>
+      <DraftNotice draft={typedDraft} />
       <TextField
         label={t('pickup.place')}
         value={draft.place}
@@ -130,7 +139,13 @@ function PlaceEditor({ initial, existing, busy, error, onSave, onCancel }: Edito
         <Button type="submit" variant="primary" disabled={busy}>
           {existing ? t('pickup.saveEdit') : t('pickup.saveNew')}
         </Button>
-        <Button variant="quiet" onClick={onCancel}>
+        <Button
+          variant="quiet"
+          onClick={() => {
+            typedDraft.discard();
+            onCancel();
+          }}
+        >
           {t('pickup.cancel')}
         </Button>
       </ButtonRow>
@@ -175,7 +190,7 @@ export function PickupPane() {
   }, []);
 
   const save = useCallback(
-    async (draft: Draft) => {
+    async (draft: Draft): Promise<boolean> => {
       setBusy(true);
       setError(null);
       const body = {
@@ -192,6 +207,7 @@ export function PickupPane() {
         setNotice(null);
         close();
         await load();
+        return true;
       } else {
         setError(
           result.error === 'pickup_place_limit'
@@ -200,6 +216,7 @@ export function PickupPane() {
               ? 'invalid'
               : 'failed',
         );
+        return false;
       }
     },
     [close, editing, load, slug],
@@ -258,8 +275,9 @@ export function PickupPane() {
                 existing
                 busy={busy}
                 error={error}
-                onSave={(draft) => void save(draft)}
+                onSave={save}
                 onCancel={close}
+                draftId={point.id}
               />
             </Item>
           ) : (
@@ -300,8 +318,9 @@ export function PickupPane() {
           existing={false}
           busy={busy}
           error={error}
-          onSave={(draft) => void save(draft)}
+          onSave={save}
           onCancel={close}
+          draftId="new"
         />
       ) : left > 0 ? (
         <ButtonRow>

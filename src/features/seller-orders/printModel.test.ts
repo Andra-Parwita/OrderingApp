@@ -74,4 +74,24 @@ describe('print plan (plan 042)', () => {
     expect(blocks.at(-1)?.type).toBe('totals');
     expect(PAGE_LINES).toBeGreaterThan(0);
   });
+
+  it('50 dishes: every order once, totals right, the totals block on one page', () => {
+    const lines = Array.from({ length: 50 }, (_, i) => ({
+      itemId: `d${i}`,
+      name: { en: `Dish number ${i}`, id: `Hidangan ${i}` },
+      size: { en: '1', id: '1' },
+      priceCents: 100,
+      qty: 2,
+    }));
+    const big = Array.from({ length: 12 }, (_, i) =>
+      makeOrder({ id: `b${i}`, code: `B${String(i).padStart(2, '0')}222`, lines }),
+    );
+    const plan = buildPrintPlan(big, view, 'all', 'place', 'en');
+    expect(plan.totals.dishes).toHaveLength(50);
+    expect(plan.totals.dishes.every((d) => d.qty === 24)).toBe(true);
+    expect(plan.totals.totalCents).toBe(12 * 50 * 2 * 100);
+    const pages = paginate(plan, 'en');
+    expect(pages.flat().filter((b) => b.type === 'order')).toHaveLength(12);
+    expect(pages.filter((p) => p.some((b) => b.type === 'totals'))).toHaveLength(1);
+  });
 });

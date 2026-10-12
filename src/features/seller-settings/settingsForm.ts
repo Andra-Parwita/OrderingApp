@@ -1,4 +1,4 @@
-import type { KitchenSettings, Languages, LocalText } from '../../../shared/domain';
+import type { KitchenSettings, Language, Languages, LocalText } from '../../../shared/domain';
 import { formatPhone, normaliseAuMobile } from '../../../shared/phone';
 
 // Branding, images and devices come in batches 3 and 4; this is the minimal settings page.
@@ -10,6 +10,8 @@ export type Draft = {
   closing: LocalText;
   /** Plan 056; undefined = leave the kitchen's choice as it is. */
   languages?: Languages;
+  /** Plan 060; undefined = leave it as it is. */
+  firstLanguage?: Language;
 };
 
 export function toDraft(settings: KitchenSettings): Draft {
@@ -19,6 +21,7 @@ export function toDraft(settings: KitchenSettings): Draft {
     greeting: settings.postGreeting,
     closing: settings.postClosing,
     ...(settings.languages !== undefined ? { languages: settings.languages } : {}),
+    ...(settings.firstLanguage !== undefined ? { firstLanguage: settings.firstLanguage } : {}),
   };
 }
 
@@ -31,6 +34,7 @@ export function toSettings(draft: Draft): KitchenSettings {
   const phone = draft.phone.trim();
   return {
     ...(draft.languages !== undefined ? { languages: draft.languages } : {}),
+    ...(draft.firstLanguage !== undefined ? { firstLanguage: draft.firstLanguage } : {}),
     ...(phone !== '' ? { whatsappNumber: phone } : {}),
     postGreeting: draft.greeting,
     postClosing: draft.closing,

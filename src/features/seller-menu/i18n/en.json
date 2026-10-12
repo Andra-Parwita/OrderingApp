@@ -36,7 +36,9 @@
     "notPaid": "not paid",
     "use": "Use these dishes for a new menu",
     "addToThis": "Add these dishes to this menu",
-    "panel": "Past menus"
+    "panel": "Past menus",
+    "noPicture": "No picture kept",
+    "picture": "Menu picture"
   },
   "draft": {
     "kicker": "Your menu · not published",
@@ -274,10 +276,22 @@
       "replace": "Replace picture",
       "remove": "Remove",
       "alt": "Menu picture",
-      "foot": "Each new menu starts without a picture.",
+      "foot": "A new menu starts without a picture, unless you start it from a past menu.",
       "image_type": "That file is not a picture we can use. Try a JPEG, PNG or WebP.",
       "image_too_big": "The picture is too big. Try a smaller one.",
-      "image_ratio": "The picture has the wrong shape. Use a 3:2 picture."
+      "image_ratio": "The picture has the wrong shape. Use a 3:2 picture.",
+      "usePast": "Use a past menu's picture",
+      "fromPast": "Menu of {{date}}"
+    },
+    "how": {
+      "title": "How do customers get their food?",
+      "pickup": "Pickup",
+      "delivery": "Delivery",
+      "both": "Both",
+      "removeTitle": "Remove the pickup places from this menu?",
+      "removeBody": "Delivery only means customers can't choose a pickup place. Your saved places stay in Settings.",
+      "keep": "Keep the places",
+      "remove": "Remove them"
     }
   },
   "check": {
@@ -296,7 +310,12 @@
     "off": "Off",
     "worth": "Worth a look",
     "allGood": "Nothing to check. Ready when you are.",
-    "neverBlock": "None of these stops you from publishing."
+    "neverBlock": "None of these stops you from publishing.",
+    "how": "Getting the food",
+    "pickupOnly": "Pickup only",
+    "deliveryOnly": "Delivery only",
+    "pickupOrDelivery": "Pickup or delivery",
+    "noWay": "not chosen yet"
   },
   "worry": {
     "noDishes": "This menu has no dishes yet.",

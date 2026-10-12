@@ -52,10 +52,14 @@ export function createMenu(
   cookingDate?: string,
   actor?: StaffActor,
   seller?: string,
+  pictureFromPastMenu?: string,
 ): Promise<ApiResult<MenuViewResponse>> {
   return request('/api/seller/menus', parseMenuViewResponse, {
     method: 'POST',
-    body: cookingDate ? { cookingDate } : {},
+    body: {
+      ...(cookingDate ? { cookingDate } : {}),
+      ...(pictureFromPastMenu ? { pictureFromPastMenu } : {}),
+    },
     ...who(actor, seller),
   });
 }
@@ -145,6 +149,19 @@ export function uploadMenuPicture(
   return request('/api/seller/menus/current/picture', parseMenuViewResponse, {
     method: 'PUT',
     body: { dataUrl },
+    ...who(actor, seller),
+  });
+}
+
+/** Plan 064: the current menu takes the picture a past menu kept (no upload). */
+export function usePastMenuPicture(
+  pastMenuId: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<MenuViewResponse>> {
+  return request('/api/seller/menus/current/picture', parseMenuViewResponse, {
+    method: 'PUT',
+    body: { pastMenuId },
     ...who(actor, seller),
   });
 }

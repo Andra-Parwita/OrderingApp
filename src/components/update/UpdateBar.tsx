@@ -1,10 +1,10 @@
 // "A new version is ready" bar (plan 059). Muted, at the top; it never reloads by itself, so nothing
 // typed is lost. Refresh reloads; the cross hides it until the next check.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { UPDATE_NS } from './i18n/register';
-import { watchForUpdate, type WatchOptions } from './updateCheck';
+import { UPDATE_BAR_HEIGHT_VAR, watchForUpdate, type WatchOptions } from './updateCheck';
 
 const Bar = styled.div`
   position: fixed;
@@ -58,9 +58,19 @@ export function UpdateBar({
   const [newer, setNewer] = useState(false);
   // Every check sets the state again, so a hidden bar comes back at the next check.
   useEffect(() => watchForUpdate(setNewer, watch), [watch]);
+  // The offline banner (plan 062) sits below this bar: it reads the bar's height from this variable.
+  const bar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (newer && bar.current)
+      root.style.setProperty(UPDATE_BAR_HEIGHT_VAR, `${bar.current.offsetHeight}px`);
+    return () => {
+      root.style.removeProperty(UPDATE_BAR_HEIGHT_VAR);
+    };
+  }, [newer]);
   if (!newer) return null;
   return (
-    <Bar role="status">
+    <Bar ref={bar} role="status">
       <span>{t('message')} ·</span>
       <Button type="button" onClick={reload}>
         {t('refresh')}

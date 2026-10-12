@@ -157,8 +157,12 @@ export type SellerRepository = {
     ref?: string,
   ): Promise<StoreResult<{ view: MenuView; before: string | undefined }>>;
   removeMenuPicture(): Promise<{ view: MenuView; before: string | undefined }>;
+  /** Plan 064: take the picture a past menu kept (`not_found` if it kept none). */
+  usePastMenuPicture(
+    pastMenuId: string,
+  ): Promise<StoreResult<{ view: MenuView; before: string | undefined }>>;
   /** Same as the midnight auto-finish, on demand; only for a live menu (`menu_not_live`). */
-  finishMenuNow(): Promise<StoreResult<FinishMenuResponse>>;
+  finishMenuNow(): Promise<StoreResult<FinishMenuResponse & { prunedPictures: Array<string> }>>;
 
   // Your dishes (the library). Menus hold copies, so none of this touches a menu or an order.
   listDishes(): Promise<Array<Dish>>;

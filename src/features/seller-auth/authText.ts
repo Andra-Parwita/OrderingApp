@@ -31,6 +31,8 @@ export function failureMessage(t: TFunction, failure: ApiFailure): string {
       return t('errors.paused');
     case 'unauthorized':
       return t('errors.setupExpired');
+    case 'forbidden':
+      return t('errors.forbidden');
     case 'passkey_cancelled':
       return t('errors.passkeyCancelled');
     case 'passkey_failed':

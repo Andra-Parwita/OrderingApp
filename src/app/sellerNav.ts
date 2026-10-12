@@ -132,7 +132,6 @@ const TABLET_ONLY = [
   '/seller/chefs',
   '/seller/past-weeks',
   '/seller/backup',
-  '/seller/devices',
 ];
 
 // Plan 051: Your dishes work on a phone: /seller/menu/dishes for owners, and a chef's /seller/menu

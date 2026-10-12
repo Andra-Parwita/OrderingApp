@@ -8,6 +8,7 @@
     "locked_other": "Terlalu banyak percobaan. Coba lagi dalam {{count}} menit.",
     "network": "Tidak bisa terhubung ke server. Periksa koneksi lalu coba lagi.",
     "setupExpired": "Waktu penyiapan habis. Mulai lagi dengan kunci baru.",
+    "forbidden": "Kamu tidak diizinkan melakukan ini.",
     "generic": "Terjadi kesalahan. Coba lagi.",
     "passkeyCancelled": "Permintaan passkey ditutup. Coba lagi, atau pakai kata sandi.",
     "passkeyFailed": "Perangkat ini tidak bisa memakai passkey. Coba lagi, atau pakai kata sandi.",

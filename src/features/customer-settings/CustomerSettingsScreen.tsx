@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Language } from '../../../shared/domain';
+import type { Kitchen, Language } from '../../../shared/domain';
+import { markLanguageChosen } from '../../i18n/chosenLanguage';
 import { setThemePreference, useThemePreference } from '../../theme/themePreference';
 import { CustomerSettingsView } from './CustomerSettingsView';
 
@@ -8,11 +9,18 @@ import { CustomerSettingsView } from './CustomerSettingsView';
 /** `showLanguage` is false for a kitchen that offers one language (plan 056). */
 export function CustomerSettingsScreen({
   showLanguage = true,
-}: Readonly<{ showLanguage?: boolean }>) {
+  kitchen,
+}: Readonly<{ showLanguage?: boolean; kitchen?: Kitchen }>) {
   const { i18n } = useTranslation();
   const theme = useThemePreference();
   const lang: Language = i18n.language.startsWith('id') ? 'id' : 'en';
-  const onLang = useCallback((next: Language) => void i18n.changeLanguage(next), [i18n]);
+  const onLang = useCallback(
+    (next: Language) => {
+      markLanguageChosen();
+      void i18n.changeLanguage(next);
+    },
+    [i18n],
+  );
   return (
     <CustomerSettingsView
       lang={lang}
@@ -20,6 +28,7 @@ export function CustomerSettingsScreen({
       theme={theme}
       onTheme={setThemePreference}
       showLanguage={showLanguage}
+      kitchen={kitchen}
     />
   );
 }

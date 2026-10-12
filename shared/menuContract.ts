@@ -3,6 +3,7 @@ import type {
   Seller,
   Kitchen,
   KitchenImages,
+  Language,
   Languages,
   MenuItemView,
   OrderingState,
@@ -11,7 +12,7 @@ import type {
   Week,
 } from './domain';
 import { DAY_STOCK_MAX } from './daySalesContract';
-import { LANGUAGES } from './languages';
+import { FIRST_LANGUAGES, LANGUAGES } from './languages';
 import { isHexColour } from './kitchenImages';
 import { MAX_MENU_ITEMS } from './limits';
 import { parseSeller } from './seller';
@@ -31,6 +32,8 @@ export type MenuResponse = {
   pictureUrl?: string;
   /** plan 056: the languages customers see. Absent = "both". */
   languages?: Languages;
+  /** plan 060: with "both", the language customers see first. Absent = "en". */
+  firstLanguage?: Language;
 };
 
 /** GET /api/seller/menu (of the X-Seller seller): the same menu plus the chef grouping. */
@@ -200,7 +203,8 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
   const ordering = parseOrderingState(input['ordering']);
   if (!seller || !kitchen || !week || !items || !ordering) return null;
   if (items.length > MAX_MENU_ITEMS || kitchen.sellerId !== seller.id) return null;
-  const { theme, pictureUrl, languages } = input;
+  const { theme, pictureUrl, languages, firstLanguage } = input;
+  if (firstLanguage !== undefined && !isOneOf(FIRST_LANGUAGES, firstLanguage)) return null;
   if (languages !== undefined && !isOneOf(LANGUAGES, languages)) return null;
   if (theme !== undefined && !isOneOf(THEMES, theme)) return null;
   if (pictureUrl !== undefined && (typeof pictureUrl !== 'string' || pictureUrl === ''))
@@ -214,6 +218,7 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
     ...(theme !== undefined ? { theme } : {}),
     ...(pictureUrl !== undefined ? { pictureUrl } : {}),
     ...(languages !== undefined ? { languages } : {}),
+    ...(firstLanguage !== undefined ? { firstLanguage } : {}),
   };
 }
 

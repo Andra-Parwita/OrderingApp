@@ -2,6 +2,7 @@
 // D-094: POST /menus/current/items appends one library dish to the menu without touching the rest.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parseKeyResponse, parseSessionResponse } from '../shared/authContract';
+import { MAX_MENU_ITEMS } from '../shared/limits';
 import { devApi, useWorld, type World } from './impl';
 
 const SELLER_ID = 'seller-onde-onde';
@@ -179,7 +180,7 @@ describe('chef adds her own dish to the menu (D-094)', () => {
   it('refuses a full menu and a finished menu', async () => {
     const { owner } = await setup();
     let status = 201;
-    for (let i = 0; status === 201 && i < 12; i += 1) {
+    for (let i = 0; status === 201 && i < MAX_MENU_ITEMS + 2; i += 1) {
       status = (await add(owner.token, await mk(owner.token, `Dish ${String(i)}`))).status;
     }
     expect(status).toBe(409);

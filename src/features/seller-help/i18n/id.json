@@ -12,5 +12,9 @@
   "needHelp": "Butuh bantuan?",
   "inviteKeyHelp": "Bantuan soal kunci undangan",
   "inviteLine": "Bantuan: {{link}}",
-  "picture": "Gambar: {{what}}"
+  "picture": "Gambar: {{what}}",
+  "tabs": "Tab bantuan",
+  "tabSeller": "Bantuan penjual",
+  "tabCustomer": "Bantuan pelanggan",
+  "foundIn": "Ada di {{tab}} ({{count}}) →"
 }

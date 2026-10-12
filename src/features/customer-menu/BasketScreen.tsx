@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import type { Fulfilment } from '../../../shared/domain';
@@ -8,6 +8,7 @@ import { PageHeader } from '../../ui';
 import {
   BasketView,
   EmptyBasketView,
+  fulfilmentOptions,
   PickupPlaceView,
   YourNameView,
   type ClosedReason,
@@ -55,8 +56,19 @@ const BASKET_PROBLEMS: ReadonlyArray<FailureCode> = [
   'kitchen_closed',
 ];
 
-function otherErrorKey(code: FailureCode): string {
-  return code === 'order_locked' ? 'basket.errors.order_locked' : 'basket.errors.other';
+function otherErrorKey(
+  code: FailureCode,
+  fulfilment: Fulfilment,
+  offered: ReadonlyArray<Fulfilment>,
+): string {
+  if (code === 'order_locked') return 'basket.errors.order_locked';
+  if (code === 'fulfilment_unavailable') {
+    // Say which one is missing when the menu on screen tells us.
+    return offered.includes(fulfilment)
+      ? 'basket.errors.fulfilment_unavailable'
+      : `basket.errors.fulfilment_unavailable_${fulfilment}`;
+  }
+  return 'basket.errors.other';
 }
 
 const noop = () => undefined;
@@ -138,7 +150,16 @@ function BasketContent({
   }, [theme]);
 
   const editOrder = edit.status === 'ready' ? edit.order : null;
-  const fulfilment: Fulfilment = checkout.fulfilment ?? editOrder?.fulfilment ?? 'pickup';
+  // Plan 063: only the ways this menu offers; a delivery-only menu starts on delivery.
+  const options = useMemo<ReadonlyArray<Fulfilment>>(
+    () => (menu.status === 'ready' ? fulfilmentOptions(menu.data.week) : ['pickup']),
+    [menu],
+  );
+  const wanted = checkout.fulfilment ?? editOrder?.fulfilment;
+  const fulfilment: Fulfilment =
+    wanted !== undefined && (editing || options.includes(wanted))
+      ? wanted
+      : (options[0] ?? 'pickup');
   const note = checkout.note ?? editOrder?.note ?? '';
   const firstName = editing ? (editOrder?.firstName ?? '') : checkout.firstName;
 
@@ -291,7 +312,11 @@ function BasketContent({
         firstName={firstName}
         note={note}
         nameError={nameError}
-        failure={failedCode !== null && !basketProblem ? t(otherErrorKey(failedCode)) : undefined}
+        failure={
+          failedCode !== null && !basketProblem
+            ? t(otherErrorKey(failedCode, fulfilment, options))
+            : undefined
+        }
         count={count}
         totalCents={totalCents}
         fulfilment={fulfilment}

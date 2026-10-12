@@ -512,7 +512,14 @@ export type MenuView = {
 };
 
 /** POST /api/seller/menus: only once the current menu is finished. `cookingDate` defaults to the coming Saturday. */
-export type CreateMenuRequest = { cookingDate?: string };
+export type CreateMenuRequest = {
+  cookingDate?: string;
+  /** Plan 064: the id of a past menu whose picture the new menu starts with (ignored if it kept none). */
+  pictureFromPastMenu?: string;
+};
+
+/** PUT /api/seller/menus/current/picture with this body: reuse a past menu's picture instead of uploading. */
+export type UsePastMenuPictureRequest = { pastMenuId: string };
 
 /**
  * PUT /api/seller/menus/current: any of these. `dishIds` makes the menu hold exactly these library
@@ -550,9 +557,19 @@ export type FinishMenuResponse = { menu: MenuView; closedOrders: number };
 export function parseCreateMenuRequest(input: unknown): CreateMenuRequest | null {
   if (input === undefined) return {};
   if (!isRecord(input)) return null;
-  const { cookingDate } = input;
-  if (cookingDate === undefined) return {};
-  return realDate(cookingDate) ? { cookingDate } : null;
+  const { cookingDate, pictureFromPastMenu } = input;
+  if (cookingDate !== undefined && !realDate(cookingDate)) return null;
+  if (pictureFromPastMenu !== undefined && typeof pictureFromPastMenu !== 'string') return null;
+  return {
+    ...(cookingDate !== undefined ? { cookingDate } : {}),
+    ...(pictureFromPastMenu !== undefined ? { pictureFromPastMenu } : {}),
+  };
+}
+
+export function parseUsePastMenuPictureRequest(input: unknown): UsePastMenuPictureRequest | null {
+  if (!isRecord(input)) return null;
+  const { pastMenuId } = input;
+  return typeof pastMenuId === 'string' && pastMenuId !== '' ? { pastMenuId } : null;
 }
 
 function parsePlaceUse(input: unknown): MenuPlaceUse | null {

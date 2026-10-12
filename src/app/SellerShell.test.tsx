@@ -66,6 +66,7 @@ function renderAt(path: string) {
             <Route path="cook" element={<p>Cook page</p>} />
             <Route path="menu" element={<p>Menu page</p>} />
             <Route path="hand-over" element={<p>Hand-over page</p>} />
+            <Route path="devices" element={<p>Devices page</p>} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -175,6 +176,16 @@ describe('seller shell, phone', () => {
       screen.getByRole('heading', { name: 'Open this on a tablet or computer' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Menu page')).not.toBeInTheDocument();
+  });
+
+  it('shows Devices on a phone, not the tablet-only note (D-097)', () => {
+    tablet = false;
+    me = SELLER;
+    renderAt('/seller/devices');
+    expect(screen.getByText('Devices page')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Open this on a tablet or computer' }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows the Kitchen page itself on a tablet', () => {

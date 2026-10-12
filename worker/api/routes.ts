@@ -35,6 +35,7 @@ import {
   parseUpdateDishRequest,
   parsePublishRequest,
   parseUpdateMenuRequest,
+  parseUsePastMenuPictureRequest,
   parseUpdatePickupPlaceRequest,
   parseUpdatePreferencesRequest,
   type DeleteDishResponse,
@@ -905,7 +906,19 @@ async function handleSeller(
     }
     // The menu picture (D-060): R2 with a bucket, the same pattern as the kitchen images.
     if (c === 'picture' && method === 'PUT') {
-      const input = parseUploadImageRequest(await readJson(request));
+      const body = await readJson(request);
+      // Plan 064: reuse the picture a past menu kept, no upload.
+      const reuse = parseUsePastMenuPictureRequest(body);
+      if (reuse) {
+        const reused = await store.usePastMenuPicture(reuse.pastMenuId);
+        if (!reused.ok) return error(reused.error, reused.message);
+        if (context.images) {
+          await dropUnusedImageRefs(context.images, store, [reused.value.before], sellerId);
+        }
+        await menuChanged();
+        return Response.json({ menu: reused.value.view } satisfies MenuViewResponse);
+      }
+      const input = parseUploadImageRequest(body);
       if (!input) return bad();
       const stored = context.images
         ? await putUploadedImage(context.images, sellerId, 'menuPicture', input.dataUrl)
@@ -936,7 +949,12 @@ async function handleSeller(
       // The open orders were closed and archived: the order screens refetch too.
       await signal(context, sellerId, 'order.changed');
       await menuChanged();
-      return Response.json(result.value satisfies FinishMenuResponse);
+      // Plan 064: past menus beyond the newest 10 lost their picture; the file goes if unused.
+      const { prunedPictures, ...finished } = result.value;
+      if (context.images) {
+        await dropUnusedImageRefs(context.images, store, prunedPictures, sellerId);
+      }
+      return Response.json(finished satisfies FinishMenuResponse);
     }
     return null;
   }

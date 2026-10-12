@@ -53,13 +53,78 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
   // 2
   {
     en: {
+      n: 'Phone or tablet?',
+      s: 'What each one is good for',
+      l: 'The app works on both, but a phone has less room. A tablet on its side is best.',
+      steps: [
+        { part: 'On a phone' },
+        {
+          text: 'The bar at the bottom has **Orders**, **Pickup & delivery** and **More**. In **More** you find **Sell**, **Kitchen**, **Your dishes**, **Devices** and **Help**.',
+          pic: 'the phone bar with Orders, Pickup & delivery and More',
+        },
+        {
+          text: 'A phone is handy to see and update orders, add a new order, count what sells and mark pickups and deliveries when you are on the go.',
+        },
+        { part: 'On a tablet or computer' },
+        {
+          text: 'The left menu shows everything: **Home**, **Orders**, **Kitchen**, **Pickup & delivery**, **Menu**, **Settings** and **Help**.',
+          pic: 'the left menu on a tablet',
+        },
+        {
+          text: 'These need a tablet or computer: making and publishing menus (**Menu**, **Share menu**) and **Settings** (team, kitchen, pictures). On a phone they show "Open this on a tablet or computer". **Devices** works on a phone too: open **More** → **Devices**.',
+        },
+        { part: 'Our advice' },
+        {
+          text: 'Use a **tablet held sideways (landscape)** to make menus and on cooking day. You see the list and the details side by side.',
+        },
+        {
+          text: 'Keep the phone for orders and selling on the go. You can be signed in on both at the same time: see **Use more than one device**.',
+        },
+      ],
+      note: 'A chef sees fewer items and a helper only Orders, Pickup & delivery and Sell, on any device.',
+    },
+    id: {
+      n: 'HP atau tablet?',
+      s: 'Apa kelebihan masing-masing',
+      l: 'Aplikasi jalan di keduanya, tetapi layar ponsel lebih sempit. Tablet yang dipegang menyamping paling enak.',
+      steps: [
+        { part: 'Di ponsel' },
+        {
+          text: 'Bilah di bawah berisi **Pesanan**, **Serah terima** dan **Lainnya**. Di **Lainnya** ada **Jual**, **Dapur**, **Hidangan Anda**, **Perangkat** dan **Bantuan**.',
+          pic: 'bilah ponsel dengan Pesanan, Serah terima dan Lainnya',
+        },
+        {
+          text: 'Ponsel praktis untuk melihat dan mengubah pesanan, menambah pesanan baru, menghitung yang terjual dan menandai pengambilan dan pengantaran saat Anda sedang di luar.',
+        },
+        { part: 'Di tablet atau komputer' },
+        {
+          text: 'Menu di kiri menampilkan semuanya: **Beranda**, **Pesanan**, **Dapur**, **Serah terima**, **Menu**, **Pengaturan** dan **Bantuan**.',
+          pic: 'menu kiri di tablet',
+        },
+        {
+          text: 'Ini memerlukan tablet atau komputer: membuat dan mempublikasikan menu (**Menu**, **Bagikan menu**) dan **Pengaturan** (tim, dapur, gambar). Di ponsel muncul tulisan "Buka ini di tablet atau komputer". **Perangkat** bisa dibuka di ponsel juga: buka **Lainnya** → **Perangkat**.',
+        },
+        { part: 'Saran kami' },
+        {
+          text: 'Pakai **tablet yang dipegang menyamping (lanskap)** untuk membuat menu dan di hari memasak. Daftar dan rinciannya terlihat berdampingan.',
+        },
+        {
+          text: 'Simpan ponsel untuk pesanan dan berjualan saat bepergian. Anda bisa masuk di keduanya sekaligus: lihat **Pakai lebih dari satu perangkat**.',
+        },
+      ],
+      note: 'Koki melihat lebih sedikit menu dan asisten hanya Pesanan, Serah terima dan Jual, di perangkat apa pun.',
+    },
+  },
+  // 3
+  {
+    en: {
       n: 'Use more than one device',
       s: 'Your tablet and phone, and other people',
       l: 'Two different jobs. Pick the part that fits you.',
       steps: [
         { part: 'A · Your own tablet and phone' },
         {
-          text: 'On the device that is already signed in, open **More** → **Devices**.',
+          text: 'On the device that is already signed in, open **More** → **Devices** on a phone, or **Devices** in the left menu on a tablet.',
           pic: 'the Devices page',
         },
         {
@@ -104,7 +169,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       steps: [
         { part: 'A · Tablet dan ponsel Anda sendiri' },
         {
-          text: 'Di perangkat yang sudah masuk, buka **Lainnya** → **Perangkat**.',
+          text: 'Di perangkat yang sudah masuk, buka **Lainnya** → **Perangkat** di ponsel, atau **Perangkat** di menu kiri di tablet.',
           pic: 'halaman Perangkat',
         },
         {
@@ -143,7 +208,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Setiap perangkat punya passkey sendiri. Kalau perangkat hilang, buka Perangkat, cari di Perangkat lain lalu ketuk Keluarkan.',
     },
   },
-  // 3
+  // 4
   {
     en: {
       n: 'Put the app on your home screen',
@@ -229,7 +294,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Aplikasi terbuka layar penuh tanpa bilah alamat, dan Anda tetap masuk. Pelanggan Anda juga bisa: kartu "Taruh dapur di layar utama" di halaman menu mereka melakukannya untuk mereka.',
     },
   },
-  // 4
+  // 5
   {
     en: {
       n: 'Add dishes',
@@ -288,64 +353,118 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Baris yang bermasalah dilewati. Yang lain tetap diimpor.',
     },
   },
-  // 5
+  // 6
   {
     en: {
       n: 'Make and publish a menu',
-      s: 'Four steps, then open for orders',
-      l: 'A menu has four steps. Go through them one by one.',
+      s: 'Set up once, then four steps to open for orders',
+      l: 'Pickup places are saved once. Each menu then has four steps.',
       steps: [
+        { part: 'Before your first menu (once)' },
         {
-          text: 'Open **Menu** and tap **New menu**. Pick the cooking day, then **Start with the dishes**.',
+          text: 'Open **Settings**, then **Pickup locations**, and tap **Add a place**. Write the **Place** name, the **Directions** in English and Indonesian, and the **From** and **To** times. Tap **Add place**. You can save up to 5 places.',
+        },
+        {
+          text: 'Open **Menu defaults** in **Settings**. Choose **Offer delivery** or **No delivery**, write the delivery note for customers, and set the usual cut-off (days before the cooking day, and the time). Every new menu starts with these.',
+        },
+        { part: 'Make the menu' },
+        {
+          text: 'Open **Menu** and tap **New menu**. Pick the **Cooking day**, then tap **Start with the dishes**.',
           pic: 'the Pick the cooking day screen',
         },
         {
-          text: 'The four steps are **Dishes**, **Details**, **Check** and **Publish & share**. Fill in each one, then tap **Continue to step 2** (and so on).',
+          text: 'Step 1, **Dishes**: tick the dishes for this menu. Or start from a saved set or a past menu in **Start from**. Need one that is not there? Tap **New dish**. Tap **Save these as a set** to keep the list for next time.',
           pic: 'the four steps along the top',
         },
         {
-          text: 'On the last step, tap **Publish menu**. Choose **Publish and take orders now** to open at once.',
+          text: 'Step 2, **Details**: check the **Cooking day** and when **Orders close**. At the top, under **How do customers get their food?**, choose **Pickup**, **Delivery** or **Both**. For **Delivery** or **Both**, write the **Note for customers**.',
+        },
+        {
+          text: 'Still in **Details**, for **Pickup** or **Both**, tick the places this menu uses under **Pickup locations**. Choosing **Delivery** hides them (it asks first if places were ticked). Set the time for this menu (**From** and **To**) or keep the **Usual time**. Customers choose one place when they order. A place missing? Tap **Add a place** here.',
+        },
+        {
+          text: 'Step 3, **Check**: see what customers will see. Change the price or limit of a dish for this menu here. Read **Worth a look** and tap the button next to anything flagged, for example **Choose places** or **Add dishes**.',
+        },
+        {
+          text: 'Step 4, **Publish & share**: tap **Publish menu**. Choose **Publish and take orders now** to open at once.',
           pic: 'the Publish window with two choices',
         },
         {
           text: 'Not ready for orders yet? Choose **Publish, ordering paused**. Customers see the menu but cannot order.',
         },
+        { part: 'After publishing' },
         {
-          text: 'When you are ready, switch **Taking orders** on in **Orders**.',
+          text: 'Paused? When you are ready, switch **Taking orders** on in **Orders**. Switch it off to stop new orders, and on again to resume.',
           pic: 'the Taking orders switch',
         },
+        {
+          text: 'Share the menu on WhatsApp: see **Share the menu** next. Later, tap **Share again** on the live menu.',
+        },
+        {
+          text: 'Changing a live menu: open **Menu** and tap **Edit details**, **Add dish**, or a dish to change its price or limit. Customers see changes at once.',
+        },
+        {
+          text: 'Done with the menu? Tap **Finish menu now**. It also finishes by itself at midnight after the cooking day and moves to **Past menus**. **Unpublish** hides it from customers.',
+        },
       ],
-      note: 'It is saved as you go, so you can stop and come back.',
+      note: 'It is saved as you go, so you can stop and come back. Nothing in Worth a look stops you from publishing, but a menu with no pickup place and no delivery gives customers no way to get their order. A chef can add her own dish under Menu, and the owner puts it on the menu.',
     },
     id: {
       n: 'Buat dan publikasikan menu',
-      s: 'Empat langkah, lalu buka pesanan',
-      l: 'Satu menu punya empat langkah. Isi satu per satu.',
+      s: 'Atur sekali, lalu empat langkah untuk buka pesanan',
+      l: 'Tempat ambil disimpan sekali. Lalu setiap menu punya empat langkah.',
       steps: [
+        { part: 'Sebelum menu pertama (sekali saja)' },
         {
-          text: 'Buka **Menu** lalu ketuk **Menu baru**. Pilih hari memasak, lalu **Mulai dengan hidangan**.',
+          text: 'Buka **Pengaturan**, lalu **Lokasi ambil**, dan ketuk **Tambah tempat**. Tulis nama **Tempat**, **Petunjuk** dalam bahasa Inggris dan Indonesia, serta jam **Dari** dan **Sampai**. Ketuk **Tambah tempat**. Anda bisa menyimpan sampai 5 tempat.',
+        },
+        {
+          text: 'Buka **Bawaan menu** di **Pengaturan**. Pilih **Tawarkan antar** atau **Tanpa antar**, tulis catatan antar untuk pelanggan, dan atur batas pesan yang biasa (berapa hari sebelum hari memasak, dan jamnya). Setiap menu baru dimulai dengan ini.',
+        },
+        { part: 'Buat menunya' },
+        {
+          text: 'Buka **Menu** lalu ketuk **Menu baru**. Pilih **Hari memasak**, lalu ketuk **Mulai dengan hidangan**.',
           pic: 'layar Pilih hari memasak',
         },
         {
-          text: 'Empat langkahnya: **Hidangan**, **Rincian**, **Periksa** dan **Publikasi & bagikan**. Isi satu per satu, lalu ketuk **Lanjut ke langkah 2** (dan seterusnya).',
+          text: 'Langkah 1, **Hidangan**: centang hidangan untuk menu ini. Atau mulai dari paket tersimpan atau menu lalu di **Mulai dari**. Butuh yang belum ada? Ketuk **Hidangan baru**. Ketuk **Simpan sebagai paket** untuk menyimpan daftarnya.',
           pic: 'empat langkah di bagian atas',
         },
         {
-          text: 'Di langkah terakhir, ketuk **Publikasikan menu**. Pilih **Publikasikan dan terima pesanan sekarang** untuk langsung buka.',
+          text: 'Langkah 2, **Rincian**: periksa **Hari memasak** dan kapan **Pesanan ditutup**. Di bagian atas, di bawah **Bagaimana pelanggan mendapat makanannya?**, pilih **Ambil sendiri**, **Diantar** atau **Keduanya**. Untuk **Diantar** atau **Keduanya**, tulis **Catatan untuk pelanggan**.',
+        },
+        {
+          text: 'Masih di **Rincian**, untuk **Ambil sendiri** atau **Keduanya**, centang tempat yang dipakai menu ini di bawah **Lokasi pengambilan**. Memilih **Diantar** menyembunyikannya (ditanya dulu jika ada tempat yang dicentang). Atur jam untuk menu ini (**Dari** dan **Sampai**) atau pakai **Jam biasa**. Pelanggan memilih satu tempat saat memesan. Tempatnya belum ada? Ketuk **Tambah tempat** di sini.',
+        },
+        {
+          text: 'Langkah 3, **Periksa**: lihat apa yang dilihat pelanggan. Ubah harga atau batas hidangan untuk menu ini di sini. Baca **Perlu dilihat** dan ketuk tombol di samping yang ditandai, misalnya **Pilih tempat** atau **Tambah hidangan**.',
+        },
+        {
+          text: 'Langkah 4, **Publikasi & bagikan**: ketuk **Publikasikan menu**. Pilih **Publikasikan dan terima pesanan sekarang** untuk langsung buka.',
           pic: 'jendela Publikasi dengan dua pilihan',
         },
         {
           text: 'Belum siap menerima pesanan? Pilih **Publikasikan, pemesanan dijeda**. Pelanggan melihat menu tetapi belum bisa memesan.',
         },
+        { part: 'Setelah dipublikasikan' },
         {
-          text: 'Kalau sudah siap, nyalakan **Menerima pesanan** di **Pesanan**.',
+          text: 'Dijeda? Kalau sudah siap, nyalakan **Menerima pesanan** di **Pesanan**. Matikan untuk menghentikan pesanan baru, nyalakan lagi untuk melanjutkan.',
           pic: 'tombol Menerima pesanan',
         },
+        {
+          text: 'Bagikan menu di WhatsApp: lihat **Bagikan menu** berikutnya. Nanti, ketuk **Bagikan lagi** di menu yang tayang.',
+        },
+        {
+          text: 'Mengubah menu yang tayang: buka **Menu** lalu ketuk **Ubah rincian**, **Tambah hidangan**, atau sebuah hidangan untuk mengubah harga atau batasnya. Pelanggan langsung melihat perubahannya.',
+        },
+        {
+          text: 'Menu sudah selesai? Ketuk **Selesaikan menu sekarang**. Menu juga selesai sendiri tengah malam setelah hari memasak dan pindah ke **Menu lalu**. **Tarik menu** menyembunyikannya dari pelanggan.',
+        },
       ],
-      note: 'Tersimpan otomatis, jadi boleh berhenti dan lanjut nanti.',
+      note: 'Tersimpan otomatis, jadi boleh berhenti dan lanjut nanti. Tidak ada isi Perlu dilihat yang menghalangi publikasi, tetapi menu tanpa tempat ambil dan tanpa antar membuat pelanggan tidak punya cara menerima pesanan. Koki bisa menambah hidangannya sendiri di Menu, lalu pemilik memasukkannya ke menu.',
     },
   },
-  // 6
+  // 7
   {
     en: {
       n: 'Share the menu',
@@ -388,7 +507,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Pelanggan tidak perlu akun. Mereka cukup buka tautan dan memesan.',
     },
   },
-  // 7
+  // 8
   {
     en: {
       n: 'Orders',
@@ -431,7 +550,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Tidak ada pembayaran di aplikasi. Anda dan pelanggan mengatur pembayaran sendiri.',
     },
   },
-  // 8
+  // 9
   {
     en: {
       n: 'Sell on the day',
@@ -467,7 +586,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Hidangan yang mencapai 0 tampil habis bagi pelanggan.',
     },
   },
-  // 9
+  // 10
   {
     en: {
       n: 'Your team',
@@ -506,7 +625,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Menghapus seseorang tidak menghapus hidangannya.',
     },
   },
-  // 10
+  // 11
   {
     en: {
       n: 'Your kitchen',
@@ -557,7 +676,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Perubahan langsung terlihat oleh pelanggan. Dapur yang sudah ada mulai dengan kedua bahasa.',
     },
   },
-  // 11
+  // 12
   {
     en: {
       n: 'If something goes wrong',

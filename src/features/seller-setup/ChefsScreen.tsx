@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Chef } from '../../../shared/domain';
 import { CHEF_NAME_MAX } from '../../../shared/limits';
+import { currentSellerSlug } from '../../api/device/sellerContext';
+import { DraftNotice, draftKey, useDraft } from '../../components/draft';
 import { Button, ConfirmButton, SlideOver, TextField } from '../../ui';
 import { SETUP_NS } from './i18n/register';
 import {
@@ -120,7 +122,8 @@ export function ChefsScreen({ embedded = false }: Readonly<{ embedded?: boolean 
   const { load, list, counts, kitchenName, busy, failure } = useSelector(
     (state: SetupRootState) => state.sellerSetup.chefs,
   );
-  const [name, setName] = useState('');
+  // Plan 061: the new cook's name survives a closed modal or a reload.
+  const [name, setName, nameDraft] = useDraft(draftKey(currentSellerSlug(), 'chefs', 'new'), '');
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -135,10 +138,12 @@ export function ChefsScreen({ embedded = false }: Readonly<{ embedded?: boolean 
       const trimmed = name.trim();
       if (trimmed === '') return;
       dispatch(chefAddRequested(trimmed));
+      nameDraft.clear();
       setName('');
       setSubmitted(false);
+      // clear() above stops the pending save; setName('') is a change back to empty, stored as nothing
     },
-    [dispatch, name],
+    [dispatch, name, nameDraft, setName],
   );
 
   return (
@@ -176,6 +181,7 @@ export function ChefsScreen({ embedded = false }: Readonly<{ embedded?: boolean 
           ) : null}
           <Section as="form" onSubmit={onAdd} noValidate>
             <SectionTitle>{t('chefs.add')}</SectionTitle>
+            <DraftNotice draft={nameDraft} />
             <TextField
               label={t('chefs.name')}
               helper={t('chefs.addHelper')}

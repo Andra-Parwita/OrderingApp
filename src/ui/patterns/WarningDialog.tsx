@@ -16,6 +16,9 @@ export type WarningDialogProps = Readonly<{
   continueLabel?: string;
   onCancel: () => void;
   onContinue: () => void;
+  /** An optional middle way, named by its outcome ("Close and keep draft"). */
+  extraLabel?: string;
+  onExtra?: () => void;
 }>;
 
 const Overlay = styled.div`
@@ -76,6 +79,8 @@ export function WarningDialog({
   continueLabel,
   onCancel,
   onContinue,
+  extraLabel,
+  onExtra,
 }: WarningDialogProps) {
   const { t } = useTranslation();
   const titleId = useId();
@@ -99,6 +104,7 @@ export function WarningDialog({
           <Button variant="destructive" onClick={onContinue}>
             {continueLabel ?? t('patterns.continueAnyway')}
           </Button>
+          {extraLabel && onExtra ? <Button onClick={onExtra}>{extraLabel}</Button> : null}
           <Button variant="primary" onClick={onCancel} data-autofocus>
             {cancelLabel ?? t('patterns.cancel')}
           </Button>

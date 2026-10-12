@@ -12,7 +12,7 @@
     "noPasskey": "Tidak ada passkey admin yang dipakai. Kalau perangkat ini belum punya, siapkan dulu.",
     "sellerPasskey": "Passkey itu milik penjual. Coba lagi dan pilih passkey admin.",
     "unauthorized": "Masuk sebagai admin untuk melihat halaman ini.",
-    "forbidden": "Hanya admin yang bisa membuka halaman ini.",
+    "forbidden": "Kamu tidak diizinkan melakukan ini.",
     "passkeyCancelled": "Permintaan passkey ditutup. Coba lagi.",
     "passkeyFailed": "Perangkat ini tidak bisa memakai passkey. Coba lagi."
   },

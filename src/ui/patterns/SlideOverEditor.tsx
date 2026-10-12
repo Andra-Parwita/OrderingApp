@@ -15,6 +15,10 @@ export type SlideOverEditorProps = Readonly<{
   onSave: () => void;
   /** An optional second footer action, beside Save (for example "Create only"). */
   secondaryAction?: Readonly<{ label: string; onClick: () => void; disabled?: boolean }>;
+  /** Plan 061: the leave dialog's Discard runs this (default: onCancel), e.g. to forget a draft. */
+  onDiscard?: () => void;
+  /** Plan 061: adds "Close and keep draft" to the leave dialog (the draft is already kept). */
+  keepDraftLabel?: string;
   children: ReactNode;
 }>;
 
@@ -27,6 +31,8 @@ export function SlideOverEditor({
   onCancel,
   onSave,
   secondaryAction,
+  onDiscard,
+  keepDraftLabel,
   children,
 }: SlideOverEditorProps) {
   const { t } = useTranslation();
@@ -67,7 +73,8 @@ export function SlideOverEditor({
           cancelLabel={t('patterns.keepEditing')}
           continueLabel={t('patterns.discard')}
           onCancel={() => setAsking(false)}
-          onContinue={onCancel}
+          onContinue={onDiscard ?? onCancel}
+          {...(keepDraftLabel ? { extraLabel: keepDraftLabel, onExtra: onCancel } : {})}
         >
           {t('patterns.unsavedBody')}
         </WarningDialog>

@@ -12,7 +12,7 @@
     "noPasskey": "No admin passkey was used. If this device has none, set it up first.",
     "sellerPasskey": "That passkey belongs to a seller. Try again and pick the admin passkey.",
     "unauthorized": "Sign in as admin to see this page.",
-    "forbidden": "Only the admin can open this page.",
+    "forbidden": "You are not allowed to do this.",
     "passkeyCancelled": "The passkey prompt was closed. Try again.",
     "passkeyFailed": "This device could not use a passkey. Try again."
   },

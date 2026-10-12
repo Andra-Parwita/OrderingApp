@@ -3,6 +3,7 @@
 // Runs against a local D1; see mocks/impl.ts.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parseBackupFile } from '../shared/backup';
+import { MAX_MENU_ITEMS } from '../shared/limits';
 import { parseMenuResponse, parseSellerMenuResponse } from '../shared/menuContract';
 import { parseSellerOrdersResponse } from '../shared/orderContract';
 import { fakePng, pngFor } from './images';
@@ -302,19 +303,19 @@ describe('seller setup', () => {
       ).toMatchObject(ERR(400, 'unknown_chef'));
     });
 
-    it('allows at most 10 dishes per menu', async () => {
-      while ((await menu(A)).items.length < 10) await addItem(A);
+    it('allows at most MAX_MENU_ITEMS dishes per menu', async () => {
+      while ((await menu(A)).items.length < MAX_MENU_ITEMS) await addItem(A);
       const made = await call('POST', '/api/seller/dishes', { ...A_, body: newItem() });
       const extra = (made.body as { dish: { id: string } }).dish.id;
       const ids = (await view(A)).dishes.map((dish) => dish.dishId);
       expect(await putMenu(A, { dishIds: [...ids, extra] })).toMatchObject(
         ERR(400, 'invalid_request'),
       );
-      expect((await menu(A)).items).toHaveLength(10);
+      expect((await menu(A)).items).toHaveLength(MAX_MENU_ITEMS);
       expect((await menu(B)).items).toHaveLength(3);
       await addItem(B);
       expect((await menu(B)).items).toHaveLength(4);
-    });
+    }, 60_000);
 
     it('reorders: the menu follows the order of the dish ids, no foreign or unknown ids', async () => {
       const dishIds = (await view(A)).dishes.map((dish) => dish.dishId ?? '');
@@ -844,7 +845,11 @@ describe('seller setup', () => {
         { ...good, items: 'x' },
         {
           ...good,
-          items: [...(good['items'] as Array<unknown>), ...(good['items'] as Array<unknown>)],
+          // More items than a menu may hold (MAX_MENU_ITEMS).
+          items: Array.from({ length: MAX_MENU_ITEMS + 1 }, (_, i) => {
+            const all = good['items'] as Array<unknown>;
+            return all[i % all.length];
+          }),
         },
         { ...good, week: { ...(good['week'] as object), status: 'open' } },
         { ...good, settings: { ...(good['settings'] as object), whatsappNumber: '123' } },

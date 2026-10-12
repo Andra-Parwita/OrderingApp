@@ -8,7 +8,8 @@
 //     leaves a stub so its old link says "archived". The day-sales log (plan 029) is cut to 10 weeks.
 import { Db, type D1Like } from '../db/d1';
 import { dropOldDaySales } from '../db/daySales';
-import { finishDueMenus } from '../db/menus';
+import { deleteUnusedPictures, finishDueMenus } from '../db/menus';
+import type { ImageBucket } from '../images/r2';
 import { dropExpiredDetails, dropStaleFindAttempts, type RetentionCounts } from '../db/retention';
 
 /** Hourly: forgets old wrong tries of "find my order" (D-075). Returns how many rows went. */
@@ -47,13 +48,24 @@ export async function runRetention(
  * skipped, so the hourly run finds nothing to do most of the time. Logs counts only.
  */
 export async function runAutoFinish(
-  env: { DB: D1Like },
+  env: { DB: D1Like; IMAGES?: ImageBucket },
   now: Date,
   log: (line: string) => void = (line) => {
     console.log(line);
   },
 ): Promise<{ menus: number; orders: number; failed: number }> {
-  const counts = await finishDueMenus(new Db(env.DB), now);
+  const db = new Db(env.DB);
+  const { pruned, ...counts } = await finishDueMenus(db, now);
+  // Plan 064: the pictures of past menus beyond the newest 10 (the file goes unless still used).
+  if (env.IMAGES) {
+    for (const { sellerId, refs } of pruned) {
+      try {
+        await deleteUnusedPictures(db, env.IMAGES, sellerId, refs);
+      } catch {
+        // The row is already cleared; a file that stays is only a few hundred KB.
+      }
+    }
+  }
   if (counts.menus > 0) {
     log(
       `auto-finish: ${String(counts.menus)} menu(s) finished, ${String(counts.orders)} open order(s) closed`,

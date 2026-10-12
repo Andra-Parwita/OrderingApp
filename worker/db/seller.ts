@@ -400,6 +400,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       ordering: draft ? { open: false, reason: 'not_published' } : ordering(s),
       theme: s.theme,
       languages: s.settings.languages ?? 'both',
+      firstLanguage: s.settings.firstLanguage ?? 'en',
       ...(!draft && s.pictureUrl !== undefined ? { pictureUrl: s.pictureUrl } : {}),
     };
   }
@@ -505,9 +506,11 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
    */
   function portionGuard(order: SellerOrder): D1Statement | null {
     if (order.status === 'cancelled' || order.lines.length === 0) return null;
-    const want = order.lines.map(() => '(?, ?)').join(', ');
+    // One JSON parameter, not two per line: D1 allows 100 bound parameters a statement, and a
+    // 50-line order (plan 066) would need 102.
     return db.stmt(
-      `WITH want (item_id, qty) AS (VALUES ${want})
+      `WITH want (item_id, qty) AS (
+         SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?))
        SELECT CASE WHEN EXISTS (
          SELECT 1 FROM want w JOIN menu_items m ON m.seller_id = ? AND m.id = w.item_id
          WHERE m.portion_limit IS NOT NULL AND m.portion_limit < w.qty + COALESCE((
@@ -515,7 +518,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
            WHERE o.seller_id = m.seller_id AND o.past_week_id IS NULL AND o.status <> 'cancelled'
              AND l.item_id = w.item_id AND o.id <> ?), 0)
        ) THEN abs(-9223372036854775808) ELSE 0 END AS guard`,
-      ...order.lines.flatMap((line) => [line.itemId, line.qty]),
+      JSON.stringify(order.lines.map((line) => [line.itemId, line.qty])),
       sid,
       order.id,
     );
@@ -592,6 +595,24 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     };
   }
 
+  /** A customer may only pick what the menu offers (pickup needs a pickup point). */
+  function fulfilmentRefusal(
+    s: State,
+    fulfilment: 'pickup' | 'delivery',
+  ): StoreResult<never> | null {
+    if (fulfilment === 'pickup' && s.week.pickupPoints.length === 0)
+      return fail('fulfilment_unavailable', "This menu doesn't offer pickup");
+    if (fulfilment === 'delivery' && !s.week.delivery.available)
+      return fail('fulfilment_unavailable', "This menu doesn't offer delivery");
+    return null;
+  }
+
+  /** Demo orders only use what the menu offers: delivery when wanted and available, else pickup. */
+  function sampleFulfilment(s: State, wantDelivery: boolean): 'pickup' | 'delivery' {
+    if (wantDelivery && s.week.delivery.available) return 'delivery';
+    return s.week.pickupPoints.length > 0 || !s.week.delivery.available ? 'pickup' : 'delivery';
+  }
+
   async function place(
     s: State,
     input: CreateOrderRequest | CreateSellerOrderRequest,
@@ -599,6 +620,10 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     enteredBy: StaffActor | undefined,
     extra: StaffInsert,
   ): Promise<StoreResult<SellerOrder>> {
+    if (!enteredBy) {
+      const refused = fulfilmentRefusal(s, input.fulfilment);
+      if (refused) return refused;
+    }
     if (
       input.fulfilment === 'pickup' &&
       input.pickupPlaceId !== undefined &&
@@ -686,6 +711,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     paid_cents: number;
     unpaid_cents: number;
     details_dropped_at: string | null;
+    picture_ref: string | null;
   };
   type PastItemRow = {
     past_week_id: string;
@@ -723,6 +749,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
           })),
       },
       hasOrders: week.details_dropped_at === null,
+      ...(week.picture_ref !== null ? { pictureUrl: week.picture_ref } : {}),
     }));
   }
 
@@ -799,7 +826,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         firstName,
         language: random() < 0.5 ? 'en' : 'id',
         lines: requested,
-        fulfilment: random() < 0.4 && s.week.delivery.available ? 'delivery' : 'pickup',
+        fulfilment: sampleFulfilment(s, random() < 0.4),
         ...(note !== undefined ? { note } : {}),
         // Pickup samples rotate over the menu's places (no random draw, so seeds stay stable).
         ...(s.week.pickupPoints.length > 0
@@ -833,10 +860,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
             !current.order.lines.some((line) => line.itemId === item.id),
         );
         const edit = patched(s, current.order, {
-          fulfilment:
-            current.order.fulfilment === 'pickup' && s.week.delivery.available
-              ? 'delivery'
-              : 'pickup',
+          fulfilment: sampleFulfilment(s, current.order.fulfilment === 'pickup'),
           note: 'Changed my mind, thanks',
           ...(extra ? { lines: [...current.order.lines, { itemId: extra.id, qty: 1 }] } : {}),
         });
@@ -950,20 +974,24 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       await db.batch([
         db.stmt(
           `UPDATE kitchen_settings SET whatsapp_number = ?, post_greeting_en = ?, post_greeting_id = ?,
-             post_closing_en = ?, post_closing_id = ?, languages = COALESCE(?, languages) WHERE seller_id = ?`,
+             post_closing_en = ?, post_closing_id = ?, languages = COALESCE(?, languages),
+             first_language = COALESCE(?, first_language) WHERE seller_id = ?`,
           next.whatsappNumber ?? null,
           next.postGreeting.en,
           next.postGreeting.id,
           next.postClosing.en,
           next.postClosing.id,
           next.languages ?? null,
+          next.firstLanguage ?? null,
           sid,
         ),
         db.stmt('UPDATE menus SET taking_orders = ? WHERE seller_id = ?', next.orderingOpen, sid),
       ]);
+      const kept = await this.getSettings();
       return {
         ...structuredClone(next),
-        languages: next.languages ?? (await this.getSettings()).languages,
+        languages: next.languages ?? kept.languages,
+        firstLanguage: next.firstLanguage ?? kept.firstLanguage,
       };
     },
 
@@ -1451,6 +1479,10 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       if (closed) return closed;
       if (order.locked) return fail('order_locked', 'The seller has locked this order');
       if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
+      if (patch.fulfilment && patch.fulfilment !== order.fulfilment) {
+        const refused = fulfilmentRefusal(s, patch.fulfilment);
+        if (refused) return refused;
+      }
       const next = patched(s, order, patch);
       if (!next.ok) return next;
       const edited = editDraft(order, next.value, patch.lines !== undefined);

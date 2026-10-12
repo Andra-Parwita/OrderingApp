@@ -189,7 +189,10 @@ describe('SettingsPanes', () => {
     renderPane('kitchen');
     expect(await screen.findByRole('radio', { name: 'English and Indonesian' })).toBeChecked();
     expect(screen.getByText(/Customers can switch language\./)).toBeInTheDocument();
+    expect(screen.getByText(/their own choice is remembered/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
     fireEvent.click(screen.getByRole('radio', { name: 'English only' }));
+    expect(screen.queryByText(/their own choice is remembered/)).not.toBeInTheDocument();
     expect(
       screen.getByText(/You type every dish name and description once, in English\./),
     ).toBeInTheDocument();
@@ -198,6 +201,6 @@ describe('SettingsPanes', () => {
       screen.getByText(/You type every dish name and description once, in Indonesian\./),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(body).toMatchObject({ languages: 'id' }));
+    await waitFor(() => expect(body).toMatchObject({ languages: 'id', firstLanguage: 'id' }));
   });
 });

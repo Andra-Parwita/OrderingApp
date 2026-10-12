@@ -61,6 +61,31 @@ describe('CustomerSettingsView', () => {
     expect(screen.getByRole('radio', { name: 'Dark' })).toBeInTheDocument();
   });
 
+  it('shows the kitchen banner on top when a kitchen is loaded, nothing without', () => {
+    const kitchen = {
+      sellerId: 's1',
+      name: 'Onde Onde',
+      tagline: { en: 'x', id: 'x' },
+      bannerImageUrl: '/banner.png',
+    };
+    const first = render(
+      <ThemeProvider theme={lightTheme}>
+        <CustomerSettingsView
+          lang="en"
+          onLang={vi.fn()}
+          theme="auto"
+          onTheme={vi.fn()}
+          install={{ env: base }}
+          kitchen={kitchen}
+        />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole('img', { name: 'Onde Onde banner' })).toBeInTheDocument();
+    first.unmount();
+    show();
+    expect(screen.queryByRole('img', { name: 'Onde Onde banner' })).toBeNull();
+  });
+
   it('picks a text size and applies it to the page', () => {
     show();
     expect(screen.getByRole('radio', { name: 'Normal' })).toBeChecked();

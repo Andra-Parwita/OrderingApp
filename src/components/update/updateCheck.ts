@@ -78,3 +78,6 @@ export function reloadOnPreloadError(
   window.addEventListener('vite:preloadError', handler);
   return () => window.removeEventListener('vite:preloadError', handler);
 }
+
+/** CSS variable on <html> holding the update bar's height while it shows; the offline banner sits below it. */
+export const UPDATE_BAR_HEIGHT_VAR = '--update-bar-height';

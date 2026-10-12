@@ -54,6 +54,24 @@ describe('languages for customers (plan 056)', () => {
     expect((await settings()).languages).toBe('id');
   });
 
+  it('defaults the first language to en, lets the owner set id, keeps it when omitted (plan 060)', async () => {
+    const current = await settings();
+    expect(current.firstLanguage).toBe('en');
+    const menuFirst = async () =>
+      parseMenuResponse((await call('GET', `/api/s/${A}/menu`)).body)?.firstLanguage;
+    expect(await menuFirst()).toBe('en');
+    const put = await call('PUT', '/api/seller/settings', { ...current, firstLanguage: 'id' });
+    expect(put.body.settings.firstLanguage).toBe('id');
+    expect(await menuFirst()).toBe('id');
+    const old = { ...current };
+    delete old.firstLanguage;
+    const kept = await call('PUT', '/api/seller/settings', { ...old, orderingOpen: true });
+    expect(kept.body.settings.firstLanguage).toBe('id');
+    expect(
+      (await call('PUT', '/api/seller/settings', { ...current, firstLanguage: 'fr' })).status,
+    ).toBe(400);
+  });
+
   it('refuses an unknown value', async () => {
     const current = await settings();
     expect(

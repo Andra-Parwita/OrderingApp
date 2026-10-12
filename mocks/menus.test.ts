@@ -542,6 +542,7 @@ describe('menus and dishes', () => {
       expect(Object.keys(settings).sort()).toEqual(['sellerId', 'settings']);
       const publicMenu = (await call('GET', `/api/s/${A}/menu`)).body;
       expect(Object.keys(publicMenu).sort()).toEqual([
+        'firstLanguage',
         'items',
         'kitchen',
         'languages',

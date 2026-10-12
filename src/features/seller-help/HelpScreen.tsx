@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { styled } from 'styled-components';
@@ -6,7 +6,8 @@ import { useMediaQuery } from '../../components/useMediaQuery';
 import { brandColour, brandHelp, brandPill } from '../../theme/brandTokens';
 import { STEP_IMAGES } from './images';
 import { HELP_NS } from './i18n/register';
-import { TOPICS, type HelpStep, type HelpTopicText } from './topics';
+import { CUSTOMER_TOPICS } from './customerTopics';
+import { TOPICS, type HelpStep, type HelpTopic, type HelpTopicText } from './topics';
 
 // Plan 058, D-095: the seller Help page. Public (no sign-in), noindex, in the user's language with
 // an EN | ID switch. A tablet shows the topic list beside the steps; a phone shows an accordion.
@@ -414,6 +415,40 @@ const Note = styled.p`
   background: ${({ theme }) => theme.c.surf2};
   font-size: 0.875rem;
 `;
+const TabList = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+
+  @media print {
+    display: none;
+  }
+`;
+const TabButton = styled.button`
+  min-height: ${({ theme }) => theme.minTapTarget};
+  margin-bottom: calc(-1 * ${({ theme }) => theme.border.hairline});
+  padding: ${({ theme }) => theme.spacing.sm} 0.125rem;
+  border: 0;
+  border-bottom: 0.125rem solid transparent;
+  background: transparent;
+  color: ${({ theme }) => theme.c.muted};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+
+  &[aria-selected='true'] {
+    border-bottom-color: ${({ theme }) => theme.c.fill};
+    color: ${({ theme }) => theme.c.text};
+  }
+`;
+const OtherTab = styled.button`
+  margin: 0;
+  padding: 1.125rem;
+  border: 0;
+  background: transparent;
+  color: ${({ theme }) => theme.c.atext};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+  text-align: left;
+`;
 const None = styled.p`
   margin: 0;
   padding: 1.125rem;
@@ -450,7 +485,13 @@ function StepsView({
   topic,
   index,
   alt,
-}: Readonly<{ topic: HelpTopicText; index: number; alt: (what: string) => string }>) {
+  pictures,
+}: Readonly<{
+  topic: HelpTopicText;
+  index: number;
+  alt: (what: string) => string;
+  pictures: boolean;
+}>) {
   // A step's number restarts after each part heading (A, B, iPhone, Android).
   const numbers = topic.steps.reduce<Array<number>>((all, step, i) => {
     all.push('part' in step ? 0 : (all[i - 1] ?? 0) + 1);
@@ -468,7 +509,7 @@ function StepsView({
               </li>
             );
           }
-          const file = STEP_IMAGES[`${index + 1}.${i + 1}`];
+          const file = pictures ? STEP_IMAGES[`${index + 1}.${i + 1}`] : undefined;
           return (
             <li key={i} data-n={numbers[i]}>
               <p>
@@ -491,10 +532,15 @@ function StepsView({
   );
 }
 
-/** `?topic=3` (from 1) opens that topic; anything else opens the first. */
-function topicFromAddress(value: string | null): number {
+type Tab = 'seller' | 'customer';
+const TABS: ReadonlyArray<Tab> = ['seller', 'customer'];
+const topicsOf = (tab: Tab): ReadonlyArray<HelpTopic> =>
+  tab === 'customer' ? CUSTOMER_TOPICS : TOPICS;
+
+/** `?topic=4` (from 1) opens that topic of the tab; anything else opens the first. */
+function topicFromAddress(value: string | null, tab: Tab): number {
   const n = Number(value);
-  return Number.isInteger(n) && n >= 1 && n <= TOPICS.length ? n - 1 : 0;
+  return Number.isInteger(n) && n >= 1 && n <= topicsOf(tab).length ? n - 1 : 0;
 }
 
 export type HelpScreenProps = Readonly<{
@@ -508,7 +554,11 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
   const lang = i18n.language.startsWith('id') ? 'id' : 'en';
   const phone = useMediaQuery(PHONE_QUERY);
   const [params] = useSearchParams();
-  const [open, setOpen] = useState(() => topicFromAddress(params.get('topic')));
+  const [tab, setTab] = useState<Tab>(() =>
+    params.get('tab') === 'customer' ? 'customer' : 'seller',
+  );
+  const [open, setOpen] = useState(() => topicFromAddress(params.get('topic'), tab));
+  const tabRefs = useRef<Record<Tab, HTMLButtonElement | null>>({ seller: null, customer: null });
   const [query, setQuery] = useState('');
   const [printing, setPrinting] = useState(false);
   const q = query.trim().toLowerCase();
@@ -536,9 +586,36 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
   }, [t, lang]);
 
   const shown = useMemo(
-    () => TOPICS.map((topic, i) => ({ topic: topic[lang], i })).filter((x) => matches(x.topic, q)),
-    [lang, q],
+    () =>
+      topicsOf(tab)
+        .map((topic, i) => ({ topic: topic[lang], i }))
+        .filter((x) => matches(x.topic, q)),
+    [lang, q, tab],
   );
+  const other: Tab = tab === 'seller' ? 'customer' : 'seller';
+  const otherCount = useMemo(
+    () => (q === '' ? 0 : topicsOf(other).filter((x) => matches(x[lang], q)).length),
+    [lang, q, other],
+  );
+  const pick = (next: Tab, focus = false) => {
+    setTab(next);
+    setOpen(0);
+    if (focus) tabRefs.current[next]?.focus();
+  };
+  const onTabKey = (event: KeyboardEvent) => {
+    const at = TABS.indexOf(tab);
+    const to =
+      event.key === 'ArrowRight' || event.key === 'ArrowLeft'
+        ? TABS[(at + (event.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length]
+        : event.key === 'Home'
+          ? TABS[0]
+          : event.key === 'End'
+            ? TABS[TABS.length - 1]
+            : undefined;
+    if (to === undefined) return;
+    event.preventDefault();
+    pick(to, true);
+  };
   // The open topic stays one that is shown; a search moves it to the first match.
   const current = shown.some((x) => x.i === open) ? open : (shown[0]?.i ?? -1);
   const accordion = phone || printing;
@@ -577,6 +654,25 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
         <MascotBox>{mascot}</MascotBox>
       </Band>
       <Main>
+        <TabList role="tablist" aria-label={t('tabs')} onKeyDown={onTabKey}>
+          {TABS.map((id) => (
+            <TabButton
+              key={id}
+              ref={(el) => {
+                tabRefs.current[id] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`help-tab-${id}`}
+              aria-selected={tab === id}
+              aria-controls="help-panel"
+              tabIndex={tab === id ? 0 : -1}
+              onClick={() => pick(id)}
+            >
+              {t(id === 'seller' ? 'tabSeller' : 'tabCustomer')}
+            </TabButton>
+          ))}
+        </TabList>
         <SearchBox>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
@@ -591,9 +687,24 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
             onChange={(event) => setQuery(event.target.value)}
           />
         </SearchBox>
-        <Layout $split={!accordion}>
+        <Layout
+          $split={!accordion}
+          role="tabpanel"
+          id="help-panel"
+          aria-labelledby={`help-tab-${tab}`}
+        >
           {shown.length === 0 ? (
-            <None role="status">{t('none')}</None>
+            <div role="status">
+              <None>{t('none')}</None>
+              {otherCount > 0 ? (
+                <OtherTab type="button" onClick={() => pick(other)}>
+                  {t('foundIn', {
+                    tab: t(other === 'seller' ? 'tabSeller' : 'tabCustomer'),
+                    count: otherCount,
+                  })}
+                </OtherTab>
+              ) : null}
+            </div>
           ) : (
             <List aria-label={t('topics')}>
               {shown.map(({ topic, i }) => {
@@ -617,7 +728,7 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
                     </TopicButton>
                     {accordion && on ? (
                       <Inline id={`help-topic-${i}`}>
-                        <StepsView topic={topic} index={i} alt={alt} />
+                        <StepsView topic={topic} index={i} alt={alt} pictures={tab === 'seller'} />
                       </Inline>
                     ) : null}
                   </li>
@@ -630,7 +741,12 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
               <h2>
                 {detail.i + 1}. {detail.topic.n}
               </h2>
-              <StepsView topic={detail.topic} index={detail.i} alt={alt} />
+              <StepsView
+                topic={detail.topic}
+                index={detail.i}
+                alt={alt}
+                pictures={tab === 'seller'}
+              />
             </Detail>
           ) : null}
         </Layout>

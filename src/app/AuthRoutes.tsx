@@ -92,7 +92,7 @@ export function SellerSetupRoute() {
     <>
       <FootLink to={SWITCH_SIGN_IN}>{t('signIn.alreadySetUp')}</FootLink>
       {/* Plan 058: the invite key is the step people get stuck on; Help topic 2 explains it. */}
-      <FootLink to={`${SELLER_HELP_PATH}?topic=2`}>{tHelp('inviteKeyHelp')}</FootLink>
+      <FootLink to={`${SELLER_HELP_PATH}?topic=3`}>{tHelp('inviteKeyHelp')}</FootLink>
     </>
   );
   return (

@@ -9,6 +9,7 @@ import { fetchMenu } from '../../api/client';
 import { setKitchenName } from '../../api/kitchenName';
 import { KITCHEN_NAME_MAX } from '../../../shared/setupContract';
 import { currentSellerSlug } from '../../api/device/sellerContext';
+import { DraftNotice, clearDraft, draftKey, fingerprint, useDraft } from '../../components/draft';
 import { Button, Segmented, TextArea, TextField, type SegmentedOption } from '../../ui';
 import { SETTINGS_NS } from './i18n/register';
 import { ErrorLine, GroupTitle, Muted, PaneForm, Two } from './paneParts';
@@ -41,7 +42,8 @@ const PicturesBlock = styled.section`
 /** Loads the kitchen settings and hands them to its children; shows the load states. */
 function SettingsGate({
   children,
-}: Readonly<{ children: (settings: KitchenSettings) => ReactNode }>) {
+  form,
+}: Readonly<{ children: (settings: KitchenSettings) => ReactNode; form: string }>) {
   const { t } = useTranslation(SETTINGS_NS);
   const dispatch = useDispatch();
   const { load, settings, version } = useSelector(
@@ -51,6 +53,18 @@ function SettingsGate({
     dispatch(loadRequested());
   }, [dispatch]);
   const retry = useCallback(() => dispatch(loadRequested()), [dispatch]);
+  // Plan 061: a new version after the form was shown means the server accepted a Save (or reloaded):
+  // what was typed is no longer a draft. Cleared before the fresh form reads it.
+  const [seen, setSeen] = useState<number | null>(null);
+  if (settings && seen !== version) {
+    setSeen(version);
+    if (seen !== null) clearDraft(draftKey(currentSellerSlug(), form));
+  }
+  // The old form's unmount flush runs after the render above and can write the typed text back:
+  // clear again once it has run (effects of a commit run after the unmounted form's cleanup).
+  useEffect(() => {
+    if (seen !== null) clearDraft(draftKey(currentSellerSlug(), form));
+  }, [seen, form]);
   if (load === 'error') {
     return (
       <ErrorLine role="alert">
@@ -107,22 +121,53 @@ function useKitchenName() {
       live = false;
     };
   }, []);
-  return { name, setName, saved, setSaved, loaded };
+  return { name, saved, setSaved, loaded };
 }
 
+type KitchenDraft = {
+  name: string | null;
+  phone: string;
+  languages: Languages;
+  firstLanguage: Language;
+};
+
 const LANGUAGE_VALUES: ReadonlyArray<Languages> = ['both', 'en', 'id'];
+const FIRST_VALUES: ReadonlyArray<Language> = ['en', 'id'];
 
 function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   const { t } = useTranslation(SETTINGS_NS);
   const dispatch = useDispatch();
-  const { name, setName, saved, setSaved, loaded } = useKitchenName();
+  const { name: loadedName, saved, setSaved, loaded } = useKitchenName();
   const [nameFailed, setNameFailed] = useState(false);
   const save = useSelector((state: SettingsRootState) => state.sellerSettings.save);
-  const [phone, setPhone] = useState(() => toDraft(settings).phone);
-  const [languages, setLanguages] = useState<Languages>(settings.languages ?? 'both');
+  // Plan 061: name (null = as saved), number and languages survive a reload until Save.
+  const start = useMemo<KitchenDraft>(
+    () => ({
+      name: null,
+      phone: toDraft(settings).phone,
+      languages: settings.languages ?? 'both',
+      firstLanguage: settings.firstLanguage ?? 'en',
+    }),
+    [settings],
+  );
+  const [typed, setTyped, typedDraft] = useDraft<KitchenDraft>(
+    draftKey(currentSellerSlug(), 'kitchen'),
+    start,
+    { baseline: fingerprint(start) },
+  );
+  const { phone, languages, firstLanguage } = typed;
+  const name = typed.name ?? loadedName;
+  const setPhone = (value: string) => setTyped((p) => ({ ...p, phone: value }));
+  const setLanguages = (value: Languages) => setTyped((p) => ({ ...p, languages: value }));
+  const setFirstLanguage = (value: Language) => setTyped((p) => ({ ...p, firstLanguage: value }));
+  const setName = (value: string) => setTyped((p) => ({ ...p, name: value }));
   const languageOptions = useMemo<Array<SegmentedOption<Languages>>>(
     () => LANGUAGE_VALUES.map((value) => ({ value, label: t(`kitchen.languages.${value}`) })),
     [t],
+  );
+  const firstOptions = useMemo<Array<SegmentedOption<Language>>>(
+    () => FIRST_VALUES.map((value) => ({ value, label: value.toUpperCase() })),
+    [],
   );
   const [submitted, setSubmitted] = useState(false);
   const serverInvalid = save.status === 'error' && save.code === 'invalid_request';
@@ -143,12 +188,15 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
           if (result.ok) setSaved(result.data.name);
         });
       }
-      dispatch(saveRequested(toSettings({ ...toDraft(settings), phone, languages })));
+      dispatch(
+        saveRequested(toSettings({ ...toDraft(settings), phone, languages, firstLanguage })),
+      );
     },
-    [dispatch, phone, languages, settings, name, nameInvalid, saved, setSaved],
+    [dispatch, phone, languages, firstLanguage, settings, name, nameInvalid, saved, setSaved],
   );
   return (
     <PaneForm onSubmit={onSubmit} noValidate>
+      <DraftNotice draft={typedDraft} />
       <Two>
         <TextField
           label={t('kitchen.name')}
@@ -186,6 +234,18 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
           label={t('kitchen.languages.title')}
         />
         <Muted>{t(`kitchen.languages.${languages}Help`)}</Muted>
+        {languages === 'both' ? (
+          <>
+            <GroupTitle>{t('kitchen.languages.firstTitle')}</GroupTitle>
+            <Segmented
+              options={firstOptions}
+              value={firstLanguage}
+              onChange={setFirstLanguage}
+              label={t('kitchen.languages.firstTitle')}
+            />
+            <Muted>{t('kitchen.languages.firstHelp')}</Muted>
+          </>
+        ) : null}
       </Group>
       <SaveFailure hideInvalid />
       <SaveButton />
@@ -196,7 +256,7 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
 export function KitchenPane({ images }: Readonly<{ images: ReactNode }>) {
   return (
     <>
-      <SettingsGate>{(settings) => <PhoneForm settings={settings} />}</SettingsGate>
+      <SettingsGate form="kitchen">{(settings) => <PhoneForm settings={settings} />}</SettingsGate>
       <PicturesBlock>{images}</PicturesBlock>
     </>
   );
@@ -207,8 +267,17 @@ export function KitchenPane({ images }: Readonly<{ images: ReactNode }>) {
 function PostForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   const { t } = useTranslation(SETTINGS_NS);
   const dispatch = useDispatch();
-  const [greeting, setGreeting] = useState(settings.postGreeting);
-  const [closing, setClosing] = useState(settings.postClosing);
+  // Plan 061: both texts survive a reload until Save.
+  const start = useMemo(
+    () => ({ greeting: settings.postGreeting, closing: settings.postClosing }),
+    [settings],
+  );
+  const [typed, setTyped, typedDraft] = useDraft(draftKey(currentSellerSlug(), 'post'), start, {
+    baseline: fingerprint(start),
+  });
+  const { greeting, closing } = typed;
+  const setGreeting = (value: LocalText) => setTyped((p) => ({ ...p, greeting: value }));
+  const setClosing = (value: LocalText) => setTyped((p) => ({ ...p, closing: value }));
   const number = settings.whatsappNumber ? formatPhone(settings.whatsappNumber) : '';
   // Plan 056: with one language there is one field per text, saved into both.
   const one =
@@ -237,6 +306,7 @@ function PostForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
       set({ ...current, [lng]: event.target.value });
   return (
     <PaneForm onSubmit={onSubmit} noValidate>
+      <DraftNotice draft={typedDraft} />
       <Two>
         {one ? (
           <>
@@ -310,5 +380,5 @@ function PostForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
 }
 
 export function PostPane() {
-  return <SettingsGate>{(settings) => <PostForm settings={settings} />}</SettingsGate>;
+  return <SettingsGate form="post">{(settings) => <PostForm settings={settings} />}</SettingsGate>;
 }

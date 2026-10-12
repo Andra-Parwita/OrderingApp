@@ -46,6 +46,15 @@ describe('UpdateBar', () => {
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
   });
 
+  it('publishes its height so the offline banner sits below it, and clears it when hidden', async () => {
+    const height = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(36);
+    await mount(answer('1.0.2'));
+    expect(document.documentElement.style.getPropertyValue('--update-bar-height')).toBe('36px');
+    fireEvent.click(screen.getByRole('button', { name: 'Hide' }));
+    expect(document.documentElement.style.getPropertyValue('--update-bar-height')).toBe('');
+    height.mockRestore();
+  });
+
   it('shows nothing when the version is the same', async () => {
     await mount(answer('1.0.1'));
     expect(screen.queryByRole('status')).toBeNull();

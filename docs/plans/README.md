@@ -89,6 +89,13 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 057 | ✅ | [A ⇄ Translate button for dish texts](057-translate-button.md) | approved (2026-10-12); this round; **AI binding** |
 | 058 | ✅ | [A simple Help page for sellers](058-seller-help.md) | draft; mock-up first; this round |
 | 059 | ✅ | ["A new version is ready" and safe refresh for home-screen apps](059-new-version-refresh.md) | this round |
+| 060 | ✅ | [The language customers see first](060-customer-first-language.md) | draft; next round; **migration 0014** |
+| 061 | ✅ | [Never lose typed data](061-never-lose-typed-data.md) | approved (2026-10-12); building |
+| 062 | ✅ | [Calm network errors, no endless retries](062-calm-network-errors.md) | approved (2026-10-12); after 061 |
+| 063 | ✅ | [One clear choice: Pickup, Delivery or Both](063-pickup-delivery-choice.md) | approved (2026-10-12); after 061 |
+| 064 | ✅ | [Keep the pictures of the last 10 menus](064-past-menu-pictures.md) | approved (2026-10-12); server now, client after 061 |
+| 065 | ✅ | [My orders: remember the kitchen, kitchen pill on cards](065-my-orders-kitchen.md) | approved (2026-10-12) |
+| 066 | ✅ | [Up to 50 dishes on a menu, labels and print split properly](066-fifty-dishes.md) | approved (2026-10-12) |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

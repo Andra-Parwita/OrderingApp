@@ -89,6 +89,10 @@ const MENU = {
   ordering: { open: true },
 };
 
+function fetchedUrls(): Array<string> {
+  return vi.mocked(fetch).mock.calls.map(([input]) => (input as string).toString());
+}
+
 function stubMenu(images: Record<string, unknown> = MENU.kitchen.images) {
   const menu = { ...MENU, kitchen: { ...MENU.kitchen, images } };
   vi.stubGlobal(
@@ -115,6 +119,21 @@ describe('AppRoutes', () => {
     );
     fireEvent.click(screen.getByRole('radio', { name: 'Auto' }));
     expect(localStorage.getItem('theme')).toBe('auto');
+  });
+
+  it('loads the last kitchen on My orders after a reload', async () => {
+    localStorage.setItem('lastKitchen', 'onde-onde');
+    stubMenu();
+    renderAt('/my-orders');
+    await waitFor(() =>
+      expect(fetchedUrls()).toContainEqual(expect.stringContaining('/api/s/onde-onde/menu')),
+    );
+  });
+
+  it('loads no menu on My orders when no kitchen is remembered', () => {
+    stubMenu();
+    renderAt('/my-orders');
+    expect(fetchedUrls()).not.toContainEqual(expect.stringContaining('/menu'));
   });
 
   it('shows the bottom tab bar on a phone and the left rail on a desktop', () => {

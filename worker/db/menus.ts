@@ -4,7 +4,13 @@
 // several rows send them as one batch, which D1 runs as one transaction.
 import { comingSaturday, cutoffAtFor, menuFinishesAt } from '../../shared/dates';
 import type { InboxEntry, PickupPoint, SellerOrder } from '../../shared/domain';
-import { MAX_DISHES, MAX_MENU_ITEMS, MAX_PICKUP_PLACES, MAX_SETS } from '../../shared/limits';
+import {
+  MAX_DISHES,
+  MAX_MENU_ITEMS,
+  MAX_PICKUP_PLACES,
+  MAX_SETS,
+  PAST_MENU_PICTURES_KEPT,
+} from '../../shared/limits';
 import {
   importRowProblem,
   type Dish,
@@ -15,6 +21,7 @@ import {
   type Preferences,
 } from '../../shared/menusContract';
 import { summariseOrders } from '../../shared/pastWeeks';
+import { deleteImageRefs, type ImageBucket } from '../images/r2';
 import { isFinalStatus } from '../../shared/status';
 import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
 import { checkImageUpload } from '../../shared/imageSlots';
@@ -64,6 +71,7 @@ export type MenuOps = Pick<
   | 'deleteMenu'
   | 'setMenuPicture'
   | 'removeMenuPicture'
+  | 'usePastMenuPicture'
   | 'finishMenuNow'
   | 'listDishes'
   | 'createDish'
@@ -94,7 +102,13 @@ function ok<T>(value: T): StoreResult<T> {
 /** See finishDueMenus. */
 export const MAX_FINISH_PER_RUN = 12;
 
-export type FinishPlan = { row: MenuRow; statements: Array<D1Statement>; closedOrders: number };
+export type FinishPlan = {
+  row: MenuRow;
+  statements: Array<D1Statement>;
+  closedOrders: number;
+  /** Plan 064: pictures of past menus beyond the newest PAST_MENU_PICTURES_KEPT, cleared by this finish. */
+  prunedPictures: Array<string>;
+};
 
 /**
  * Everything that finishing a seller's menu writes: the closed week with its totals (under the
@@ -116,13 +130,25 @@ export async function planFinish(
   const totals = summariseOrders(orders);
   const open = closeOpenOrders ? orders.filter((order) => !isFinalStatus(order.status)) : [];
   const at = now.toISOString();
+  // Plan 064: the finished menu keeps its picture on its past-menu row; the newest
+  // PAST_MENU_PICTURES_KEPT keep theirs, so the ones that fall out now are the old rows from the
+  // (KEPT - 1)th on, before this one is added. Their files are deleted by the caller if unused.
+  const older = await db.all<{ picture_ref: string | null }>(
+    'SELECT picture_ref FROM past_weeks WHERE seller_id = ? ORDER BY rowid DESC LIMIT -1 OFFSET ?',
+    sellerId,
+    PAST_MENU_PICTURES_KEPT - 1,
+  );
+  const prunedPictures = older.flatMap((past) =>
+    past.picture_ref === null ? [] : [past.picture_ref],
+  );
   return {
     row,
     closedOrders: open.length,
+    prunedPictures,
     statements: [
       db.stmt(
         `INSERT INTO past_weeks (seller_id, id, cooking_date, closed_at, orders_count, cancelled_count, income_cents,
-           paid_cents, unpaid_cents, details_dropped_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+           paid_cents, unpaid_cents, details_dropped_at, picture_ref) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
         sellerId,
         row.id,
         row.cooking_date,
@@ -132,7 +158,19 @@ export async function planFinish(
         totals.incomeCents,
         totals.paidCents,
         totals.unpaidCents,
+        row.picture_ref,
       ),
+      ...(prunedPictures.length > 0
+        ? [
+            db.stmt(
+              `UPDATE past_weeks SET picture_ref = NULL WHERE seller_id = ? AND picture_ref IS NOT NULL
+                 AND rowid NOT IN (SELECT rowid FROM past_weeks WHERE seller_id = ? ORDER BY rowid DESC LIMIT ?)`,
+              sellerId,
+              sellerId,
+              PAST_MENU_PICTURES_KEPT,
+            ),
+          ]
+        : []),
       ...totals.items.map((item, position) =>
         db.stmt(
           `INSERT INTO past_week_items (seller_id, past_week_id, position, item_id, name_en, name_id, qty)
@@ -195,9 +233,9 @@ export async function finishMenu(
   db: Db,
   sellerId: string,
   now: Date,
-): Promise<{ finished: boolean; closedOrders: number }> {
+): Promise<{ finished: boolean; closedOrders: number; prunedPictures: Array<string> }> {
   const plan = await planFinish(db, sellerId, now);
-  if (!plan) return { finished: false, closedOrders: 0 };
+  if (!plan) return { finished: false, closedOrders: 0, prunedPictures: [] };
   try {
     await db.batch(plan.statements);
   } catch (error) {
@@ -206,10 +244,11 @@ export async function finishMenu(
       'SELECT state FROM menus WHERE seller_id = ?',
       sellerId,
     );
-    if (again?.state === 'finished') return { finished: false, closedOrders: 0 };
+    if (again?.state === 'finished')
+      return { finished: false, closedOrders: 0, prunedPictures: [] };
     throw error;
   }
-  return { finished: true, closedOrders: plan.closedOrders };
+  return { finished: true, closedOrders: plan.closedOrders, prunedPictures: plan.prunedPictures };
 }
 
 /**
@@ -219,7 +258,13 @@ export async function finishMenu(
 export async function finishDueMenus(
   db: Db,
   now: Date,
-): Promise<{ menus: number; orders: number; failed: number }> {
+): Promise<{
+  menus: number;
+  orders: number;
+  failed: number;
+  /** Plan 064: pictures pruned from past menus, per seller; delete them with deleteUnusedPictures. */
+  pruned: Array<{ sellerId: string; refs: Array<string> }>;
+}> {
   const live = await db.all<{ seller_id: string; cooking_date: string }>(
     "SELECT seller_id, cooking_date FROM menus WHERE state = 'live'",
   );
@@ -231,6 +276,7 @@ export async function finishDueMenus(
   let menus = 0;
   let orders = 0;
   let failed = 0;
+  const pruned: Array<{ sellerId: string; refs: Array<string> }> = [];
   for (const menu of due) {
     // One bad menu must not stop the others; it is still due at the next hourly run.
     try {
@@ -238,12 +284,58 @@ export async function finishDueMenus(
       if (done.finished) {
         menus++;
         orders += done.closedOrders;
+        if (done.prunedPictures.length > 0) {
+          pruned.push({ sellerId: menu.seller_id, refs: done.prunedPictures });
+        }
       }
     } catch {
       failed++;
     }
   }
-  return { menus, orders, failed };
+  return { menus, orders, failed, pruned };
+}
+
+/**
+ * Plan 064: deletes the R2 files of pictures a finish just pruned, unless something still shows
+ * them: the kitchen's pictures, a saved set, the menu, or another past menu (a picture reused by
+ * the current menu or a newer past menu keeps its file).
+ */
+export async function deleteUnusedPictures(
+  db: Db,
+  bucket: ImageBucket,
+  sellerId: string,
+  refs: ReadonlyArray<string>,
+): Promise<void> {
+  if (refs.length === 0) return;
+  const m = marks(refs.length);
+  const rows = await db.reads([
+    db.stmt(
+      `SELECT ref FROM kitchen_images WHERE seller_id = ? AND ref IN (${m})`,
+      sellerId,
+      ...refs,
+    ),
+    db.stmt(
+      `SELECT ref FROM saved_set_images WHERE seller_id = ? AND ref IN (${m})`,
+      sellerId,
+      ...refs,
+    ),
+    db.stmt(
+      `SELECT picture_ref AS ref FROM menus WHERE seller_id = ? AND picture_ref IN (${m})`,
+      sellerId,
+      ...refs,
+    ),
+    db.stmt(
+      `SELECT picture_ref AS ref FROM past_weeks WHERE seller_id = ? AND picture_ref IN (${m})`,
+      sellerId,
+      ...refs,
+    ),
+  ]);
+  const inUse = new Set((rows.flat() as Array<{ ref: string }>).map((row) => row.ref));
+  await deleteImageRefs(
+    bucket,
+    refs.filter((ref) => !inUse.has(ref)),
+    sellerId,
+  );
 }
 
 // ---- The operations ------------------------------------------------------------------------
@@ -342,6 +434,18 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       }
       const defaults = preferencesOf(settings[0] as SettingsRow).menuDefaults;
       const cookingDate = request.cookingDate ?? comingSaturday(deps.now());
+      // Plan 064: "start from a past menu" brings its picture along (the same file, no new upload).
+      const fromPast = request.pictureFromPastMenu;
+      const pastPicture =
+        fromPast === undefined
+          ? null
+          : ((
+              await db.first<{ picture_ref: string | null }>(
+                'SELECT picture_ref FROM past_weeks WHERE seller_id = ? AND id = ?',
+                sid,
+                fromPast,
+              )
+            )?.picture_ref ?? null);
       await db.batch([
         db.stmt('DELETE FROM menu_items WHERE seller_id = ?', sid),
         db.stmt('DELETE FROM menu_pickup_places WHERE seller_id = ?', sid),
@@ -354,6 +458,7 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
           delivery: defaults.delivery,
           wizardStep: 0,
           takingOrders: true,
+          ...(pastPicture !== null ? { pictureRef: pastPicture } : {}),
           // The new menu starts with the places the last one used, at their usual times.
           placeUses: (uses as Array<{ place_id: string }>).map((use) => ({
             placeId: use.place_id,
@@ -569,6 +674,22 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       return { view: await readView(), before: row.picture_ref ?? undefined };
     },
 
+    /** Plan 064: the current menu takes the picture a past menu kept (the same file, no upload). */
+    async usePastMenuPicture(pastMenuId) {
+      const row = await menuRow();
+      if (row.state === 'finished') return fail('week_closed', 'This menu is finished');
+      const past = await db.first<{ picture_ref: string | null }>(
+        'SELECT picture_ref FROM past_weeks WHERE seller_id = ? AND id = ?',
+        sid,
+        pastMenuId,
+      );
+      if (!past?.picture_ref) return fail('not_found', 'That past menu has no picture');
+      await db
+        .stmt('UPDATE menus SET picture_ref = ? WHERE seller_id = ?', past.picture_ref, sid)
+        .run();
+      return ok({ view: await readView(), before: row.picture_ref ?? undefined });
+    },
+
     async finishMenuNow() {
       const row = await menuRow();
       if (row.state !== 'live') return fail('menu_not_live', 'Only a live menu can be finished');
@@ -576,7 +697,8 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       return ok({
         menu: await readView(),
         closedOrders: done.closedOrders,
-      } satisfies FinishMenuResponse);
+        prunedPictures: done.prunedPictures,
+      } satisfies FinishMenuResponse & { prunedPictures: Array<string> });
     },
 
     // ---- Your dishes ----

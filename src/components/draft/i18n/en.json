@@ -1,0 +1,9 @@
+{
+  "restored": "Restored what you typed",
+  "discard": "Discard",
+  "conflict": "This changed since you started typing.",
+  "keepMine": "Keep my version",
+  "useSaved": "Use the saved version",
+  "keepDraft": "Close and keep draft",
+  "droppedDishes": "Some dishes you picked are no longer on the menu and were removed."
+}

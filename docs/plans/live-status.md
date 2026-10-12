@@ -63,10 +63,35 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 
 
+
+
+
+
+
+
+
+
+
 ## Done (newest first)
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-13 | night gate: typecheck · lint · format · unit · e2e 76/76 (1 real bug fixed, 2 specs updated, 1 overnight hang while the PC slept) | coordinator + fixer | 23:24 | 40 min | 06:36 | 7 h (6 h asleep) | — | — | ✅ |
+| 2026-10-12 | fixer: Settings draft re-written after Save (061 regression found by e2e) | builder · sonnet | 23:36 | 20 min | 23:45 | 9 min | −11 min | 2 files | ✅ 103 tests, e2e settings |
+| 2026-10-12 | 063·1 (Details three-way; Menu defaults left two-way: owner question) + 063·3, 064·2 past pictures, 066·3 seller | builder · sonnet | 23:05 | 60 min | 23:22 | 17 min | −43 min | ~15 files, 3 new tests | ✅ 96 tests, e2e seller-menu + seller-history |
+| 2026-10-12 | 062·4–5 (403 "not allowed" texts, banners stack), 066·3 customer (50-dish e2e; customer dishes have no pictures) | builder · sonnet | 23:05 | 40 min | 23:20 | 15 min | −25 min | ~10 files, 1 new spec | ✅ 397 tests, 3 e2e |
+| 2026-10-12 | 061 · 1–9 never lose typed data + 063·2 delivery-only basket fix | builder · sonnet | 22:25 | 70 min | 23:07 | 42 min | −28 min | ~35 files, ~12 new | ✅ 379 tests, 3 e2e |
+| 2026-10-12 | Help: two tabs (Seller help / Customer help) + 7-question customer FAQ | builder · sonnet | 22:56 | 25 min | 23:06 | 10 min | −15 min | 5 files, 1 new | ✅ 13 tests |
+| 2026-10-12 | 066 · 1–2 fifty dishes: limit 50, D1 100-variable bug fixed (json_each), print totals, WhatsApp post "+ N more" (coordinator set the post budget to 3000 so usual menus aren't cut) | builder · sonnet | 22:49 | 50 min | 23:00 | 11 min | −39 min | ~9 files | ✅ round trips ≤ 7 per route |
+| 2026-10-12 | 065 · My orders: reload the last kitchen, kitchen pill between code and total | builder · sonnet | 22:42 | 30 min | 22:56 | 14 min | −16 min | 5 files | ✅ 58 tests, e2e native-customer + customer-batch2 |
+| 2026-10-12 | bug: server refuses a fulfilment the menu doesn't offer (customers only; demo generator fixed) | builder · sonnet | 22:43 | 20 min | 22:48 | 5 min | −15 min | 4 files + test | ✅ 99 tests |
+| 2026-10-12 | 064 · 1 server: keep last 10 menu pictures (needed migration 0015), rolling prune, reuse routes | builder · sonnet | 22:38 | 35 min | 22:49 | 11 min | −24 min | 2 new, 9 edited | ✅ 4 new tests; applied 0015 locally |
+| 2026-10-12 | 062 · 1–3 retry policy (GET only), live loop + reconnect caps, offline banner, order poll | builder · sonnet | 22:31 | 60 min | 22:47 | 16 min | −44 min | 8 new, 5 edited | ✅ 35 tests, e2e live + order-flow; watch: banner overlaps the update bar |
+| 2026-10-12 | D-097 · Devices on the phone (More row for every role, Help updated) | builder · sonnet | 22:34 | 20 min | 22:44 | 10 min | −10 min | 5 files | ✅ |
+| 2026-10-12 | customer Settings: kitchen banner on top (a 10-line copy of the menu Banner; share it once customer-menu is free) | builder · sonnet | 22:30 | 15 min | 22:37 | 7 min | −8 min | 4 files | ✅ 11 tests, e2e native-customer |
+| 2026-10-12 | Help topic 6 rewritten: pickup places + menu defaults first, 13 steps in 3 parts | builder · sonnet | 22:28 | 15 min | 22:35 | 7 min | −8 min | 1 file | ✅ 9 tests |
+| 2026-10-12 | 060 · the language customers see first (migration 0014, Settings control, langChosen flag) | builder · sonnet | 22:14 | 35 min | 22:33 | 19 min | −16 min | ~15 files, 2 new | ✅ 421 tests, e2e customer-batch1 + native-customer |
+| 2026-10-12 | Help topic 2 "Phone or tablet?" (topics renumbered to 12, links + pictures shifted) | builder · sonnet | 22:23 | 15 min | 22:30 | 7 min | −8 min | 5 files | ✅ 29 tests; found: Devices is tablet-only on phones |
 | 2026-10-12 | final gate: typecheck · lint · format · unit 1897 · e2e 74/74 (fixer: 3 spec updates, 4 load flakes) | coordinator + fixer · sonnet | 21:20 | 35 min | 22:08 | 48 min | +13 min | 3 spec files | ✅ |
 | 2026-10-12 | 058 · 1 seller Help page (public hidden address, 6 real screenshots, links everywhere, waving mascot) | builder · sonnet | 21:01 | 50 min | 21:20 | 19 min | −31 min | ~25 files, 6 webp | ✅ 9 tests |
 | 2026-10-12 | 059 · new-version bar, version.json (no-store), stale-chunk reload once | builder · sonnet | 21:05 | 30 min | 21:16 | 11 min | −19 min | 8 new, 3 edited | ✅ 6 tests, build ok |

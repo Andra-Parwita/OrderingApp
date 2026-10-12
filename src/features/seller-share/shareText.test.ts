@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildShareText, fillPhone, priceText } from './shareText';
+import { POST_DISHES_MAX, buildShareText, fillPhone, priceText } from './shareText';
 import { MENU, SETTINGS } from './testSupport';
 
 const ORIGIN = 'https://orders.example';
@@ -54,6 +54,28 @@ describe('buildShareText', () => {
     expect(text).not.toMatch(/orders\.example\/(\s|$)/);
     expect(text).toContain('Pesan di sini:');
     expect(text).toContain('Order here:');
+  });
+
+  it('lists whole dish lines up to the budget, then "+ N more on the menu" before the link', () => {
+    const items = Array.from({ length: 50 }, (_, i) => ({
+      ...MENU.items[0]!,
+      name: {
+        en: `Dish number ${i + 1} with a long name, slow-cooked in coconut milk and spices`,
+        id: `Hidangan nomor ${i + 1} dengan nama panjang, dimasak lama dengan santan dan bumbu`,
+      },
+    }));
+    const big = { ...MENU, items };
+    for (const lang of ['en', 'id'] as const) {
+      const text = buildShareText(big, SETTINGS, lang, ORIGIN, SLUG);
+      const lines = text.split('\n').filter((l) => /^\d+\. /.test(l));
+      const more = text.match(/^\+ (\d+) (more on the menu|lainnya di menu)$/m);
+      expect(lines.length).toBeGreaterThan(3);
+      expect(lines.length).toBeLessThan(50);
+      expect(lines.join('\n').length).toBeLessThanOrEqual(POST_DISHES_MAX);
+      expect(Number(more?.[1])).toBe(50 - lines.length);
+      expect(text.indexOf(more?.[0] ?? '#')).toBeLessThan(text.indexOf(ORIGIN));
+    }
+    expect(buildShareText(MENU, SETTINGS, 'en', ORIGIN, SLUG)).not.toContain('more on the menu');
   });
 
   it('leaves out an empty description and drops {phone} with no number', () => {

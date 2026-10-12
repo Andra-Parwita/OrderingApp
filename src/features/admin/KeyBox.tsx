@@ -1,3 +1,4 @@
+import { DraftNotice, draftKey, useDraft } from '../../components/draft';
 import { useCallback, useState, type FormEvent } from 'react';
 import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
@@ -80,7 +81,9 @@ const LANGS: ReadonlyArray<{ value: MessageLang; label: string }> = [
  */
 export function KeyBox({ title, slug, kitchen, create, onDone }: KeyBoxProps) {
   const { t } = useTranslation(ADMIN_NS);
-  const [displayName, setDisplayName] = useState('');
+  // Plan 061: the person's name survives a reload until the key is made. The key, the link and the
+  // edited message (which holds the link) are never stored.
+  const [displayName, setDisplayName, nameDraft] = useDraft(draftKey('admin', 'invite', slug), '');
   const [keyText, setKeyText] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // The message has its own language (the page may be in the other); no edit = the text as written.
@@ -95,9 +98,12 @@ export function KeyBox({ title, slug, kitchen, create, onDone }: KeyBoxProps) {
       setNote(null);
       const made = await create(displayName.trim());
       setBusy(false);
-      if (made !== null) setKeyText(made);
+      if (made !== null) {
+        nameDraft.clear();
+        setKeyText(made);
+      }
     },
-    [create, displayName],
+    [create, displayName, nameDraft],
   );
 
   const copy = async (text: string) => {
@@ -115,6 +121,7 @@ export function KeyBox({ title, slug, kitchen, create, onDone }: KeyBoxProps) {
         <Heading>{title}</Heading>
         <form onSubmit={(event) => void make(event)}>
           <Stack>
+            <DraftNotice draft={nameDraft} />
             <TextField
               label={t('home.key.nameLabel')}
               helper={t('home.key.nameHelper')}

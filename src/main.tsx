@@ -21,6 +21,7 @@ import { registerSellerHelpI18n } from './features/seller-help';
 import { registerSellerSetupI18n } from './features/seller-setup';
 import { registerShareI18n } from './features/seller-share';
 import { registerInstallI18n, startInstallSupport } from './components/install';
+import { mountOfflineBanner } from './components/network';
 import { mountUpdateBar } from './components/update';
 import { startClientLog } from './api/clientLog';
 import { initI18n } from './i18n/init';
@@ -71,6 +72,7 @@ void initI18n().then(async () => {
   registerAdminI18n();
   registerSellerSaturdayI18n();
   mountUpdateBar();
+  mountOfflineBanner();
   if (harness) {
     const module = await harness.loader();
     const component = module[harness.component];

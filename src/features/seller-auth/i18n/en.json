@@ -8,6 +8,7 @@
     "locked_other": "Too many tries. Try again in {{count}} minutes.",
     "network": "Cannot reach the server. Check your connection and try again.",
     "setupExpired": "Your setup timed out. Start again with a new key.",
+    "forbidden": "You are not allowed to do this.",
     "generic": "Something went wrong. Try again.",
     "passkeyCancelled": "The passkey prompt was closed. Try again, or use a password.",
     "passkeyFailed": "This device could not use a passkey. Try again, or use a password.",

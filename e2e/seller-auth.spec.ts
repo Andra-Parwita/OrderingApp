@@ -223,8 +223,9 @@ async function switchPerson(page: Page) {
     await page.waitForTimeout(600);
     await page.getByRole('button', { name: /Switch person/ }).click();
   }
-  // Sign out, then the passkey picker opens by itself and signs the chosen person in.
-  await expect(page).toHaveURL(/\/seller$/);
+  // Sign out, then the passkey picker opens by itself and signs the chosen person in. A chef
+  // lands on Orders (AppRoutes sends a chef from /seller to /seller/orders), an owner on Home.
+  await expect(page).toHaveURL(/\/seller(\/orders)?$/);
 }
 
 test('two staff passkeys on one device: Switch person goes between them', async ({

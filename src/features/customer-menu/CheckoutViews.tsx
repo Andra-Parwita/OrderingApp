@@ -229,6 +229,17 @@ const Quiet = styled.p`
   color: ${({ theme }) => theme.c.muted};
 `;
 
+/**
+ * The ways this menu can be received: pickup only when it has pickup places, delivery only when it
+ * is on. (Plan 063: a delivery-only menu offers no pickup, a pickup-only one no delivery.)
+ */
+export function fulfilmentOptions(week: MenuResponse['week']): ReadonlyArray<Fulfilment> {
+  const options: Array<Fulfilment> = [];
+  if (week.pickupPoints.length > 0) options.push('pickup');
+  if (week.delivery.available) options.push('delivery');
+  return options.length > 0 ? options : ['pickup'];
+}
+
 /** What the pickup place row shows: where, and when. */
 function whenAndWhere(point: PickupPoint, cookingDate: string, lang: Language): string {
   return `${formatCookingDate(cookingDate, lang)} · ${formatWindow(point.window.start, point.window.end, lang)}`;
@@ -329,7 +340,6 @@ export function BasketView({
   const total = formatMoney(totalCents, lang);
   const points = week.pickupPoints;
   const pickup = points.find((point) => point.id === pickupId) ?? points[0];
-  const delivery = week.delivery.available;
   const canChange = !editing && points.length > 1;
   const labelId = useId();
   return (
@@ -382,7 +392,7 @@ export function BasketView({
         </TotalRow>
         <SectionLabel id={labelId}>{t('basket.how')}</SectionLabel>
         <Track role="radiogroup" aria-labelledby={labelId}>
-          {(delivery ? (['pickup', 'delivery'] as const) : (['pickup'] as const)).map((value) => (
+          {fulfilmentOptions(week).map((value) => (
             <Segment
               key={value}
               type="button"

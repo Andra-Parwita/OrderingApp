@@ -24,10 +24,17 @@ export type NewMenuRequest = Readonly<{
 }>;
 
 /** The ops that follow the first one, in order: the cut-off, then the dishes to start with. */
-function followUps(input: NewMenuRequest, firstIsCreate: boolean): Array<MenuOp> {
+function followUps(
+  input: NewMenuRequest,
+  firstIsCreate: boolean,
+  pictureWeekId: string | undefined,
+): Array<MenuOp> {
   const ops: Array<MenuOp> = [];
   // createMenu takes the cooking day only; the cut-off the seller chose goes in right after.
   if (firstIsCreate) ops.push({ kind: 'updateMenu', request: { cutoffAt: input.cutoffAt } });
+  // Plan 064: a new menu takes its picture in the create call; a kitchen's first menu already exists.
+  if (!firstIsCreate && pictureWeekId)
+    ops.push({ kind: 'usePastPicture', pastMenuId: pictureWeekId });
   if (input.source.kind === 'past') ops.push({ kind: 'usePast', weekId: input.source.weekId });
   if (input.source.kind === 'set') ops.push({ kind: 'useSet', setId: input.source.setId });
   return ops;
@@ -66,7 +73,7 @@ export function useMenuWizard(): {
   const edit = useCallback((tab: Tab) => go(stepPath('edit', tab)), [go]);
 
   // One op at a time: when one is done, the next waits its turn; the last opens Dishes.
-  useOpWatch(['createMenu', 'updateMenu', 'usePast', 'useSet'], {
+  useOpWatch(['createMenu', 'updateMenu', 'usePast', 'usePastPicture', 'useSet'], {
     onDone: () => {
       if (!starting.current) return;
       const next = pending.current.shift();
@@ -93,17 +100,26 @@ export function useMenuWizard(): {
       // A kitchen's first menu already exists, empty and not published: it gets the day and cut-off.
       // After a finished menu, a new one is created.
       const create = state === 'finished';
-      pending.current = followUps(input, create);
+      // Starting from a past menu copies its picture too (when it kept one).
+      const weekId = input.source.kind === 'past' ? input.source.weekId : undefined;
+      const pictureWeekId = data?.past.some((week) => week.id === weekId && week.pictureUrl)
+        ? weekId
+        : undefined;
+      pending.current = followUps(input, create, pictureWeekId);
       run(
         create
-          ? { kind: 'createMenu', cookingDate: input.cookingDate }
+          ? {
+              kind: 'createMenu',
+              cookingDate: input.cookingDate,
+              ...(pictureWeekId ? { pictureFromPastMenu: pictureWeekId } : {}),
+            }
           : {
               kind: 'updateMenu',
               request: { cookingDate: input.cookingDate, cutoffAt: input.cutoffAt },
             },
       );
     },
-    [run, state],
+    [run, state, data],
   );
 
   return { open, edit, start, failed };

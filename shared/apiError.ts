@@ -59,6 +59,8 @@ export const API_ERROR_CODES = [
   'translate_limit',
   /** Plan 057: no translator (no AI binding) or the translator failed; never retried. */
   'translate_unavailable',
+  /** A customer order asks for pickup or delivery that the menu does not offer. */
+  'fulfilment_unavailable',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

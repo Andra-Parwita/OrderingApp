@@ -32,6 +32,7 @@ import { ADMIN_NS } from './i18n/register';
 import { ProblemsPanel } from './ProblemsPanel';
 import { RefreshBar } from './RefreshBar';
 import { PauseLabel, SellerDetails } from './SellerDetails';
+import { DraftNotice, draftKey, useDraft } from '../../components/draft';
 import { slugProblem } from './slug';
 import {
   DeviceItem,
@@ -237,8 +238,14 @@ export function AdminHomeScreen({
   const [mine, setMine] = useState<Array<DeviceView> | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
+  // Plan 061: the new kitchen's name and address survive a reload until it is added.
+  const [addForm, setAddForm, addDraft] = useDraft<{ name: string; slug: string }>(
+    draftKey('admin', 'add-kitchen'),
+    { name: '', slug: '' },
+  );
+  const { name, slug } = addForm;
+  const setName = (value: string) => setAddForm((f) => ({ ...f, name: value }));
+  const setSlug = (value: string) => setAddForm((f) => ({ ...f, slug: value }));
   const [addProblem, setAddProblem] = useState<string | null>(null);
   const [added, setAdded] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -327,12 +334,12 @@ export function AdminHomeScreen({
       const { seller } = result.data;
       setSellers((current) => [...(current ?? []), seller]);
       setCounts((current) => ({ ...current, [seller.id]: 0 }));
-      setName('');
-      setSlug('');
+      addDraft.clear();
+      setAddForm({ name: '', slug: '' });
       setAdded(t('home.add.added', { name: seller.name, slug: seller.slug }));
       setPanel({ kind: 'seller', id: seller.id });
     },
-    [canAdd, name, slug, refusedHere, t],
+    [addDraft, canAdd, name, slug, refusedHere, setAddForm, t],
   );
 
   const signOutMine = useCallback(
@@ -548,6 +555,7 @@ export function AdminHomeScreen({
           <PanelBody>
             <FormSection onSubmit={(event) => void addSeller(event)}>
               <SmallHeading>{t('home.add.title')}</SmallHeading>
+              <DraftNotice draft={addDraft} />
               <Fields>
                 <TextField
                   label={t('home.add.name')}

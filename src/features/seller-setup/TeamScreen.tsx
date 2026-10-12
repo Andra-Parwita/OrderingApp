@@ -10,6 +10,7 @@ import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, ConfirmButton, Segmented, TextField } from '../../ui';
 import { ChefsScreen } from './ChefsScreen';
 import { SETUP_NS } from './i18n/register';
+import { DraftNotice, draftKey, useDraft } from '../../components/draft';
 import { InviteBox } from './InviteBox';
 import {
   Actions,
@@ -66,6 +67,8 @@ const Notice = styled.div`
 `;
 
 type Load = 'loading' | 'ready' | 'error';
+type InviteForm = { name: string; role: MembershipRole; cookId: string };
+const EMPTY_INVITE: InviteForm = { name: '', role: 'chef', cookId: '' };
 type Shown = Readonly<{ name: string; key: string; role: MembershipRole }>;
 
 /** Settings → Team (plan 033): who is in this kitchen, invite by name and role, remove. Cooks follow below. */
@@ -76,10 +79,16 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
   const cooks = useSelector((state: SetupRootState) => state.sellerSetup.chefs);
   const [load, setLoad] = useState<Load>('loading');
   const [members, setMembers] = useState<ReadonlyArray<TeamMember>>([]);
-  const [name, setName] = useState('');
+  // Plan 061: name, role and cook survive a reload until the invite is made. Never the key or link.
+  const [form, setForm, formDraft] = useDraft<InviteForm>(
+    draftKey(slug, 'invite', 'new'),
+    EMPTY_INVITE,
+  );
+  const { name, role, cookId } = form;
+  const setName = (value: string) => setForm((f) => ({ ...f, name: value }));
+  const setRole = (value: MembershipRole) => setForm((f) => ({ ...f, role: value }));
+  const setCookId = (value: string) => setForm((f) => ({ ...f, cookId: value }));
   const [submitted, setSubmitted] = useState(false);
-  const [role, setRole] = useState<MembershipRole>('chef');
-  const [cookId, setCookId] = useState('');
   const [shown, setShown] = useState<Shown | null>(null);
   const [failure, setFailure] = useState<'invite' | 'remove' | null>(null);
   const [reassign, setReassign] = useState<Readonly<{ name: string; count: number }> | null>(null);
@@ -90,7 +99,7 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
       setMembers(result.data.members);
       setLoad('ready');
     } else setLoad('error');
-  }, [slug]);
+  }, [slug, setLoad, setMembers]);
 
   useEffect(() => {
     dispatch(chefsRequested());
@@ -124,12 +133,12 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
         return;
       }
       setShown({ name: displayName, key: result.data.key, role });
-      setName('');
+      formDraft.clear();
+      setForm((f) => ({ ...f, name: '', cookId: '' }));
       setSubmitted(false);
-      setCookId('');
       dispatch(chefsRequested());
     },
-    [cookId, dispatch, name, role, slug],
+    [cookId, dispatch, formDraft, name, role, setForm, slug],
   );
 
   const remove = useCallback(
@@ -203,6 +212,7 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
             {failure === 'remove' ? <Failure role="alert">{t('team.removeFailed')}</Failure> : null}
             <Section as="form" onSubmit={(event) => void invite(event)} noValidate>
               <SectionTitle>{t('team.invite')}</SectionTitle>
+              <DraftNotice draft={formDraft} />
               <TextField
                 label={t('team.name')}
                 error={submitted && name.trim() === '' ? t('team.nameEmpty') : undefined}

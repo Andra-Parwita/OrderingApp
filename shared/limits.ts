@@ -1,6 +1,6 @@
 export const FIRST_NAME_MAX = 40;
 export const NOTE_MAX = 200;
-export const MAX_MENU_ITEMS = 10;
+export const MAX_MENU_ITEMS = 50;
 export const MAX_QTY = 99;
 export const AUDIT_MAX = 4;
 /** "N left" shows only when this many or fewer remain (D-027). */
@@ -25,5 +25,7 @@ export const CHEF_NAME_MAX = 40;
 export const MAX_PICKUP_PLACES = 5;
 /** Dishes in the library ("Your dishes"). */
 export const MAX_DISHES = 200;
+/** Plan 064: how many past menus keep their menu picture (the newest ones; older pictures are deleted). */
+export const PAST_MENU_PICTURES_KEPT = 10;
 export const PLACE_NAME_MAX = 80;
 export const PLACE_DIRECTIONS_MAX = 200;

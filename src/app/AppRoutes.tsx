@@ -32,11 +32,13 @@ import {
   OrderPlacedScreen,
   placeReset,
   selectKitchenMissing,
+  selectMenu,
   useKitchenLanguages,
   type CheckoutStep,
   type CustomerRootState,
 } from '../features/customer-menu';
 import { MyOrdersScreen, OrderQrScreen, OrderScreen } from '../features/customer-orders';
+import { menuRequested } from '../features/customer-menu/customerSlice';
 import { CustomerSettingsScreen } from '../features/customer-settings';
 import { HELP_NS, HelpScreen } from '../features/seller-help';
 import { CookScreen } from '../features/seller-cook';
@@ -259,12 +261,31 @@ function EditOrderRoute({ step }: Readonly<{ step: 'basket' | 'name' }>) {
   );
 }
 
+/** After a reload no kitchen is loaded: load the last one this phone visited, for the banner, theme and Menu tab. */
+function useLastKitchenMenu() {
+  const dispatch = useDispatch();
+  const menu = useSelector(selectMenu);
+  const idle = menu.status === 'idle';
+  useEffect(() => {
+    const slug = lastKitchen();
+    if (idle && slug !== null) dispatch(menuRequested(slug));
+  }, [idle, dispatch]);
+  return menu;
+}
+
 function CustomerSettingsRoute() {
-  return <CustomerSettingsScreen showLanguage={useKitchenLanguages() === 'both'} />;
+  const menu = useLastKitchenMenu();
+  return (
+    <CustomerSettingsScreen
+      showLanguage={useKitchenLanguages() === 'both'}
+      kitchen={menu.status === 'ready' ? menu.data.kitchen : undefined}
+    />
+  );
 }
 
 function MyOrdersRoute() {
   const navigate = useNavigate();
+  useLastKitchenMenu();
   // "Go to the menu": the last kitchen this phone visited, else the home page.
   const back = useCallback(() => {
     const slug = lastKitchen();
@@ -513,6 +534,7 @@ const PHONE_LINKS = [
   ['sell', '/seller/sell'],
   ['labels', '/seller/labels'],
   ['printOrders', '/seller/orders/print'],
+  ['devices', '/seller/devices'],
   ['help', SELLER_HELP_PATH],
 ] as const;
 // What the server closes to a chef (D-013); the chef does not see these.
@@ -527,12 +549,13 @@ const CHEF_HIDDEN: ReadonlySet<string> = new Set([
 /** Chefs keep the plain Devices page (they have no Settings); the owner's is the Devices pane. */
 function DevicesRoute() {
   const { t } = useTranslation();
+  const tablet = useMediaQuery(DESKTOP_QUERY);
   const navigate = useNavigate();
   const { me, end } = useSession();
   const signedOut = useCallback(() => {
     void navigate('/seller/sign-in', { replace: true });
   }, [navigate]);
-  if (me?.role !== 'chef' && me?.role !== 'helper') return <ToPane pane="devices" />;
+  if (tablet && me?.role !== 'chef' && me?.role !== 'helper') return <ToPane pane="devices" />;
   return (
     <MorePage title={t('sellerNav.devices')}>
       <DevicesScreen onSignedOut={signedOut} signOutHere={end} />
@@ -565,7 +588,9 @@ function MoreRoute() {
         <PageHeader title={t('sellerNav.moreTitle')} />
         <nav aria-label={t('sellerNav.moreTitle')}>
           {PHONE_LINKS.filter(([key]) =>
-            helper ? key === 'sell' || key === 'help' : me?.role !== 'chef' || key !== 'sell',
+            helper
+              ? key === 'sell' || key === 'devices' || key === 'help'
+              : me?.role !== 'chef' || key !== 'sell',
           ).map(([key, to]) => (
             <ListRow
               key={key}

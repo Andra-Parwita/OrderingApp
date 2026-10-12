@@ -169,6 +169,50 @@ const customerSlice = createSlice({
       // The customer has acted on what the banner said.
       state.notices = [];
     },
+    /** Plan 061: a basket and checkout typed before a reload, put back once the menu is known. */
+    basketRestored(
+      state,
+      action: PayloadAction<{
+        basket: Record<string, number>;
+        names: Record<string, LocalText>;
+        checkout: CheckoutState;
+      }>,
+    ) {
+      if (state.menu.status !== 'ready' || state.edit.status !== 'idle') return;
+      if (Object.keys(state.basket).length > 0) return;
+      const { data } = state.menu;
+      const notices: Array<BasketNotice> = [];
+      for (const [itemId, qty] of Object.entries(action.payload.basket)) {
+        const name = action.payload.names[itemId] ?? { en: itemId, id: itemId };
+        if (!data.items.some((candidate) => candidate.id === itemId)) {
+          // No longer on the menu: dropped, and the usual banner says so.
+          notices.push({ kind: 'sold_out', itemId, name, qty: 0 });
+          continue;
+        }
+        const max = maxFor(state, itemId);
+        const next = Math.min(Math.floor(qty), max);
+        if (next <= 0) notices.push({ kind: 'sold_out', itemId, name, qty: 0 });
+        else {
+          state.basket[itemId] = next;
+          if (next < qty) notices.push({ kind: 'fewer', itemId, name, qty: next });
+        }
+      }
+      const saved = action.payload.checkout;
+      const places = data.week.pickupPoints;
+      state.checkout = {
+        fulfilment:
+          saved.fulfilment === 'delivery' && !data.week.delivery.available
+            ? null
+            : saved.fulfilment,
+        pickupPlaceId: places.some((place) => place.id === saved.pickupPlaceId)
+          ? saved.pickupPlaceId
+          : null,
+        // What is already on the page (a saved first name, say) wins over the stored draft.
+        firstName: state.checkout.firstName !== '' ? state.checkout.firstName : saved.firstName,
+        note: state.checkout.note ?? saved.note,
+      };
+      if (notices.length > 0) state.notices = notices;
+    },
     /** Checkout fields the pages share (fulfilment, pickup place, first name, note). */
     checkoutSet(state, action: PayloadAction<Partial<CheckoutState>>) {
       state.checkout = { ...state.checkout, ...action.payload };
@@ -255,6 +299,7 @@ export const {
   menuFailed,
   quantitySet,
   checkoutSet,
+  basketRestored,
   placeRequested,
   placeSucceeded,
   placeFailed,

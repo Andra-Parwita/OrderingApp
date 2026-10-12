@@ -6,10 +6,12 @@ import type { Fulfilment, Language } from '../../../shared/domain';
 import { FIRST_NAME_MAX, LOW_STOCK, MAX_QTY, NOTE_MAX } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
+import { DRAFT_NS, DraftNotice } from '../../components/draft';
 import { Segmented, SlideOverEditor, Stepper, TextArea, TextField, Button } from '../../ui';
 import type { SegmentedOption } from '../../ui';
 import { SELLER_NS } from './i18n/register';
 import { useLang } from './orderText';
+import { useOrderDraft, type YesNo } from './useOrderDraft';
 import { openOrderLink } from './whatsappLink';
 import { selectCreate, selectCurrent, selectMenu } from './sellerOrdersSelectors';
 import { createOrderRequested, createReset, menuRequested } from './sellerOrdersSlice';
@@ -71,8 +73,6 @@ const Muted = styled.span`
   font-size: 0.875rem;
 `;
 
-type YesNo = 'yes' | 'no';
-
 function errorKey(error: string): string {
   return error === 'sold_out' || error === 'exceeds_remaining' || error === 'ordering_closed'
     ? `new.error.${error}`
@@ -89,13 +89,17 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
   const create = useSelector(selectCreate);
   const current = useSelector(selectCurrent);
 
-  const [firstName, setFirstName] = useState('');
-  const [customerLang, setCustomerLang] = useState<Language>('id');
-  const [how, setHow] = useState('pickup');
-  const [qtys, setQtys] = useState<Readonly<Record<string, number>>>({});
-  const [note, setNote] = useState('');
-  const [confirmNow, setConfirmNow] = useState<YesNo>('yes');
-  const [paid, setPaid] = useState<YesNo>('no');
+  const ids = useMemo(() => (menu.status === 'ready' ? menu.items.map((i) => i.id) : null), [menu]);
+  // Plan 061: what is typed survives a reload or a closed panel, until Create or Discard.
+  const form = useOrderDraft(ids);
+  const { firstName, customerLang, how, qtys, note, confirmNow, paid } = form.values;
+  const setFirstName = (v: string) => form.set('firstName', v);
+  const setCustomerLang = (v: Language) => form.set('customerLang', v);
+  const setHow = (v: string) => form.set('how', v);
+  const setNote = (v: string) => form.set('note', v);
+  const setConfirmNow = (v: YesNo) => form.set('confirmNow', v);
+  const setPaid = (v: YesNo) => form.set('paid', v);
+  const { t: tDraft } = useTranslation(DRAFT_NS);
   const [submitted, setSubmitted] = useState(false);
   // True after "Create & send link on WhatsApp": the saved order opens WhatsApp, then the panel closes.
   const sendAfter = useRef(false);
@@ -140,8 +144,10 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
     if (create.status !== 'saved') return;
     if (sendAfter.current) openOrderLink(i18n, create.order);
     sendAfter.current = false;
+    form.draft.clear();
     dispatch(createReset());
     onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [create, dispatch, i18n, onClose]);
 
   const nameMissing = firstName.trim() === '';
@@ -173,7 +179,7 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
   const onOnly = useCallback(() => submit(false), [submit]);
   const retryMenu = useCallback(() => dispatch(menuRequested()), [dispatch]);
 
-  const dirty = firstName !== '' || note !== '' || lines.length > 0;
+  const dirty = form.dirty;
   const saving = create.status === 'saving';
   return (
     <SlideOverEditor
@@ -182,6 +188,11 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
       saveLabel={t('newPanel.createSend')}
       saving={saving || menu.status !== 'ready'}
       onCancel={onClose}
+      onDiscard={() => {
+        form.draft.discard();
+        onClose();
+      }}
+      keepDraftLabel={tDraft('keepDraft')}
       onSave={onSend}
       secondaryAction={{
         label: t('newPanel.createOnly'),
@@ -190,6 +201,8 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
       }}
     >
       <Form>
+        <DraftNotice draft={form.draft} />
+        {form.dropped ? <Muted role="status">{tDraft('droppedDishes')}</Muted> : null}
         <TextField
           label={t('new.name')}
           value={firstName}
@@ -238,7 +251,7 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
                 </Names>
                 <Stepper
                   value={qtys[item.id] ?? 0}
-                  onChange={(next: number) => setQtys((old) => ({ ...old, [item.id]: next }))}
+                  onChange={(next: number) => form.setQty(item.id, next)}
                   label={name}
                   decreaseLabel={t('new.decrease', { name })}
                   increaseLabel={t('new.increase', { name })}

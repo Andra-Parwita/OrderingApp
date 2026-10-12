@@ -4,9 +4,9 @@
  */
 export const STEP_IMAGES: Readonly<Record<string, string>> = {
   '1.1': 'sign-in.webp',
-  '4.1': 'your-dishes.webp',
-  '4.3': 'dish-form.webp',
-  '4.5': 'import-preview.webp',
-  '6.2': 'share-menu.webp',
-  '10.3': 'kitchen-languages.webp',
+  '5.1': 'your-dishes.webp',
+  '5.3': 'dish-form.webp',
+  '5.5': 'import-preview.webp',
+  '7.2': 'share-menu.webp',
+  '11.3': 'kitchen-languages.webp',
 };

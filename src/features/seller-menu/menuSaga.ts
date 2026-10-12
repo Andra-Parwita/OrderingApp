@@ -18,12 +18,14 @@ import {
   publishMenu,
   removeMenuPicture,
   unpublishMenu,
+  usePastMenuPicture,
   addDishToMenu,
   updateCurrentMenu,
   updateDish,
   updatePickupPlace,
   uploadMenuPicture,
 } from '../../api/menus';
+import { MAX_MENU_ITEMS } from '../../../shared/limits';
 import type { ApiWarning } from '../../../shared/apiError';
 import type { ChefsResponse } from '../../../shared/setupContract';
 import type {
@@ -109,7 +111,13 @@ function* execute(op: MenuOp) {
   switch (op.kind) {
     case 'createMenu':
       return toOutcome(
-        (yield call(createMenu, op.cookingDate, undefined, slug)) as ApiResult<unknown>,
+        (yield call(
+          createMenu,
+          op.cookingDate,
+          undefined,
+          slug,
+          op.pictureFromPastMenu,
+        )) as ApiResult<unknown>,
       );
     case 'updateMenu': {
       const result = (yield call(updateCurrentMenu, op.request, undefined, slug)) as Awaited<
@@ -132,6 +140,10 @@ function* execute(op: MenuOp) {
     case 'uploadPicture':
       return toOutcome(
         (yield call(uploadMenuPicture, op.dataUrl, undefined, slug)) as ApiResult<unknown>,
+      );
+    case 'usePastPicture':
+      return toOutcome(
+        (yield call(usePastMenuPicture, op.pastMenuId, undefined, slug)) as ApiResult<unknown>,
       );
     case 'removePicture':
       return toOutcome((yield call(removeMenuPicture, undefined, slug)) as ApiResult<unknown>);
@@ -248,7 +260,10 @@ function* execute(op: MenuOp) {
         return { ok: false, code: 'not_found', message: 'Menu not found' } as Outcome;
       const onMenu = data.view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : []));
       const { ids, missing } = matchPastDishes(week.totals.items, data.dishes);
-      const next = [...onMenu, ...ids.filter((id) => !onMenu.includes(id))].slice(0, 10);
+      const next = [...onMenu, ...ids.filter((id) => !onMenu.includes(id))].slice(
+        0,
+        MAX_MENU_ITEMS,
+      );
       const result = (yield call(
         updateCurrentMenu,
         { dishIds: next },

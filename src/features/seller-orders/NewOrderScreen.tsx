@@ -18,6 +18,7 @@ import {
   type SegmentedOption,
 } from '../../ui';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
+import { DRAFT_NS, DraftNotice } from '../../components/draft';
 import { ContactFields, saveContact } from './contacts';
 import { FeedbackHost } from './FeedbackHost';
 import { SELLER_NS } from './i18n/register';
@@ -32,6 +33,7 @@ import {
   pollingStarted,
   pollingStopped,
 } from './sellerOrdersSlice';
+import { useOrderDraft, type OrderForm, type YesNo } from './useOrderDraft';
 import { openOrderLink } from './whatsappLink';
 
 // New order on a phone (plan 001 stage 11; handoff, New order): the tablet slide-over's fields,
@@ -181,32 +183,31 @@ const ItemLine = memo(function ItemLine({ item, qty, lang, onQty }: ItemLineProp
   );
 });
 
-type YesNo = 'yes' | 'no';
-
 function errorKey(error: string): string {
   return error === 'sold_out' || error === 'exceeds_remaining' || error === 'ordering_closed'
     ? `new.error.${error}`
     : 'new.error.other';
 }
 
-function FormView({ onDone }: Readonly<{ onDone: () => void }>) {
+function FormView({ onDone, form }: Readonly<{ onDone: () => void; form: OrderForm }>) {
   const { t, i18n } = useTranslation(SELLER_NS);
+  const { t: tDraft } = useTranslation(DRAFT_NS);
   const lang = useLang();
   const dispatch = useDispatch();
   const menu = useSelector(selectMenu);
   const create = useSelector(selectCreate);
   const current = useSelector(selectCurrent);
 
-  const [firstName, setFirstName] = useState('');
-  const [customerLang, setCustomerLang] = useState<Language>('id');
-  const [how, setHow] = useState('pickup');
-  const [qtys, setQtys] = useState<Readonly<Record<string, number>>>({});
-  const [note, setNote] = useState('');
-  const [confirmNow, setConfirmNow] = useState<YesNo>('yes');
-  const [paid, setPaid] = useState<YesNo>('no');
-  // Device only (D-059): kept here, saved on this phone once the order exists, never sent.
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
+  const { firstName, customerLang, how, qtys, note, confirmNow, paid, phone, address } =
+    form.values;
+  const setFirstName = (v: string) => form.set('firstName', v);
+  const setCustomerLang = (v: Language) => form.set('customerLang', v);
+  const setHow = (v: string) => form.set('how', v);
+  const setNote = (v: string) => form.set('note', v);
+  const setConfirmNow = (v: YesNo) => form.set('confirmNow', v);
+  const setPaid = (v: YesNo) => form.set('paid', v);
+  const setPhone = (v: string) => form.set('phone', v);
+  const setAddress = (v: string) => form.set('address', v);
   const [submitted, setSubmitted] = useState(false);
   // True after "Create & send link on WhatsApp": the saved order opens WhatsApp, then we leave.
   const sendAfter = useRef(false);
@@ -255,6 +256,7 @@ function FormView({ onDone }: Readonly<{ onDone: () => void }>) {
     });
     if (sendAfter.current) openOrderLink(i18n, create.order, digits);
     sendAfter.current = false;
+    form.draft.clear();
     dispatch(createReset());
     onDone();
     // The fields are read once, at the moment the order is saved.
@@ -304,7 +306,8 @@ function FormView({ onDone }: Readonly<{ onDone: () => void }>) {
   const onSend = useCallback(() => submit(true), [submit]);
   const onOnly = useCallback(() => submit(false), [submit]);
   const onQty = useCallback(
-    (itemId: string, qty: number) => setQtys((old) => ({ ...old, [itemId]: qty })),
+    (itemId: string, qty: number) => form.setQty(itemId, qty),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
   const retryMenu = useCallback(() => dispatch(menuRequested()), [dispatch]);
@@ -313,6 +316,8 @@ function FormView({ onDone }: Readonly<{ onDone: () => void }>) {
   return (
     <>
       <Form>
+        <DraftNotice draft={form.draft} />
+        {form.dropped ? <Muted role="status">{tDraft('droppedDishes')}</Muted> : null}
         <TextField
           label={t('new.name')}
           value={firstName}
@@ -430,6 +435,10 @@ function FormView({ onDone }: Readonly<{ onDone: () => void }>) {
 function NewOrderContent({ onBack, onDone, hideLanguage = false }: NewOrderScreenProps) {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
+  const menu = useSelector(selectMenu);
+  const ids = useMemo(() => (menu.status === 'ready' ? menu.items.map((i) => i.id) : null), [menu]);
+  // Plan 061: one draft for the whole form; Cancel forgets it, Back/close keeps it.
+  const form = useOrderDraft(ids);
 
   useEffect(() => {
     dispatch(createReset());
@@ -446,13 +455,19 @@ function NewOrderContent({ onBack, onDone, hideLanguage = false }: NewOrderScree
     <Page>
       <FeedbackHost />
       <Bar>
-        <Button variant="quiet" onClick={onBack}>
+        <Button
+          variant="quiet"
+          onClick={() => {
+            form.draft.discard();
+            onBack();
+          }}
+        >
           {t('phone.cancel')}
         </Button>
         <Title>{t('new.title')}</Title>
         {hideLanguage ? <span /> : <LanguageSwitch />}
       </Bar>
-      <FormView onDone={onDone} />
+      <FormView onDone={onDone} form={form} />
     </Page>
   );
 }

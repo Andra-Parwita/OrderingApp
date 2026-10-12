@@ -1,4 +1,4 @@
-import { call, put, select, takeLatest } from 'redux-saga/effects';
+import { call, fork, put, select, takeLatest } from 'redux-saga/effects';
 import type { CreateOrderRequest, UpdateOrderRequest } from '../../../shared/orderContract';
 import {
   placeOrder as placeOrderRequest,
@@ -27,6 +27,7 @@ import {
   updateSucceeded,
   type CustomerRootState,
 } from './customerSlice';
+import { basketDraftSaga } from './basketDraft';
 import { selectBasket, selectEdit } from './selectors';
 
 export function* loadMenu(action: ReturnType<typeof menuRequested>) {
@@ -132,4 +133,5 @@ export function* customerSaga() {
   yield takeLatest(orderRequested.type, loadOrder);
   yield takeLatest(editRequested.type, loadEdit);
   yield takeLatest(updateRequested.type, saveEdit);
+  yield fork(basketDraftSaga);
 }

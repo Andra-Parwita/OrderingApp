@@ -8,6 +8,7 @@ import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { ArchivedOrderView, EarlierOrderView } from './ClosedOrderViews';
 import { ORDERS_NS } from './i18n/register';
 import { OfflineNote, Page, ScreenBoundary, StateMessage, isOffline, useLang } from './layout';
+import { startOrderPoll } from './orderPoll';
 import { OrderPageView } from './OrderPageView';
 import { orderInfo } from './orderInfo';
 import { OrderQrView } from './OrderQrView';
@@ -45,10 +46,7 @@ function useOrderPage(token: string, poll: boolean) {
   useEffect(load, [load]);
   useEffect(() => {
     if (!poll) return undefined;
-    const timer = window.setInterval(() => {
-      dispatch(orderRefreshRequested(token));
-    }, POLL_MS);
-    return () => window.clearInterval(timer);
+    return startOrderPoll(() => dispatch(orderRefreshRequested(token)), POLL_MS);
   }, [dispatch, token, poll]);
   const order = page.status === 'ready' && page.order.token === token ? page.order : null;
   return { page, order, load };

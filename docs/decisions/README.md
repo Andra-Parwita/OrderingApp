@@ -596,3 +596,8 @@ Format for each entry:
 **Ruling:** "A". A per-kitchen setting **Languages for customers**: both (default), English only, Indonesian only (plan 056, migration 0013). With one language, customers see it with no switch and the seller types each text once (saved to both columns). With both, a dish may still be filled in one language only; the empty one shows the other's text. A **⇄ Translate** button (plan 057, Cloudflare Workers AI, 100 a day per kitchen; the account is on the Free plan, so no charge is possible) fills the other language for the seller to check.
 **Trade-off:** machine translation can mangle food names; the seller always sees and can fix it before saving.
 **Revisit when:** a kitchen wants a third language.
+
+## D-097 · Devices opens on the phone too (2026-10-12; owner)
+**Ruling:** "A". The seller's **Devices** screen (this device, other devices, **Add a device** with the 6-digit code, Sign out) is no longer tablet-only: it opens on a phone from **More → Devices**, so a seller signed in only on her phone can add her tablet herself. The code rules don't change (10 minutes, her own account only).
+**Trade-off:** none found; the screen is a short list.
+**Revisit when:** Devices grows controls that need a wide screen.

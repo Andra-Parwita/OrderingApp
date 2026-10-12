@@ -6,9 +6,20 @@
 // the seller is named by a `?seller=` slug (a browser WebSocket cannot send headers); with the
 // HttpOnly cookie session the browser sends the cookie with the upgrade itself, and the slug goes.
 import { buffers, eventChannel, type EventChannel } from 'redux-saga';
-import { call, delay, flush, race, take } from 'redux-saga/effects';
+import { call, delay, flush, put, race, take } from 'redux-saga/effects';
 import { LIVE_PATH, LIVE_PING, parseLiveEvent, type LiveEvent } from '../../shared/liveContract';
 import { currentSellerSlug } from './device/sellerContext';
+import {
+  MAX_REFUSALS,
+  POLL_GAP_MAX_MS,
+  markOutcomes,
+  onRetry,
+  onUnauthorized,
+  outcomeSince,
+  setPollsStopped,
+  type Outcome,
+} from './netState';
+import { staffSignedOut } from './staffSignedOut';
 
 /** `connecting`: first attempt; `live`: open; `reconnecting`: lost, waiting to try again. */
 export type LiveStatus = 'connecting' | 'live' | 'reconnecting';
@@ -44,6 +55,8 @@ export const BACKOFF_BASE_MS = 1000;
 export const BACKOFF_MAX_MS = 30_000;
 export const HEARTBEAT_MS = 25_000;
 export const HEARTBEAT_TIMEOUT_MS = 10_000;
+/** Plan 062: after this many failed attempts in a row the socket stops trying; the slow poll carries on. */
+export const MAX_ATTEMPTS = 8;
 
 /** 1 s, 2 s, 4 s ... up to 30 s, each with up to a quarter taken off so screens do not reconnect in step. */
 export function backoffMs(attempt: number, random: () => number = Math.random): number {
@@ -62,6 +75,7 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
   let socket: SocketLike | null = null;
   let attempt = 0;
   let closed = false;
+  let gaveUp = false;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
   let pingTimer: ReturnType<typeof setTimeout> | undefined;
   let deadTimer: ReturnType<typeof setTimeout> | undefined;
@@ -92,9 +106,17 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
     stopTimers();
     if (closed) return;
     onStatus('reconnecting');
-    retryTimer = setTimeout(open, backoffMs(attempt, random));
-    attempt += 1;
+    scheduleRetry();
   };
+
+  function scheduleRetry() {
+    attempt += 1;
+    if (attempt >= MAX_ATTEMPTS) {
+      gaveUp = true;
+      return;
+    }
+    retryTimer = setTimeout(open, backoffMs(attempt - 1, random));
+  }
 
   function open() {
     if (closed) return;
@@ -105,8 +127,7 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
       // No WebSocket here (or a bad URL): behave like a lost connection and keep polling.
       socket = null;
       onStatus('reconnecting');
-      retryTimer = setTimeout(open, backoffMs(attempt, random));
-      attempt += 1;
+      scheduleRetry();
       return;
     }
     socket = current;
@@ -134,12 +155,30 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
     };
   }
 
+  // Coming back online, or the tab coming to the front, restarts a socket that is waiting or gave up.
+  const restart = () => {
+    if (closed || socket !== null) return;
+    if (gaveUp) {
+      gaveUp = false;
+      attempt = 0;
+    }
+    clearTimeout(retryTimer);
+    open();
+  };
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') restart();
+  };
+  window.addEventListener('online', restart);
+  document.addEventListener('visibilitychange', onVisible);
+
   onStatus('connecting');
   open();
 
   return {
     close() {
       closed = true;
+      window.removeEventListener('online', restart);
+      document.removeEventListener('visibilitychange', onVisible);
       stopTimers();
       const current = socket;
       socket = null;
@@ -156,6 +195,7 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
 // ---- One shared connection per tab ----
 
 let shared: LiveConnection | null = null;
+let stopUnauthorized: (() => void) | null = null;
 let sharedStatus: LiveStatus = 'connecting';
 const listeners = new Set<LiveListener>();
 
@@ -246,6 +286,14 @@ export function subscribeLive(
         for (const each of [...listeners]) each.onStatus(status);
       },
     });
+    // Plan 062: a 401 from any call means the session is gone; the socket would only be refused.
+    stopUnauthorized = onUnauthorized(() => {
+      shared?.close();
+      shared = null;
+      stopUnauthorized?.();
+      stopUnauthorized = null;
+      setLink('offline');
+    });
   } else {
     listener.onStatus(sharedStatus);
   }
@@ -254,6 +302,8 @@ export function subscribeLive(
     if (listeners.size === 0 && shared !== null) {
       shared.close();
       shared = null;
+      stopUnauthorized?.();
+      stopUnauthorized = null;
       resetLink();
     }
   };
@@ -289,22 +339,60 @@ export type LiveRefresh = {
   channel?: () => EventChannel<LiveMessage>;
 };
 
+/** Runs `load` and says how its GET calls ended (read from netState, so the loaders need no change). */
+function* loadAndJudge(load: LiveRefresh['load']) {
+  const marker = markOutcomes();
+  yield call(load);
+  return outcomeSince(marker);
+}
+
 /**
  * Keeps a screen fresh: loads once, then reloads on every live event (a burst is one reload), and
  * once more each time the socket (re)connects, since events may have been missed while it was
  * down. While the socket is not live it reloads every `fallbackMs`. Run it in a `race` against the
  * screen's "stop" action; closing the channel in `finally` closes the socket for the last screen.
+ *
+ * Plan 062: a failed load doubles the gap (up to 5 min) and a good one resets it. After
+ * MAX_REFUSALS refusals in a row the loop stops asking and waits for Try again (netState); a 401
+ * ends it through `staffSignedOut`.
  */
 export function* liveRefreshLoop({ load, fallbackMs, channel = liveChannel }: LiveRefresh) {
   const messages = (yield call(channel)) as EventChannel<LiveMessage>;
   try {
     let live = false;
-    yield call(load);
+    let failures = 0;
+    let refusals = 0;
+    // Returns false when the loop must end.
+    const judge = function* (): Generator<unknown, boolean, unknown> {
+      const outcome = (yield call(loadAndJudge, load)) as Outcome;
+      if (outcome === 'unauthorized') {
+        yield put(staffSignedOut());
+        return false;
+      }
+      failures = outcome === 'ok' ? 0 : failures + 1;
+      refusals = outcome === 'refused' ? refusals + 1 : 0;
+      if (refusals >= MAX_REFUSALS) {
+        setPollsStopped(true);
+        const retries = eventChannel<true>((emit) => onRetry(() => emit(true)), buffers.sliding(1));
+        try {
+          yield take(retries);
+        } finally {
+          retries.close();
+        }
+        yield flush(messages);
+        failures = 0;
+        refusals = 0;
+        return yield* judge();
+      }
+      return true;
+    };
+    if (!(yield* judge())) return;
     while (true) {
+      const gap = Math.min(POLL_GAP_MAX_MS, fallbackMs * 2 ** failures);
       const { message, tick } = (yield race({
         message: take(messages),
-        // Only while the socket is down; a live socket needs no timer at all.
-        ...(live ? {} : { tick: delay(fallbackMs) }),
+        // Only while the socket is down (or the last load failed); a live, healthy socket needs no timer.
+        ...(live && failures === 0 ? {} : { tick: delay(gap) }),
       })) as { message?: LiveMessage; tick?: true };
       let reload = tick !== undefined;
       const batch: Array<LiveMessage> = [];
@@ -317,7 +405,7 @@ export function* liveRefreshLoop({ load, fallbackMs, channel = liveChannel }: Li
           if (live && !wasLive) reload = true;
         } else reload = true;
       }
-      if (reload) yield call(load);
+      if (reload && !(yield* judge())) return;
     }
   } finally {
     messages.close();

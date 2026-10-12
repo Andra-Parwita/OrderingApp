@@ -126,6 +126,19 @@ describe('BasketScreen', () => {
     },
   );
 
+  it('a failed menu load shows Try again, which reloads the menu', async () => {
+    server.use(
+      http.get('*/api/s/onde-onde/menu', () => new HttpResponse(null, { status: 500 }), {
+        once: true,
+      }),
+    );
+    const store = createTestStore();
+    renderWithStore(<CheckoutFlow slug="onde-onde" />, store);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load the menu');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(store.getState().customer.menu.status).toBe('ready'));
+  });
+
   it('goes back when the last item is removed', async () => {
     const { onBack } = await basketStore();
     fireEvent.click(screen.getByRole('button', { name: 'Remove one Thin battered tempeh' }));

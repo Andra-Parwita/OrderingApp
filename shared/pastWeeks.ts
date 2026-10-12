@@ -24,6 +24,8 @@ export type PastWeekSummary = {
   totals: WeekTotals;
   /** True while the order details are still kept. */
   hasOrders: boolean;
+  /** Plan 064: the menu picture of this past menu; absent when it had none or was pruned (older than the newest 10). */
+  pictureUrl?: string;
 };
 
 /** `orders` is present only while the week is within ORDER_DETAIL_WEEKS of its cooking date. */
@@ -121,7 +123,8 @@ function parseHead(input: Record<string, unknown>) {
   const totals = parseTotals(input['totals']);
   if (typeof id !== 'string' || id === '' || typeof cookingDate !== 'string') return null;
   if (!DATE.test(cookingDate) || !isIsoDate(closedAt) || !totals) return null;
-  return { id, cookingDate, closedAt, totals };
+  const pictureUrl = typeof input['pictureUrl'] === 'string' ? input['pictureUrl'] : undefined;
+  return { id, cookingDate, closedAt, totals, ...(pictureUrl !== undefined ? { pictureUrl } : {}) };
 }
 
 export function parsePastWeekSummary(input: unknown): PastWeekSummary | null {

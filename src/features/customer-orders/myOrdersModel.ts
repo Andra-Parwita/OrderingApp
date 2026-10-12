@@ -15,6 +15,8 @@ export type CurrentRow = Readonly<{
   token: string;
   code: string;
   kitchen: string;
+  /** The kitchen's small logo, when its menu is loaded. */
+  kitchenLogo: string | undefined;
   /** "2 × Lime-leaf rice, 1 × Kue lapis". */
   summary: string;
   /** "Sat 17 Oct". */
@@ -36,6 +38,7 @@ export type EarlierRow = Readonly<{
   /** Archived entries take it from this phone's saved list. */
   code: string | undefined;
   kitchen: string;
+  kitchenLogo: string | undefined;
   dayText: string;
   /** None once archived. */
   totalCents: number | undefined;
@@ -84,6 +87,7 @@ export function buildMyOrders({
         token: order.token,
         code: order.code,
         kitchen: order.seller.name,
+        kitchenLogo: menu?.kitchen.images?.railImage ?? undefined,
         summary: order.lines.map((line) => `${line.qty} × ${pickText(line.name, lang)}`).join(', '),
         dayText:
           cooking !== null ? formatCookingDate(cooking, lang) : formatDay(order.createdAt, lang),
@@ -104,6 +108,7 @@ export function buildMyOrders({
         token: order.token,
         code: order.code,
         kitchen: order.seller.name,
+        kitchenLogo: menu?.kitchen.images?.railImage ?? undefined,
         dayText: date !== null ? formatCookingDate(date, lang) : formatDay(order.createdAt, lang),
         totalCents: orderTotalCents(order),
         status: order.status,
@@ -115,6 +120,7 @@ export function buildMyOrders({
       token: order.token,
       code: saved.find((entry) => entry.token === order.token)?.code,
       kitchen: order.seller.name,
+      kitchenLogo: menus[order.seller.slug]?.kitchen.images?.railImage ?? undefined,
       dayText: formatCookingDate(order.cookingDate, lang),
       totalCents: undefined,
       status: 'archived',

@@ -1,13 +1,23 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
-import type { Languages } from '../../../shared/domain';
+import type { Language, Languages } from '../../../shared/domain';
+import { hasChosenLanguage } from '../../i18n/chosenLanguage';
 import { selectMenu } from './selectors';
 
 /** Plan 056: the languages the loaded kitchen offers to customers ("both" until a menu is loaded). */
 export function useKitchenLanguages(): Languages {
   const menu = useSelector(selectMenu);
   return menu.status === 'ready' ? (menu.data.languages ?? 'both') : 'both';
+}
+
+/** The language the loaded kitchen puts the customer in: its one language, or its first language until they choose. */
+function useKitchenTarget(): Language | null {
+  const menu = useSelector(selectMenu);
+  if (menu.status !== 'ready') return null;
+  const { languages = 'both', firstLanguage } = menu.data;
+  if (languages !== 'both') return languages;
+  return firstLanguage !== undefined && !hasChosenLanguage() ? firstLanguage : null;
 }
 
 const STORAGE_KEY = 'lang';
@@ -30,22 +40,22 @@ function restoreChoice(saved: string | null): void {
 }
 
 /**
- * A one-language kitchen shows the customer app in that language (the EN / ID switch is hidden
+ * A one-language kitchen (and, until the customer switches, a two-language kitchen's first language) shows the customer app in that language (the EN / ID switch is hidden
  * where this is "en" or "id"). Mounted once, in the customer shell. The forced language is for
  * the customer pages only: the person's saved choice (shared with the seller app on this device)
  * is put back after the change, and the shown language returns to it when the pages close.
  */
 export function useForcedKitchenLanguage(): void {
-  const languages = useKitchenLanguages();
+  const target = useKitchenTarget();
   const { i18n } = useTranslation();
   // The language and saved choice from before anything was forced; set once.
   const original = useRef<{ language: string; saved: string | null } | null>(null);
   useEffect(() => {
-    if (languages === 'both' || i18n.language.startsWith(languages)) return;
+    if (target === null || i18n.language.startsWith(target)) return;
     original.current ??= { language: i18n.language, saved: savedChoice() };
     const { saved } = original.current;
-    void i18n.changeLanguage(languages).then(() => restoreChoice(saved));
-  }, [languages, i18n]);
+    void i18n.changeLanguage(target).then(() => restoreChoice(saved));
+  }, [target, i18n]);
   useEffect(
     () => () => {
       const before = original.current;

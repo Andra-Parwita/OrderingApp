@@ -2,6 +2,8 @@ import { parseApiError, type ApiErrorCode, type ApiWarning } from '../../shared/
 import type { StaffActor } from '../../shared/domain';
 import { reportApiFailure } from './clientLog';
 import { dropLegacySessionToken, setSessionHint } from './device/session';
+import { recordOutcome } from './netState';
+import { isRetryable, retryCount, retryDelayMs } from './retryPolicy';
 
 export type ApiFailure = {
   ok: false;
@@ -57,6 +59,26 @@ async function send(
   }
 }
 
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/** `send`, repeated for a GET that got no answer, a 5xx or a 429 (retryPolicy.ts); the final result is recorded. */
+async function sendWithRetry(
+  path: string,
+  options: RequestOptions,
+): Promise<{ response: Response } | ApiFailure> {
+  const method = options.method ?? 'GET';
+  let sent = await send(path, options);
+  for (let retry = 0; retry < retryCount(); retry += 1) {
+    const status = 'ok' in sent ? sent.status : sent.response.status;
+    if (!isRetryable(method, status)) break;
+    const header = 'ok' in sent ? null : sent.response.headers.get('Retry-After');
+    await wait(retryDelayMs(retry, header));
+    sent = await send(path, options);
+  }
+  recordOutcome(method, 'ok' in sent ? sent.status : sent.response.status);
+  return sent;
+}
+
 async function failureOf(response: Response): Promise<ApiFailure> {
   let json: unknown;
   try {
@@ -94,7 +116,7 @@ export async function request<T>(
   parse: (input: unknown) => T | null,
   options: RequestOptions = {},
 ): Promise<ApiResult<T>> {
-  const sent = await send(path, options);
+  const sent = await sendWithRetry(path, options);
   if ('ok' in sent) return sent;
   const { response } = sent;
   if (!response.ok) return failureOf(response);
@@ -120,7 +142,7 @@ export async function requestText(
   path: string,
   options: RequestOptions = {},
 ): Promise<ApiResult<string>> {
-  const sent = await send(path, options);
+  const sent = await sendWithRetry(path, options);
   if ('ok' in sent) return sent;
   const { response } = sent;
   if (!response.ok) return failureOf(response);

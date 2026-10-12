@@ -1,0 +1,6 @@
+{
+  "offline": "You're offline. Your changes are kept. We'll try again when you're back.",
+  "server": "Server isn't answering. Try again in a moment.",
+  "stopped": "Can't reach the kitchen right now.",
+  "tryAgain": "Try again"
+}

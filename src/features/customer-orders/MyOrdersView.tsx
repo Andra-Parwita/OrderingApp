@@ -114,7 +114,6 @@ const Body = styled.span`
 const Top = styled.span`
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
   gap: 0 ${({ theme }) => theme.spacing.sm};
 `;
 const Code = styled.span<{ $small?: boolean }>`
@@ -122,7 +121,48 @@ const Code = styled.span<{ $small?: boolean }>`
   font-size: ${({ $small }) => ($small ? '0.9375rem' : '1.0625rem')};
   font-weight: 600;
   letter-spacing: 0.06em;
+  flex-shrink: 0;
 `;
+/** The kitchen's name between the code and the total: it shrinks (ellipsis) before they do. */
+const KitchenPill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 0.125rem ${({ theme }) => theme.spacing.md};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border-radius: ${({ theme }) => theme.radius.pill};
+  background: ${({ theme }) => theme.c.surf2};
+  color: ${({ theme }) => theme.c.text};
+  font-size: ${({ theme }) => theme.type.size.md};
+  line-height: 1.3;
+
+  img {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+function Kitchen({ name, logo }: Readonly<{ name: string; logo: string | undefined }>) {
+  return (
+    <KitchenPill title={name}>
+      {logo ? (
+        <img src={logo} alt="" width={16} height={16} loading="lazy" decoding="async" />
+      ) : null}
+      <span>{name}</span>
+    </KitchenPill>
+  );
+}
 const Dot = styled.span`
   align-self: center;
   width: 0.5rem;
@@ -132,6 +172,7 @@ const Dot = styled.span`
 `;
 const Total = styled.span`
   margin-left: auto;
+  flex-shrink: 0;
   font-weight: 700;
 `;
 const Line = styled.span`
@@ -226,11 +267,10 @@ const CurrentItem = memo(function CurrentItem({ row, lang, onOpen }: CurrentRowP
                 <VisuallyHidden>{t('list.newUpdate')}</VisuallyHidden>
               </>
             ) : null}
+            <Kitchen name={row.kitchen} logo={row.kitchenLogo} />
             <Total>{formatMoney(row.totalCents, lang)}</Total>
           </Top>
-          <Line>
-            {row.kitchen} · {row.summary}
-          </Line>
+          <Line>{row.summary}</Line>
           <Dim>
             {row.dayText} · {how}
           </Dim>
@@ -277,13 +317,12 @@ const EarlierItem = memo(function EarlierItem({ row, lang, onOpen }: EarlierRowP
                 {formatOrderCode(row.code)}
               </Code>
             ) : null}
-            <Dim>
-              {row.kitchen} · {row.dayText}
-            </Dim>
+            <Kitchen name={row.kitchen} logo={row.kitchenLogo} />
             {row.totalCents === undefined ? null : (
               <Total>{formatMoney(row.totalCents, lang)}</Total>
             )}
           </Top>
+          <Dim>{row.dayText}</Dim>
           <Result $tone={look.tone}>
             <OrderIcon name={look.icon} />
             {word}

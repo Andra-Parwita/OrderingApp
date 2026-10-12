@@ -154,6 +154,7 @@ export function paginate(plan: PrintPlan, lang: Language): Array<Array<PrintBloc
     if (group.kind !== 'all') add({ type: 'group', group }, 2, nextCost);
     for (const order of group.orders) add({ type: 'order', order, group }, orderLines(order, lang));
   }
-  add({ type: 'totals' }, 6 + plan.totals.dishes.length);
+  // The dish list prints in two columns (PrintOrders), so it costs half a line per dish.
+  add({ type: 'totals' }, 6 + Math.ceil(plan.totals.dishes.length / 2));
   return pages;
 }

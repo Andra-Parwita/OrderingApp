@@ -17,13 +17,14 @@ import type { PickupPointInput, UpdateItemRequest } from '../../../shared/setupC
 
 /** Everything the menu screens can ask the server to do; the saga runs each and then refreshes. */
 export type MenuOp =
-  | { kind: 'createMenu'; cookingDate: string }
+  | { kind: 'createMenu'; cookingDate: string; pictureFromPastMenu?: string }
   | { kind: 'updateMenu'; request: UpdateMenuRequest }
   | { kind: 'publish'; force?: boolean; takingOrders?: boolean }
   | { kind: 'unpublish' }
   | { kind: 'deleteMenu' }
   | { kind: 'finish' }
   | { kind: 'uploadPicture'; dataUrl: string }
+  | { kind: 'usePastPicture'; pastMenuId: string }
   | { kind: 'removePicture' }
   /** `alsoDishId`: the library dish behind it, kept in step (name, description, size, price, limit, chef). */
   | { kind: 'updateMenuDish'; id: string; request: UpdateItemRequest; alsoDishId?: string }

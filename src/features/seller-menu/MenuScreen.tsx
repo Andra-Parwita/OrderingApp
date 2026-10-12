@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import { formatCutoff, formatDay } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
+import { MAX_MENU_ITEMS } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import type { MenuDishView } from '../../../shared/menusContract';
 import { Button, Icon, ListWithPanel, WarningDialog } from '../../ui';
@@ -244,7 +245,7 @@ function LiveMenu({
         <Button disabled={full} onClick={() => onEditTab('dishes')}>
           <Icon name="plus" />
           {t('live.addDish')}{' '}
-          <Muted as="span">{t('live.nOf', { n: view.dishes.length, max: 10 })}</Muted>
+          <Muted as="span">{t('live.nOf', { n: view.dishes.length, max: MAX_MENU_ITEMS })}</Muted>
         </Button>
         <LinkButton onClick={() => setAsking('finish')}>{t('live.finish')}</LinkButton>
       </Actions>

@@ -364,6 +364,9 @@ describe('add a device when the account already has a login (plan 025)', () => {
     expect(failureMessage(t, fail('password_exists'))).toMatch(/already has a password/);
     expect(failureMessage(t, fail('passkey_exists'))).toMatch(/already has a passkey/);
     expect(failureMessage(t, fail('unauthorized'))).toMatch(/timed out/);
+    expect(failureMessage(t, fail('forbidden', { status: 403 }))).toBe(
+      'You are not allowed to do this.',
+    );
     expect(failureMessage(t, fail('kitchen_paused'))).toBe(
       'This kitchen is paused. Contact the admin.',
     );

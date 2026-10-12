@@ -4,8 +4,9 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { Provider } from 'react-redux';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import type { Languages } from '../../../shared/domain';
+import type { Language, Languages } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
+import { markLanguageChosen } from '../../i18n/chosenLanguage';
 import en from '../../i18n/en.json';
 import id from '../../i18n/id.json';
 import { customerReducer } from './customerSlice';
@@ -31,9 +32,12 @@ function Probe() {
   return <output>{useKitchenLanguages()}</output>;
 }
 
-function show(languages: Languages | undefined) {
+function show(languages: Languages | undefined, firstLanguage?: Language) {
   const base = customerReducer(undefined, { type: 'init' });
-  const data = (languages === undefined ? {} : { languages }) as MenuResponse;
+  const data = {
+    ...(languages === undefined ? {} : { languages }),
+    ...(firstLanguage === undefined ? {} : { firstLanguage }),
+  } as MenuResponse;
   const store = configureStore({
     reducer: { customer: customerReducer },
     preloadedState: { customer: { ...base, menu: { status: 'ready' as const, data } } },
@@ -70,5 +74,25 @@ describe('a kitchen that offers one language (plan 056)', () => {
     show('both');
     show(undefined);
     expect(i18n.language).toBe('id');
+  });
+});
+
+describe('the language customers see first (plan 060)', () => {
+  it('first visit: shows the kitchen first language, and leaves the saved lang key alone', async () => {
+    localStorage.setItem('lang', 'en');
+    show('both', 'id');
+    await waitFor(() => expect(i18n.language).toBe('id'));
+    await waitFor(() => expect(localStorage.getItem('lang')).toBe('en'));
+  });
+
+  it('after the customer switched language, their choice wins', () => {
+    markLanguageChosen();
+    show('both', 'id');
+    expect(i18n.language).toBe('en');
+  });
+
+  it('without a first language from the server, leaves the language alone', () => {
+    show('both');
+    expect(i18n.language).toBe('en');
   });
 });

@@ -263,16 +263,21 @@ test('scrolling the orders list slides the sheet over the banner, which keeps it
     const height = async (locator: Locator) =>
       Math.round((await locator.boundingBox())?.height ?? 0);
     await expect.poll(() => height(clip)).toBe(164);
-    // Scroll the first element that actually scrolls inside the sheet.
-    const scrolled = await page.evaluate(() => {
-      const target = [...document.querySelectorAll<HTMLElement>('div')].find(
-        (el) => getComputedStyle(el).overflowY === 'auto' && el.scrollHeight > el.clientHeight + 40,
-      );
-      if (!target) return false;
-      target.scrollTop = 60;
-      return true;
-    });
-    expect(scrolled).toBe(true);
+    // Scroll the first element that actually scrolls inside the sheet (poll: the list may still be
+    // loading under a busy full run).
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const target = [...document.querySelectorAll<HTMLElement>('div')].find(
+            (el) =>
+              getComputedStyle(el).overflowY === 'auto' && el.scrollHeight > el.clientHeight + 40,
+          );
+          if (!target) return false;
+          target.scrollTop = 60;
+          return true;
+        }),
+      )
+      .toBe(true);
     await expect.poll(() => height(clip)).toBe(73);
     expect(Math.round((await image.boundingBox())?.height ?? 0)).toBe(164);
     await page.screenshot({ path: 'captures/banners3-scrolled-1180.png' });

@@ -155,6 +155,13 @@ describe('MyOrdersScreen', () => {
     await waitFor(() => expect(onOpenOrder).toHaveBeenCalledWith(placed.token));
   });
 
+  it('shows the kitchen name as a pill on its card', async () => {
+    await place();
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    const pill = await screen.findByTitle('Onde Onde');
+    expect(pill).toHaveTextContent('Onde Onde');
+  });
+
   it('names the kitchen the find form searches in', async () => {
     await place(); // a saved order of that kitchen gives its name
     localStorage.setItem('lastKitchen', 'onde-onde');

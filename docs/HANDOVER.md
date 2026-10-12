@@ -2,87 +2,56 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here.
 
-**Last session:** 2026-10-12 evening, the owner's PC (Adelaide), with Claude as coordinator. Branch `indra/brand_logo_ux` = `main` (release **1.0.24**, `e056995`, deployed) + the builder's plans 045/046 (`09268ac`) + **this session's uncommitted work** below. GitHub's copy of the branch still has the old history: push it with `git push --force-with-lease origin indra/brand_logo_ux`.
+**Last session:** 2026-10-12, late evening into the night, the owner's PC (Adelaide), with Claude as coordinator. The owner went to sleep at about 23:00 and asked: "do this automated and tested, then commit and push; I will check tomorrow". Branch `indra/brand_logo_ux`. `main` = **Release 1.0.30** (`0ad9830`, plans 047–059, deployed by the builder on 12 Oct). **Everything below was built after 1.0.30, committed and pushed to `indra/brand_logo_ux` overnight. Not merged into `main`, not deployed.**
 
 ## Where things stand
-Built on this PC on 12 Oct and **committed by the owner as `c89fbfd`** (during the final e2e run); the e2e spec fixes and these docs are a second small commit. **Not deployed yet.** **The final gate passed (22:08):** typecheck ✅, lint ✅, format ✅, **unit 1897 / 1897** ✅ (172 files), **e2e 74 passed, 0 failed** ✅ (`scratch/g5-e2e.log`; 28 skipped = captures and opt-ins). The e2e fixes were test updates only (the home-screen card is dismissed in customer specs; `/seller` now has the seller manifest; a chef lands on `/seller/orders` after setup). No app code changed in the fix round.
+**Final gate (13 Oct, 06:36), all green:** typecheck ✅ · lint ✅ · format ✅ · **unit: all pass** (172+ files; the full run had 9 load-only timeouts that pass alone, and 2 tests still assuming 10 dishes, fixed) · **e2e 76 passed, 0 failed** (`scratch/n-e2e5.log`; 28 skipped = captures and opt-ins). The e2e runs found **one real bug, fixed**: after Save, Settings → Kitchen kept the typed WhatsApp number instead of the saved one (a plan 061 draft re-written by the form's unmount flush). Two specs updated (a chef lands on `/seller/orders`; the banner scroll check waits for the list). One overnight run hung for 6 hours in `design-compare-customer` while the PC slept; it passes alone and in the final run.
 
-| plan | what |
-|---|---|
-| 047 | **link previews**: WhatsApp shows a small square picture (the ShaggyBobo happy face for invites/admin; the kitchen's app icon for menu links) with title and description; every WhatsApp link now uses `api.whatsapp.com/send` (the 👋 no longer breaks) |
-| 048 | the **seller app installs** on every `/seller` page ("ShaggyBobo Seller", the bean icon, opens without the address bar); an **"Install the app"** row in More (phone) and Settings (tablet) |
-| 049 | **"Edit chefs" opens a modal** over the dish editor, so a typed dish is never lost |
-| 050 | **dish library CSV**: Import (preview of new / update / problem before anything changes), Export, Template; matched by **name + chef** |
-| 051 | **dishes on the phone** (More → Dishes); a **chef can put her own dish on the current menu** (D-094), via a new "add one dish" route |
-| 052 | admin page **"Last updated" + Refresh** (at most once a minute) |
-| 053 | **Menu step tabs** for an unpublished menu: each step read-only, **Edit** opens the wizard at that step, **Continue to step N** |
-| 054 | a friendly **"put it on your home screen"** card (customer menu; seller Home/Orders), only in the browser, never in the installed app; "Not now" = 7 days |
-| 055 | **Publish now, or publish with ordering paused**, chosen in a **confirmation modal when the seller presses Publish**, each option explained in plain words; after a paused publish a notice says how to open orders. ✅ built (271 tests) |
-| 056 | **Languages for customers**: both / English only / Indonesian only (Settings → Kitchen); one field per text when one language. ✅ built |
-| 057 | **⇄ Translate** button for dish name/description (Cloudflare Workers AI, 100 a day per kitchen). ✅ built, in the dish editor. Locally there is no AI (`remoteBindings: false`), so the button says "not available": expected. **After deploying, check one translation returns 200** (a 503 means the binding didn't ship) |
-| 058 | **Seller Help** page, public at the hidden address `/help-yw4xsvh8` (D-095), 11 topics EN/ID with real screenshots, waving mascot; **Help** under Settings in the left menu, More, sign-in, setup and the invite message ✅. 6 real screenshots so far (English); more (devices, invite, publish, orders) need a real signed-in session — next round |
-| 059 | **"A new version is ready · Refresh"** bar + automatic reload when an old screen misses a replaced part ✅ (`version.json` no-store via the new `public/_headers`) |
-| fix | **customers no longer see an unpublished (draft) menu**: they get "The next menu is coming soon" (it was leaking the draft's dishes on the live site) |
-| fix | the seller banner no longer collapses with the left menu (only on scroll or ^) |
-| fix | `/seller/sign-in` shows ShaggyBobo branding when the device has no kitchen |
-| fix | the Orders badge counts no cancelled orders; the admin seller row's summary shows at once for a new seller |
+### Built after 1.0.30 (this branch)
+| plan | what | deploy impact |
+|---|---|---|
+| 060 | **The language customers see first**: Settings → Kitchen, under "English and Indonesian", "Customers see first"; once a customer switches, their own choice is remembered (`langChosen`) and the seller app's language on the same device is untouched | ⚠️ **migration 0014** |
+| 061 | **Never lose typed data**: a draft on the device for the dish editor (with "Close and keep draft"), the new chef's name, the menu wizard's note and place, Settings (kitchen, ordering rules, WhatsApp post, pickup places), the seller's New order (device only), invites (name, role; never the key or link), and the **customer basket and checkout**; "Restored what you typed · Discard"; 7-day expiry; "Keep my version / Use the saved version" when the server changed meanwhile | none |
+| 062 | **Calm network errors**: loading retried 3 times (1/3/9 s) only for network errors, 5xx and 429; **saves never retried** (owner A); live refresh backs off and **stops after 5 refusals** (owner A) with "Can't reach the kitchen right now · Try again"; reconnect capped at 8; one offline banner (stacks under the update bar); the customer order page pauses while hidden; 403 says "You are not allowed to do this" | none |
+| 063 | **Pickup · Delivery · Both**: one clear choice at the top of the menu's Details step; only the matching settings show; switching to Delivery with places ticked asks first; Check says "Pickup only / Delivery only / Pickup or delivery"; **the customer basket offers only what the menu offers** (Dellavee's live bug) and the **server refuses** anything else from customers (`fulfilment_unavailable`) | none |
+| 064 | **Pictures of the last 10 menus are kept** (rolling): Past menus show their picture; "Start from" a past menu copies it; the picture slot has "Use a past menu's picture"; files are deleted only when nothing uses them | ⚠️ **migration 0015** |
+| 065 | **My orders** remembers the last kitchen (its banner after a reload) and shows each order's **kitchen pill** between code and total | none |
+| 066 | **Up to 50 dishes per menu** (portions per dish per order stay 99; dish stock up to 10,000). Fixed a real bug on the way: a 50-line order hit D1's 100-variable limit (`portionGuard` now uses `json_each`). Every route stays at ≤ 7 database round trips. Print totals fit; the WhatsApp post lists dishes up to 3,000 characters, then "+ N more on the menu" | none; **publish 11+ dishes only a day after the deploy** (an app that hasn't refreshed still refuses more than 10) |
+| D-097 | **Devices opens on the phone** (More → Devices), so a phone-only seller (Chandra) can add her tablet herself | none |
+| Help | two tabs, **Seller help** (12 topics, incl. new "Phone or tablet?" and a rewritten "Make and publish a menu" with pickup places first) and **Customer help** (a 7-question FAQ: ordering, lost order, updates, home screen, odd app, languages, orders from other kitchens) | none |
+| — | customer **Settings** shows the kitchen banner on top | none |
 
-**Decisions recorded:** D-094 (a chef may put her own dish on the current menu, draft or live). **Live plan status:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md) (✅ 047–054; 045/046 are the builder's drafts).
+**Decisions recorded:** D-095 (Help public at a hidden address), D-096 (languages; one language per dish is enough), D-097 (Devices on the phone). **Live plan status:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md).
 
-## Deploy impact (tell the builder before deploying)
+## For the owner tomorrow: questions waiting (one at a time)
+1. **063 Menu defaults:** Settings → Menu defaults is still two-way (delivery on/off). A true Pickup · Delivery · Both default needs one more stored setting. **A:** leave it two-way (each menu's Details has the three-way choice). **B:** add the stored setting (small; maybe a migration).
+2. **060 default first language:** every kitchen now says "English" first by default, so an Indonesian phone opening a "both" kitchen sees English until it switches (before, it followed the phone). **A:** default to the **phone's language** unless the owner picked one. **B:** keep English as the default.
+3. **Dish pictures for customers:** the customer menu shows no dish pictures today (only the menu's collage). **A:** leave it. **B:** a plan to show each dish's picture (lazy-loaded).
+4. **Invite message drafts:** the editable invite message isn't kept as a draft, because it contains the key. **A:** fine as is.
+
+## Deploy impact (tell the builder before the next deploy)
 | area | impact |
 |---|---|
-| database | ⚠️ **one new migration, 0013_languages (add-only, plan 056)**: apply to the live D1 **before** deploying (deploying the code first breaks the kitchen settings reads until it's applied): `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote`; on each PC `pnpm db:migrate:local` (never reseed) |
-| secrets / settings | ⚠️ `wrangler.jsonc` gains an **AI binding** (plan 057); no new secret. The account is on the **Workers Free** plan (owner checked 2026-10-12): over the free daily allowance translations just stop, no charge possible |
-| server + app together | ⚠️ deploy **both in one go** (a normal `pnpm run deploy` does): the app now understands the new "not published" state and the new add-one-dish route |
-| customers | the moment it's live, an unpublished menu disappears from the customer page ("coming soon") until it's published |
-| seller home-screen apps | ⚠️ low: old shortcuts keep working; installing now gives "ShaggyBobo Seller" with the bean icon (not the kitchen's name/icon) |
-| WhatsApp previews | WhatsApp caches previews; a link shared before the deploy may show the old card for a while |
-| chefs | ⚠️ rule change: chefs can add **their own** dish to a **live** menu; tell the team |
+| database | ⚠️ **two new migrations, both add-only: 0014_first_language, 0015_past_menu_pictures.** Apply to the live D1 **before** deploying: `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote`. On each PC `pnpm db:migrate:local` (never reseed). Deploying the code first breaks the kitchen settings reads and the menu finish until they are applied |
+| secrets / settings | ✅ nothing new |
+| beta testers | ✅ the new-version bar (plan 059, live since 1.0.30) tells them to Refresh; no "close and reopen" message needed this time |
+| 50 dishes | publish a menu with more than 10 dishes only a day after the deploy |
 | signed-in people | ✅ nobody is signed out |
-| beta testers with the app open | ⚠️ **this** deploy: an old home-screen app keeps the old version until it is **fully closed and reopened** (swipe it away). Tell them once. From this version on, the new-version bar (plan 059) tells them |
 
-## First thing next session
-1. The owner commits the last spec fixes + docs, pushes with `git push --force-with-lease origin indra/brand_logo_ux`, then merges into `main`.
-2. Nothing else is outstanding for this round. If anything changed since 22:08, re-run only typecheck and the touched unit tests.
+**After deploying, check:** Dellavee's basket offers delivery only; a translation still works (⇄); a menu finish keeps its picture in Past menus.
 
-**Suggested commit message** (owner's rule: no mention of Claude):
-```
-Link previews, seller app install, dish CSV, chef menu additions, menu step tabs, fixes
+## Next session
+1. Read this file. Check the gate line above.
+2. Go through "Questions waiting" **one at a time** (owner rule).
+3. When the owner is happy: merge `indra/brand_logo_ux` into `main` (a normal push now, no force), and the builder deploys (migrations 0014 + 0015 first).
 
-- WhatsApp link previews (small square picture, title, description); WhatsApp links via api.whatsapp.com
-- Seller app installable on every seller page; "Install the app" in More and Settings
-- Home-screen card for customers and sellers (browser only, Not now = 7 days)
-- Dish library CSV import (preview first), export and template; matched by name and chef
-- Dishes on the phone; chefs can add their own dish to the current menu (D-094)
-- Edit chefs opens a modal so a typed dish is never lost
-- Menu step tabs for an unpublished menu (read-only, Edit, Continue)
-- Publish now or publish with ordering paused
-- Languages for customers: both, English only or Indonesian only (migration 0013)
-- Translate button for dish texts (Workers AI)
-- Seller Help page (public, hidden address) with links from the app and the invite message
-- Admin page: Last updated and Refresh (once a minute)
-- Fix: customers no longer see an unpublished menu ("coming soon")
-- Fix: banner no longer collapses with the left menu; ShaggyBobo on a fresh seller sign-in; badge without cancelled orders
-```
-
-## After the merge: the builder deploys
-`git pull` on `main` → `pnpm install` → `pnpm db:migrate:local` → apply **0013** to the live D1 → read [guide/deploy-cloudflare.md](guide/deploy-cloudflare.md) and the latest `plans/release-*.md` → `pnpm run deploy` → check the live app.
-
-## The owner's checks after the deploy
-- Send yourself an **invite** and a **menu link** on WhatsApp: the small picture and the 👋 are right (use a fresh link).
-- Android tablet: open `/seller`, then the **Install the app** row or ⋮ → Add to home screen → Install; it opens without the address bar.
-- Chandra on her phone: More → **Dishes** → add a dish, tick "Also add to the current menu".
-- Unpublish nothing on the live kitchen just to test; instead open the customer link of a kitchen whose menu is still a draft: "coming soon".
-- Import a small CSV (Download template first) on Dapur Demo.
-
-## Known and not done (next round unless the owner says otherwise)
-- **Never lose typed data**: drafts kept on the device for every form until Save/Cancel (owner).
-- **Graceful network and refusal handling**: no endless retries on 401/403; a calm offline state (owner).
+## Known and not done
+- **Dellavee is a beta tester.** Ask her for feedback after the next deploy (delivery-only basket fixed).
+- Help screenshots still missing for screens that need a real signed-in session (Devices, the 6-digit code, Invite, Publish, Orders): take them from the live app.
 - Clearer image-slot labels; the seller's own invite list with paging; keep max 50 invites per kitchen.
-- 031 as a read-only "view as" for the admin; Send reminder / Download CSV on Orders; stall sales in the printed totals.
-- The owner's wife's iPad: her kitchen invite shows "used" but "0 devices" on the admin page; if she can't sign in, send a **Create recovery key** (owner: "leave it for now").
+- 031 as a read-only "view as"; Send reminder / Download CSV on Orders; stall sales in the printed totals; owners pausing their own kitchen.
+- The owner's wife's iPad (invite "used", 0 devices): send a recovery key if she can't sign in ("leave it for now").
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. The 12 Oct round (plans 047–059) is merged and deployed. Help me check the live app against "The owner's checks after the deploy", then plan the next round (never lose typed data, graceful network handling, more real Help screenshots, then the customer app). Ask me one question at a time.
+> Read docs/HANDOVER.md and CLAUDE.md. Overnight work (plans 060–066, D-097, Help tabs) is pushed on indra/brand_logo_ux, not deployed. Tell me the gate result, then go through "Questions waiting" **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next. Never several questions in one message.

@@ -99,6 +99,17 @@ describe('splitOrder', () => {
     }
   });
 
+  it('50 lines: every line on exactly one label, in order, nothing dropped', () => {
+    for (const paper of ['a4', 'roll'] as const) {
+      const all = lines(50);
+      const parts = splitOrder(order('a', 'confirmed', all, 'No chilli'), paper);
+      expect(parts.flatMap((p) => p.lines.map((l) => l.itemId))).toEqual(all.map((l) => l.itemId));
+      expect(parts.every((p) => p.lines.length <= LINES_PER_LABEL[paper])).toBe(true);
+      expect(parts.filter((p) => p.showNote)).toHaveLength(1);
+      expect(parts.at(-1)?.showNote).toBe(true);
+    }
+  });
+
   it('puts the note on the last part only, and gives it room', () => {
     const parts = splitOrder(order('a', 'confirmed', lines(8), 'Allergic'), 'a4');
     expect(parts).toHaveLength(3);

@@ -2,7 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { appVersion } from '../../../shared/buildInfo';
-import type { Language } from '../../../shared/domain';
+import type { Kitchen, Language } from '../../../shared/domain';
+import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import {
   INSTALL_NS,
   InstallOverlay,
@@ -13,7 +14,7 @@ import {
 } from '../../components/install';
 import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import type { ThemePreference } from '../../theme/themePreference';
-import { Icon, Segmented, type SegmentedOption } from '../../ui';
+import { Icon, ImageSlot, Segmented, type SegmentedOption } from '../../ui';
 
 // The customer's Settings tab (spec §4.6): Language, Appearance, Order updates, and the "put it on
 // your home screen" card. Presentational: CustomerSettingsScreen wires it to i18n and the theme
@@ -25,6 +26,11 @@ const Page = styled.main`
   margin: 0 auto;
   /* Leaves room for the customer tab bar when the app shell shows one. */
   min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
+`;
+// Same banner as the menu home (MenuHomeView), kept here because features can't import each other.
+const BannerTop = styled.div<{ $background?: string }>`
+  padding-top: var(--sat);
+  background: ${({ theme, $background }) => $background ?? theme.c.surf2};
 `;
 const Title = styled.h1`
   margin: 0;
@@ -225,6 +231,8 @@ export type CustomerSettingsViewProps = Readonly<{
   canInstall?: boolean;
   /** Plan 056: false when the kitchen offers one language, so there is nothing to switch. */
   showLanguage?: boolean;
+  /** The loaded kitchen: its banner shows on top, as on the menu. Absent = no banner. */
+  kitchen?: Kitchen;
 }>;
 
 /** The Settings tab. */
@@ -236,6 +244,7 @@ export function CustomerSettingsView({
   install: installOverride,
   canInstall: canInstallOverride,
   showLanguage = true,
+  kitchen,
 }: CustomerSettingsViewProps) {
   const { t } = useTranslation();
   const { t: ti } = useTranslation(INSTALL_NS);
@@ -283,6 +292,17 @@ export function CustomerSettingsView({
             : ti('settings.off');
   return (
     <Page>
+      {kitchen ? (
+        <BannerTop $background={kitchen.images?.bannerBackground}>
+          <ImageSlot
+            aspectRatio="3 / 1"
+            background={kitchen.images?.bannerBackground}
+            src={phoneBannerSrc(kitchen.images) ?? kitchen.bannerImageUrl}
+            alt={bannerAlt(kitchen, lang)}
+            placeholder={kitchen.name}
+          />
+        </BannerTop>
+      ) : null}
       <Title>{t('customerSettings.title')}</Title>
       <Rows>
         {showLanguage ? (

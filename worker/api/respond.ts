@@ -43,6 +43,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   kitchen_closed: 409,
   translate_limit: 429,
   translate_unavailable: 503,
+  fulfilment_unavailable: 400,
 };
 
 export function error(

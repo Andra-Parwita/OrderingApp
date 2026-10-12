@@ -12,5 +12,9 @@
   "needHelp": "Need help?",
   "inviteKeyHelp": "Help with your invite key",
   "inviteLine": "Help: {{link}}",
-  "picture": "Picture: {{what}}"
+  "picture": "Picture: {{what}}",
+  "tabs": "Help tabs",
+  "tabSeller": "Seller help",
+  "tabCustomer": "Customer help",
+  "foundIn": "Found in {{tab}} ({{count}}) →"
 }
