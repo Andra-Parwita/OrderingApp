@@ -157,7 +157,11 @@ describe('menu states', () => {
     expect(await screen.findByText('Not taking orders right now')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'See dishes and order' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Message the seller on WhatsApp' }));
-    expect(open).toHaveBeenCalledWith(`https://wa.me/${NUMBER}`, '_blank', 'noopener,noreferrer');
+    expect(open).toHaveBeenCalledWith(
+      `https://api.whatsapp.com/send?phone=${NUMBER}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
     fireEvent.click(screen.getByRole('button', { name: 'See the dishes anyway' }));
     expect(onSeeDishes).toHaveBeenCalledTimes(1);
   });
@@ -187,7 +191,11 @@ describe('menu states', () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     renderHome();
     fireEvent.click(await screen.findByRole('button', { name: 'Message the seller on WhatsApp' }));
-    expect(open).toHaveBeenCalledWith('https://wa.me/', '_blank', 'noopener,noreferrer');
+    expect(open).toHaveBeenCalledWith(
+      'https://api.whatsapp.com/send',
+      '_blank',
+      'noopener,noreferrer',
+    );
   });
 
   it('not published: "The menu isn\'t out yet"', async () => {
@@ -198,6 +206,37 @@ describe('menu states', () => {
     );
     renderHome();
     expect(await screen.findByText("The menu isn't out yet")).toBeVisible();
+  });
+
+  it('draft menu (not_published): "coming soon", the WhatsApp button, no dishes or basket', async () => {
+    await useMenu((menu) => ({
+      ...withOrdering({ open: false, reason: 'not_published' })(menu),
+      items: [],
+    }));
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    renderHome();
+    expect(await screen.findByText('The next menu is coming soon')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'See dishes and order' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Message the seller on WhatsApp' }));
+    expect(open).toHaveBeenCalledWith(
+      `https://api.whatsapp.com/send?phone=${NUMBER}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+    await act(() => i18n.changeLanguage('id'));
+    expect(await screen.findByText('Menu berikutnya segera hadir')).toBeVisible();
+  });
+
+  it('draft menu without a WhatsApp number: no message button', async () => {
+    await useMenu((menu) => ({
+      ...menu,
+      kitchen: { ...menu.kitchen, whatsappNumber: undefined },
+      items: [],
+      ordering: { open: false, reason: 'not_published' },
+    }));
+    renderHome();
+    expect(await screen.findByText('The next menu is coming soon')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /WhatsApp/ })).toBeNull();
   });
 
   it('load error: a skeleton, then an error card; Try again loads the menu', async () => {

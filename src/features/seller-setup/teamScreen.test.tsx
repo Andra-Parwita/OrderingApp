@@ -116,7 +116,7 @@ describe('TeamScreen', () => {
     fireEvent.change(preview, { target: { value: 'Halo, ini undangan' } });
     expect(within(box).getByRole('link', { name: 'Send on WhatsApp' })).toHaveAttribute(
       'href',
-      `https://wa.me/?text=${encodeURIComponent('Halo, ini undangan')}`,
+      `https://api.whatsapp.com/send?text=${encodeURIComponent('Halo, ini undangan')}`,
     );
   });
 

@@ -13,7 +13,7 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
   page.on('pageerror', (error) => consoleErrors.push(error.message));
-  await context.route('https://wa.me/**', (route) =>
+  await context.route('https://api.whatsapp.com/**', (route) =>
     route.fulfill({ contentType: 'text/html', body: '<p>wa</p>' }),
   );
 

@@ -1,7 +1,13 @@
 // The kitchen's manifest and home-screen icon links, as HTML for the page head (plan 011). The Worker
 // (production) and Vite (dev) add them to the page a phone first receives; React keeps them right
 // after navigation (src/components/install/manifestLinks.ts) with the same hrefs.
-import { appleTouchIconPath, sellerAppName, sellerManifestPath } from './kitchenManifest';
+import {
+  DEFAULT_SELLER_ICON_PATH,
+  DEFAULT_SELLER_MANIFEST_PATH,
+  appleTouchIconPath,
+  sellerAppName,
+  sellerManifestPath,
+} from './kitchenManifest';
 import { isValidSlug } from './seller';
 import { THEME_BAR_COLOUR } from './themeColours';
 import type { ThemeName } from './themes';
@@ -19,6 +25,16 @@ export function sellerHeadHtml(slug: string, name?: string): string {
       : `<meta name="apple-mobile-web-app-title" content="${escapeAttr(sellerAppName(name))}">`)
   );
 }
+
+/** The seller app's head links before any kitchen is known (sign-in, first setup; plan 048). */
+export const defaultSellerHeadHtml = (): string =>
+  `<link rel="manifest" href="${DEFAULT_SELLER_MANIFEST_PATH}">` +
+  `<link rel="apple-touch-icon" href="${DEFAULT_SELLER_ICON_PATH}">` +
+  `<meta name="apple-mobile-web-app-title" content="Seller">`;
+
+/** A seller page path: `/seller` and everything under it. */
+export const isSellerPath = (pathname: string): boolean =>
+  pathname === '/seller' || pathname.startsWith('/seller/');
 
 export type KitchenPageTarget = { slug: string } | { token: string };
 
@@ -54,3 +70,60 @@ export const themeColour = (theme: ThemeName): string => THEME_BAR_COLOUR[theme]
 /** `<meta name="theme-color">` for a kitchen or order page (plan 024). */
 export const themeColourHtml = (theme: ThemeName): string =>
   `<meta name="theme-color" content="${escapeAttr(themeColour(theme))}">`;
+
+/** The ShaggyBobo link-preview picture (plan 047): a small square, so WhatsApp shows a thumbnail. */
+export const DEFAULT_OG_IMAGE = { path: '/brand/og-shaggybobo.png', width: 512, height: 512 };
+export const DEFAULT_OG_TITLE = "ShaggyBobo's Order";
+const DEFAULT_OG_DESCRIPTION =
+  'Weekly home-cooked menu, order by link · Menu masakan rumahan mingguan, pesan lewat tautan';
+
+export type LinkPreview = {
+  title: string;
+  description: string;
+  /** Site path or absolute URL of the picture. */
+  image: string;
+  width: number;
+  height: number;
+};
+
+const defaultImage = () => ({
+  image: DEFAULT_OG_IMAGE.path,
+  width: DEFAULT_OG_IMAGE.width,
+  height: DEFAULT_OG_IMAGE.height,
+});
+
+/** The preview of a kitchen or order page: its name and its app icon (square), else ShaggyBobo's picture. */
+export function kitchenPreview(name: string, images?: { railIcon?: string }): LinkPreview {
+  const description = `Order from ${name} · Pesan dari ${name}`;
+  if (images?.railIcon) {
+    return { title: name, description, image: images.railIcon, width: 512, height: 512 };
+  }
+  return { title: name, description, ...defaultImage() };
+}
+
+/** The preview of every other page. */
+export const defaultPreview = (): LinkPreview => ({
+  title: DEFAULT_OG_TITLE,
+  description: DEFAULT_OG_DESCRIPTION,
+  ...defaultImage(),
+});
+
+const absolute = (origin: string, ref: string): string =>
+  /^https?:\/\//i.test(ref) ? ref : origin + (ref.startsWith('/') ? ref : `/${ref}`);
+
+/** Open Graph and Twitter tags for the head (plan 047). `origin` is the request's, e.g. https://order.shaggybobo.app. */
+export function linkPreviewHtml(preview: LinkPreview, origin: string, pathname: string): string {
+  const meta = (key: string, value: string | number, attr = 'property'): string =>
+    `<meta ${attr}="${key}" content="${escapeAttr(String(value))}">`;
+  return (
+    meta('og:type', 'website') +
+    meta('og:site_name', DEFAULT_OG_TITLE) +
+    meta('og:title', preview.title) +
+    meta('og:description', preview.description) +
+    meta('og:image', absolute(origin, preview.image)) +
+    meta('og:image:width', preview.width) +
+    meta('og:image:height', preview.height) +
+    meta('og:url', origin + pathname) +
+    meta('twitter:card', 'summary', 'name')
+  );
+}

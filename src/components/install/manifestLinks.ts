@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
 import { manifestHref as kitchenManifestHref } from '../../../shared/kitchenHeadLinks';
-import { appleTouchIconPath, sellerManifestPath } from '../../../shared/kitchenManifest';
+import {
+  DEFAULT_SELLER_ICON_PATH,
+  DEFAULT_SELLER_MANIFEST_PATH,
+  appleTouchIconPath,
+  sellerManifestPath,
+} from '../../../shared/kitchenManifest';
 import { isValidSlug } from '../../../shared/seller';
 
 // The per-kitchen web app manifest and the iPhone home-screen icon (plan 004 stage 7, spec 6.4).
@@ -61,13 +66,17 @@ function setLink(rel: string, href: string | null): void {
  * Points the page at the kitchen's manifest and icon. The icon address always answers with a PNG
  * (the upload, or the shared default), so `apple-touch-icon` is always linked (plan 011).
  */
-export function setManifestLinks(target: ManifestTarget | null): void {
-  setLink('manifest', target ? manifestHref(target) : null);
-  setLink('apple-touch-icon', target ? appleTouchIconPath(target.slug) : null);
+export function setManifestLinks(target: ManifestTarget | null, sellerFallback = false): void {
+  // Seller pages without a kitchen keep ShaggyBobo's seller app links (plan 048).
+  const none = sellerFallback
+    ? { manifest: DEFAULT_SELLER_MANIFEST_PATH, icon: DEFAULT_SELLER_ICON_PATH }
+    : { manifest: null, icon: null };
+  setLink('manifest', target ? manifestHref(target) : none.manifest);
+  setLink('apple-touch-icon', target ? appleTouchIconPath(target.slug) : none.icon);
 }
 
 /** Keeps the manifest links right for the page on show. */
-export function useManifestLinks(target: ManifestTarget | null): void {
+export function useManifestLinks(target: ManifestTarget | null, sellerFallback = false): void {
   const slug = target?.slug;
   const start = target?.start;
   const seller = target?.seller;
@@ -76,6 +85,7 @@ export function useManifestLinks(target: ManifestTarget | null): void {
       slug !== undefined && start !== undefined
         ? { slug, start, ...(seller ? { seller } : {}) }
         : null,
+      sellerFallback,
     );
-  }, [slug, start, seller]);
+  }, [slug, start, seller, sellerFallback]);
 }

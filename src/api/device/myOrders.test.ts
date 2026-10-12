@@ -179,11 +179,17 @@ describe('device My orders', () => {
 describe('WhatsApp link', () => {
   it('opens the seller chat when the number is known, else the chat picker', () => {
     expect(whatsAppUrl('hi there', '61412345678')).toBe(
-      'https://wa.me/61412345678?text=hi%20there',
+      'https://api.whatsapp.com/send?phone=61412345678&text=hi%20there',
     );
-    expect(whatsAppUrl('hi there')).toBe('https://wa.me/?text=hi%20there');
-    expect(whatsAppUrl(undefined, '61412345678')).toBe('https://wa.me/61412345678');
-    expect(whatsAppUrl()).toBe('https://wa.me/');
+    expect(whatsAppUrl('hi there')).toBe('https://api.whatsapp.com/send?text=hi%20there');
+    expect(whatsAppUrl(undefined, '61412345678')).toBe(
+      'https://api.whatsapp.com/send?phone=61412345678',
+    );
+    expect(whatsAppUrl()).toBe('https://api.whatsapp.com/send');
+    // An emoji survives the round trip (plan 047).
+    const emoji = new URL(whatsAppUrl('Hi Sandra! 👋'));
+    expect(emoji.searchParams.get('text')).toBe('Hi Sandra! 👋');
+    expect(emoji.href).toContain('%F0%9F%91%8B');
   });
 
   it('builds the text from the order, with the address prompt for delivery', () => {

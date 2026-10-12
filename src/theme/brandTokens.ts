@@ -47,3 +47,9 @@ export const brandSize = {
 export const brandShadow = {
   ground: 'rgba(0, 0, 0, 0.7)',
 } as const;
+
+/** The Help page's header band (plan 058): the scene fades into the beige toward the right. */
+export const brandHelp = {
+  fade: 'linear-gradient(90deg, rgba(234, 219, 194, 0.96) 0%, rgba(234, 219, 194, 0.8) 45%, rgba(234, 219, 194, 0.1) 100%)',
+  sceneOpacity: 0.55,
+} as const;

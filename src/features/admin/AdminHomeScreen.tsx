@@ -30,6 +30,7 @@ import { brandColour, brandSize } from '../../theme/brandTokens';
 import { Button, ConfirmButton, Icon, SlideOver, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { ProblemsPanel } from './ProblemsPanel';
+import { RefreshBar } from './RefreshBar';
 import { PauseLabel, SellerDetails } from './SellerDetails';
 import { slugProblem } from './slug';
 import {
@@ -241,6 +242,10 @@ export function AdminHomeScreen({
   const [addProblem, setAddProblem] = useState<string | null>(null);
   const [added, setAdded] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Plan 052: when the list was loaded, and a counter that tells the Problems list and the open
+  // seller panel to load again.
+  const [loadedAt, setLoadedAt] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const refusedHere = useCallback(
     (failure: ApiFailure): string => {
@@ -266,7 +271,13 @@ export function AdminHomeScreen({
       }),
     );
     setCounts(Object.fromEntries(entries));
+    setLoadedAt(Date.now());
   }, [refusedHere]);
+
+  const refresh = useCallback(() => {
+    setRefreshKey((value) => value + 1);
+    void loadSellers();
+  }, [loadSellers]);
 
   const loadMine = useCallback(async () => {
     const result = await fetchMyDevices();
@@ -462,13 +473,14 @@ export function AdminHomeScreen({
               <Button onClick={() => void addDevice()}>{t('home.mine.addDevice')}</Button>
               {code ? <Message role="status">{t('home.mine.code', { code })}</Message> : null}
             </Section>
-            <ProblemsPanel slugs={slugs} />
+            <ProblemsPanel slugs={slugs} refreshKey={refreshKey} />
             <Muted>{t('home.privacy')}</Muted>
           </AdminInner>
         </AdminPanel>
 
         <SellersPanel>
           <Sub>{t('home.sellers')}</Sub>
+          <RefreshBar loadedAt={loadedAt} onRefresh={refresh} />
           <Toggle
             ref={addButton}
             type="button"
@@ -578,6 +590,7 @@ export function AdminHomeScreen({
             onSeller={changeSeller}
             onDevices={setDevices}
             notice={added}
+            refreshKey={refreshKey}
             {...(images ? { images } : {})}
           />
         </SlideOver>

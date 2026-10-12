@@ -164,8 +164,8 @@ describe('OrderPlacedScreen', () => {
     expect(screen.getByText('Saved in My orders on this phone.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Send to .* on WhatsApp/ }));
     const url = String(open.mock.calls[0]?.[0]);
-    expect(url.startsWith('https://wa.me/?text=')).toBe(true);
-    const text = decodeURIComponent(url.slice('https://wa.me/?text='.length));
+    expect(url.startsWith('https://api.whatsapp.com/send?text=')).toBe(true);
+    const text = decodeURIComponent(url.slice('https://api.whatsapp.com/send?text='.length));
     expect(text).toContain(`my order is ${code.textContent}`);
     expect(text).toContain('2× Chicken lemper, 1× Thin battered tempeh');
     expect(text).toContain('Total $30.00');
@@ -204,6 +204,8 @@ describe('WhatsApp text', () => {
     expect(text).toContain('Total $20.00. Diantar. Nama: Rina.');
     expect(text.endsWith('Alamat saya:')).toBe(true);
     expect(text).not.toContain('rahasia');
-    expect(whatsAppUrl(text)).toBe(`https://wa.me/?text=${encodeURIComponent(text)}`);
+    expect(whatsAppUrl(text)).toBe(
+      `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`,
+    );
   });
 });

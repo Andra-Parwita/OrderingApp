@@ -3,6 +3,7 @@ import i18n from 'i18next';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Me } from '../../shared/authContract';
+import { registerSellerHelpI18n } from '../features/seller-help';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import { SellerLayout } from './SellerLayout';
@@ -30,6 +31,7 @@ beforeAll(async () => {
       removeEventListener: () => undefined,
     }) as unknown as MediaQueryList;
   await initI18n();
+  registerSellerHelpI18n();
 });
 
 afterEach(async () => {
@@ -89,6 +91,7 @@ describe('seller shell, tablet', () => {
       'Sell',
       'Menu',
       'Settings',
+      'Help',
     ]);
     // /seller is Home on a tablet; Orders is /seller/orders.
     expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
@@ -113,14 +116,14 @@ describe('seller shell, tablet', () => {
     me = CHEF;
     renderAt('/seller');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
-    expect(linkNames(nav)).toEqual(['Orders', 'Kitchen', 'Pickup & delivery', 'Menu']);
+    expect(linkNames(nav)).toEqual(['Orders', 'Kitchen', 'Pickup & delivery', 'Menu', 'Help']);
   });
 
   it('shows a helper only Orders, Pickup & delivery and Sell', () => {
     me = { role: 'helper', stage: 'full', sellerName: 'Delave', displayName: 'Dewi' };
     renderAt('/seller/orders');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
-    expect(linkNames(nav)).toEqual(['Orders', 'Pickup & delivery', 'Sell']);
+    expect(linkNames(nav)).toEqual(['Orders', 'Pickup & delivery', 'Sell', 'Help']);
   });
 
   it('marks Menu "Not published" with a word while the week is a draft', async () => {
@@ -142,6 +145,7 @@ describe('seller shell, tablet', () => {
       'Jual',
       'Menu',
       'Pengaturan',
+      'Bantuan',
     ]);
   });
 

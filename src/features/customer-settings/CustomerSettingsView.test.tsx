@@ -55,6 +55,12 @@ describe('CustomerSettingsView', () => {
     expect(screen.getByText('Auto · follows phone')).toBeVisible();
   });
 
+  it('hides the language switch when the kitchen offers one language (plan 056)', () => {
+    show({ showLanguage: false });
+    expect(screen.queryByRole('radio', { name: 'ID' })).toBeNull();
+    expect(screen.getByRole('radio', { name: 'Dark' })).toBeInTheDocument();
+  });
+
   it('picks a text size and applies it to the page', () => {
     show();
     expect(screen.getByRole('radio', { name: 'Normal' })).toBeChecked();

@@ -1,4 +1,4 @@
-export { ChefsScreen } from './ChefsScreen';
+export { ChefsScreen, ChefsModal } from './ChefsScreen';
 export { TeamScreen } from './TeamScreen';
 export { ImagesScreen } from './ImagesScreen';
 export { KitchenImagesEditor, type KitchenImagesCalls } from './KitchenImagesEditor';

@@ -1,3 +1,4 @@
+import { useSellerLanguages } from '../../api/useSellerLanguages';
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -347,7 +348,12 @@ function ImagesBody({ resize }: ImagesBodyProps) {
   const [colour, setColour] = useState(data.bannerBackground ?? '');
   const [altEn, setAltEn] = useState(data.alt?.en ?? '');
   const [altId, setAltId] = useState(data.alt?.id ?? '');
+  const languages = useSellerLanguages();
+  const oneLanguage = languages === 'en' || languages === 'id' ? languages : null;
   const [submitted, setSubmitted] = useState(false);
+
+  // Plan 056: one language = one field, saved into both.
+  const oneAlt = oneLanguage ? (oneLanguage === 'en' ? altEn || altId : altId || altEn) : '';
 
   const colourValid = colour.trim() === '' || isHexColour(colour.trim());
   const shown = isHexColour(colour.trim()) ? colour.trim() : FALLBACK_COLOUR;
@@ -365,11 +371,13 @@ function ImagesBody({ resize }: ImagesBodyProps) {
       dispatch(
         styleRequested({
           bannerBackground: trimmed === '' ? null : trimmed.toLowerCase(),
-          alt: { en: altEn.trim(), id: altId.trim() },
+          alt: oneLanguage
+            ? { en: oneAlt.trim(), id: oneAlt.trim() }
+            : { en: altEn.trim(), id: altId.trim() },
         }),
       );
     },
-    [altEn, altId, colour, colourValid, dispatch],
+    [altEn, altId, colour, colourValid, dispatch, oneAlt, oneLanguage],
   );
 
   const onUpload = useCallback(
@@ -421,21 +429,34 @@ function ImagesBody({ resize }: ImagesBodyProps) {
             onChange={onColour}
           />
         </ColourRow>
-        <Row>
+        {oneLanguage ? (
           <TextField
-            label={t('images.altEn')}
+            label={t('images.altOne')}
             helper={t('images.altHelper')}
-            value={altEn}
+            value={oneAlt}
             maxLength={200}
-            onChange={(event) => setAltEn(event.target.value)}
+            onChange={(event) => {
+              setAltEn(event.target.value);
+              setAltId(event.target.value);
+            }}
           />
-          <TextField
-            label={t('images.altId')}
-            value={altId}
-            maxLength={200}
-            onChange={(event) => setAltId(event.target.value)}
-          />
-        </Row>
+        ) : (
+          <Row>
+            <TextField
+              label={t('images.altEn')}
+              helper={t('images.altHelper')}
+              value={altEn}
+              maxLength={200}
+              onChange={(event) => setAltEn(event.target.value)}
+            />
+            <TextField
+              label={t('images.altId')}
+              value={altId}
+              maxLength={200}
+              onChange={(event) => setAltId(event.target.value)}
+            />
+          </Row>
+        )}
         {failure && failure.target === 'style' ? (
           <Failure role="alert">{t('images.styleFailed')}</Failure>
         ) : null}

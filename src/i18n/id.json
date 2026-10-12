@@ -3,6 +3,7 @@
     "name": "ShaggyBobo's Order",
     "brand": {
       "sellerSetup": "Pengaturan penjual",
+      "sellerSignIn": "Masuk penjual",
       "build": "build {{commit}}",
       "production": "produksi",
       "development": "pengembangan",
@@ -100,6 +101,7 @@
     "switchPersonShort": "Ganti",
     "signedInWho": "Masuk sebagai",
     "navSell": "Jual",
+    "dishes": "Hidangan",
     "sell": "Jual",
     "printOrders": "Cetak pesanan"
   },

@@ -20,24 +20,33 @@ import { SPLIT_QUERY } from './layout';
 // of the form on a tablet and on top of it on a phone; the EN / ID switch is top right, and the
 // kitchen's logo and name sit above the form (the app name when there is no last kitchen).
 
-// Plan 036: the admin pages and the seller's first set-up carry ShaggyBobo's branding instead.
+// Plan 036: the admin pages and the seller's first set-up carry ShaggyBobo's branding instead,
+// and so does seller sign-in when this device has no kitchen to show.
 
-/** The last kitchen this device used, from the public menu; null if none, it cannot be read, or off. */
-function useLastKitchen(enabled: boolean): Kitchen | null {
+/**
+ * The last kitchen this device used, from the public menu; `kitchen` is null if none, it cannot be
+ * read, or off. `none` is true once we know there is no kitchen to show (nothing remembered, or the
+ * remembered one failed to load).
+ */
+function useLastKitchen(enabled: boolean): { kitchen: Kitchen | null; none: boolean } {
   const [kitchen, setKitchen] = useState<Kitchen | null>(null);
+  const [failed, setFailed] = useState(false);
+  const remembered = enabled && lastKitchen() !== null;
   useEffect(() => {
     if (!enabled) return;
     const slug = lastKitchen();
     if (slug === null) return;
     let live = true;
     void fetchMenu(slug).then((result) => {
-      if (live && result.ok) setKitchen(result.data.kitchen);
+      if (!live) return;
+      if (result.ok) setKitchen(result.data.kitchen);
+      else setFailed(true);
     });
     return () => {
       live = false;
     };
   }, [enabled]);
-  return kitchen;
+  return { kitchen, none: enabled && (!remembered || failed) };
 }
 
 const Split = styled.div<{ $split: boolean }>`
@@ -162,7 +171,11 @@ export function SignInFrame({
 }>) {
   const { i18n } = useTranslation();
   const split = useMediaQuery(SPLIT_QUERY);
-  const kitchen = useLastKitchen(brand === undefined);
+  const last = useLastKitchen(brand === undefined);
+  const kitchen = last.kitchen;
+  // No kitchen known on this device: the developer's branding, like the first set-up.
+  const shown: BrandPage | undefined =
+    brand ?? (last.none && !kitchenName ? 'sellerSignIn' : undefined);
   const lang = i18n.language.startsWith('id') ? 'id' : 'en';
   const picture = kitchen?.images?.phoneBanner;
   const background = picture ? kitchen?.images?.bannerBackground : undefined;
@@ -171,10 +184,10 @@ export function SignInFrame({
   const logo = kitchen?.images?.railIcon;
   return (
     <Split $split={split}>
-      {brand ? (
+      {shown ? (
         split ? (
           <BrandSide>
-            <BrandColumn page={brand} />
+            <BrandColumn page={shown} />
           </BrandSide>
         ) : null
       ) : (
@@ -191,8 +204,8 @@ export function SignInFrame({
           <LanguageSwitch compact />
         </TopBar>
         <FormArea>
-          {brand ? (
-            <Head $admin={brand === 'admin'}>
+          {shown ? (
+            <Head $admin={shown === 'admin'}>
               <BrandLogo />
             </Head>
           ) : kitchen || kitchenName ? (
@@ -204,7 +217,7 @@ export function SignInFrame({
           {children}
         </FormArea>
       </FormSide>
-      {brand && !split ? <BrandFootLine /> : null}
+      {shown && !split ? <BrandFootLine /> : null}
     </Split>
   );
 }

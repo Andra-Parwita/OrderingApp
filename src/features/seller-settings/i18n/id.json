@@ -17,12 +17,14 @@
   },
   "greeting": {
     "en": "Sapaan (Inggris)",
-    "id": "Sapaan (Indonesia)"
+    "id": "Sapaan (Indonesia)",
+    "one": "Sapaan"
   },
   "closing": {
     "en": "Penutup (Inggris)",
     "id": "Penutup (Indonesia)",
-    "helper": "{phone} diganti dengan nomor kamu"
+    "helper": "{phone} diganti dengan nomor kamu",
+    "one": "Penutup"
   },
   "save": "Simpan",
   "saving": "Menyimpan…",
@@ -30,15 +32,42 @@
   "saveFailed": "Tidak bisa menyimpan. Coba lagi.",
   "panes": {
     "nav": "Bagian pengaturan",
-    "link": { "title": "Tautan", "sub": "Salin, bagikan, kode QR" },
-    "kitchen": { "title": "Dapur", "sub": "Nama, WhatsApp, gambar" },
-    "post": { "title": "Postingan WhatsApp", "sub": "Sapaan dan penutup" },
-    "pickup": { "title": "Lokasi ambil", "sub": "Sampai 5 tempat" },
-    "defaults": { "title": "Bawaan menu", "sub": "Batas pesan, antar" },
-    "look": { "title": "Tampilan", "sub": "Terang / gelap, tema" },
-    "chefs": { "title": "Tim", "sub": "Orang yang masuk, dan juru masak Anda" },
-    "devices": { "title": "Perangkat", "sub": "Tambah, ganti nama, keluar" },
-    "backup": { "title": "Cadangan", "sub": "Unduh atau pulihkan" }
+    "link": {
+      "title": "Tautan",
+      "sub": "Salin, bagikan, kode QR"
+    },
+    "kitchen": {
+      "title": "Dapur",
+      "sub": "Nama, WhatsApp, gambar"
+    },
+    "post": {
+      "title": "Postingan WhatsApp",
+      "sub": "Sapaan dan penutup"
+    },
+    "pickup": {
+      "title": "Lokasi ambil",
+      "sub": "Sampai 5 tempat"
+    },
+    "defaults": {
+      "title": "Bawaan menu",
+      "sub": "Batas pesan, antar"
+    },
+    "look": {
+      "title": "Tampilan",
+      "sub": "Terang / gelap, tema"
+    },
+    "chefs": {
+      "title": "Tim",
+      "sub": "Orang yang masuk, dan juru masak Anda"
+    },
+    "devices": {
+      "title": "Perangkat",
+      "sub": "Tambah, ganti nama, keluar"
+    },
+    "backup": {
+      "title": "Cadangan",
+      "sub": "Unduh atau pulihkan"
+    }
   },
   "link": {
     "intro": "Kirim tautan ini ke pelanggan. Mereka membukanya untuk melihat menu dan memesan.",
@@ -62,7 +91,16 @@
     "nameHelper": "Tampil ke pelanggan di menu Anda. Maksimal 60 karakter.",
     "nameInvalid": "Isi nama (maksimal 60 karakter).",
     "phone": "Nomor WhatsApp",
-    "phoneHelper": "Pelanggan mengirim nomor pesanan ke sini."
+    "phoneHelper": "Pelanggan mengirim nomor pesanan ke sini.",
+    "languages": {
+      "title": "Bahasa untuk pelanggan",
+      "both": "Inggris dan Indonesia",
+      "en": "Hanya Inggris",
+      "id": "Hanya Indonesia",
+      "bothHelp": "Pelanggan bisa ganti bahasa. Anda bisa isi keduanya, atau satu saja — yang lain menampilkan teks yang sama. ⇄ Terjemahkan membantu.",
+      "enHelp": "Pelanggan hanya melihat bahasa Inggris. Anda mengetik nama dan deskripsi hidangan sekali saja, dalam bahasa Inggris.",
+      "idHelp": "Pelanggan hanya melihat bahasa Indonesia. Anda mengetik nama dan deskripsi hidangan sekali saja, dalam bahasa Indonesia."
+    }
   },
   "post": {
     "preview": "Pratinjau",

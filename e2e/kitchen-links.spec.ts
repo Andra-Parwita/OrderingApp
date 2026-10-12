@@ -9,7 +9,10 @@ test('the served HTML of a kitchen page has the manifest and icon links', async 
   expect(html.match(/rel="manifest"/g)).toHaveLength(1);
   expect(html).toContain('apple-mobile-web-app-title" content="Onde Onde"');
   expect((await request.get('/seller')).ok()).toBe(true);
-  expect(await (await request.get('/seller')).text()).not.toContain('rel="manifest"');
+  // Plan 048: every /seller page links the one ShaggyBobo seller manifest, never a kitchen's.
+  const sellerHtml = await (await request.get('/seller')).text();
+  expect(sellerHtml).toContain('rel="manifest" href="/seller.webmanifest"');
+  expect(sellerHtml).not.toContain('/k/');
   const icon = await request.get('/k/dapur-demo/apple-touch-icon.png');
   expect(icon.ok()).toBe(true);
   expect(icon.headers()['content-type']).toContain('image/');

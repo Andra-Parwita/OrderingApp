@@ -7,6 +7,7 @@ import type {
   Kitchen,
   KitchenImages,
   KitchenSettings,
+  Languages,
   MenuItem,
   OrderLine,
   PickupPoint,
@@ -28,6 +29,7 @@ export type KitchenRow = {
 };
 export type ImageRow = { slot: ImageSlot; ref: string };
 export type SettingsRow = {
+  languages: Languages;
   whatsapp_number: string | null;
   post_greeting_en: string;
   post_greeting_id: string;
@@ -204,6 +206,7 @@ export function kitchenOf(
 /** `takingOrders` lives on the menu now; the settings keep their old shape. */
 export function settingsOf(row: SettingsRow, takingOrders: boolean): KitchenSettings {
   return {
+    languages: row.languages,
     ...(row.whatsapp_number !== null ? { whatsappNumber: row.whatsapp_number } : {}),
     postGreeting: text(row.post_greeting_en, row.post_greeting_id),
     postClosing: text(row.post_closing_en, row.post_closing_id),

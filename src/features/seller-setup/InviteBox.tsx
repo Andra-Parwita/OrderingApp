@@ -3,7 +3,9 @@ import i18n from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { APP_NAME } from '../../../shared/appName';
+import { SELLER_HELP_PATH } from '../../../shared/help';
 import type { MembershipRole } from '../../../shared/authContract';
+import { whatsAppUrl } from '../../api/device/whatsapp';
 import { Button, Segmented, TextArea } from '../../ui';
 import { SETUP_NS } from './i18n/register';
 import { Actions, Hint } from './parts';
@@ -92,6 +94,7 @@ export function InviteBox({ name, slug, kitchen, role, keyText, onDone }: Invite
       greet: person ? say('team.greet', { name: person }) : say('team.greetAnon'),
       kitchen,
       link,
+      help: `${window.location.origin}${SELLER_HELP_PATH}`,
       app: APP_NAME,
       interpolation: { escapeValue: false },
     });
@@ -139,11 +142,7 @@ export function InviteBox({ name, slug, kitchen, role, keyText, onDone }: Invite
         <Button variant="secondary" onClick={() => void copy(keyText)}>
           {t('team.inviteCopyKey')}
         </Button>
-        <WhatsApp
-          href={`https://wa.me/?text=${encodeURIComponent(message)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <WhatsApp href={whatsAppUrl(message)} target="_blank" rel="noopener noreferrer">
           {t('team.inviteWhatsapp')}
         </WhatsApp>
         <Button variant="quiet" onClick={onDone}>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { pickText } from '../../../shared/text';
 import {
   EMPTY_DRAFT,
   createRequestOf,
@@ -61,6 +62,12 @@ describe('validateDraft', () => {
     expect(validateDraft(EMPTY_DRAFT).errors).toEqual({ name: 'required', price: 'invalid' });
     expect(validateDraft(ok).errors).toEqual({});
     expect(validateDraft({ ...ok, nameId: '', nameEn: 'Lemper' }).errors).toEqual({});
+  });
+
+  it('saves an Indonesian-only dish, which shows its Indonesian name in English', () => {
+    const request = createRequestOf(ok);
+    expect(request?.name).toEqual({ en: '', id: 'Lemper' });
+    expect(request && pickText(request.name, 'en')).toBe('Lemper');
   });
 
   it('checks the limit and the lengths', () => {

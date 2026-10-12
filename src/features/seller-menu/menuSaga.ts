@@ -18,6 +18,7 @@ import {
   publishMenu,
   removeMenuPicture,
   unpublishMenu,
+  addDishToMenu,
   updateCurrentMenu,
   updateDish,
   updatePickupPlace,
@@ -119,7 +120,9 @@ function* execute(op: MenuOp) {
       });
     }
     case 'publish':
-      return toOutcome((yield call(publishMenu, op.force, undefined, slug)) as ApiResult<unknown>);
+      return toOutcome(
+        (yield call(publishMenu, op.force, undefined, slug, op.takingOrders)) as ApiResult<unknown>,
+      );
     case 'unpublish':
       return toOutcome((yield call(unpublishMenu, undefined, slug)) as ApiResult<unknown>);
     case 'deleteMenu':
@@ -154,18 +157,7 @@ function* execute(op: MenuOp) {
       if (!created.ok) return toOutcome(created);
       const dishId = created.data.dish.id;
       if (op.addToMenu) {
-        const data = (yield select(
-          (state: MenuRootState) => state.sellerMenu.data,
-        )) as MenuRootState['sellerMenu']['data'];
-        const onMenu = (data?.view.dishes ?? []).flatMap((dish) =>
-          dish.dishId ? [dish.dishId] : [],
-        );
-        const added = (yield call(
-          updateCurrentMenu,
-          { dishIds: [...onMenu, dishId] },
-          undefined,
-          slug,
-        )) as ApiResult<unknown>;
+        const added = (yield call(addDishToMenu, dishId, undefined, slug)) as ApiResult<unknown>;
         // The dish is saved either way; a refused add (the menu is full) is told to the screen.
         if (!added.ok) return { ok: false, code: added.error, message: added.message } as Outcome;
       }
@@ -201,6 +193,18 @@ function* execute(op: MenuOp) {
         }
       }
       return toOutcome(result);
+    }
+    case 'addDishToMenu': {
+      const data = (yield select(
+        (state: MenuRootState) => state.sellerMenu.data,
+      )) as MenuRootState['sellerMenu']['data'];
+      const onMenu = (data?.view.dishes ?? []).flatMap((dish) =>
+        dish.dishId ? [dish.dishId] : [],
+      );
+      if (onMenu.includes(op.dishId)) return { ok: true, done: {} } satisfies Outcome;
+      return toOutcome(
+        (yield call(addDishToMenu, op.dishId, undefined, slug)) as ApiResult<unknown>,
+      );
     }
     case 'deleteDish': {
       const result = (yield call(deleteDish, op.id, undefined, slug)) as Awaited<

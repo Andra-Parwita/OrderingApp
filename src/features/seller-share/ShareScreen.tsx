@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
+import { whatsAppUrl } from '../../api/device/whatsapp';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Segmented, Toast, type SegmentedOption } from '../../ui';
 import { SHARE_NS } from './i18n/register';
@@ -76,7 +77,7 @@ function shareText(text: string): void {
     void navigator.share({ text }).catch(() => undefined);
     return;
   }
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+  window.open(whatsAppUrl(text), '_blank', 'noopener');
 }
 
 /**

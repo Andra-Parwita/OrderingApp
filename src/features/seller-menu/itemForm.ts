@@ -73,6 +73,23 @@ export function draftOf(item: SellerMenuItemView): ItemDraft {
   };
 }
 
+/** Plan 056: with one language, each text pair gets the one text (the kitchen's language first). */
+export function unifyDraft(draft: ItemDraft, lang: 'en' | 'id'): ItemDraft {
+  const one = (en: string, id: string) => (lang === 'en' ? en.trim() || id : id.trim() || en);
+  const name = one(draft.nameEn, draft.nameId);
+  const desc = one(draft.descEn, draft.descId);
+  const size = one(draft.sizeEn, draft.sizeId);
+  return {
+    ...draft,
+    nameEn: name,
+    nameId: name,
+    descEn: desc,
+    descId: desc,
+    sizeEn: size,
+    sizeId: size,
+  };
+}
+
 export type ItemErrors = Partial<{
   name: 'required' | 'tooLong';
   descEn: 'tooLong';

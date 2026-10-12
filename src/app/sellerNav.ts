@@ -1,3 +1,4 @@
+import { SELLER_HELP_PATH } from '../../shared/help';
 import type { IconName } from '../ui';
 
 // The seller navigation (D-058, D-065): Home · Orders · Kitchen · Pickup & delivery · Menu · Settings
@@ -13,10 +14,11 @@ export const NAV_IDS = [
   'sell',
   'menu',
   'settings',
+  'help',
 ] as const;
 export type NavId = (typeof NAV_IDS)[number];
 
-const HELPER_NAV_IDS: ReadonlyArray<NavId> = ['orders', 'handover', 'sell'];
+const HELPER_NAV_IDS: ReadonlyArray<NavId> = ['orders', 'handover', 'sell', 'help'];
 
 export const PHONE_NAV_IDS = ['orders', 'handover', 'more'] as const;
 export type PhoneNavId = (typeof PHONE_NAV_IDS)[number];
@@ -31,12 +33,15 @@ export const HREF: Readonly<Record<NavId | 'more', string>> = {
   // Settings opens on its first pane (stage 10); the phone's More tab keeps /seller/more.
   settings: '/seller/settings/kitchen',
   more: '/seller/more',
+  // Plan 058: the public Help page, outside the seller layout; every role sees it, right under Settings.
+  help: SELLER_HELP_PATH,
 };
 
 /** The Home icon is not in the icon kit (src/ui): the rail draws this path itself. */
 export const HOME_ICON_PATH = 'M4 11l8-7 8 7M6 9.5V20h12V9.5M10 20v-5h4v5';
 
 export const ICON: Readonly<Record<Exclude<NavId, 'home'> | 'more', IconName>> = {
+  help: 'help',
   orders: 'list',
   kitchen: 'pot',
   handover: 'box',
@@ -117,7 +122,7 @@ export function activePhoneNav(pathname: string): PhoneNavId {
 }
 
 // Phone: these routes say "Open this on a tablet or computer" (handoff, Layout shell → Phone).
-// Kitchen and Labels are not here: they work on a phone (plan 035).
+// Kitchen and Labels are not here: they work on a phone (plan 035); nor are Your dishes (plan 051).
 const TABLET_ONLY = [
   '/seller/menu',
   '/seller/share',
@@ -130,7 +135,12 @@ const TABLET_ONLY = [
   '/seller/devices',
 ];
 
-export function isTabletOnly(pathname: string): boolean {
+// Plan 051: Your dishes work on a phone: /seller/menu/dishes for owners, and a chef's /seller/menu
+// (which is her Your dishes). The wizard, sets, share and Settings stay tablet-only.
+export function isTabletOnly(pathname: string, role?: Role): boolean {
+  const path = pathname.replace(/\/+$/, '');
+  if (under(path, '/seller/menu/dishes')) return false;
+  if (role === 'chef' && path === '/seller/menu') return false;
   return TABLET_ONLY.some((path) => under(pathname, path));
 }
 

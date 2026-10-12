@@ -307,7 +307,7 @@ function BasketContent({
 
   const { ordering } = data;
   const closed: ClosedReason | null = !ordering.open
-    ? ordering.reason === 'kitchen_closed'
+    ? ordering.reason === 'kitchen_closed' || ordering.reason === 'not_published'
       ? 'closed_by_seller'
       : (ordering.reason ?? 'closed_by_seller')
     : failedCode === 'cutoff_passed'

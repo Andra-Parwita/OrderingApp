@@ -11,6 +11,8 @@ export type MenuSlots = Readonly<{
   preview: (props: { slug: string; menu: MenuResponse }) => ReactNode;
   /** The WhatsApp post composer shown once the menu is live. */
   share: (props: { onGoToOrders: () => void }) => ReactNode;
+  /** The cook list in a modal (Edit chefs in the dish editor); the app injects the Chefs screen. */
+  chefs: (props: { onClose: () => void }) => ReactNode;
   /** The New menu dialog (Home's), so Home and the Menu screen start a menu the same way. */
   newMenu: (props: {
     lang: Language;

@@ -20,7 +20,8 @@ async function setUpWithKey(page: Page, key: string, password: string, device: s
   await page.getByLabel('Confirm password', { exact: true }).fill(password);
   await page.getByLabel('Name of this device').fill(device);
   await page.getByRole('button', { name: 'Save password' }).click();
-  await expect(page).toHaveURL(/\/seller$/);
+  // A chef has no Home: /seller sends them to Orders (AppRoutes), so either address is signed in.
+  await expect(page).toHaveURL(/\/seller(\/orders)?$/);
 }
 
 test('admin invites, seller sets up and signs in again, chef has no menu', async ({ page }) => {

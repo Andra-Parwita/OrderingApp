@@ -3,9 +3,10 @@ import { styled } from 'styled-components';
 import { formatDay } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
 import type { MenuView } from '../../../shared/menusContract';
-import { Aside, Columns, Label } from './homeParts';
+import { Aside, Columns, GoLink, Label } from './homeParts';
 import { PhaseStrip, StateIcon, type Progress } from './PhaseStrip';
 import { HOME_NS } from './i18n/register';
+import type { GoTarget } from './types';
 
 // State 2, the body: the four phases of a menu (Make the menu is current) and the four making
 // steps with the one the seller stopped at. Read-only: "Continue making it" is the main button.
@@ -33,7 +34,16 @@ const Row = styled.li<{ $todo: boolean }>`
     font-weight: 400;
   }
 `;
-export function Draft({ view, lang }: Readonly<{ view: MenuView; lang: Language }>) {
+export function Draft({
+  view,
+  lang,
+  onGo,
+}: Readonly<{
+  view: MenuView;
+  lang: Language;
+  /** A making step opens the matching tab of the Menu screen (`?step=`, plan 053). */
+  onGo: (target: GoTarget, search?: string) => void;
+}>) {
   const { t } = useTranslation(HOME_NS);
   const { menu, dishes } = view;
   const stopped = Math.min(menu.wizardStep, MAKING_STEPS.length - 1);
@@ -68,7 +78,9 @@ export function Draft({ view, lang }: Readonly<{ view: MenuView; lang: Language 
               return (
                 <Row key={step} $todo={state === 'todo'}>
                   <StateIcon state={state} />
-                  <span>{t(`draft.step.${step}`)}</span>
+                  <GoLink onClick={() => onGo('menu', `step=${step}`)}>
+                    {t(`draft.step.${step}`)}
+                  </GoLink>
                   <small>{noteOf(step, state)}</small>
                 </Row>
               );

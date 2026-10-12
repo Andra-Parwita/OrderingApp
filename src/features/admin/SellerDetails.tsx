@@ -94,6 +94,8 @@ export type SellerDetailsProps = Readonly<{
   images?: (sellerId: string) => ReactNode;
   /** A line shown at the top (the seller was just added). */
   notice?: string | null;
+  /** Changes when the admin page is refreshed: people and invites load again (plan 052). */
+  refreshKey?: number;
 }>;
 
 /**
@@ -107,6 +109,7 @@ export function SellerDetails({
   onDevices,
   images,
   notice,
+  refreshKey = 0,
 }: SellerDetailsProps) {
   const { t, i18n } = useTranslation(ADMIN_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
@@ -156,7 +159,7 @@ export function SellerDetails({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMembers();
     void loadInvites();
-  }, [loadMembers, loadInvites]);
+  }, [loadMembers, loadInvites, refreshKey]);
 
   /** The invite box calls this with the typed name; the key itself stays inside the box. */
   const makeKey = useCallback(

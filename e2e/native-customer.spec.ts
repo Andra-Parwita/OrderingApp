@@ -26,7 +26,7 @@ test('the customer app: menu, basket, order, then Settings and the Indonesian me
   const viewport = page.viewportSize();
   expect(bannerBox?.y ?? 99).toBeLessThanOrEqual(1);
   expect(bannerBox?.width ?? 0).toBeGreaterThanOrEqual((viewport?.width ?? 0) - 2);
-  await expect(page.getByRole('heading', { name: 'Onde Onde' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Onde Onde', exact: true })).toBeVisible();
   await expect(tabs.getByRole('link', { name: 'Menu' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('button', { name: /^Back/ })).toHaveCount(0);
   await page.screenshot({ path: `captures/native-menu-${project}.png` });

@@ -282,8 +282,8 @@ test('scrolling the orders list slides the sheet over the banner, which keeps it
     await expect.poll(() => height(clip)).toBe(164);
     await rail.getByRole('button', { name: 'Collapse menu' }).click();
     await expect.poll(async () => (await rail.boundingBox())?.width ?? 999).toBeLessThan(80);
-    // The banner follows the menu: 73 px strip, image still 164.
-    await expect.poll(() => height(clip)).toBe(73);
+    // Unlinked (owner, 2026-10-12): the banner stays full with the menu collapsed.
+    await expect.poll(() => height(clip)).toBe(164);
     expect(Math.round((await image.boundingBox())?.height ?? 0)).toBe(164);
     await page.screenshot({ path: 'captures/banners3-rail-collapsed-1180.png' });
     await rail.getByRole('button', { name: 'Expand menu' }).click();

@@ -46,11 +46,34 @@ const menuWith = (images: Record<string, string>) => ({
 });
 
 describe('SignInFrame (D-051)', () => {
-  it('shows the app name on a plain panel when no kitchen was used, and asks for nothing', () => {
+  it('shows ShaggyBobo branding when no kitchen was used, and asks for nothing', () => {
     renderFrame();
-    expect(screen.getByText(APP_NAME)).toBeInTheDocument();
-    expect(screen.queryByRole('img')).toBeNull();
     expect(fetchMenu).not.toHaveBeenCalled();
+    expect(screen.getByText('Seller sign-in')).toBeInTheDocument();
+    expect(screen.getAllByRole('img', { name: 'ShaggyBobo' }).length).toBeGreaterThan(0);
+    expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
+    expect(screen.queryByText(APP_NAME)).toBeNull();
+  });
+
+  it('shows the branding when the remembered kitchen cannot be loaded', async () => {
+    localStorage.setItem('lastKitchen', 'onde-onde');
+    fetchMenu.mockResolvedValue({ ok: false });
+    renderFrame();
+    expect(await screen.findByText('Seller sign-in')).toBeInTheDocument();
+  });
+
+  it('keeps the kitchen name head, not the branding, when the device remembers a name', () => {
+    render(
+      <AppThemeProvider>
+        <MemoryRouter>
+          <SignInFrame kitchenName="Onde Onde">
+            <main>form</main>
+          </SignInFrame>
+        </MemoryRouter>
+      </AppThemeProvider>,
+    );
+    expect(screen.getByText('Onde Onde')).toBeInTheDocument();
+    expect(screen.queryByText('Seller sign-in')).toBeNull();
   });
 
   it("shows the last kitchen's phone banner whole, with its alt text", async () => {
@@ -70,8 +93,9 @@ describe('SignInFrame (D-051)', () => {
     fetchMenu.mockResolvedValue(menuWith({ desktopBanner: '/wide.png' }));
     renderFrame();
     await waitFor(() => expect(fetchMenu).toHaveBeenCalled());
+    expect(await screen.findByText('Onde Onde')).toBeInTheDocument();
     expect(screen.getByText(APP_NAME)).toBeInTheDocument();
-    expect(screen.queryByRole('img')).toBeNull();
+    expect(screen.queryByRole('img', { name: 'ShaggyBobo' })).toBeNull();
   });
 
   it.each(['admin', 'sellerSetup'] as const)(

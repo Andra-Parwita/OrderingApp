@@ -17,12 +17,14 @@
   },
   "greeting": {
     "en": "Greeting (English)",
-    "id": "Greeting (Indonesian)"
+    "id": "Greeting (Indonesian)",
+    "one": "Greeting"
   },
   "closing": {
     "en": "Closing (English)",
     "id": "Closing (Indonesian)",
-    "helper": "{phone} is replaced with your number"
+    "helper": "{phone} is replaced with your number",
+    "one": "Closing"
   },
   "save": "Save",
   "saving": "Saving…",
@@ -30,15 +32,42 @@
   "saveFailed": "Could not save. Try again.",
   "panes": {
     "nav": "Settings sections",
-    "link": { "title": "Links", "sub": "Copy, share, QR code" },
-    "kitchen": { "title": "Kitchen", "sub": "Name, WhatsApp, pictures" },
-    "post": { "title": "WhatsApp post", "sub": "Greeting and closing" },
-    "pickup": { "title": "Pickup locations", "sub": "Up to 5 places" },
-    "defaults": { "title": "Menu defaults", "sub": "Cut-off, delivery" },
-    "look": { "title": "Appearance", "sub": "Light / dark, theme" },
-    "chefs": { "title": "Team", "sub": "People who sign in, and your cooks" },
-    "devices": { "title": "Devices", "sub": "Add, rename, sign out" },
-    "backup": { "title": "Backup", "sub": "Download or restore" }
+    "link": {
+      "title": "Links",
+      "sub": "Copy, share, QR code"
+    },
+    "kitchen": {
+      "title": "Kitchen",
+      "sub": "Name, WhatsApp, pictures"
+    },
+    "post": {
+      "title": "WhatsApp post",
+      "sub": "Greeting and closing"
+    },
+    "pickup": {
+      "title": "Pickup locations",
+      "sub": "Up to 5 places"
+    },
+    "defaults": {
+      "title": "Menu defaults",
+      "sub": "Cut-off, delivery"
+    },
+    "look": {
+      "title": "Appearance",
+      "sub": "Light / dark, theme"
+    },
+    "chefs": {
+      "title": "Team",
+      "sub": "People who sign in, and your cooks"
+    },
+    "devices": {
+      "title": "Devices",
+      "sub": "Add, rename, sign out"
+    },
+    "backup": {
+      "title": "Backup",
+      "sub": "Download or restore"
+    }
   },
   "link": {
     "intro": "Send this link to your customers. They open it to see the menu and order.",
@@ -62,7 +91,16 @@
     "nameHelper": "Shown to customers on your menu. Up to 60 characters.",
     "nameInvalid": "Enter a name (up to 60 characters).",
     "phone": "WhatsApp number",
-    "phoneHelper": "Customers send their order number here."
+    "phoneHelper": "Customers send their order number here.",
+    "languages": {
+      "title": "Languages for customers",
+      "both": "English and Indonesian",
+      "en": "English only",
+      "id": "Indonesian only",
+      "bothHelp": "Customers can switch language. You can fill in both, or just one — the other shows the same text. ⇄ Translate helps.",
+      "enHelp": "Customers see English only. You type every dish name and description once, in English.",
+      "idHelp": "Customers see Indonesian only. You type every dish name and description once, in Indonesian."
+    }
   },
   "post": {
     "preview": "Preview",

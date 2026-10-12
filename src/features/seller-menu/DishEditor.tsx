@@ -1,6 +1,6 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useDispatch } from 'react-redux';
 import { styled } from 'styled-components';
 import {
   MAX_MENU_ITEMS,
@@ -10,6 +10,8 @@ import {
 } from '../../../shared/limits';
 import { formatDay } from '../../../shared/dates';
 import type { Dish } from '../../../shared/menusContract';
+import { useSellerLanguages } from '../../api/useSellerLanguages';
+import { TranslateButton } from '../../components/translate';
 import { Button, SlideOverEditor, TextArea, TextField, WarningDialog } from '../../ui';
 import { FieldFrame, fieldControlStyle, useFieldIds } from '../../ui/Field';
 import { MENU_NS } from './i18n/register';
@@ -21,10 +23,12 @@ import {
   updateDishRequestOf,
   updateRequestOf,
   validateDraft,
+  unifyDraft,
   type ItemDraft,
 } from './itemForm';
 import { ErrorText, LinkButton, Muted, useLang, useOpWatch, useRunOp } from './menuShared';
-import type { MenuData } from './menuSlice';
+import { loadRequested, type MenuData } from './menuSlice';
+import type { MenuSlots } from './slots';
 
 /** What the editor changes: a dish in Your dishes (null id = a new one), or one dish on this menu. */
 export type DishTarget =
@@ -36,6 +40,8 @@ export type DishEditorProps = Readonly<{
   onClose: () => void;
   /** Plan 030: a chef's editor (their own dish): no chef picker, no add-to-menu, no delete. */
   asChef?: boolean;
+  /** Edit chefs opens this over the editor (the app injects the Chefs screen); without it the link is hidden. */
+  renderChefs?: MenuSlots['chefs'];
 }>;
 
 const Form = styled.form`
@@ -44,6 +50,10 @@ const Form = styled.form`
   gap: ${({ theme }) => theme.spacing.lg};
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px
     ${({ theme }) => theme.size.pagePadTablet}px;
+
+  @media (max-width: 37.4375rem) {
+    padding-inline: ${({ theme }) => theme.spacing.lg};
+  }
 `;
 const Heading = styled.h2`
   margin: 0;
@@ -51,16 +61,35 @@ const Heading = styled.h2`
   font-weight: 700;
   line-height: 1.25;
 `;
+// On a phone (plan 051) every field takes the full width: one column.
 const Pair = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+`;
+const Cell = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.xs};
+
+  > :first-child {
+    align-self: stretch;
+  }
 `;
 const Cols = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: ${({ theme }) => theme.spacing.md};
   align-items: start;
+
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 `;
 const LangLabel = styled.div`
   display: grid;
@@ -71,6 +100,10 @@ const LangLabel = styled.div`
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+
+  @media (max-width: 37.4375rem) {
+    display: none;
+  }
 `;
 const Select = styled.select<{ $invalid: boolean }>`
   ${fieldControlStyle}
@@ -94,10 +127,16 @@ const ChefHead = styled.div`
 `;
 
 /** The dish editor (560 px slide-over). Used from the wizard, the live menu and Your dishes. */
-export function DishEditor({ data, target, onClose, asChef = false }: DishEditorProps) {
+export function DishEditor({
+  data,
+  target,
+  onClose,
+  asChef = false,
+  renderChefs,
+}: DishEditorProps) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { run, busy } = useRunOp();
   const { view } = data;
   const dish: Dish | undefined =
@@ -116,18 +155,68 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
   const menuOpen = view.menu.state !== 'finished';
   const menuFull = view.dishes.length >= MAX_MENU_ITEMS;
   const [addToMenu, setAddToMenu] = useState(!asChef && menuOpen && !menuFull);
-  const { errors } = validateDraft(draft);
+  const languages = useSellerLanguages();
+  const oneLanguage = languages === 'en' || languages === 'id' ? languages : null;
+  const shown = oneLanguage ? unifyDraft(draft, oneLanguage) : draft;
+  const { errors } = validateDraft(shown);
+  const setBoth =
+    (a: keyof ItemDraft, b: keyof ItemDraft) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setDraft((previous) => ({ ...previous, [a]: event.target.value, [b]: event.target.value }));
+  // Plan 057: with both languages, a ⇄ button fills the empty one from the other (not saved here).
+  const translateFor = (pair: 'name' | 'desc', toId = false) => {
+    const en = pair === 'name' ? ('nameEn' as const) : ('descEn' as const);
+    const id = pair === 'name' ? ('nameId' as const) : ('descId' as const);
+    const [from, to] = toId ? [en, id] : [id, en];
+    if (draft[to].trim() !== '' || draft[from].trim() === '') return null;
+    return (
+      <TranslateButton
+        text={draft[from]}
+        from={toId ? 'en' : 'id'}
+        to={toId ? 'id' : 'en'}
+        onResult={(result) => setDraft((previous) => ({ ...previous, [to]: result }))}
+      />
+    );
+  };
   const set =
     (key: keyof ItemDraft) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setDraft((previous) => ({ ...previous, [key]: event.target.value }));
+  const [editingChefs, setEditingChefs] = useState(false);
+  // The cooks that existed when Edit chefs opened: one that is not among them afterwards is new.
+  const chefsBefore = useRef<ReadonlyArray<string> | null>(null);
+  const openChefs = () => {
+    chefsBefore.current = data.chefs.map((c) => c.id);
+    setEditingChefs(true);
+  };
+  const closeChefs = () => {
+    setEditingChefs(false);
+    dispatch(loadRequested());
+  };
+  useEffect(() => {
+    const before = chefsBefore.current;
+    if (before === null || editingChefs) return;
+    const added = data.chefs.find((c) => !before.includes(c.id));
+    if (added) {
+      chefsBefore.current = null;
+      setDraft((previous) => ({ ...previous, chefId: added.id }));
+    } else if (draft.chefId !== '' && !data.chefs.some((c) => c.id === draft.chefId)) {
+      setDraft((previous) => ({ ...previous, chefId: '' }));
+    }
+  }, [data.chefs, editingChefs, draft.chefId]);
   const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(start), [draft, start]);
 
   useOpWatch(['createDish', 'updateDish', 'updateMenuDish', 'deleteDish'], {
     onDone: () => onClose(),
     onFail: (result) => {
       // A new dish is saved even when "add to this menu" was refused: say so, and close.
-      setFailure(result.code === 'limit_reached' ? t('dish.menuFull') : t('genericError'));
+      setFailure(
+        result.code === 'limit_reached'
+          ? t('dish.menuFull')
+          : result.code === 'forbidden'
+            ? t('chef.ownerOnly')
+            : t('genericError'),
+      );
     },
   });
 
@@ -135,6 +224,7 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
     setSubmitted(true);
     setFailure(null);
     if (Object.keys(errors).length > 0) return;
+    const draft = shown;
     if (isNew) {
       const request = createRequestOf(draft);
       if (request)
@@ -188,66 +278,111 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
         >
           <Heading>{title}</Heading>
           <Muted>{isNew ? t('dish.subNew') : t('dish.subEdit')}</Muted>
-          <LangLabel>
-            <span>{t('dish.english')}</span>
-            <span>{t('dish.indonesian')}</span>
-          </LangLabel>
-          <Pair>
-            <TextField
-              label={t('dish.name')}
-              value={draft.nameEn}
-              maxLength={ITEM_NAME_MAX}
-              placeholder={t('dish.nameHintEn')}
-              onChange={set('nameEn')}
-              {...(submitted && errors.name ? { error: err('name', ITEM_NAME_MAX) } : {})}
-            />
-            <TextField
-              label={t('dish.nameId')}
-              value={draft.nameId}
-              maxLength={ITEM_NAME_MAX}
-              placeholder={t('dish.nameHintId')}
-              onChange={set('nameId')}
-              {...(draft.nameId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
-            />
-          </Pair>
-          <Pair>
-            <TextArea
-              label={t('dish.description')}
-              value={draft.descEn}
-              maxLength={ITEM_DESCRIPTION_MAX}
-              showCounter
-              onChange={set('descEn')}
-              {...(submitted && errors.descEn
-                ? { error: err('descEn', ITEM_DESCRIPTION_MAX) }
-                : {})}
-            />
-            <TextArea
-              label={t('dish.descriptionId')}
-              value={draft.descId}
-              maxLength={ITEM_DESCRIPTION_MAX}
-              showCounter
-              onChange={set('descId')}
-              {...(draft.descId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
-            />
-          </Pair>
-          <Pair>
-            <TextField
-              label={t('dish.size')}
-              value={draft.sizeEn}
-              maxLength={ITEM_SIZE_MAX}
-              placeholder={t('dish.sizeHintEn')}
-              onChange={set('sizeEn')}
-              {...(submitted && errors.sizeEn ? { error: err('sizeEn', ITEM_SIZE_MAX) } : {})}
-            />
-            <TextField
-              label={t('dish.sizeId')}
-              value={draft.sizeId}
-              maxLength={ITEM_SIZE_MAX}
-              placeholder={t('dish.sizeHintId')}
-              onChange={set('sizeId')}
-              {...(draft.sizeId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
-            />
-          </Pair>
+          {oneLanguage ? (
+            <>
+              <TextField
+                label={t('dish.nameOne')}
+                value={shown.nameEn}
+                maxLength={ITEM_NAME_MAX}
+                placeholder={t(oneLanguage === 'en' ? 'dish.nameHintEn' : 'dish.nameHintId')}
+                onChange={setBoth('nameEn', 'nameId')}
+                {...(submitted && errors.name ? { error: err('name', ITEM_NAME_MAX) } : {})}
+              />
+              <TextArea
+                label={t('dish.descriptionOne')}
+                value={shown.descEn}
+                maxLength={ITEM_DESCRIPTION_MAX}
+                showCounter
+                onChange={setBoth('descEn', 'descId')}
+                {...(submitted && errors.descEn
+                  ? { error: err('descEn', ITEM_DESCRIPTION_MAX) }
+                  : {})}
+              />
+              <TextField
+                label={t('dish.sizeOne')}
+                value={shown.sizeEn}
+                maxLength={ITEM_SIZE_MAX}
+                placeholder={t(oneLanguage === 'en' ? 'dish.sizeHintEn' : 'dish.sizeHintId')}
+                onChange={setBoth('sizeEn', 'sizeId')}
+                {...(submitted && errors.sizeEn ? { error: err('sizeEn', ITEM_SIZE_MAX) } : {})}
+              />
+            </>
+          ) : (
+            <>
+              <LangLabel>
+                <span>{t('dish.english')}</span>
+                <span>{t('dish.indonesian')}</span>
+              </LangLabel>
+              <Pair>
+                <Cell>
+                  <TextField
+                    label={t('dish.name')}
+                    value={draft.nameEn}
+                    maxLength={ITEM_NAME_MAX}
+                    placeholder={t('dish.nameHintEn')}
+                    onChange={set('nameEn')}
+                    {...(submitted && errors.name ? { error: err('name', ITEM_NAME_MAX) } : {})}
+                  />
+                  {translateFor('name')}
+                </Cell>
+                <Cell>
+                  <TextField
+                    label={t('dish.nameId')}
+                    value={draft.nameId}
+                    maxLength={ITEM_NAME_MAX}
+                    placeholder={t('dish.nameHintId')}
+                    onChange={set('nameId')}
+                    {...(draft.nameId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
+                  />
+                  {translateFor('name', true)}
+                </Cell>
+              </Pair>
+              <Pair>
+                <Cell>
+                  <TextArea
+                    label={t('dish.description')}
+                    value={draft.descEn}
+                    maxLength={ITEM_DESCRIPTION_MAX}
+                    showCounter
+                    onChange={set('descEn')}
+                    {...(submitted && errors.descEn
+                      ? { error: err('descEn', ITEM_DESCRIPTION_MAX) }
+                      : {})}
+                  />
+                  {translateFor('desc')}
+                </Cell>
+                <Cell>
+                  <TextArea
+                    label={t('dish.descriptionId')}
+                    value={draft.descId}
+                    maxLength={ITEM_DESCRIPTION_MAX}
+                    showCounter
+                    onChange={set('descId')}
+                    {...(draft.descId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
+                  />
+                  {translateFor('desc', true)}
+                </Cell>
+              </Pair>
+              <Pair>
+                <TextField
+                  label={t('dish.size')}
+                  value={draft.sizeEn}
+                  maxLength={ITEM_SIZE_MAX}
+                  placeholder={t('dish.sizeHintEn')}
+                  onChange={set('sizeEn')}
+                  {...(submitted && errors.sizeEn ? { error: err('sizeEn', ITEM_SIZE_MAX) } : {})}
+                />
+                <TextField
+                  label={t('dish.sizeId')}
+                  value={draft.sizeId}
+                  maxLength={ITEM_SIZE_MAX}
+                  placeholder={t('dish.sizeHintId')}
+                  onChange={set('sizeId')}
+                  {...(draft.sizeId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
+                />
+              </Pair>
+            </>
+          )}
           <Cols>
             <TextField
               label={t('dish.price')}
@@ -308,10 +443,10 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
               label={t('dish.chef')}
               editLabel={t('dish.editChefs')}
               onChange={set('chefId')}
-              onEdit={() => void navigate('/seller/chefs')}
+              onEdit={renderChefs ? openChefs : undefined}
             />
           )}
-          {!asChef && isNew && menuOpen ? (
+          {isNew && menuOpen ? (
             <Check>
               <input
                 type="checkbox"
@@ -320,11 +455,12 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
                 onChange={(event) => setAddToMenu(event.target.checked)}
               />
               <span>
-                {t('dish.addToMenu')} <Muted as="span">{t('dish.savedAnyway')}</Muted>
+                {asChef ? t('dish.addToCurrent') : t('dish.addToMenu')}{' '}
+                <Muted as="span">{t('dish.savedAnyway')}</Muted>
               </span>
             </Check>
           ) : null}
-          {!asChef && isNew && menuOpen && menuFull ? <Muted>{t('dish.menuFull')}</Muted> : null}
+          {isNew && menuOpen && menuFull ? <Muted>{t('dish.menuFull')}</Muted> : null}
           {!isNew ? (
             <Muted>
               {onThisMenu
@@ -344,6 +480,7 @@ export function DishEditor({ data, target, onClose, asChef = false }: DishEditor
           ) : null}
         </Form>
       </SlideOverEditor>
+      {editingChefs && renderChefs ? renderChefs({ onClose: closeChefs }) : null}
       {asking && libraryDishId ? (
         <WarningDialog
           title={t('dish.deleteTitle', { name: (draft.nameEn || draft.nameId).trim() })}
@@ -377,16 +514,18 @@ function ChefField({
   label: string;
   editLabel: string;
   onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  onEdit: () => void;
+  onEdit: (() => void) | undefined;
 }>) {
   const { id } = useFieldIds(undefined, undefined);
   return (
     <FieldFrame label={label} id={id} helperId={undefined} errorId={undefined} counter={undefined}>
       <ChefHead>
         <span />
-        <LinkButton type="button" onClick={onEdit}>
-          {editLabel}
-        </LinkButton>
+        {onEdit ? (
+          <LinkButton type="button" onClick={onEdit}>
+            {editLabel}
+          </LinkButton>
+        ) : null}
       </ChefHead>
       <Select id={id} value={value} $invalid={false} onChange={onChange}>
         <option value="">{kitchen}</option>

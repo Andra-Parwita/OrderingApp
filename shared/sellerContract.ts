@@ -1,4 +1,5 @@
 import type { KitchenSettings, OrderStatus } from './domain';
+import { LANGUAGES } from './languages';
 import { POST_TEXT_MAX } from './limits';
 import { isOneOf, isRecord, parseLocalText } from './parse';
 import { normaliseAuMobile } from './phone';
@@ -58,7 +59,8 @@ export function parseSettingsRequest(input: unknown): KitchenSettings | null {
   if (!isRecord(input)) return null;
   const postGreeting = parsePostText(input['postGreeting']);
   const postClosing = parsePostText(input['postClosing']);
-  const { whatsappNumber, orderingOpen } = input;
+  const { whatsappNumber, orderingOpen, languages } = input;
+  if (languages !== undefined && !isOneOf(LANGUAGES, languages)) return null;
   if (!postGreeting || !postClosing || typeof orderingOpen !== 'boolean') return null;
   let number: string | undefined;
   if (whatsappNumber !== undefined) {
@@ -70,6 +72,7 @@ export function parseSettingsRequest(input: unknown): KitchenSettings | null {
     }
   }
   return {
+    ...(languages !== undefined ? { languages } : {}),
     ...(number !== undefined ? { whatsappNumber: number } : {}),
     postGreeting,
     postClosing,

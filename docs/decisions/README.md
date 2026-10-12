@@ -581,3 +581,18 @@ Format for each entry:
 **Ruling:** "A" (plan 040). The real content sits in the middle 1896 × 328, exactly what iPad landscape shows at the left menu's top height (164 px, 2× for retina); the sides are scenery that wider screens reveal; narrower screens shrink the banner rather than cut the middle. No side bands anywhere (owner: "I don't want to have ugly bg on left and right"). The left-menu logo fills its block at the same height. The phone banner stays a separate 1200 × 400.
 **Trade-off:** the seller's designer draws a wider canvas with scenery on the sides; existing 5:1 banners must be re-uploaded (not deployed to real sellers yet). Replaces the 5:1 sizes of D-038 for the wide banner.
 **Revisit when:** sellers mostly use another device than iPad landscape.
+
+## D-094 · A chef may put her own dish on the current menu (2026-10-12; owner)
+**Ruling:** "A" ("yes"). Amends plan 030 (chefs worked in the library only). A chef may add **her own** dish (dish chef = herself) to the current menu, whether it is still being made or already live; on a live menu customers see it at once, like a chef's edits (plan 030 ruling A). She still cannot publish, finish, change the menu's details, or add another chef's dish. The owner sees it on the menu and can remove it. Same dish names from different chefs are separate dishes (no unique name), and the CSV import matches by name + chef (plan 050).
+**Trade-off:** a chef can change what customers see on a live menu without the owner; acceptable for a family team.
+**Revisit when:** an owner wants to approve chef additions first.
+
+## D-095 · Seller help is public at a hard-to-guess address (2026-10-12; owner)
+**Ruling:** "A" (public) + "make the seller help URL a bit hard to remember and not easy to find" + "wave on Help only". The seller Help page (plan 058) opens without sign-in at `/help-yw4xsvh8` (one constant in `shared/`), `noindex, nofollow`, in no sitemap and linked from no customer page. Links: the left menu's **Help** under Settings, phone More, the sign-in page, the first-setup (invite key) page, and the invite message. Its mascot blinks and waves; the other pages keep their jump.
+**Trade-off:** obscurity, not a lock: anyone with the link can read it. Acceptable: it holds no kitchen or personal data.
+**Revisit when:** the link spreads widely (change the constant) or the help needs kitchen-specific content.
+
+## D-096 · Languages for customers, and one language per dish is enough (2026-10-12; owner)
+**Ruling:** "A". A per-kitchen setting **Languages for customers**: both (default), English only, Indonesian only (plan 056, migration 0013). With one language, customers see it with no switch and the seller types each text once (saved to both columns). With both, a dish may still be filled in one language only; the empty one shows the other's text. A **⇄ Translate** button (plan 057, Cloudflare Workers AI, 100 a day per kitchen; the account is on the Free plan, so no charge is possible) fills the other language for the seller to check.
+**Trade-off:** machine translation can mangle food names; the seller always sees and can fix it before saving.
+**Revisit when:** a kitchen wants a third language.

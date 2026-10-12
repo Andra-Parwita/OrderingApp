@@ -71,7 +71,10 @@ const PAGE = LOG_ADMIN_LIMIT;
  * The newest client problems (plan 026), collapsed to "Problems (N)". Filter by app and kitchen,
  * 50 per page (Older / Newer), and Clear all (tap twice). Scrubbed text only (D-007).
  */
-export function ProblemsPanel({ slugs = [] }: Readonly<{ slugs?: ReadonlyArray<string> }>) {
+export function ProblemsPanel({
+  slugs = [],
+  refreshKey = 0,
+}: Readonly<{ slugs?: ReadonlyArray<string>; refreshKey?: number }>) {
   const { t, i18n } = useTranslation(ADMIN_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [entries, setEntries] = useState<Array<LogEntry> | null>(null);
@@ -100,7 +103,7 @@ export function ProblemsPanel({ slugs = [] }: Readonly<{ slugs?: ReadonlyArray<s
     return () => {
       live = false;
     };
-  }, [app, slug, offset, reload]);
+  }, [app, slug, offset, reload, refreshKey]);
 
   const clearAll = async () => {
     const result = await clearAdminLog();

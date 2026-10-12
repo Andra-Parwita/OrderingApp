@@ -14,7 +14,7 @@ import {
 } from './sellerNav';
 
 describe('navIdsFor', () => {
-  it('gives the seller all seven items, Home first', () => {
+  it('gives the seller all eight items, Home first and Help right under Settings', () => {
     expect(navIdsFor('seller')).toEqual([
       'home',
       'orders',
@@ -23,16 +23,17 @@ describe('navIdsFor', () => {
       'sell',
       'menu',
       'settings',
+      'help',
     ]);
     expect(HREF.sell).toBe('/seller/sell');
     expect(HREF.home).toBe('/seller');
     expect(HREF.orders).toBe('/seller/orders');
   });
   it('shows a helper Orders, Pickup & delivery and Sell only', () => {
-    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell']);
+    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell', 'help']);
   });
   it('shows a chef Menu (own dishes, plan 030) but not Home, Sell or Settings', () => {
-    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu']);
+    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu', 'help']);
   });
 });
 
@@ -85,6 +86,19 @@ describe('phone', () => {
       expect(isTabletOnly(path)).toBe(false);
     }
     expect(isTabletOnly('/seller/hand-over/delivery')).toBe(false);
+  });
+  it('lets a phone open Your dishes, and the wizard stays tablet-only (plan 051)', () => {
+    expect(isTabletOnly('/seller/menu/dishes')).toBe(false);
+    expect(isTabletOnly('/seller/menu', 'chef')).toBe(false);
+    expect(isTabletOnly('/seller/menu', 'seller')).toBe(true);
+    for (const path of [
+      '/seller/menu/make/dishes',
+      '/seller/menu/edit/details',
+      '/seller/menu/sets',
+    ]) {
+      expect(isTabletOnly(path)).toBe(true);
+      expect(isTabletOnly(path, 'chef')).toBe(true);
+    }
   });
 });
 

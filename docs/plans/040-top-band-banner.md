@@ -30,3 +30,4 @@
 ## Decisions and notes
 - The UX review's other route (cap 5:1 at 160 px, keeping uploads) was set aside by the owner's "no side bands" rule.
 - Not deployed to real sellers yet, so asking for an 8:1 re-upload is acceptable now.
+- Owner unlinked the left menu and the banner, 2026-10-12: collapsing the menu no longer collapses the banner (it still collapses on scroll past 8 px or the ^ button).

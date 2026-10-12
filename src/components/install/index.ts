@@ -12,6 +12,8 @@ export {
   type InstallController,
   type InstallOverride,
 } from './useInstallFlow';
+export { HomeScreenCard } from './HomeScreenCard';
+export { useSellerInstall, type SellerInstall } from './useSellerInstall';
 export { promptInstall, useCanInstall } from './installPrompt';
 export {
   manifestTarget,

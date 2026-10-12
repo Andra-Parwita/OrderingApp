@@ -19,7 +19,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | **Server and kitchen** (was the son's; after the UI waves, or alongside them on separate files) | 028 → 030 → 029 → 032 stages 3–4 → 031 | **028 stage 1 is out of date after 033**: it says `chefs.kind` and "`Me` carries kind", but 033 rebuilt accounts and memberships (`migrations/0007_people.sql`). Re-plan its contract line first. 032 stage 1 is already done in 033. |
 | **This PC** (AI builders, at most 3 at once) | wave A: 039 stages 2–3 (Home) · 038 · 024 → wave B: 039 stages 4–5 · 037 stage 1 · 026 → wave C: 037 stages 2–3 · 026 stage 4 | Home before the wizard layer: Home opens the wizard as a page until 037 lands. 037 and 039 never run at the same time (both edit `AppRoutes.tsx`). |
 
-**After this deploy (owner, 2026-10-11):** the **customer app** gets its own next plan (with the Lottie animations the owner will send). Also waiting: 031 as a read-only "view as"; Send reminder and Download CSV on Orders; the stall's on-the-day counts in the printed totals (042); paging for the admin's invite list (043 shows the newest 20); **the same invite list for the seller** in Settings → Team, with paging; and **keep at most the last 50 invites per kitchen** (older ones pruned, so storage never grows without limit) (owner, 2026-10-11). And **graceful network and refusal handling** (owner): a refused or failed request is never repeated without end; one shared rule for retries (a few, with growing waits, only for network errors and 5xx, never for 401/403/4xx), a calm "offline / try again" state on screen, and polling that stops or slows when the server refuses.
+**After this deploy (owner, 2026-10-11):** the **customer app** gets its own next plan (with the Lottie animations the owner will send). Also waiting: 031 as a read-only "view as"; Send reminder and Download CSV on Orders; the stall's on-the-day counts in the printed totals (042); paging for the admin's invite list (043 shows the newest 20); **the same invite list for the seller** in Settings → Team, with paging; and **keep at most the last 50 invites per kitchen** (older ones pruned, so storage never grows without limit) (owner, 2026-10-11). Clearer image-slot labels (owner said "leave it for now", 2026-10-12): "Menu image (left menu)" reads like the food menu, and the square "App icon" isn't recognised as the closed left menu's logo; the proposal is "Left-menu logo, menu open" / "Square logo: closed left menu and phone home-screen icon" / "Background while loading (optional)". **Never lose typed data** (owner, 2026-10-12): every form (dish editor, new order, settings, menu details, invites…) keeps a draft on the device while typing and restores it after a reload, a crash or leaving by mistake, until Save / Submit or Cancel clears it (one shared hook; per kitchen and per person; nothing private kept longer than needed). And **graceful network and refusal handling** (owner): a refused or failed request is never repeated without end; one shared rule for retries (a few, with growing waits, only for network errors and 5xx, never for 401/403/4xx), a calm "offline / try again" state on screen, and polling that stops or slows when the server refuses.
 
 **Migration numbers:** all work is now on this PC, so each plan takes the next free number when it is built (no gaps, so they apply in order everywhere).
 **Rebase:** 038 changes `AdminHomeScreen.tsx`, which 028, 031 and 032 also edit. The son rebases after wave A.
@@ -74,6 +74,21 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 042 | ✅ | [Print the current menu's orders on A4](042-print-orders-a4.md) | done (2026-10-11); not deployed |
 | 043 | ✅ | [A friendly invite message, in English or Indonesian](043-invite-message.md) | done (2026-10-11); not deployed |
 | 044 | ✅ | [The new ShaggyBobo mascot and logo icon](044-new-mascot-and-logo.md) | done (2026-10-11); not deployed |
+| 045 | ⬜ | [Releases run by GitHub, not by hand](045-release-automation.md) | later (builder, 2026-10-11) |
+| 046 | ⬜ | [Update in progress: advance notice and maintenance mode](046-maintenance-notice.md) | draft (2026-10-11); stages 1–3 now, 4 with 045 |
+| 047 | ✅ | [Link previews and a WhatsApp emoji fix](047-link-previews-and-whatsapp.md) | done (2026-10-12); not deployed |
+| 048 | ✅ | [The seller app can be installed from the sign-in page](048-seller-app-install.md) | approved (2026-10-12); now |
+| 049 | ✅ | [Edit chefs without leaving the dish](049-edit-chefs-in-place.md) | approved (2026-10-12); now |
+| 050 | ✅ | [Import and export the dish library as CSV](050-dishes-csv-import.md) | approved (2026-10-12); this round |
+| 051 | ✅ | [Add and edit dishes on a phone](051-dishes-on-the-phone.md) | approved (2026-10-12); this round |
+| 052 | ✅ | [Admin page: "Last updated" and a Refresh button](052-admin-refresh.md) | approved (2026-10-12); this round |
+| 053 | ✅ | [Jump to any step of a menu that isn't published yet](053-menu-steps-clickable.md) | approved (2026-10-12); this round |
+| 054 | ✅ | [A friendly "put it on your home screen" card](054-home-screen-nudge.md) | approved (2026-10-12); tonight |
+| 055 | ✅ | [Publish now, or publish with ordering paused](055-publish-paused.md) | approved (2026-10-12); this round |
+| 056 | ✅ | [Languages for customers: both, English only, Indonesian only](056-kitchen-languages.md) | approved (2026-10-12); this round; **migration 0013** |
+| 057 | ✅ | [A ⇄ Translate button for dish texts](057-translate-button.md) | approved (2026-10-12); this round; **AI binding** |
+| 058 | ✅ | [A simple Help page for sellers](058-seller-help.md) | draft; mock-up first; this round |
+| 059 | ✅ | ["A new version is ready" and safe refresh for home-screen apps](059-new-version-refresh.md) | this round |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

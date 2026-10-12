@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { HomeScreenCard } from '../components/install';
 import { SellerHome, type GoTarget, type HomeData } from '../features/seller-home';
 import { useLiveOrders } from '../features/seller-orders';
 import { useMenuData } from '../features/seller-menu/menuShared';
@@ -39,13 +40,16 @@ export function SellerHomeRoute() {
     ...(orders ? { orders } : {}),
   };
   return (
-    <SellerHome
-      data={home}
-      lang={i18n.resolvedLanguage === 'id' ? 'id' : 'en'}
-      onStartMenu={wizard.start}
-      startFailed={wizard.failed}
-      onContinue={wizard.open}
-      onGo={go}
-    />
+    <>
+      <HomeScreenCard who="seller" />
+      <SellerHome
+        data={home}
+        lang={i18n.resolvedLanguage === 'id' ? 'id' : 'en'}
+        onStartMenu={wizard.start}
+        startFailed={wizard.failed}
+        onContinue={wizard.open}
+        onGo={go}
+      />
+    </>
   );
 }

@@ -33,6 +33,14 @@ const shadow = keyframes`
   0%, 80%, 100% { scale: 1; opacity: 1; }
   50% { scale: 0.7; opacity: 0.5; }
 `;
+// Plan 058, D-095: on the Help page only the spoon arm waves (three waves, then rest, every 5 s)
+// instead of the jump; the pivot is the shoulder.
+const wave = keyframes`
+  0% { transform: rotate(0); }
+  4%, 16%, 28% { transform: rotate(-14deg); }
+  10%, 22% { transform: rotate(14deg); }
+  36%, 100% { transform: rotate(0); }
+`;
 const blink = keyframes`
   0%, 93%, 100% { opacity: 0; }
   94%, 99% { opacity: 1; }
@@ -129,5 +137,54 @@ export function WalkingMascot() {
         </div>
       </div>
     </Figure>
+  );
+}
+
+const WaveFigure = styled.div`
+  position: absolute;
+  right: 0;
+  bottom: -0.875rem;
+  width: 100%;
+  aspect-ratio: 900 / 635;
+  pointer-events: none;
+  user-select: none;
+
+  & img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  & .leg-l,
+  & .leg-r {
+    translate: ${brandSize.legsX} 0;
+  }
+  & .lids {
+    opacity: 0;
+  }
+  & .arm {
+    transform-origin: 7.9% 18.2%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    & .lids {
+      animation: ${blink} 2s steps(1, end) infinite;
+    }
+    & .arm {
+      animation: ${wave} 5s ease-in-out infinite;
+    }
+  }
+`;
+
+/** The same mascot standing still: it blinks and waves with the spoon (the Help page only). */
+export function WavingMascot() {
+  return (
+    <WaveFigure data-mascot aria-hidden="true" data-testid="waving-mascot">
+      <img className="leg-r" src={`${SRC}leg-right.webp`} alt="" />
+      <img className="leg-l" src={`${SRC}leg-left.webp`} alt="" />
+      <img src={`${SRC}body.webp`} alt="" />
+      <img className="lids" src={`${SRC}eyes-closed.webp`} alt="" />
+      <img className="arm" src={`${SRC}arm-spoon.webp`} alt="" />
+    </WaveFigure>
   );
 }

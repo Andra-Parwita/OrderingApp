@@ -17,6 +17,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   ordering_closed: 409,
   item_has_orders: 409,
   limit_reached: 409,
+  already_on_menu: 409,
   no_items: 409,
   confirm_required: 409,
   week_not_draft: 409,
@@ -40,6 +41,8 @@ const STATUS: Record<ApiErrorCode, number> = {
   bad_origin: 403,
   kitchen_paused: 403,
   kitchen_closed: 409,
+  translate_limit: 429,
+  translate_unavailable: 503,
 };
 
 export function error(

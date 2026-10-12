@@ -61,7 +61,11 @@ function scratchDir(name: string): string {
 // program made `eslint .` run out of memory. Only what is used here is declared.
 type Proxy = { env: Record<string, unknown>; dispose: () => Promise<void> };
 type Wrangler = {
-  getPlatformProxy: (options: { configPath: string; persist: { path: string } }) => Promise<Proxy>;
+  getPlatformProxy: (options: {
+    configPath: string;
+    persist: { path: string };
+    remoteBindings?: boolean;
+  }) => Promise<Proxy>;
 };
 const WRANGLER = 'wrangler';
 /**
@@ -102,7 +106,12 @@ export async function openDatabase(name: string, upTo?: string): Promise<Databas
   mkdirSync(dir, { recursive: true });
   const proxy = await withNodeTypedArrays(async () => {
     const { getPlatformProxy } = await loadWrangler();
-    return getPlatformProxy({ configPath: 'wrangler.jsonc', persist: { path: dir } });
+    return getPlatformProxy({
+      configPath: 'wrangler.jsonc',
+      persist: { path: dir },
+      // Plan 057: the AI binding is always remote; tests use a fake and must not need a login.
+      remoteBindings: false,
+    });
   });
   const d1 = proxy.env['DB'] as D1Like;
   const files = readdirSync(MIGRATIONS).filter((file) => file.endsWith('.sql'));

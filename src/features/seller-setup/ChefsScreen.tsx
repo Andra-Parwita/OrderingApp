@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Chef } from '../../../shared/domain';
 import { CHEF_NAME_MAX } from '../../../shared/limits';
-import { Button, ConfirmButton, TextField } from '../../ui';
+import { Button, ConfirmButton, SlideOver, TextField } from '../../ui';
 import { SETUP_NS } from './i18n/register';
 import {
   Actions,
@@ -194,5 +194,15 @@ export function ChefsScreen({ embedded = false }: Readonly<{ embedded?: boolean 
         </Body>
       ) : null}
     </Page>
+  );
+}
+
+/** The cook list in a modal over another screen (plan 049): closing it leaves that screen as it was. */
+export function ChefsModal({ onClose }: Readonly<{ onClose: () => void }>) {
+  const { t } = useTranslation(SETUP_NS);
+  return (
+    <SlideOver label={t('chefs.title')} closeLabel={t('chefs.close')} onClose={onClose}>
+      <ChefsScreen embedded />
+    </SlideOver>
   );
 }

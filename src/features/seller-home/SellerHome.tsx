@@ -212,7 +212,7 @@ export function SellerHome({
           />
         );
       case 'draft':
-        return <Draft view={view} lang={lang} />;
+        return <Draft view={view} lang={lang} onGo={onGo} />;
       case 'quiet':
         return (
           <>

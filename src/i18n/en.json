@@ -3,6 +3,7 @@
     "name": "ShaggyBobo's Order",
     "brand": {
       "sellerSetup": "Seller setup",
+      "sellerSignIn": "Seller sign-in",
       "build": "build {{commit}}",
       "production": "production",
       "development": "development",
@@ -100,6 +101,7 @@
     "switchPersonShort": "Switch",
     "signedInWho": "Signed in",
     "navSell": "Sell",
+    "dishes": "Dishes",
     "sell": "Sell",
     "printOrders": "Print orders"
   },

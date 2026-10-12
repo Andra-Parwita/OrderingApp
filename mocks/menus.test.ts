@@ -225,6 +225,33 @@ describe('menus and dishes', () => {
       ).toMatchObject({ status: 409, body: { error: 'week_closed' } });
     });
 
+    it('publishes with ordering paused or open now (plan 055); the switch then opens it', async () => {
+      const ordering = async () =>
+        (await call('GET', `/api/s/${A}/menu`)).body.ordering as { open: boolean; reason?: string };
+      const fresh = async () => {
+        await call('POST', '/api/seller/menus/current/unpublish');
+        expect((await currentMenu()).menu.takingOrders).toBe(true);
+      };
+      await fresh();
+      const paused = await call('POST', '/api/seller/menus/current/publish', {
+        body: { takingOrders: false },
+      });
+      expect(paused.body.menu.menu).toMatchObject({ state: 'live', takingOrders: false });
+      expect(await ordering()).toEqual({ open: false, reason: 'closed_by_seller' });
+      await call('PUT', '/api/seller/menus/current', { body: { takingOrders: true } });
+      expect(await ordering()).toEqual({ open: true });
+
+      await fresh();
+      await call('POST', '/api/seller/menus/current/publish', { body: { takingOrders: true } });
+      expect((await currentMenu()).menu).toMatchObject({ state: 'live', takingOrders: true });
+      expect(await ordering()).toEqual({ open: true });
+
+      expect(
+        (await call('POST', '/api/seller/menus/current/publish', { body: { takingOrders: 'x' } }))
+          .status,
+      ).toBe(400);
+    });
+
     it('puts dishes on the menu from the library, keeping copies and warning about ordered ones', async () => {
       const lemper = await itemIdByName('Chicken lemper');
       await orderOnMenu();
@@ -517,6 +544,7 @@ describe('menus and dishes', () => {
       expect(Object.keys(publicMenu).sort()).toEqual([
         'items',
         'kitchen',
+        'languages',
         'ordering',
         'seller',
         'theme',

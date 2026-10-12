@@ -162,14 +162,14 @@ describe('SellerLayout', () => {
     expect(clip).toHaveStyle({ maxHeight: '164px' });
   });
 
-  it('shows the short strip while the left menu is collapsed, image at full size', async () => {
+  it('keeps the banner full while the left menu is collapsed (unlinked)', async () => {
     localStorage.setItem('sellerRailCollapsed', '1');
     stubKitchen();
     wide = true;
     renderLayout();
     const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
     const full = banner.parentElement?.parentElement as HTMLElement;
-    expect(full.parentElement).toHaveStyle({ maxHeight: '73px' });
+    expect(full.parentElement).toHaveStyle({ maxHeight: '164px' });
     expect(full).toHaveStyle({ maxHeight: '164px' });
     localStorage.clear();
   });

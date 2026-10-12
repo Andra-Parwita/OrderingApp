@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { DishEditor, type DishTarget } from './DishEditor';
 import type { MenuData } from './menuSlice';
+import type { MenuSlots } from './slots';
 
 // The dish editor is part of the URL (?dish=new | <dishId> | item:<menuItemId>), so a reload keeps
 // it open and Back closes it.
@@ -58,7 +59,14 @@ export function DishEditorHost({
   value,
   onClose,
   asChef = false,
-}: Readonly<{ data: MenuData; value: string | null; onClose: () => void; asChef?: boolean }>) {
+  renderChefs,
+}: Readonly<{
+  data: MenuData;
+  value: string | null;
+  onClose: () => void;
+  asChef?: boolean;
+  renderChefs?: MenuSlots['chefs'];
+}>) {
   if (value === null) return null;
   return (
     <DishEditor
@@ -67,6 +75,7 @@ export function DishEditorHost({
       target={targetOf(value)}
       onClose={onClose}
       asChef={asChef}
+      renderChefs={renderChefs}
     />
   );
 }

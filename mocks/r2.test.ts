@@ -16,7 +16,11 @@ const DIR = path.resolve(SCRATCH, 'r2-local');
 // wrangler is loaded by a variable name on purpose (see mocks/impl.ts).
 type Proxy = { env: Record<string, unknown>; dispose: () => Promise<void> };
 type Wrangler = {
-  getPlatformProxy: (options: { configPath: string; persist: { path: string } }) => Promise<Proxy>;
+  getPlatformProxy: (options: {
+    configPath: string;
+    persist: { path: string };
+    remoteBindings?: boolean;
+  }) => Promise<Proxy>;
 };
 const WRANGLER = 'wrangler';
 
@@ -34,7 +38,11 @@ describe('local R2 bucket', () => {
     rmSync(DIR, { recursive: true, force: true });
     mkdirSync(DIR, { recursive: true });
     const { getPlatformProxy } = (await import(/* @vite-ignore */ WRANGLER)) as Wrangler;
-    proxy = await getPlatformProxy({ configPath: 'wrangler.jsonc', persist: { path: DIR } });
+    proxy = await getPlatformProxy({
+      configPath: 'wrangler.jsonc',
+      persist: { path: DIR },
+      remoteBindings: false,
+    });
     bucket = proxy.env['IMAGES'] as ImageBucket;
   }, 60_000);
 

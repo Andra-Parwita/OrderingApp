@@ -43,12 +43,25 @@
     "title": "Menu for {{date}}",
     "saved": "Saved as you go · {{dishes}} dishes picked",
     "progress": "Progress",
-    "continue": "Continue · step {{n}}",
+    "continue": "Continue to step {{n}}",
     "delete": "Delete",
     "deleteTitle": "Delete this menu?",
     "deleteBody": "Its dishes and places are removed from this menu. Your dishes and saved sets stay.",
     "keep": "Keep menu",
-    "deleteAnyway": "Delete menu"
+    "deleteAnyway": "Delete menu",
+    "stepDishes_one": "{{count}} dish",
+    "stepDishes_other": "{{count}} dishes",
+    "todo": "To do",
+    "checked": "Checked",
+    "pickupPlaces_one": "{{count}} pickup place",
+    "pickupPlaces_other": "{{count}} pickup places",
+    "readOnly": "Read only",
+    "edit": "Edit {{step}}",
+    "noDishes": "No dishes on this menu yet.",
+    "limitOf_one": "limit {{count}}",
+    "limitOf_other": "limit {{count}}",
+    "publishInfo": "Not published yet. When you publish, customers can order, and you can share the menu post on WhatsApp.",
+    "stoppedHere": "You stopped here"
   },
   "step": {
     "dishes": "Dishes",
@@ -178,6 +191,7 @@
     "chef": "Chef",
     "wholeKitchen": "Whole kitchen",
     "editChefs": "Edit chefs",
+    "addToCurrent": "Also add to the current menu",
     "addToMenu": "Add to this menu too",
     "savedAnyway": "(it's saved in Your dishes either way)",
     "menuFull": "This menu already has 10 dishes, so the dish was saved but not added.",
@@ -193,13 +207,16 @@
     "add": "Add dish",
     "save": "Save dish",
     "err": {
-      "name": "Add a name in at least one language.",
+      "name": "Give the dish a name in English or Indonesian.",
       "price": "Enter a price like 10, 10.00 or 10,50.",
       "limit": "Enter a whole number of 1 or more, or leave it empty.",
       "dayStock": "Enter a whole number from 0 to 9999.",
       "preorder": "Turn on Sold on the day, or keep Pre-order on.",
       "tooLong": "Too long: at most {{max}} characters."
-    }
+    },
+    "nameOne": "Name",
+    "descriptionOne": "Description",
+    "sizeOne": "Size"
   },
   "prices": {
     "title": "Prices and limits for this menu",
@@ -304,6 +321,11 @@
     }
   },
   "publish": {
+    "choiceLegend": "When can customers order?",
+    "nowTitle": "Publish and take orders now",
+    "nowNote": "Customers can see the menu and order straight away.",
+    "pausedTitle": "Publish, ordering paused",
+    "pausedNote": "Customers can see the menu but can't order yet. Switch \"Taking orders\" on in Orders when you're ready.",
     "ready": "Ready to publish",
     "summary": "{{dishes}} dishes for {{date}}. Customers can order as soon as it is live.",
     "worries_one": "{{count}} thing in Worth a look. You can still publish.",
@@ -315,7 +337,48 @@
     "emptyTitle": "Publish a menu with no dishes?",
     "emptyBody": "Customers would see an empty menu and could not order anything.",
     "addDishes": "Add dishes",
-    "emptyAnyway": "Publish anyway"
+    "emptyAnyway": "Publish anyway",
+    "modalTitle": "Publish the menu for {{date}}?",
+    "cancel": "Cancel",
+    "confirmNow": "Publish and open orders",
+    "confirmPaused": "Publish, paused",
+    "pausedNotice": "Menu published · ordering paused. Turn on Taking orders in Orders when you're ready.",
+    "close": "Close"
+  },
+  "import": {
+    "button": "Import",
+    "export": "Export CSV",
+    "template": "Download template",
+    "file": "Choose a CSV file of dishes",
+    "title": "Import dishes",
+    "close": "Close",
+    "cancel": "Cancel",
+    "apply": "Import",
+    "counts": "{{new}} new, {{update}} to update, {{error}} with a problem",
+    "skipped": "Rows with a problem are skipped; the others are imported.",
+    "overLimit": "These new dishes would not fit in Your dishes. Remove some rows or dishes and try again.",
+    "failed": "Could not import. Try again.",
+    "done": "Imported: {{new}} new, {{update}} updated.",
+    "status": {
+      "new": "New",
+      "update": "Update",
+      "error": "Problem"
+    },
+    "problem": {
+      "no_header": "The first line must name the columns, starting with name_en.",
+      "too_many_rows": "Too many dishes in one file (500 at most).",
+      "name_required": "Give the dish a name in English or Indonesian.",
+      "text_too_long": "A name, description or size is too long.",
+      "price_invalid": "The price is not a number such as 12.50.",
+      "limit_invalid": "The limit must be a whole number.",
+      "day_stock_invalid": "day_stock must be a whole number.",
+      "preorder_invalid": "preorder must be yes or no.",
+      "preorder_needs_stock": "preorder \"no\" needs a day_stock.",
+      "unknown_chef": "This cook does not exist. Add the cook first.",
+      "not_yours": "You can only import your own dishes.",
+      "duplicate": "The same name and cook appear twice in the file.",
+      "ambiguous": "More than one dish in Your dishes has this name and cook."
+    }
   },
   "library": {
     "title": "Your dishes",
@@ -332,6 +395,9 @@
   "chef": {
     "title": "Your dishes",
     "help": "Add your dishes and change their price, limit and picture. The owner puts them on the menu. A change to a dish on the live menu shows to customers at once.",
-    "notOnMenu": "Not on this menu"
+    "notOnMenu": "Not on this menu",
+    "ownerOnly": "Only the owner can change this menu right now.",
+    "addToMenu": "Add to menu",
+    "addToMenuFor": "Add {{name}} to the current menu"
   }
 }

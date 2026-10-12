@@ -200,11 +200,16 @@ export type Kitchen = {
 /** Whether customers can order right now (the switch and the cut-off). */
 export type OrderingState = {
   open: boolean;
-  reason?: 'closed_by_seller' | 'cutoff_passed' | 'kitchen_closed';
+  reason?: 'closed_by_seller' | 'cutoff_passed' | 'kitchen_closed' | 'not_published';
 };
+
+/** Plan 056: the languages customers see. "both" = English and Indonesian with a switch. */
+export type Languages = 'both' | 'en' | 'id';
 
 /** Seller-editable kitchen settings (D-027). */
 export type KitchenSettings = {
+  /** Absent = "both" (an older client or backup). */
+  languages?: Languages;
   whatsappNumber?: string;
   postGreeting: LocalText;
   postClosing: LocalText;

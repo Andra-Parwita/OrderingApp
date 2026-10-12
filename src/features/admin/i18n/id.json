@@ -57,6 +57,15 @@
     "sellersTable": "Penjual",
     "noSellers": "Belum ada penjual.",
     "devicesCount_other": "{{count}} perangkat",
+    "refresh": {
+      "button": "Segarkan",
+      "wait": "Segarkan dalam {{seconds}} dtk",
+      "updated": "Diperbarui {{time}} · {{ago}}",
+      "never": "Memuat…",
+      "justNow": "baru saja",
+      "minutesAgo_other": "{{count}} menit lalu",
+      "hoursAgo_other": "{{count}} jam lalu"
+    },
     "createdOn": "Dibuat {{date}}",
     "close": "Tutup",
     "add": {

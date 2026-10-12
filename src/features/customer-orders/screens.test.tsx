@@ -524,7 +524,9 @@ describe('OrderScreen', () => {
       renderOrder(placed.token);
       fireEvent.click(await screen.findByRole('button', { name: /Message .* on WhatsApp/ }));
       const url = decodeURIComponent(String(open.mock.calls[0]?.[0]));
-      expect(url.startsWith(`https://wa.me/${NUMBER}?text=Hi, my order is `)).toBe(true);
+      expect(
+        url.startsWith(`https://api.whatsapp.com/send?phone=${NUMBER}&text=Hi, my order is `),
+      ).toBe(true);
       expect(url).toContain('3× Thin battered tempeh');
       expect(url).toContain('Pickup Sat 10 Oct, 2–5 pm');
     });
@@ -535,7 +537,7 @@ describe('OrderScreen', () => {
       renderOrder(placed.token);
       fireEvent.click(await screen.findByRole('button', { name: /Message .* on WhatsApp/ }));
       const url = decodeURIComponent(String(open.mock.calls[0]?.[0]));
-      expect(url.startsWith('https://wa.me/?text=Halo, pesanan saya ')).toBe(true);
+      expect(url.startsWith('https://api.whatsapp.com/send?text=Halo, pesanan saya ')).toBe(true);
       expect(url).toContain('3× Tempe mendoan');
     });
 

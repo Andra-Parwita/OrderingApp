@@ -6,8 +6,10 @@ import { formatDay } from '../../../shared/dates';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { Button, Icon } from '../../ui';
+import { DishCsvTools } from './DishCsvTools';
 import { DishEditorHost, useDishEditor } from './DishEditorHost';
 import { MENU_NS } from './i18n/register';
+import type { MenuSlots } from './slots';
 import {
   Head,
   Muted,
@@ -44,6 +46,15 @@ const Row = styled.div`
   .num {
     text-align: right;
   }
+
+  /* Phone: name, price, pencil; the last-used date goes. */
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: minmax(0, 1fr) auto 3rem;
+
+    .used {
+      display: none;
+    }
+  }
 `;
 const Pencil = styled.button`
   display: inline-flex;
@@ -76,7 +87,16 @@ function Back({ title }: Readonly<{ title: string }>) {
   return (
     <Head>
       <Tools>
-        <Button variant="quiet" onClick={() => void navigate('/seller/menu')}>
+        <Button
+          variant="quiet"
+          onClick={() =>
+            void navigate(
+              window.matchMedia('(max-width: 37.4375rem)').matches
+                ? '/seller/more'
+                : '/seller/menu',
+            )
+          }
+        >
           <Icon name="back" />
           {t('back')}
         </Button>
@@ -86,7 +106,7 @@ function Back({ title }: Readonly<{ title: string }>) {
   );
 }
 
-export function DishesScreen() {
+export function DishesScreen({ slots }: Readonly<{ slots?: Pick<MenuSlots, 'chefs'> }>) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
   const { data, status } = useMenuData();
@@ -105,6 +125,7 @@ export function DishesScreen() {
               {t('dishes.newDish')}
             </Button>
           </Tools>
+          <DishCsvTools dishes={data.dishes} chefs={data.chefs} />
           {data.dishes.length === 0 ? <Muted>{t('dishes.noneYet')}</Muted> : null}
           {data.dishes.map((dish) => {
             const name = pickText(dish.name, lang);
@@ -116,7 +137,7 @@ export function DishesScreen() {
                   {size ? <span className="sub">{size}</span> : null}
                 </span>
                 <span className="num">{formatMoney(dish.priceCents, lang)}</span>
-                <span className="num">
+                <span className="num used">
                   {dish.lastUsedAt ? formatDay(dish.lastUsedAt, lang) : '–'}
                 </span>
                 <Pencil
@@ -131,7 +152,14 @@ export function DishesScreen() {
           })}
         </Section>
       )}
-      {data ? <DishEditorHost data={data} value={editor.value} onClose={editor.close} /> : null}
+      {data ? (
+        <DishEditorHost
+          data={data}
+          value={editor.value}
+          onClose={editor.close}
+          renderChefs={slots?.chefs}
+        />
+      ) : null}
     </Page>
   );
 }

@@ -5,6 +5,7 @@ import { css, keyframes, styled } from 'styled-components';
 import { isValidSlug } from '../../shared/seller';
 import { lastKitchen } from '../api/device/lastKitchen';
 import { manifestTarget, useManifestLinks } from '../components/install';
+import { useForcedKitchenLanguage } from '../features/customer-menu';
 import { selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
 import { Icon, type IconName } from '../ui';
 
@@ -208,6 +209,7 @@ export function CustomerShell() {
   const { pathname } = useLocation();
   const unseen = useUnseenUpdate(pathname);
   useShellManifest(pathname);
+  useForcedKitchenLanguage();
   const navigationType = useNavigationType();
   const tabs = hasTabBar(pathname);
   return (

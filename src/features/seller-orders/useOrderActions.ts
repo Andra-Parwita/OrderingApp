@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AuditEntry, Language, Order } from '../../../shared/domain';
 import { formatAuditDiff } from '../../../shared/auditDiff';
+import { whatsAppUrl } from '../../api/device/whatsapp';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { nextStatuses } from '../../../shared/status';
 import { SELLER_NS } from './i18n/register';
@@ -112,7 +113,7 @@ export function useOrderActions(order: Order) {
       code: formatOrderCode(order.code),
       link: `${window.location.origin}/o/${order.token}`,
     });
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    window.open(whatsAppUrl(text), '_blank', 'noopener');
   }, [i18n, order]);
   const onRetry = useCallback(() => {
     if (!failed) return;

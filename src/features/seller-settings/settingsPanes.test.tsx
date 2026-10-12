@@ -62,7 +62,7 @@ describe('SettingsPanes', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const url = String(open.mock.calls[0]![0]);
-    expect(url.startsWith('https://wa.me/?text=')).toBe(true);
+    expect(url.startsWith('https://api.whatsapp.com/send?text=')).toBe(true);
     expect(decodeURIComponent(url)).toContain(link);
     open.mockRestore();
   });
@@ -169,5 +169,35 @@ describe('SettingsPanes', () => {
     await waitFor(() =>
       expect(screen.getByRole('radio', { name: 'Bali' })).toHaveAttribute('aria-checked', 'true'),
     );
+  });
+
+  it('picks the languages for customers (plan 056)', async () => {
+    let body: unknown = null;
+    const settings = {
+      languages: 'both',
+      postGreeting: { en: 'Hi', id: 'Halo' },
+      postClosing: { en: 'Bye', id: 'Dah' },
+      orderingOpen: true,
+    };
+    server.use(
+      http.get('*/api/seller/settings', () => HttpResponse.json({ sellerId: 's', settings })),
+      http.put('*/api/seller/settings', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ sellerId: 's', settings: body });
+      }),
+    );
+    renderPane('kitchen');
+    expect(await screen.findByRole('radio', { name: 'English and Indonesian' })).toBeChecked();
+    expect(screen.getByText(/Customers can switch language\./)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'English only' }));
+    expect(
+      screen.getByText(/You type every dish name and description once, in English\./),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Indonesian only' }));
+    expect(
+      screen.getByText(/You type every dish name and description once, in Indonesian\./),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(body).toMatchObject({ languages: 'id' }));
   });
 });

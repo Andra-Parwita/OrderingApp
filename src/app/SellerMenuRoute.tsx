@@ -2,7 +2,9 @@ import { MenuScreen, type MenuSlots } from '../features/seller-menu';
 import { useSession } from './session';
 
 /** /seller/menu: the owner's Menu; a chef (plan 030) gets Your dishes only. */
-export function SellerMenuRoute({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu'> }>) {
+export function SellerMenuRoute({
+  slots,
+}: Readonly<{ slots: Pick<MenuSlots, 'newMenu' | 'chefs'> }>) {
   const { me } = useSession();
   return (
     <MenuScreen

@@ -2,63 +2,87 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here.
 
-**Last session:** 2026-10-11, the owner's PC (Adelaide), with Claude as coordinator. Branch `indra/brand_logo_ux`, rebased on the builder's `plan/flow-and-prototype` (84c4b31).
+**Last session:** 2026-10-12 evening, the owner's PC (Adelaide), with Claude as coordinator. Branch `indra/brand_logo_ux` = `main` (release **1.0.24**, `e056995`, deployed) + the builder's plans 045/046 (`09268ac`) + **this session's uncommitted work** below. GitHub's copy of the branch still has the old history: push it with `git push --force-with-lease origin indra/brand_logo_ux`.
 
 ## Where things stand
-Everything below is built and checked on this PC: typecheck, lint, format, 1796 unit tests, and the full e2e suite (Chrome at Android-phone, iPhone and desktop sizes, the sequential chain, and one WebKit smoke test). It is **not committed or deployed yet**.
+Built on this PC on 12 Oct and **committed by the owner as `c89fbfd`** (during the final e2e run); the e2e spec fixes and these docs are a second small commit. **Not deployed yet.** **The final gate passed (22:08):** typecheck ✅, lint ✅, format ✅, **unit 1897 / 1897** ✅ (172 files), **e2e 74 passed, 0 failed** ✅ (`scratch/g5-e2e.log`; 28 skipped = captures and opt-ins). The e2e fixes were test updates only (the home-screen card is dismissed in customer specs; `/seller` now has the seller manifest; a chef lands on `/seller/orders` after setup). No app code changed in the fix round.
 
 | plan | what |
 |---|---|
-| 024 | customer pages show the kitchen's theme from the first paint |
-| 026 | an error log devices send to the server (newest 500, nothing personal); the admin's "Problems" list with filters, paging and Clear |
-| 028 | the **Helper** role ("Asisten"): invite, a deny-by-default server allowlist, the helper's own screens (Orders read-only, Hand over, Sell) |
-| 029 | **selling on the day**: pre-order and/or day stock per dish, atomic sales and a sales log, live updates, the **Sell** screen (−1, −n, set count, undo), the end-of-day summary and CSV |
-| 030 | chefs add and edit their own dishes ("Your dishes") |
-| 032 | pause a kitchen (closed to customers, or fully), single-use links (from 033), a notice slot in the seller layout |
-| 036 | ShaggyBobo branding on the admin and first-setup pages (was 027/028 on this branch) |
-| 037 | the menu wizard opens as a layer over the current screen |
-| 038 | admin page: two panels, brand bar, seller rows with a summary, a right-hand panel with **Invitations** / **Settings** tabs |
-| 039 | the seller **Home** at `/seller` (tablet and desktop); **Orders moved to `/seller/orders`** |
-| 040 | the top band: a 3840 × 328 wide banner matched to the left menu, logo fills its block, slide-over on scroll; every image upload shows its size, types and a guide with a template |
-| 041 | the admin uploads a kitchen's images |
-| 042 | **print orders on A4** (Orders → 🖨 Print; phone: More → Print orders) |
-| 043 | a friendly **invite message** in EN or ID (editable preview, Copy message), also for chef/helper invites; the admin sees the **newest 20 invites** per kitchen (waiting / used / expired) |
-| — | the ShaggyBobo logo above the sign-in form sits in a beige box in light mode too |
+| 047 | **link previews**: WhatsApp shows a small square picture (the ShaggyBobo happy face for invites/admin; the kitchen's app icon for menu links) with title and description; every WhatsApp link now uses `api.whatsapp.com/send` (the 👋 no longer breaks) |
+| 048 | the **seller app installs** on every `/seller` page ("ShaggyBobo Seller", the bean icon, opens without the address bar); an **"Install the app"** row in More (phone) and Settings (tablet) |
+| 049 | **"Edit chefs" opens a modal** over the dish editor, so a typed dish is never lost |
+| 050 | **dish library CSV**: Import (preview of new / update / problem before anything changes), Export, Template; matched by **name + chef** |
+| 051 | **dishes on the phone** (More → Dishes); a **chef can put her own dish on the current menu** (D-094), via a new "add one dish" route |
+| 052 | admin page **"Last updated" + Refresh** (at most once a minute) |
+| 053 | **Menu step tabs** for an unpublished menu: each step read-only, **Edit** opens the wizard at that step, **Continue to step N** |
+| 054 | a friendly **"put it on your home screen"** card (customer menu; seller Home/Orders), only in the browser, never in the installed app; "Not now" = 7 days |
+| 055 | **Publish now, or publish with ordering paused**, chosen in a **confirmation modal when the seller presses Publish**, each option explained in plain words; after a paused publish a notice says how to open orders. ✅ built (271 tests) |
+| 056 | **Languages for customers**: both / English only / Indonesian only (Settings → Kitchen); one field per text when one language. ✅ built |
+| 057 | **⇄ Translate** button for dish name/description (Cloudflare Workers AI, 100 a day per kitchen). ✅ built, in the dish editor. Locally there is no AI (`remoteBindings: false`), so the button says "not available": expected. **After deploying, check one translation returns 200** (a 503 means the binding didn't ship) |
+| 058 | **Seller Help** page, public at the hidden address `/help-yw4xsvh8` (D-095), 11 topics EN/ID with real screenshots, waving mascot; **Help** under Settings in the left menu, More, sign-in, setup and the invite message ✅. 6 real screenshots so far (English); more (devices, invite, publish, orders) need a real signed-in session — next round |
+| 059 | **"A new version is ready · Refresh"** bar + automatic reload when an old screen misses a replaced part ✅ (`version.json` no-store via the new `public/_headers`) |
+| fix | **customers no longer see an unpublished (draft) menu**: they get "The next menu is coming soon" (it was leaking the draft's dishes on the live site) |
+| fix | the seller banner no longer collapses with the left menu (only on scroll or ^) |
+| fix | `/seller/sign-in` shows ShaggyBobo branding when the device has no kitchen |
+| fix | the Orders badge counts no cancelled orders; the admin seller row's summary shows at once for a new seller |
 
-**Plan 044 (second commit):** the new bean mascot (jumps on the spot, blinks every 2 s), the happy-face logo icon in a pill, the left column's top bar over the scene, phones without beige bars. Its assets are placeholder quality from the owner's lab (`temp/shaggybobo-mascot/`); the designer's final files keep the same names (see guide/update-brand-logo.md). `--legs-x` on `:root` moves the legs; the owner is choosing the final value.
-**Postponed by the owner:** 031 (admin opens a kitchen as its owner). It may come back later as a read-only "view as".
-**Decisions recorded today:** D-092 (helper role, labelled chef in history; helper invites like every invite), D-093 (the wide banner is 3840 × 328, designed for iPad landscape).
-**Live plan status with every agent and time:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md).
+**Decisions recorded:** D-094 (a chef may put her own dish on the current menu, draft or live). **Live plan status:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md) (✅ 047–054; 045/046 are the builder's drafts).
 
-## Next: merge and deploy (the builder, on his PC)
-1. **The owner** commits on `indra/brand_logo_ux`, merges `plan/flow-and-prototype` into `main`, then `indra/brand_logo_ux` into `main`, and pushes. Because of today's rebase, pushing the branch itself needs `git push --force-with-lease`.
-2. **The builder** pulls `main`, then:
-   - `pnpm install`
-   - `pnpm exec playwright install chromium webkit` (once per PC, for the e2e tests; see "Running e2e" in guide/tech-stack.md)
-   - `pnpm db:migrate:local`: applies **0009 client log, 0010 helper, 0011 day selling, 0012 pause** to the local database (add-only; keeps data)
-3. **Before deploying**, read [guide/deploy-cloudflare.md](guide/deploy-cloudflare.md) and the latest `plans/release-*.md`:
-   - apply the same four migrations to the live D1: `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote`
-   - no new secrets this time (`ADMIN_SETUP_KEY` and the push keys are unchanged)
-   - deploy: `pnpm run deploy`
-4. **Check on the live app:** the seller lands on Home (tablet), Orders at `/seller/orders`, the new banner, the admin page's panel and Images, Print, Sell, inviting a helper.
+## Deploy impact (tell the builder before deploying)
+| area | impact |
+|---|---|
+| database | ⚠️ **one new migration, 0013_languages (add-only, plan 056)**: apply to the live D1 **before** deploying (deploying the code first breaks the kitchen settings reads until it's applied): `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote`; on each PC `pnpm db:migrate:local` (never reseed) |
+| secrets / settings | ⚠️ `wrangler.jsonc` gains an **AI binding** (plan 057); no new secret. The account is on the **Workers Free** plan (owner checked 2026-10-12): over the free daily allowance translations just stop, no charge possible |
+| server + app together | ⚠️ deploy **both in one go** (a normal `pnpm run deploy` does): the app now understands the new "not published" state and the new add-one-dish route |
+| customers | the moment it's live, an unpublished menu disappears from the customer page ("coming soon") until it's published |
+| seller home-screen apps | ⚠️ low: old shortcuts keep working; installing now gives "ShaggyBobo Seller" with the bean icon (not the kitchen's name/icon) |
+| WhatsApp previews | WhatsApp caches previews; a link shared before the deploy may show the old card for a while |
+| chefs | ⚠️ rule change: chefs can add **their own** dish to a **live** menu; tell the team |
+| signed-in people | ✅ nobody is signed out |
+| beta testers with the app open | ⚠️ **this** deploy: an old home-screen app keeps the old version until it is **fully closed and reopened** (swipe it away). Tell them once. From this version on, the new-version bar (plan 059) tells them |
+
+## First thing next session
+1. The owner commits the last spec fixes + docs, pushes with `git push --force-with-lease origin indra/brand_logo_ux`, then merges into `main`.
+2. Nothing else is outstanding for this round. If anything changed since 22:08, re-run only typecheck and the touched unit tests.
+
+**Suggested commit message** (owner's rule: no mention of Claude):
+```
+Link previews, seller app install, dish CSV, chef menu additions, menu step tabs, fixes
+
+- WhatsApp link previews (small square picture, title, description); WhatsApp links via api.whatsapp.com
+- Seller app installable on every seller page; "Install the app" in More and Settings
+- Home-screen card for customers and sellers (browser only, Not now = 7 days)
+- Dish library CSV import (preview first), export and template; matched by name and chef
+- Dishes on the phone; chefs can add their own dish to the current menu (D-094)
+- Edit chefs opens a modal so a typed dish is never lost
+- Menu step tabs for an unpublished menu (read-only, Edit, Continue)
+- Publish now or publish with ordering paused
+- Languages for customers: both, English only or Indonesian only (migration 0013)
+- Translate button for dish texts (Workers AI)
+- Seller Help page (public, hidden address) with links from the app and the invite message
+- Admin page: Last updated and Refresh (once a minute)
+- Fix: customers no longer see an unpublished menu ("coming soon")
+- Fix: banner no longer collapses with the left menu; ShaggyBobo on a fresh seller sign-in; badge without cancelled orders
+```
+
+## After the merge: the builder deploys
+`git pull` on `main` → `pnpm install` → `pnpm db:migrate:local` → apply **0013** to the live D1 → read [guide/deploy-cloudflare.md](guide/deploy-cloudflare.md) and the latest `plans/release-*.md` → `pnpm run deploy` → check the live app.
 
 ## The owner's checks after the deploy
-- 027: a named admin device on the iPad
-- 028: invite a helper and try it on a phone
-- 029: a pretend stall day on two devices
-- 030: a chef adds a dish
-- 032: an invite link on the phone; pause and resume the demo kitchen
-- 042: a real print or "Save as PDF"
-- Upload the Onde Onde banners (3840 × 328 wide, 1200 × 400 phone) from the admin page or Settings → Images
+- Send yourself an **invite** and a **menu link** on WhatsApp: the small picture and the 👋 are right (use a fresh link).
+- Android tablet: open `/seller`, then the **Install the app** row or ⋮ → Add to home screen → Install; it opens without the address bar.
+- Chandra on her phone: More → **Dishes** → add a dish, tick "Also add to the current menu".
+- Unpublish nothing on the live kitchen just to test; instead open the customer link of a kitchen whose menu is still a draft: "coming soon".
+- Import a small CSV (Download template first) on Dapur Demo.
 
-## Known and not done
-- Send reminder and Download CSV on Orders (in the design, not in the app yet)
-- The printed totals count pre-orders only (stall sales are in the Sell summary)
-- The chalkboard "M" in the Onde Onde banner sits behind the logo board (artwork)
-- WebKit e2e can be slow under a full parallel run; a spec that times out once usually passes alone
-
-## After this deploy (owner)
-The **customer app** is the next plan (with the owner's Lottie animations). Also waiting: 031 as a read-only "view as".
+## Known and not done (next round unless the owner says otherwise)
+- **Never lose typed data**: drafts kept on the device for every form until Save/Cancel (owner).
+- **Graceful network and refusal handling**: no endless retries on 401/403; a calm offline state (owner).
+- Clearer image-slot labels; the seller's own invite list with paging; keep max 50 invites per kitchen.
+- 031 as a read-only "view as" for the admin; Send reminder / Download CSV on Orders; stall sales in the printed totals.
+- The owner's wife's iPad: her kitchen invite shows "used" but "0 devices" on the admin page; if she can't sign in, send a **Create recovery key** (owner: "leave it for now").
+- The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. We merged and deployed the 2026-10-11 round (plans 024–042). Check the live app against "The owner's checks after the deploy", then start planning the customer app update. Ask me one question at a time.
+> Read docs/HANDOVER.md and CLAUDE.md. The 12 Oct round (plans 047–059) is merged and deployed. Help me check the live app against "The owner's checks after the deploy", then plan the next round (never lose typed data, graceful network handling, more real Help screenshots, then the customer app). Ask me one question at a time.

@@ -5,7 +5,7 @@
 //   2. notificationclick: focuses an open window on data.url, or opens one.
 //   3. offline: network-first with a cache fallback for the app shell and the last menu and order
 //      answers, so a phone without signal still shows what it loaded last (spec section 8).
-//      Never cached: /api/seller/*, /api/auth/*, /api/admin/*, /api/dev/*, /api/push/*, anything that
+//      Never cached: /version.json, /api/seller/*, /api/auth/*, /api/admin/*, /api/dev/*, /api/push/*, anything that
 //      is not a GET, and the seller and admin pages.
 //
 // Registration (src/components/install/registerServiceWorker.ts) happens only in a production build,
@@ -20,6 +20,8 @@ const KNOWN_CACHES = [SHELL_CACHE, DATA_CACHE];
 
 const NEVER_CACHE_API = /^\/api\/(seller|auth|admin|dev|push)(\/|$)/;
 const NEVER_CACHE_PAGES = /^\/(seller|admin)(\/|$)/;
+// The deployed version (plan 059) must always come from the network.
+const NEVER_CACHE_FILES = /^\/version\.json$/;
 const CACHEABLE_API = /^\/api\/(s\/[^/]+\/menu|orders)(\/|$|\?)/;
 
 self.addEventListener('install', (event) => {
@@ -74,6 +76,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   const path = url.pathname;
   if (NEVER_CACHE_API.test(path) || NEVER_CACHE_PAGES.test(path)) return;
+  if (NEVER_CACHE_FILES.test(path)) return;
 
   // Pages: the SPA shell. Offline, any customer page gets the cached shell, which then shows the
   // last data it can find.

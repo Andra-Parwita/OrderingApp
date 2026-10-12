@@ -7,7 +7,7 @@ import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { fetchMenu } from '../api/client';
 import { currentSellerSlug } from '../api/device/sellerContext';
 import { cssUrl } from '../components/cssUrl';
-import { sellerManifestTarget, useManifestLinks } from '../components/install';
+import { useManifestLinks } from '../components/install';
 import { useBannerCollapsed } from '../components/useBannerCollapsed';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { ReadOnlyOrdersProvider, useNewOrderTitle } from '../features/seller-orders';
@@ -153,7 +153,7 @@ export function SellerLayout() {
   const { pathname } = useLocation();
   const { me } = useSession();
   const who = useWho();
-  useManifestLinks(me?.stage === 'full' ? sellerManifestTarget(me.slug) : null);
+  useManifestLinks(null, true); // ShaggyBobo's seller app manifest on every seller page (plan 048)
   const role =
     me?.role === 'chef' || me?.role === 'helper' || me?.role === 'seller' ? me.role : undefined;
   const navIds = useMemo(() => navIdsFor(role), [role]);
@@ -172,7 +172,8 @@ export function SellerLayout() {
   // The Switch person block already names the signed-in person: in the open panel, and at the top
   // of the More tab on a phone. Everywhere else the bar is the only place the name appears.
   const nameShownElsewhere = tablet ? !collapsed : pathname === '/seller/more';
-  const tabletOnlyHere = !tablet && isTabletOnly(pathname);
+  const tabletOnlyHere =
+    !tablet && isTabletOnly(pathname, me?.role === 'chef' ? 'chef' : undefined);
   // Phone: the 3:1 banner belongs to the Orders list only; other phone screens have none.
   const phoneBanner = !tablet && isPhoneOrdersList(pathname);
   const homeTablet = tablet && pathname === '/seller';
@@ -189,9 +190,8 @@ export function SellerLayout() {
     }
   };
   const stored = useBannerCollapsed();
-  // The banner follows the left menu's top: a collapsed menu gives the short strip too.
-  const bannerCollapsed =
-    (stored && fixesPage(pathname, tablet)) || (slides && scrolled) || (tablet && collapsed);
+  // The left menu and the banner are unlinked (owner, 2026-10-12): only the stored toggle or a scroll collapses it.
+  const bannerCollapsed = (stored && fixesPage(pathname, tablet)) || (slides && scrolled);
 
   return (
     <Shell $tablet={tablet} $fixed={fixed}>

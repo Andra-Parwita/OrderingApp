@@ -3,6 +3,7 @@ import type {
   Seller,
   Kitchen,
   KitchenImages,
+  Languages,
   MenuItemView,
   OrderingState,
   PickupPoint,
@@ -10,6 +11,7 @@ import type {
   Week,
 } from './domain';
 import { DAY_STOCK_MAX } from './daySalesContract';
+import { LANGUAGES } from './languages';
 import { isHexColour } from './kitchenImages';
 import { MAX_MENU_ITEMS } from './limits';
 import { parseSeller } from './seller';
@@ -27,6 +29,8 @@ export type MenuResponse = {
   theme?: ThemeName;
   /** plan 001 stage 12 (D-060): the menu picture (3:2), shown whole above the dishes. */
   pictureUrl?: string;
+  /** plan 056: the languages customers see. Absent = "both". */
+  languages?: Languages;
 };
 
 /** GET /api/seller/menu (of the X-Seller seller): the same menu plus the chef grouping. */
@@ -182,7 +186,7 @@ function parseOrderingState(input: unknown): OrderingState | null {
   const { open, reason } = input;
   if (typeof open !== 'boolean') return null;
   if (reason === undefined) return { open };
-  return isOneOf(['closed_by_seller', 'cutoff_passed', 'kitchen_closed'], reason)
+  return isOneOf(['closed_by_seller', 'cutoff_passed', 'kitchen_closed', 'not_published'], reason)
     ? { open, reason }
     : null;
 }
@@ -196,7 +200,8 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
   const ordering = parseOrderingState(input['ordering']);
   if (!seller || !kitchen || !week || !items || !ordering) return null;
   if (items.length > MAX_MENU_ITEMS || kitchen.sellerId !== seller.id) return null;
-  const { theme, pictureUrl } = input;
+  const { theme, pictureUrl, languages } = input;
+  if (languages !== undefined && !isOneOf(LANGUAGES, languages)) return null;
   if (theme !== undefined && !isOneOf(THEMES, theme)) return null;
   if (pictureUrl !== undefined && (typeof pictureUrl !== 'string' || pictureUrl === ''))
     return null;
@@ -208,6 +213,7 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
     ordering,
     ...(theme !== undefined ? { theme } : {}),
     ...(pictureUrl !== undefined ? { pictureUrl } : {}),
+    ...(languages !== undefined ? { languages } : {}),
   };
 }
 

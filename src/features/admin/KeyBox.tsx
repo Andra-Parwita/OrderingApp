@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { APP_NAME } from '../../../shared/appName';
 import { DISPLAY_NAME_MAX } from '../../../shared/authContract';
+import { whatsAppUrl } from '../../api/device/whatsapp';
 import { Button, Segmented, TextArea, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { Message, Muted, Row } from './shared';
@@ -175,11 +176,7 @@ export function KeyBox({ title, slug, kitchen, create, onDone }: KeyBoxProps) {
         </Button>
         <Button onClick={() => void copy(message)}>{t('home.key.copyMessage')}</Button>
         <Button onClick={() => void copy(keyText)}>{t('home.key.copy')}</Button>
-        <WhatsApp
-          href={`https://wa.me/?text=${encodeURIComponent(message)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <WhatsApp href={whatsAppUrl(message)} target="_blank" rel="noopener noreferrer">
           {t('home.key.whatsapp')}
         </WhatsApp>
         <Button variant="quiet" onClick={onDone}>

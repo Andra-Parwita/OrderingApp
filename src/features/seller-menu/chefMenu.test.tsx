@@ -31,7 +31,12 @@ const DATA = {
     ],
     pickupPoints: [],
   },
-  dishes: [dish('d1', 'Lemper', 'wati'), dish('d2', 'Rendang', 'rudi'), dish('d3', 'Soto')],
+  dishes: [
+    dish('d1', 'Lemper', 'wati'),
+    dish('d2', 'Rendang', 'rudi'),
+    dish('d3', 'Soto'),
+    dish('d4', 'Pisang', 'wati'),
+  ],
   sets: [],
   places: [],
   chefs: [
@@ -72,7 +77,7 @@ function renderChef() {
     <Provider store={store}>
       <AppThemeProvider>
         <MemoryRouter>
-          <MenuScreen slots={{ newMenu: () => null }} chefId="wati" />
+          <MenuScreen slots={{ newMenu: () => null, chefs: () => null }} chefId="wati" />
         </MemoryRouter>
       </AppThemeProvider>
     </Provider>,
@@ -95,6 +100,9 @@ describe('chef Menu (plan 030)', () => {
     fireEvent.click(screen.getByRole('button', { name: /New dish/ }));
     expect(screen.queryByLabelText('Chef')).toBeNull();
     expect(screen.queryByText('Add to this menu too')).toBeNull();
+    // D-094: her own new dish may go on the current menu too, but only if she ticks it.
+    const also = screen.getByLabelText(/Also add to the current menu/);
+    expect(also).not.toBeChecked();
     expect(screen.queryByRole('button', { name: /Delete/ })).toBeNull();
     fireEvent.change(screen.getByLabelText('Name (English)'), { target: { value: 'Pastel' } });
     fireEvent.change(screen.getByLabelText('Price (AUD)'), { target: { value: '12' } });
@@ -105,5 +113,26 @@ describe('chef Menu (plan 030)', () => {
     expect(op?.payload.kind).toBe('createDish');
     expect(op?.payload.addToMenu).toBe(false);
     expect(op?.payload.request).not.toHaveProperty('chefId');
+  });
+
+  it('Add to menu in the list adds her dish that is not on the menu yet', () => {
+    const actions = renderChef();
+    expect(screen.queryByRole('button', { name: 'Add Lemper to the current menu' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Pisang to the current menu' }));
+    const op = actions.find((a) => a.type.includes('opRequested')) as unknown as
+      { payload: unknown } | undefined;
+    expect(op?.payload).toEqual({ kind: 'addDishToMenu', dishId: 'd4' });
+  });
+
+  it('a new dish of hers goes on the current menu when she ticks the box', () => {
+    const actions = renderChef();
+    fireEvent.click(screen.getByRole('button', { name: /New dish/ }));
+    fireEvent.click(screen.getByLabelText(/Also add to the current menu/));
+    fireEvent.change(screen.getByLabelText('Name (English)'), { target: { value: 'Pastel' } });
+    fireEvent.change(screen.getByLabelText('Price (AUD)'), { target: { value: '12' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add dish' }));
+    const op = actions.find((a) => a.type.includes('opRequested')) as unknown as
+      { payload: { kind: string; addToMenu: boolean } } | undefined;
+    expect(op?.payload).toMatchObject({ kind: 'createDish', addToMenu: true });
   });
 });

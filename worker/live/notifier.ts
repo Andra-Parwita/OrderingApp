@@ -35,3 +35,20 @@ export function createLiveNotifier(namespace: RoomNamespace): LiveNotifier {
     },
   };
 }
+
+/** Plan 057: the kitchen's daily translation counter lives in its room (Durable Object storage). */
+export function createTranslateSlots(namespace: RoomNamespace) {
+  return async (sellerId: string, day: string, cap: number): Promise<boolean> => {
+    const room = namespace.get(namespace.idFromName(sellerId) as never);
+    const reply = await room.fetch(
+      new Request('https://live.internal/translate-slot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ day, cap }),
+      }),
+    );
+    if (!reply.ok) throw new Error('translate slot failed');
+    const body: { ok: boolean } = await reply.json();
+    return body.ok;
+  };
+}

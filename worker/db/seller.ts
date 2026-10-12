@@ -386,7 +386,9 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       : { ...copy, onTheDay: dayStock > 0 ? ('available' as const) : ('sold_out' as const) };
   }
 
-  function publicMenu(s: State): MenuResponse {
+  function publicMenu(s: State, forSeller = false): MenuResponse {
+    // A draft is the seller's private work: customers get the kitchen, no dishes, no ordering.
+    const draft = !forSeller && s.week.status !== 'published';
     return {
       seller: { ...seller },
       kitchen: {
@@ -394,10 +396,11 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         ...(s.settings.whatsappNumber ? { whatsappNumber: s.settings.whatsappNumber } : {}),
       },
       week: s.week,
-      items: s.items.map((item) => view(item, s.used)),
-      ordering: ordering(s),
+      items: draft ? [] : s.items.map((item) => view(item, s.used)),
+      ordering: draft ? { open: false, reason: 'not_published' } : ordering(s),
       theme: s.theme,
-      ...(s.pictureUrl !== undefined ? { pictureUrl: s.pictureUrl } : {}),
+      languages: s.settings.languages ?? 'both',
+      ...(!draft && s.pictureUrl !== undefined ? { pictureUrl: s.pictureUrl } : {}),
     };
   }
 
@@ -437,20 +440,20 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       const previous = existing.find((line) => line.itemId === itemId);
       // Plan 029: an on-the-day-only dish cannot be pre-ordered (an order may keep what it has).
       if (item.preorder === false && (!previous || qty > previous.qty)) {
-        return fail('not_preorderable', `${item.name.en} is sold on the day only`);
+        return fail('not_preorderable', `${item.name.en || item.name.id} is sold on the day only`);
       }
       // Manually sold out: no new portions (an order may keep what it already has).
       if (item.soldOut === true && (!previous || qty > previous.qty)) {
-        const refused = tooMany('sold_out', `${item.name.en} is sold out`);
+        const refused = tooMany('sold_out', `${item.name.en || item.name.id} is sold out`);
         if (refused) return refused;
       }
       if (item.limit !== undefined) {
         const left = item.limit - (s.used.get(itemId) ?? 0);
         const refused =
           left <= 0
-            ? tooMany('sold_out', `${item.name.en} is sold out`)
+            ? tooMany('sold_out', `${item.name.en || item.name.id} is sold out`)
             : qty > left
-              ? tooMany('exceeds_remaining', `Only ${left} left of ${item.name.en}`)
+              ? tooMany('exceeds_remaining', `Only ${left} left of ${item.name.en || item.name.id}`)
               : null;
         if (refused) return refused;
       }
@@ -609,7 +612,10 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     const id = deps.newId();
     const code = await uniqueCode(deps.newCode);
     const token = deps.newToken();
-    const order = buildOrder(input, lines.value, by, enteredBy, { id, code, token }, extra);
+    const built = buildOrder(input, lines.value, by, enteredBy, { id, code, token }, extra);
+    // Plan 056: a one-language kitchen's orders (and so its push and WhatsApp texts) use it.
+    const only = s.settings.languages;
+    const order = only === 'en' || only === 'id' ? { ...built, language: only } : built;
     // A forced order takes the portions it asked for, so the race guard must not stop it.
     const guard = over === 'allow' ? null : portionGuard(order);
     try {
@@ -921,7 +927,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
     async getSellerMenu(): Promise<SellerMenuResponse> {
       const s = await loadState();
-      const menu = publicMenu(s);
+      const menu = publicMenu(s, true);
       return { ...menu, chefs: s.chefs, items: s.items.map((item) => sellerView(item, s.used)) };
     },
 
@@ -944,17 +950,21 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       await db.batch([
         db.stmt(
           `UPDATE kitchen_settings SET whatsapp_number = ?, post_greeting_en = ?, post_greeting_id = ?,
-             post_closing_en = ?, post_closing_id = ? WHERE seller_id = ?`,
+             post_closing_en = ?, post_closing_id = ?, languages = COALESCE(?, languages) WHERE seller_id = ?`,
           next.whatsappNumber ?? null,
           next.postGreeting.en,
           next.postGreeting.id,
           next.postClosing.en,
           next.postClosing.id,
+          next.languages ?? null,
           sid,
         ),
         db.stmt('UPDATE menus SET taking_orders = ? WHERE seller_id = ?', next.orderingOpen, sid),
       ]);
-      return structuredClone(next);
+      return {
+        ...structuredClone(next),
+        languages: next.languages ?? (await this.getSettings()).languages,
+      };
     },
 
     listPastWeeks: readPastWeeks,

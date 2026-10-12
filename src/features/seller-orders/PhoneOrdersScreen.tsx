@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import { formatDay, formatDayTime } from '../../../shared/dates';
 import { Button, BottomSheet, EmptyState, Icon, SheetRow } from '../../ui';
+import { HomeScreenCard } from '../../components/install';
 import { LiveDot } from '../../components/LiveDot';
 import { ScanEntry } from '../../components/scan';
 import { BannerToggle } from './BannerToggle';
@@ -479,6 +480,7 @@ function PhoneOrdersContent({
         ) : null}
         {!live && view ? <NoLive>{t('home.noLive')}</NoLive> : null}
       </Head>
+      <HomeScreenCard who="seller" />
       {kind === 'live' ? body : <Scroll>{body}</Scroll>}
       {dishes && live ? <DishesSlideOver width="100%" onClose={() => setDishes(false)} /> : null}
       {sheet ? (

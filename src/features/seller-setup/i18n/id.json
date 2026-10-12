@@ -77,10 +77,12 @@
         "Pakai pemandangan atau pola saja, tanpa teks atau wajah."
       ]
     },
-    "specIcon": "{{width}} × {{height}} px · taruh logo di tengah, {{keepWidth}} × {{keepHeight}} · persegi, tanpa transparansi, tanpa sudut membulat · JPEG, PNG atau WebP · maksimal {{kb}} KB"
+    "specIcon": "{{width}} × {{height}} px · taruh logo di tengah, {{keepWidth}} × {{keepHeight}} · persegi, tanpa transparansi, tanpa sudut membulat · JPEG, PNG atau WebP · maksimal {{kb}} KB",
+    "altOne": "Teks gambar"
   },
   "chefs": {
     "title": "Koki",
+    "close": "Tutup",
     "items_one": "{{count}} menu minggu ini",
     "items_other": "{{count}} menu minggu ini",
     "empty": "Belum ada koki. Tambahkan yang pertama di bawah.",
@@ -132,9 +134,9 @@
     "inviteWhatsapp": "Kirim lewat WhatsApp",
     "greet": "Halo {{name}}!",
     "greetAnon": "Halo!",
-    "messageOwner": "{{greet}} 👋 Anda diundang untuk mengelola *{{kitchen}}* di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
-    "messageChef": "{{greet}} 👋 Anda diundang bergabung di *{{kitchen}}* sebagai Koki di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
-    "messageHelper": "{{greet}} 👋 Anda diundang bergabung di *{{kitchen}}* sebagai Asisten di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.",
+    "messageOwner": "{{greet}} 👋 Anda diundang untuk mengelola *{{kitchen}}* di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.\nBantuan: {{help}}",
+    "messageChef": "{{greet}} 👋 Anda diundang bergabung di *{{kitchen}}* sebagai Koki di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.\nBantuan: {{help}}",
+    "messageHelper": "{{greet}} 👋 Anda diundang bergabung di *{{kitchen}}* sebagai Asisten di {{app}}, aplikasi untuk menerima pesanan makanan mingguan Anda.\n1. Buka tautan ini di ponsel atau tablet yang akan Anda pakai: {{link}}\n2. Simpan passkey saat ponsel Anda meminta (Face ID, sidik jari, atau PIN).\n\nTautan hanya berlaku sekali, di satu perangkat, dalam 24 jam.\nBantuan: {{help}}",
     "messageLang": "Bahasa pesan",
     "messagePreview": "Pesan (bisa diubah sebelum dikirim)",
     "inviteCopyMessage": "Salin pesan",

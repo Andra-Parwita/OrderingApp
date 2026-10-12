@@ -38,6 +38,8 @@
       "migrations_dir": "migrations",
     },
   ],
+  // Plan 057: Workers AI for the dish-text Translate button (no secret; capped at 100 a day per kitchen).
+  "ai": { "binding": "AI" },
   // Live updates (stage 8.3): one Durable Object per seller. The free plan only allows SQLite-backed
   // classes, hence "new_sqlite_classes". Change a class later with a new migration tag, never edit v1.
   "durable_objects": {

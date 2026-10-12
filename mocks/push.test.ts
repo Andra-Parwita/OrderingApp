@@ -590,14 +590,7 @@ describe('web push and kitchen files', () => {
       const orderHead = await kitchenHeadFor(world.repo, `/o/${token}`);
       expect(orderHead).toContain('/k/onde-onde/manifest.webmanifest?start=%2Fo%2F');
       expect(orderHead).toContain('source%3Dhomescreen');
-      for (const none of [
-        '/nobody-here',
-        '/seller/orders',
-        '/o/not-a-token',
-        '/',
-        '/o',
-        '/sw.js',
-      ]) {
+      for (const none of ['/nobody-here', '/o/not-a-token', '/', '/o', '/sw.js']) {
         expect(await kitchenHeadFor(world.repo, none)).toBeNull();
       }
     });
@@ -634,12 +627,17 @@ describe('web push and kitchen files', () => {
         deviceName: 'Test tablet',
       });
       if (!full.ok) throw new Error(JSON.stringify(full));
-      const head = await kitchenHeadFor(world.repo, '/seller/orders', full.value.token);
-      expect(head).toContain('href="/k/onde-onde/seller.webmanifest"');
-      expect(head).toContain('href="/k/onde-onde/apple-touch-icon.png"');
-      expect(head).toContain('content="Onde Onde · Seller"');
-      expect(await kitchenHeadFor(world.repo, '/seller')).toBeNull();
-      expect(await kitchenHeadFor(world.repo, '/seller', 'not-a-session')).toBeNull();
+      const head = await kitchenHeadFor(world.repo, '/seller/orders');
+      // Every seller page, any session, gets ShaggyBobo's seller manifest (plan 048).
+      for (const found of [
+        head,
+        await kitchenHeadFor(world.repo, '/seller'),
+        await kitchenHeadFor(world.repo, '/seller/sign-in'),
+      ]) {
+        expect(found).toContain('<link rel="manifest" href="/seller.webmanifest">');
+        expect(found).toContain('<link rel="apple-touch-icon" href="/brand/app-icon-192.png">');
+      }
+      expect(head).not.toContain('/k/onde-onde/');
     });
 
     it('serves an uploaded icon at any size, and 404s unknown kitchens and sizes', async () => {
