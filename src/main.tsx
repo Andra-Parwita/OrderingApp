@@ -17,9 +17,11 @@ import { registerSellerHistoryI18n } from './features/seller-history';
 import { registerSellerLabelsI18n } from './features/seller-labels';
 import { registerSellerMenuI18n } from './features/seller-menu';
 import { registerSettingsI18n } from './features/seller-settings';
+import { registerSellerHelpI18n } from './features/seller-help';
 import { registerSellerSetupI18n } from './features/seller-setup';
 import { registerShareI18n } from './features/seller-share';
 import { registerInstallI18n, startInstallSupport } from './components/install';
+import { mountUpdateBar } from './components/update';
 import { startClientLog } from './api/clientLog';
 import { initI18n } from './i18n/init';
 
@@ -62,11 +64,13 @@ void initI18n().then(async () => {
   registerSettingsI18n();
   registerSellerMenuI18n();
   registerSellerSetupI18n();
+  registerSellerHelpI18n();
   registerSellerLabelsI18n();
   registerSellerHistoryI18n();
   registerSellerAuthI18n();
   registerAdminI18n();
   registerSellerSaturdayI18n();
+  mountUpdateBar();
   if (harness) {
     const module = await harness.loader();
     const component = module[harness.component];

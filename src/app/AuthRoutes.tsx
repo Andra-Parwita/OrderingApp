@@ -11,9 +11,11 @@ import {
   SetupKeyScreen,
   SignInScreen,
 } from '../features/seller-auth';
+import { HELP_NS } from '../features/seller-help';
 import { KitchenImagesEditor, type ResizeFn } from '../features/seller-setup';
 import type { Me } from '../../shared/authContract';
 import type { ImageSlot } from '../../shared/imageSlots';
+import { SELLER_HELP_PATH } from '../../shared/help';
 import { isValidSlug } from '../../shared/seller';
 import { fetchSellerImages, removeSellerImage, uploadSellerImage } from '../api/auth';
 import { lastSignedIn } from '../api/device/sellerContext';
@@ -85,7 +87,14 @@ export function SellerSetupRoute() {
       navigate(setup?.role === 'admin' ? '/admin' : '/seller', { replace: true }),
     );
   }, [navigate, refresh, setup]);
-  const alreadySetUp = <FootLink to={SWITCH_SIGN_IN}>{t('signIn.alreadySetUp')}</FootLink>;
+  const { t: tHelp } = useTranslation(HELP_NS);
+  const alreadySetUp = (
+    <>
+      <FootLink to={SWITCH_SIGN_IN}>{t('signIn.alreadySetUp')}</FootLink>
+      {/* Plan 058: the invite key is the step people get stuck on; Help topic 2 explains it. */}
+      <FootLink to={`${SELLER_HELP_PATH}?topic=2`}>{tHelp('inviteKeyHelp')}</FootLink>
+    </>
+  );
   return (
     <SignInFrame brand="sellerSetup">
       {step === 'key' ? (
@@ -122,6 +131,7 @@ export function SellerSetupRoute() {
 /** /seller/sign-in: the kitchen is `?kitchen=`, else the one last signed in on this device. */
 export function SellerSignInRoute() {
   const { t } = useTranslation(AUTH_NS);
+  const { t: tHelp } = useTranslation(HELP_NS);
   const navigate = useNavigate();
   const { adopt } = useSession();
   const [params] = useSearchParams();
@@ -145,7 +155,12 @@ export function SellerSignInRoute() {
         {...(slug ? { slug } : {})}
         onSignedIn={signedIn}
         switchPerson={switching}
-        footer={<FootLink to="/seller/setup">{t('signIn.firstTime')}</FootLink>}
+        footer={
+          <>
+            <FootLink to="/seller/setup">{t('signIn.firstTime')}</FootLink>
+            <FootLink to={SELLER_HELP_PATH}>{tHelp('needHelp')}</FootLink>
+          </>
+        }
       />
     </SignInFrame>
   );

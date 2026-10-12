@@ -11,14 +11,17 @@ import { createWebPushSender, realVapidValue, vapidFromEnv, type PushSender } fr
 import { handleKitchenRequest } from './kitchenRoutes';
 import type { ImageBucket } from '../images/r2';
 import { serveImage } from '../images/serve';
-import { createLiveNotifier, type RoomNamespace } from '../live/notifier';
+import { createLiveNotifier, createTranslateSlots, type RoomNamespace } from '../live/notifier';
 import { handleApiRequest } from './routes';
+import type { AiLike } from './translate';
 
 /** The bindings and variables the Worker reads (wrangler.jsonc, `.dev.vars` locally). */
 export type ApiEnv = {
   DB: D1Like;
   IMAGES: ImageBucket;
   SELLER_LIVE: RoomNamespace;
+  /** Workers AI (plan 057); absent where there is no Cloudflare login. */
+  AI?: AiLike;
   /** Secret: the key that creates the first admin. Without it nobody can. */
   ADMIN_SETUP_KEY?: string;
   /** "1" turns every dev-only path on. Set only in `.dev.vars`; absent is production. */
@@ -87,6 +90,7 @@ export async function handleWorkerRequest(
     images: env.IMAGES,
     devTools,
     vapidPublicKey: realVapidValue(env.VAPID_PUBLIC_KEY),
+    translate: { ai: env.AI, takeSlot: createTranslateSlots(env.SELLER_LIVE) },
   });
   const sending = dispatcher.flush();
   if (ctx) ctx.waitUntil(sending);

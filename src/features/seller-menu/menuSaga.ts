@@ -120,7 +120,9 @@ function* execute(op: MenuOp) {
       });
     }
     case 'publish':
-      return toOutcome((yield call(publishMenu, op.force, undefined, slug)) as ApiResult<unknown>);
+      return toOutcome(
+        (yield call(publishMenu, op.force, undefined, slug, op.takingOrders)) as ApiResult<unknown>,
+      );
     case 'unpublish':
       return toOutcome((yield call(unpublishMenu, undefined, slug)) as ApiResult<unknown>);
     case 'deleteMenu':

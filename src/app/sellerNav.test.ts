@@ -14,7 +14,7 @@ import {
 } from './sellerNav';
 
 describe('navIdsFor', () => {
-  it('gives the seller all seven items, Home first', () => {
+  it('gives the seller all eight items, Home first and Help right under Settings', () => {
     expect(navIdsFor('seller')).toEqual([
       'home',
       'orders',
@@ -23,16 +23,17 @@ describe('navIdsFor', () => {
       'sell',
       'menu',
       'settings',
+      'help',
     ]);
     expect(HREF.sell).toBe('/seller/sell');
     expect(HREF.home).toBe('/seller');
     expect(HREF.orders).toBe('/seller/orders');
   });
   it('shows a helper Orders, Pickup & delivery and Sell only', () => {
-    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell']);
+    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell', 'help']);
   });
   it('shows a chef Menu (own dishes, plan 030) but not Home, Sell or Settings', () => {
-    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu']);
+    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu', 'help']);
   });
 });
 

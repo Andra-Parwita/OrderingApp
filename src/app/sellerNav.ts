@@ -1,3 +1,4 @@
+import { SELLER_HELP_PATH } from '../../shared/help';
 import type { IconName } from '../ui';
 
 // The seller navigation (D-058, D-065): Home · Orders · Kitchen · Pickup & delivery · Menu · Settings
@@ -13,10 +14,11 @@ export const NAV_IDS = [
   'sell',
   'menu',
   'settings',
+  'help',
 ] as const;
 export type NavId = (typeof NAV_IDS)[number];
 
-const HELPER_NAV_IDS: ReadonlyArray<NavId> = ['orders', 'handover', 'sell'];
+const HELPER_NAV_IDS: ReadonlyArray<NavId> = ['orders', 'handover', 'sell', 'help'];
 
 export const PHONE_NAV_IDS = ['orders', 'handover', 'more'] as const;
 export type PhoneNavId = (typeof PHONE_NAV_IDS)[number];
@@ -31,12 +33,15 @@ export const HREF: Readonly<Record<NavId | 'more', string>> = {
   // Settings opens on its first pane (stage 10); the phone's More tab keeps /seller/more.
   settings: '/seller/settings/kitchen',
   more: '/seller/more',
+  // Plan 058: the public Help page, outside the seller layout; every role sees it, right under Settings.
+  help: SELLER_HELP_PATH,
 };
 
 /** The Home icon is not in the icon kit (src/ui): the rail draws this path itself. */
 export const HOME_ICON_PATH = 'M4 11l8-7 8 7M6 9.5V20h12V9.5M10 20v-5h4v5';
 
 export const ICON: Readonly<Record<Exclude<NavId, 'home'> | 'more', IconName>> = {
+  help: 'help',
   orders: 'list',
   kitchen: 'pot',
   handover: 'box',

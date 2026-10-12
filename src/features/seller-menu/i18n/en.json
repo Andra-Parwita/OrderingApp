@@ -207,13 +207,16 @@
     "add": "Add dish",
     "save": "Save dish",
     "err": {
-      "name": "Add a name in at least one language.",
+      "name": "Give the dish a name in English or Indonesian.",
       "price": "Enter a price like 10, 10.00 or 10,50.",
       "limit": "Enter a whole number of 1 or more, or leave it empty.",
       "dayStock": "Enter a whole number from 0 to 9999.",
       "preorder": "Turn on Sold on the day, or keep Pre-order on.",
       "tooLong": "Too long: at most {{max}} characters."
-    }
+    },
+    "nameOne": "Name",
+    "descriptionOne": "Description",
+    "sizeOne": "Size"
   },
   "prices": {
     "title": "Prices and limits for this menu",
@@ -318,6 +321,11 @@
     }
   },
   "publish": {
+    "choiceLegend": "When can customers order?",
+    "nowTitle": "Publish and take orders now",
+    "nowNote": "Customers can see the menu and order straight away.",
+    "pausedTitle": "Publish, ordering paused",
+    "pausedNote": "Customers can see the menu but can't order yet. Switch \"Taking orders\" on in Orders when you're ready.",
     "ready": "Ready to publish",
     "summary": "{{dishes}} dishes for {{date}}. Customers can order as soon as it is live.",
     "worries_one": "{{count}} thing in Worth a look. You can still publish.",
@@ -329,7 +337,13 @@
     "emptyTitle": "Publish a menu with no dishes?",
     "emptyBody": "Customers would see an empty menu and could not order anything.",
     "addDishes": "Add dishes",
-    "emptyAnyway": "Publish anyway"
+    "emptyAnyway": "Publish anyway",
+    "modalTitle": "Publish the menu for {{date}}?",
+    "cancel": "Cancel",
+    "confirmNow": "Publish and open orders",
+    "confirmPaused": "Publish, paused",
+    "pausedNotice": "Menu published · ordering paused. Turn on Taking orders in Orders when you're ready.",
+    "close": "Close"
   },
   "import": {
     "button": "Import",
@@ -353,7 +367,7 @@
     "problem": {
       "no_header": "The first line must name the columns, starting with name_en.",
       "too_many_rows": "Too many dishes in one file (500 at most).",
-      "name_required": "name_en is required.",
+      "name_required": "Give the dish a name in English or Indonesian.",
       "text_too_long": "A name, description or size is too long.",
       "price_invalid": "The price is not a number such as 12.50.",
       "limit_invalid": "The limit must be a whole number.",

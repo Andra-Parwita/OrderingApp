@@ -5,6 +5,7 @@ export { OrderPlacedScreen, OrderPlacedView } from './OrderPlacedScreen';
 export { DishesView } from './DishesView';
 export { FullPictureViewer } from './FullPictureViewer';
 export { HowItWorksView } from './HowItWorksView';
+export { useForcedKitchenLanguage, useKitchenLanguages } from './kitchenLanguage';
 export { useLang } from './layout';
 export { MenuErrorView, MenuLoadingView } from './MenuLoadStates';
 export { MenuHomeView, NotPublishedView } from './MenuHomeView';

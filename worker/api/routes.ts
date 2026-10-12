@@ -33,6 +33,7 @@ import {
   parseCreateDishSetRequest,
   parseCreateMenuRequest,
   parseUpdateDishRequest,
+  parsePublishRequest,
   parseUpdateMenuRequest,
   parseUpdatePickupPlaceRequest,
   parseUpdatePreferencesRequest,
@@ -118,6 +119,7 @@ import {
 import { LIVE_PATH, type LiveEventType } from '../../shared/liveContract';
 import { dropUnusedImageRefs, putUploadedImage, type ImageBucket } from '../images/r2';
 import type { LiveNotifier } from '../live/hub';
+import { handleTranslate, type TranslateContext } from './translate';
 import {
   parseDayCountRequest,
   parseDaySaleRequest,
@@ -231,6 +233,8 @@ export type RouteContext = {
   devTools?: boolean;
   /** The VAPID public key (env `VAPID_PUBLIC_KEY`); absent means web push is not set up. */
   vapidPublicKey?: string | undefined;
+  /** Plan 057: the translator and its daily cap; absent means translation is unavailable. */
+  translate?: TranslateContext;
 };
 
 /**
@@ -706,6 +710,9 @@ async function handleSeller(
     afterOrderWrite(context, sellerId, 'order.changed', result);
   const menuChanged = () => signal(context, sellerId, 'menu.changed');
   if (a === 'menu' && !b && method === 'GET') return Response.json(await store.getSellerMenu());
+  if (a === 'translate' && !b && method === 'POST') {
+    return handleTranslate(request, sellerId, context.translate);
+  }
 
   // Chefs can't invite people (D-013); the seller invites a chef from the chefs list.
   if (a === 'chef-invites' && !b && method === 'POST') {
@@ -874,9 +881,9 @@ async function handleSeller(
       return Response.json({ menu: result.value } satisfies MenuViewResponse, { status: 201 });
     }
     if (c === 'publish' && method === 'POST') {
-      const force = parseForce(await readJson(request));
-      if (force === null) return bad();
-      const result = await store.publishMenu(force);
+      const asked = parsePublishRequest(await readJson(request));
+      if (asked === null) return bad();
+      const result = await store.publishMenu(asked.force, asked.takingOrders);
       if (!result.ok) return refusal(result);
       await menuChanged();
       return Response.json({ menu: result.value } satisfies MenuViewResponse);

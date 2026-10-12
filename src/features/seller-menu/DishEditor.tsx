@@ -10,6 +10,8 @@ import {
 } from '../../../shared/limits';
 import { formatDay } from '../../../shared/dates';
 import type { Dish } from '../../../shared/menusContract';
+import { useSellerLanguages } from '../../api/useSellerLanguages';
+import { TranslateButton } from '../../components/translate';
 import { Button, SlideOverEditor, TextArea, TextField, WarningDialog } from '../../ui';
 import { FieldFrame, fieldControlStyle, useFieldIds } from '../../ui/Field';
 import { MENU_NS } from './i18n/register';
@@ -21,6 +23,7 @@ import {
   updateDishRequestOf,
   updateRequestOf,
   validateDraft,
+  unifyDraft,
   type ItemDraft,
 } from './itemForm';
 import { ErrorText, LinkButton, Muted, useLang, useOpWatch, useRunOp } from './menuShared';
@@ -66,6 +69,16 @@ const Pair = styled.div`
 
   @media (max-width: 37.4375rem) {
     grid-template-columns: minmax(0, 1fr);
+  }
+`;
+const Cell = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.xs};
+
+  > :first-child {
+    align-self: stretch;
   }
 `;
 const Cols = styled.div`
@@ -142,7 +155,29 @@ export function DishEditor({
   const menuOpen = view.menu.state !== 'finished';
   const menuFull = view.dishes.length >= MAX_MENU_ITEMS;
   const [addToMenu, setAddToMenu] = useState(!asChef && menuOpen && !menuFull);
-  const { errors } = validateDraft(draft);
+  const languages = useSellerLanguages();
+  const oneLanguage = languages === 'en' || languages === 'id' ? languages : null;
+  const shown = oneLanguage ? unifyDraft(draft, oneLanguage) : draft;
+  const { errors } = validateDraft(shown);
+  const setBoth =
+    (a: keyof ItemDraft, b: keyof ItemDraft) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setDraft((previous) => ({ ...previous, [a]: event.target.value, [b]: event.target.value }));
+  // Plan 057: with both languages, a ⇄ button fills the empty one from the other (not saved here).
+  const translateFor = (pair: 'name' | 'desc', toId = false) => {
+    const en = pair === 'name' ? ('nameEn' as const) : ('descEn' as const);
+    const id = pair === 'name' ? ('nameId' as const) : ('descId' as const);
+    const [from, to] = toId ? [en, id] : [id, en];
+    if (draft[to].trim() !== '' || draft[from].trim() === '') return null;
+    return (
+      <TranslateButton
+        text={draft[from]}
+        from={toId ? 'en' : 'id'}
+        to={toId ? 'id' : 'en'}
+        onResult={(result) => setDraft((previous) => ({ ...previous, [to]: result }))}
+      />
+    );
+  };
   const set =
     (key: keyof ItemDraft) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -189,6 +224,7 @@ export function DishEditor({
     setSubmitted(true);
     setFailure(null);
     if (Object.keys(errors).length > 0) return;
+    const draft = shown;
     if (isNew) {
       const request = createRequestOf(draft);
       if (request)
@@ -242,66 +278,111 @@ export function DishEditor({
         >
           <Heading>{title}</Heading>
           <Muted>{isNew ? t('dish.subNew') : t('dish.subEdit')}</Muted>
-          <LangLabel>
-            <span>{t('dish.english')}</span>
-            <span>{t('dish.indonesian')}</span>
-          </LangLabel>
-          <Pair>
-            <TextField
-              label={t('dish.name')}
-              value={draft.nameEn}
-              maxLength={ITEM_NAME_MAX}
-              placeholder={t('dish.nameHintEn')}
-              onChange={set('nameEn')}
-              {...(submitted && errors.name ? { error: err('name', ITEM_NAME_MAX) } : {})}
-            />
-            <TextField
-              label={t('dish.nameId')}
-              value={draft.nameId}
-              maxLength={ITEM_NAME_MAX}
-              placeholder={t('dish.nameHintId')}
-              onChange={set('nameId')}
-              {...(draft.nameId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
-            />
-          </Pair>
-          <Pair>
-            <TextArea
-              label={t('dish.description')}
-              value={draft.descEn}
-              maxLength={ITEM_DESCRIPTION_MAX}
-              showCounter
-              onChange={set('descEn')}
-              {...(submitted && errors.descEn
-                ? { error: err('descEn', ITEM_DESCRIPTION_MAX) }
-                : {})}
-            />
-            <TextArea
-              label={t('dish.descriptionId')}
-              value={draft.descId}
-              maxLength={ITEM_DESCRIPTION_MAX}
-              showCounter
-              onChange={set('descId')}
-              {...(draft.descId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
-            />
-          </Pair>
-          <Pair>
-            <TextField
-              label={t('dish.size')}
-              value={draft.sizeEn}
-              maxLength={ITEM_SIZE_MAX}
-              placeholder={t('dish.sizeHintEn')}
-              onChange={set('sizeEn')}
-              {...(submitted && errors.sizeEn ? { error: err('sizeEn', ITEM_SIZE_MAX) } : {})}
-            />
-            <TextField
-              label={t('dish.sizeId')}
-              value={draft.sizeId}
-              maxLength={ITEM_SIZE_MAX}
-              placeholder={t('dish.sizeHintId')}
-              onChange={set('sizeId')}
-              {...(draft.sizeId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
-            />
-          </Pair>
+          {oneLanguage ? (
+            <>
+              <TextField
+                label={t('dish.nameOne')}
+                value={shown.nameEn}
+                maxLength={ITEM_NAME_MAX}
+                placeholder={t(oneLanguage === 'en' ? 'dish.nameHintEn' : 'dish.nameHintId')}
+                onChange={setBoth('nameEn', 'nameId')}
+                {...(submitted && errors.name ? { error: err('name', ITEM_NAME_MAX) } : {})}
+              />
+              <TextArea
+                label={t('dish.descriptionOne')}
+                value={shown.descEn}
+                maxLength={ITEM_DESCRIPTION_MAX}
+                showCounter
+                onChange={setBoth('descEn', 'descId')}
+                {...(submitted && errors.descEn
+                  ? { error: err('descEn', ITEM_DESCRIPTION_MAX) }
+                  : {})}
+              />
+              <TextField
+                label={t('dish.sizeOne')}
+                value={shown.sizeEn}
+                maxLength={ITEM_SIZE_MAX}
+                placeholder={t(oneLanguage === 'en' ? 'dish.sizeHintEn' : 'dish.sizeHintId')}
+                onChange={setBoth('sizeEn', 'sizeId')}
+                {...(submitted && errors.sizeEn ? { error: err('sizeEn', ITEM_SIZE_MAX) } : {})}
+              />
+            </>
+          ) : (
+            <>
+              <LangLabel>
+                <span>{t('dish.english')}</span>
+                <span>{t('dish.indonesian')}</span>
+              </LangLabel>
+              <Pair>
+                <Cell>
+                  <TextField
+                    label={t('dish.name')}
+                    value={draft.nameEn}
+                    maxLength={ITEM_NAME_MAX}
+                    placeholder={t('dish.nameHintEn')}
+                    onChange={set('nameEn')}
+                    {...(submitted && errors.name ? { error: err('name', ITEM_NAME_MAX) } : {})}
+                  />
+                  {translateFor('name')}
+                </Cell>
+                <Cell>
+                  <TextField
+                    label={t('dish.nameId')}
+                    value={draft.nameId}
+                    maxLength={ITEM_NAME_MAX}
+                    placeholder={t('dish.nameHintId')}
+                    onChange={set('nameId')}
+                    {...(draft.nameId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
+                  />
+                  {translateFor('name', true)}
+                </Cell>
+              </Pair>
+              <Pair>
+                <Cell>
+                  <TextArea
+                    label={t('dish.description')}
+                    value={draft.descEn}
+                    maxLength={ITEM_DESCRIPTION_MAX}
+                    showCounter
+                    onChange={set('descEn')}
+                    {...(submitted && errors.descEn
+                      ? { error: err('descEn', ITEM_DESCRIPTION_MAX) }
+                      : {})}
+                  />
+                  {translateFor('desc')}
+                </Cell>
+                <Cell>
+                  <TextArea
+                    label={t('dish.descriptionId')}
+                    value={draft.descId}
+                    maxLength={ITEM_DESCRIPTION_MAX}
+                    showCounter
+                    onChange={set('descId')}
+                    {...(draft.descId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
+                  />
+                  {translateFor('desc', true)}
+                </Cell>
+              </Pair>
+              <Pair>
+                <TextField
+                  label={t('dish.size')}
+                  value={draft.sizeEn}
+                  maxLength={ITEM_SIZE_MAX}
+                  placeholder={t('dish.sizeHintEn')}
+                  onChange={set('sizeEn')}
+                  {...(submitted && errors.sizeEn ? { error: err('sizeEn', ITEM_SIZE_MAX) } : {})}
+                />
+                <TextField
+                  label={t('dish.sizeId')}
+                  value={draft.sizeId}
+                  maxLength={ITEM_SIZE_MAX}
+                  placeholder={t('dish.sizeHintId')}
+                  onChange={set('sizeId')}
+                  {...(draft.sizeId.trim() === '' ? { helper: t('dish.seeEnglish') } : {})}
+                />
+              </Pair>
+            </>
+          )}
           <Cols>
             <TextField
               label={t('dish.price')}

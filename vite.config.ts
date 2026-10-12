@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { formatVersion } from './shared/buildInfo';
 
 // Plan 020: the app version, from package.json (major.minor) and git (count, commit, draft).
@@ -26,6 +26,21 @@ const appVersion = formatVersion({
 
 // `pnpm build` (and so `pnpm deploy`) prints it, to see which version is about to go live.
 if (process.argv.includes('build')) console.log(`App version: ${appVersion}`);
+
+// Plan 059: /version.json, read by the "new version is ready" bar. Never cached (public/_headers, sw.js).
+function versionFile(): Plugin {
+  return {
+    name: 'version-file',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({ version: appVersion }),
+      });
+    },
+  };
+}
 
 const https = {
   cert: readFileSync('.certs/dev.pem'),
@@ -61,7 +76,11 @@ const persist = persistState();
 // phones on the home Wi-Fi, with the kitchen name and the `/o/:token` links as well.
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(appVersion) },
-  plugins: [react(), cloudflare(persist ? { persistState: persist } : {})],
+  plugins: [
+    react(),
+    versionFile(),
+    cloudflare({ ...(persist ? { persistState: persist } : {}), remoteBindings: false }),
+  ],
   server: {
     https,
     host: true,

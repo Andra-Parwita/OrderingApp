@@ -41,6 +41,8 @@ const STATUS: Record<ApiErrorCode, number> = {
   bad_origin: 403,
   kitchen_paused: 403,
   kitchen_closed: 409,
+  translate_limit: 429,
+  translate_unavailable: 503,
 };
 
 export function error(

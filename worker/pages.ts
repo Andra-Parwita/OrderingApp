@@ -6,6 +6,7 @@ import {
   isSellerPath,
   linkPreviewHtml,
 } from '../shared/kitchenHeadLinks';
+import { SELLER_HELP_PATH } from '../shared/help';
 import { kitchenPageFor } from './api/kitchenPage';
 import { createD1Repository } from './db';
 import type { D1Like } from './db/d1';
@@ -19,6 +20,12 @@ export async function withKitchenLinks(
   env: { DB: D1Like },
   page: Response,
 ): Promise<Response> {
+  // The seller Help page is public but not for search engines (D-095): the header on top of the page's own meta tag.
+  if (new URL(request.url).pathname === SELLER_HELP_PATH) {
+    const help = new Response(page.body, page);
+    help.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return help;
+  }
   if (request.method !== 'GET' || !page.headers.get('Content-Type')?.includes('text/html')) {
     return page;
   }

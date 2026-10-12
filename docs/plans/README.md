@@ -84,6 +84,11 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 052 | ✅ | [Admin page: "Last updated" and a Refresh button](052-admin-refresh.md) | approved (2026-10-12); this round |
 | 053 | ✅ | [Jump to any step of a menu that isn't published yet](053-menu-steps-clickable.md) | approved (2026-10-12); this round |
 | 054 | ✅ | [A friendly "put it on your home screen" card](054-home-screen-nudge.md) | approved (2026-10-12); tonight |
+| 055 | ✅ | [Publish now, or publish with ordering paused](055-publish-paused.md) | approved (2026-10-12); this round |
+| 056 | ✅ | [Languages for customers: both, English only, Indonesian only](056-kitchen-languages.md) | approved (2026-10-12); this round; **migration 0013** |
+| 057 | ✅ | [A ⇄ Translate button for dish texts](057-translate-button.md) | approved (2026-10-12); this round; **AI binding** |
+| 058 | ✅ | [A simple Help page for sellers](058-seller-help.md) | draft; mock-up first; this round |
+| 059 | ✅ | ["A new version is ready" and safe refresh for home-screen apps](059-new-version-refresh.md) | this round |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

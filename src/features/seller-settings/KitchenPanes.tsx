@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import type { KitchenSettings, Language } from '../../../shared/domain';
+import type { KitchenSettings, Language, Languages, LocalText } from '../../../shared/domain';
 import { POST_TEXT_MAX } from '../../../shared/limits';
 import { formatPhone } from '../../../shared/phone';
 import { fetchMenu } from '../../api/client';
 import { setKitchenName } from '../../api/kitchenName';
 import { KITCHEN_NAME_MAX } from '../../../shared/setupContract';
 import { currentSellerSlug } from '../../api/device/sellerContext';
-import { Button, TextArea, TextField } from '../../ui';
+import { Button, Segmented, TextArea, TextField, type SegmentedOption } from '../../ui';
 import { SETTINGS_NS } from './i18n/register';
 import { ErrorLine, GroupTitle, Muted, PaneForm, Two } from './paneParts';
 import { phoneIsValid, toDraft, toSettings } from './settingsForm';
@@ -24,6 +24,11 @@ const Preview = styled.pre`
   font: inherit;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+`;
+const Group = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 const PicturesBlock = styled.section`
   display: flex;
@@ -105,6 +110,8 @@ function useKitchenName() {
   return { name, setName, saved, setSaved, loaded };
 }
 
+const LANGUAGE_VALUES: ReadonlyArray<Languages> = ['both', 'en', 'id'];
+
 function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   const { t } = useTranslation(SETTINGS_NS);
   const dispatch = useDispatch();
@@ -112,6 +119,11 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   const [nameFailed, setNameFailed] = useState(false);
   const save = useSelector((state: SettingsRootState) => state.sellerSettings.save);
   const [phone, setPhone] = useState(() => toDraft(settings).phone);
+  const [languages, setLanguages] = useState<Languages>(settings.languages ?? 'both');
+  const languageOptions = useMemo<Array<SegmentedOption<Languages>>>(
+    () => LANGUAGE_VALUES.map((value) => ({ value, label: t(`kitchen.languages.${value}`) })),
+    [t],
+  );
   const [submitted, setSubmitted] = useState(false);
   const serverInvalid = save.status === 'error' && save.code === 'invalid_request';
   const error =
@@ -131,9 +143,9 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
           if (result.ok) setSaved(result.data.name);
         });
       }
-      dispatch(saveRequested(toSettings({ ...toDraft(settings), phone })));
+      dispatch(saveRequested(toSettings({ ...toDraft(settings), phone, languages })));
     },
-    [dispatch, phone, settings, name, nameInvalid, saved, setSaved],
+    [dispatch, phone, languages, settings, name, nameInvalid, saved, setSaved],
   );
   return (
     <PaneForm onSubmit={onSubmit} noValidate>
@@ -165,6 +177,16 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
           }}
         />
       </Two>
+      <Group>
+        <GroupTitle>{t('kitchen.languages.title')}</GroupTitle>
+        <Segmented
+          options={languageOptions}
+          value={languages}
+          onChange={setLanguages}
+          label={t('kitchen.languages.title')}
+        />
+        <Muted>{t(`kitchen.languages.${languages}Help`)}</Muted>
+      </Group>
       <SaveFailure hideInvalid />
       <SaveButton />
     </PaneForm>
@@ -188,11 +210,23 @@ function PostForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   const [greeting, setGreeting] = useState(settings.postGreeting);
   const [closing, setClosing] = useState(settings.postClosing);
   const number = settings.whatsappNumber ? formatPhone(settings.whatsappNumber) : '';
+  // Plan 056: with one language there is one field per text, saved into both.
+  const one =
+    settings.languages === 'en' || settings.languages === 'id' ? settings.languages : null;
+  const both = (value: LocalText): LocalText =>
+    one
+      ? { en: value[one] || value.en || value.id, id: value[one] || value.en || value.id }
+      : value;
   const onSubmit = useCallback(
     (event: { preventDefault: () => void }) => {
       event.preventDefault();
-      dispatch(saveRequested(toSettings({ ...toDraft(settings), greeting, closing })));
+      dispatch(
+        saveRequested(
+          toSettings({ ...toDraft(settings), greeting: both(greeting), closing: both(closing) }),
+        ),
+      );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [closing, dispatch, greeting, settings],
   );
   const text = (lng: Language) =>
@@ -204,36 +238,58 @@ function PostForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   return (
     <PaneForm onSubmit={onSubmit} noValidate>
       <Two>
-        <TextArea
-          label={t('greeting.en')}
-          value={greeting.en}
-          maxLength={POST_TEXT_MAX}
-          showCounter
-          onChange={edit(setGreeting, greeting, 'en')}
-        />
-        <TextArea
-          label={t('greeting.id')}
-          value={greeting.id}
-          maxLength={POST_TEXT_MAX}
-          showCounter
-          onChange={edit(setGreeting, greeting, 'id')}
-        />
-        <TextArea
-          label={t('closing.en')}
-          helper={t('closing.helper')}
-          value={closing.en}
-          maxLength={POST_TEXT_MAX}
-          showCounter
-          onChange={edit(setClosing, closing, 'en')}
-        />
-        <TextArea
-          label={t('closing.id')}
-          helper={t('closing.helper')}
-          value={closing.id}
-          maxLength={POST_TEXT_MAX}
-          showCounter
-          onChange={edit(setClosing, closing, 'id')}
-        />
+        {one ? (
+          <>
+            <TextArea
+              label={t('greeting.one')}
+              value={greeting[one] || greeting.en || greeting.id}
+              maxLength={POST_TEXT_MAX}
+              showCounter
+              onChange={(event) => setGreeting({ en: event.target.value, id: event.target.value })}
+            />
+            <TextArea
+              label={t('closing.one')}
+              helper={t('closing.helper')}
+              value={closing[one] || closing.en || closing.id}
+              maxLength={POST_TEXT_MAX}
+              showCounter
+              onChange={(event) => setClosing({ en: event.target.value, id: event.target.value })}
+            />
+          </>
+        ) : (
+          <>
+            <TextArea
+              label={t('greeting.en')}
+              value={greeting.en}
+              maxLength={POST_TEXT_MAX}
+              showCounter
+              onChange={edit(setGreeting, greeting, 'en')}
+            />
+            <TextArea
+              label={t('greeting.id')}
+              value={greeting.id}
+              maxLength={POST_TEXT_MAX}
+              showCounter
+              onChange={edit(setGreeting, greeting, 'id')}
+            />
+            <TextArea
+              label={t('closing.en')}
+              helper={t('closing.helper')}
+              value={closing.en}
+              maxLength={POST_TEXT_MAX}
+              showCounter
+              onChange={edit(setClosing, closing, 'en')}
+            />
+            <TextArea
+              label={t('closing.id')}
+              helper={t('closing.helper')}
+              value={closing.id}
+              maxLength={POST_TEXT_MAX}
+              showCounter
+              onChange={edit(setClosing, closing, 'id')}
+            />
+          </>
+        )}
       </Two>
       <SaveFailure />
       <SaveButton />

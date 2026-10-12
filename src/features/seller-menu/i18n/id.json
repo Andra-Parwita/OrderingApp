@@ -200,13 +200,16 @@
     "add": "Tambah hidangan",
     "save": "Simpan hidangan",
     "err": {
-      "name": "Isi nama di setidaknya satu bahasa.",
+      "name": "Beri nama hidangan dalam bahasa Inggris atau Indonesia.",
       "price": "Isi harga seperti 10, 10.00 atau 10,50.",
       "limit": "Isi bilangan bulat 1 atau lebih, atau kosongkan.",
       "dayStock": "Isi bilangan bulat 0 sampai 9999.",
       "preorder": "Nyalakan Dijual di hari-H, atau biarkan Pre-order menyala.",
       "tooLong": "Terlalu panjang: maksimal {{max}} karakter."
-    }
+    },
+    "nameOne": "Nama",
+    "descriptionOne": "Deskripsi",
+    "sizeOne": "Ukuran"
   },
   "prices": {
     "title": "Harga dan batas untuk menu ini",
@@ -307,6 +310,11 @@
     }
   },
   "publish": {
+    "choiceLegend": "Kapan pelanggan bisa memesan?",
+    "nowTitle": "Publikasikan dan terima pesanan sekarang",
+    "nowNote": "Pelanggan bisa melihat menu dan langsung memesan.",
+    "pausedTitle": "Publikasikan, pemesanan dijeda",
+    "pausedNote": "Pelanggan bisa melihat menu tetapi belum bisa memesan. Nyalakan \"Menerima pesanan\" di Pesanan saat Anda siap.",
     "ready": "Siap dipublikasikan",
     "summary": "{{dishes}} hidangan untuk {{date}}. Pelanggan bisa memesan begitu menu tayang.",
     "worries_other": "{{count}} hal di Perlu dilihat. Anda tetap bisa mempublikasikan.",
@@ -317,7 +325,13 @@
     "emptyTitle": "Publikasikan menu tanpa hidangan?",
     "emptyBody": "Pelanggan akan melihat menu kosong dan tidak bisa memesan apa pun.",
     "addDishes": "Tambah hidangan",
-    "emptyAnyway": "Tetap publikasikan"
+    "emptyAnyway": "Tetap publikasikan",
+    "modalTitle": "Publikasikan menu untuk {{date}}?",
+    "cancel": "Batal",
+    "confirmNow": "Publikasikan dan buka pesanan",
+    "confirmPaused": "Publikasikan, dijeda",
+    "pausedNotice": "Menu dipublikasikan · pemesanan dijeda. Nyalakan Menerima pesanan di Pesanan saat Anda siap.",
+    "close": "Tutup"
   },
   "import": {
     "button": "Impor",
@@ -341,7 +355,7 @@
     "problem": {
       "no_header": "Baris pertama harus berisi nama kolom, diawali name_en.",
       "too_many_rows": "Terlalu banyak hidangan dalam satu file (maksimal 500).",
-      "name_required": "name_en wajib diisi.",
+      "name_required": "Beri nama hidangan dalam bahasa Inggris atau Indonesia.",
       "text_too_long": "Nama, deskripsi, atau ukuran terlalu panjang.",
       "price_invalid": "Harga bukan angka seperti 12.50.",
       "limit_invalid": "Batas harus berupa bilangan bulat.",

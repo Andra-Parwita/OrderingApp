@@ -132,6 +132,7 @@ export function parseDishCsv(text: string, cookNames?: ReadonlyArray<string>): P
     const cell = (name: string) => (fields[header.indexOf(name)] ?? '').trim();
     const fail = (p: ImportProblem): ParsedDishLine => ({ line, problem: p });
     const nameEn = cell('name_en');
+    const nameId = cell('name_id');
     const priceText = cell('price');
     const priceCents = priceToCents(priceText);
     if (priceCents === null) {
@@ -156,8 +157,8 @@ export function parseDishCsv(text: string, cookNames?: ReadonlyArray<string>): P
       return fail(problem('unknown_chef', `Unknown cook "${chef}"`));
     }
     const row: ImportDishRow = {
-      nameEn,
-      nameId: cell('name_id') || nameEn,
+      nameEn: nameEn || nameId,
+      nameId: nameId || nameEn,
       descriptionEn: cell('description_en'),
       descriptionId: cell('description_id'),
       size: cell('size'),

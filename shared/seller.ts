@@ -1,5 +1,6 @@
 import type { Seller } from './domain';
 import { isRecord } from './parse';
+import { SELLER_HELP_PATH } from './help';
 
 /** The seller the dev mock uses when a request names none; phase 4 replaces this with the session. */
 export const DEFAULT_SELLER_SLUG = 'onde-onde';
@@ -19,6 +20,7 @@ export const RESERVED_SLUGS: ReadonlyArray<string> = [
   'basket',
   'assets',
   's',
+  SELLER_HELP_PATH.slice(1),
 ];
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;

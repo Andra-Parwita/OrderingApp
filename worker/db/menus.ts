@@ -483,7 +483,7 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       });
     },
 
-    async publishMenu(force = false) {
+    async publishMenu(force = false, takingOrders?: boolean) {
       const [row, count] = await Promise.all([
         menuRow(),
         db.first<{ n: number }>('SELECT COUNT(*) AS n FROM menu_items WHERE seller_id = ?', sid),
@@ -497,8 +497,10 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       if (row.state === 'not_published') {
         await db
           .stmt(
-            "UPDATE menus SET state = 'live', published_at = ?, wizard_step = 3 WHERE seller_id = ?",
+            "UPDATE menus SET state = 'live', published_at = ?, wizard_step = 3, taking_orders = ? WHERE seller_id = ?",
             nowIso(),
+            // Only a not-published menu is changed; `undefined` keeps the switch as it is.
+            takingOrders === undefined ? row.taking_orders : takingOrders ? 1 : 0,
             sid,
           )
           .run();
@@ -630,7 +632,7 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       const seen = new Set<string>();
       const writes: Array<{ dish: Dish; isNew: boolean }> = [];
       const rows = input.rows.map((row): ImportRowResult => {
-        const name = row.nameEn.trim();
+        const name = row.nameEn.trim() || row.nameId.trim();
         const error = (p: ImportProblem): ImportRowResult => ({
           status: 'error',
           name,
@@ -655,14 +657,16 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
         }
         seen.add(key);
         const matches = dishes.filter(
-          (d) => same(d.name.en, name) && (d.chefId ?? '') === (chef?.id ?? ''),
+          (d) =>
+            same(row.nameEn.trim() === '' ? d.name.id : d.name.en, name) &&
+            (d.chefId ?? '') === (chef?.id ?? ''),
         );
         if (matches.length > 1) {
           return error(problem('ambiguous', `More than one dish called ${name} for this cook`));
         }
         const dish: Dish = {
           id: matches[0]?.id ?? deps.newId(),
-          name: { en: name, id: row.nameId.trim() || name },
+          name: { en: row.nameEn.trim() || name, id: row.nameId.trim() || name },
           description: { en: row.descriptionEn.trim(), id: row.descriptionId.trim() },
           size: { en: row.size.trim(), id: row.size.trim() },
           priceCents: row.priceCents,

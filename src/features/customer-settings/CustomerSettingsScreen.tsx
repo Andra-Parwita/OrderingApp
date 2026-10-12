@@ -5,12 +5,21 @@ import { setThemePreference, useThemePreference } from '../../theme/themePrefere
 import { CustomerSettingsView } from './CustomerSettingsView';
 
 /** The customer's Settings tab: language, appearance, order updates and the home-screen card. */
-export function CustomerSettingsScreen() {
+/** `showLanguage` is false for a kitchen that offers one language (plan 056). */
+export function CustomerSettingsScreen({
+  showLanguage = true,
+}: Readonly<{ showLanguage?: boolean }>) {
   const { i18n } = useTranslation();
   const theme = useThemePreference();
   const lang: Language = i18n.language.startsWith('id') ? 'id' : 'en';
   const onLang = useCallback((next: Language) => void i18n.changeLanguage(next), [i18n]);
   return (
-    <CustomerSettingsView lang={lang} onLang={onLang} theme={theme} onTheme={setThemePreference} />
+    <CustomerSettingsView
+      lang={lang}
+      onLang={onLang}
+      theme={theme}
+      onTheme={setThemePreference}
+      showLanguage={showLanguage}
+    />
   );
 }

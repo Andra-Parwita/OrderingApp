@@ -59,6 +59,17 @@ describe('portion limit under concurrent orders', () => {
     expect(await world.db.first('SELECT COUNT(*) AS n FROM orders')).toEqual({ n: 1 });
   });
 
+  it('names an Indonesian-only dish in the sold-out message (plan 056)', async () => {
+    await setLimit(1);
+    await world.db
+      .stmt("UPDATE menu_items SET name_en = '', name_id = 'Pesmol ikan' WHERE id = 'pesmol'")
+      .run();
+    const onde = await seller();
+    expect((await onde.createOrder(order('Rina', 1))).ok).toBe(true);
+    const lost = await onde.createOrder(order('Tom', 1));
+    expect(!lost.ok && lost.message).toBe('Pesmol ikan is sold out');
+  });
+
   it('gives the loser the same "only N left" error a slower order would get', async () => {
     await setLimit(3);
     const onde = await seller();

@@ -56,10 +56,25 @@ The plan work in progress, one row per stage or check, kept current by the coord
 | gate: typecheck · lint · format · all unit tests, then full e2e parallel | coordinator · shell | 20:22 | 25 min | | | | — | ⏳ |
 
 
+
+
+
+
+
+| final gate: lint · format · all unit, then full e2e | coordinator · shell | 21:22 | 35 min | | | | — | ⏳ |
+
 ## Done (newest first)
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-12 | 058 · 1 seller Help page (public hidden address, 6 real screenshots, links everywhere, waving mascot) | builder · sonnet | 21:01 | 50 min | 21:20 | 19 min | −31 min | ~25 files, 6 webp | ✅ 9 tests |
+| 2026-10-12 | 059 · new-version bar, version.json (no-store), stale-chunk reload once | builder · sonnet | 21:05 | 30 min | 21:16 | 11 min | −19 min | 8 new, 3 edited | ✅ 6 tests, build ok |
+| 2026-10-12 | editor round: 056·3 one field per text, 057·2 ⇄ in dish editor, sold-out names, language storage fix, setting descriptions | builder · sonnet | 21:01 | 40 min | 21:12 | 11 min | −29 min | ~18 files, 2 new | ✅ 159 tests |
+| 2026-10-12 | 056 · 1–2 languages for customers (migration 0013, Settings → Kitchen, forced customer language) | builder · sonnet | 20:39 | 45 min | 21:02 | 23 min | −22 min | ~20 files, 4 new | ✅ e2e customer-batch1 3/3 |
+| 2026-10-12 | 058 · 0 Help mock-up (11 topics, real names EN/ID, devices, home screen, waving mascot) | builder · sonnet | 20:50 | 20 min | 21:05 | 15 min | −5 min | temp/mockups/seller-help.html | ✅ |
+| 2026-10-12 | 057 · 1 translate route, AI binding (remote off locally), 100/day cap, TranslateButton | builder · sonnet | 20:41 | 35 min | 20:55 | 14 min | −21 min | 6 new, ~10 edited | ✅ 10 + 281 tests with no token |
+| 2026-10-12 | 056 · one language per dish is enough (CSV, import match, editor text) | builder · sonnet | 20:42 | 25 min | 20:52 | 10 min | −15 min | ~8 files | ✅ 508 tests; todo: worker/db/seller.ts sold-out messages use name.en |
+| 2026-10-12 | 055 · publish now or paused, in a confirmation modal | builder · sonnet | 20:28 | 20 min | 20:46 | 18 min | −2 min | ~11 files, 2 new | ✅ 271 tests |
 | 2026-10-12 | bug fix: draft menu hidden from customers ("coming soon") + 054 home-screen card | builder · sonnet | 20:09 | 60 min | 20:21 | 12 min | −48 min | ~14 files, 2 new | ✅ 667 tests, e2e customer-batch1 3/3 |
 | 2026-10-12 | seller sign-in shows ShaggyBobo when no kitchen is remembered | builder · sonnet | 20:17 | 15 min | 20:21 | 4 min | −11 min | 4 files | ✅ 10 tests; captures/sign-in-fresh |
 | 2026-10-12 | 050 · 3 CSV Import / Export / Template + 053 menu step tabs + phone More note | builder · sonnet | 20:08 | 65 min | 20:22 | 14 min | −51 min | 3 new, ~10 edited | ✅ 206 tests; captures/p050, p053 |

@@ -19,7 +19,7 @@ import type { PickupPointInput, UpdateItemRequest } from '../../../shared/setupC
 export type MenuOp =
   | { kind: 'createMenu'; cookingDate: string }
   | { kind: 'updateMenu'; request: UpdateMenuRequest }
-  | { kind: 'publish'; force?: boolean }
+  | { kind: 'publish'; force?: boolean; takingOrders?: boolean }
   | { kind: 'unpublish' }
   | { kind: 'deleteMenu' }
   | { kind: 'finish' }

@@ -147,7 +147,7 @@ export type SellerRepository = {
   /** Allowed while live (instant edits); refused once finished (`week_closed`). */
   updateMenu(request: UpdateMenuRequest): Promise<StoreResult<UpdateMenuResponse>>;
   /** An empty menu is a warning (`no_items` with `no_dishes`) that `force` overrides (D-062). */
-  publishMenu(force?: boolean): Promise<StoreResult<MenuView>>;
+  publishMenu(force?: boolean, takingOrders?: boolean): Promise<StoreResult<MenuView>>;
   unpublishMenu(): Promise<StoreResult<MenuView>>;
   /** A menu that is not published only (`week_not_draft`); it ends as finished with no past-menu entry. */
   deleteMenu(): Promise<StoreResult<{ view: MenuView; before: string | undefined }>>;

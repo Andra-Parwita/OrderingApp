@@ -67,6 +67,8 @@ try {
     configPath: path.join(root, 'wrangler.jsonc'),
     // wrangler's CLI keeps local state under <persist-to>/v3; do the same, so the two agree.
     persist: { path: path.join(dir, 'v3') },
+    // Plan 057: the AI binding is remote; seeding needs no login.
+    remoteBindings: false,
   });
   const d1 = proxy.env.DB;
   const db = new Db(d1);

@@ -223,6 +223,8 @@ export type CustomerSettingsViewProps = Readonly<{
   install?: InstallOverride;
   /** Fixtures and tests: pretend the browser is offering its own Install (Android Chrome). */
   canInstall?: boolean;
+  /** Plan 056: false when the kitchen offers one language, so there is nothing to switch. */
+  showLanguage?: boolean;
 }>;
 
 /** The Settings tab. */
@@ -233,6 +235,7 @@ export function CustomerSettingsView({
   onTheme,
   install: installOverride,
   canInstall: canInstallOverride,
+  showLanguage = true,
 }: CustomerSettingsViewProps) {
   const { t } = useTranslation();
   const { t: ti } = useTranslation(INSTALL_NS);
@@ -282,17 +285,19 @@ export function CustomerSettingsView({
     <Page>
       <Title>{t('customerSettings.title')}</Title>
       <Rows>
-        <Row>
-          <Label>
-            <Name>{t('customerSettings.language')}</Name>
-          </Label>
-          <Segmented
-            options={LANGUAGES}
-            value={lang}
-            onChange={onLang}
-            label={t('language.label')}
-          />
-        </Row>
+        {showLanguage ? (
+          <Row>
+            <Label>
+              <Name>{t('customerSettings.language')}</Name>
+            </Label>
+            <Segmented
+              options={LANGUAGES}
+              value={lang}
+              onChange={onLang}
+              label={t('language.label')}
+            />
+          </Row>
+        ) : null}
         <Row>
           <Label>
             <Name>{t('customerSettings.theme')}</Name>

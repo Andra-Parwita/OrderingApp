@@ -29,6 +29,26 @@ export class SellerLive extends DurableObject {
       return Response.json({ sent });
     }
 
+    // Plan 057: the daily translation cap. The key holds today's count; older days are removed.
+    if (pathname === '/translate-slot' && request.method === 'POST') {
+      const body = (await request.json().catch(() => null)) as {
+        day?: unknown;
+        cap?: unknown;
+      } | null;
+      if (typeof body?.day !== 'string' || typeof body.cap !== 'number') {
+        return new Response('Bad request', { status: 400 });
+      }
+      const key = `translate:${body.day}`;
+      const used = (await this.ctx.storage.get<number>(key)) ?? 0;
+      if (used >= body.cap) return Response.json({ ok: false });
+      const old = [...(await this.ctx.storage.list({ prefix: 'translate:' })).keys()].filter(
+        (k) => k !== key,
+      );
+      if (old.length > 0) await this.ctx.storage.delete(old);
+      await this.ctx.storage.put(key, used + 1);
+      return Response.json({ ok: true });
+    }
+
     if (pathname === '/connect' && request.headers.get('Upgrade') === 'websocket') {
       const pair = new WebSocketPair();
       const [client, server] = [pair[0], pair[1]];

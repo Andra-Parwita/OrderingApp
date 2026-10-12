@@ -77,7 +77,8 @@
         "Use scenery or a pattern only, with no text or faces."
       ]
     },
-    "specIcon": "{{width}} × {{height}} px · keep the mark in the middle {{keepWidth}} × {{keepHeight}} · square, no transparency, no rounded corners · JPEG, PNG or WebP · up to {{kb}} KB"
+    "specIcon": "{{width}} × {{height}} px · keep the mark in the middle {{keepWidth}} × {{keepHeight}} · square, no transparency, no rounded corners · JPEG, PNG or WebP · up to {{kb}} KB",
+    "altOne": "Picture text"
   },
   "chefs": {
     "title": "Chefs",
@@ -133,9 +134,9 @@
     "inviteWhatsapp": "Send on WhatsApp",
     "greet": "Hi {{name}}!",
     "greetAnon": "Hi!",
-    "messageOwner": "{{greet}} 👋 You're invited to run *{{kitchen}}* on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.",
-    "messageChef": "{{greet}} 👋 You're invited to join *{{kitchen}}* as a chef on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.",
-    "messageHelper": "{{greet}} 👋 You're invited to join *{{kitchen}}* as a helper on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.",
+    "messageOwner": "{{greet}} 👋 You're invited to run *{{kitchen}}* on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.\nHelp: {{help}}",
+    "messageChef": "{{greet}} 👋 You're invited to join *{{kitchen}}* as a chef on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.\nHelp: {{help}}",
+    "messageHelper": "{{greet}} 👋 You're invited to join *{{kitchen}}* as a helper on {{app}}, the app for taking your weekly food orders.\n1. Open this link on the phone or tablet you'll use: {{link}}\n2. Save the passkey when your phone asks (Face ID, fingerprint or PIN).\n\nThe link works once, on one device, within 24 hours.\nHelp: {{help}}",
     "messageLang": "Message language",
     "messagePreview": "Message (you can edit it before sending)",
     "inviteCopyMessage": "Copy message",

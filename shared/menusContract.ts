@@ -285,7 +285,9 @@ export type ImportDishRow = {
 /** The first thing wrong with a row on its own (no library or cooks involved), or null. */
 export function importRowProblem(row: ImportDishRow): ImportProblem | null {
   const problem = (code: ImportProblemCode, message: string) => ({ code, message });
-  if (row.nameEn.trim() === '') return problem('name_required', 'name_en is required');
+  if (row.nameEn.trim() === '' && row.nameId.trim() === '') {
+    return problem('name_required', 'name_en or name_id is required');
+  }
   if (
     row.nameEn.length > ITEM_NAME_MAX ||
     row.nameId.length > ITEM_NAME_MAX ||
@@ -528,6 +530,18 @@ export type UpdateMenuRequest = {
 };
 
 export type MenuViewResponse = { menu: MenuView };
+
+/** POST .../publish: both fields optional. `takingOrders: false` publishes with ordering paused (plan 055). */
+export function parsePublishRequest(
+  input: unknown,
+): { force: boolean; takingOrders?: boolean } | null {
+  if (input === undefined || input === null) return { force: false };
+  if (!isRecord(input)) return null;
+  const { force, takingOrders } = input;
+  if (force !== undefined && typeof force !== 'boolean') return null;
+  if (takingOrders !== undefined && typeof takingOrders !== 'boolean') return null;
+  return { force: force ?? false, ...(takingOrders !== undefined ? { takingOrders } : {}) };
+}
 /** PUT …/menus/current: `removedWithOrders` names menu dishes that were dropped although they have orders (D-062). */
 export type UpdateMenuResponse = { menu: MenuView; warnings: { removedWithOrders: Array<string> } };
 /** POST …/menus/current/finish. */

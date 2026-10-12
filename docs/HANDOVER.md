@@ -5,7 +5,7 @@
 **Last session:** 2026-10-12 evening, the owner's PC (Adelaide), with Claude as coordinator. Branch `indra/brand_logo_ux` = `main` (release **1.0.24**, `e056995`, deployed) + the builder's plans 045/046 (`09268ac`) + **this session's uncommitted work** below. GitHub's copy of the branch still has the old history: push it with `git push --force-with-lease origin indra/brand_logo_ux`.
 
 ## Where things stand
-Built on this PC tonight, **not committed or deployed yet**. Each builder ran typecheck, eslint, its unit tests and its own e2e specs. The final gate: typecheck ✅, lint ✅, format ✅ (one file fixed at 20:26), **all unit tests were still running** when this was written (log `scratch/g2-unit.log`, result in `scratch/g2-result.txt`), and **the full e2e suite has not run on the whole set yet** (see "First thing next session").
+Built on this PC tonight, **not committed or deployed yet**. Each builder ran typecheck, eslint, its unit tests and its own e2e specs. The final gate: typecheck ✅, lint ✅, format ✅ (one file fixed at 20:26), **all unit tests pass: 1852 of 1852 in 164 files** (20:34, before plan 055), and **the full e2e suite has not run on the whole set yet** (see "First thing next session").
 
 | plan | what |
 |---|---|
@@ -17,6 +17,11 @@ Built on this PC tonight, **not committed or deployed yet**. Each builder ran ty
 | 052 | admin page **"Last updated" + Refresh** (at most once a minute) |
 | 053 | **Menu step tabs** for an unpublished menu: each step read-only, **Edit** opens the wizard at that step, **Continue to step N** |
 | 054 | a friendly **"put it on your home screen"** card (customer menu; seller Home/Orders), only in the browser, never in the installed app; "Not now" = 7 days |
+| 055 | **Publish now, or publish with ordering paused**, chosen in a **confirmation modal when the seller presses Publish**, each option explained in plain words; after a paused publish a notice says how to open orders. ✅ built (271 tests) |
+| 056 | **Languages for customers**: both / English only / Indonesian only (Settings → Kitchen); one field per text when one language. ✅ built |
+| 057 | **⇄ Translate** button for dish name/description (Cloudflare Workers AI, 100 a day per kitchen). ✅ built, in the dish editor. Locally there is no AI (`remoteBindings: false`), so the button says "not available": expected. **After deploying, check one translation returns 200** (a 503 means the binding didn't ship) |
+| 058 | **Seller Help** page, public at the hidden address `/help-yw4xsvh8` (D-095), 11 topics EN/ID with real screenshots, waving mascot; **Help** under Settings in the left menu, More, sign-in, setup and the invite message ✅. 6 real screenshots so far (English); more (devices, invite, publish, orders) need a real signed-in session — next round |
+| 059 | **"A new version is ready · Refresh"** bar + automatic reload when an old screen misses a replaced part ✅ (`version.json` no-store via the new `public/_headers`) |
 | fix | **customers no longer see an unpublished (draft) menu**: they get "The next menu is coming soon" (it was leaking the draft's dishes on the live site) |
 | fix | the seller banner no longer collapses with the left menu (only on scroll or ^) |
 | fix | `/seller/sign-in` shows ShaggyBobo branding when the device has no kitchen |
@@ -27,17 +32,18 @@ Built on this PC tonight, **not committed or deployed yet**. Each builder ran ty
 ## Deploy impact (tell the builder before deploying)
 | area | impact |
 |---|---|
-| database | ✅ **no new migrations** (the last is still 0012, already on Cloudflare) |
-| secrets / settings | ✅ nothing new |
+| database | ⚠️ **one new migration, 0013_languages (add-only, plan 056)**: apply to the live D1 **before** deploying (deploying the code first breaks the kitchen settings reads until it's applied): `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote`; on each PC `pnpm db:migrate:local` (never reseed) |
+| secrets / settings | ⚠️ `wrangler.jsonc` gains an **AI binding** (plan 057); no new secret. The account is on the **Workers Free** plan (owner checked 2026-10-12): over the free daily allowance translations just stop, no charge possible |
 | server + app together | ⚠️ deploy **both in one go** (a normal `pnpm run deploy` does): the app now understands the new "not published" state and the new add-one-dish route |
 | customers | the moment it's live, an unpublished menu disappears from the customer page ("coming soon") until it's published |
 | seller home-screen apps | ⚠️ low: old shortcuts keep working; installing now gives "ShaggyBobo Seller" with the bean icon (not the kitchen's name/icon) |
 | WhatsApp previews | WhatsApp caches previews; a link shared before the deploy may show the old card for a while |
 | chefs | ⚠️ rule change: chefs can add **their own** dish to a **live** menu; tell the team |
 | signed-in people | ✅ nobody is signed out |
+| beta testers with the app open | ⚠️ **this** deploy: an old home-screen app keeps the old version until it is **fully closed and reopened** (swipe it away). Tell them once. From this version on, the new-version bar (plan 059) tells them |
 
 ## First thing next session (before the commit)
-1. Read `scratch/g2-result.txt`: it should end with `unit=0`. If not, open `scratch/g2-unit.log`, fix (a miniflare "fetch failed" / EADDRINUSE in one test file is a known flake: re-run that file alone).
+1. Check plan 055 finished (its report / `docs/plans/live-status.md`), then re-run the unit tests it touched (`pnpm exec vitest run src/features/seller-menu mocks`). The rest passed (1852/1852 at 20:34). A miniflare "fetch failed" / EADDRINUSE in one file is a known flake: re-run that file alone.
 2. Run the **full e2e suite** once on a quiet tree (parallel, see "Running e2e" in [guide/tech-stack.md](guide/tech-stack.md)): `NODE_EXTRA_CA_CERTS="$LOCALAPPDATA/mkcert/rootCA.pem" pnpm exec playwright test > scratch/gate-e2e.log 2>&1`. Fix only real failures; expected-URL or wording changes from tonight are spec updates.
 3. Then the owner commits (message below), pushes with `--force-with-lease`, opens a PR / merges `indra/brand_logo_ux` into `main`.
 
@@ -52,13 +58,17 @@ Link previews, seller app install, dish CSV, chef menu additions, menu step tabs
 - Dishes on the phone; chefs can add their own dish to the current menu (D-094)
 - Edit chefs opens a modal so a typed dish is never lost
 - Menu step tabs for an unpublished menu (read-only, Edit, Continue)
+- Publish now or publish with ordering paused
+- Languages for customers: both, English only or Indonesian only (migration 0013)
+- Translate button for dish texts (Workers AI)
+- Seller Help page (public, hidden address) with links from the app and the invite message
 - Admin page: Last updated and Refresh (once a minute)
 - Fix: customers no longer see an unpublished menu ("coming soon")
 - Fix: banner no longer collapses with the left menu; ShaggyBobo on a fresh seller sign-in; badge without cancelled orders
 ```
 
 ## After the merge: the builder deploys
-`git pull` on `main` → `pnpm install` → (no migrations this time) → read [guide/deploy-cloudflare.md](guide/deploy-cloudflare.md) and the latest `plans/release-*.md` → `pnpm run deploy` → check the live app.
+`git pull` on `main` → `pnpm install` → `pnpm db:migrate:local` → apply **0013** to the live D1 → read [guide/deploy-cloudflare.md](guide/deploy-cloudflare.md) and the latest `plans/release-*.md` → `pnpm run deploy` → check the live app.
 
 ## The owner's checks after the deploy
 - Send yourself an **invite** and a **menu link** on WhatsApp: the small picture and the 👋 are right (use a fresh link).

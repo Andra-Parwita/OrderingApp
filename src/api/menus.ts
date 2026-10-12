@@ -91,10 +91,15 @@ export function publishMenu(
   force?: boolean,
   actor?: StaffActor,
   seller?: string,
+  takingOrders?: boolean,
 ): Promise<ApiResult<MenuViewResponse>> {
+  const body = {
+    ...(force ? { force } : {}),
+    ...(takingOrders === undefined ? {} : { takingOrders }),
+  };
   return request('/api/seller/menus/current/publish', parseMenuViewResponse, {
     method: 'POST',
-    ...(force ? { body: { force } } : {}),
+    ...(Object.keys(body).length > 0 ? { body } : {}),
     ...who(actor, seller),
   });
 }

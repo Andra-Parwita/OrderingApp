@@ -31,6 +31,15 @@ describe('parseDishCsv', () => {
     expect(lines[0]?.line).toBe(3);
   });
 
+  it('takes a row with only name_id (name_en falls back to it); neither name is name_required', () => {
+    const { lines } = parseDishCsv(`${H}
+,Lemper,,,,5,,,,
+,,,,,5,,,,
+`);
+    expect(lines[0]?.row).toMatchObject({ nameEn: 'Lemper', nameId: 'Lemper' });
+    expect(lines[1]?.problem?.code).toBe('name_required');
+  });
+
   it('reports a problem per row and keeps the good ones', () => {
     const text = [
       H,

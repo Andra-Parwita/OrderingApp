@@ -128,6 +128,18 @@ describe('dish CSV import (plan 050)', () => {
   const importRows = (token: string, rows: Array<unknown>, apply: boolean) =>
     call('POST', '/api/seller/dishes/import', { token, body: { rows, apply } });
 
+  it('imports a row with only an Indonesian name and refuses a row with no name', async () => {
+    const { owner } = await setup();
+    const rows = [row('', '', { nameId: 'Lemper' }), row('', '', { nameId: '' })];
+    const reply = result(await importRows(owner.token, rows, true));
+    expect(reply.rows.map((r) => r.status)).toEqual(['new', 'error']);
+    expect(reply.rows[1]?.problem?.code).toBe('name_required');
+    const saved = (await dishes(owner.token)).find((d) => d.name.en === 'Lemper');
+    expect(saved).toBeDefined();
+    const again = result(await importRows(owner.token, [row('', '', { nameId: 'lemper' })], false));
+    expect(again.rows[0]?.status).toBe('update');
+  });
+
   it('previews new, update and error rows without writing; apply writes them', async () => {
     const { owner, watiName } = await setup();
     await call('POST', '/api/seller/dishes', {

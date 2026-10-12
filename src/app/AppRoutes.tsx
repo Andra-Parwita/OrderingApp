@@ -16,6 +16,7 @@ import {
   type Location,
 } from 'react-router';
 import { styled } from 'styled-components';
+import { SELLER_HELP_PATH } from '../../shared/help';
 import { lastKitchen } from '../api/device/lastKitchen';
 import { currentSellerSlug } from '../api/device/sellerContext';
 import { fetchPreferences } from '../api/menus';
@@ -31,11 +32,13 @@ import {
   OrderPlacedScreen,
   placeReset,
   selectKitchenMissing,
+  useKitchenLanguages,
   type CheckoutStep,
   type CustomerRootState,
 } from '../features/customer-menu';
 import { MyOrdersScreen, OrderQrScreen, OrderScreen } from '../features/customer-orders';
 import { CustomerSettingsScreen } from '../features/customer-settings';
+import { HELP_NS, HelpScreen } from '../features/seller-help';
 import { CookScreen } from '../features/seller-cook';
 import {
   ContactsBackup,
@@ -79,6 +82,8 @@ import {
   SellerSignInRoute,
 } from './AuthRoutes';
 import { AdminGuard, SellerGuard, SellerOnly } from './guards';
+import { BrandLogo } from './BrandLogo';
+import { WavingMascot } from './BrandMascot';
 import { SellerMenuRoute } from './SellerMenuRoute';
 import { SessionProvider, useSession } from './session';
 import { CustomerShell } from './CustomerShell';
@@ -252,6 +257,10 @@ function EditOrderRoute({ step }: Readonly<{ step: 'basket' | 'name' }>) {
       />
     </EditOrderFlow>
   );
+}
+
+function CustomerSettingsRoute() {
+  return <CustomerSettingsScreen showLanguage={useKitchenLanguages() === 'both'} />;
 }
 
 function MyOrdersRoute() {
@@ -504,6 +513,7 @@ const PHONE_LINKS = [
   ['sell', '/seller/sell'],
   ['labels', '/seller/labels'],
   ['printOrders', '/seller/orders/print'],
+  ['help', SELLER_HELP_PATH],
 ] as const;
 // What the server closes to a chef (D-013); the chef does not see these.
 const CHEF_HIDDEN: ReadonlySet<string> = new Set([
@@ -555,11 +565,11 @@ function MoreRoute() {
         <PageHeader title={t('sellerNav.moreTitle')} />
         <nav aria-label={t('sellerNav.moreTitle')}>
           {PHONE_LINKS.filter(([key]) =>
-            helper ? key === 'sell' : me?.role !== 'chef' || key !== 'sell',
+            helper ? key === 'sell' || key === 'help' : me?.role !== 'chef' || key !== 'sell',
           ).map(([key, to]) => (
             <ListRow
               key={key}
-              primary={t(`sellerNav.${key}`)}
+              primary={key === 'help' ? t('nav', { ns: HELP_NS }) : t(`sellerNav.${key}`)}
               trailing="›"
               onClick={() =>
                 void navigate(key === 'dishes' && me?.role === 'chef' ? '/seller/menu' : to)
@@ -726,9 +736,14 @@ export function AppRoutes() {
             <Route path="/o/:token/edit" element={<EditOrderRoute step="basket" />} />
             <Route path="/o/:token/edit/name" element={<EditOrderRoute step="name" />} />
             <Route path="/my-orders" element={<MyOrdersRoute />} />
-            <Route path="/settings" element={<CustomerSettingsScreen />} />
+            <Route path="/settings" element={<CustomerSettingsRoute />} />
           </Route>
           {/* Sign-in and setup sit outside the seller shell; the shell needs a finished sign-in. */}
+          {/* Plan 058, D-095: public Help at a hard-to-guess address, outside the seller shell; /seller/help is not a route. */}
+          <Route
+            path={SELLER_HELP_PATH}
+            element={<HelpScreen logo={<BrandLogo onBeige />} mascot={<WavingMascot />} />}
+          />
           <Route path="/seller/setup" element={<SellerSetupRoute />} />
           <Route path="/seller/sign-in" element={<SellerSignInRoute />} />
           <Route path="/admin/setup" element={<AdminSetupRoute />} />

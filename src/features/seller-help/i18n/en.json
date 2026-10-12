@@ -1,0 +1,16 @@
+{
+  "pageTitle": "Seller help",
+  "title": "ShaggyBobo · Seller help",
+  "sub": "Short steps, in plain words.",
+  "search": "Search, e.g. \"dish\", \"invite\"",
+  "print": "Print",
+  "none": "Nothing found. Try another word.",
+  "foot": "Help page · works without signing in",
+  "language": "Language",
+  "topics": "Help topics",
+  "nav": "Help",
+  "needHelp": "Need help?",
+  "inviteKeyHelp": "Help with your invite key",
+  "inviteLine": "Help: {{link}}",
+  "picture": "Picture: {{what}}"
+}
