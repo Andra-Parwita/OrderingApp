@@ -594,6 +594,7 @@ Format for each entry:
 
 ## D-096 · Languages for customers, and one language per dish is enough (2026-10-12; owner)
 **Ruling:** "A". A per-kitchen setting **Languages for customers**: both (default), English only, Indonesian only (plan 056, migration 0013). With one language, customers see it with no switch and the seller types each text once (saved to both columns). With both, a dish may still be filled in one language only; the empty one shows the other's text. A **⇄ Translate** button (plan 057, Cloudflare Workers AI, 100 a day per kitchen; the account is on the Free plan, so no charge is possible) fills the other language for the seller to check.
+**Ruling 13 Oct ("A", plan 060):** for "English and Indonesian", a new customer sees **the phone's own language** unless the seller actively picked **Customers see first** (Phone's language / English / Indonesian; default Phone's language). Stored as a nullable `first_language` (NULL = not chosen; migration 0014 not yet live, so amended).
 **Trade-off:** machine translation can mangle food names; the seller always sees and can fix it before saving.
 **Revisit when:** a kitchen wants a third language.
 

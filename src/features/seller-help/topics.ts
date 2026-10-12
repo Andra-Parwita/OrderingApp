@@ -310,7 +310,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
           pic: 'the name fields with the translate button',
         },
         {
-          text: 'Fill in the **Price**, choose the **Chef** who cooks it, add a picture if you like. Tap **Add dish**.',
+          text: 'Fill in the **Price**, choose the **Chef** who cooks it. Tap **Add dish**.',
           pic: 'the dish form with price and chef',
         },
         {
@@ -338,7 +338,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
           pic: 'kolom nama dengan tombol terjemah',
         },
         {
-          text: 'Isi **Harga**, pilih **Koki** yang memasaknya, tambah gambar kalau mau. Ketuk **Tambah hidangan**.',
+          text: 'Isi **Harga**, pilih **Koki** yang memasaknya. Ketuk **Tambah hidangan**.',
           pic: 'formulir hidangan dengan harga dan koki',
         },
         {

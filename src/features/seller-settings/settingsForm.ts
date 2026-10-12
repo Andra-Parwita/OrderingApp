@@ -11,7 +11,7 @@ export type Draft = {
   /** Plan 056; undefined = leave the kitchen's choice as it is. */
   languages?: Languages;
   /** Plan 060; undefined = leave it as it is. */
-  firstLanguage?: Language;
+  firstLanguage?: Language | null;
 };
 
 export function toDraft(settings: KitchenSettings): Draft {

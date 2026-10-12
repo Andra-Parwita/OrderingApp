@@ -31,7 +31,7 @@ export type KitchenRow = {
 export type ImageRow = { slot: ImageSlot; ref: string };
 export type SettingsRow = {
   languages: Languages;
-  first_language: Language;
+  first_language: Language | null;
   whatsapp_number: string | null;
   post_greeting_en: string;
   post_greeting_id: string;
@@ -209,7 +209,7 @@ export function kitchenOf(
 export function settingsOf(row: SettingsRow, takingOrders: boolean): KitchenSettings {
   return {
     languages: row.languages,
-    firstLanguage: row.first_language,
+    ...(row.first_language !== null ? { firstLanguage: row.first_language } : {}),
     ...(row.whatsapp_number !== null ? { whatsappNumber: row.whatsapp_number } : {}),
     postGreeting: text(row.post_greeting_en, row.post_greeting_id),
     postClosing: text(row.post_closing_en, row.post_closing_id),

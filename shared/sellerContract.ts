@@ -60,7 +60,12 @@ export function parseSettingsRequest(input: unknown): KitchenSettings | null {
   const postGreeting = parsePostText(input['postGreeting']);
   const postClosing = parsePostText(input['postClosing']);
   const { whatsappNumber, orderingOpen, languages, firstLanguage } = input;
-  if (firstLanguage !== undefined && !isOneOf(FIRST_LANGUAGES, firstLanguage)) return null;
+  if (
+    firstLanguage !== undefined &&
+    firstLanguage !== null &&
+    !isOneOf(FIRST_LANGUAGES, firstLanguage)
+  )
+    return null;
   if (languages !== undefined && !isOneOf(LANGUAGES, languages)) return null;
   if (!postGreeting || !postClosing || typeof orderingOpen !== 'boolean') return null;
   let number: string | undefined;

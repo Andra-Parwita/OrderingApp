@@ -96,6 +96,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 064 | ✅ | [Keep the pictures of the last 10 menus](064-past-menu-pictures.md) | approved (2026-10-12); server now, client after 061 |
 | 065 | ✅ | [My orders: remember the kitchen, kitchen pill on cards](065-my-orders-kitchen.md) | approved (2026-10-12) |
 | 066 | ✅ | [Up to 50 dishes on a menu, labels and print split properly](066-fifty-dishes.md) | approved (2026-10-12) |
+| 067 | ⬜ | [A picture for each dish, shown to customers](067-dish-pictures.md) | draft; after the next deploy |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

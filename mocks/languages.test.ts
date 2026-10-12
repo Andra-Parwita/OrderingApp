@@ -54,19 +54,21 @@ describe('languages for customers (plan 056)', () => {
     expect((await settings()).languages).toBe('id');
   });
 
-  it('defaults the first language to en, lets the owner set id, keeps it when omitted (plan 060)', async () => {
+  it('has no first language until the owner picks one, clears it with null, keeps it when omitted (plan 060)', async () => {
     const current = await settings();
-    expect(current.firstLanguage).toBe('en');
+    expect(current.firstLanguage).toBeUndefined();
     const menuFirst = async () =>
       parseMenuResponse((await call('GET', `/api/s/${A}/menu`)).body)?.firstLanguage;
-    expect(await menuFirst()).toBe('en');
+    expect(await menuFirst()).toBeUndefined();
     const put = await call('PUT', '/api/seller/settings', { ...current, firstLanguage: 'id' });
     expect(put.body.settings.firstLanguage).toBe('id');
     expect(await menuFirst()).toBe('id');
-    const old = { ...current };
-    delete old.firstLanguage;
-    const kept = await call('PUT', '/api/seller/settings', { ...old, orderingOpen: true });
+    const kept = await call('PUT', '/api/seller/settings', { ...current, orderingOpen: true });
     expect(kept.body.settings.firstLanguage).toBe('id');
+    const cleared = await call('PUT', '/api/seller/settings', { ...current, firstLanguage: null });
+    expect(cleared.body.settings.firstLanguage).toBeUndefined();
+    expect((await settings()).firstLanguage).toBeUndefined();
+    expect(await menuFirst()).toBeUndefined();
     expect(
       (await call('PUT', '/api/seller/settings', { ...current, firstLanguage: 'fr' })).status,
     ).toBe(400);

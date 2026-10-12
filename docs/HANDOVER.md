@@ -24,10 +24,10 @@
 **Decisions recorded:** D-095 (Help public at a hidden address), D-096 (languages; one language per dish is enough), D-097 (Devices on the phone). **Live plan status:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md).
 
 ## For the owner tomorrow: questions waiting (one at a time)
-1. **063 Menu defaults:** Settings → Menu defaults is still two-way (delivery on/off). A true Pickup · Delivery · Both default needs one more stored setting. **A:** leave it two-way (each menu's Details has the three-way choice). **B:** add the stored setting (small; maybe a migration).
-2. **060 default first language:** every kitchen now says "English" first by default, so an Indonesian phone opening a "both" kitchen sees English until it switches (before, it followed the phone). **A:** default to the **phone's language** unless the owner picked one. **B:** keep English as the default.
-3. **Dish pictures for customers:** the customer menu shows no dish pictures today (only the menu's collage). **A:** leave it. **B:** a plan to show each dish's picture (lazy-loaded).
-4. **Invite message drafts:** the editable invite message isn't kept as a draft, because it contains the key. **A:** fine as is.
+1. ~~063 Menu defaults~~ **Decided (owner A, 13 Oct): leave Menu defaults two-way;** the three-way choice is per menu in Details.
+2. ~~060 default first language~~ **Decided (owner A, 13 Oct): the phone's language unless the seller picked one** (migration 0014 amended before it ever reached the live database).
+3. ~~Dish pictures~~ **Decided (owner B, 13 Oct): after the next deploy** → [plan 067](plans/067-dish-pictures.md) (dishes have no picture today; sellers will add one per dish, customers see it).
+4. ~~Invite message drafts~~ **Decided (owner A, 13 Oct): fine as is** (name and role kept; the message holds the key, so it is never stored).
 
 ## Deploy impact (tell the builder before the next deploy)
 | area | impact |

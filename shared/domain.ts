@@ -210,8 +210,12 @@ export type Languages = 'both' | 'en' | 'id';
 export type KitchenSettings = {
   /** Absent = "both" (an older client or backup). */
   languages?: Languages;
-  /** Plan 060: with "both", the language a customer sees until they switch. Absent = "en" (keeps the stored one on a save). */
-  firstLanguage?: Language;
+  /**
+   * Plan 060: with "both", the language a customer sees until they switch. Absent / null = not chosen
+   * (the customer keeps the phone's language). On a save, absent keeps the stored one and null clears it;
+   * what the server sends back never has null.
+   */
+  firstLanguage?: Language | null;
   whatsappNumber?: string;
   postGreeting: LocalText;
   postClosing: LocalText;

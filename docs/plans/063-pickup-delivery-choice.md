@@ -12,7 +12,7 @@ How do customers get their food?
 
 ## Rules
 - No new storage: the choice is derived from today's data (places ticked + `delivery.available`) and writes the same fields. Switching to Delivery un-ticks the places only on save, and asks first if places were ticked ("Remove the pickup places from this menu?").
-- Settings → Menu defaults gets the same three-way choice for new menus (default: today's setting).
+- ~~Settings → Menu defaults gets the same three-way choice~~ **Owner (13 Oct, A): not needed; Menu defaults stays delivery on/off, the choice is per menu.**
 - Check step: "Pickup only" / "Delivery only" / "Pickup or delivery" in its summary; the "no place and no delivery" worry stays for the impossible mix.
 - Customers: the menu page already says Pickup / Pickup or delivery / Delivery only; the basket/checkout must handle **no pickup places** (today it assumes `points[0]`): delivery is preselected and no pickup picker shows.
 - EN + ID. Help topic 6 updated to the new control.

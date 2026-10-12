@@ -64,7 +64,7 @@ export function settingsStatement(
     s.postClosing.en,
     s.postClosing.id,
     s.languages ?? 'both',
-    s.firstLanguage ?? 'en',
+    s.firstLanguage ?? null,
     prefs.theme,
     d.cutoffDaysBefore,
     d.cutoffTime,

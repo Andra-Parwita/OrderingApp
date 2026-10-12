@@ -400,7 +400,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       ordering: draft ? { open: false, reason: 'not_published' } : ordering(s),
       theme: s.theme,
       languages: s.settings.languages ?? 'both',
-      firstLanguage: s.settings.firstLanguage ?? 'en',
+      ...(s.settings.firstLanguage ? { firstLanguage: s.settings.firstLanguage } : {}),
       ...(!draft && s.pictureUrl !== undefined ? { pictureUrl: s.pictureUrl } : {}),
     };
   }
@@ -975,23 +975,26 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         db.stmt(
           `UPDATE kitchen_settings SET whatsapp_number = ?, post_greeting_en = ?, post_greeting_id = ?,
              post_closing_en = ?, post_closing_id = ?, languages = COALESCE(?, languages),
-             first_language = COALESCE(?, first_language) WHERE seller_id = ?`,
+             first_language = CASE WHEN ? THEN ? ELSE first_language END WHERE seller_id = ?`,
           next.whatsappNumber ?? null,
           next.postGreeting.en,
           next.postGreeting.id,
           next.postClosing.en,
           next.postClosing.id,
           next.languages ?? null,
+          next.firstLanguage === undefined ? 0 : 1,
           next.firstLanguage ?? null,
           sid,
         ),
         db.stmt('UPDATE menus SET taking_orders = ? WHERE seller_id = ?', next.orderingOpen, sid),
       ]);
       const kept = await this.getSettings();
+      const rest = structuredClone(next);
+      delete rest.firstLanguage;
       return {
-        ...structuredClone(next),
+        ...rest,
         languages: next.languages ?? kept.languages,
-        firstLanguage: next.firstLanguage ?? kept.firstLanguage,
+        ...(kept.firstLanguage ? { firstLanguage: kept.firstLanguage } : {}),
       };
     },
 

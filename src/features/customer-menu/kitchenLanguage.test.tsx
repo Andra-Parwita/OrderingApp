@@ -91,8 +91,9 @@ describe('the language customers see first (plan 060)', () => {
     expect(i18n.language).toBe('en');
   });
 
-  it('without a first language from the server, leaves the language alone', () => {
+  it('without a first language from the server (not chosen), keeps the phone language', async () => {
+    await i18n.changeLanguage('id');
     show('both');
-    expect(i18n.language).toBe('en');
+    expect(i18n.language).toBe('id');
   });
 });

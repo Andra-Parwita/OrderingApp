@@ -100,6 +100,7 @@
       "bothHelp": "Customers can switch language. You can fill in both, or just one — the other shows the same text. ⇄ Translate helps.",
       "enHelp": "Customers see English only. You type every dish name and description once, in English.",
       "idHelp": "Customers see Indonesian only. You type every dish name and description once, in Indonesian.",
+      "phone": "Phone's language",
       "firstTitle": "Customers see first",
       "firstHelp": "Customers can switch language; their own choice is remembered."
     }

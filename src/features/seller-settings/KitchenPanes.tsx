@@ -128,11 +128,12 @@ type KitchenDraft = {
   name: string | null;
   phone: string;
   languages: Languages;
-  firstLanguage: Language;
+  /** null = not chosen: the phone's language. */
+  firstLanguage: Language | null;
 };
 
 const LANGUAGE_VALUES: ReadonlyArray<Languages> = ['both', 'en', 'id'];
-const FIRST_VALUES: ReadonlyArray<Language> = ['en', 'id'];
+const FIRST_VALUES: ReadonlyArray<Language | 'phone'> = ['phone', 'en', 'id'];
 
 function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   const { t } = useTranslation(SETTINGS_NS);
@@ -146,7 +147,7 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
       name: null,
       phone: toDraft(settings).phone,
       languages: settings.languages ?? 'both',
-      firstLanguage: settings.firstLanguage ?? 'en',
+      firstLanguage: settings.firstLanguage ?? null,
     }),
     [settings],
   );
@@ -159,15 +160,20 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
   const name = typed.name ?? loadedName;
   const setPhone = (value: string) => setTyped((p) => ({ ...p, phone: value }));
   const setLanguages = (value: Languages) => setTyped((p) => ({ ...p, languages: value }));
-  const setFirstLanguage = (value: Language) => setTyped((p) => ({ ...p, firstLanguage: value }));
+  const setFirstLanguage = (value: Language | 'phone') =>
+    setTyped((p) => ({ ...p, firstLanguage: value === 'phone' ? null : value }));
   const setName = (value: string) => setTyped((p) => ({ ...p, name: value }));
   const languageOptions = useMemo<Array<SegmentedOption<Languages>>>(
     () => LANGUAGE_VALUES.map((value) => ({ value, label: t(`kitchen.languages.${value}`) })),
     [t],
   );
-  const firstOptions = useMemo<Array<SegmentedOption<Language>>>(
-    () => FIRST_VALUES.map((value) => ({ value, label: value.toUpperCase() })),
-    [],
+  const firstOptions = useMemo<Array<SegmentedOption<Language | 'phone'>>>(
+    () =>
+      FIRST_VALUES.map((value) => ({
+        value,
+        label: value === 'phone' ? t('kitchen.languages.phone') : value.toUpperCase(),
+      })),
+    [t],
   );
   const [submitted, setSubmitted] = useState(false);
   const serverInvalid = save.status === 'error' && save.code === 'invalid_request';
@@ -239,7 +245,7 @@ function PhoneForm({ settings }: Readonly<{ settings: KitchenSettings }>) {
             <GroupTitle>{t('kitchen.languages.firstTitle')}</GroupTitle>
             <Segmented
               options={firstOptions}
-              value={firstLanguage}
+              value={firstLanguage ?? 'phone'}
               onChange={setFirstLanguage}
               label={t('kitchen.languages.firstTitle')}
             />

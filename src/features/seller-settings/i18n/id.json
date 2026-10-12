@@ -100,6 +100,7 @@
       "bothHelp": "Pelanggan bisa ganti bahasa. Anda bisa isi keduanya, atau satu saja — yang lain menampilkan teks yang sama. ⇄ Terjemahkan membantu.",
       "enHelp": "Pelanggan hanya melihat bahasa Inggris. Anda mengetik nama dan deskripsi hidangan sekali saja, dalam bahasa Inggris.",
       "idHelp": "Pelanggan hanya melihat bahasa Indonesia. Anda mengetik nama dan deskripsi hidangan sekali saja, dalam bahasa Indonesia.",
+      "phone": "Bahasa HP",
       "firstTitle": "Pelanggan melihat dulu",
       "firstHelp": "Pelanggan bisa ganti bahasa; pilihan mereka sendiri diingat."
     }

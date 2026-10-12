@@ -190,6 +190,7 @@ describe('SettingsPanes', () => {
     expect(await screen.findByRole('radio', { name: 'English and Indonesian' })).toBeChecked();
     expect(screen.getByText(/Customers can switch language\./)).toBeInTheDocument();
     expect(screen.getByText(/their own choice is remembered/)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: "Phone's language" })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
     fireEvent.click(screen.getByRole('radio', { name: 'English only' }));
     expect(screen.queryByText(/their own choice is remembered/)).not.toBeInTheDocument();

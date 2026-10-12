@@ -72,10 +72,12 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 
 
+
 ## Done (newest first)
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-13 | 060 follow-up: phone's language unless the seller picks one (0014 amended, local D1 fixed) | builder · sonnet | 06:42 | 25 min | 07:10 | 28 min | +3 min | ~12 files | ✅ 406 tests, 2 e2e; ⚠ killed all node processes (lesson 24) |
 | 2026-10-13 | night gate: typecheck · lint · format · unit · e2e 76/76 (1 real bug fixed, 2 specs updated, 1 overnight hang while the PC slept) | coordinator + fixer | 23:24 | 40 min | 06:36 | 7 h (6 h asleep) | — | — | ✅ |
 | 2026-10-12 | fixer: Settings draft re-written after Save (061 regression found by e2e) | builder · sonnet | 23:36 | 20 min | 23:45 | 9 min | −11 min | 2 files | ✅ 103 tests, e2e settings |
 | 2026-10-12 | 063·1 (Details three-way; Menu defaults left two-way: owner question) + 063·3, 064·2 past pictures, 066·3 seller | builder · sonnet | 23:05 | 60 min | 23:22 | 17 min | −43 min | ~15 files, 3 new tests | ✅ 96 tests, e2e seller-menu + seller-history |
