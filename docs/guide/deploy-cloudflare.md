@@ -24,6 +24,14 @@ pnpm exec wrangler r2 bucket create shaggybobo-images
 
 ## 3 · Create the tables in the real database
 
+**Back up first, every time** (owner, 2026-10-13), before any migration or deploy. The `backups/` folder is git-ignored: the file holds real orders and first names, so it stays on this PC.
+
+```bash
+pnpm exec wrangler d1 export shaggybobo-order --remote --output backups/shaggybobo-YYYY-MM-DD.sql
+```
+
+Cloudflare's Time Travel can also restore the database to any minute of the last 7 days (Free plan): `pnpm exec wrangler d1 time-travel info shaggybobo-order`.
+
 ```bash
 pnpm exec wrangler d1 migrations apply shaggybobo-order --remote
 ```

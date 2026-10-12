@@ -71,3 +71,6 @@ graphify-out/
 
 # Playwright MCP browser logs (Claude Code screenshots)
 .playwright-mcp/
+
+# Database backups (wrangler d1 export): real customer data, never commit
+backups/
