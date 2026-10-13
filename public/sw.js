@@ -1,7 +1,8 @@
 // Service worker for the customer app (plan 004 stage 7). Hand-written, no dependency. Scope "/".
 //
 // It does three things:
-//   1. push: shows the seller's message as a notification (payload: { title, body, icon, data: { url } }).
+//   1. push: shows the seller's message as a notification (payload: { title, body, icon, data: { url } })
+//      and tells open windows ({ type: 'order-push', url }) so an open page refreshes that order at once.
 //   2. notificationclick: focuses an open window on data.url, or opens one.
 //   3. offline: network-first with a cache fallback for the app shell and the last menu and order
 //      answers, so a phone without signal still shows what it loaded last (spec section 8).
@@ -105,14 +106,23 @@ self.addEventListener('push', (event) => {
   if (!payload || typeof payload.title !== 'string') return;
   const url = payload.data && typeof payload.data.url === 'string' ? payload.data.url : '/';
   event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: typeof payload.body === 'string' ? payload.body : '',
-      icon: typeof payload.icon === 'string' ? payload.icon : undefined,
-      data: { url },
-      // One notification per order: a newer message replaces the older one but still alerts.
-      tag: url,
-      renotify: true,
-    }),
+    Promise.all([
+      self.registration.showNotification(payload.title, {
+        body: typeof payload.body === 'string' ? payload.body : '',
+        icon: typeof payload.icon === 'string' ? payload.icon : undefined,
+        data: { url },
+        // One notification per order: a newer message replaces the older one but still alerts.
+        tag: url,
+        renotify: true,
+      }),
+      // Plan 074: tell open pages which order changed, so they refresh it at once.
+      self.clients
+        .matchAll({ type: 'window', includeUncontrolled: true })
+        .then((windows) => {
+          for (const client of windows) client.postMessage({ type: 'order-push', url });
+        })
+        .catch(() => undefined),
+    ]),
   );
 });
 

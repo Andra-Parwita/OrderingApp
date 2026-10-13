@@ -76,7 +76,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 043 | ✅ | [A friendly invite message, in English or Indonesian](043-invite-message.md) | done (2026-10-11); not deployed |
 | 044 | ✅ | [The new ShaggyBobo mascot and logo icon](044-new-mascot-and-logo.md) | done (2026-10-11); not deployed |
 | 045 | ⬜ | [Releases run by GitHub, not by hand](045-release-automation.md) | later (builder, 2026-10-11) |
-| 046 | ⬜ | [Update in progress: advance notice and maintenance mode](046-maintenance-notice.md) | approved (2026-10-13); building stages 1–3 |
+| 046 | ✅ | [Update in progress: advance notice and maintenance mode](046-maintenance-notice.md) | approved (2026-10-13); building stages 1–3 |
 | 047 | ✅ | [Link previews and a WhatsApp emoji fix](047-link-previews-and-whatsapp.md) | done (2026-10-12); not deployed |
 | 048 | ✅ | [The seller app can be installed from the sign-in page](048-seller-app-install.md) | approved (2026-10-12); now |
 | 049 | ✅ | [Edit chefs without leaving the dish](049-edit-chefs-in-place.md) | approved (2026-10-12); now |
@@ -102,6 +102,9 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 069 | ✅ | [Per-chef portions and income](069-per-chef-income.md) | approved (2026-10-13) |
 | 070 | ✅ | [A branded HTML docs site, kept current](070-docs-site.md) | approved (2026-10-13); building |
 | 071 | ✅ | [Delivery addresses: encrypted, team-only, short-lived; Directions; address book](071-customer-details-on-devices.md) | approved (2026-10-13, D-099); building |
+| 072 | ✅ | [Tick freely, saved in one go](072-tick-freely-save-in-one-go.md) | approved (2026-10-13); building |
+| 073 | ✅ | [Fewer, smarter server requests (audit)](073-request-audit.md) | draft (2026-10-13); owner to choose stages |
+| 074 | ✅ | [Live updates everywhere: push instead of checking](074-live-updates-everywhere.md) | approved (2026-10-14); building |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

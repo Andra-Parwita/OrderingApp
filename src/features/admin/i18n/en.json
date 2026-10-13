@@ -215,6 +215,15 @@
       "turnOff": "Turn maintenance off",
       "failed": "Could not save. Try again.",
       "badLength": "Enter 1 to 240 minutes."
+    },
+    "backup": {
+      "title": "Backup check",
+      "text": "How often a screen checks for news while its live connection is down (and the screen is open). Minutes, 1 to 30.",
+      "customers": "Backup check, customers",
+      "sellers": "Backup check, sellers",
+      "save": "Save",
+      "saved": "Saved.",
+      "bad": "Enter {{min}} to {{max}} minutes."
     }
   }
 }

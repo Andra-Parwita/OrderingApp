@@ -18,7 +18,6 @@ import {
   createDeviceCode,
   createSeller,
   fetchMyDevices,
-  fetchSellerMembers,
   fetchSellers,
   renameMyDevice,
   signOut,
@@ -29,6 +28,7 @@ import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { brandColour, brandSize } from '../../theme/brandTokens';
 import { Button, ConfirmButton, Icon, SlideOver, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
+import { BackupMinutesPanel } from './BackupMinutesPanel';
 import { MaintenancePanel } from './MaintenancePanel';
 import { ProblemsPanel } from './ProblemsPanel';
 import { RefreshBar } from './RefreshBar';
@@ -271,14 +271,12 @@ export function AdminHomeScreen({
     }
     setLoadProblem(null);
     setSellers(result.data.sellers);
-    const entries = await Promise.all(
-      result.data.sellers.map(async (seller) => {
-        const list = await fetchSellerMembers(seller.id);
-        const count = list.ok ? list.data.members.reduce((sum, m) => sum + m.devices, 0) : 0;
-        return [seller.id, count] as const;
-      }),
+    // Plan 073: the device counts come with the list (one request, not one per kitchen).
+    setCounts(
+      Object.fromEntries(
+        result.data.sellers.map((seller) => [seller.id, seller.summary?.devices ?? 0]),
+      ),
     );
-    setCounts(Object.fromEntries(entries));
     setLoadedAt(Date.now());
   }, [refusedHere]);
 
@@ -482,6 +480,7 @@ export function AdminHomeScreen({
               {code ? <Message role="status">{t('home.mine.code', { code })}</Message> : null}
             </Section>
             <MaintenancePanel />
+            <BackupMinutesPanel />
             <ProblemsPanel slugs={slugs} refreshKey={refreshKey} />
             <Muted>{t('home.privacy')}</Muted>
           </AdminInner>

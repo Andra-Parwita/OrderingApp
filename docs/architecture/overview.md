@@ -31,7 +31,7 @@ flowchart LR
 | step | what happens | where |
 |---|---|---|
 | 1 | `checkOrigin`: a state-changing call to `/api/seller`, `/api/admin` or `/api/auth` must carry the site's own `Origin` (403 `bad_origin`, D-048) | [`worker/auth/origin.ts`](../../worker/auth/origin.ts) |
-| 2 | `/api/health` is answered; `/images/<key>` streams from R2 | `worker/api/index.ts`, [`worker/images/`](../../worker/images/) |
+| 2 | `/api/health` is answered (`/api/status`, the maintenance state, is answered by the router, plan 046); `/images/<key>` streams from R2 | `worker/api/index.ts`, [`worker/images/`](../../worker/images/) |
 | 3 | the D1 repository is built from the bindings for this request; nothing is kept between requests. A push dispatcher collects customer messages | [`worker/db/`](../../worker/db/), [`worker/push/`](../../worker/push/) |
 | 4 | `/k/<slug>/...` per-kitchen manifests and icons | [`worker/api/kitchenRoutes.ts`](../../worker/api/kitchenRoutes.ts) |
 | 5 | the router picks the area (public, token, auth, admin, log, seller, dev), resolves the session cookie, applies the role allowlist, and calls one repository operation per action | [`worker/api/routes.ts`](../../worker/api/routes.ts) |

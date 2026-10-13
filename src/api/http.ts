@@ -1,6 +1,8 @@
 import { parseApiError, type ApiErrorCode, type ApiWarning } from '../../shared/apiError';
 import type { StaffActor } from '../../shared/domain';
 import { reportApiFailure } from './clientLog';
+import { DEVICE_ID_HEADER } from '../../shared/liveContract';
+import { sellerDeviceId } from './deviceId';
 import { dropLegacySessionToken, setSessionHint } from './device/session';
 import { setMaintenanceBlocked } from './maintenanceState';
 import { recordOutcome } from './netState';
@@ -45,6 +47,9 @@ async function send(
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (actor) headers['X-Actor'] = `${actor.role}:${actor.name}`;
   if (seller) headers['X-Seller'] = seller;
+  // Plan 074: lets this tab recognise the live event its own write causes.
+  if (method !== 'GET' && path.startsWith('/api/seller/'))
+    headers[DEVICE_ID_HEADER] = sellerDeviceId();
   try {
     // The session is an HttpOnly cookie the browser sends by itself (same site only); a session
     // always wins over the dev headers above.

@@ -10,7 +10,7 @@ import { placeOrder, nudgeOrder, setOrderLocked, setOrderStatus } from '../../ap
 import { MY_ORDERS_KEY, readMyOrders, saveMyOrder } from '../../api/device/myOrders';
 import { MyOrdersScreen } from './MyOrdersScreen';
 import { OrderScreen } from './OrderScreen';
-import { listFailed } from './slice';
+import { listFailed, orderLiveRequested } from './slice';
 import { renderWithStore, setupI18n } from './testSupport';
 import { DEFAULT_SELLER_SLUG } from '../../../shared/seller';
 
@@ -308,14 +308,20 @@ describe('OrderScreen', () => {
     expect(screen.getByRole('button', { name: 'Cancel order' })).toBeVisible();
   });
 
-  it('moves the timeline when the seller confirms, and polls for it', async () => {
+  it('does not poll: a change shows only when the live connection pushes it (plan 074)', async () => {
     const placed = await place();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      renderOrder(placed.token);
+      const { store } = renderOrder(placed.token);
       await screen.findByTestId('timeline');
       await setOrderStatus(placed.code, 'confirmed');
-      await vi.advanceTimersByTimeAsync(15_100);
+      await vi.advanceTimersByTimeAsync(30 * 60_000);
+      expect(within(screen.getByTestId('timeline')).getByText('Ordered')).toHaveAttribute(
+        'aria-current',
+        'step',
+      );
+      // The live connection (CustomerLiveHost) turns a pushed change into this one reload.
+      store.dispatch(orderLiveRequested(placed.token));
       await waitFor(() =>
         expect(within(screen.getByTestId('timeline')).getByText('Confirmed')).toHaveAttribute(
           'aria-current',

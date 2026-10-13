@@ -5,6 +5,7 @@ import type { Language, OrderLine, OrderStatus, SellerOrder } from '../../../sha
 import type { PickupPoint } from '../../../shared/domain';
 import { formatCookingDate } from '../../../shared/dates';
 import type { MessageLogEntry, MessageText } from '../../../shared/handoverContract';
+import type { LiveEventType } from '../../../shared/liveContract';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { fetchCurrentMenu, fetchSellerOrders } from '../../api/client';
@@ -12,9 +13,7 @@ import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchMessages } from '../../api/handover';
 import { Icon, type IconName } from '../../ui';
 import { SATURDAY_NS } from './i18n/register';
-
-/** How often an open screen reloads, so counts follow what others do. */
-export const REFRESH_MS = 15_000;
+import { useLiveReload, type Wanted } from './useLiveReload';
 
 export function useLang(): Language {
   const { i18n } = useTranslation(SATURDAY_NS);
@@ -76,44 +75,73 @@ export type HandoverData =
       date: string | null;
     }>;
 
-/** Orders, the current menu's places and the message log, reloaded every REFRESH_MS. */
+/**
+ * Orders, the current menu's places and the message log. Plan 074: no timer; it follows the live
+ * connection and reloads only what an event touched (orders and messages for `order.*`, the places
+ * for `menu.changed`). `reload` (after an action here) fetches orders and messages once and ignores
+ * the echo of that action.
+ */
 export function useHandoverData(): { data: HandoverData; reload: () => Promise<void> } {
   const lang = useLang();
   const slug = currentSellerSlug();
   const [data, setData] = useState<HandoverData>({ status: 'loading' });
   const alive = useRef(true);
+  const ready = useRef(false);
 
-  const reload = useCallback(async () => {
-    const [orders, menu, log] = await Promise.all([
-      fetchSellerOrders(undefined, slug),
-      fetchCurrentMenu(undefined, slug),
-      fetchMessages(undefined, slug),
-    ]);
-    if (!alive.current) return;
-    if (!orders.ok) {
-      // A silent refresh that fails keeps what is already on screen.
-      setData((current) => (current.status === 'ready' ? current : { status: 'error' }));
-      return;
-    }
-    setData({
-      status: 'ready',
-      orders: orders.data.orders,
-      places: menu.ok ? menu.data.menu.pickupPoints : [],
-      messages: log.ok ? log.data.messages : [],
-      date: menu.ok ? formatCookingDate(menu.data.menu.menu.cookingDate, lang) : null,
-    });
-  }, [slug, lang]);
+  const fetchParts = useCallback(
+    async (parts: Readonly<{ orders: boolean; menu: boolean; log: boolean }>) => {
+      const [orders, menu, log] = await Promise.all([
+        parts.orders ? fetchSellerOrders(undefined, slug) : null,
+        parts.menu ? fetchCurrentMenu(undefined, slug) : null,
+        parts.log ? fetchMessages(undefined, slug) : null,
+      ]);
+      if (!alive.current) return;
+      if (orders && !orders.ok) {
+        // A silent refresh that fails keeps what is already on screen.
+        setData((current) => (current.status === 'ready' ? current : { status: 'error' }));
+        return;
+      }
+      setData((current) => {
+        const was = current.status === 'ready' ? current : null;
+        if (!was && !orders) return current; // only a full load can start the screen
+        return {
+          status: 'ready',
+          orders: orders?.ok ? orders.data.orders : (was?.orders ?? []),
+          places: menu?.ok ? menu.data.menu.pickupPoints : (was?.places ?? []),
+          messages: log?.ok ? log.data.messages : (was?.messages ?? []),
+          date: menu?.ok
+            ? formatCookingDate(menu.data.menu.menu.cookingDate, lang)
+            : (was?.date ?? null),
+        };
+      });
+      if (orders?.ok) ready.current = true;
+    },
+    [slug, lang],
+  );
+
+  const loadFor = useCallback(
+    async (wanted: Wanted) => {
+      const all = wanted === null || !ready.current;
+      const has = (type: LiveEventType) => wanted?.has(type) ?? false;
+      const orders = all || has('order.created') || has('order.changed');
+      const menu = all || has('menu.changed');
+      // A message sent from another device is logged together with an order event.
+      if (orders || menu) await fetchParts({ orders, menu, log: orders });
+    },
+    [fetchParts],
+  );
 
   useEffect(() => {
     alive.current = true;
-    const first = window.setTimeout(() => void reload(), 0);
-    const timer = window.setInterval(() => void reload(), REFRESH_MS);
     return () => {
       alive.current = false;
-      window.clearTimeout(first);
-      window.clearInterval(timer);
     };
-  }, [reload]);
+  }, []);
+  useLiveReload(loadFor);
+
+  const reload = useCallback(async () => {
+    await fetchParts({ orders: true, menu: !ready.current, log: true });
+  }, [fetchParts]);
 
   return { data, reload };
 }

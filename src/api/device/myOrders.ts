@@ -1,9 +1,14 @@
 import type { CustomerOrder, OrderStatus } from '../../../shared/domain';
+import { isFinalStatus } from '../../../shared/status';
 import { rememberKitchen } from './lastKitchen';
 
 // "My orders" lives on this phone only (D-007/D-010): the code, the private token and a little
 // state so the list can show an unseen-update dot and a returning customer can be recognised.
 export const MY_ORDERS_KEY = 'myOrders';
+/** Fired on `window` after this phone's order list changes (plan 074: the live connection follows it). */
+export const MY_ORDERS_CHANGED = 'myorders:changed';
+/** An order older than this is not on the active menu day any more, whatever its last status says. */
+const ACTIVE_DAYS = 10;
 
 export type SavedOrder = Readonly<{
   code: string;
@@ -15,21 +20,22 @@ export type SavedOrder = Readonly<{
   lastStatus?: OrderStatus;
   /** ISO time of the newest inbox entry the customer has seen. */
   lastSeenInboxAt?: string;
+  /** Plan 074: the server said the week is closed or the details are gone; never live again. */
+  closed?: true;
 }>;
 
 function isSavedOrder(entry: unknown): entry is SavedOrder {
   if (typeof entry !== 'object' || entry === null) return false;
-  const { code, token, placedAt, sellerSlug, lastStatus, lastSeenInboxAt } = entry as Record<
-    string,
-    unknown
-  >;
+  const { code, token, placedAt, sellerSlug, lastStatus, lastSeenInboxAt, closed } =
+    entry as Record<string, unknown>;
   return (
     typeof code === 'string' &&
     typeof token === 'string' &&
     typeof placedAt === 'string' &&
     (sellerSlug === undefined || typeof sellerSlug === 'string') &&
     (lastStatus === undefined || typeof lastStatus === 'string') &&
-    (lastSeenInboxAt === undefined || typeof lastSeenInboxAt === 'string')
+    (lastSeenInboxAt === undefined || typeof lastSeenInboxAt === 'string') &&
+    (closed === undefined || closed === true)
   );
 }
 
@@ -49,6 +55,7 @@ function writeMyOrders(entries: ReadonlyArray<SavedOrder>): void {
   } catch {
     // storage unavailable: the order still exists, it is just not remembered on this phone
   }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(MY_ORDERS_CHANGED));
 }
 
 /** ISO time of the newest inbox entry, or undefined when the inbox is empty. */
@@ -96,6 +103,7 @@ export function rememberStatus(order: CustomerOrder): void {
         placedAt: order.createdAt,
         sellerSlug: order.seller.slug,
         lastStatus: order.status,
+        ...(order.archived === true ? { closed: true as const } : {}),
       },
       ...entries,
     ]);
@@ -105,10 +113,42 @@ export function rememberStatus(order: CustomerOrder): void {
   writeMyOrders(
     entries.map((entry) =>
       entry.token === order.token
-        ? { ...entry, sellerSlug: order.seller.slug, lastStatus: order.status }
+        ? {
+            ...entry,
+            sellerSlug: order.seller.slug,
+            lastStatus: order.status,
+            ...(order.archived === true ? { closed: true as const } : {}),
+          }
         : entry,
     ),
   );
+}
+
+/** The server no longer has this order's details (its week is gone): it can never be live again. */
+export function markOrderClosed(token: string): void {
+  const entries = readMyOrders();
+  if (!entries.some((entry) => entry.token === token && entry.closed !== true)) return;
+  writeMyOrders(
+    entries.map((entry) => (entry.token === token ? { ...entry, closed: true } : entry)),
+  );
+}
+
+/**
+ * Plan 074: the orders worth a live connection: kitchen known, not closed, not collected /
+ * delivered / cancelled, placed within the active days. The server checks the same again.
+ */
+export function activeOrders(
+  entries: ReadonlyArray<SavedOrder> = readMyOrders(),
+  now: number = Date.now(),
+): Array<SavedOrder & { sellerSlug: string }> {
+  const active: Array<SavedOrder & { sellerSlug: string }> = [];
+  for (const entry of entries) {
+    if (entry.sellerSlug === undefined || entry.closed === true) continue;
+    if (entry.lastStatus !== undefined && isFinalStatus(entry.lastStatus)) continue;
+    if (now - Date.parse(entry.placedAt) > ACTIVE_DAYS * 86_400_000) continue;
+    active.push({ ...entry, sellerSlug: entry.sellerSlug });
+  }
+  return active;
 }
 
 /** The customer has viewed the order: everything up to its newest inbox entry is seen. */

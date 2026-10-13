@@ -6,7 +6,7 @@ import { isValidSlug } from '../../shared/seller';
 import { appKitchen, lastKitchen, rememberAppKitchen } from '../api/device/lastKitchen';
 import { manifestTarget, readEnvironment, useManifestLinks } from '../components/install';
 import { useForcedKitchenLanguage } from '../features/customer-menu';
-import { selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
+import { CustomerLiveHost, selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
 import { Icon, type IconName } from '../ui';
 
 // The customer app's bottom tab bar (D-039): Menu · My orders · Settings, fixed to the bottom,
@@ -212,13 +212,14 @@ function useShellManifest(pathname: string): void {
 /** Wraps the customer pages with the tab bar. */
 export function CustomerShell() {
   const { pathname } = useLocation();
-  const unseen = useUnseenUpdate(pathname);
+  const unseen = useUnseenUpdate();
   useShellManifest(pathname);
   useForcedKitchenLanguage();
   const navigationType = useNavigationType();
   const tabs = hasTabBar(pathname);
   return (
     <Wrap $tabs={tabs}>
+      <CustomerLiveHost />
       <Slide key={pathname} $push={navigationType === NavigationType.Push && !isRootPage(pathname)}>
         <Outlet />
       </Slide>

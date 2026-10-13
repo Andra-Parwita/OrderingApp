@@ -4,14 +4,22 @@ import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import type { MenuDishView } from '../../../shared/menusContract';
 import { pickText } from '../../../shared/text';
+import { currentSellerSlug } from '../../api/device/sellerContext';
+import { draftKey } from '../../components/draft';
 import { fieldControlStyle } from '../../ui/Field';
 import { LIMIT_MAX, parsePriceInput, priceInputOf } from './itemForm';
+import { AutoSaveStatus } from './AutoSaveStatus';
+import { useAutoSave, type SaveResult } from './autoSave';
 import { MENU_NS } from './i18n/register';
-import { SwitchButton, useRunOp } from './menuShared';
+import { SwitchButton, saveResultOf, useRunOp, useSendOp } from './menuShared';
 import type { MenuData } from './menuSlice';
 
 // Prices & limits for this menu only: price, limit, chef and sold out per dish. Used by step 3 and
-// by the live menu's third tab; every change is saved as you make it.
+// by the live menu's third tab. Plan 072: a price or limit is saved ~1 s after the last edit
+// (several edits together), the chef and sold-out switch at once.
+
+/** The price / limit edits not saved yet, by menu item id. */
+type Edits = Record<string, { priceCents?: number; limit?: number | null }>;
 
 const Grid = styled.div<{ $head?: boolean }>`
   display: grid;
@@ -52,11 +60,23 @@ function PriceRow({
   chefs,
   kitchen,
   lang,
-}: Readonly<{ dish: MenuDishView; chefs: MenuData['chefs']; kitchen: string; lang: Language }>) {
+  edit,
+  onEdit,
+}: Readonly<{
+  dish: MenuDishView;
+  chefs: MenuData['chefs'];
+  kitchen: string;
+  lang: Language;
+  /** What is waiting to be saved for this dish; it shows instead of the saved value. */
+  edit: Edits[string] | undefined;
+  onEdit: (id: string, change: Edits[string]) => void;
+}>) {
   const { t } = useTranslation(MENU_NS);
   const { run, busy } = useRunOp();
-  const [price, setPrice] = useState(priceInputOf(dish.priceCents));
-  const [limit, setLimit] = useState(dish.limit === undefined ? '' : String(dish.limit));
+  const shownPrice = edit?.priceCents ?? dish.priceCents;
+  const shownLimit = edit?.limit === undefined ? (dish.limit ?? null) : edit.limit;
+  const [price, setPrice] = useState(priceInputOf(shownPrice));
+  const [limit, setLimit] = useState(shownLimit === null ? '' : String(shownLimit));
   const priceCents = parsePriceInput(price);
   const limitText = limit.trim();
   const limitValue = limitText === '' ? null : /^\d+$/.test(limitText) ? Number(limitText) : 0;
@@ -65,14 +85,10 @@ function PriceRow({
   const size = pickText(dish.size, lang);
 
   const commitPrice = () => {
-    if (priceCents !== null && priceCents !== dish.priceCents) {
-      run({ kind: 'updateMenuDish', id: dish.id, request: { priceCents } });
-    }
+    if (priceCents !== null && priceCents !== shownPrice) onEdit(dish.id, { priceCents });
   };
   const commitLimit = () => {
-    if (limitOk && limitValue !== (dish.limit ?? null)) {
-      run({ kind: 'updateMenuDish', id: dish.id, request: { limit: limitValue } });
-    }
+    if (limitOk && limitValue !== shownLimit) onEdit(dish.id, { limit: limitValue });
   };
   return (
     <Grid role="row">
@@ -151,6 +167,24 @@ function PriceRow({
 export function PricesTable({ data, lang }: Readonly<{ data: MenuData; lang: Language }>) {
   const { t } = useTranslation(MENU_NS);
   const kitchen = t('dish.wholeKitchen');
+  const sendOp = useSendOp();
+  const saver = useAutoSave<Edits>(
+    draftKey(currentSellerSlug(), 'menu-prices', data.view.menu.id),
+    async (edits) => {
+      // One request per changed dish, sent together; the first problem is the answer.
+      const answers = await Promise.all(
+        Object.entries(edits).map(async ([id, request]) =>
+          saveResultOf(await sendOp({ kind: 'updateMenuDish', id, request })),
+        ),
+      );
+      const failed = answers.filter(
+        (answer): answer is Extract<SaveResult, { ok: false }> => !answer.ok,
+      );
+      return failed.find((answer) => answer.refused) ?? failed[0] ?? { ok: true };
+    },
+  );
+  const onEdit = (id: string, change: Edits[string]) =>
+    saver.update((previous) => ({ ...previous, [id]: { ...previous?.[id], ...change } }));
   return (
     <div>
       <div role="table" aria-label={t('prices.title')}>
@@ -164,14 +198,17 @@ export function PricesTable({ data, lang }: Readonly<{ data: MenuData; lang: Lan
         {data.view.dishes.map((dish) => (
           <PriceRow
             // The row's inputs start from the saved values again when the server's change.
-            key={`${dish.id}:${String(dish.priceCents)}:${String(dish.limit ?? '')}`}
+            key={`${dish.id}:${String(dish.priceCents)}:${String(dish.limit ?? '')}:${String(saver.state.revision)}`}
             dish={dish}
             chefs={data.chefs}
             kitchen={kitchen}
             lang={lang}
+            edit={saver.state.pending?.[dish.id]}
+            onEdit={onEdit}
           />
         ))}
       </div>
+      <AutoSaveStatus state={saver.state} onRetry={saver.retry} />
       <Hint>{t('prices.hint')}</Hint>
     </div>
   );

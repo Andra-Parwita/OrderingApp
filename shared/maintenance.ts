@@ -20,7 +20,52 @@ export type MaintenanceState = {
   notice: MaintenanceNotice | null;
 };
 
-export type StatusResponse = MaintenanceState & { time: string };
+/**
+ * Plan 074: how often (minutes) a screen checks for news while its live connection is down. One
+ * value for customers, one for sellers (owner/chef/helper screens). Set by the admin.
+ */
+export type BackupMinutes = { customer: number; seller: number };
+
+export const BACKUP_MINUTES_DEFAULT = 5;
+export const BACKUP_MINUTES_MIN = 1;
+export const BACKUP_MINUTES_MAX = 30;
+export const DEFAULT_BACKUP_MINUTES: BackupMinutes = {
+  customer: BACKUP_MINUTES_DEFAULT,
+  seller: BACKUP_MINUTES_DEFAULT,
+};
+
+function isBackupValue(value: unknown): value is number {
+  return (
+    typeof value === 'number' &&
+    Number.isInteger(value) &&
+    value >= BACKUP_MINUTES_MIN &&
+    value <= BACKUP_MINUTES_MAX
+  );
+}
+
+/** A value from the server, or 5 when absent or out of bounds (old Worker, bad data). */
+export function parseBackupMinutes(input: unknown): BackupMinutes {
+  if (!isRecord(input)) return DEFAULT_BACKUP_MINUTES;
+  return {
+    customer: isBackupValue(input['customer']) ? input['customer'] : BACKUP_MINUTES_DEFAULT,
+    seller: isBackupValue(input['seller']) ? input['seller'] : BACKUP_MINUTES_DEFAULT,
+  };
+}
+
+/** PATCH /api/admin/backup-minutes: either or both, whole minutes 1 to 30. */
+export function parseBackupMinutesPatch(input: unknown): Partial<BackupMinutes> | null {
+  if (!isRecord(input)) return null;
+  const patch: Partial<BackupMinutes> = {};
+  for (const key of ['customer', 'seller'] as const) {
+    if (!(key in input)) continue;
+    const value = input[key];
+    if (!isBackupValue(value)) return null;
+    patch[key] = value;
+  }
+  return 'customer' in patch || 'seller' in patch ? patch : null;
+}
+
+export type StatusResponse = MaintenanceState & { time: string; backupMinutes: BackupMinutes };
 
 export const NO_MAINTENANCE: MaintenanceState = { maintenance: false, notice: null };
 
@@ -43,7 +88,11 @@ export function parseMaintenanceState(input: unknown): MaintenanceState | null {
 export function parseStatus(input: unknown): StatusResponse | null {
   const state = parseMaintenanceState(input);
   if (!state || !isRecord(input) || !isIsoDate(input['time'])) return null;
-  return { ...state, time: input['time'] };
+  return {
+    ...state,
+    time: input['time'],
+    backupMinutes: parseBackupMinutes(input['backupMinutes']),
+  };
 }
 
 /** PATCH /api/admin/maintenance: any of the two; `notice: null` clears the announcement. */

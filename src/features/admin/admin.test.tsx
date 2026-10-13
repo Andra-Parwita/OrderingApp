@@ -6,6 +6,7 @@ import { clearCookies, installCookieJar, sessionCookie } from '../../../mocks/co
 import { DEV_ADMIN_SETUP_KEY, mockStores } from '../../../mocks/handlers';
 import {
   adminSetup,
+  createSeller,
   createDeviceCode,
   registerDevice,
   signInWithCode,
@@ -286,6 +287,22 @@ describe('AdminHomeScreen', () => {
     expect(screen.queryByText(/\$\d/)).not.toBeInTheDocument();
     expect(screen.queryByText(/nasi campur|lemper/i)).not.toBeInTheDocument();
     expect(await screen.findByText(/this device/)).toBeInTheDocument();
+  });
+
+  it('plan 073: five kitchens load with one request, and no members call per kitchen', async () => {
+    await signInAsAdmin();
+    for (const slug of ['k-one', 'k-two', 'k-three']) await createSeller(slug, slug);
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    renderThemed(<AdminHomeScreen />);
+    const list = await screen.findByRole('list', { name: 'Sellers' });
+    await waitFor(() =>
+      expect(within(list).getAllByRole('button').length).toBeGreaterThanOrEqual(5),
+    );
+    const urls = fetchSpy.mock.calls.map(([input]) =>
+      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+    );
+    expect(urls.filter((url) => url.endsWith('/api/admin/sellers'))).toHaveLength(1);
+    expect(urls.filter((url) => url.includes('/members'))).toHaveLength(0);
   });
 
   it('shows why a link cannot be used: bad characters, reserved, taken', async () => {

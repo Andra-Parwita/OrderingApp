@@ -228,8 +228,11 @@ export async function planFinish(
   sellerId: string,
   now: Date,
   closeOpenOrders = true,
+  known?: MenuRow,
 ): Promise<FinishPlan | null> {
-  const row = await db.first<MenuRow>('SELECT * FROM menus WHERE seller_id = ?', sellerId);
+  // `known`: the caller has just read this seller's menu row, so it is not read twice.
+  const row =
+    known ?? (await db.first<MenuRow>('SELECT * FROM menus WHERE seller_id = ?', sellerId));
   if (!row || row.state === 'finished') return null;
   const orders = await readOrders(db, sellerId, 'o.past_week_id IS NULL');
   const totals = summariseOrders(orders);
@@ -342,8 +345,9 @@ export async function finishMenu(
   db: Db,
   sellerId: string,
   now: Date,
+  known?: MenuRow,
 ): Promise<{ finished: boolean; closedOrders: number; prunedPictures: Array<string> }> {
-  const plan = await planFinish(db, sellerId, now);
+  const plan = await planFinish(db, sellerId, now, true, known);
   if (!plan) return { finished: false, closedOrders: 0, prunedPictures: [] };
   try {
     await db.batch(plan.statements);
@@ -802,7 +806,7 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
     async finishMenuNow() {
       const row = await menuRow();
       if (row.state !== 'live') return fail('menu_not_live', 'Only a live menu can be finished');
-      const done = await finishMenu(db, sid, deps.now());
+      const done = await finishMenu(db, sid, deps.now(), row);
       return ok({
         menu: await readView(),
         closedOrders: done.closedOrders,

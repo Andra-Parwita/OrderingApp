@@ -122,14 +122,20 @@ describe('Sell screen', () => {
       ).toHaveTextContent('4'),
     );
     fireEvent.click(screen.getByRole('radio', { name: 'Summary' }));
-    const row = (await screen.findAllByRole('row')).find((r) =>
-      r.textContent?.startsWith('Tilapia pesmol'),
+    // Plan 074: the log is fetched when Summary opens (the sale on this device was not re-fetched).
+    await waitFor(
+      () => {
+        const row = screen
+          .getAllByRole('row')
+          .find((r) => r.textContent?.startsWith('Tilapia pesmol'));
+        expect(
+          within(row as HTMLElement)
+            .getAllByRole('cell')
+            .map((c) => c.textContent),
+        ).toEqual(['Tilapia pesmol', '0', '1', '4']);
+      },
+      { timeout: 4000 },
     );
-    expect(
-      within(row as HTMLElement)
-        .getAllByRole('cell')
-        .map((c) => c.textContent),
-    ).toEqual(['Tilapia pesmol', '0', '1', '4']);
     expect(screen.getByText('Sold on the day: 1')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Download CSV' })).toBeEnabled();
     // The owner can correct a log entry later.

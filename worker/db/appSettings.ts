@@ -1,6 +1,8 @@
 // Plan 046: the platform's one settings row (id 1): maintenance on/off and the announced update.
 import {
+  DEFAULT_BACKUP_MINUTES,
   NO_MAINTENANCE,
+  type BackupMinutes,
   type MaintenancePatch,
   type MaintenanceState,
 } from '../../shared/maintenance';
@@ -16,6 +18,9 @@ type Row = {
 
 export type AppSettingsRepository = {
   maintenance(): Promise<MaintenanceState>;
+  /** Plan 074: the backup-check minutes (customers, sellers). */
+  backupMinutes(): Promise<BackupMinutes>;
+  setBackupMinutes(patch: Partial<BackupMinutes>): Promise<BackupMinutes>;
   /** Changes what the patch names; the rest stays. */
   setMaintenance(patch: MaintenancePatch): Promise<MaintenanceState>;
 };
@@ -39,8 +44,35 @@ export function createAppSettingsRepository(db: Db): AppSettingsRepository {
           : null,
     };
   }
+  async function readBackup(): Promise<BackupMinutes> {
+    const row = await db.first<{ backup_customer_min: number; backup_seller_min: number }>(
+      'SELECT backup_customer_min, backup_seller_min FROM app_settings WHERE id = 1',
+    );
+    return row
+      ? { customer: row.backup_customer_min, seller: row.backup_seller_min }
+      : DEFAULT_BACKUP_MINUTES;
+  }
   return {
     maintenance: read,
+    backupMinutes: readBackup,
+    async setBackupMinutes(patch) {
+      const current = await readBackup();
+      const next: BackupMinutes = {
+        customer: patch.customer ?? current.customer,
+        seller: patch.seller ?? current.seller,
+      };
+      // The row may not exist yet (no maintenance ever saved): the other columns have defaults.
+      await db
+        .stmt(
+          `INSERT INTO app_settings (id, backup_customer_min, backup_seller_min) VALUES (1, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET backup_customer_min = excluded.backup_customer_min,
+             backup_seller_min = excluded.backup_seller_min`,
+          next.customer,
+          next.seller,
+        )
+        .run();
+      return next;
+    },
     async setMaintenance(patch) {
       const current = await read();
       const next: MaintenanceState = {

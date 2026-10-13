@@ -32,7 +32,8 @@ import {
   setOrderStatus,
   setOrderWaReceived,
 } from '../../api/client';
-import { liveRefreshLoop, type LiveMessage } from '../../api/live';
+import { sellerBackupMs } from '../../api/backupMinutes';
+import { liveRefreshLoop, type Changed, type LiveMessage } from '../../api/live';
 import { playChime } from '../../components/chime';
 import type { Order } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
@@ -92,9 +93,6 @@ import {
 import { isLinked } from './contacts/addressBook';
 import { staffSignedOut } from '../../api/staffSignedOut';
 import { currentSellerSlug } from '../../api/device/sellerContext';
-
-/** How often the list reloads while the live socket is down (the fallback). */
-export const POLL_MS = 60_000;
 
 /** Plan 021: how long a new order's row stays highlighted. */
 export const FRESH_MS = 6000;
@@ -174,12 +172,16 @@ export function* loadPast() {
 // Durable Object says something changed (api/live.ts), and every `pollMs` while the socket is down.
 // Phase 5 note: the "Live" dot still shows whether the last load worked; the socket's own status
 // (`Reconnecting…`) can drive it once the screens are reworked.
-function* refresh() {
-  yield call(loadCurrent);
-  yield call(loadOrders);
+function* refresh(changed: Changed) {
+  // Plan 074: an event names what changed. `menu.changed` = the menu; `order.*` = the orders;
+  // `stock.changed` (a day sale) shows nowhere on these screens. No event = both.
+  if (changed === null || changed.has('menu.changed')) yield call(loadCurrent);
+  if (changed === null || changed.has('order.created') || changed.has('order.changed')) {
+    yield call(loadOrders);
+  }
 }
 
-function* watchPolling(pollMs: number, channel?: () => EventChannel<LiveMessage>) {
+function* watchPolling(pollMs: number | (() => number), channel?: () => EventChannel<LiveMessage>) {
   while (true) {
     yield take(pollingStarted.type);
     yield race({
@@ -488,7 +490,7 @@ export function* devReset() {
 }
 
 export function* sellerOrdersSaga(
-  pollMs: number = POLL_MS,
+  pollMs: number | (() => number) = sellerBackupMs,
   channel?: () => EventChannel<LiveMessage>,
 ) {
   yield takeLatest(refreshRequested.type, loadOrders);

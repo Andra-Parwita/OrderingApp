@@ -220,6 +220,19 @@
     "descriptionOne": "Description",
     "sizeOne": "Size"
   },
+  "autosave": {
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "notSaved": "Not saved yet",
+    "tryAgain": "Try again",
+    "limit_reached": "A menu holds at most {{max}} dishes. Your last change was undone.",
+    "forbidden": "You are not allowed to make this change. Your last change was undone.",
+    "other": "The change was not accepted, so it was undone.",
+    "leaveTitle": "Some changes aren't saved yet",
+    "leaveBody": "Some changes aren't saved yet. They're kept on this device.",
+    "leaveTry": "Try again",
+    "leaveAnyway": "Leave anyway"
+  },
   "prices": {
     "title": "Prices and limits for this menu",
     "priceFor": "Price of {{name}}",

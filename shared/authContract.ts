@@ -202,6 +202,8 @@ export type AdminSeller = Seller & {
 export type SellerSummary = {
   /** People with a place in the kitchen. */
   people: number;
+  /** Plan 073: devices signed in across those people (so the admin home needs no call per kitchen). */
+  devices?: number;
   /** The kitchen's one current menu: its state and cooking day (YYYY-MM-DD); null if it has none. */
   menu: { state: 'not_published' | 'live' | 'finished'; cookingDate: string } | null;
   /** Orders on the current menu, cancelled ones left out (a count, no names). */
@@ -481,7 +483,14 @@ function parseSellerSummary(input: unknown): SellerSummary | null {
   }
   if (!isInt(people, 0, 100000) || !isInt(orders, 0, 100000)) return null;
   if (lastActiveAt !== null && !isIsoDate(lastActiveAt)) return null;
-  return { people, menu, orders, lastActiveAt };
+  const devices = input['devices'];
+  return {
+    people,
+    menu,
+    orders,
+    lastActiveAt,
+    ...(isInt(devices, 0, 100000) ? { devices } : {}),
+  };
 }
 
 export function parseSellersResponse(input: unknown): SellersResponse | null {

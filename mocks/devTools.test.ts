@@ -59,6 +59,7 @@ describe('dev tools flag', () => {
       const live = {
         notify: () => Promise.resolve(),
         connect: () => Promise.resolve(new Response()),
+        connectCustomer: () => Promise.resolve(new Response()),
       };
       const byHeader = await handleApiRequest(
         world.repo,

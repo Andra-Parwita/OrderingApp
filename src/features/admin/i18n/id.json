@@ -209,6 +209,15 @@
       "turnOff": "Matikan pemeliharaan",
       "failed": "Tidak bisa menyimpan. Coba lagi.",
       "badLength": "Isi 1 sampai 240 menit."
+    },
+    "backup": {
+      "title": "Pemeriksaan cadangan",
+      "text": "Seberapa sering layar memeriksa kabar baru saat koneksi langsungnya terputus (dan layar sedang terbuka). Menit, 1 sampai 30.",
+      "customers": "Pemeriksaan cadangan, pelanggan",
+      "sellers": "Pemeriksaan cadangan, penjual",
+      "save": "Simpan",
+      "saved": "Tersimpan.",
+      "bad": "Isi {{min}} sampai {{max}} menit."
     }
   }
 }

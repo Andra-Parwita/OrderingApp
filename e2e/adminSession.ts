@@ -16,6 +16,7 @@ export const ADMIN_LABELS = [
   'seller-auth-desktop-chromium',
   'admin-desktop-chromium',
   'session-flow-desktop-chromium',
+  'maintenance-desktop-chromium',
 ] as const;
 export type AdminLabel = (typeof ADMIN_LABELS)[number];
 

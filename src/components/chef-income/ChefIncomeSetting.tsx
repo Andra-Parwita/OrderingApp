@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { currentSellerSlug } from '../../api/device/sellerContext';
-import { fetchPreferences } from '../../api/menus';
+import { fetchPreferencesCached } from '../../api/cachedReads';
 import { updatePreferences } from '../../api/settings';
 import { INCOME_NS, registerChefIncomeI18n } from './i18n/register';
 
@@ -36,7 +36,7 @@ export function ChefIncomeSetting() {
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     let live = true;
-    void fetchPreferences(undefined, slug).then((result) => {
+    void fetchPreferencesCached(slug).then((result) => {
       if (live && result.ok) setOn(result.data.preferences.chefsSeeIncome !== false);
     });
     return () => {

@@ -1,20 +1,10 @@
 // Docs site behaviour: theme toggle, mobile menu, search over page text and headings.
 (function () {
-  // Keep the left menu where it was when a menu link loads the next page (each page is its own
-  // file, so the browser would start the menu at the top again).
+  // Keep the left menu where it was when a menu link loads the next page. The position is put back
+  // by a tiny inline script right after the menu (before the first paint, so it doesn't jump); this
+  // part only saves it.
   var side = document.getElementById('side');
   if (side) {
-    var saved = null;
-    try {
-      saved = sessionStorage.getItem('docs-side-scroll');
-    } catch {
-      /* private mode: start at the current page instead */
-    }
-    if (saved !== null) side.scrollTop = Number(saved) || 0;
-    else {
-      var here = side.querySelector('[aria-current="page"]');
-      if (here) here.scrollIntoView({ block: 'center' });
-    }
     window.addEventListener('pagehide', function () {
       try {
         sessionStorage.setItem('docs-side-scroll', String(side.scrollTop));

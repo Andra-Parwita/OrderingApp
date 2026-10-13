@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import { formatDay } from '../../../shared/dates';
-import { Button, Icon } from '../../ui';
+import { Button, Icon, WarningDialog } from '../../ui';
+import { AutoSaveGate, type Leavable } from './autoSave';
 import { CheckStep } from './CheckStep';
 import { DetailsStep } from './DetailsStep';
 import { DishEditorHost, useDishEditor } from './DishEditorHost';
@@ -129,6 +130,16 @@ export function MakeMenuScreen({
   const { data, status } = useMenuData();
   const { run } = useRunOp();
   const editor = useDishEditor();
+  // Plan 072: the step on screen saves its pending changes before the seller leaves it; if an
+  // earlier save did not get through, a calm warning asks first.
+  const gate = useRef(new Set<Leavable>());
+  const [leaving, setLeaving] = useState<{ go: () => void } | null>(null);
+  const leave = (proceed: () => void) => {
+    const savers = [...gate.current];
+    savers.forEach((saver) => saver.flushIfDue());
+    if (savers.some((saver) => saver.hasFailed())) setLeaving({ go: proceed });
+    else proceed();
+  };
   const index = mode === 'make' ? STEPS.indexOf(step as Step) : -1;
   const reached = data?.view.menu.wizardStep ?? 0;
   // The furthest step reached is saved, so Continue on the Menu screen comes back here.
@@ -162,10 +173,11 @@ export function MakeMenuScreen({
     );
   }
 
-  const go = (to: Step | Tab) => void navigate(stepPath(mode, to), { state });
+  const go = (to: Step | Tab) => leave(() => void navigate(stepPath(mode, to), { state }));
+  const closeSaved = () => leave(close);
   const live = menu.state === 'live';
   const date = formatDay(menu.cookingDate, lang);
-  const goOrders = () => void navigate('/seller/orders');
+  const goOrders = () => leave(() => void navigate('/seller/orders'));
   const openEditor = (dishId: string) => editor.open({ dishId });
 
   const content =
@@ -192,100 +204,120 @@ export function MakeMenuScreen({
   const next = mode === 'make' && index < STEPS.length - 1 ? STEPS[index + 1] : undefined;
   const back = mode === 'make' && index > 0 ? STEPS[index - 1] : undefined;
   return (
-    <Page>
-      <Head>
-        <TitleBlock>
-          <Title>{t('make.title', { date })}</Title>
-          <Status $live={live}>
-            <Icon name={live ? 'check' : 'note'} />
-            {live ? t('make.live') : t('make.notPublished')}
-          </Status>
-        </TitleBlock>
-        {mode === 'make' ? (
-          <Bar aria-label={t('make.steps')}>
-            {STEPS.map((name, position) => {
-              const done = position < Math.max(reached, index);
-              return (
-                <StepButton
+    <AutoSaveGate.Provider value={gate}>
+      <Page>
+        <Head>
+          <TitleBlock>
+            <Title>{t('make.title', { date })}</Title>
+            <Status $live={live}>
+              <Icon name={live ? 'check' : 'note'} />
+              {live ? t('make.live') : t('make.notPublished')}
+            </Status>
+          </TitleBlock>
+          {mode === 'make' ? (
+            <Bar aria-label={t('make.steps')}>
+              {STEPS.map((name, position) => {
+                const done = position < Math.max(reached, index);
+                return (
+                  <StepButton
+                    key={name}
+                    type="button"
+                    $current={position === index}
+                    $done={done}
+                    aria-current={position === index ? 'step' : undefined}
+                    disabled={position > Math.max(reached, index)}
+                    onClick={() => go(name)}
+                  >
+                    <i>{done && position !== index ? <Icon name="check" /> : position + 1}</i>
+                    {t(`step.${name}`)}
+                    {name === 'dishes' && done && position !== index
+                      ? ` · ${String(dishes.length)}`
+                      : ''}
+                  </StepButton>
+                );
+              })}
+            </Bar>
+          ) : (
+            <Bar aria-label={t('make.tabs')}>
+              {TABS.map((name) => (
+                <TabButton
                   key={name}
                   type="button"
-                  $current={position === index}
-                  $done={done}
-                  aria-current={position === index ? 'step' : undefined}
-                  disabled={position > Math.max(reached, index)}
+                  $current={name === step}
+                  aria-current={name === step ? 'page' : undefined}
                   onClick={() => go(name)}
                 >
-                  <i>{done && position !== index ? <Icon name="check" /> : position + 1}</i>
-                  {t(`step.${name}`)}
-                  {name === 'dishes' && done && position !== index
-                    ? ` · ${String(dishes.length)}`
-                    : ''}
-                </StepButton>
-              );
-            })}
-          </Bar>
-        ) : (
-          <Bar aria-label={t('make.tabs')}>
-            {TABS.map((name) => (
-              <TabButton
-                key={name}
-                type="button"
-                $current={name === step}
-                aria-current={name === step ? 'page' : undefined}
-                onClick={() => go(name)}
-              >
-                {t(`tab.${name}`)}
-              </TabButton>
-            ))}
-          </Bar>
-        )}
-        {mode === 'make' && !layered ? (
-          <Button variant="quiet" onClick={close}>
-            {t('close')}
-          </Button>
-        ) : null}
-      </Head>
-      <Body>{content}</Body>
-      <Foot>
-        {mode === 'make' ? (
-          <>
-            {back ? (
-              <Button onClick={() => go(back)}>
-                <Icon name="back" />
-                {t('make.back')}
-              </Button>
-            ) : (
-              <span />
-            )}
-            <FootRight>
-              <Muted>
-                {step === 'dishes'
-                  ? t('make.stepDishes', { n: index + 1, count: dishes.length })
-                  : t('make.stepOf', { n: index + 1, total: STEPS.length })}
-              </Muted>
-              {next ? (
-                <Button variant="primary" onClick={() => go(next)}>
-                  {t('make.next', { name: t(`step.${next}`) })}
-                  <Icon name="forward" />
-                </Button>
-              ) : null}
-            </FootRight>
-          </>
-        ) : (
-          <>
-            <Muted>{t('make.instant')}</Muted>
-            <Button variant="primary" onClick={close}>
-              {t('make.done')}
+                  {t(`tab.${name}`)}
+                </TabButton>
+              ))}
+            </Bar>
+          )}
+          {mode === 'make' && !layered ? (
+            <Button variant="quiet" onClick={closeSaved}>
+              {t('close')}
             </Button>
-          </>
-        )}
-      </Foot>
-      <DishEditorHost
-        data={data}
-        value={editor.value}
-        onClose={editor.close}
-        renderChefs={slots.chefs}
-      />
-    </Page>
+          ) : null}
+        </Head>
+        <Body>{content}</Body>
+        <Foot>
+          {mode === 'make' ? (
+            <>
+              {back ? (
+                <Button onClick={() => go(back)}>
+                  <Icon name="back" />
+                  {t('make.back')}
+                </Button>
+              ) : (
+                <span />
+              )}
+              <FootRight>
+                <Muted>
+                  {step === 'dishes'
+                    ? t('make.stepDishes', { n: index + 1, count: dishes.length })
+                    : t('make.stepOf', { n: index + 1, total: STEPS.length })}
+                </Muted>
+                {next ? (
+                  <Button variant="primary" onClick={() => go(next)}>
+                    {t('make.next', { name: t(`step.${next}`) })}
+                    <Icon name="forward" />
+                  </Button>
+                ) : null}
+              </FootRight>
+            </>
+          ) : (
+            <>
+              <Muted>{t('make.instant')}</Muted>
+              <Button variant="primary" onClick={closeSaved}>
+                {t('make.done')}
+              </Button>
+            </>
+          )}
+        </Foot>
+        <DishEditorHost
+          data={data}
+          value={editor.value}
+          onClose={editor.close}
+          renderChefs={slots.chefs}
+        />
+        {leaving ? (
+          <WarningDialog
+            title={t('autosave.leaveTitle')}
+            cancelLabel={t('autosave.leaveTry')}
+            continueLabel={t('autosave.leaveAnyway')}
+            onCancel={() => {
+              [...gate.current].forEach((saver) => saver.retry());
+              setLeaving(null);
+            }}
+            onContinue={() => {
+              const target = leaving;
+              setLeaving(null);
+              target.go();
+            }}
+          >
+            {t('autosave.leaveBody')}
+          </WarningDialog>
+        ) : null}
+      </Page>
+    </AutoSaveGate.Provider>
   );
 }

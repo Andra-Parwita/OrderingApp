@@ -22,6 +22,17 @@ Copy the `database_id` it prints into `wrangler.jsonc`, replacing `"local-only"`
 pnpm exec wrangler r2 bucket create shaggybobo-images
 ```
 
+## Announce an update and pause the app (plan 046)
+
+Around every release that has a migration:
+
+1. **Announce** (any time before): admin page, "Announce an update": date, start, minutes, an optional note per language. Everyone sees a quiet "Maintenance on ..." bar until the window ends.
+2. **Maintenance on**, just before the backup and migrations (admin page, "Turn maintenance on"). Customers and sellers see "Updating, back in a few minutes" and the server refuses every change (503 `maintenance`); the admin page keeps working.
+3. Back up, migrate, deploy (below).
+4. **Maintenance off** after the health check passes. Screens return by themselves within 30 seconds. If the release fails, leave it on.
+
+Optional, for a script: a secret `MAINTENANCE_TOKEN` (`pnpm exec wrangler secret put MAINTENANCE_TOKEN`) lets `POST /api/maintenance` with `Authorization: Bearer <token>` and `{"maintenance": true|false}` switch it without a passkey (it works on that route only).
+
 ## 3 · Create the tables in the real database
 
 **Back up first, every time** (owner, 2026-10-13), before any migration or deploy. The `backups/` folder is git-ignored: the file holds real orders and first names, so it stays on this PC.

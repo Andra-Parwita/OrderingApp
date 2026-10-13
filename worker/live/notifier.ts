@@ -9,6 +9,7 @@ export type RoomNamespace = {
 };
 
 const CONNECT_URL = 'https://live.internal/connect';
+const CONNECT_CUSTOMER_URL = 'https://live.internal/connect-customer';
 const NOTIFY_URL = 'https://live.internal/notify';
 
 export function createLiveNotifier(namespace: RoomNamespace): LiveNotifier {
@@ -32,6 +33,12 @@ export function createLiveNotifier(namespace: RoomNamespace): LiveNotifier {
       // A fresh request: only the upgrade header goes through, never the client's URL or cookies.
       const upgrade = new Request(CONNECT_URL, { headers: { Upgrade: 'websocket' } });
       return room(sellerId).fetch(upgrade);
+    },
+
+    connectCustomer(sellerId, codes) {
+      const url = new URL(CONNECT_CUSTOMER_URL);
+      url.searchParams.set('codes', codes.join(','));
+      return room(sellerId).fetch(new Request(url, { headers: { Upgrade: 'websocket' } }));
     },
   };
 }

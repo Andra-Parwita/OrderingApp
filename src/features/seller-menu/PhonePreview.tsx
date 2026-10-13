@@ -39,7 +39,8 @@ const Head = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
 
-type Loaded = { status: 'loading' } | { status: 'error' } | { status: 'ready'; menu: MenuResponse };
+type Base = Pick<MenuResponse, 'seller' | 'kitchen' | 'week' | 'ordering'>;
+type Loaded = { status: 'loading' } | { status: 'error' } | { status: 'ready'; base: Base };
 
 /** The customer's view of this menu: the server's, with the chef fields taken off. */
 function strip(menu: MenuResponse | null, items: Array<SellerMenuItemView>): MenuResponse | null {
@@ -62,8 +63,8 @@ export function PhonePreview({
   const { t, i18n } = useTranslation(MENU_NS);
   const [lang, setLang] = useState<Language>(i18n.resolvedLanguage === 'id' ? 'id' : 'en');
   const [state, setState] = useState<Loaded>({ status: 'loading' });
-  // The preview is rebuilt when the menu changes (a price, a limit, a place).
-  const signature = JSON.stringify([view.menu, view.dishes, view.pickupPoints]);
+  // Read once when the preview opens: the seller, kitchen and ordering state are not in the wizard's
+  // data. Dishes, date, cut-off, delivery and places come from `view`, so a save needs no new request.
   useEffect(() => {
     let live = true;
     void fetchSellerMenu(undefined, currentSellerSlug()).then((result) => {
@@ -72,14 +73,25 @@ export function PhonePreview({
         setState({ status: 'error' });
         return;
       }
-      const { seller, kitchen, week, ordering, items } = result.data;
-      const menu = strip({ seller, kitchen, week, ordering, items: [] }, items);
-      setState(menu ? { status: 'ready', menu } : { status: 'error' });
+      const { seller, kitchen, week, ordering } = result.data;
+      setState({ status: 'ready', base: { seller, kitchen, week, ordering } });
     });
     return () => {
       live = false;
     };
-  }, [signature]);
+  }, []);
+  const menu = useMemo(() => {
+    if (state.status !== 'ready') return null;
+    const { base } = state;
+    const week = {
+      ...base.week,
+      cookingDate: view.menu.cookingDate,
+      cutoffAt: view.menu.cutoffAt,
+      delivery: view.menu.delivery,
+      pickupPoints: view.pickupPoints,
+    };
+    return strip({ ...base, week, items: [] }, view.dishes);
+  }, [state, view]);
   const clone = useMemo(() => i18n.cloneInstance({ lng: lang }), [i18n, lang]);
   const options = [
     { value: 'en' as const, label: 'EN' },
@@ -98,10 +110,8 @@ export function PhonePreview({
       </Head>
       <Frame role="region" aria-label={t('check.customersSee')}>
         {view.menu.pictureRef ? <Cover src={view.menu.pictureRef} alt="" /> : null}
-        {state.status === 'ready' ? (
-          <I18nextProvider i18n={clone}>
-            {render({ slug: state.menu.seller.slug, menu: state.menu })}
-          </I18nextProvider>
+        {menu ? (
+          <I18nextProvider i18n={clone}>{render({ slug: menu.seller.slug, menu })}</I18nextProvider>
         ) : state.status === 'error' ? (
           <Muted role="alert">{t('error')}</Muted>
         ) : (

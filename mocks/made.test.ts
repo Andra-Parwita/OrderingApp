@@ -18,6 +18,7 @@ describe('made counts', () => {
       return Promise.resolve();
     },
     connect: () => Promise.resolve(new Response('room')),
+    connectCustomer: () => Promise.resolve(new Response('room')),
   };
 
   async function call(method: string, seller: string, body?: unknown) {

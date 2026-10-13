@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Kitchen, Language } from '../../../shared/domain';
+import { getCustomerLiveState, watchCustomerLiveState } from '../../api/customerLiveState';
 import { markLanguageChosen } from '../../i18n/chosenLanguage';
 import { setThemePreference, useThemePreference } from '../../theme/themePreference';
 import { CustomerSettingsView } from './CustomerSettingsView';
@@ -13,6 +14,7 @@ export function CustomerSettingsScreen({
 }: Readonly<{ showLanguage?: boolean; kitchen?: Kitchen }>) {
   const { i18n } = useTranslation();
   const theme = useThemePreference();
+  const connection = useSyncExternalStore(watchCustomerLiveState, getCustomerLiveState);
   const lang: Language = i18n.language.startsWith('id') ? 'id' : 'en';
   const onLang = useCallback(
     (next: Language) => {
@@ -29,6 +31,7 @@ export function CustomerSettingsScreen({
       onTheme={setThemePreference}
       showLanguage={showLanguage}
       kitchen={kitchen}
+      connection={connection}
     />
   );
 }

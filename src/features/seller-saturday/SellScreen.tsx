@@ -4,15 +4,16 @@ import { styled } from 'styled-components';
 import type { Language, SellerMenuItemView, SellerOrder } from '../../../shared/domain';
 import { daySalesToCsv } from '../../../shared/csv';
 import { DAY_STOCK_MAX, type DaySaleEntry } from '../../../shared/daySalesContract';
+import type { LiveEventType } from '../../../shared/liveContract';
 import { pickText } from '../../../shared/text';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
 import { fetchDayLog, sellOnDay, setDayCount, undoDaySale } from '../../api/day';
 import { currentSellerSlug } from '../../api/device/sellerContext';
-import { subscribeLive } from '../../api/live';
 import { Button, Segmented, TextField, type SegmentedOption } from '../../ui';
 import { SATURDAY_NS } from './i18n/register';
 import { summarise } from './daySummary';
-import { Muted, Notice, REFRESH_MS, useLang } from './parts';
+import { Muted, Notice, useLang } from './parts';
+import { useLiveReload, type Wanted } from './useLiveReload';
 
 /** How long Undo stays on screen after a sale. */
 export const UNDO_MS = 5000;
@@ -111,43 +112,130 @@ const Gone = styled.span`
   text-decoration: line-through;
 `;
 
-/** The menu, the day's log and the orders; reloads on a live event and on a timer. */
-function useSellData(): { load: Load; reload: () => Promise<void> } {
+type Parts = Readonly<{ menu: boolean; log: boolean; orders: boolean }>;
+
+/**
+ * The menu (with the day stock), the day's log and the orders. Plan 074: no timer. It loads once,
+ * then follows the live connection and fetches only what an event touched: a sale elsewhere
+ * (`stock.changed`) reloads the stock, an order event the orders. The log and the orders only feed
+ * the Summary tab, so on the Sell tab they are marked stale and fetched when Summary opens. This
+ * device's own sale is applied from the POST answer and its echo (same device id) is ignored: no extra request.
+ */
+function useSellData(tab: Tab) {
   const slug = currentSellerSlug();
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const alive = useRef(true);
-  const reload = useCallback(async () => {
-    const [menu, log, orders] = await Promise.all([
-      fetchSellerMenu(undefined, slug),
-      fetchDayLog(slug),
-      fetchSellerOrders(undefined, slug),
-    ]);
-    if (!alive.current) return;
-    if (!menu.ok || !log.ok) {
-      setLoad((current) => (current.status === 'ready' ? current : { status: 'error' }));
-      return;
-    }
-    setLoad({
-      status: 'ready',
-      items: menu.data.items,
-      entries: log.data.entries,
-      orders: orders.ok ? orders.data.orders : [],
-    });
-  }, [slug]);
+  const ready = useRef(false);
+  const tabRef = useRef(tab);
+  useEffect(() => {
+    tabRef.current = tab;
+  }, [tab]);
+  const stale = useRef({ log: false, orders: false });
+
+  const fetchParts = useCallback(
+    async (parts: Parts) => {
+      const [menu, log, orders] = await Promise.all([
+        parts.menu ? fetchSellerMenu(undefined, slug) : null,
+        parts.log ? fetchDayLog(slug) : null,
+        parts.orders ? fetchSellerOrders(undefined, slug) : null,
+      ]);
+      if (!alive.current) return;
+      if ((menu && !menu.ok) || (log && !log.ok)) {
+        // A silent refresh that fails keeps what is already on screen.
+        if (parts.log) stale.current.log = true;
+        setLoad((current) => (current.status === 'ready' ? current : { status: 'error' }));
+        return;
+      }
+      if (orders && !orders.ok) stale.current.orders = true;
+      setLoad((current) => {
+        if (current.status !== 'ready') {
+          // Only a full load can start the screen.
+          return menu?.ok && log?.ok
+            ? {
+                status: 'ready',
+                items: menu.data.items,
+                entries: log.data.entries,
+                orders: orders?.ok ? orders.data.orders : [],
+              }
+            : current;
+        }
+        return {
+          status: 'ready',
+          items: menu?.ok ? menu.data.items : current.items,
+          entries: log?.ok ? log.data.entries : current.entries,
+          orders: orders?.ok ? orders.data.orders : current.orders,
+        };
+      });
+      if (menu && log) ready.current = true;
+    },
+    [slug],
+  );
+
+  const loadFor = useCallback(
+    async (wanted: Wanted) => {
+      const all = wanted === null || !ready.current;
+      const has = (type: LiveEventType) => wanted?.has(type) ?? false;
+      const menu = all || has('menu.changed') || has('stock.changed');
+      let log = all || has('menu.changed') || has('stock.changed');
+      let orders = all || has('menu.changed') || has('order.created') || has('order.changed');
+      // The Sell tab shows neither: mark them stale and fetch when Summary opens.
+      if (!all && tabRef.current === 'sell') {
+        stale.current.log ||= log;
+        stale.current.orders ||= orders;
+        log = false;
+        orders = false;
+      }
+      if (log) stale.current.log = false;
+      if (orders) stale.current.orders = false;
+      if (menu || log || orders) await fetchParts({ menu, log, orders });
+    },
+    [fetchParts],
+  );
+
   useEffect(() => {
     alive.current = true;
-    const first = window.setTimeout(() => void reload(), 0);
-    const timer = window.setInterval(() => void reload(), REFRESH_MS);
-    // A sale or count on another device arrives as a live event.
-    const stop = subscribeLive({ onEvent: () => void reload(), onStatus: () => undefined });
     return () => {
       alive.current = false;
-      window.clearTimeout(first);
-      window.clearInterval(timer);
-      stop();
     };
-  }, [reload]);
-  return { load, reload };
+  }, []);
+  useLiveReload(loadFor);
+
+  // Summary opens: fetch what went stale while the Sell tab was showing.
+  useEffect(() => {
+    if (tab !== 'summary' || !ready.current) return;
+    const { log, orders } = stale.current;
+    if (!log && !orders) return;
+    stale.current = { log: false, orders: false };
+    void fetchParts({ menu: false, log, orders });
+  }, [tab, fetchParts]);
+
+  /** This device's own change: the stock from the POST answer; the log goes stale (fetched at once on Summary). */
+  const applied = useCallback(
+    (itemId: string, dayStock: number) => {
+      setLoad((current) =>
+        current.status === 'ready'
+          ? {
+              ...current,
+              items: current.items.map((item) =>
+                item.id === itemId ? { ...item, dayStock } : item,
+              ),
+            }
+          : current,
+      );
+      if (tabRef.current === 'summary') void fetchParts({ menu: false, log: true, orders: false });
+      else stale.current.log = true;
+    },
+    [fetchParts],
+  );
+  const reloadMenu = useCallback(
+    () => fetchParts({ menu: true, log: false, orders: false }),
+    [fetchParts],
+  );
+  const reload = useCallback(
+    () => fetchParts({ menu: true, log: true, orders: true }),
+    [fetchParts],
+  );
+  return { load, reload, reloadMenu, applied };
 }
 
 const clock = (at: string, lang: Language) =>
@@ -161,8 +249,8 @@ export function SellScreen({ canCorrect = false }: Readonly<{ canCorrect?: boole
   const { t } = useTranslation(SATURDAY_NS);
   const lang = useLang();
   const slug = currentSellerSlug();
-  const { load, reload } = useSellData();
   const [tab, setTab] = useState<Tab>('sell');
+  const { load, reload, reloadMenu, applied } = useSellData(tab);
   const [undo, setUndo] = useState<Undo | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [numbers, setNumbers] = useState<Readonly<Record<string, string>>>({});
@@ -185,24 +273,36 @@ export function SellScreen({ canCorrect = false }: Readonly<{ canCorrect?: boole
     setNote(null);
     const result = await sellOnDay({ itemId: item.id, qty }, slug);
     if (result.ok) {
+      applied(item.id, result.data.dayStock);
       const entryId = result.data.entryId;
       if (entryId) {
         setUndo({ entryId, text: t('sell.sold', { count: qty, name: pickText(item.name, lang) }) });
       }
-    } else setNote(result.error === 'sold_out' ? t('sell.soldOutNote') : t('common.actionFailed'));
-    await reload();
+    } else {
+      setNote(result.error === 'sold_out' ? t('sell.soldOutNote') : t('common.actionFailed'));
+      // The stock on screen was out of date (or the call failed): ask for the truth.
+      await reloadMenu();
+    }
   };
   const setCount = async (item: SellerMenuItemView, count: number) => {
     setNote(null);
     const result = await setDayCount({ itemId: item.id, count }, slug);
-    if (!result.ok) setNote(t('common.actionFailed'));
-    await reload();
+    if (result.ok) applied(item.id, result.data.dayStock);
+    else {
+      setNote(t('common.actionFailed'));
+      await reloadMenu();
+    }
   };
   const reverse = async (entryId: string) => {
     setUndo(null);
     const result = await undoDaySale({ entryId }, slug);
-    setNote(result.ok ? null : t('sell.undoRefused'));
-    await reload();
+    if (result.ok) {
+      applied(result.data.itemId, result.data.dayStock);
+      setNote(null);
+    } else {
+      setNote(t('sell.undoRefused'));
+      await reloadMenu();
+    }
   };
 
   const ready = load.status === 'ready' ? load : null;

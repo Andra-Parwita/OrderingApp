@@ -8,21 +8,11 @@ import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { ArchivedOrderView, EarlierOrderView } from './ClosedOrderViews';
 import { ORDERS_NS } from './i18n/register';
 import { OfflineNote, Page, ScreenBoundary, StateMessage, isOffline, useLang } from './layout';
-import { startOrderPoll } from './orderPoll';
 import { OrderPageView } from './OrderPageView';
 import { orderInfo } from './orderInfo';
 import { OrderQrView } from './OrderQrView';
 import { selectCancel, selectCollect, selectMenus, selectOrderPage } from './selectors';
-import {
-  cancelRequested,
-  collectRequested,
-  orderRefreshRequested,
-  orderRequested,
-  type FailureCode,
-} from './slice';
-
-/** How often the open order page reloads. Replaced by push / live updates in phase 4-5. */
-export const POLL_MS = 15_000;
+import { cancelRequested, collectRequested, orderRequested, type FailureCode } from './slice';
 
 function cancelErrorKey(code: FailureCode): string {
   switch (code) {
@@ -36,18 +26,17 @@ function cancelErrorKey(code: FailureCode): string {
   }
 }
 
-/** Loads the order on arrival (what My orders knew may be old) and, optionally, keeps it fresh. */
-function useOrderPage(token: string, poll: boolean) {
+/**
+ * Loads the order on arrival (what My orders knew may be old). After that it stays fresh by itself:
+ * the app's one live connection (CustomerLiveHost, plan 074) pushes changes into the store.
+ */
+function useOrderPage(token: string) {
   const dispatch = useDispatch();
   const page = useSelector(selectOrderPage);
   const load = useCallback(() => {
     dispatch(orderRequested(token));
   }, [dispatch, token]);
   useEffect(load, [load]);
-  useEffect(() => {
-    if (!poll) return undefined;
-    return startOrderPoll(() => dispatch(orderRefreshRequested(token)), POLL_MS);
-  }, [dispatch, token, poll]);
   const order = page.status === 'ready' && page.order.token === token ? page.order : null;
   return { page, order, load };
 }
@@ -153,7 +142,7 @@ const toMenuByLink = (slug: string) => window.location.assign(`/${encodeURICompo
 function OrderContent({ token, onBack, onChange, onShowQr = () => undefined, onOpenMenu }: Props) {
   const { t } = useTranslation(ORDERS_NS);
   const lang = useLang();
-  const { page, order, load } = useOrderPage(token, true);
+  const { page, order, load } = useOrderPage(token);
   const openMenu = onOpenMenu ?? toMenuByLink;
 
   // Seen: viewing the order clears its dot on My orders.
@@ -231,7 +220,7 @@ export function OrderScreen(props: Props) {
 function QrContent({ token, onBack }: Readonly<{ token: string; onBack: () => void }>) {
   const { t } = useTranslation(ORDERS_NS);
   const lang = useLang();
-  const { page, order, load } = useOrderPage(token, false);
+  const { page, order, load } = useOrderPage(token);
   const menu = useKitchenBrand(order?.seller.slug);
   return (
     <Page>

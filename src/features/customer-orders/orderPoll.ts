@@ -1,4 +1,4 @@
-// The open order page's refresh timer (plan 062). Every `baseMs` while things work; the gap doubles
+// The slow backup check's timer (plan 062; since plan 074 only while the live connection is down). Every `baseMs` while things work; the gap doubles
 // after each failed refresh (up to 5 minutes) and resets on a good one. It pauses while the tab is
 // hidden (one refresh on return), and stops after 5 refusals in a row until the person taps Try
 // again (the banner, see components/network). How a refresh ended is read from api/netState.
@@ -21,7 +21,8 @@ export function startOrderPoll(refresh: () => void, baseMs: number): () => void 
 
   const schedule = () => {
     clearTimeout(timer);
-    timer = setTimeout(tick, Math.min(POLL_GAP_MAX_MS, baseMs * 2 ** failures));
+    // A base gap longer than the cap (a 30 minute backup check) never shrinks on a failure.
+    timer = setTimeout(tick, Math.min(Math.max(POLL_GAP_MAX_MS, baseMs), baseMs * 2 ** failures));
   };
 
   // Learns how the last refresh ended; false when the poll must stop.

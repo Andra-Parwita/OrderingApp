@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { fetchImages, fetchSettings } from '../../api/client';
+import { fetchSettingsCached } from '../../api/cachedReads';
+import { fetchImages } from '../../api/client';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Icon } from '../../ui';
 import { Aside, Columns, Label } from './homeParts';
@@ -89,7 +90,7 @@ export function FirstTime({
         setPictures([railImage, railIcon, desktopBanner, phoneBanner].some(Boolean));
       }
     });
-    void fetchSettings(undefined, slug).then((result) => {
+    void fetchSettingsCached().then((result) => {
       if (live && result.ok) setWhatsapp(Boolean(result.data.settings.whatsappNumber));
     });
     return () => {

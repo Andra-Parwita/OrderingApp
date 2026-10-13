@@ -250,6 +250,18 @@ a {
   max-height: calc(100dvh - var(--band-h) - 24px);
   overflow: auto;
 }
+/* Room around the search box and menu, so they don't touch the panel edges or its scrollbar. */
+.side {
+  padding: 0 12px 12px 8px;
+}
+/* The search stays pinned at the top of the menu while the list scrolls under it. */
+.search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg);
+  padding: 4px 0 10px;
+}
 .search input {
   width: 100%;
   min-height: 44px;

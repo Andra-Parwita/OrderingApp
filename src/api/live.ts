@@ -7,7 +7,13 @@
 // HttpOnly cookie session the browser sends the cookie with the upgrade itself, and the slug goes.
 import { buffers, eventChannel, type EventChannel } from 'redux-saga';
 import { call, delay, flush, put, race, take } from 'redux-saga/effects';
-import { LIVE_PATH, LIVE_PING, parseLiveEvent, type LiveEvent } from '../../shared/liveContract';
+import {
+  LIVE_PATH,
+  LIVE_PING,
+  parseLiveEvent,
+  type LiveEvent,
+  type LiveEventType,
+} from '../../shared/liveContract';
 import { currentSellerSlug } from './device/sellerContext';
 import {
   MAX_REFUSALS,
@@ -330,27 +336,46 @@ export function liveChannel(
   }, buffers.expanding(16));
 }
 
+/** What changed since the last load: the event types of the batch, or null = reload everything. */
+export type Changed = ReadonlySet<LiveEventType> | null;
+
 export type LiveRefresh = {
-  /** Loads the screen's data once. */
-  load: () => Generator<unknown, void, unknown>;
-  /** How long to wait between loads while the socket is not live (the fallback). */
-  fallbackMs: number;
+  /** Loads the screen's data once; `changed` lets it reload only the parts an event touched (plan 074). */
+  load: (changed: Changed) => Generator<unknown, void, unknown>;
+  /** How long to wait between loads while the socket is not live (the backup check), in ms. A
+   *  function is read each time, so the admin's setting applies without a restart. */
+  fallbackMs: number | (() => number);
   /** The channel to listen to; tests pass one from a fake socket. */
   channel?: () => EventChannel<LiveMessage>;
 };
 
 /** Runs `load` and says how its GET calls ended (read from netState, so the loaders need no change). */
-function* loadAndJudge(load: LiveRefresh['load']) {
+function* loadAndJudge(load: LiveRefresh['load'], changed: Changed) {
   const marker = markOutcomes();
-  yield call(load);
+  yield call(load, changed);
   return outcomeSince(marker);
 }
 
+/** A reconnect right after a load adds nothing; this long counts as "right after". */
+export const RECENT_LOAD_MS = 2000;
+
+/** The page coming to the front or going to the back; the loop pauses its timer while hidden. */
+function visibilityChannel(): EventChannel<true> {
+  return eventChannel<true>((emit) => {
+    const onChange = () => emit(true);
+    document.addEventListener('visibilitychange', onChange);
+    return () => document.removeEventListener('visibilitychange', onChange);
+  }, buffers.sliding(1));
+}
+
 /**
- * Keeps a screen fresh: loads once, then reloads on every live event (a burst is one reload), and
- * once more each time the socket (re)connects, since events may have been missed while it was
- * down. While the socket is not live it reloads every `fallbackMs`. Run it in a `race` against the
- * screen's "stop" action; closing the channel in `finally` closes the socket for the last screen.
+ * Keeps a screen fresh: loads once, then reloads on every live event (a burst is one reload that
+ * names the event types, so the loader can fetch only what changed), and once more each time the
+ * socket (re)connects, since events may have been missed while it was down. While the socket is
+ * not live and the page is visible it reloads every `fallbackMs` (plan 074: the admin's "backup
+ * check", default 5 min); a hidden page asks for nothing and reloads at once when it comes back.
+ * Run it in a `race` against the screen's "stop" action; closing the channel in `finally` closes
+ * the socket for the last screen.
  *
  * Plan 062: a failed load doubles the gap (up to 5 min) and a good one resets it. After
  * MAX_REFUSALS refusals in a row the loop stops asking and waits for Try again (netState); a 401
@@ -358,13 +383,17 @@ function* loadAndJudge(load: LiveRefresh['load']) {
  */
 export function* liveRefreshLoop({ load, fallbackMs, channel = liveChannel }: LiveRefresh) {
   const messages = (yield call(channel)) as EventChannel<LiveMessage>;
+  const visibility = (yield call(visibilityChannel)) as EventChannel<true>;
+  const baseMs = () => (typeof fallbackMs === 'function' ? fallbackMs() : fallbackMs);
   try {
     let live = false;
     let failures = 0;
     let refusals = 0;
+    let lastLoadAt = 0;
     // Returns false when the loop must end.
-    const judge = function* (): Generator<unknown, boolean, unknown> {
-      const outcome = (yield call(loadAndJudge, load)) as Outcome;
+    const judge = function* (changed: Changed): Generator<unknown, boolean, unknown> {
+      const outcome = (yield call(loadAndJudge, load, changed)) as Outcome;
+      lastLoadAt = Date.now();
       if (outcome === 'unauthorized') {
         yield put(staffSignedOut());
         return false;
@@ -382,19 +411,32 @@ export function* liveRefreshLoop({ load, fallbackMs, channel = liveChannel }: Li
         yield flush(messages);
         failures = 0;
         refusals = 0;
-        return yield* judge();
+        return yield* judge(null);
       }
       return true;
     };
-    if (!(yield* judge())) return;
+    if (!(yield* judge(null))) return;
     while (true) {
-      const gap = Math.min(POLL_GAP_MAX_MS, fallbackMs * 2 ** failures);
-      const { message, tick } = (yield race({
+      const gap = Math.min(POLL_GAP_MAX_MS, baseMs() * 2 ** failures);
+      const hidden = document.visibilityState === 'hidden';
+      const { message, tick, shown } = (yield race({
         message: take(messages),
-        // Only while the socket is down (or the last load failed); a live, healthy socket needs no timer.
-        ...(live && failures === 0 ? {} : { tick: delay(gap) }),
-      })) as { message?: LiveMessage; tick?: true };
+        shown: take(visibility),
+        // Only while the socket is down (or the last load failed) and the page is visible; a live,
+        // healthy socket or a hidden page needs no timer.
+        ...((live && failures === 0) || hidden ? {} : { tick: delay(gap) }),
+      })) as { message?: LiveMessage; tick?: true; shown?: true };
       let reload = tick !== undefined;
+      // Null = everything. Events alone narrow it to their types.
+      let everything = tick !== undefined;
+      const types = new Set<LiveEventType>();
+      if (shown) {
+        // Back in front: ask at once; going to the back changes nothing (the timer just stops).
+        if (document.visibilityState === 'visible') {
+          reload = true;
+          everything = true;
+        }
+      }
       const batch: Array<LiveMessage> = [];
       if (message) batch.push(message);
       if (message) batch.push(...((yield flush(messages)) as Array<LiveMessage>));
@@ -402,12 +444,19 @@ export function* liveRefreshLoop({ load, fallbackMs, channel = liveChannel }: Li
         if (entry.kind === 'status') {
           const wasLive = live;
           live = entry.status === 'live';
-          if (live && !wasLive) reload = true;
-        } else reload = true;
+          if (live && !wasLive && Date.now() - lastLoadAt >= RECENT_LOAD_MS) {
+            reload = true;
+            everything = true;
+          }
+        } else {
+          reload = true;
+          types.add(entry.event.type);
+        }
       }
-      if (reload && !(yield* judge())) return;
+      if (reload && !(yield* judge(everything ? null : types))) return;
     }
   } finally {
     messages.close();
+    visibility.close();
   }
 }

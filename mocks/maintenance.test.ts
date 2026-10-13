@@ -4,6 +4,7 @@
 // The public status shows the announcement; the release token works on its own endpoint only.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parseStatus } from '../shared/maintenance';
+import { bustMaintenanceCache } from '../worker/api/maintenanceGuard';
 import { DEV_ADMIN_SETUP_KEY, devApi, useWorld, type World } from './impl';
 import { SoftAuthenticator } from './softAuthenticator';
 
@@ -13,7 +14,6 @@ const SLUG = 'onde-onde';
 describe('maintenance mode (plan 046)', () => {
   const create = useWorld('maintenance');
   let world: World;
-  let n = 0;
   const authenticator = new SoftAuthenticator(SITE);
 
   async function call(method: string, path: string, token?: string, body?: unknown) {
@@ -78,7 +78,27 @@ describe('maintenance mode (plan 046)', () => {
 
   beforeEach(async () => {
     authenticator.credentials.length = 0;
+    bustMaintenanceCache();
     world = await create({ now: () => new Date('2026-10-07T10:00:00Z') });
+  });
+
+  it('the write guard costs no D1 round trip once the flag is cached, and the switch busts it', async () => {
+    bustMaintenanceCache();
+    const bare = () => {
+      world.queries.reset();
+      return devApi(
+        world.repo,
+        new Request(`${SITE}/api/seller/menu`, { method: 'POST', body: '{}' }),
+      ).then(() => world.queries.count());
+    };
+    const first = await bare(); // reads the flag once
+    const second = await bare();
+    expect(first - second).toBe(1);
+    const admin = await adminToken();
+    await patch(admin, { maintenance: true }); // busts this isolate's copy
+    expect((await order()).status).toBe(503);
+    await patch(admin, { maintenance: false });
+    expect((await order()).status).toBe(201);
   });
 
   it('is off by default and the public status says so', async () => {
@@ -157,5 +177,35 @@ describe('maintenance mode (plan 046)', () => {
       await send('release-token', '/api/admin/maintenance', { maintenance: true }, 'PATCH'),
     ).toBe(401);
     expect(parseStatus((await call('GET', '/api/status')).body)?.maintenance).toBe(false);
+  });
+
+  it('plan 074: the backup-check minutes default to 5 / 5, ride on /api/status, and only the admin sets them within 1 to 30', async () => {
+    expect(parseStatus((await call('GET', '/api/status')).body)?.backupMinutes).toEqual({
+      customer: 5,
+      seller: 5,
+    });
+    const set = (token: string, body: unknown) =>
+      call('PATCH', '/api/admin/backup-minutes', token, body);
+    expect((await set('nope', { seller: 2 })).status).toBe(401);
+    expect((await call('GET', '/api/admin/backup-minutes')).status).toBe(401);
+    const admin = await adminToken();
+    expect((await set(admin, { seller: 2 })).body).toEqual({ customer: 5, seller: 2 });
+    expect((await set(admin, { customer: 30 })).body).toEqual({ customer: 30, seller: 2 });
+    expect(parseStatus((await call('GET', '/api/status')).body)?.backupMinutes).toEqual({
+      customer: 30,
+      seller: 2,
+    });
+    // Out of bounds, not whole, wrong type, or nothing to change: refused, nothing saved.
+    for (const bad of [{ seller: 0 }, { seller: 31 }, { customer: 2.5 }, { customer: '5' }, {}]) {
+      expect((await set(admin, bad)).status).toBe(400);
+    }
+    expect((await call('GET', '/api/admin/backup-minutes', admin)).body).toEqual({
+      customer: 30,
+      seller: 2,
+    });
+    // Maintenance changes keep the minutes.
+    await patch(admin, { maintenance: true });
+    await patch(admin, { maintenance: false });
+    expect(parseStatus((await call('GET', '/api/status')).body)?.backupMinutes.seller).toBe(2);
   });
 });

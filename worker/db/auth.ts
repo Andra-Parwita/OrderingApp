@@ -1287,8 +1287,8 @@ export async function sellerSummaries(db: Db): Promise<Map<string, SellerSummary
     db.all<{ seller_id: string; n: number }>(
       'SELECT seller_id, COUNT(*) AS n FROM memberships GROUP BY seller_id',
     ),
-    db.all<{ seller_id: string; last: string }>(
-      'SELECT m.seller_id AS seller_id, MAX(d.last_used_at) AS last FROM memberships m JOIN devices d ON d.account_id = m.account_id GROUP BY m.seller_id',
+    db.all<{ seller_id: string; last: string; devices: number }>(
+      'SELECT m.seller_id AS seller_id, MAX(d.last_used_at) AS last, COUNT(d.id) AS devices FROM memberships m JOIN devices d ON d.account_id = m.account_id GROUP BY m.seller_id',
     ),
   ]);
   const byId = <T extends { seller_id: string }>(rows: Array<T>) =>
@@ -1311,6 +1311,7 @@ export async function sellerSummaries(db: Db): Promise<Map<string, SellerSummary
       menu: menu ? { state: menu.state, cookingDate: menu.cooking_date } : null,
       orders: ordersOf.get(id)?.n ?? 0,
       lastActiveAt: activeOf.get(id)?.last ?? null,
+      devices: activeOf.get(id)?.devices ?? 0,
     });
   }
   return result;

@@ -54,8 +54,10 @@ export function MaintenancePanel() {
     void save({ notice: { from, until, noteEn: noteEn.trim(), noteId: noteId.trim() } });
   }
 
-  const on = state?.maintenance ?? false;
-  const notice = state?.notice ?? null;
+  // Nothing until the admin-only call answers: anyone else never sees these controls.
+  if (!state) return null;
+  const on = state.maintenance;
+  const notice = state.notice;
   return (
     <Section>
       <Sub>{t('home.maintenance.title')}</Sub>
@@ -126,7 +128,11 @@ export function MaintenancePanel() {
           onConfirm={() => void save({ maintenance: true })}
         />
       )}
-      {problem ? <Message $bad role="alert">{problem}</Message> : null}
+      {problem ? (
+        <Message $bad role="alert">
+          {problem}
+        </Message>
+      ) : null}
     </Section>
   );
 }

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { currentSellerSlug } from '../../api/device/sellerContext';
+import { draftKey } from '../../components/draft';
 import { formatDay } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
 import { MAX_MENU_ITEMS } from '../../../shared/limits';
@@ -8,6 +10,8 @@ import type { Dish } from '../../../shared/menusContract';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { Button, Icon, Segmented, TextField, WarningDialog } from '../../ui';
+import { AutoSaveStatus } from './AutoSaveStatus';
+import { useAutoSave } from './autoSave';
 import { MENU_NS } from './i18n/register';
 import {
   AskDialog,
@@ -15,8 +19,10 @@ import {
   GroupLabel,
   LinkButton,
   Muted,
+  saveResultOf,
   useOpWatch,
   useRunOp,
+  useSendOp,
 } from './menuShared';
 import type { MenuData } from './menuSlice';
 import { matchPastDishes } from './pastMenus';
@@ -164,11 +170,37 @@ export function DishesStep({
   } | null>(null);
   const { sold } = useSold(live);
   const { view } = data;
-  const onMenuIds = useMemo(
+  const serverIds = useMemo(
     () => view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : [])),
     [view.dishes],
   );
-  const full = view.dishes.length >= MAX_MENU_ITEMS;
+  // Plan 072: a tick shows at once and is saved ~1 s after the last one, in one request.
+  const sendOp = useSendOp();
+  const saver = useAutoSave<Array<string>>(
+    draftKey(currentSellerSlug(), 'menu-dishes', view.menu.id),
+    async (dishIds) => saveResultOf(await sendOp({ kind: 'updateMenu', request: { dishIds } })),
+  );
+  const { pending } = saver.state;
+  const onMenuIds = pending ?? serverIds;
+  const onMenu = useMemo(() => {
+    if (pending === null) {
+      return view.dishes.map((dish) => ({
+        key: dish.id,
+        dishId: dish.dishId,
+        name: dish.name,
+        priceCents: dish.priceCents,
+      }));
+    }
+    return pending.flatMap((dishId) => {
+      const item = view.dishes.find((candidate) => candidate.dishId === dishId);
+      const dish = data.dishes.find((candidate) => candidate.id === dishId);
+      const source = item ?? dish;
+      return source
+        ? [{ key: item?.id ?? dishId, dishId, name: source.name, priceCents: source.priceCents }]
+        : [];
+    });
+  }, [pending, view.dishes, data.dishes]);
+  const full = onMenuIds.length >= MAX_MENU_ITEMS;
   const needle = search.trim().toLowerCase();
   const shown = data.dishes.filter(
     (dish) =>
@@ -177,13 +209,11 @@ export function DishesStep({
       dish.name.id.toLowerCase().includes(needle),
   );
 
-  useOpWatch(['updateMenu', 'useSet', 'usePast', 'createSet'], {
+  useOpWatch(['useSet', 'usePast', 'createSet'], {
     onDone: (result) => {
       if (result.kind === 'createSet') setNote(t('dishes.setSaved'));
       else if (result.kind === 'usePast' && (result.missing ?? 0) > 0) {
         setNote(t('dishes.pastMissing', { count: result.missing }));
-      } else if (result.kind === 'updateMenu' && (result.removedWithOrders ?? 0) > 0) {
-        setNote(t('dishes.removedWithOrders', { count: result.removedWithOrders }));
       } else setNote(null);
     },
     onFail: (result) =>
@@ -191,11 +221,10 @@ export function DishesStep({
   });
 
   const toggle = (dish: Dish) => {
-    const on = onMenuIds.includes(dish.id);
-    if (!on && full) return;
-    run({
-      kind: 'updateMenu',
-      request: { dishIds: on ? onMenuIds.filter((id) => id !== dish.id) : [...onMenuIds, dish.id] },
+    saver.update((previous) => {
+      const base = previous ?? serverIds;
+      if (base.includes(dish.id)) return base.filter((id) => id !== dish.id);
+      return base.length >= MAX_MENU_ITEMS ? base : [...base, dish.id];
     });
   };
   const removeItem = (id: string, dishId: string | undefined, name: string) => {
@@ -208,10 +237,7 @@ export function DishesStep({
   };
   const dropItem = (id: string, dishId: string | undefined) => {
     // An item whose library dish is gone has no id to keep or drop by; the others are listed.
-    run({
-      kind: 'updateMenu',
-      request: { dishIds: onMenuIds.filter((candidate) => candidate !== dishId) },
-    });
+    saver.update((previous) => (previous ?? serverIds).filter((candidate) => candidate !== dishId));
     void id;
   };
 
@@ -271,7 +297,7 @@ export function DishesStep({
                       <Tick
                         type="checkbox"
                         checked={on}
-                        disabled={busy || (!on && full)}
+                        disabled={!on && full}
                         aria-label={t('dishes.onMenuFor', { name })}
                         onChange={() => toggle(dish)}
                       />
@@ -314,7 +340,10 @@ export function DishesStep({
                     <strong>{set.name}</strong>
                     <Muted>{names.join(' · ')}</Muted>
                   </div>
-                  <Button disabled={busy} onClick={() => run({ kind: 'useSet', setId: set.id })}>
+                  <Button
+                    disabled={busy || pending !== null}
+                    onClick={() => run({ kind: 'useSet', setId: set.id })}
+                  >
                     {t('dishes.addSet')}
                   </Button>
                 </Card>
@@ -336,7 +365,7 @@ export function DishesStep({
                     </Muted>
                   </div>
                   <Button
-                    disabled={busy || ids.length === 0}
+                    disabled={busy || pending !== null || ids.length === 0}
                     onClick={() => run({ kind: 'usePast', weekId: week.id })}
                   >
                     {t('dishes.addThese')}
@@ -348,25 +377,31 @@ export function DishesStep({
         ) : null}
         {full ? <Muted>{t('dishes.full', { max: MAX_MENU_ITEMS })}</Muted> : null}
         {note ? <Muted role="status">{note}</Muted> : null}
+        {saver.state.removedWithOrders > 0 ? (
+          <Muted role="status">
+            {t('dishes.removedWithOrders', { count: saver.state.removedWithOrders })}
+          </Muted>
+        ) : null}
       </Left>
       <Right aria-label={t('dishes.onMenu')}>
         <div>
           <strong>{t('dishes.onMenu')}</strong>{' '}
-          <Muted as="span">{t('dishes.count', { count: view.dishes.length })}</Muted>
+          <Muted as="span">{t('dishes.count', { count: onMenu.length })}</Muted>
         </div>
-        {view.dishes.length === 0 ? <Muted>{t('dishes.emptyMenu')}</Muted> : null}
+        <AutoSaveStatus state={saver.state} onRetry={saver.retry} max={MAX_MENU_ITEMS} />
+        {onMenu.length === 0 ? <Muted>{t('dishes.emptyMenu')}</Muted> : null}
         <List>
-          {view.dishes.map((dish) => {
+          {onMenu.map((dish) => {
             const name = pickText(dish.name, lang);
             return (
-              <OnMenu key={dish.id}>
+              <OnMenu key={dish.key}>
                 <span>{name}</span>
                 <span>{formatMoney(dish.priceCents, lang)}</span>
                 <Pencil
                   type="button"
                   aria-label={t('dishes.remove', { name })}
-                  disabled={busy || !dish.dishId}
-                  onClick={() => removeItem(dish.id, dish.dishId, name)}
+                  disabled={!dish.dishId}
+                  onClick={() => removeItem(dish.key, dish.dishId, name)}
                 >
                   <Icon name="x" />
                 </Pencil>

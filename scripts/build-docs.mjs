@@ -37,6 +37,7 @@ const GROUPS = [
       ['architecture/api.md', 'API'],
       ['architecture/seller-auth.md', 'Sign-in and roles'],
       ['architecture/source-layout.md', 'Source layout'],
+      ['architecture/state-and-data-flow.md', 'State and data flow'],
     ],
   ],
   [
@@ -223,6 +224,7 @@ function shell({ title, body, current, hasDiagram, toc }) {
     <nav id="menu" aria-label="Documentation">${nav(current)}</nav>
     <p id="none" class="none" hidden>No page matches.</p>
   </aside>
+  <script>(function(){var s=document.getElementById('side'),v=null;try{v=sessionStorage.getItem('docs-side-scroll')}catch(e){}if(v!==null){s.scrollTop=Number(v)||0}else{var h=s.querySelector('[aria-current="page"]');if(h)h.scrollIntoView({block:'center'})}})()</script>
   <main id="content">
     <article class="doc">${body}</article>
   </main>

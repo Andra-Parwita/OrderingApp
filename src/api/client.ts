@@ -65,6 +65,7 @@ import {
   type SendUpdatesResponse,
 } from '../../shared/updateContract';
 import { request, requestText, type ApiResult } from './http';
+import { invalidateCached, SETTINGS_PREFIX } from './shortCache';
 
 const enc = encodeURIComponent;
 
@@ -282,11 +283,12 @@ export function saveSettings(
   actor?: StaffActor,
   seller?: string,
 ): Promise<ApiResult<SettingsResponse>> {
+  invalidateCached(SETTINGS_PREFIX);
   return request('/api/seller/settings', parseSettingsResponse, {
     method: 'PUT',
     body: settings,
     ...who(actor, seller),
-  });
+  }).finally(() => invalidateCached(SETTINGS_PREFIX));
 }
 
 // Dev only (the Worker has these routes only in dev).

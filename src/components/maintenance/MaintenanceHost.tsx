@@ -9,6 +9,7 @@ import styled from 'styled-components';
 import { formatDay, formatTime } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
 import { noticeVisible, type MaintenanceState } from '../../../shared/maintenance';
+import { setBackupMinutes } from '../../api/backupMinutes';
 import {
   isMaintenanceBlocked,
   setMaintenanceBlocked,
@@ -23,7 +24,7 @@ export const NOTICE_BAR_HEIGHT_VAR = '--notice-bar-height';
 
 const Bar = styled.div`
   position: fixed;
-  top: var(--update-bar-height, 0px);
+  top: var(--update-bar-height, 0rem);
   left: 0;
   right: 0;
   z-index: 998;
@@ -119,6 +120,7 @@ export function MaintenanceHost({
       const status = await fetchStatus(fetchImpl);
       if (!live) return;
       if (status) {
+        setBackupMinutes(status.backupMinutes);
         setState({ maintenance: status.maintenance, notice: status.notice });
         if (!status.maintenance) setMaintenanceBlocked(false);
       }

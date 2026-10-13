@@ -56,7 +56,7 @@ Live orders have `past_week_id` NULL. Finishing the menu sets it (the finished m
 
 | table | purpose | key | retention |
 |---|---|---|---|
-| `orders` | one order: `code` (6 chars), `token` (private link), `first_name`, `language`, `fulfilment`, `note`, `status`, `paid`, `locked`, `wa_received`, `is_returning`, `changed`, `entered_by_role/name`, `packed` (kept apart from status, D-066), `collected_at/by`, `pickup_place_id` (no FK; NULL = the menu's first place), `sample` (demo kitchens), `address_enc` (0018, plan 071: the delivery address, **encrypted**, see below; NULL = none), `customer_code` (0019, plan 071: the customer phone's anonymous random code for this kitchen; returned in seller order reads only; NULL = none, old apps send none), `past_week_id` | PK `(seller_id, id)`; UNIQUE `(seller_id, code)`; UNIQUE `token` | live until the menu finishes, then **4 weeks after the cooking date**, then deleted (a stub stays in `expired_orders`) |
+| `orders` | one order: `code` (6 chars), `token` (private link), `first_name`, `language`, `fulfilment`, `note`, `status`, `paid`, `locked`, `wa_received`, `is_returning`, `changed`, `entered_by_role/name`, `packed` (kept apart from status, D-066), `collected_at/by`, `pickup_place_id` (no FK; NULL = the menu's first place), `sample` (demo kitchens), `address_enc` (0018, plan 071: the delivery address, **encrypted**, see below; NULL = none), `address_changed` / `address_seen` (0020 / 0021, plan 071: flags only, the old address is never kept; a customer's real address change sets changed=1, seen=0; a team member's "Got it" sets seen=1; exposed as `addressChanged: 'new' | 'seen'` to the team and `addressChange: 'waiting' | 'seen'` to the customer), `customer_code` (0019, plan 071: the customer phone's anonymous random code for this kitchen; returned in seller order reads only; NULL = none, old apps send none), `past_week_id` | PK `(seller_id, id)`; UNIQUE `(seller_id, code)`; UNIQUE `token` | live until the menu finishes, then **4 weeks after the cooking date**, then deleted (a stub stays in `expired_orders`) |
 | `order_lines` | the item snapshot (D-020): `item_id` (no FK), names, size, `price_cents`, `qty`, `ticked` (packing tick) | PK `(seller_id, order_id, position)`; cascade | with the order |
 | `order_audit` | last 4 changes (D-013): who, what, `diff_json` | PK `(seller_id, order_id, seq)`; cascade | **4 per order**, by trigger `order_audit_cap` |
 | `order_inbox` | customer-visible messages (keys and data only) | PK `(seller_id, order_id, seq)`; cascade | **20 per order**, by trigger `order_inbox_cap` |
@@ -96,6 +96,12 @@ One login per **person**, who joins kitchens through memberships. 0007 deleted e
 | table | purpose | retention |
 |---|---|---|
 | `client_log` | app, version, slug, path, kind, code, a scrubbed message, user agent, installed or not. No names, notes, codes, tokens, IPs or cookies (D-007) | a ring of the **newest 500**, trimmed in the same batch as each insert; the admin can clear it |
+
+### Platform settings (0022, plan 046)
+
+| table | purpose | retention |
+|---|---|---|
+| `app_settings` | one row (`id = 1`): `maintenance` (0/1), `notice_from`, `notice_until` (ISO instants), `notice_text_en`, `notice_text_id`, and (plan 074, migration 0023) `backup_customer_min`, `backup_seller_min` (default 5 each; 1 to 30 checked by the Worker). No row = all off and 5 / 5. Read by `GET /api/status` and before every write; changed by the admin or the release token | kept; the admin clears the announcement |
 
 ## Hashed, never stored
 
@@ -152,7 +158,7 @@ sellers 1──1 kitchens
 accounts 1──* memberships *──1 sellers        (role owner / chef / helper)
 accounts 1──* devices 1──0..1 sessions        accounts 1──* sessions (setup: no device)
 accounts 1──* auth_codes        sellers 1──* auth_keys 1──1 auth_key_redemptions
-auth_attempts, auth_challenges, auth_rate, client_log   (stand-alone)
+auth_attempts, auth_challenges, auth_rate, client_log, app_settings   (stand-alone)
 ```
 
 ## Repository
@@ -163,7 +169,7 @@ Things worth knowing:
 
 - **D1 caps `LIKE`/`GLOB` patterns at 50 bytes**, so long patterns in a `CHECK` fail on insert.
 - **Rules run in TypeScript on rows read from D1**; an operation that writes several rows is one `db.batch` (one transaction). The first statement of an order write re-checks the portion limits inside the transaction, so two orders for the last portion cannot both win (`mocks/portionRace.test.ts`).
-- **Round trips cost**: reads are batched (`Db.reads`). The free plan allows 50 D1 queries per invocation; `mocks/queries.test.ts` holds every route under 40 with 100 orders in the week.
+- **Round trips cost**: reads are batched (`Db.reads`). The free plan allows 50 D1 queries per invocation; `mocks/queries.test.ts` holds every route under 40 with 100 orders in the week. The full budget and how to stay inside it: [state-and-data-flow.md](state-and-data-flow.md#10-database-trips-the-budget).
 - `worker/db/migrate.ts` splits statements itself (a `CREATE TRIGGER ... END;` stays whole) and records applied files in wrangler's `d1_migrations` table.
 - `Repository.dev.reset` refuses to run unless built with `devTools: true`, which only tests and the local server set.
 - A new seller's first menu is for the coming Saturday with the default cut-off (the evening before, 21:00 Melbourne time), from `shared/dates.ts`.

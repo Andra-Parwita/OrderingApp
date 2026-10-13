@@ -29,16 +29,23 @@ const cookSlice = createSlice({
     loaded(
       state,
       action: PayloadAction<{
-        orders: Array<Order>;
-        menu: CookMenu;
+        orders?: Array<Order>;
+        menu?: CookMenu;
         made?: Record<string, number>;
       }>,
     ) {
+      // Plan 074: a live event reloads only the parts it touched, so each part is optional.
       // Keep the old objects when nothing changed, so memoised selectors do not recompute.
-      if (JSON.stringify(state.orders) !== JSON.stringify(action.payload.orders)) {
+      if (
+        action.payload.orders &&
+        JSON.stringify(state.orders) !== JSON.stringify(action.payload.orders)
+      ) {
         state.orders = action.payload.orders;
       }
-      if (JSON.stringify(state.menu) !== JSON.stringify(action.payload.menu)) {
+      if (
+        action.payload.menu &&
+        JSON.stringify(state.menu) !== JSON.stringify(action.payload.menu)
+      ) {
         state.menu = action.payload.menu;
       }
       if (

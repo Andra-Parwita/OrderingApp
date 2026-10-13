@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import type { MenuDishView } from '../../../shared/menusContract';
 import { pickText } from '../../../shared/text';
 import { Button } from '../../ui';
 import { useModalFocus } from '../../ui/patterns/modal';
+import { isKeptCode, type SaveResult } from './autoSave';
 import { MENU_NS } from './i18n/register';
 import {
   loadRequested,
@@ -162,6 +163,48 @@ export function useRunOp(): { run: (op: MenuOp) => void; busy: boolean } {
   const dispatch = useDispatch();
   const busy = useSelector((state: MenuRootState) => state.sellerMenu.busy);
   return { run: (op) => dispatch(opRequested(op)), busy };
+}
+
+/** What an op answered, for a caller that waits for it (the auto-save, plan 072). */
+export type OpAnswer =
+  { ok: true; removedWithOrders: number } | { ok: false; code: string; message: string };
+
+/** An auto-save's answer: a refusal undoes the change; a failure to get through keeps it. */
+export function saveResultOf(answer: OpAnswer): SaveResult {
+  return answer.ok
+    ? { ok: true, removedWithOrders: answer.removedWithOrders }
+    : { ok: false, refused: !isKeptCode(answer.code), code: answer.code };
+}
+
+let nextRef = 0;
+
+/**
+ * Runs an updateMenu / updateMenuDish op and resolves with its answer. Every answer is seen (the
+ * store is watched on each dispatch), so several ops in flight at once each hear their own.
+ */
+export function useSendOp(): (
+  op: Extract<MenuOp, { kind: 'updateMenu' | 'updateMenuDish' }>,
+) => Promise<OpAnswer> {
+  const store = useStore<MenuRootState>();
+  return useCallback(
+    (op) =>
+      new Promise<OpAnswer>((resolve) => {
+        nextRef += 1;
+        const ref = `auto-${String(nextRef)}`;
+        const stop = store.subscribe(() => {
+          const { result } = store.getState().sellerMenu;
+          if (result?.ref !== ref) return;
+          stop();
+          resolve(
+            result.status === 'done'
+              ? { ok: true, removedWithOrders: result.removedWithOrders ?? 0 }
+              : { ok: false, code: result.code, message: result.message },
+          );
+        });
+        store.dispatch(opRequested({ ...op, ref }));
+      }),
+    [store],
+  );
 }
 
 type Handlers = {

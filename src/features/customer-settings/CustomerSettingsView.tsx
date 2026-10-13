@@ -3,6 +3,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { appVersion } from '../../../shared/buildInfo';
 import type { Kitchen, Language } from '../../../shared/domain';
+import type { CustomerLiveState } from '../../api/customerLiveState';
 import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import {
   INSTALL_NS,
@@ -62,6 +63,16 @@ const Label = styled.div`
 `;
 const Name = styled.span`
   font-size: ${({ theme }) => theme.type.size.base};
+`;
+// Plan 074: one muted line about the live connection; no banner, no alarm colour.
+const Connection = styled.p`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.md};
+`;
+const Dot = styled.span`
+  color: ${({ theme }) => theme.c.atext};
 `;
 const Hint = styled.span<{ $on?: boolean }>`
   font-size: ${({ theme }) => theme.type.size.md};
@@ -233,7 +244,18 @@ export type CustomerSettingsViewProps = Readonly<{
   showLanguage?: boolean;
   /** The loaded kitchen: its banner shows on top, as on the menu. Absent = no banner. */
   kitchen?: Kitchen;
+  /** Plan 074: what the live connection is doing; absent = the line is not shown. */
+  connection?: CustomerLiveState;
 }>;
+
+/** "10:42", in the phone's own clock style. */
+function clockTime(ms: number, lang: Language): string {
+  return new Intl.DateTimeFormat(lang === 'id' ? 'id-ID' : 'en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(ms));
+}
 
 /** The Settings tab. */
 export function CustomerSettingsView({
@@ -245,6 +267,7 @@ export function CustomerSettingsView({
   canInstall: canInstallOverride,
   showLanguage = true,
   kitchen,
+  connection,
 }: CustomerSettingsViewProps) {
   const { t } = useTranslation();
   const { t: ti } = useTranslation(INSTALL_NS);
@@ -387,6 +410,28 @@ export function CustomerSettingsView({
           </About>
         ) : null}
       </Rows>
+      {connection ? (
+        <Connection role="status">
+          {connection.mode === 'live' ? (
+            <>
+              {t('customerSettings.connLive')} <Dot aria-hidden="true">●</Dot>
+            </>
+          ) : connection.mode === 'backup' ? (
+            connection.lastUpdated === null ? (
+              t('customerSettings.connBackupNone', { minutes: connection.minutes })
+            ) : (
+              t('customerSettings.connBackup', {
+                time: clockTime(connection.lastUpdated, lang),
+                minutes: connection.minutes,
+              })
+            )
+          ) : connection.mode === 'connecting' ? (
+            t('customerSettings.connConnecting')
+          ) : (
+            t('customerSettings.connNone')
+          )}
+        </Connection>
+      ) : null}
       {showHome ? (
         <Card aria-labelledby="settings-home">
           <CardHead>

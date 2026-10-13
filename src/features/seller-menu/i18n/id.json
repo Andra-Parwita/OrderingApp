@@ -213,6 +213,19 @@
     "descriptionOne": "Deskripsi",
     "sizeOne": "Ukuran"
   },
+  "autosave": {
+    "saving": "Menyimpan…",
+    "saved": "Tersimpan ✓",
+    "notSaved": "Belum tersimpan",
+    "tryAgain": "Coba lagi",
+    "limit_reached": "Satu menu paling banyak berisi {{max}} hidangan. Perubahan terakhir dibatalkan.",
+    "forbidden": "Kamu tidak boleh membuat perubahan ini. Perubahan terakhir dibatalkan.",
+    "other": "Perubahan tidak diterima, jadi dibatalkan.",
+    "leaveTitle": "Ada perubahan yang belum tersimpan",
+    "leaveBody": "Ada perubahan yang belum tersimpan. Perubahan itu disimpan di perangkat ini.",
+    "leaveTry": "Coba lagi",
+    "leaveAnyway": "Tetap keluar"
+  },
   "prices": {
     "title": "Harga dan batas untuk menu ini",
     "priceFor": "Harga {{name}}",

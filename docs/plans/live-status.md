@@ -80,16 +80,31 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 | final gate (071 round): typecheck · lint · format · unit, then full e2e | coordinator · shell | 22:20 | 40 min | | | | — | ⏳ |
 
-| 071 follow-ups: slide-in map panel, View on map in-app, "Address changed" for the seller | builder · sonnet | 22:25 | 30 min | | | | | ⏳ |
 
 
-| 046 · 1–3 maintenance notice bar (sellers + customers), maintenance mode, admin controls | builder · sonnet | 22:45 | 60 min | | | | | ⏳ |
+
+
+
+
+
 
 
 ## Done (newest first)
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-14 | final gate: typecheck · lint · format · unit 2,199 · e2e 81/81 (fixer: maintenance spec runs alone) | coordinator + fixer | 07:20 | 50 min | 08:30 | 70 min | +20 min | 4 e2e files | ✅ |
+| 2026-10-14 | 073 · 4–5 Cook made ± and Pack ticks saved in one go (shared auto-save in src/components), admin home 6 → 1 request | builder · sonnet | 07:11 | 40 min | 07:30 | 19 min | −21 min | ~12 files | ✅ 553 tests, e2e admin 3/3 |
+| 2026-10-14 | fix: live events carry the sender's device id (X-Device-Id), only a device's own echo is ignored; customers never see it | builder · sonnet | 07:14 | 25 min | 07:30 | 16 min | −9 min | ~8 files, 1 new | ✅ 59 tests, 2 e2e |
+| 2026-10-14 | 074 · B customer one live connection (token-scoped, hibernating), notification → refresh, status line; 15 s poll removed | builder · sonnet | 06:43 | 90 min | 07:18 | 35 min | −55 min | ~20 files, 4 new | ✅ 30 new tests, 3 e2e incl. Ready in < 2 s |
+| 2026-10-14 | 074 · A seller Sell / Hand over / Orders / Cook on live (0 requests when connected), event-aware loaders, 1 sale = 1 request, admin backup settings (0023) | builder · sonnet | 06:43 | 60 min | 07:05 | 22 min | −38 min | ~20 files, 5 new tests | ✅ 710/711 (1 flake), 2 e2e; ⚠ echo-ignore window may swallow another device's event for 5 s |
+| 2026-10-14 | 073 · 1–3 wizard ops refresh only what changed (1+7 → 1), menu badge + settings caches; e2e pending (blocked by in-flux 074) | builder · sonnet | 06:45 | 45 min | 07:03 | 18 min | −27 min | ~15 files, 3 new | ✅ unit; ⚠ its full-suite e2e run stopped by PID |
+| 2026-10-13 | 072 · tick freely, one save after 1 s; flush on leaving; Not saved yet / Try again; prices batched | builder · sonnet | 22:53 | 45 min | 23:15 | 22 min | −23 min | ~10 files, 3 new | ✅ 68 tests, 2 e2e |
+| 2026-10-13 | 046 · 1–3 maintenance notice bar + Updating screen + admin panel + token endpoint (0022); guard cached 10 s | builder · sonnet | 22:29 | 60 min | 23:12 | 43 min | −17 min | ~20 files | ✅ unit + e2e admin 3/3 |
+| 2026-10-13 | audit: requests too often / too granular → plan 073 draft (4 stages) | builder · sonnet · read-only | 22:55 | 25 min | 23:08 | 13 min | −12 min | 1 doc | ✅ |
+| 2026-10-13 | fixer: menu finish back to 10 trips (removed a duplicate menu read); the 11th was the new maintenance guard | builder · sonnet | 22:45 | 15 min | 22:58 | 13 min | −2 min | 1 file | ✅ chefIncome 8/8 |
+| 2026-10-13 | docs: "State and data flow" (8 slices, 4 contexts, 4 diagrams) + "Database trips (the budget)" | builder · sonnet | 22:47 | 30 min | 23:05 | 18 min | −12 min | 3 docs + 1 line | ✅ 23 pages, diagrams render |
+| 2026-10-13 | 071 follow-ups: SlideOver slides in (all panels), View on map in-app, "Address changed" + "Got it ✓" / customer "seen" (0020, 0021) | builder · sonnet | 22:22 | 30 min | 22:48 | 26 min | −4 min | ~15 files | ✅ 33 tests, e2e p071-address |
 | 2026-10-13 | docs site: sticky header + menu, full width, ⤢ Enlarge viewer for diagrams/images | builder · sonnet | 22:32 | 15 min | 22:50 | 18 min | +3 min | 2 files | ✅ browser-checked |
 | 2026-10-13 | Help: only the list and content scroll on tablet/desktop; topic 13 "address not available" (no keys) | builder · sonnet | 22:29 | 15 min | 22:40 | 11 min | −4 min | 2 files | ✅ 13 tests, browser check |
 | 2026-10-13 | 071 · 4–5 customer code (0019), device address book (IndexedDB), link sheet, CSV backup/restore, Help topic 13; location UX, privacy modal, in-app map panel (MAPS_EMBED_KEY) | builder · sonnet | 21:38 | 60 min | 22:18 | 40 min | −20 min | ~35 files | ✅ unit + 3 e2e |

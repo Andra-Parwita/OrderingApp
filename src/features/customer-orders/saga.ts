@@ -3,7 +3,8 @@ import { TOKENS_MAX } from '../../../shared/limits';
 import type { FetchedOrderResponse } from '../../../shared/orderContract';
 import { markCollected } from '../../api/customer';
 import { cancelOrder, fetchMenu, fetchMyOrders, fetchOrderOrExpired } from '../../api/client';
-import { readMyOrders, rememberStatus } from '../../api/device/myOrders';
+import { markOrderClosed, readMyOrders, rememberStatus } from '../../api/device/myOrders';
+import { noteLiveUpdate } from '../../api/customerLiveState';
 import {
   cancelFailed,
   cancelRequested,
@@ -16,7 +17,9 @@ import {
   menuRequested,
   orderExpired,
   orderFailed,
+  orderLiveRequested,
   orderLoaded,
+  orderPatched,
   orderRefreshRequested,
   orderRequested,
 } from './slice';
@@ -39,7 +42,10 @@ export function* loadList() {
   const orders = [...result.data.orders].sort(
     (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
   );
+  // A week that is gone can never be live again (plan 074).
+  for (const gone of result.data.expired ?? []) yield call(markOrderClosed, gone.token);
   yield put(listLoaded({ orders, expired: result.data.expired ?? [], saved: readMyOrders() }));
+  yield call(noteLiveUpdate);
   // Each seller's week (cooking date) sorts their orders into "this week" and "earlier".
   // Archived orders are always earlier, so their sellers need no menu.
   const slugs = [
@@ -81,6 +87,20 @@ export function* refreshOrder(action: ReturnType<typeof orderRefreshRequested>) 
   else if (result.error === 'network') yield put(orderFailed(result.error));
 }
 
+/** Plan 074: a pushed change (or a notification) for one order: one fetch, no menu. */
+export function* liveOrder(action: ReturnType<typeof orderLiveRequested>) {
+  const result = (yield call(fetchOrderOrExpired, action.payload)) as Fetched;
+  // A failure is quiet: the backup check and the next change cover it.
+  if (!result.ok) return;
+  if ('expired' in result.data) {
+    yield call(markOrderClosed, action.payload);
+  } else {
+    yield call(rememberStatus, result.data.order);
+    yield put(orderPatched({ order: result.data.order, saved: readMyOrders() }));
+  }
+  yield call(noteLiveUpdate);
+}
+
 export function* cancel(action: ReturnType<typeof cancelRequested>) {
   const result = (yield call(cancelOrder, action.payload)) as Awaited<
     ReturnType<typeof cancelOrder>
@@ -110,6 +130,7 @@ export function* customerOrdersSaga() {
   yield takeEvery(menuRequested.type, loadMenu);
   yield takeLatest(orderRequested.type, loadOrder);
   yield takeLatest(orderRefreshRequested.type, refreshOrder);
+  yield takeEvery(orderLiveRequested.type, liveOrder);
   yield takeEvery(cancelRequested.type, cancel);
   yield takeLatest(collectRequested.type, collect);
 }

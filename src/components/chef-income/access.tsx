@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { currentSellerSlug } from '../../api/device/sellerContext';
-import { fetchPreferences } from '../../api/menus';
+import { fetchPreferencesCached } from '../../api/cachedReads';
 
 // Plan 069: who gets a "Per chef" / "My income" button. The server enforces it as well; this only
 // decides whether the button is offered. 'all' = owner, 'own' = a chef while the kitchen setting
@@ -20,7 +19,7 @@ export function IncomeAccessProvider({
   useEffect(() => {
     if (role !== 'chef') return undefined;
     let live = true;
-    void fetchPreferences(undefined, currentSellerSlug()).then((result) => {
+    void fetchPreferencesCached().then((result) => {
       if (live) setChefMay(result.ok && result.data.preferences.chefsSeeIncome !== false);
     });
     return () => {

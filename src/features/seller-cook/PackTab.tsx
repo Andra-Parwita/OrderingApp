@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
@@ -7,6 +7,9 @@ import { formatDay } from '../../../shared/dates';
 import { pickText } from '../../../shared/text';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { packOrder } from '../../api/kitchen';
+import { AutoSaveStatus } from '../../components/autoSave/AutoSaveStatus';
+import { isKeptCode, useAutoSave, type SaveResult } from '../../components/autoSave/autoSave';
+import { draftKey } from '../../components/draft';
 import { PrintJob, type LabelText } from '../../components/labels/LabelSheets';
 import { splitOrder } from '../../components/labels/labelModel';
 import { useLabelPaper } from '../../components/labels/useLabelPaper';
@@ -237,6 +240,9 @@ const Centered = styled.p`
   color: ${({ theme }) => theme.c.muted};
 `;
 
+/** A bag's ticks as the seller left them, with the bag as the server held it (to put back). */
+type PackPending = Record<string, { base: Order; ticked: Array<string> }>;
+
 /** Kitchen · Pack (D-066): one bag at a time. Ticks and "Packed" are saved on the server. */
 export function PackTab() {
   const { t, i18n } = useTranslation(COOK_NS);
@@ -283,17 +289,50 @@ export function PackTab() {
     [dispatch],
   );
 
+  // Plan 073: a tick shows at once; the final set of ticks of each bag is saved ~1 s after the last
+  // tick (one request per bag that changed), when the seller leaves, and before "Packed". A refusal
+  // puts the bag back as the server holds it.
+  const wanted = useRef<Record<string, Array<string>>>({});
+  const sendTicks = useCallback(
+    async (pending: PackPending): Promise<SaveResult> => {
+      const entries = Object.entries(pending);
+      for (const [index, [code, { ticked }]] of entries.entries()) {
+        const result = await packOrder(code, { ticked }, undefined, currentSellerSlug());
+        if (!result.ok) {
+          const refused = !isKeptCode(result.error);
+          if (refused) {
+            for (const [, rest] of entries.slice(index)) dispatch(orderReplaced(rest.base));
+          }
+          return { ok: false, refused, code: result.error };
+        }
+        // Shown only when no newer tick is waiting (that one is sent next and would be overwritten).
+        const latest = wanted.current[code];
+        if (
+          latest &&
+          latest.length === ticked.length &&
+          latest.every((id) => ticked.includes(id))
+        ) {
+          dispatch(orderReplaced(result.data.order));
+        }
+      }
+      return { ok: true };
+    },
+    [dispatch],
+  );
+  const saver = useAutoSave<PackPending>(draftKey(currentSellerSlug(), 'cook-pack'), sendTicks);
+  const { update, flushNow, whenIdle } = saver;
+
   const tick = useCallback(
-    async (order: Order, itemId: string) => {
+    (order: Order, itemId: string) => {
       const ids = toggledIds(order, itemId);
       dispatch(orderReplaced(withTicks(order, ids)));
-      const result = await save(order, { ticked: ids });
-      if ('ok' in result) {
-        dispatch(orderReplaced(order));
-        setFailed(true);
-      }
+      wanted.current[order.code] = ids;
+      update((previous) => ({
+        ...previous,
+        [order.code]: { base: previous?.[order.code]?.base ?? order, ticked: ids },
+      }));
     },
-    [dispatch, save],
+    [dispatch, update],
   );
 
   const goNext = useCallback(
@@ -306,6 +345,9 @@ export function PackTab() {
 
   const markPacked = useCallback(
     async (bag: Bag, force: boolean) => {
+      // The ticks first (the server must hold them before it checks the bag is full).
+      flushNow();
+      await whenIdle();
       const result = await save(bag.order, { packed: true, ...(force ? { force } : {}) });
       if (!('ok' in result)) {
         setWarn(null);
@@ -321,7 +363,7 @@ export function PackTab() {
         setFailed(true);
       }
     },
-    [goNext, save],
+    [flushNow, goNext, save, whenIdle],
   );
 
   const unpack = useCallback(
@@ -424,7 +466,7 @@ export function PackTab() {
                   disabled={other}
                   $on={on}
                   $other={other}
-                  onClick={() => void tick(open.order, line.itemId)}
+                  onClick={() => tick(open.order, line.itemId)}
                 >
                   <Box $on={on}>{on ? <Icon name="check" /> : null}</Box>
                   <Qty>{line.qty}×</Qty>
@@ -436,6 +478,7 @@ export function PackTab() {
             );
           })}
         </Items>
+        <AutoSaveStatus state={saver.state} onRetry={saver.retry} ns={COOK_NS} />
         <Footer>
           <Hint role="status">
             {failed

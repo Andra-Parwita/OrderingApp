@@ -12,5 +12,6 @@ export {
   type CustomerOrdersRootState,
   type CustomerOrdersState,
 } from './slice';
+export { CustomerLiveHost } from './CustomerLiveHost';
 export { useUnseenUpdate } from './useUnseenUpdate';
 export { selectMenus, selectOrderPage } from './selectors';

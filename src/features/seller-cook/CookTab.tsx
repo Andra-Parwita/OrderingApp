@@ -11,6 +11,7 @@ import { ChefFilterControl, useChefFilter } from './ChefFilterControl';
 import type { CookRow, GroupBy } from './cookModel';
 import { selectCookGroups, selectCookNotes } from './cookSelectors';
 import type { CookRootState } from './cookSlice';
+import { AutoSaveStatus } from '../../components/autoSave/AutoSaveStatus';
 import { useCountMode, useMadeCounts } from './madeCounts';
 
 const GROUPS: ReadonlyArray<GroupBy> = ['item', 'chef'];
@@ -241,7 +242,7 @@ export function CookTab({
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [groupBy, setGroupBy] = useState<GroupBy>('item');
   const [counting, setCounting] = useCountMode();
-  const { made, change } = useMadeCounts();
+  const { made, change, saver } = useMadeCounts();
   const chef = useChefFilter();
   const [whoItem, setWhoItem] = useState<string | null>(null);
   const groups = useSelector((state: CookRootState) =>
@@ -288,6 +289,9 @@ export function CookTab({
           {t('countMode')} <Hint>{t('countHint')}</Hint>
         </Switch>
         {counting ? <Total>{t('cooked', { made: cooked, total })}</Total> : null}
+        {counting ? (
+          <AutoSaveStatus state={saver.state} onRetry={saver.retry} ns={COOK_NS} />
+        ) : null}
       </Tools>
 
       {status === 'loading' ? <Centered role="status">{t('loading')}</Centered> : null}

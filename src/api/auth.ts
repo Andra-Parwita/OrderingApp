@@ -44,7 +44,9 @@ import {
 } from '../../shared/logContract';
 import type { PauseKind } from '../../shared/domain';
 import {
+  parseBackupMinutes,
   parseMaintenanceState,
+  type BackupMinutes,
   type MaintenancePatch,
   type MaintenanceState,
 } from '../../shared/maintenance';
@@ -455,4 +457,18 @@ export function fetchMaintenance(): Promise<ApiResult<MaintenanceState>> {
 
 export function saveMaintenance(patch: MaintenancePatch): Promise<ApiResult<MaintenanceState>> {
   return request('/api/admin/maintenance', parseMaintenanceState, { method: 'PATCH', body: patch });
+}
+
+/** Plan 074: the two backup-check intervals in minutes (admin only). */
+export function fetchBackupMinutes(): Promise<ApiResult<BackupMinutes>> {
+  return request('/api/admin/backup-minutes', (input) => parseBackupMinutes(input));
+}
+
+export function saveBackupMinutes(
+  patch: Partial<BackupMinutes>,
+): Promise<ApiResult<BackupMinutes>> {
+  return request('/api/admin/backup-minutes', (input) => parseBackupMinutes(input), {
+    method: 'PATCH',
+    body: patch,
+  });
 }

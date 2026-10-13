@@ -23,12 +23,15 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 | method | path | who | purpose |
 |---|---|---|---|
 | GET | `/api/health` | public | liveness, server time, version, whether dev tools are on |
+| GET | `/api/status` | public | plan 046: `{ maintenance, notice: { from, until, noteEn, noteId } \| null, time, backupMinutes: { customer, seller } }` (plan 074: minutes between backup checks while a live connection is down, 1 to 30, default 5 each; clients use 5 when absent); cached 5 s; every screen reads it (every 5 min, every 30 s while the Updating screen is up) |
+| POST | `/api/maintenance` | release token | plan 046: `{ maintenance: boolean }` with `Authorization: Bearer <MAINTENANCE_TOKEN>`; 401 without the secret or with a wrong token; no other route accepts the token |
 | GET | `/images/<key>` | public | stream an image from R2 (content-hashed, cached a year) |
 | GET | `/k/<slug>/manifest.webmanifest` | public | the kitchen's customer web-app manifest (`?start=` for an order page); also `seller.webmanifest`, `icon-<180\|192\|512>.png\|svg` and `apple-touch-icon.png` (always an image: the upload, or the shared default) |
 | GET | `/api/s/:slug/menu` | public | the kitchen's menu, theme, languages and ordering state |
 | POST | `/api/s/:slug/orders` | public | place an order (a delivery order may carry `address`: street, suburb, postcode, notes, lat/lng; ignored when the server has no `ADDRESS_KEY`; the menu answer says `addresses: true` when it has; an optional `customerCode`, 24 hex characters, the phone's anonymous per-kitchen code, stored on the order) |
 | POST | `/api/s/:slug/orders/find` | public | find a lost order by code and first name (2 wrong tries lock that code 15 min; every miss answers alike, D-075) |
 | GET | `/api/s/:slug/team-names` | public | names of people with a password, for the password sign-in picker (D-090) |
+| GET | `/api/s/:slug/live?tokens=a,b` | token | plan 074: WebSocket (upgrade) for a customer's live updates; up to 20 tokens, each must be an unfinished order of this kitchen on its active menu (else 404 `not_found`; 400 for none or more than 20; 426 without upgrade). The room sends only `order.changed` for those orders (`{type, code?, at}`; no code = a bare nudge), never kitchen-wide events |
 | GET | `/api/orders?tokens=a,b` | token | My orders: up to 20 tokens across kitchens (live, archived, expired) |
 | GET | `/api/orders/:token` | token | one order (live, archived, or expired stub) |
 | PATCH | `/api/orders/:token` | token | customer edit (items, fulfilment, note, `address` or `address: null`) |
@@ -66,7 +69,9 @@ All under `/api/admin/`. The admin has no kitchen session and sees no order data
 | method | path | who | purpose |
 |---|---|---|---|
 | POST | `setup` | public | create the first admin with the `ADMIN_SETUP_KEY` secret (`admin_exists` once one exists) |
-| GET, POST | `sellers` | admin | list kitchens; add one (name and slug; `slug_taken`) |
+| GET, POST | `sellers` | admin | list kitchens; add one (name and slug; `slug_taken`). Each row's `summary` carries `people`, `devices` (plan 073: the device count for the row, so the admin home needs no `members` call per kitchen), `menu`, `orders` and `lastActiveAt`, all from four grouped queries, so the list is one request and a fixed number of D1 trips however many kitchens there are |
+| GET, PATCH | `maintenance` | admin | plan 046: read, or change `maintenance` (on/off) and the announced `notice` (`null` clears it; `until` after `from`; notes max 200) |
+| GET, PATCH | `backup-minutes` | admin | plan 074: read, or change `{ customer?, seller? }` (whole minutes 1 to 30; anything else or an empty body is 400); rides on `GET /api/status` |
 | PATCH | `sellers/:id` | admin | switch demo mode on or off |
 | POST | `sellers/:id/pause`, `sellers/:id/resume` | admin | pause (`customers` or `full`, a full pause signs everyone out) or resume (D-086) |
 | POST | `sellers/:id/invite-key`, `sellers/:id/recovery-key` | admin | invite an owner by name (recovery is the same call, D-090) |
@@ -121,6 +126,7 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 | GET | `orders/:code` | chef | one order. Every seller order answer carries the decrypted `address` (`{address}` or `{unavailable: true}`) for the kitchen's own team only (plan 071, D-099); seller answers also carry `customerCode` (never any customer answer) |
 | POST | `orders/:code/status` | helper | move to the next status |
 | POST | `orders/:code/collected` | helper | confirm the hand-over |
+| POST | `orders/:code/address-seen` | helper | "Got it" on the customer's changed address (plan 071); customer order answers then say `addressChange: 'seen'` |
 | POST | `orders/:code/delete-address` | chef | "Delete address now" (plan 071; not a helper) |
 | POST | `orders/:code/pack`, `delivery-step`, `paid`, `lock`, `wa-received`, `nudge`, `seen` | chef | packing ticks, delivery step, paid, lock, WhatsApp received, nudge, clear "changed" |
 | POST | `updates` | chef | bulk message (and optional status) to up to 200 order codes |
@@ -150,6 +156,7 @@ Every 4xx is `{ error, message }`, with the codes in [`shared/apiError.ts`](../.
 |---|---|
 | `fulfilment_unavailable` | a customer order asks for pickup or delivery that the menu does not offer |
 | `already_on_menu` | the dish is already on the current menu (D-094) |
+| `maintenance` | plan 046: maintenance is on; every POST, PATCH, PUT and DELETE answers **503** with `X-Maintenance: 1` (the app never retries it and shows the Updating screen). Reads, `/api/admin/*`, `/api/auth/*`, `/api/log` and `/api/maintenance` are exempt |
 | `translate_limit` | the kitchen used its 100 translations today (counted in its Durable Object; text max 500 characters) |
 | `translate_unavailable` | no `AI` binding (for example local) or the model failed; never retried |
 | `forbidden` | a valid session whose role may not do this (helper allowlist, chef limits, admin on a seller route, income kept private) |

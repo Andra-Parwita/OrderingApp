@@ -18,7 +18,8 @@ import type { PickupPointInput, UpdateItemRequest } from '../../../shared/setupC
 /** Everything the menu screens can ask the server to do; the saga runs each and then refreshes. */
 export type MenuOp =
   | { kind: 'createMenu'; cookingDate: string; pictureFromPastMenu?: string }
-  | { kind: 'updateMenu'; request: UpdateMenuRequest }
+  /** `ref`: plan 072, echoed in the answer so an auto-save can tell its own answer from another's. */
+  | { kind: 'updateMenu'; request: UpdateMenuRequest; ref?: string }
   | { kind: 'publish'; force?: boolean; takingOrders?: boolean }
   | { kind: 'unpublish' }
   | { kind: 'deleteMenu' }
@@ -27,7 +28,13 @@ export type MenuOp =
   | { kind: 'usePastPicture'; pastMenuId: string }
   | { kind: 'removePicture' }
   /** `alsoDishId`: the library dish behind it, kept in step (name, description, size, price, limit, chef). */
-  | { kind: 'updateMenuDish'; id: string; request: UpdateItemRequest; alsoDishId?: string }
+  | {
+      kind: 'updateMenuDish';
+      id: string;
+      request: UpdateItemRequest;
+      alsoDishId?: string;
+      ref?: string;
+    }
   | { kind: 'createDish'; request: CreateDishRequest; addToMenu: boolean }
   | { kind: 'updateDish'; id: string; request: UpdateDishRequest }
   | { kind: 'deleteDish'; id: string }
@@ -53,6 +60,7 @@ export type OpResult =
       missing?: number;
       /** updateMenu: names of dishes dropped although they have orders (D-062). */
       removedWithOrders?: number;
+      ref?: string;
     }
   | {
       kind: MenuOpKind;
@@ -60,6 +68,7 @@ export type OpResult =
       code: string;
       message: string;
       warning?: ApiWarning;
+      ref?: string;
     };
 
 export type MenuLoad = 'loading' | 'ready' | 'error';
@@ -101,6 +110,10 @@ const menuSlice = createSlice({
       state.load = 'ready';
       state.data = action.payload;
     },
+    /** Plan 073: an op's own answer (or a small re-read) replaces just the parts it changed. */
+    patched(state, action: PayloadAction<Partial<MenuData>>) {
+      if (state.data) state.data = { ...state.data, ...action.payload };
+    },
     loadFailed(state) {
       if (state.load !== 'ready') state.load = 'error';
     },
@@ -110,7 +123,7 @@ const menuSlice = createSlice({
       },
       prepare: (op: MenuOp) => ({ payload: op }),
     },
-    opDone(state, action: PayloadAction<{ kind: MenuOpKind } & DoneExtras>) {
+    opDone(state, action: PayloadAction<{ kind: MenuOpKind; ref?: string } & DoneExtras>) {
       state.busy = false;
       state.seq += 1;
       state.result = { status: 'done', ...action.payload };
@@ -122,6 +135,7 @@ const menuSlice = createSlice({
         code: string;
         message: string;
         warning?: ApiWarning;
+        ref?: string;
       }>,
     ) {
       state.busy = false;
@@ -131,6 +145,6 @@ const menuSlice = createSlice({
   },
 });
 
-export const { loadRequested, loaded, loadFailed, opRequested, opDone, opFailed } =
+export const { loadRequested, loaded, patched, loadFailed, opRequested, opDone, opFailed } =
   menuSlice.actions;
 export const menuReducer = menuSlice.reducer;

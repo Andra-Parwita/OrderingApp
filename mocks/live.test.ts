@@ -24,7 +24,12 @@ type Sent = { sellerId: string; signal: LiveSignal };
 function fakeLive() {
   const sent: Array<Sent> = [];
   const connected: Array<string> = [];
+  const customerCodes: Array<{ sellerId: string; codes: ReadonlyArray<string> }> = [];
   const live = {
+    connectCustomer(sellerId: string, codes: ReadonlyArray<string>) {
+      customerCodes.push({ sellerId, codes });
+      return Promise.resolve(new Response('customer-room'));
+    },
     notify(sellerId: string, signal: LiveSignal) {
       sent.push({ sellerId, signal });
       return Promise.resolve();
@@ -34,7 +39,7 @@ function fakeLive() {
       return Promise.resolve(new Response('room', { headers: { 'X-Room': sellerId } }));
     },
   };
-  return { live, sent, connected };
+  return { live, sent, connected, customerCodes };
 }
 
 /** An in-memory stand-in for the R2 binding. */
@@ -215,6 +220,26 @@ describe('live events and images', () => {
       expect(types().sort()).toEqual(['menu.changed', 'order.changed']);
     });
 
+    it('a seller write names the writer’s device id in the event (valid ids only); old clients send none', async () => {
+      await call('PATCH', '/api/seller/menu/items/pesmol', { seller: A, body: { dayStock: 5 } });
+      room.sent.length = 0;
+      const sale = { seller: A, body: { itemId: 'pesmol', qty: 1 } };
+      await call('POST', '/api/seller/day/sale', {
+        ...sale,
+        headers: { 'X-Device-Id': 'a1b2c3d4e5f60718' },
+      });
+      await call('POST', '/api/seller/day/sale', {
+        ...sale,
+        headers: { 'X-Device-Id': 'nonsense' },
+      });
+      await call('POST', '/api/seller/day/sale', sale);
+      expect(room.sent.map((entry) => entry.signal)).toEqual([
+        { type: 'stock.changed', from: 'a1b2c3d4e5f60718' },
+        { type: 'stock.changed' },
+        { type: 'stock.changed' },
+      ]);
+    });
+
     it('a day sale or set count says stock.changed to every device; a refused sale says nothing', async () => {
       await call('PATCH', '/api/seller/menu/items/pesmol', { seller: A, body: { dayStock: 1 } });
       room.sent.length = 0;
@@ -273,6 +298,7 @@ describe('live events and images', () => {
       const broken = {
         notify: () => Promise.reject(new Error('room down')),
         connect: () => Promise.reject(new Error('room down')),
+        connectCustomer: () => Promise.reject(new Error('room down')),
       };
       const reply = await call('POST', `/api/s/${A}/orders`, {
         ctx: { live: broken },

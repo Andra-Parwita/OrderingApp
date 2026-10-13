@@ -29,7 +29,8 @@ import {
   type SellersResponse,
   type SessionResponse,
 } from '../../shared/authContract';
-import { parseMaintenancePatch } from '../../shared/maintenance';
+import { bustMaintenanceCache } from './maintenanceGuard';
+import { parseBackupMinutesPatch, parseMaintenancePatch } from '../../shared/maintenance';
 import { isImageSlot } from '../../shared/imageSlots';
 import { isValidSlug } from '../../shared/seller';
 import {
@@ -331,7 +332,19 @@ export async function handleAdmin(
     if (method === 'PATCH') {
       const patch = parseMaintenancePatch(await readJson(request));
       if (!patch) return bad();
-      return Response.json(await store.settings.setMaintenance(patch));
+      const saved = await store.settings.setMaintenance(patch);
+      bustMaintenanceCache();
+      return Response.json(saved);
+    }
+  }
+
+  // Plan 074: how often screens check for news while their live connection is down (admin only).
+  if (a === 'backup-minutes' && !b) {
+    if (method === 'GET') return Response.json(await store.settings.backupMinutes());
+    if (method === 'PATCH') {
+      const patch = parseBackupMinutesPatch(await readJson(request));
+      if (!patch) return bad();
+      return Response.json(await store.settings.setBackupMinutes(patch));
     }
   }
 

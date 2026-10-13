@@ -74,6 +74,12 @@ const slice = createSlice({
       }>,
     ) {
       state.list = { status: 'ready', ...action.payload, expired: action.payload.expired ?? [] };
+      // The open order page follows the list: one check (or reconnect) refreshes both (plan 074).
+      if (state.order.status === 'ready') {
+        const token = state.order.order.token;
+        const fresh = action.payload.orders.find((order) => order.token === token);
+        if (fresh) state.order = { status: 'ready', order: fresh };
+      }
     },
     listFailed(state, action: PayloadAction<FailureCode>) {
       // Keep the last good list on screen (spec §8, offline); only a first load shows an error.
@@ -99,8 +105,31 @@ const slice = createSlice({
       },
       prepare: (token: string) => ({ payload: token }),
     },
-    /** A quiet reload (the 15 s poll): no spinner, and a failure keeps what is on screen. */
+    /** A quiet reload: no spinner, and a failure keeps what is on screen. */
     orderRefreshRequested: {
+      reducer() {
+        // The saga loads it.
+      },
+      prepare: (token: string) => ({ payload: token }),
+    },
+    /**
+     * Plan 074: a pushed change reloaded one order. It lands in the order page (if that is the open
+     * order) and in My orders' list, without resetting a cancel in progress.
+     */
+    orderPatched(state, action: PayloadAction<{ order: CustomerOrder; saved: Array<SavedOrder> }>) {
+      const { order, saved } = action.payload;
+      if (state.order.status === 'ready' && state.order.order.token === order.token) {
+        state.order = { status: 'ready', order };
+      }
+      if (state.list.status === 'ready') {
+        const at = state.list.orders.findIndex((entry) => entry.token === order.token);
+        if (at >= 0) state.list.orders[at] = order;
+        state.list.saved = saved;
+        delete state.list.stale;
+      }
+    },
+    /** Plan 074: reload one order after a pushed change (no menu, no spinner). */
+    orderLiveRequested: {
       reducer() {
         // The saga loads it.
       },
@@ -148,6 +177,8 @@ export const {
   menuLoaded,
   orderRequested,
   orderRefreshRequested,
+  orderLiveRequested,
+  orderPatched,
   orderLoaded,
   orderExpired,
   orderFailed,

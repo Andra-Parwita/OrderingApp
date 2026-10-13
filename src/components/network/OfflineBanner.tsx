@@ -10,7 +10,7 @@ import { useNetworkState } from './useNetworkState';
 
 const Bar = styled.div`
   position: fixed;
-  top: calc(var(--update-bar-height, 0px) + var(--notice-bar-height, 0px));
+  top: calc(var(--update-bar-height, 0rem) + var(--notice-bar-height, 0rem));
   left: 0;
   right: 0;
   z-index: 999;

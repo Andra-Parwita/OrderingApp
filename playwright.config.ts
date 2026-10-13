@@ -35,7 +35,10 @@ const HELPER_FLOW = /\/helper-flow\.spec\.ts$/;
 const CHEF_DISHES = /\/chef-dishes\.spec\.ts$/;
 // The iPhone-size check: Chromium with an iPhone 15 screen, running only this small set (customer flow
 // + Indonesian, the native-app customer shell, a customer order reaching the seller, nudge and lock). Everything else runs on the Android phone and desktop projects.
-const IPHONE_SMOKE = /\/(customer-batch1|native-customer|order-flow|batch2-flow)\.spec\.ts$/;
+const IPHONE_SMOKE =
+  /\/(customer-batch1|native-customer|order-flow|batch2-flow|customer-live)\.spec\.ts$/;
+// Plan 046: turns maintenance on for a moment, which every page shows; runs alone, after the auth specs and before archived (which resets the database, and with it the admin).
+const MAINTENANCE = /\/admin-maintenance\.spec\.ts$/;
 const MAIN = ['iphone-chromium', 'mobile-chromium', 'desktop-chromium'];
 
 export default defineConfig({
@@ -80,6 +83,7 @@ export default defineConfig({
         HELPER_FLOW,
         CHEF_DISHES,
         DAY_SELLING,
+        MAINTENANCE,
         CAPTURES,
       ],
       use: { ...devices['Pixel 7'] },
@@ -95,6 +99,7 @@ export default defineConfig({
         HELPER_FLOW,
         CHEF_DISHES,
         DAY_SELLING,
+        MAINTENANCE,
         CAPTURES,
       ],
       use: { ...devices['Desktop Chrome'] },
@@ -156,6 +161,12 @@ export default defineConfig({
     {
       name: 'archived-desktop-chromium',
       testMatch: ARCHIVED,
+      dependencies: ['maintenance-desktop-chromium'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'maintenance-desktop-chromium',
+      testMatch: MAINTENANCE,
       dependencies: ['chef-dishes-desktop-chromium'],
       use: { ...devices['Desktop Chrome'] },
     },

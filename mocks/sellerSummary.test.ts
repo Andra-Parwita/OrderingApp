@@ -56,6 +56,7 @@ describe('admin seller summary', () => {
     if (!done.ok) throw new Error(done.error);
     const summary = await summaryOf('onde-onde');
     expect(summary?.people).toBe(1);
+    expect(summary?.devices).toBe(1);
     expect(summary?.lastActiveAt).not.toBeNull();
 
     const fresh = await world.repo.addSeller('Warung Baru', 'warung-baru');
@@ -63,5 +64,16 @@ describe('admin seller summary', () => {
     const listed = (await summaryOf('warung-baru')) ?? null;
     expect(listed === null || (listed.people === 0 && listed.lastActiveAt === null)).toBe(true);
     expect(listed?.menu ?? null).not.toMatchObject({ state: 'live' });
+  });
+
+  it('plan 073: the list carries every kitchen device count in a fixed number of trips', async () => {
+    for (const slug of ['k-one', 'k-two', 'k-three', 'k-four'])
+      await world.repo.addSeller(slug, slug);
+    world.queries.reset();
+    const sellers = await world.repo.adminSellers();
+    expect(sellers.length).toBeGreaterThanOrEqual(5);
+    // 1 list + 4 grouped summary queries, however many kitchens there are (the free plan allows 50).
+    expect(world.queries.count()).toBeLessThanOrEqual(5);
+    expect(sellers.every((seller) => (seller.summary?.devices ?? 0) >= 0)).toBe(true);
   });
 });

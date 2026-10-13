@@ -71,6 +71,7 @@ import {
   type RestoreResponse,
 } from '../../shared/setupContract';
 import { TOKENS_MAX } from '../../shared/limits';
+import { isFinalStatus } from '../../shared/status';
 import {
   parsePushSubscribeRequest,
   parsePushUnsubscribeRequest,
@@ -118,7 +119,12 @@ import {
   type SendUpdatesResponse,
   type UpdateResult,
 } from '../../shared/updateContract';
-import { LIVE_PATH, type LiveEventType } from '../../shared/liveContract';
+import {
+  DEVICE_ID_HEADER,
+  LIVE_PATH,
+  parseDeviceId,
+  type LiveEventType,
+} from '../../shared/liveContract';
 import { dropUnusedImageRefs, putUploadedImage, type ImageBucket } from '../images/r2';
 import type { LiveNotifier } from '../live/hub';
 import { handleTranslate, type TranslateContext } from './translate';
@@ -137,6 +143,7 @@ import { sessionTokenOf } from '../auth/cookie';
 import { sha256Hex } from '../db/crypto';
 import { parseDeliveryAddress, type DeliveryAddress } from '../../shared/address';
 import { decryptAddress, encryptAddress } from '../db/address';
+import { bustMaintenanceCache, maintenanceOn } from './maintenanceGuard';
 import { authError, error, readJson } from './respond';
 import type { Repository, SellerRepository, StoreResult } from '../repo/Repository';
 
@@ -428,9 +435,11 @@ export async function handleApiRequest(
   // Plan 046: the public status (cheap, cached a few seconds) every screen polls.
   if (area === 'status' && !a && method === 'GET') {
     const state = await store.settings.maintenance();
-    return Response.json({ ...state, time: new Date().toISOString() } satisfies StatusResponse, {
-      headers: { 'Cache-Control': 'public, max-age=5' },
-    });
+    const backupMinutes = await store.settings.backupMinutes();
+    return Response.json(
+      { ...state, time: new Date().toISOString(), backupMinutes } satisfies StatusResponse,
+      { headers: { 'Cache-Control': 'public, max-age=5' } },
+    );
   }
   // Plan 046: the release token switches maintenance without a passkey; it works on this route only.
   if (area === 'maintenance' && !a && method === 'POST') {
@@ -441,7 +450,9 @@ export async function handleApiRequest(
     }
     const on = parseTokenSwitch(await readJson(request));
     if (on === null) return bad();
-    return Response.json(await store.settings.setMaintenance({ maintenance: on }));
+    const saved = await store.settings.setMaintenance({ maintenance: on });
+    bustMaintenanceCache();
+    return Response.json(saved);
   }
   // Plan 046: while maintenance is on, every change is refused so nothing is half-saved during a migration.
   if (
@@ -449,7 +460,7 @@ export async function handleApiRequest(
     method !== 'HEAD' &&
     area !== undefined &&
     !MAINTENANCE_EXEMPT.has(area) &&
-    (await store.settings.maintenance()).maintenance
+    (await maintenanceOn(store))
   ) {
     return error('maintenance', 'The app is being updated. Back in a few minutes.');
   }
@@ -468,6 +479,33 @@ export async function handleApiRequest(
           ? { mapsEmbedKey: context.mapsEmbedKey }
           : {}),
       });
+    }
+    // Plan 074: a customer's live socket. The private order tokens are the only credential (never a
+    // name or phone): each must belong to THIS kitchen, be on its active menu and not be finished.
+    // Only the codes of those orders reach the room, so the socket hears about nothing else.
+    if (b === 'live' && !c && method === 'GET') {
+      if (request.headers.get('Upgrade') !== 'websocket') {
+        return new Response('Expected a WebSocket', { status: 426 });
+      }
+      if (!context.live) return error('not_found', 'Live updates are not available here');
+      const raw = searchParams.get('tokens');
+      if (raw === null) return bad();
+      const tokens = [...new Set(raw.split(',').filter((token) => token !== ''))];
+      if (tokens.length === 0 || tokens.length > TOKENS_MAX) return bad();
+      const found = await store.lookupByTokens(tokens);
+      const codes: Array<string> = [];
+      for (const token of tokens) {
+        const hit = found.get(token);
+        if (
+          hit?.kind === 'live' &&
+          hit.sellerRepo.seller.id === sellerStore.seller.id &&
+          !isFinalStatus(hit.order.status)
+        ) {
+          codes.push(hit.order.code);
+        }
+      }
+      if (codes.length === 0) return error('not_found', 'No active orders');
+      return context.live.connectCustomer(sellerStore.seller.id, codes);
     }
     if (b === 'orders' && !c && method === 'POST') {
       const input = parseCreateOrderRequest(await readJson(request));
@@ -855,6 +893,16 @@ async function helperMay(
 async function handleSeller(
   ...args: Parameters<typeof handleSellerRoutes>
 ): Promise<Response | null> {
+  const [, , request, , , , context] = args;
+  // Plan 074: the writer's device id rides on every live event this call causes.
+  const from = parseDeviceId(request.headers.get(DEVICE_ID_HEADER));
+  const live = context.live;
+  if (from && live) {
+    args[6] = {
+      ...context,
+      live: { ...live, notify: (id, signal) => live.notify(id, { ...signal, from }) },
+    };
+  }
   const response = await handleSellerRoutes(...args);
   return response && args[3][0] === 'orders' ? withAddresses(response, args[1], args[6]) : response;
 }

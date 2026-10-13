@@ -36,7 +36,7 @@ sequenceDiagram
 
 ## 2 · The seller changes a status
 
-Only the **customer's** subscription gets a web push (one per order, if the customer turned it on). The push is built after the write and sent in `waitUntil`, so the seller's answer is not slowed. A customer without push sees the change when the order page refreshes (a poll that pauses while the tab is hidden and slows after failures).
+Only the **customer's** subscription gets a web push (one per order, if the customer turned it on). The push is built after the write and sent in `waitUntil`, so the seller's answer is not slowed. An open customer app also hears the change over its own live connection (section 11), and a push arriving while the app is open makes the service worker tell the page, which refreshes that order at once.
 
 ```mermaid
 sequenceDiagram
@@ -231,3 +231,86 @@ sequenceDiagram
     Note over S: Later asks again next app open. Settings, Customer details: Upload CSV adds or updates, never wipes
 ```
 
+## 9 · Announce an update and run it in maintenance mode
+
+Plan 046. The admin announces, switches maintenance on before the backup and migrations, and off after the health check.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Admin
+    participant W as Worker (app_settings)
+    actor P as Seller / customer phone
+
+    A->>W: PATCH /api/admin/maintenance {notice}
+    P->>W: GET /api/status (on start, every 5 min)
+    W-->>P: notice, maintenance off
+    P->>P: quiet bar "Maintenance on ..." until the window ends
+    A->>W: PATCH /api/admin/maintenance {maintenance: true}
+    Note over A,W: backup, migrations, deploy
+    P->>W: any POST / PATCH / DELETE
+    W-->>P: 503 maintenance (X-Maintenance, never retried)
+    P->>P: full "Updating, back in a few minutes" screen
+    loop every 30 s
+        P->>W: GET /api/status
+    end
+    A->>W: PATCH /api/admin/maintenance {maintenance: false} after the health check
+    W-->>P: maintenance off
+    P->>P: the screen goes by itself
+```
+
+## 10 · Seller screens on the live connection and the backup check (plan 074)
+
+Orders, Cook, Sell and Hand over / Delivery run share one WebSocket per tab. They ask for nothing while it is live; an event names what changed, and each screen reloads only that.
+
+```mermaid
+sequenceDiagram
+    participant A as Admin page
+    participant W as Worker
+    participant S as Seller screen (Sell)
+    participant DO as SellerLive
+    A->>W: PATCH /api/admin/backup-minutes {seller: 5}
+    S->>W: GET /api/status (MaintenanceHost, every 5 min)
+    W-->>S: backupMinutes {customer: 5, seller: 5}
+    S->>W: first load (menu, day log, orders)
+    Note over S,DO: socket live: no timer, no polling
+    S->>W: POST /api/seller/day/sale
+    W-->>S: dayStock, entryId (the screen updates itself)
+    W->>DO: stock.changed (from = X-Device-Id)
+    DO-->>S: stock.changed (from = this device: echo ignored)
+    DO-->>S: stock.changed (another device's sale, different or no `from`)
+    S->>W: GET /api/seller/menu (stock only)
+    Note over S,DO: socket lost and page visible: one check every backup minutes
+    S->>W: reload everything
+    Note over S: page hidden: nothing; page shown again: reload at once
+```
+
+## 11 · The customer app's one live connection, backup check and notification refresh (plan 074)
+
+The customer shell mounts `CustomerLiveHost` once ([liveConnection.ts](../../src/features/customer-orders/liveConnection.ts)). It opens **one WebSocket per kitchen** where this phone has an active order (not collected, delivered or cancelled; not from a closed week; placed in the last 10 days; normally one). The order page and My orders never open sockets or poll: they read the store, which the connection keeps fresh.
+
+Authorisation is the private order tokens only: `GET /api/s/:slug/live?tokens=a,b` (up to 20, WebSocket upgrade). The Worker checks every token belongs to **that** kitchen, is on its active menu and is not finished, and hands the room only the **codes** of the orders it admitted. The room (`SellerLive`, `/connect-customer`, tagged `customer`, hibernating) sends such a socket only `order.changed` for those codes (a change without a code, such as "Ready now" or finishing the week, is a bare nudge to every customer socket of that kitchen; no data in it). Seller sockets are untouched: kitchen-wide events never reach a customer. At most 300 customer sockets per kitchen.
+
+```mermaid
+sequenceDiagram
+    participant P as Order page / My orders
+    participant H as CustomerLiveHost (shell)
+    participant W as Worker
+    participant DO as SellerLive
+    participant SW as Service worker
+    H->>W: GET /api/s/onde-onde/live?tokens=t1,t2 (upgrade)
+    W->>W: each token: this kitchen, active menu, not finished
+    W->>DO: /connect-customer?codes=C1,C2
+    Note over H,DO: live: no timer, no polling
+    Note over H: order again: the new token joins at once (new socket)
+    W->>DO: order.changed C1 (seller marked Ready)
+    DO-->>H: order.changed C1 (only this phone's orders)
+    H->>W: GET /api/orders/t1 (one targeted fetch, no menu)
+    W-->>P: store updated: order page and list change together
+    SW-->>H: postMessage order-push /o/t1 (a notification arrived)
+    H->>W: GET /api/orders/t1 (events within 1 s collapse)
+    Note over H,W: socket lost, page visible: GET /api/orders?tokens= every backupMinutes.customer
+    Note over H: back in the app after 10 s or more, or socket reconnects: one check at once
+```
+
+Backup rules: only while a kitchen's socket is down and the page is visible; the gap is `backupMinutes.customer` from `GET /api/status` (5 when absent), through [orderPoll.ts](../../src/features/customer-orders/orderPoll.ts) so plan 062's rules hold (backoff after failures, stop after 5 refusals until Try again, pause while hidden). Finished orders are dropped from the connection when their status reaches the phone, and with none left the socket closes and nothing is checked. Settings shows one muted line from [customerLiveState.ts](../../src/api/customerLiveState.ts): "Connection: live", "Last updated 10:42 · checking every 5 min", or "No active orders".

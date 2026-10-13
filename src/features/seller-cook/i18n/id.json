@@ -72,5 +72,12 @@
     "pickup": "Ambil · {{day}}",
     "delivery": "Antar · {{day}}",
     "part": "{{index}} dari {{of}}"
+  },
+  "autosave": {
+    "saving": "Menyimpan…",
+    "saved": "Tersimpan ✓",
+    "notSaved": "Belum tersimpan",
+    "tryAgain": "Coba lagi",
+    "other": "Perubahan tidak diterima, jadi dibatalkan."
   }
 }

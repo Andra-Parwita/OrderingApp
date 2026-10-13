@@ -76,5 +76,12 @@
     "pickup": "Pickup · {{day}}",
     "delivery": "Delivery · {{day}}",
     "part": "{{index}} of {{of}}"
+  },
+  "autosave": {
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "notSaved": "Not saved yet",
+    "tryAgain": "Try again",
+    "other": "The change was not accepted, so it was undone."
   }
 }

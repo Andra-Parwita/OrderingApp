@@ -19,7 +19,7 @@ import { styled } from 'styled-components';
 import { SELLER_HELP_PATH } from '../../shared/help';
 import { lastKitchen } from '../api/device/lastKitchen';
 import { currentSellerSlug } from '../api/device/sellerContext';
-import { fetchPreferences } from '../api/menus';
+import { fetchPreferencesCached } from '../api/cachedReads';
 import { setKitchenBrand } from '../theme/kitchenBrand';
 import { useMediaQuery } from '../components/useMediaQuery';
 import {
@@ -457,7 +457,7 @@ function KitchenBrandSync() {
   const who = me?.sellerName ?? '';
   useEffect(() => {
     let live = true;
-    void fetchPreferences(undefined, currentSellerSlug()).then((result) => {
+    void fetchPreferencesCached().then((result) => {
       if (live && result.ok) setKitchenBrand(result.data.preferences.theme);
     });
     return () => {

@@ -3,6 +3,7 @@ import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { devToolsEnabled } from '../src/api/devTools';
 import { setRetryDelays } from '../src/api/retryPolicy';
+import { clearShortCache } from '../src/api/shortCache';
 import { closeWorld, warmWorld } from './handlers';
 import { server } from './server';
 
@@ -17,6 +18,7 @@ beforeAll(async () => {
 }, 60_000);
 afterEach(() => {
   cleanup();
+  clearShortCache(); // plan 073: one test's cached settings must not reach the next
   // Plan 061: a form saves its draft when it unmounts; one test's draft must not reach the next.
   if (typeof localStorage !== 'undefined') {
     for (const key of Object.keys(localStorage)) {
