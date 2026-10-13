@@ -47,7 +47,8 @@ Nothing is built after 1.0.35 yet. **Next time you deploy:** back up first; anno
 ## Next session
 1. Read this file.
 2. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
-3. Then the open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie).
+3. **Plan 075 release notes in the seller app** ([draft](plans/075-release-notes.md), next round): continue with **question 1 of 3, where the notes show** (A: a "What's new" card once after Refresh + Settings → What's new; B: Settings only with a dot; C: one line in the new-version bar; recommended A), then who writes them, then who sees what.
+4. Then the other open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie).
 
 ## Known and not done
 - **State duplication found while documenting (13 Oct; see docs/architecture/state-and-data-flow.md "what looks inconsistent") — cleanup candidates, ask the owner first:** seller orders held in two slices (sellerOrders + sellerCook), so one live event triggers two fetches; the current menu copied into four slices; two `menuRequested` actions; the session in three places; several screens call the API directly instead of through a slice.
@@ -61,4 +62,4 @@ Nothing is built after 1.0.35 yet. **Next time you deploy:** back up first; anno
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.
+> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then continue plan 075 (release notes) at question 1, then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.
