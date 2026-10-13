@@ -2,7 +2,7 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here.
 
-**Last session:** 2026-10-13 → 14 (overnight), the owner's PC (Adelaide), Claude as coordinator. Branch `indra/brand_logo_ux`. **Live: Release 1.0.34** (`709a377`, tagged v1.0.34, deployed 13 Oct 07:40). **Everything under "Built after 1.0.34" is committed and pushed on this branch, not deployed yet** (owner: "we will deploy when all is done").
+**Last session:** 2026-10-13 → 14 (overnight), the owner's PC (Adelaide), Claude as coordinator. **Live: Release 1.0.35** (`14a4440`, Worker version `afd9eeb0-132a-438b-8ee5-6acac5535271`, deployed 14 Oct by the owner from this PC; `main` fast-forwarded and tagged `v1.0.35`). Backup `backups/shaggybobo-2026-10-14.sql` taken before migrations 0016–0023 (all applied); `MAPS_EMBED_KEY` set. Post-deploy server check ✅: pages, Help, `/api/status` (backupMinutes 5/5), OndeOnde + DellaVee menus.
 
 ## Where things stand
 **Final gate (14 Oct, ~08:30), green:** typecheck ✅ · lint ✅ · format ✅ · **unit 2,199 tests** ✅ (61 failed in the big parallel run only from Windows port exhaustion — EADDRINUSE; all re-ran green, 75/75) · **e2e 81 passed, 0 failed** (`scratch/f-e2e3.log`). The e2e run found an **order-dependent failure, fixed**: the plan 046 maintenance test switched maintenance on while seller-auth ran in parallel; it now runs alone in its own `maintenance-desktop-chromium` project. The docs site is rebuilt (23 pages).
@@ -23,7 +23,7 @@
 
 **Decisions recorded:** D-095 (Help public at a hidden address), D-096 (languages; one language per dish is enough), D-097 (Devices on the phone). **Live plan status:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md).
 
-### Built after 1.0.34 (this branch, not deployed)
+### In Release 1.0.35 (deployed 14 Oct)
 | plan | what | deploy impact |
 |---|---|---|
 | 069 | **Per-chef portions and income**: one Per chef / My income button (Home, phone Orders, Past menus) opens a panel; owners see all chefs, a chef her own line when Settings → Team "Chefs can see their own income" is on (default on); helpers never. Each finished menu now **keeps its per-chef summary** (snapshot); menus finished before the deploy show "not kept" | ⚠️ **migrations 0016 + 0017** (add-only) **before** deploying (the finish fails without 0017) |
@@ -42,29 +42,12 @@
 4. ~~Invite message drafts~~ **Decided (owner A, 13 Oct): fine as is** (name and role kept; the message holds the key, so it is never stored).
 
 ## Deploy impact (tell the builder before the next deploy)
-| area | impact |
-|---|---|
-| database | ⚠️ **two new migrations, both add-only: 0014_first_language, 0015_past_menu_pictures.** Apply to the live D1 **before** deploying: `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote`. On each PC `pnpm db:migrate:local` (never reseed). Deploying the code first breaks the kitchen settings reads and the menu finish until they are applied |
-| secrets / settings | ✅ nothing new |
-| beta testers | ✅ the new-version bar (plan 059, live since 1.0.30) tells them to Refresh; no "close and reopen" message needed this time |
-| 50 dishes | publish a menu with more than 10 dishes only a day after the deploy |
-| signed-in people | ✅ nobody is signed out |
-
-**After deploying, check:** Dellavee's basket offers delivery only; a translation still works (⇄); a menu finish keeps its picture in Past menus.
+Nothing is built after 1.0.35 yet. **Next time you deploy:** back up first; announce (admin → Announce an update); switch Maintenance on before the migrations, off after the live check (plan 046 is live now).
 
 ## Next session
-1. Read this file. Check the gate line above.
-2. Go through "Questions waiting" **one at a time** (owner rule).
-3. When the owner is happy: merge `indra/brand_logo_ux` into `main` (a normal push now, no force), and the builder deploys (migrations 0014 + 0015 first).
-
-## Next deploy (Release 1.0.35) — in this order
-1. **Back up:** `pnpm exec wrangler d1 export shaggybobo-order --remote --output backups/shaggybobo-YYYY-MM-DD.sql`
-2. **Migrations 0016–0023** (all add-only): `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote`. They must be on the live D1 **before** the new Worker: without 0017 a menu finish fails, without 0018–0021 order reads fail, without 0022 writes fail.
-3. **Secrets:** `ADDRESS_KEY` ✅ already set (owner, 13 Oct; copy in Keeper). **`MAPS_EMBED_KEY`** (optional; Google Maps Embed key, restricted to our sites; in Keeper): `pnpm exec wrangler secret put MAPS_EMBED_KEY`. `MAINTENANCE_TOKEN` optional (only for the later release automation).
-4. **Deploy:** `pnpm run deploy` (Worker and app together: the customer live connection and the maintenance guard need both).
-5. **Check live:** a delivery order with an address → the seller sees it with Directions and "Got it ✓"; the seller marks Ready → the customer's open page shows it within seconds; admin → Announce an update shows the bar; Per chef panel; Dellavee's basket delivery only.
-6. **Then:** fast-forward `main` to this branch, push, tag `v1.0.35`.
-7. **Next time you deploy:** announce first (admin → Announce an update), switch Maintenance on before step 2, off after step 5.
+1. Read this file.
+2. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
+3. Then the open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie).
 
 ## Known and not done
 - **State duplication found while documenting (13 Oct; see docs/architecture/state-and-data-flow.md "what looks inconsistent") — cleanup candidates, ask the owner first:** seller orders held in two slices (sellerOrders + sellerCook), so one live event triggers two fetches; the current menu copied into four slices; two `menuRequested` actions; the session in three places; several screens call the API directly instead of through a slice.
@@ -78,4 +61,4 @@
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Overnight work (plans 060–066, D-097, Help tabs) is pushed on indra/brand_logo_ux, not deployed. Tell me the gate result, then go through "Questions waiting" **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next. Never several questions in one message.
+> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.
