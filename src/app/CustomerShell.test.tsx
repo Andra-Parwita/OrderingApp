@@ -21,7 +21,7 @@ import { GlobalStyle } from '../theme/GlobalStyle';
 import { lightTheme } from '../theme/themes';
 import { AppRoutes } from './AppRoutes';
 import { CustomerPage } from '../components/CustomerPage';
-import { activeTab, hasTabBar, isRootPage } from './CustomerShell';
+import { activeTab, hasTabBar, isRootPage, menuTabHref } from './CustomerShell';
 import { createAppStore } from './store';
 import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
 
@@ -363,6 +363,39 @@ describe('customer sub-page headers', () => {
     // One back arrow in the top bar; the empty basket's own "Back to the menu" button is a
     // separate action in the page body.
     expect(await screen.findAllByRole('button', { name: 'Back to Dishes' })).toHaveLength(1);
+  });
+});
+
+describe('Menu tab in a home-screen app (plan 068)', () => {
+  const standalone = (on: boolean) => {
+    window.matchMedia = ((query: string) => ({
+      matches: on && query.includes('standalone'),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+  };
+  afterEach(() => {
+    standalone(false);
+    sessionStorage.clear();
+    localStorage.clear();
+  });
+
+  it('goes back to the kitchen the app was launched on, not the last one visited', () => {
+    standalone(true);
+    localStorage.setItem('lastKitchen', 'dellavee');
+    expect(menuTabHref('/dellavee')).toBe('/dellavee');
+    localStorage.setItem('lastKitchen', 'ondeonde');
+    expect(menuTabHref('/ondeonde')).toBe('/dellavee');
+    expect(menuTabHref('/my-orders')).toBe('/dellavee');
+  });
+
+  it('in a normal browser tab follows the last kitchen, as before', () => {
+    standalone(false);
+    expect(menuTabHref('/dellavee')).toBe('/dellavee');
+    expect(menuTabHref('/ondeonde')).toBe('/ondeonde');
+    localStorage.setItem('lastKitchen', 'ondeonde');
+    expect(menuTabHref('/my-orders')).toBe('/ondeonde');
   });
 });
 

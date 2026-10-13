@@ -1,3 +1,4 @@
+import type { DeliveryAddress } from './address';
 export type Language = 'en' | 'id';
 export type LocalText = { en: string; id: string };
 
@@ -81,6 +82,9 @@ export type OrderLine = {
 
 export type CollectedBy = 'customer' | 'seller';
 
+/** Plan 071: a delivery address as the kitchen's team reads it. */
+export type OrderAddress = { address: DeliveryAddress } | { unavailable: true };
+
 /** The full order, as the seller and chefs see it. */
 export type SellerOrder = {
   id: string;
@@ -106,6 +110,11 @@ export type SellerOrder = {
   returning: boolean;
   /** The customer edited after placing; cleared by the seller's next status change or "seen". */
   changed: boolean;
+  /**
+   * Plan 071: the customer changed the delivery address. `new` until a team member taps "Got it"
+   * (then `seen`); another change makes it `new` again. The old address is never kept.
+   */
+  addressChanged?: 'new' | 'seen';
   /** Customer-visible messages, newest first, at most INBOX_MAX. */
   inbox: Array<InboxEntry>;
   enteredBy?: StaffActor;
@@ -113,6 +122,17 @@ export type SellerOrder = {
   audit: Array<AuditEntry>;
   /** plan 001 stage 4. The pickup place (id) of a pickup order; absent counts as the menu's first. */
   pickupPlaceId?: string;
+  /**
+   * Plan 071 (D-099): the delivery address, added only by the seller-side routes (never stored in
+   * this shape, never in a customer view, a backup, a label or a log). `unavailable`: one exists but
+   * cannot be read (the key changed or was lost).
+   */
+  address?: OrderAddress;
+  /**
+   * Plan 071 (D-099): the anonymous code the customer's phone made for this kitchen. Seller-side
+   * reads only (never in a customer view); lets the seller's device link repeat orders.
+   */
+  customerCode?: string;
   /** Kitchen · Pack (D-066): a flag only. Never changes the status, never shown to the customer. */
   packed?: boolean;
   /** When and by whom the hand-over was confirmed; both or neither. */
@@ -147,6 +167,13 @@ export type CustomerOrder = Pick<
 > & {
   /** Customers are not seller-scoped: each order says whose it is (My orders spans sellers). */
   seller: SellerRef;
+  /**
+   * Plan 071: whether the kitchen holds an address for this order. Never the address itself.
+   * `unreadable` = it cannot be read any more, so the order page asks for it again. Absent = none.
+   */
+  addressState?: 'saved' | 'unreadable';
+  /** Plan 071: after the customer changed the address, whether the kitchen has seen the change. */
+  addressChange?: 'waiting' | 'seen';
   /** Set when the seller closed the week (D-044): the order is read-only. `cookingDate` goes with it. */
   archived?: true;
   /** Local date (YYYY-MM-DD) of the closed week; present with `archived`. */

@@ -590,6 +590,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       ...(input.fulfilment === 'pickup' && input.pickupPlaceId !== undefined
         ? { pickupPlaceId: input.pickupPlaceId }
         : {}),
+      ...(input.customerCode !== undefined ? { customerCode: input.customerCode } : {}),
       createdAt: at,
       updatedAt: at,
     };
@@ -1542,6 +1543,33 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
     getByCode: (code: string) => readLiveOrder(db, sid, 'code', code),
 
+    async setOrderAddress(orderId: string, cipher: string | null, edited = false) {
+      // Only a flag is kept for a customer's change: the old address is never stored (D-099).
+      await db.batch([
+        db.stmt(
+          `UPDATE orders SET address_enc = ?${
+            edited ? ', address_changed = 1, address_seen = 0, changed = 1, updated_at = ?' : ''
+          } WHERE seller_id = ? AND id = ? AND past_week_id IS NULL`,
+          cipher,
+          ...(edited ? [nowIso()] : []),
+          sid,
+          orderId,
+        ),
+      ]);
+    },
+
+    async orderAddresses(codes?: ReadonlyArray<string>) {
+      if (codes !== undefined && codes.length === 0) return new Map<string, string>();
+      const rows = await db.all<{ code: string; address_enc: string }>(
+        `SELECT code, address_enc FROM orders WHERE seller_id = ? AND past_week_id IS NULL AND address_enc IS NOT NULL${
+          codes ? ` AND code IN (${codes.map(() => '?').join(', ')})` : ''
+        }`,
+        sid,
+        ...(codes ?? []),
+      );
+      return new Map(rows.map((row) => [row.code, row.address_enc]));
+    },
+
     /** Newest first. */
     async listOrders() {
       return (await readOrders(db, sid, 'o.past_week_id IS NULL')).reverse();
@@ -1600,6 +1628,20 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
           withOrder(addInbox(draft(order), { kind: 'nudge', textKey }), { updatedAt: nowIso() }),
         );
       });
+    },
+
+    /** A team member tapped "Got it" on the customer's changed address. */
+    async markAddressSeen(code: string) {
+      const order = await readLiveOrder(db, sid, 'code', code);
+      if (!order) return fail('not_found', 'Order not found');
+      await db.batch([
+        db.stmt(
+          'UPDATE orders SET address_seen = 1 WHERE seller_id = ? AND id = ? AND address_changed = 1',
+          sid,
+          order.id,
+        ),
+      ]);
+      return ok((await readLiveOrder(db, sid, 'code', code)) ?? order);
     },
 
     /** The seller has seen the customer's change. */

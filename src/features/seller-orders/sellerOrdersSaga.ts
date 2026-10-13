@@ -86,8 +86,10 @@ import {
   refreshRequested,
   seenRequested,
   statusChangeRequested,
+  linkPromptShown,
   waReceivedRequested,
 } from './sellerOrdersSlice';
+import { isLinked } from './contacts/addressBook';
 import { staffSignedOut } from '../../api/staffSignedOut';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 
@@ -215,6 +217,15 @@ export function* changeStatus(action: ReturnType<typeof statusChangeRequested>) 
   )) as ApiResult<SellerOrderResponse>;
   if (result.ok) {
     yield put(orderSaved({ order: result.data.order }));
+    // Plan 071: a confirmed order from a phone this device has not met yet: offer to link it.
+    const { customerCode } = result.data.order;
+    if (
+      to === 'confirmed' &&
+      customerCode !== undefined &&
+      !isLinked(currentSellerSlug(), customerCode)
+    ) {
+      yield put(linkPromptShown({ code }));
+    }
     // Confirm and cancel get a toast with Undo: the same call back to the old status, forced.
     if (!undo && (to === 'confirmed' || to === 'cancelled')) {
       yield put(

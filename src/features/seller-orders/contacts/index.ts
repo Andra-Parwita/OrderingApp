@@ -1,12 +1,11 @@
 export { ContactFields } from './ContactFields';
 export { ContactsBackup } from './ContactsBackup';
+export { CustomerDetailsHost } from './CustomerDetailsHost';
 export { PhoneLanguageRow, PhoneMoreNote } from './PhoneMoreParts';
+export { loadBook } from './addressBook';
 export {
-  contactKey,
-  exportContacts,
   getContact,
   getContactDigits,
-  importContacts,
   saveContact,
   useContactBook,
   type Contact,

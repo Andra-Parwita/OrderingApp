@@ -2,7 +2,7 @@
 
 | folder | what's in it |
 |---|---|
-| [product/](product/overview.md) | what we're building: a summary of the concept brief, design rules, open questions |
+| [product/](product/overview.md) | what we're building: a summary of the concept brief, design rules, open questions; the [product roadmap](product/roadmap.md) (Square payments, a simple store, events and ticketing) |
 | [plans/](plans/README.md) | one file per change: goal, stages, end-of-phase checks (D-055) |
 | [plan/](plan/roadmap.md) | the [roadmap](plan/roadmap.md) (phases, stage tables, folder structure), the live [board](plan/board.md) (status of the current round) and [lessons](plan/lessons.md) |
 | [guide/](guide/) | how we work: [tech stack and quality gate](guide/tech-stack.md), [token efficiency](guide/token-efficiency.md), [agent working conventions](guide/agent-working-conventions.md), [update the ShaggyBobo logo](guide/update-brand-logo.md) |
@@ -11,3 +11,7 @@
 | [decisions/](decisions/README.md) | the owner's numbered rulings |
 
 The raw inputs stay in [briefs/](../briefs/): the concept brief (source of truth for behaviour) and the reference mock images.
+
+## Read it as a website
+
+Run `pnpm run docs`, then open `docs/site/index.html`. It builds these pages (and the Mermaid diagrams in them) into a branded site with a menu, search and a light or dark theme. It is private, git-ignored and never deployed (plan 070, D-098).

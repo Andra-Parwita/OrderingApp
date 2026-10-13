@@ -16,13 +16,14 @@ import {
   type MessagesResponse,
 } from '../../shared/handoverContract';
 import { parseBackupFile } from '../../shared/backup';
+import { parseTokenSwitch, type StatusResponse } from '../../shared/maintenance';
 import { isRecord } from '../../shared/parse';
 import type {
   Chef,
   CustomerOrder,
   SellerMenuItemView,
+  OrderAddress,
   SellerOrder,
-  SellerRef,
   StaffActor,
 } from '../../shared/domain';
 import { isImageSlot } from '../../shared/imageSlots';
@@ -128,11 +129,14 @@ import {
   type DayLogResponse,
   type DayStockResponse,
 } from '../../shared/daySalesContract';
+import type { ChefSummaryResponse } from '../../shared/chefSummaryContract';
 import { parseAddMadeRequest, type MadeResponse } from '../../shared/madeContract';
 import { chefAccess, handleAdmin, handleAuth } from './authRoutes';
 import { handleAdminLog, handleLog } from './logRoutes';
 import { sessionTokenOf } from '../auth/cookie';
 import { sha256Hex } from '../db/crypto';
+import { parseDeliveryAddress, type DeliveryAddress } from '../../shared/address';
+import { decryptAddress, encryptAddress } from '../db/address';
 import { authError, error, readJson } from './respond';
 import type { Repository, SellerRepository, StoreResult } from '../repo/Repository';
 
@@ -209,15 +213,118 @@ function okResult(result: StoreResult<true>): Response {
     : error(result.error, result.message);
 }
 
-/** Customer endpoints return the narrowed view (with the seller), never the seller-only fields. */
-function customerResult(
+/**
+ * Customer endpoints return the narrowed view (with the seller), never the seller-only fields. Plan
+ * 071: whether the kitchen holds an address for the order (`addressState`), never the address.
+ */
+async function customerResult(
   result: StoreResult<SellerOrder>,
-  seller: SellerRef,
+  repo: SellerRepository,
+  context: RouteContext,
   status = 200,
-): Response {
+): Promise<Response> {
   if (!result.ok) return refusal(result);
-  const body: CustomerOrderResponse = { order: toCustomerOrder(result.value, seller) };
+  const order = toCustomerOrder(result.value, repo.seller);
+  const stored = (await repo.orderAddresses([result.value.code])).get(result.value.code);
+  let addressState: CustomerOrder['addressState'];
+  if (stored !== undefined) {
+    addressState =
+      (await decryptAddress(context.addressKey ?? null, stored)) === null ? 'unreadable' : 'saved';
+  }
+  const body: CustomerOrderResponse = {
+    order: {
+      ...order,
+      ...(addressState ? { addressState } : {}),
+      ...(result.value.addressChanged
+        ? { addressChange: result.value.addressChanged === 'seen' ? 'seen' : 'waiting' }
+        : {}),
+    },
+  };
   return Response.json(body, { status });
+}
+
+/**
+ * Plan 071: keeps (or clears) an order's encrypted delivery address after a write. Only a delivery
+ * order has one; without the key nothing is stored. An empty string deletes it.
+ */
+async function storeAddress(
+  repo: SellerRepository,
+  context: RouteContext,
+  result: StoreResult<SellerOrder>,
+  address: DeliveryAddress | null | undefined,
+  customerEdit = false,
+): Promise<void> {
+  if (!result.ok) return;
+  const order = result.value;
+  if (order.fulfilment !== 'delivery') {
+    if (address !== undefined || order.changed) await repo.setOrderAddress(order.id, null);
+    return;
+  }
+  if (address === undefined) return;
+  if (address === null) await repo.setOrderAddress(order.id, null);
+  else if (context.addressKey) {
+    // A customer's change shows the seller "Address changed", but only when it really differs. The old
+    // address is compared and dropped, never kept (D-099).
+    let edited = false;
+    if (customerEdit) {
+      const before = (await repo.orderAddresses([order.code])).get(order.code);
+      const old = before === undefined ? null : await decryptAddress(context.addressKey, before);
+      edited =
+        old !== null &&
+        JSON.stringify(parseDeliveryAddress(safeParse(old))) !== JSON.stringify(address);
+    }
+    await repo.setOrderAddress(
+      order.id,
+      await encryptAddress(context.addressKey, JSON.stringify(address)),
+      edited,
+    );
+  }
+}
+
+/** Plan 071: the team's view of a stored address, decrypted; an unreadable one says so. */
+async function readAddress(
+  context: RouteContext,
+  stored: string | undefined,
+): Promise<OrderAddress | undefined> {
+  if (stored === undefined) return undefined;
+  const json = await decryptAddress(context.addressKey ?? null, stored);
+  const address = json === null ? null : parseDeliveryAddress(safeParse(json));
+  return address === null ? { unavailable: true } : { address };
+}
+
+/**
+ * Adds each order's address to a seller-side answer that carries `order` or `orders`. Only the
+ * signed-in team of that kitchen gets here; the customer routes never call it.
+ */
+async function withAddresses(
+  response: Response,
+  repo: SellerRepository,
+  context: RouteContext,
+): Promise<Response> {
+  if (!response.ok || !(response.headers.get('Content-Type') ?? '').includes('json')) {
+    return response;
+  }
+  const body: unknown = await response.clone().json();
+  if (!isRecord(body)) return response;
+  const one = body['order'];
+  const many = body['orders'];
+  const decorate = (orders: Array<unknown>, stored: Map<string, string>): Promise<Array<unknown>> =>
+    Promise.all(
+      orders.map(async (order) => {
+        if (!isRecord(order) || typeof order['code'] !== 'string') return order;
+        const address = await readAddress(context, stored.get(order['code']));
+        return address ? { ...order, address } : order;
+      }),
+    );
+  if (isRecord(one) && typeof one['code'] === 'string') {
+    const [order] = await decorate([one], await repo.orderAddresses([one['code']]));
+    return Response.json({ ...body, order }, { status: response.status });
+  }
+  if (Array.isArray(many)) {
+    const orders = await decorate(many as Array<unknown>, await repo.orderAddresses());
+    return Response.json({ ...body, orders }, { status: response.status });
+  }
+  return response;
 }
 
 /** What the hosting Worker offers the routes. Both are optional: unit tests run without them. */
@@ -236,7 +343,16 @@ export type RouteContext = {
   vapidPublicKey?: string | undefined;
   /** Plan 057: the translator and its daily cap; absent means translation is unavailable. */
   translate?: TranslateContext;
+  /** Plan 071 (D-099): the key for delivery addresses (secret `ADDRESS_KEY`); absent = addresses are off. */
+  addressKey?: CryptoKey | null;
+  /** Plan 071: the public Maps Embed key (env `MAPS_EMBED_KEY`); sent in the public menu answer when set. */
+  mapsEmbedKey?: string;
+  /** Plan 046: the release token (secret `MAINTENANCE_TOKEN`) that may switch maintenance on or off; absent = no such endpoint. */
+  maintenanceToken?: string | undefined;
 };
+
+/** Plan 046: these areas keep working in maintenance (the admin signs in and switches it off; client logs). */
+const MAINTENANCE_EXEMPT = new Set(['admin', 'auth', 'log', 'maintenance']);
 
 /**
  * Tells a seller's live room that something changed, after the write has succeeded. Never throws
@@ -309,22 +425,62 @@ export async function handleApiRequest(
   const [, area, a, b, c] = segments;
   const bad = () => error('invalid_request', 'Invalid request');
 
+  // Plan 046: the public status (cheap, cached a few seconds) every screen polls.
+  if (area === 'status' && !a && method === 'GET') {
+    const state = await store.settings.maintenance();
+    return Response.json({ ...state, time: new Date().toISOString() } satisfies StatusResponse, {
+      headers: { 'Cache-Control': 'public, max-age=5' },
+    });
+  }
+  // Plan 046: the release token switches maintenance without a passkey; it works on this route only.
+  if (area === 'maintenance' && !a && method === 'POST') {
+    const sent = /^Bearer (.+)$/.exec(request.headers.get('Authorization') ?? '')?.[1];
+    const wanted = context.maintenanceToken;
+    if (!wanted || !sent || (await sha256Hex(sent)) !== (await sha256Hex(wanted))) {
+      return error('unauthorized', 'Not allowed');
+    }
+    const on = parseTokenSwitch(await readJson(request));
+    if (on === null) return bad();
+    return Response.json(await store.settings.setMaintenance({ maintenance: on }));
+  }
+  // Plan 046: while maintenance is on, every change is refused so nothing is half-saved during a migration.
+  if (
+    method !== 'GET' &&
+    method !== 'HEAD' &&
+    area !== undefined &&
+    !MAINTENANCE_EXEMPT.has(area) &&
+    (await store.settings.maintenance()).maintenance
+  ) {
+    return error('maintenance', 'The app is being updated. Back in a few minutes.');
+  }
+
   // Public, per seller (D-037). The old unscoped GET /api/menu and POST /api/orders are gone:
   // they fall through (404).
   if (area === 's' && a) {
     const sellerStore = await store.sellerBySlug(a);
     if (!sellerStore) return noSeller();
-    if (b === 'menu' && !c && method === 'GET') return Response.json(await sellerStore.getMenu());
+    if (b === 'menu' && !c && method === 'GET') {
+      const menu = await sellerStore.getMenu();
+      return Response.json({
+        ...menu,
+        ...(context.addressKey ? { addresses: true } : {}),
+        ...(context.addressKey && context.mapsEmbedKey
+          ? { mapsEmbedKey: context.mapsEmbedKey }
+          : {}),
+      });
+    }
     if (b === 'orders' && !c && method === 'POST') {
       const input = parseCreateOrderRequest(await readJson(request));
       if (!input) return bad();
+      const created = await sellerStore.createOrder(input);
+      await storeAddress(sellerStore, context, created, input.address);
       const result = await afterOrderWrite(
         context,
         sellerStore.seller.id,
         'order.created',
-        await sellerStore.createOrder(input),
+        created,
       );
-      return customerResult(result, sellerStore.seller, 201);
+      return customerResult(result, sellerStore, context, 201);
     }
     // D-075: a lost order back by code and first name, in this kitchen. Two wrong tries lock it for
     // 15 minutes per kitchen-and-code; ten lock a client address. Every miss answers alike.
@@ -388,7 +544,7 @@ export async function handleApiRequest(
       if (method === 'GET') {
         if (!hit) return error('not_found', 'Order not found');
         if (hit.kind === 'live') {
-          return customerResult({ ok: true, value: hit.order }, hit.sellerRepo.seller);
+          return customerResult({ ok: true, value: hit.order }, hit.sellerRepo, context);
         }
         if (hit.kind === 'archived') {
           const order = toArchivedOrder(hit.order, hit.sellerRepo.seller, hit.cookingDate);
@@ -402,13 +558,17 @@ export async function handleApiRequest(
         if (!patch) return bad();
         if (!hit) return error('not_found', 'Order not found');
         if (hit.kind !== 'live') return weekClosed();
+        const updated = await hit.sellerRepo.updateOrder(a, patch);
+        await storeAddress(hit.sellerRepo, context, updated, patch.address, true);
         const result = await afterOrderWrite(
           context,
           hit.sellerRepo.seller.id,
           'order.changed',
-          await hit.sellerRepo.updateOrder(a, patch),
+          updated,
         );
-        return customerResult(result, hit.sellerRepo.seller);
+        // Re-read: the address write above may have marked the order.
+        const fresh = result.ok ? await hit.sellerRepo.getByCode(result.value.code) : null;
+        return customerResult(fresh ? { ok: true, value: fresh } : result, hit.sellerRepo, context);
       }
     }
     // plan 001 stage 4: "I've collected it". The token is the auth, as on the order page. Idempotent.
@@ -422,7 +582,7 @@ export async function handleApiRequest(
         'order.changed',
         await hit.sellerRepo.customerCollected(a),
       );
-      return customerResult(result, hit.sellerRepo.seller);
+      return customerResult(result, hit.sellerRepo, context);
     }
     // Plan 004 stage 6: web push for this order. The token is the auth; the browser's endpoint and
     // keys are stored and never returned. The Origin check sits in worker/auth/origin.ts.
@@ -449,7 +609,7 @@ export async function handleApiRequest(
         'order.changed',
         await hit.sellerRepo.cancelOrder(a),
       );
-      return customerResult(result, hit.sellerRepo.seller);
+      return customerResult(result, hit.sellerRepo, context);
     }
     return null;
   }
@@ -647,7 +807,7 @@ async function chefOwnDishMay(
 
 /**
  * What a helper may do (plan 028), deny by default: read orders (and the menu the screens show),
- * mark an item sold out, and move an order along (status, collected). Everything else,
+ * mark an item sold out, and move an order along (status, collected, "Got it" on a changed address). Everything else,
  * including every other read (backup, team,
  * settings) and the demo samples, is refused.
  */
@@ -660,7 +820,9 @@ async function helperMay(
   const method = request.method;
   if (a === 'orders') {
     if (method === 'GET') return !c;
-    return method === 'POST' && !!b && (c === 'status' || c === 'collected');
+    return (
+      method === 'POST' && !!b && (c === 'status' || c === 'collected' || c === 'address-seen')
+    );
   }
   // The read-only GETs the helper's screens fetch (Orders, Dishes, Hand over, Sell): the seller
   // menu, the current menu, the message log and the kitchen colour theme (preferences). Settings, team, backup and past weeks stay closed.
@@ -689,8 +851,16 @@ async function helperMay(
   return false;
 }
 
-/** Everything under /api/seller/*, for the one seller the request is scoped to. */
+/** Everything under /api/seller/*; the order answers carry the team-only address (plan 071). */
 async function handleSeller(
+  ...args: Parameters<typeof handleSellerRoutes>
+): Promise<Response | null> {
+  const response = await handleSellerRoutes(...args);
+  return response && args[3][0] === 'orders' ? withAddresses(response, args[1], args[6]) : response;
+}
+
+/** Everything under /api/seller/*, for the one seller the request is scoped to. */
+async function handleSellerRoutes(
   repo: Repository,
   store: SellerRepository,
   request: Request,
@@ -860,6 +1030,14 @@ async function handleSeller(
       if (!result.ok) return error(result.error, result.message);
       await menuChanged();
       return Response.json({ menu: result.value } satisfies MenuViewResponse, { status: 201 });
+    }
+    // Plan 069: portions and income per chef. Owners see every chef; a chef only her own line, and
+    // only while the kitchen setting is on (a helper never gets here: helperMay denies it).
+    if (b && c === 'chef-summary' && method === 'GET') {
+      const summary = await store.getChefSummary(b, chefId);
+      if (summary === 'private') return error('forbidden', 'The kitchen keeps income private');
+      if (!summary) return error('not_found', 'No per-chef figures for this menu');
+      return Response.json(summary satisfies ChefSummaryResponse);
     }
     if (b !== 'current') return null;
     if (!c && method === 'GET') {
@@ -1227,12 +1405,9 @@ async function handleSeller(
     if (!b && method === 'POST') {
       const input = parseCreateSellerOrderRequest(await readJson(request));
       if (!input) return bad();
-      const result = await afterOrderWrite(
-        context,
-        sellerId,
-        'order.created',
-        await store.createSellerOrder(input, actor),
-      );
+      const created = await store.createSellerOrder(input, actor);
+      await storeAddress(store, context, created, input.address);
+      const result = await afterOrderWrite(context, sellerId, 'order.created', created);
       return sellerResult(result, 201);
     }
     const code = b ? parseOrderCode(b) : null;
@@ -1250,6 +1425,14 @@ async function handleSeller(
             await changed(await store.setStatus(code, input.to, actor, input.force === true)),
           )
         : error('not_found', 'Order not found');
+    }
+    // Plan 071: "Delete address now". A helper may not (the helper gate allows only status and collected).
+    if (b && c === 'delete-address' && method === 'POST') {
+      const order = code ? await store.getByCode(code) : undefined;
+      if (!order) return error('not_found', 'Order not found');
+      await store.setOrderAddress(order.id, null);
+      await signal(context, sellerId, 'order.changed', order.code);
+      return sellerResult({ ok: true, value: order });
     }
     if (b && c === 'pack' && method === 'POST') {
       const input = parsePackRequest(await readJson(request));
@@ -1296,6 +1479,11 @@ async function handleSeller(
       if (!input) return bad();
       return code
         ? sellerResult(await changed(await store.setWaReceived(code, input.received)))
+        : error('not_found', 'Order not found');
+    }
+    if (b && c === 'address-seen' && method === 'POST') {
+      return code
+        ? sellerResult(await changed(await store.markAddressSeen(code)))
         : error('not_found', 'Order not found');
     }
     if (b && (c === 'nudge' || c === 'seen') && method === 'POST') {

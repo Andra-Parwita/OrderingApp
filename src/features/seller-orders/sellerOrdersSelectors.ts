@@ -130,3 +130,5 @@ export const selectOrdersCount = (state: SellerOrdersRootState): number | null =
   state.sellerOrders.list.status === 'ready'
     ? state.sellerOrders.orders.filter((o) => o.status !== 'cancelled').length
     : null;
+
+export const selectLinkPrompt = (state: SellerOrdersRootState) => state.sellerOrders.linkPrompt;

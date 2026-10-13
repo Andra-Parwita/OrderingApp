@@ -30,6 +30,7 @@ function renderPane(pane: PaneId) {
             devices={<p>Devices pane</p>}
             images={<p>Images pane</p>}
             chefs={<p>Chefs pane</p>}
+            customers={<p>Customers pane</p>}
             backup={<p>Backup pane</p>}
           />
         </MemoryRouter>
@@ -84,11 +85,11 @@ describe('SettingsPanes', () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(link));
   });
 
-  it('lists all nine panes and marks the open one', async () => {
+  it('lists all ten panes and marks the open one', async () => {
     server.use(http.get('*/api/seller/pickup-places', () => HttpResponse.json({ places: [] })));
     renderPane('pickup');
     const nav = screen.getByRole('navigation', { name: 'Settings sections' });
-    expect(nav.querySelectorAll('a')).toHaveLength(9);
+    expect(nav.querySelectorAll('a')).toHaveLength(10);
     expect(screen.getByText('Version dev')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Pickup locations/ })).toHaveAttribute(
       'aria-current',

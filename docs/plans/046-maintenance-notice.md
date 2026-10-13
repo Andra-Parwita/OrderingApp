@@ -1,6 +1,6 @@
 # 046 · "Update in progress": advance notice and a maintenance mode
 
-**Status:** draft (2026-10-11). Builder: "a notification of deployment happening, so sellers and others know they cannot do anything for a period of maintenance". Q1 answered "A" (sellers, staff and customers).
+**Status:** approved (2026-10-13, owner "A": stages 1–3 in this deploy; owner: "I need the ability to send or show a platform notification bar on the seller too, to say 'Maintenance window …'"). Draft 2026-10-11. Builder: "a notification of deployment happening, so sellers and others know they cannot do anything for a period of maintenance". Q1 answered "A" (sellers, staff and customers).
 **Goal:** people are told ahead of an update, and during it they see a calm "Updating, back in a few minutes" instead of errors, while the server refuses changes so nothing is half-saved during a migration. For now the admin switches it on and off by hand around each manual release (plan 045, release automation, is for later).
 
 ## Open question (builder)

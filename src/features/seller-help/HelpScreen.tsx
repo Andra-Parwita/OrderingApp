@@ -16,8 +16,17 @@ import { TOPICS, type HelpStep, type HelpTopic, type HelpTopicText } from './top
 const PHONE_QUERY = '(max-width: 51.25rem)';
 const PIC_DIR = '/help/';
 
-const Page = styled.div`
+const Page = styled.div<{ $split: boolean }>`
+  min-height: 100vh;
   min-height: 100dvh;
+  ${({ $split }) =>
+    $split
+      ? `display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;`
+      : ''}
   background: ${({ theme }) => theme.c.bg};
   color: ${({ theme }) => theme.c.text};
   font-family: ${({ theme }) => theme.font.ui};
@@ -36,6 +45,7 @@ const Page = styled.div`
 `;
 const Band = styled.header`
   position: relative;
+  flex: none;
   height: 9.375rem;
   overflow: hidden;
   background: ${brandColour.beige};
@@ -180,7 +190,7 @@ const MascotBox = styled.div`
     display: none;
   }
 `;
-const Main = styled.main`
+const Main = styled.main<{ $split: boolean }>`
   box-sizing: border-box;
   max-width: 73.75rem;
   margin: 0 auto;
@@ -189,6 +199,16 @@ const Main = styled.main`
   @media (max-width: 51.25rem) {
     padding: 0.875rem ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xxl};
   }
+  /* Two-column layout: the page is one screen tall; only the two panes scroll. */
+  ${({ $split, theme }) =>
+    $split
+      ? `display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  padding-bottom: ${theme.spacing.md};`
+      : ''}
 `;
 const SearchBox = styled.div`
   position: relative;
@@ -224,13 +244,21 @@ const Layout = styled.div<{ $split: boolean }>`
   grid-template-columns: ${({ $split }) => ($split ? '21.25rem 1fr' : '1fr')};
   gap: ${({ theme }) => theme.spacing.xl};
   align-items: start;
+  ${({ $split }) =>
+    $split
+      ? `flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);`
+      : ''}
 `;
 const List = styled.ol`
   display: flex;
   flex-direction: column;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 100%;
   list-style: none;
   border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   border-radius: ${({ theme }) => theme.radius.md};
@@ -324,7 +352,9 @@ const Inline = styled.div`
 `;
 const Detail = styled.section`
   box-sizing: border-box;
-  min-height: 18.75rem;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
   padding: 1.375rem ${({ theme }) => theme.spacing.xl};
   border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   border-radius: ${({ theme }) => theme.radius.md};
@@ -622,9 +652,13 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
   const alt = (what: string) => t('picture', { what });
   const toggle = (i: number) => setOpen(accordion && current === i ? -1 : i);
   const detail = shown.find((x) => x.i === current);
+  const detailRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (detailRef.current) detailRef.current.scrollTop = 0;
+  }, [current, tab]);
 
   return (
-    <Page>
+    <Page $split={!accordion}>
       <Band>
         <Scene src="/brand/nusantara-market.webp" alt="" aria-hidden="true" />
         <BandIn>
@@ -653,7 +687,7 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
         </BandIn>
         <MascotBox>{mascot}</MascotBox>
       </Band>
-      <Main>
+      <Main $split={!accordion}>
         <TabList role="tablist" aria-label={t('tabs')} onKeyDown={onTabKey}>
           {TABS.map((id) => (
             <TabButton
@@ -737,7 +771,7 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
             </List>
           )}
           {!accordion && detail ? (
-            <Detail id={`help-topic-${detail.i}`} aria-live="polite">
+            <Detail ref={detailRef} id={`help-topic-${detail.i}`} aria-live="polite">
               <h2>
                 {detail.i + 1}. {detail.topic.n}
               </h2>

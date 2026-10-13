@@ -93,7 +93,10 @@
       "signOutConfirm": "Ketuk lagi untuk mengeluarkan",
       "members": "Orang",
       "tabs": "Detail dapur",
-      "tab": { "invitations": "Undangan", "settings": "Pengaturan" },
+      "tab": {
+        "invitations": "Undangan",
+        "settings": "Pengaturan"
+      },
       "images": "Gambar",
       "imagesNote": "Gambar untuk dapur ini. Penjual bisa mengubahnya nanti di Pengaturan.",
       "noMembers": "Belum ada yang bergabung.",
@@ -115,7 +118,11 @@
     "pause": {
       "title": "Jeda dapur ini",
       "state": "Status",
-      "label": { "open": "Buka", "customers": "Tutup untuk pelanggan", "full": "Dijeda" },
+      "label": {
+        "open": "Buka",
+        "customers": "Tutup untuk pelanggan",
+        "full": "Dijeda"
+      },
       "customersButton": "Tutup untuk pelanggan",
       "customersNote": "Pelanggan melihat \"Dapur ini sedang tutup\" dan tidak bisa memesan. Orang dapur tetap bekerja seperti biasa.",
       "fullButton": "Jeda dapur",
@@ -181,6 +188,27 @@
       "orders_other": "{{count}} pesanan",
       "active": "Aktif {{when}}",
       "neverActive": "Belum pernah aktif"
+    },
+    "maintenance": {
+      "title": "Umumkan pembaruan",
+      "text": "Semua orang melihat pemberitahuan singkat sampai pembaruan selesai. Waktu mengikuti jam sang juru masak (Melbourne).",
+      "date": "Tanggal",
+      "start": "Mulai",
+      "length": "Menit",
+      "noteEn": "Catatan (Inggris, opsional)",
+      "noteId": "Catatan (Indonesia, opsional)",
+      "announce": "Umumkan",
+      "clear": "Hapus pengumuman",
+      "announced": "Diumumkan: {{when}}, {{minutes}} mnt.",
+      "none": "Belum ada pembaruan diumumkan.",
+      "modeTitle": "Pemeliharaan",
+      "modeOff": "Pemeliharaan mati. Aplikasi berjalan seperti biasa.",
+      "modeOn": "Pemeliharaan AKTIF. Semua orang melihat layar Pembaruan dan perubahan ditolak.",
+      "turnOn": "Aktifkan pemeliharaan",
+      "turnOnConfirm": "Ketuk lagi untuk mengaktifkan",
+      "turnOff": "Matikan pemeliharaan",
+      "failed": "Tidak bisa menyimpan. Coba lagi.",
+      "badLength": "Isi 1 sampai 240 menit."
     }
   }
 }

@@ -73,4 +73,22 @@ describe('SlideOver', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  it('slides in (an animation on the panel and a fading scrim) unless the user prefers reduced motion', () => {
+    renderThemed(
+      <SlideOver label="Details" closeLabel="Close" onClose={() => undefined}>
+        <p>Body</p>
+      </SlideOver>,
+    );
+    const css = [...document.querySelectorAll('style')]
+      .map((tag) => tag.textContent)
+      .join(String.fromCharCode(10));
+    expect(css).toMatch(/translateX\(100%\)/);
+    expect(css).toMatch(/translateY\(100%\)/);
+    // Both animations (0.22 s) are declared only after the no-preference query opens.
+    const first = css.indexOf('0.22s');
+    expect(first).toBeGreaterThan(-1);
+    expect(css.slice(0, first)).toMatch(/prefers-reduced-motion:\s*no-preference/);
+    expect(css).not.toMatch(/prefers-reduced-motion:\s*reduce[^}]*animation/);
+  });
 });

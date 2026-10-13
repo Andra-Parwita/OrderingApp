@@ -23,6 +23,14 @@
 
 **Decisions recorded:** D-095 (Help public at a hidden address), D-096 (languages; one language per dish is enough), D-097 (Devices on the phone). **Live plan status:** [plans/live-status.md](plans/live-status.md). **Plans index:** [plans/README.md](plans/README.md).
 
+### Built after 1.0.34 (this branch, not deployed)
+| plan | what | deploy impact |
+|---|---|---|
+| 069 | **Per-chef portions and income**: one Per chef / My income button (Home, phone Orders, Past menus) opens a panel; owners see all chefs, a chef her own line when Settings → Team "Chefs can see their own income" is on (default on); helpers never. Each finished menu now **keeps its per-chef summary** (snapshot); menus finished before the deploy show "not kept" | ⚠️ **migrations 0016 + 0017** (add-only) **before** deploying (the finish fails without 0017) |
+| 070 | **Branded docs site** (`pnpm run docs`, open `docs/site/index.html`; private) with sequences and UX flows; CLAUDE.md "Docs stay current" rule; architecture docs refreshed + source-layout page; product roadmap | none (dev-only `marked`, `mermaid`, D-098) |
+| 071 · 1–3 | **Delivery addresses (D-099)**: guided address at checkout (Check on map, Use my location, driver notes, saved card), privacy line in the kitchen's name; encrypted, team-only, deleted a day after the menu; seller order + **Deliveries** list with Directions; all customer texts updated | ✅ **secret `ADDRESS_KEY` already set on Cloudflare by the owner (13 Oct; copy in Keeper)**; ⚠️ **migration 0018** before deploying; optional **`MAPS_EMBED_KEY`** (Google Maps Embed API key, restricted to our sites) for the in-app map check |
+| 068 | **Two kitchens on one phone**: fixed app id per kitchen (`/<slug>`) and for the seller app (`/seller`); inside a kitchen's home-screen app the Menu tab stays with that kitchen and My orders shows its orders first, "Other kitchens (N)" folded; the home-screen card also shows on "coming soon" | none (an app once installed from an order link `/o/…` may count as a new app identity: low risk) |
+
 ## For the owner tomorrow: questions waiting (one at a time)
 1. ~~063 Menu defaults~~ **Decided (owner A, 13 Oct): leave Menu defaults two-way;** the three-way choice is per menu in Details.
 2. ~~060 default first language~~ **Decided (owner A, 13 Oct): the phone's language unless the seller picked one** (migration 0014 amended before it ever reached the live database).
@@ -46,6 +54,8 @@
 3. When the owner is happy: merge `indra/brand_logo_ux` into `main` (a normal push now, no force), and the builder deploys (migrations 0014 + 0015 first).
 
 ## Known and not done
+- **Plan 071 decisions (13 Oct):** addresses encrypted in the cloud, team-only, deleted a day after the menu (D-099, wording in the kitchen's name); guided address fields + Check on map + optional Use my location + driver notes; Delivery opens the form or shows the saved address card with Change; anonymous per-kitchen customer code + "Link to a saved customer?" at confirm; backup reminder only with new data; **no outside delivery: only the kitchen's team delivers** (owner, 13 Oct).
+- **Found while refreshing the architecture docs (13 Oct), listed not fixed — ask the owner one at a time:** (1) the "find my order" and log limiters keep a **hash of the visitor's IP** (swept later) although D-007 / the sign-in page say "no IP stored"; (2) expired invite keys and device codes are never swept; (3) `chefMayNot` in routes.ts lists dead route names, and the old `POST /api/seller/chef-invites` is still live beside `invites`; (4) theme colours are copied in `shared/kitchenManifest.ts` (change both); (5) Playwright projects pick specs by file name (fragile); (6) `docs/plan/roadmap.md`'s folder section is out of date (see architecture/source-layout.md).
 - **Dellavee is a beta tester.** Ask her for feedback after the next deploy (delivery-only basket fixed).
 - Help screenshots still missing for screens that need a real signed-in session (Devices, the 6-digit code, Invite, Publish, Orders): take them from the live app.
 - Clearer image-slot labels; the seller's own invite list with paging; keep max 50 invites per kitchen.

@@ -121,20 +121,26 @@ function HomeContent({ slug, onSeeDishes, onHowItWorks, preview }: HomeProps) {
   }, [showHow, onHowItWorks]);
 
   return (
-    <MenuGate menu={menu} load={load}>
-      {(data) => (
-        <>
-          {preview ? null : <HomeScreenCard who="customer" kitchenName={data.kitchen.name} />}
-          <MenuHomeView
-            data={data}
-            lang={lang}
-            onSeeDishes={preview ? undefined : onSeeDishes}
-            onHowItWorks={preview ? undefined : onHowItWorks}
-            onMessageSeller={() => openWhatsApp(data.kitchen.whatsappNumber)}
-          />
-        </>
-      )}
-    </MenuGate>
+    <>
+      {/* The coming-soon view skips MenuGate's children, so the card is shown here too (plan 068). */}
+      {ready?.ordering.reason === 'not_published' && !preview ? (
+        <HomeScreenCard who="customer" kitchenName={ready.kitchen.name} />
+      ) : null}
+      <MenuGate menu={menu} load={load}>
+        {(data) => (
+          <>
+            {preview ? null : <HomeScreenCard who="customer" kitchenName={data.kitchen.name} />}
+            <MenuHomeView
+              data={data}
+              lang={lang}
+              onSeeDishes={preview ? undefined : onSeeDishes}
+              onHowItWorks={preview ? undefined : onHowItWorks}
+              onMessageSeller={() => openWhatsApp(data.kitchen.whatsappNumber)}
+            />
+          </>
+        )}
+      </MenuGate>
+    </>
   );
 }
 

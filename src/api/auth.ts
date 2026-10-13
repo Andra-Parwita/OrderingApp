@@ -43,6 +43,11 @@ import {
   type LogQuery,
 } from '../../shared/logContract';
 import type { PauseKind } from '../../shared/domain';
+import {
+  parseMaintenanceState,
+  type MaintenancePatch,
+  type MaintenanceState,
+} from '../../shared/maintenance';
 import type { ImageSlot } from '../../shared/imageSlots';
 import {
   parseImagesResponse,
@@ -441,4 +446,13 @@ export function removeTeamMember(
     method: 'DELETE',
     ...(seller ? { seller } : {}),
   });
+}
+
+/** Plan 046: the announced update and maintenance on/off (admin only). */
+export function fetchMaintenance(): Promise<ApiResult<MaintenanceState>> {
+  return request('/api/admin/maintenance', parseMaintenanceState);
+}
+
+export function saveMaintenance(patch: MaintenancePatch): Promise<ApiResult<MaintenanceState>> {
+  return request('/api/admin/maintenance', parseMaintenanceState, { method: 'PATCH', body: patch });
 }

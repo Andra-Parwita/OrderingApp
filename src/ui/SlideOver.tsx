@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
-import { styled } from 'styled-components';
+import { keyframes, styled } from 'styled-components';
 import { Button } from './Button';
 import { Icon } from './Icon';
 
@@ -19,6 +19,19 @@ export type SlideOverProps = Readonly<{
   children: ReactNode;
 }>;
 
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+const fromRight = keyframes`
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+`;
+const fromBottom = keyframes`
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+`;
+
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -28,6 +41,10 @@ const Scrim = styled.div`
   position: absolute;
   inset: 0;
   background: ${({ theme }) => theme.colour.scrim};
+
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ${fadeIn} 0.22s ease-out;
+  }
 `;
 const Panel = styled.div<{ $width: string }>`
   position: absolute;
@@ -45,6 +62,15 @@ const Panel = styled.div<{ $width: string }>`
 
   &:focus {
     outline: none;
+  }
+
+  /* Slides in from the right; up from the bottom on phones. Nothing moves with reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    animation: ${fromRight} 0.22s ease-out;
+
+    @media (max-width: 40rem) {
+      animation-name: ${fromBottom};
+    }
   }
 `;
 const Header = styled.div`

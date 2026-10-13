@@ -27,6 +27,7 @@ import {
 } from './ordersShared';
 import { ChevronDownIcon, SearchIcon } from './PhoneIcons';
 import { PhoneOrderRow } from './PhoneOrderRow';
+import { ChefIncomeButton } from '../../components/chef-income';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import {
   selectCounts,
@@ -79,6 +80,12 @@ const Head = styled.header`
   gap: ${({ theme }) => theme.spacing.xs};
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadPhone}px
     ${({ theme }) => theme.spacing.sm};
+`;
+const IncomeLine = styled.div`
+  display: flex;
+  &:empty {
+    display: none;
+  }
 `;
 const TitleLine = styled.div`
   display: flex;
@@ -263,6 +270,7 @@ function PhoneOrdersContent({
   onOpenOrder,
   onNewOrder,
   onShare,
+  onDeliveries,
 }: PhoneOrdersScreenProps) {
   const { t } = useTranslation(SELLER_NS);
   const lang = useLang();
@@ -478,6 +486,11 @@ function PhoneOrdersContent({
             })}
           </SubLine>
         ) : null}
+        {live ? (
+          <IncomeLine>
+            <ChefIncomeButton menuId="current" />
+          </IncomeLine>
+        ) : null}
         {!live && view ? <NoLive>{t('home.noLive')}</NoLive> : null}
       </Head>
       <HomeScreenCard who="seller" />
@@ -519,6 +532,12 @@ function PhoneOrdersContent({
             </Check>
             {toggles.unpaid ? <Icon name="check" /> : null}
           </SheetRow>
+          {onDeliveries ? (
+            <SheetRow type="button" $selected={false} onClick={onDeliveries}>
+              <Check>{t('address.deliveries')}</Check>
+              <Icon name="truck" />
+            </SheetRow>
+          ) : null}
         </BottomSheet>
       ) : null}
       {showDev ? <DevTools /> : null}

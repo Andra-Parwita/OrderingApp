@@ -6,6 +6,7 @@
 //   - Weekly (Mondays 03:00 UTC): retention (stage 8.4b, D-027 row 6, D-044). Order details of a
 //     closed week are dropped 4 weeks after its cooking date; totals stay, and each dropped order
 //     leaves a stub so its old link says "archived". The day-sales log (plan 029) is cut to 10 weeks.
+import { wipeOldAddresses } from '../db/address';
 import { Db, type D1Like } from '../db/d1';
 import { dropOldDaySales } from '../db/daySales';
 import { deleteUnusedPictures, finishDueMenus } from '../db/menus';
@@ -15,6 +16,11 @@ import { dropExpiredDetails, dropStaleFindAttempts, type RetentionCounts } from 
 /** Hourly: forgets old wrong tries of "find my order" (D-075). Returns how many rows went. */
 export function runAttemptSweep(env: { DB: D1Like }, now: Date): Promise<number> {
   return dropStaleFindAttempts(new Db(env.DB), now);
+}
+
+/** Hourly (plan 071): wipes delivery addresses a day after their menu finished. Returns a count only. */
+export function runAddressSweep(env: { DB: D1Like }, now: Date): Promise<number> {
+  return wipeOldAddresses(new Db(env.DB), now);
 }
 
 /** The cron entry (in wrangler.jsonc) that runs retention. The hourly entry only finishes menus. */

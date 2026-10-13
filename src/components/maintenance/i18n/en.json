@@ -1,0 +1,6 @@
+{
+  "notice": "🛠 Maintenance on {{day}}, {{start}}–{{end}}. The app pauses briefly.",
+  "dismiss": "Dismiss",
+  "title": "Updating, back in a few minutes",
+  "text": "Nothing you did is lost. This page comes back by itself."
+}

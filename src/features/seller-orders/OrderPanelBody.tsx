@@ -9,6 +9,7 @@ import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
 import { Button, Icon, Menu, WarningDialog, type IconName, type MenuItem } from '../../ui';
+import { DeliveryAddressBlock } from './DeliveryAddressBlock';
 import { SELLER_NS } from './i18n/register';
 import { StatusMark } from './StatusMark';
 import { actorLabel, orderTotalCents } from './orderText';
@@ -275,6 +276,13 @@ export function OrderPanelBody({
         <>
           <Group>{t('panel.noteFrom', { name: order.firstName })}</Group>
           <NoteText>{order.note}</NoteText>
+        </>
+      ) : null}
+
+      {order.fulfilment === 'delivery' && order.address ? (
+        <>
+          <Group>{t('address.title')}</Group>
+          <DeliveryAddressBlock order={order} />
         </>
       ) : null}
 

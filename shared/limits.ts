@@ -1,5 +1,10 @@
 export const FIRST_NAME_MAX = 40;
 export const NOTE_MAX = 200;
+/** Plan 071: the delivery address fields. */
+export const ADDRESS_STREET_MAX = 120;
+export const ADDRESS_SUBURB_MAX = 60;
+export const ADDRESS_POSTCODE_MAX = 10;
+export const ADDRESS_NOTES_MAX = 200;
 export const MAX_MENU_ITEMS = 50;
 export const MAX_QTY = 99;
 export const AUDIT_MAX = 4;

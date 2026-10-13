@@ -20,6 +20,7 @@ import {
   type MenuView,
   type Preferences,
 } from '../../shared/menusContract';
+import { parseChefSummaryResponse, type ChefSummaryRow } from '../../shared/chefSummaryContract';
 import { summariseOrders } from '../../shared/pastWeeks';
 import { deleteImageRefs, type ImageBucket } from '../images/r2';
 import { isFinalStatus } from '../../shared/status';
@@ -88,6 +89,7 @@ export type MenuOps = Pick<
   | 'deletePickupPlace'
   | 'getPreferences'
   | 'setPreferences'
+  | 'getChefSummary'
 >;
 
 function fail(error: ApiErrorCode, message: string) {
@@ -95,6 +97,109 @@ function fail(error: ApiErrorCode, message: string) {
 }
 function ok<T>(value: T): StoreResult<T> {
   return { ok: true, value };
+}
+
+// ---- Per-chef summary (plan 069) ------------------------------------------------------------
+
+/** The stored snapshot: the owner's rows. Null-safe against a damaged value ("not kept"). */
+function parseSnapshot(text: string): Array<ChefSummaryRow> | undefined {
+  try {
+    const parsed = parseChefSummaryResponse({
+      menuId: '',
+      cookingDate: '',
+      totalPortions: 0,
+      totalCents: 0,
+      rows: (JSON.parse(text) as { rows?: unknown }).rows,
+    });
+    return parsed?.rows;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * One batch (menu, setting, chefs, dishes' chefs, two sums): the owner's view of the menu the
+ * kitchen has now (current, or finished and not yet replaced), the only one that still knows each
+ * dish's chef. Chefs first by income, "Whole kitchen" last and only when it has something.
+ */
+async function readChefRows(
+  db: Db,
+  sid: string,
+): Promise<{ menu: MenuRow | undefined; seeIncome: boolean; rows: Array<ChefSummaryRow> }> {
+  const [menus, setting, chefs, onMenu, orderSums, saleSums] = await db.reads([
+    db.stmt('SELECT * FROM menus WHERE seller_id = ?', sid),
+    db.stmt('SELECT chefs_see_income FROM kitchen_settings WHERE seller_id = ?', sid),
+    db.stmt('SELECT id, name FROM chefs WHERE seller_id = ?', sid),
+    db.stmt('SELECT DISTINCT chef_id FROM menu_items WHERE seller_id = ?', sid),
+    db.stmt(
+      `SELECT i.chef_id AS chef_id, SUM(l.qty) AS qty, SUM(l.qty * l.price_cents) AS cents
+       FROM order_lines l JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
+       LEFT JOIN menu_items i ON i.seller_id = l.seller_id AND i.id = l.item_id
+       WHERE o.seller_id = ? AND o.status <> 'cancelled'
+         AND COALESCE(o.past_week_id, (SELECT id FROM menus WHERE seller_id = ?)) = (SELECT id FROM menus WHERE seller_id = ?)
+       GROUP BY i.chef_id`,
+      sid,
+      sid,
+      sid,
+    ),
+    db.stmt(
+      `SELECT i.chef_id AS chef_id, SUM(-s.change) AS qty, SUM(-s.change * i.price_cents) AS cents
+       FROM day_sales s JOIN menu_items i ON i.seller_id = s.seller_id AND i.id = s.item_id
+       WHERE s.seller_id = ? AND s.menu_id = (SELECT id FROM menus WHERE seller_id = ?)
+         AND s.kind = 'sale' AND s.undone = 0
+       GROUP BY i.chef_id`,
+      sid,
+      sid,
+    ),
+  ]);
+  type Sum = { chef_id: string | null; qty: number; cents: number };
+  const byChef = new Map<
+    string | null,
+    { portions: number; preOrderCents: number; stallCents: number }
+  >();
+  const slot = (chefId: string | null) => {
+    const found = byChef.get(chefId) ?? { portions: 0, preOrderCents: 0, stallCents: 0 };
+    byChef.set(chefId, found);
+    return found;
+  };
+  for (const sum of orderSums as Array<Sum>) {
+    const row = slot(sum.chef_id);
+    row.portions += sum.qty;
+    row.preOrderCents += sum.cents;
+  }
+  for (const sum of saleSums as Array<Sum>) {
+    const row = slot(sum.chef_id);
+    row.portions += sum.qty;
+    row.stallCents += sum.cents;
+  }
+  const names = new Map((chefs as Array<{ id: string; name: string }>).map((c) => [c.id, c.name]));
+  for (const item of onMenu as Array<{ chef_id: string | null }>) {
+    if (item.chef_id !== null && names.has(item.chef_id)) slot(item.chef_id);
+  }
+  const rows: Array<ChefSummaryRow> = [];
+  for (const [chefId, v] of byChef) {
+    const name = chefId === null ? undefined : names.get(chefId);
+    if (chefId !== null && name === undefined) continue;
+    rows.push({
+      chefId,
+      ...(name !== undefined ? { name } : {}),
+      portions: v.portions,
+      preOrderCents: v.preOrderCents,
+      stallCents: v.stallCents,
+      incomeCents: v.preOrderCents + v.stallCents,
+    });
+  }
+  rows.sort(
+    (a, b) =>
+      Number(a.chefId === null) - Number(b.chefId === null) ||
+      b.incomeCents - a.incomeCents ||
+      (a.name ?? '').localeCompare(b.name ?? ''),
+  );
+  return {
+    menu: (menus as Array<MenuRow>)[0],
+    seeIncome: (setting as Array<{ chefs_see_income: number }>)[0]?.chefs_see_income !== 0,
+    rows: rows.filter((r) => r.chefId !== null || r.portions > 0 || r.incomeCents > 0),
+  };
 }
 
 // ---- Finishing -----------------------------------------------------------------------------
@@ -141,6 +246,9 @@ export async function planFinish(
   const prunedPictures = older.flatMap((past) =>
     past.picture_ref === null ? [] : [past.picture_ref],
   );
+  // Plan 069: the per-chef figures are kept on the past-menu row (one read; the menu's dishes and
+  // chefs are gone once the next menu starts).
+  const chefSummary = JSON.stringify({ rows: (await readChefRows(db, sellerId)).rows });
   return {
     row,
     closedOrders: open.length,
@@ -148,7 +256,7 @@ export async function planFinish(
     statements: [
       db.stmt(
         `INSERT INTO past_weeks (seller_id, id, cooking_date, closed_at, orders_count, cancelled_count, income_cents,
-           paid_cents, unpaid_cents, details_dropped_at, picture_ref) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
+           paid_cents, unpaid_cents, details_dropped_at, picture_ref, chef_summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
         sellerId,
         row.id,
         row.cooking_date,
@@ -159,6 +267,7 @@ export async function planFinish(
         totals.paidCents,
         totals.unpaidCents,
         row.picture_ref,
+        chefSummary,
       ),
       ...(prunedPictures.length > 0
         ? [
@@ -1104,22 +1213,57 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
 
     getPreferences: readPreferences,
 
+    // Plan 069: one batch (chefs, dishes' chefs, two sums). Only the menu the kitchen has
+    // (current, or finished and not yet replaced) still knows each dish's chef.
+    async getChefSummary(id, asChefId) {
+      const { menu: mine, seeIncome, rows } = await readChefRows(db, sid);
+      let kept: { menuId: string; cookingDate: string; rows: Array<ChefSummaryRow> } | undefined;
+      if (mine && (id === 'current' || id === mine.id)) {
+        kept = { menuId: mine.id, cookingDate: mine.cooking_date, rows };
+      } else {
+        // Plan 069 stage 3: an older menu answers from the snapshot taken when it finished.
+        const past = await db.first<{
+          id: string;
+          cooking_date: string;
+          chef_summary: string | null;
+        }>(
+          'SELECT id, cooking_date, chef_summary FROM past_weeks WHERE seller_id = ? AND id = ?',
+          sid,
+          id,
+        );
+        const snapshot = past?.chef_summary ? parseSnapshot(past.chef_summary) : undefined;
+        if (!past || !snapshot) return undefined;
+        kept = { menuId: past.id, cookingDate: past.cooking_date, rows: snapshot };
+      }
+      if (asChefId !== undefined && !seeIncome) return 'private';
+      const shown = kept.rows.filter((r) => asChefId === undefined || r.chefId === asChefId);
+      return {
+        menuId: kept.menuId,
+        cookingDate: kept.cookingDate,
+        rows: shown,
+        totalPortions: shown.reduce((n, r) => n + r.portions, 0),
+        totalCents: shown.reduce((n, r) => n + r.incomeCents, 0),
+      };
+    },
+
     async setPreferences(request) {
       const current = await readPreferences();
       const next: Preferences = {
         theme: request.theme ?? current.theme,
         menuDefaults: request.menuDefaults ?? current.menuDefaults,
+        chefsSeeIncome: request.chefsSeeIncome ?? current.chefsSeeIncome ?? true,
       };
       await db
         .stmt(
           `UPDATE kitchen_settings SET theme = ?, default_cutoff_days = ?, default_cutoff_time = ?, default_delivery = ?,
-             default_delivery_note_en = ?, default_delivery_note_id = ? WHERE seller_id = ?`,
+             default_delivery_note_en = ?, default_delivery_note_id = ?, chefs_see_income = ? WHERE seller_id = ?`,
           next.theme,
           next.menuDefaults.cutoffDaysBefore,
           next.menuDefaults.cutoffTime,
           next.menuDefaults.delivery.available,
           next.menuDefaults.delivery.note.en,
           next.menuDefaults.delivery.note.id,
+          next.chefsSeeIncome,
           sid,
         )
         .run();

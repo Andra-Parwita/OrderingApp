@@ -16,6 +16,7 @@ import type { StatusTone } from '../../theme/tokens';
 import { fetchPastWeek, fetchPastWeeks } from '../../api/client';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Icon, Pill } from '../../ui';
+import { ChefIncomeButton } from '../../components/chef-income';
 import { HISTORY_NS } from './i18n/register';
 
 const TONES: Record<OrderStatus, StatusTone> = {
@@ -230,6 +231,9 @@ function WeekDetail({ id, onBack }: Readonly<{ id: string; onBack: () => void }>
       {back}
       <Title>{formatDay(week.cookingDate, lang)}</Title>
       <Totals totals={week.totals} lang={lang} />
+      <div>
+        <ChefIncomeButton menuId={week.id} />
+      </div>
       <Sub>{t('past.itemTotals')}</Sub>
       <Rows aria-label={t('past.itemTotals')}>
         {week.totals.items.map((item) => (

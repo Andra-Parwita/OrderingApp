@@ -22,6 +22,27 @@ export function lastKitchen(): string | null {
   }
 }
 
+// The kitchen a home-screen app was launched on (plan 068): kept for the session, so its Menu tab
+// does not follow the last kitchen opened elsewhere.
+const APP_KITCHEN_KEY = 'appKitchen';
+
+export function appKitchen(): string | null {
+  try {
+    const stored = sessionStorage.getItem(APP_KITCHEN_KEY);
+    return isValidSlug(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+export function rememberAppKitchen(slug: string): void {
+  try {
+    sessionStorage.setItem(APP_KITCHEN_KEY, slug);
+  } catch {
+    // no session storage: the Menu tab follows the last kitchen
+  }
+}
+
 // The colour theme of that kitchen (plan 024), for pages with no kitchen in the URL (My orders,
 // Settings). It is only a first guess: the server's value replaces it whenever a menu or order loads.
 export const LAST_KITCHEN_THEME_KEY = 'lastKitchenTheme';

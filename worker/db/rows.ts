@@ -43,6 +43,7 @@ export type SettingsRow = {
   default_delivery: number;
   default_delivery_note_en: string;
   default_delivery_note_id: string;
+  chefs_see_income: number;
 };
 export type MenuRow = {
   id: string;
@@ -132,12 +133,15 @@ export type OrderRow = {
   wa_received: number;
   is_returning: number;
   changed: number;
+  address_changed: number;
+  address_seen: number;
   entered_by_role: 'seller' | 'chef' | null;
   entered_by_name: string | null;
   packed: number;
   collected_at: string | null;
   collected_by: 'customer' | 'seller' | null;
   pickup_place_id: string | null;
+  customer_code: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -220,6 +224,7 @@ export function settingsOf(row: SettingsRow, takingOrders: boolean): KitchenSett
 export function preferencesOf(row: SettingsRow): Preferences {
   return {
     theme: row.theme,
+    chefsSeeIncome: row.chefs_see_income === 1,
     menuDefaults: {
       cutoffDaysBefore: row.default_cutoff_days,
       cutoffTime: row.default_cutoff_time,
@@ -367,6 +372,9 @@ export function ordersOf(
     waReceived: row.wa_received === 1,
     returning: row.is_returning === 1,
     changed: row.changed === 1,
+    ...(row.address_changed === 1
+      ? { addressChanged: row.address_seen === 1 ? ('seen' as const) : ('new' as const) }
+      : {}),
     inbox: (inboxBy.get(row.id) ?? []).map((entry): InboxEntry => ({
       at: entry.at,
       kind: entry.kind,
@@ -386,6 +394,7 @@ export function ordersOf(
       at: entry.at,
     })),
     ...(row.pickup_place_id !== null ? { pickupPlaceId: row.pickup_place_id } : {}),
+    ...(row.customer_code !== null ? { customerCode: row.customer_code } : {}),
     ...(row.packed === 1 ? { packed: true } : {}),
     ...(row.collected_at !== null && row.collected_by !== null
       ? { collectedAt: row.collected_at, collectedBy: row.collected_by }

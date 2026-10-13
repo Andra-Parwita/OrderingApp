@@ -404,6 +404,21 @@ export function OrderPageView(props: OrderPageViewProps) {
       <Details {...props} info={info} />
 
       <Actions>
+        {order.addressChange ? (
+          <Hint role="status">
+            {t(order.addressChange === 'seen' ? 'order.addressSeen' : 'order.addressWaiting', {
+              kitchen: info.kitchenName,
+            })}
+          </Hint>
+        ) : null}
+        {order.addressState === 'unreadable' && canChange ? (
+          <Alert role="alert">
+            <span>{t('order.addressAgain')}</span>{' '}
+            <button type="button" onClick={props.onChange}>
+              {t('order.addressAgainButton')}
+            </button>
+          </Alert>
+        ) : null}
         {canChange ? (
           <>
             <TwoUp>

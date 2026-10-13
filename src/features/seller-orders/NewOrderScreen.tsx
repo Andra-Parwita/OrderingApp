@@ -253,6 +253,7 @@ function FormView({ onDone, form }: Readonly<{ onDone: () => void; form: OrderFo
     saveContact(currentSellerSlug(), create.order.code, {
       phone,
       address: delivery ? address : '',
+      firstName: firstName.trim(),
     });
     if (sendAfter.current) openOrderLink(i18n, create.order, digits);
     sendAfter.current = false;

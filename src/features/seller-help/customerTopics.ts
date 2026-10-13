@@ -248,4 +248,47 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Pesanan hanya tersimpan di ponsel, tanpa akun.',
     },
   },
+  // 8
+  {
+    en: {
+      n: 'Why does the app ask my customer for an address? Who sees it?',
+      s: 'Delivery addresses, kept safe',
+      l: 'Only for delivery orders, and only your kitchen team can see it.',
+      steps: [
+        {
+          text: 'On a delivery order, the customer fills in street, suburb and postcode, and optionally notes for the driver and their map location.',
+        },
+        {
+          text: 'It is stored **encrypted**. Only your team (owner, chefs and helpers) sees it, on the order, with **Directions**.',
+        },
+        {
+          text: 'It is deleted automatically **one day after your menu ends**, or when the order is cancelled. You can also tap **Delete address now** on the order.',
+        },
+        {
+          text: 'A customer who wants it removed sooner asks you on WhatsApp. Phone numbers are never stored in the app.',
+        },
+      ],
+      note: 'The customer sees this explained in your kitchen name, right under the address fields.',
+    },
+    id: {
+      n: 'Mengapa aplikasi meminta alamat pelanggan saya? Siapa yang melihatnya?',
+      s: 'Alamat pengantaran, disimpan dengan aman',
+      l: 'Hanya untuk pesanan antar, dan hanya tim dapur Anda yang bisa melihatnya.',
+      steps: [
+        {
+          text: 'Pada pesanan antar, pelanggan mengisi jalan, daerah, dan kode pos, serta (boleh) catatan untuk pengantar dan lokasi peta.',
+        },
+        {
+          text: 'Alamat disimpan **terenkripsi**. Hanya tim Anda (pemilik, koki, dan pembantu) yang melihatnya, di pesanan, dengan **Petunjuk arah**.',
+        },
+        {
+          text: 'Alamat dihapus otomatis **satu hari setelah menu Anda selesai**, atau saat pesanan dibatalkan. Anda juga bisa mengetuk **Hapus alamat sekarang** di pesanan.',
+        },
+        {
+          text: 'Pelanggan yang ingin alamatnya dihapus lebih cepat cukup menghubungi Anda lewat WhatsApp. Nomor telepon tidak pernah disimpan di aplikasi.',
+        },
+      ],
+      note: 'Pelanggan melihat penjelasan ini atas nama dapur Anda, tepat di bawah kolom alamat.',
+    },
+  },
 ];

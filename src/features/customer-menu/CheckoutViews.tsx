@@ -315,6 +315,9 @@ type BasketProps = Readonly<{
   onChangePlace: () => void;
   onNext: () => void;
   onBack: () => void;
+  /** Plan 071: the delivery address section (under the Delivery choice) and whether it still blocks Next. */
+  addressSlot?: ReactNode;
+  addressBlocked?: boolean;
 }>;
 
 export function BasketView({
@@ -333,6 +336,8 @@ export function BasketView({
   onChangePlace,
   onNext,
   onBack,
+  addressSlot,
+  addressBlocked = false,
 }: BasketProps) {
   const { t } = useTranslation(CUSTOMER_NS);
   const { kitchen, week, seller } = data;
@@ -404,12 +409,15 @@ export function BasketView({
             </Segment>
           ))}
         </Track>
-        {fulfilment === 'delivery' ? (
+        {addressSlot ? (
+          addressSlot
+        ) : fulfilment === 'delivery' ? (
           <DeliveryNote>
             <MenuIcon name="chat" />
             <span>{t('basket.deliveryNote')}</span>
           </DeliveryNote>
-        ) : pickup ? (
+        ) : null}
+        {fulfilment === 'delivery' ? null : pickup ? (
           canChange ? (
             <PlaceButton type="button" onClick={onChangePlace}>
               <MenuIcon name="pin" size="1.5rem" />
@@ -434,7 +442,7 @@ export function BasketView({
         ) : null}
       </Body>
       <Footer>
-        <MainButton type="button" disabled={closed !== null} onClick={onNext}>
+        <MainButton type="button" disabled={closed !== null || addressBlocked} onClick={onNext}>
           {t('checkout.nextName')}
           <MenuIcon name="chevron" />
         </MainButton>
@@ -647,7 +655,7 @@ const inputStyle = `
   font: inherit;
   font-size: 1rem;
 `;
-const Input = styled.input`
+export const Input = styled.input`
   ${inputStyle}
   min-height: 3rem;
   border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
@@ -668,7 +676,7 @@ const Input = styled.input`
     border-color: ${({ theme }) => theme.c.danger};
   }
 `;
-const Area = styled.textarea`
+export const Area = styled.textarea`
   ${inputStyle}
   min-height: 5.75rem;
   padding-top: 0.75rem;
@@ -729,7 +737,7 @@ const FailureText = styled.p`
   color: ${({ theme }) => theme.c.text};
 `;
 
-function Field({
+export function Field({
   label,
   optional,
   help,
@@ -776,6 +784,10 @@ type NameProps = Readonly<{
   fulfilment: Fulfilment;
   pickupId: string | undefined;
   placing: boolean;
+  /** Plan 071: a delivery address is needed and not complete yet. */
+  addressBlocked?: boolean;
+  /** Plan 071: the address, as one line, when one will be sent. */
+  addressLine?: string | undefined;
   onFirstName: (value: string) => void;
   onNote: (value: string) => void;
   onSubmit: () => void;
@@ -795,6 +807,8 @@ export function YourNameView({
   fulfilment,
   pickupId,
   placing,
+  addressBlocked = false,
+  addressLine,
   onFirstName,
   onNote,
   onSubmit,
@@ -853,7 +867,11 @@ export function YourNameView({
           <Field
             label={t('checkout.note')}
             optional={t('checkout.optional')}
-            help={t('checkout.noteHelp')}
+            help={t(
+              data.addresses && fulfilment === 'delivery'
+                ? 'checkout.noteHelpAddress'
+                : 'checkout.noteHelp',
+            )}
             counter={`${String(note.length)}/${String(NOTE_MAX)}`}
             htmlFor={noteId}
           >
@@ -871,7 +889,7 @@ export function YourNameView({
             <dt>{t(`basket.${fulfilment}`)}</dt>
             <dd>
               {fulfilment === 'delivery'
-                ? t('checkout.deliveryShort')
+                ? (addressLine ?? t('checkout.deliveryShort'))
                 : pickup
                   ? `${pickup.place} · ${formatWindow(pickup.window.start, pickup.window.end, lang)}`
                   : ''}
@@ -883,7 +901,7 @@ export function YourNameView({
         <FooterNote>
           {t('checkout.changeUntil', { when: formatCutoff(week.cutoffAt, lang) })}
         </FooterNote>
-        <MainButton type="submit" form="your-name-form" disabled={placing}>
+        <MainButton type="submit" form="your-name-form" disabled={placing || addressBlocked}>
           {placing ? (
             <>
               <Spinner aria-hidden="true" />

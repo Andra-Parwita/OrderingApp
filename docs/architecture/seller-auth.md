@@ -1,9 +1,63 @@
-# Seller sign-in (design, draft)
+# Sign-in (how it works now)
 
-**Status:** decided 2026-10-07 in [D-011](../decisions/README.md): passkeys for admin and seller, a password fallback for the seller only, an easy passkey help screen. The comparison below is kept as the record.
-**Owner's ask (2026-10-07):** "need to consider how we can have better auth for the seller, since we will give them a key etc .. and ability for them then to login".
-**Owner, later the same day:** "seller may have more than one device .. and I may also have ability to connect to server to generate key .. so I don't need to run Claude .. this is like super admin (developer) login".
-**Constraints:** one seller (possibly on 2–3 devices: phone, tablet, a helper's phone); Cloudflare free plan; no private data in the cloud ([D-007](../decisions/README.md)); customers have no accounts and are not affected; every new dependency needs the owner's OK.
+**Status:** built and live. Refreshed 2026-10-13 from `worker/api/authRoutes.ts`, `worker/db/auth.ts`, `shared/authContract.ts` and migrations 0002, 0007, 0010 and 0012. Decided in [D-011](../decisions/README.md) (passkeys, a password fallback), reworked by [D-085](../decisions/README.md) to [D-090](../decisions/README.md) (people and memberships) and [D-092](../decisions/README.md) (helpers). The comparison of options from 2026-10-07 is kept at the end as [history](#history-the-original-options-2026-10-07).
+
+**Constraints that still hold:** Cloudflare free plan; no private data in the cloud ([D-007](../decisions/README.md): no email, no phone); customers have no accounts; a new dependency needs the owner's OK (the passkey library was approved).
+
+## People, roles and kitchens
+
+| term | meaning |
+|---|---|
+| person | one login with a **display name** only (D-090). Their passkey or password covers every kitchen they belong to (D-087) |
+| membership | a person in a kitchen with a role: **owner**, **chef** (linked to a cook in the chefs list) or **helper** (no cook row; sells and hands over only) |
+| active kitchen | the kitchen the session works in; a person in several kitchens switches with the kitchen switcher (`POST /api/auth/switch`) |
+| admin | the owner of the app (the developer). A separate login with its own passkey, never joined to a kitchen person; sees kitchens, people, devices, keys and the error log, never order data |
+
+What each role may call is in [api.md](api.md#role-limits).
+
+## The flow
+
+1. **Invite key.** The owner invites a person by name and role (the admin invites a kitchen's first owner; a recovery is the same call). A long random key is shown once, only its SHA-256 is stored, and it works for **24 hours, for one device** (D-085).
+2. **First sign-in.** The person opens `/seller/setup` (or the invite link) and enters the key. They get a short **setup session** (60 minutes) and register a passkey, or a password if the device cannot make one. A person who is already signed in just joins the new kitchen with the key.
+3. **Session.** A full session is a random token in the `__Host-session` cookie (HttpOnly, Secure, SameSite=Strict); D1 keeps only its hash. It lasts **30 days, renewed on each use**, with one session per device.
+4. **More devices.** A signed-in person makes a **6-digit device code** (10 minutes, one use, hash only) in Settings, Devices, and enters it on the new device.
+5. **Devices and removal.** Each person sees and removes their own devices; the owner sees the team and can remove a person (their sessions in that kitchen end at once); the admin can remove any device.
+6. **Password sign-in.** Open the kitchen's sign-in page, pick your name from the team list (`GET /api/s/:slug/team-names`), type the password. Passkey sign-in works from anywhere.
+7. **Recovery.** If every device is lost, the owner re-invites the person; the admin re-invites an owner. There is no email or self-service reset (D-090).
+8. **Pausing.** The admin can close a kitchen to customers, or pause it fully, which deletes its sessions and blocks every key, code and sign-in (`kitchen_paused`, D-086).
+9. **Protection.** State-changing calls check `Origin`; sign-in requests are limited to 30 a minute per browser id; 5 wrong tries lock a key or person for 15 minutes; WebAuthn challenges last 5 minutes and work once; the live socket opens only with a valid session; limiters keep a hash of an address, never the address.
+
+| number | value | constant |
+|---|---|---|
+| invite key | 24 hours, 1 device | `KEY_TTL_HOURS`, `KEY_MAX_DEVICES` |
+| device code | 6 digits, 10 minutes | `CODE_LENGTH`, `CODE_TTL_MINUTES` |
+| session | 30 days, renewed; setup 60 minutes | `SESSION_DAYS`, `SETUP_SESSION_MINUTES` |
+| lockout | 5 fails, 15 minutes | `MAX_FAILED_ATTEMPTS`, `LOCKOUT_MINUTES` |
+
+All in [`shared/authContract.ts`](../../shared/authContract.ts). Routes: [api.md](api.md#sign-in). Tables: [data-model.md](data-model.md#sign-in-rebuilt-in-0007-d-085-to-d-090).
+
+## Bootstrapping the admin
+
+At deploy the builder sets one secret once (`ADMIN_SETUP_KEY`, a Cloudflare secret, never in git; locally in `.dev.vars`). Opening `/admin/setup` with it registers the admin's first device; it is refused once an admin exists. After that everything is done in the admin pages.
+
+## Sign-in pages and branding
+
+The seller and admin sign-in pages use a split layout on tablet and desktop (image left, form right) and the image on top on a phone (D-051). Before sign-in the page does not know the kitchen, so it uses the **last kitchen this device used** (slug and theme kept on the device): that kitchen's phone banner shown whole on its background colour. A device with no last kitchen, or a kitchen with no phone banner, gets a plain tinted panel with the app name. The public Help page is linked from the sign-in and setup screens (D-095).
+
+## Passkeys: support and the fallback
+
+- **Supported on:** iPhone and iPad on iOS 16+; Android 9+ with Google Play services; Windows 10/11 with Windows Hello; macOS 13+. It needs only a screen lock.
+- **Not supported:** very old phones, or a phone with no screen lock. Setup says so in plain words, shows the passkey help, and offers the **password**.
+- **WebAuthn needs a domain, not an IP address.** Locally that means `https://localhost` only; a phone on the LAN IP uses the password (D-046).
+- **iPhone:** a web app added to the Home Screen has its own storage, separate from Safari, so the person signs in once inside it. Passkeys work there.
+
+---
+
+# History: the original options (2026-10-07)
+
+*Kept as the record, not as the design. Where it differs from the sections above (up to 3 devices per key, a one-role seller account, a chef account per cook), the sections above win.*
+
+**Owner's ask (2026-10-07):** "need to consider how we can have better auth for the seller, since we will give them a key etc .. and ability for them then to login". Later the same day: "seller may have more than one device .. and I may also have ability to connect to server to generate key .. so I don't need to run Claude .. this is like super admin (developer) login".
 
 ## The shape common to every option
 

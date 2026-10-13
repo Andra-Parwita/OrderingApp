@@ -38,6 +38,7 @@ export const TABLES_CHILDREN_FIRST = [
   'auth_challenges',
   'auth_rate',
   'client_log',
+  'app_settings',
   'saved_set_images',
   'saved_set_dishes',
   'saved_sets',

@@ -12,9 +12,10 @@ describe('panes', () => {
       'look',
       'chefs',
       'devices',
+      'customers',
       'backup',
     ]);
-    expect(SECOND_GROUP).toEqual(['chefs', 'devices', 'backup']);
+    expect(SECOND_GROUP).toEqual(['chefs', 'devices', 'customers', 'backup']);
   });
 
   it('parses a pane from the URL and builds its href', () => {

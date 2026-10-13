@@ -51,4 +51,5 @@ Details are in [docs/design/README.md](docs/design/README.md).
 - **Bilingual EN / ID** for every user-visible string, through i18n.
 - **Open every message with a status marker:** 🔴🔴🔴 ACTION NEEDED / 🟡 HEADS UP / 🟢 NO ACTION. Ask one question at a time (A / B / C with a recommendation).
 - **Commits, pushes and deploys are the owner's.** Mock-ups come before any UI build.
+- **Docs stay current:** any change to `migrations/`, an API route, a role rule or a main flow updates the matching page in docs/architecture or docs/product (and its diagram) in the same change; run `pnpm run docs` at the end of the phase.
 - **Record the owner's rulings** in docs/decisions. Keep this file short; detail goes in docs/.

@@ -7,6 +7,8 @@ import {
   updateOrder,
 } from '../../api/client';
 import { rememberKitchen } from '../../api/device/lastKitchen';
+import { rememberAddress } from '../../api/device/address';
+import { customerCodeFor } from '../../api/device/customerCode';
 import { rememberFirstName } from '../../api/device/firstName';
 import { isReturningCustomer, saveMyOrder } from '../../api/device/myOrders';
 import {
@@ -59,12 +61,13 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     string,
     number
   >;
-  const { firstName, language, fulfilment, note, pickupPlaceId } = action.payload;
+  const { firstName, language, fulfilment, note, pickupPlaceId, address } = action.payload;
   const trimmedNote = note.trim();
   // A phone that already has a collected or delivered order is a returning customer (D-027).
   const slug = (yield select((state: CustomerRootState) => state.customer.slug)) as string | null;
   if (slug === null) return;
   const returning = (yield call(isReturningCustomer, slug)) as boolean;
+  const customerCode = (yield call(customerCodeFor, slug)) as string | null;
   const input: CreateOrderRequest = {
     firstName: firstName.trim(),
     language,
@@ -73,6 +76,8 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     ...(trimmedNote !== '' ? { note: trimmedNote } : {}),
     ...(fulfilment === 'pickup' && pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
     ...(returning ? { returning: true } : {}),
+    ...(fulfilment === 'delivery' && address ? { address } : {}),
+    ...(customerCode !== null ? { customerCode } : {}),
   };
   const result = (yield call(placeOrderRequest, slug, input)) as Awaited<
     ReturnType<typeof placeOrderRequest>
@@ -80,6 +85,7 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
   if (result.ok) {
     yield call(saveMyOrder, result.data.order);
     yield call(rememberFirstName, result.data.order.firstName);
+    if (input.address) yield call(rememberAddress, input.address);
     yield put(placeSucceeded(result.data.order));
   } else {
     yield put(placeFailed({ code: result.error, message: result.message }));
@@ -113,12 +119,16 @@ export function* saveEdit(action: ReturnType<typeof updateRequested>) {
     fulfilment: action.payload.fulfilment,
     // An empty note clears it.
     note: action.payload.note.trim(),
+    ...(action.payload.fulfilment === 'delivery' && action.payload.address
+      ? { address: action.payload.address }
+      : {}),
   };
   const result = (yield call(updateOrder, edit.order.token, patch)) as Awaited<
     ReturnType<typeof updateOrder>
   >;
   if (result.ok) {
     yield call(saveMyOrder, result.data.order);
+    if (patch.address) yield call(rememberAddress, patch.address);
     yield put(updateSucceeded(result.data.order));
   } else {
     yield put(updateFailed({ code: result.error, message: result.message }));

@@ -602,3 +602,13 @@ Format for each entry:
 **Ruling:** "A". The seller's **Devices** screen (this device, other devices, **Add a device** with the 6-digit code, Sign out) is no longer tablet-only: it opens on a phone from **More → Devices**, so a seller signed in only on her phone can add her tablet herself. The code rules don't change (10 minutes, her own account only).
 **Trade-off:** none found; the screen is a short list.
 **Revisit when:** Devices grows controls that need a wide screen.
+
+## D-098 · Docs site: two dev-only libraries (2026-10-13; owner)
+**Ruling:** "A". Plan 070 may add `marked` (Markdown → HTML) and `mermaid` (diagrams) as **devDependencies**, used only by the docs build on the PC, never shipped in the app. The site is private (not served by the live app).
+**Trade-off:** two more packages to keep updated; the alternative (hand-drawn diagrams) would drift.
+**Revisit when:** the docs move to a hosted, access-controlled place.
+
+## D-099 · Delivery addresses: encrypted in the cloud, team-only, deleted a day after the menu (2026-10-13; owner)
+**Ruling:** "A" (amends D-007 for addresses only). A customer may enter a **delivery address in the app**. The server stores it **encrypted** (AES-GCM with a master key kept as a Cloudflare secret, never in the database or backups); only the **kitchen's own team** (owner, chef, helper) can read it, on the order, with **Directions / Call / WhatsApp**; it is **deleted automatically one day after the menu finishes**. If the master key is lost, undelivered addresses become unreadable and the customer simply enters the address again (or sends it on WhatsApp). Phone numbers stay out of the cloud (D-007). The seller may keep a long-term address book only on her own device (CSV backup / restore). The customer sees, in the kitchen's name (owner: "it won't be ShaggyBobo, but the seller"): "🔒 Your address is kept safe. {Kitchen} keeps it encrypted and uses it only to deliver this order and help you with it, never for advertising. Only {Kitchen}'s team can see it. It is deleted automatically one day after this menu ends. Want it removed sooner? Ask {Kitchen} on WhatsApp." (and the ID text in plan 071).
+**Trade-off:** addresses exist in the cloud for a few days (encrypted); in return no copying, every team device sees them, and they survive a cleared browser.
+**Revisit when:** the owner wants end-to-end encryption (the server unable to read), or longer keeping.

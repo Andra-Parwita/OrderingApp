@@ -56,7 +56,9 @@ describe('BasketScreen', () => {
     expect(screen.getByRole('button', { name: 'Place order · $20.00' })).toBeInTheDocument();
     expect(screen.getByText('You can change or cancel until Fri 9 Oct, 9 pm.')).toBeInTheDocument();
     expect(screen.getByText('Only your first name or a nickname')).toBeInTheDocument();
-    expect(screen.getByText("Don't write your address or phone number here.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Allergies or requests. Please don't write your phone number here."),
+    ).toBeInTheDocument();
     expect(screen.getByText('0/200')).toBeInTheDocument();
   });
 
@@ -219,6 +221,41 @@ describe('WhatsApp text', () => {
     expect(text).not.toContain('rahasia');
     expect(whatsAppUrl(text)).toBe(
       `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`,
+    );
+  });
+
+  it('asks for the address on WhatsApp only when the app does not hold one (plan 071)', () => {
+    const base = {
+      id: '1',
+      code: 'K7M2QX',
+      token: 't',
+      firstName: 'Rina',
+      language: 'en',
+      lines: [
+        {
+          itemId: 'a',
+          name: { en: 'Lemper', id: 'Lemper' },
+          size: { en: '', id: '' },
+          priceCents: 1000,
+          qty: 1,
+        },
+      ],
+      fulfilment: 'delivery',
+      status: 'ordered',
+      locked: false,
+      inbox: [],
+      createdAt: '2026-10-07T10:00:00Z',
+      updatedAt: '2026-10-07T10:00:00Z',
+      paid: false,
+      seller: { slug: 'onde-onde', name: 'Onde Onde' },
+    } as unknown as CustomerOrder;
+    const t = i18n.getFixedT('en', 'customer');
+    expect(buildWhatsAppText(base, t, null)).toContain('My address:');
+    expect(buildWhatsAppText({ ...base, addressState: 'saved' }, t, null)).not.toContain(
+      'My address:',
+    );
+    expect(buildWhatsAppText({ ...base, addressState: 'unreadable' }, t, null)).toContain(
+      'My address:',
     );
   });
 });

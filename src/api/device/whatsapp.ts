@@ -27,7 +27,10 @@ export function buildWhatsAppText(order: CustomerOrder, t: TFunction, when: stri
     how,
     name: order.firstName,
   })} ${t('wa.link', { link: `${window.location.origin}/o/${order.token}` })}`;
-  return order.fulfilment === 'delivery' ? `${text} ${t('wa.addAddress')}` : text;
+  // Plan 071: an order with an address in the app does not ask for it again on WhatsApp.
+  return order.fulfilment === 'delivery' && order.addressState !== 'saved'
+    ? `${text} ${t('wa.addAddress')}`
+    : text;
 }
 
 /**

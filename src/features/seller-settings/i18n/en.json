@@ -64,6 +64,10 @@
       "title": "Devices",
       "sub": "Add, rename, sign out"
     },
+    "customers": {
+      "title": "Customer details",
+      "sub": "Back up or restore on this device"
+    },
     "backup": {
       "title": "Backup",
       "sub": "Download or restore"

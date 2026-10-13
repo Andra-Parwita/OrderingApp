@@ -2,7 +2,13 @@ export { OrderDetailScreen, type OrderDetailScreenProps } from './OrderDetailScr
 export { NewOrderScreen, type NewOrderScreenProps } from './NewOrderScreen';
 export { OrdersScreen, type OrdersScreenProps } from './OrdersScreen';
 export { PhoneOrdersScreen, type PhoneOrdersScreenProps } from './PhoneOrdersScreen';
-export { ContactsBackup, PhoneLanguageRow, PhoneMoreNote, getContact } from './contacts';
+export {
+  ContactsBackup,
+  CustomerDetailsHost,
+  PhoneLanguageRow,
+  PhoneMoreNote,
+  getContact,
+} from './contacts';
 export { PrintOrdersScreen } from './PrintOrders';
 export { OrdersTableScreen, type OrdersTableScreenProps } from './OrdersTableScreen';
 export { registerSellerI18n } from './i18n/register';
@@ -13,3 +19,4 @@ export { selectOrdersCount } from './sellerOrdersSelectors';
 export { useNewOrderTitle, useUnseenNewOrders } from './newOrderBadge';
 export { useLiveOrders } from './useLiveOrders';
 export { ReadOnlyOrdersProvider } from './orderAccess';
+export { DeliveriesScreen } from './DeliveriesScreen';

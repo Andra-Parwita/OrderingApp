@@ -6,6 +6,7 @@ import { generateOrderCode, generateToken } from '../../shared/orderCode';
 import type { Repository, SellerRepository, TokenLookup } from '../repo/Repository';
 import type { CustomerChange } from '../push/dispatch';
 import { createAuthRepository, sellerSummaries } from './auth';
+import { createAppSettingsRepository } from './appSettings';
 import { createClientLogRepository } from './clientLog';
 import { Db, marks, type D1Like } from './d1';
 import { assembleOrders, orderReadStatements } from './orders';
@@ -242,6 +243,7 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
     }),
 
     log: createClientLogRepository(db, options.now),
+    settings: createAppSettingsRepository(db),
 
     dev: {
       async addSampleOrders(sellerId, count) {

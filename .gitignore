@@ -74,3 +74,6 @@ graphify-out/
 
 # Database backups (wrangler d1 export): real customer data, never commit
 backups/
+
+# Built docs site (pnpm docs)
+docs/site/

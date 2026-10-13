@@ -64,6 +64,10 @@
       "title": "Perangkat",
       "sub": "Tambah, ganti nama, keluar"
     },
+    "customers": {
+      "title": "Data pelanggan",
+      "sub": "Cadangkan atau pulihkan di perangkat ini"
+    },
     "backup": {
       "title": "Cadangan",
       "sub": "Unduh atau pulihkan"

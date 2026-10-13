@@ -149,14 +149,24 @@ const ErrorBox = styled.div`
 function ContactSection({ order }: Readonly<{ order: Order }>) {
   const { t } = useTranslation(SELLER_NS);
   const slug = currentSellerSlug();
-  const [phone, setPhone] = useState(() => getContact(slug, order.code)?.phone ?? '');
-  const [address, setAddress] = useState(() => getContact(slug, order.code)?.address ?? '');
+  const { customerCode } = order;
+  const [phone, setPhone] = useState(() => getContact(slug, order.code, customerCode)?.phone ?? '');
+  const [address, setAddress] = useState(
+    () => getContact(slug, order.code, customerCode)?.address ?? '',
+  );
   const [status, setStatus] = useState<'idle' | 'invalid' | 'saved' | 'volatile'>('idle');
   const onSave = useCallback(() => {
-    const result = saveContact(slug, order.code, { phone, address });
+    const result = saveContact(slug, order.code, {
+      phone,
+      address,
+      firstName: order.firstName,
+      ...(customerCode !== undefined ? { customerCode } : {}),
+    });
     setStatus(result === 'invalid_phone' ? 'invalid' : result === 'saved' ? 'saved' : 'volatile');
-    if (result !== 'invalid_phone') setPhone(getContact(slug, order.code)?.phone ?? '');
-  }, [slug, order.code, phone, address]);
+    if (result !== 'invalid_phone') {
+      setPhone(getContact(slug, order.code, customerCode)?.phone ?? '');
+    }
+  }, [slug, order.code, order.firstName, customerCode, phone, address]);
   const edit = (setter: (next: string) => void) => (next: string) => {
     setStatus('idle');
     setter(next);
@@ -214,7 +224,12 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
   const main = a.readOnly ? undefined : a.forward.find((status) => status !== 'collected');
   const canCollect = order.fulfilment === 'pickup' && !a.final;
   const send = useCallback(
-    () => openOrderLink(i18n, order, getContactDigits(currentSellerSlug(), order.code)),
+    () =>
+      openOrderLink(
+        i18n,
+        order,
+        getContactDigits(currentSellerSlug(), order.code, order.customerCode),
+      ),
     [i18n, order],
   );
   const confirmAndSend = useCallback(() => {

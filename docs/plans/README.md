@@ -22,6 +22,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 **After this deploy (owner, 2026-10-11):** the **customer app** gets its own next plan (with the Lottie animations the owner will send). Also waiting: 031 as a read-only "view as"; Send reminder and Download CSV on Orders; the stall's on-the-day counts in the printed totals (042); paging for the admin's invite list (043 shows the newest 20); **the same invite list for the seller** in Settings → Team, with paging; and **keep at most the last 50 invites per kitchen** (older ones pruned, so storage never grows without limit) (owner, 2026-10-11). Clearer image-slot labels (owner said "leave it for now", 2026-10-12): "Menu image (left menu)" reads like the food menu, and the square "App icon" isn't recognised as the closed left menu's logo; the proposal is "Left-menu logo, menu open" / "Square logo: closed left menu and phone home-screen icon" / "Background while loading (optional)". **Never lose typed data** (owner, 2026-10-12): every form (dish editor, new order, settings, menu details, invites…) keeps a draft on the device while typing and restores it after a reload, a crash or leaving by mistake, until Save / Submit or Cancel clears it (one shared hook; per kitchen and per person; nothing private kept longer than needed). And **graceful network and refusal handling** (owner): a refused or failed request is never repeated without end; one shared rule for retries (a few, with growing waits, only for network errors and 5xx, never for 401/403/4xx), a calm "offline / try again" state on screen, and polling that stops or slows when the server refuses.
 
 **Migration numbers:** all work is now on this PC, so each plan takes the next free number when it is built (no gaps, so they apply in order everywhere).
+**Architecture docs** (owner, 2026-10-13): every plan that changes `migrations/` or an API route also updates [docs/architecture/](../architecture/README.md) in the same change, and its "End of phase" checklist says so.
 **Rebase:** 038 changes `AdminHomeScreen.tsx`, which 028, 031 and 032 also edit. The son rebases after wave A.
 
 ## Plans
@@ -75,7 +76,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 043 | ✅ | [A friendly invite message, in English or Indonesian](043-invite-message.md) | done (2026-10-11); not deployed |
 | 044 | ✅ | [The new ShaggyBobo mascot and logo icon](044-new-mascot-and-logo.md) | done (2026-10-11); not deployed |
 | 045 | ⬜ | [Releases run by GitHub, not by hand](045-release-automation.md) | later (builder, 2026-10-11) |
-| 046 | ⬜ | [Update in progress: advance notice and maintenance mode](046-maintenance-notice.md) | draft (2026-10-11); stages 1–3 now, 4 with 045 |
+| 046 | ⬜ | [Update in progress: advance notice and maintenance mode](046-maintenance-notice.md) | approved (2026-10-13); building stages 1–3 |
 | 047 | ✅ | [Link previews and a WhatsApp emoji fix](047-link-previews-and-whatsapp.md) | done (2026-10-12); not deployed |
 | 048 | ✅ | [The seller app can be installed from the sign-in page](048-seller-app-install.md) | approved (2026-10-12); now |
 | 049 | ✅ | [Edit chefs without leaving the dish](049-edit-chefs-in-place.md) | approved (2026-10-12); now |
@@ -97,6 +98,10 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 065 | ✅ | [My orders: remember the kitchen, kitchen pill on cards](065-my-orders-kitchen.md) | approved (2026-10-12) |
 | 066 | ✅ | [Up to 50 dishes on a menu, labels and print split properly](066-fifty-dishes.md) | approved (2026-10-12) |
 | 067 | ⬜ | [A picture for each dish, shown to customers](067-dish-pictures.md) | draft; after the next deploy |
+| 068 | ✅ | [Two kitchens on one phone: safe home-screen apps](068-two-kitchen-icons.md) | approved (2026-10-13); next deploy |
+| 069 | ✅ | [Per-chef portions and income](069-per-chef-income.md) | approved (2026-10-13) |
+| 070 | ✅ | [A branded HTML docs site, kept current](070-docs-site.md) | approved (2026-10-13); building |
+| 071 | ✅ | [Delivery addresses: encrypted, team-only, short-lived; Directions; address book](071-customer-details-on-devices.md) | approved (2026-10-13, D-099); building |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

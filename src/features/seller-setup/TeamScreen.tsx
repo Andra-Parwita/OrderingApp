@@ -8,6 +8,7 @@ import { CHEF_NAME_MAX } from '../../../shared/limits';
 import { createInvite, fetchTeam, removeTeamMember } from '../../api/auth';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, ConfirmButton, Segmented, TextField } from '../../ui';
+import { ChefIncomeSetting } from '../../components/chef-income';
 import { ChefsScreen } from './ChefsScreen';
 import { SETUP_NS } from './i18n/register';
 import { DraftNotice, draftKey, useDraft } from '../../components/draft';
@@ -210,6 +211,7 @@ export function TeamScreen({ embedded = false }: Readonly<{ embedded?: boolean }
               </Notice>
             ) : null}
             {failure === 'remove' ? <Failure role="alert">{t('team.removeFailed')}</Failure> : null}
+            <ChefIncomeSetting />
             <Section as="form" onSubmit={(event) => void invite(event)} noValidate>
               <SectionTitle>{t('team.invite')}</SectionTitle>
               <DraftNotice draft={formDraft} />

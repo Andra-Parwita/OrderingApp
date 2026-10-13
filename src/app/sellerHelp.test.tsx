@@ -53,17 +53,17 @@ const topicButtons = () =>
     .filter((b) => b.hasAttribute('aria-controls') && b.getAttribute('role') !== 'tab');
 
 describe('Help page', () => {
-  it('lists all 12 topics in English and in Indonesian', async () => {
-    expect(TOPICS).toHaveLength(12);
+  it('lists all 13 topics in English and in Indonesian', async () => {
+    expect(TOPICS).toHaveLength(13);
     render(help());
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Seller help');
-    expect(topicButtons()).toHaveLength(12);
+    expect(topicButtons()).toHaveLength(13);
     expect(topicButtons()[0]).toHaveTextContent('Get started');
     fireEvent.click(screen.getByRole('button', { name: 'ID' }));
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Bantuan penjual'),
     );
-    expect(topicButtons()).toHaveLength(12);
+    expect(topicButtons()).toHaveLength(13);
     expect(topicButtons()[0]).toHaveTextContent('Mulai');
   });
 
@@ -73,7 +73,7 @@ describe('Help page', () => {
     fireEvent.change(box, { target: { value: 'invite' } });
     const found = topicButtons().length;
     expect(found).toBeGreaterThan(0);
-    expect(found).toBeLessThan(12);
+    expect(found).toBeLessThan(13);
     fireEvent.change(box, { target: { value: 'zzzzqq' } });
     expect(screen.getByText('Nothing found. Try another word.')).toBeInTheDocument();
   });

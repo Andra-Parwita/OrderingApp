@@ -7,6 +7,7 @@
 // (limits, statuses, lockouts) next to the writes. Every seller-scoped method belongs to a
 // `SellerRepository`, which can only see its own seller's rows (D-036).
 import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
+import type { ChefSummaryResponse } from '../../shared/chefSummaryContract';
 import type {
   DeliveryStepRequest,
   DeliveryStepResponse,
@@ -71,6 +72,7 @@ import type {
   UpdateItemRequest,
 } from '../../shared/setupContract';
 import type { SendUpdatesRequest, UpdateResult } from '../../shared/updateContract';
+import type { AppSettingsRepository } from '../db/appSettings';
 import type { ClientLogRepository } from '../db/clientLog';
 import type {
   AdminSeller,
@@ -201,6 +203,14 @@ export type SellerRepository = {
   // Theme and menu defaults
   getPreferences(): Promise<Preferences>;
   setPreferences(request: UpdatePreferencesRequest): Promise<Preferences>;
+  /**
+   * Plan 069: portions and income per chef in one round trip. `asChefId` limits it to that chef's
+   * line ('private' when the kitchen setting is off); undefined when this menu's chefs are not kept.
+   */
+  getChefSummary(
+    menuId: string,
+    asChefId?: string,
+  ): Promise<ChefSummaryResponse | 'private' | undefined>;
 
   // Items
   patchItem(id: string, patch: UpdateItemRequest): Promise<StoreResult<SellerMenuItemView>>;
@@ -243,6 +253,14 @@ export type SellerRepository = {
     actor: StaffActor,
   ): Promise<StoreResult<SellerOrder>>;
   getByCode(code: string): Promise<SellerOrder | undefined>;
+  /**
+   * Plan 071: the encrypted delivery address of a live order of this kitchen, by order id (the
+   * routes encrypt and decrypt; storage only ever sees the ciphertext). `null` deletes it.
+   */
+  /** `edited`: the customer changed it, so the order is marked changed and Address changed. */
+  setOrderAddress(orderId: string, cipher: string | null, edited?: boolean): Promise<void>;
+  /** Plan 071: order code -> stored ciphertext, for this kitchen's live orders with an address (all, or the codes asked). */
+  orderAddresses(codes?: ReadonlyArray<string>): Promise<Map<string, string>>;
   /** Live orders, newest first. */
   listOrders(): Promise<Array<SellerOrder>>;
   /** Warns (`status_out_of_order`) instead of refusing a jump; `force` goes ahead (D-062). */
@@ -257,6 +275,7 @@ export type SellerRepository = {
   setWaReceived(code: string, received: boolean): Promise<StoreResult<SellerOrder>>;
   nudge(code: string, force?: boolean): Promise<StoreResult<SellerOrder>>;
   markSeen(code: string): Promise<StoreResult<SellerOrder>>;
+  markAddressSeen(code: string): Promise<StoreResult<SellerOrder>>;
   /**
    * Bulk updates (stage 7.1), one result per code, in order. A code may be sloppy ("k7f-2qx"). The
    * orders are read together and written in a few batches, however many codes there are.
@@ -481,6 +500,8 @@ export type Repository = {
 
   /** Plan 026: the client error log (a ring of the newest 500). */
   log: ClientLogRepository;
+  /** Plan 046: maintenance mode and the announced update. */
+  settings: AppSettingsRepository;
 
   /** Dev tools: only for a local database, and only when DEV_TOOLS is on (see worker/api). */
   dev: {

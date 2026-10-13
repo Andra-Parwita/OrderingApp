@@ -21,7 +21,8 @@ export {
   useManifestLinks,
   HOME_SCREEN_SOURCE,
 } from './manifestLinks';
-export type { Environment } from './detect';
+export { readEnvironment, type Environment } from './detect';
+export { ownKitchen } from './ownKitchen';
 export type { ScreenId } from './flow';
 
 /** Called once at startup: the service worker (production builds) and Android's install prompt. */

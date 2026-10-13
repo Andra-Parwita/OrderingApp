@@ -5,6 +5,7 @@ import { appVersion } from '../../shared/buildInfo';
 import type { HealthResponse } from '../../shared/health';
 import { checkOrigin } from '../auth/origin';
 import { createD1Repository } from '../db';
+import { importAddressKey } from '../db/address';
 import { Db, type D1Like } from '../db/d1';
 import { createPushDispatcher } from '../push/dispatch';
 import { createWebPushSender, realVapidValue, vapidFromEnv, type PushSender } from '../push/sender';
@@ -32,7 +33,19 @@ export type ApiEnv = {
   VAPID_PRIVATE_KEY?: string;
   /** A `mailto:` or https URL the push services can reach the operator at. */
   VAPID_SUBJECT?: string;
+  /** Secret (plan 071, D-099): base64 of 32 random bytes, the key for delivery addresses. Without it addresses are off. */
+  ADDRESS_KEY?: string;
+  /**
+   * Plan 071: the Google Maps Embed API key for the checkout's "Check your address" panel. NOT a secret
+   * (the page shows it; Google restricts it to our website). A plain Cloudflare variable. Absent = the
+   * button opens the Maps app instead.
+   */
+  MAPS_EMBED_KEY?: string;
+  /** Secret (plan 046): lets the release workflow switch maintenance on or off. Without it that endpoint is off. */
+  MAINTENANCE_TOKEN?: string;
 };
+
+const MAPS_KEY_RE = /^[A-Za-z0-9_-]{20,100}$/;
 
 /** Where the Worker hands work that may finish after the answer (`ExecutionContext`). */
 export type WaitUntil = { waitUntil(promise: Promise<unknown>): void };
@@ -91,6 +104,11 @@ export async function handleWorkerRequest(
     devTools,
     vapidPublicKey: realVapidValue(env.VAPID_PUBLIC_KEY),
     translate: { ai: env.AI, takeSlot: createTranslateSlots(env.SELLER_LIVE) },
+    addressKey: await importAddressKey(env.ADDRESS_KEY),
+    maintenanceToken: env.MAINTENANCE_TOKEN,
+    ...(env.MAPS_EMBED_KEY && MAPS_KEY_RE.test(env.MAPS_EMBED_KEY)
+      ? { mapsEmbedKey: env.MAPS_EMBED_KEY }
+      : {}),
   });
   const sending = dispatcher.flush();
   if (ctx) ctx.waitUntil(sending);

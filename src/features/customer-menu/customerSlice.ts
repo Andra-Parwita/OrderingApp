@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { ApiFailure } from '../../api/http';
+import type { DeliveryAddress } from '../../../shared/address';
 import type { Fulfilment, Language, CustomerOrder, LocalText } from '../../../shared/domain';
 import { MAX_QTY } from '../../../shared/limits';
 import type { MenuResponse } from '../../../shared/menuContract';
@@ -52,6 +53,8 @@ export type CheckoutState = {
   pickupPlaceId: string | null;
   firstName: string;
   note: string | null;
+  /** Plan 071: the delivery address typed (or chosen) at checkout; null = none typed yet. */
+  address: DeliveryAddress | null;
 };
 
 /** A basket line the new stock could not cover: it was removed (`sold_out`) or lowered (`fewer`). */
@@ -86,15 +89,23 @@ export type PlaceRequest = {
   note: string;
   /** D-061: the pickup place chosen at checkout (a pickup order). */
   pickupPlaceId?: string;
+  /** Plan 071: a complete delivery address, only for a delivery order. */
+  address?: DeliveryAddress;
 };
 
-export type UpdateRequest = { fulfilment: Fulfilment; note: string };
+export type UpdateRequest = {
+  fulfilment: Fulfilment;
+  note: string;
+  /** Plan 071: the address to keep (a delivery order); absent = leave it as it is. */
+  address?: DeliveryAddress;
+};
 
 const emptyCheckout: CheckoutState = {
   fulfilment: null,
   pickupPlaceId: null,
   firstName: '',
   note: null,
+  address: null,
 };
 
 const initialState: CustomerState = {
@@ -210,10 +221,11 @@ const customerSlice = createSlice({
         // What is already on the page (a saved first name, say) wins over the stored draft.
         firstName: state.checkout.firstName !== '' ? state.checkout.firstName : saved.firstName,
         note: state.checkout.note ?? saved.note,
+        address: state.checkout.address ?? saved.address ?? null,
       };
       if (notices.length > 0) state.notices = notices;
     },
-    /** Checkout fields the pages share (fulfilment, pickup place, first name, note). */
+    /** Checkout fields the pages share (fulfilment, pickup place, first name, note, address). */
     checkoutSet(state, action: PayloadAction<Partial<CheckoutState>>) {
       state.checkout = { ...state.checkout, ...action.payload };
     },

@@ -96,7 +96,10 @@
       "signOutConfirm": "Tap again to sign out",
       "members": "People",
       "tabs": "Kitchen details",
-      "tab": { "invitations": "Invitations", "settings": "Settings" },
+      "tab": {
+        "invitations": "Invitations",
+        "settings": "Settings"
+      },
       "images": "Images",
       "imagesNote": "Pictures for this kitchen. The seller can change them later in Settings.",
       "noMembers": "Nobody has joined yet.",
@@ -119,7 +122,11 @@
     "pause": {
       "title": "Pause this kitchen",
       "state": "State",
-      "label": { "open": "Open", "customers": "Closed to customers", "full": "Paused" },
+      "label": {
+        "open": "Open",
+        "customers": "Closed to customers",
+        "full": "Paused"
+      },
       "customersButton": "Close to customers",
       "customersNote": "Customers see \"This kitchen is closed for now\" and cannot order. The kitchen's people keep working as normal.",
       "fullButton": "Pause the kitchen",
@@ -187,6 +194,27 @@
       "orders_other": "{{count}} orders",
       "active": "Active {{when}}",
       "neverActive": "Not active yet"
+    },
+    "maintenance": {
+      "title": "Announce an update",
+      "text": "Everyone sees a quiet notice until the update ends. Times are the cook's time (Melbourne).",
+      "date": "Date",
+      "start": "Start",
+      "length": "Minutes",
+      "noteEn": "Note (English, optional)",
+      "noteId": "Note (Indonesian, optional)",
+      "announce": "Announce",
+      "clear": "Clear announcement",
+      "announced": "Announced: {{when}}, {{minutes}} min.",
+      "none": "No update announced.",
+      "modeTitle": "Maintenance",
+      "modeOff": "Maintenance is off. The app works as usual.",
+      "modeOn": "Maintenance is ON. Everyone sees the Updating screen and changes are refused.",
+      "turnOn": "Turn maintenance on",
+      "turnOnConfirm": "Tap again to turn on",
+      "turnOff": "Turn maintenance off",
+      "failed": "Could not save. Try again.",
+      "badLength": "Enter 1 to 240 minutes."
     }
   }
 }

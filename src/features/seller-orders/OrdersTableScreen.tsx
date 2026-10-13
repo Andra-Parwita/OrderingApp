@@ -715,6 +715,15 @@ function OrdersTableContent(props: OrdersTableScreenProps) {
                   ...(props.onShare
                     ? [{ label: t('live.share'), icon: 'share' as const, onSelect: props.onShare }]
                     : []),
+                  ...(props.onDeliveries
+                    ? [
+                        {
+                          label: t('address.deliveries'),
+                          icon: 'truck' as const,
+                          onSelect: props.onDeliveries,
+                        },
+                      ]
+                    : []),
                 ]}
               />
             </Tools>

@@ -123,11 +123,12 @@ type Props = Readonly<{
   /** The other panes' screens, made by the app (a feature may not import another feature). */
   images: ReactNode;
   chefs: ReactNode;
+  customers: ReactNode;
   backup: ReactNode;
 }>;
 
 /** Settings (owner, tablet): a list of panes on the left and the open pane beside it. */
-export function SettingsPanes({ pane, devices, images, chefs, backup }: Props) {
+export function SettingsPanes({ pane, devices, images, chefs, customers, backup }: Props) {
   const { t } = useTranslation(SETTINGS_NS);
   const dispatch = useDispatch();
   const sellerInstall = useSellerInstall();
@@ -150,6 +151,7 @@ export function SettingsPanes({ pane, devices, images, chefs, backup }: Props) {
     look: <AppearancePane onToast={flashSaved} />,
     chefs,
     devices,
+    customers,
     backup,
   };
   const link = (id: PaneId) => (

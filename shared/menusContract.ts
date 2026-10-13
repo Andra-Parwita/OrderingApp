@@ -41,10 +41,19 @@ export const DEFAULT_MENU_DEFAULTS: MenuDefaults = {
   delivery: { available: false, note: { en: '', id: '' } },
 };
 
-export type Preferences = { theme: ThemeName; menuDefaults: MenuDefaults };
+export type Preferences = {
+  theme: ThemeName;
+  menuDefaults: MenuDefaults;
+  /** Plan 069: chefs may see their own portions and income. Absent = on (the default). */
+  chefsSeeIncome?: boolean;
+};
 
 /** PUT /api/seller/preferences: either part, at least one. */
-export type UpdatePreferencesRequest = { theme?: ThemeName; menuDefaults?: MenuDefaults };
+export type UpdatePreferencesRequest = {
+  theme?: ThemeName;
+  menuDefaults?: MenuDefaults;
+  chefsSeeIncome?: boolean;
+};
 /** GET and PUT /api/seller/preferences. */
 export type PreferencesResponse = { preferences: Preferences };
 
@@ -63,8 +72,10 @@ export function parseMenuDefaults(input: unknown): MenuDefaults | null {
 export function parsePreferences(input: unknown): Preferences | null {
   if (!isRecord(input)) return null;
   const menuDefaults = parseMenuDefaults(input['menuDefaults']);
+  const see = input['chefsSeeIncome'];
+  if (see !== undefined && typeof see !== 'boolean') return null;
   return isOneOf(THEMES, input['theme']) && menuDefaults
-    ? { theme: input['theme'], menuDefaults }
+    ? { theme: input['theme'], menuDefaults, ...(see !== undefined ? { chefsSeeIncome: see } : {}) }
     : null;
 }
 
@@ -79,6 +90,10 @@ export function parseUpdatePreferencesRequest(input: unknown): UpdatePreferences
     const menuDefaults = parseMenuDefaults(input['menuDefaults']);
     if (!menuDefaults) return null;
     out.menuDefaults = menuDefaults;
+  }
+  if (input['chefsSeeIncome'] !== undefined) {
+    if (typeof input['chefsSeeIncome'] !== 'boolean') return null;
+    out.chefsSeeIncome = input['chefsSeeIncome'];
   }
   return Object.keys(out).length > 0 ? out : null;
 }

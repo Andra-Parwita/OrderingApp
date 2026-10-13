@@ -29,6 +29,7 @@ import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { brandColour, brandSize } from '../../theme/brandTokens';
 import { Button, ConfirmButton, Icon, SlideOver, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
+import { MaintenancePanel } from './MaintenancePanel';
 import { ProblemsPanel } from './ProblemsPanel';
 import { RefreshBar } from './RefreshBar';
 import { PauseLabel, SellerDetails } from './SellerDetails';
@@ -480,6 +481,7 @@ export function AdminHomeScreen({
               <Button onClick={() => void addDevice()}>{t('home.mine.addDevice')}</Button>
               {code ? <Message role="status">{t('home.mine.code', { code })}</Message> : null}
             </Section>
+            <MaintenancePanel />
             <ProblemsPanel slugs={slugs} refreshKey={refreshKey} />
             <Muted>{t('home.privacy')}</Muted>
           </AdminInner>

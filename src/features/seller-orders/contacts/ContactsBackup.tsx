@@ -1,9 +1,12 @@
-import { useCallback, useRef, useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { currentSellerSlug } from '../../../api/device/sellerContext';
 import { Button } from '../../../ui';
 import { SELLER_NS } from '../i18n/register';
-import { exportContacts, importContacts, useContactBook } from './contactsStore';
+import { backupStatus, listCustomers, putCustomers, useAddressBook } from './addressBook';
+import { changeSummary, downloadBackup } from './backupFile';
+import { parseCustomersCsv, planMerge, type MergePlan } from './customersCsv';
 
 const Block = styled.section`
   display: flex;
@@ -29,58 +32,89 @@ const Hidden = styled.input`
   display: none;
 `;
 
-/** Phone More: save the contacts kept on this phone to a JSON file, or load such a file (a new phone). */
+function shortDate(iso: string, lang: string): string {
+  return new Date(iso).toLocaleDateString(lang, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+/**
+ * Settings, Customer details (phone More and the tablet pane): how fresh the CSV backup is, a
+ * download, and Upload CSV to add or update customers from a file (previewed first, never wipes).
+ */
 export function ContactsBackup() {
-  const { t } = useTranslation(SELLER_NS);
-  const count = useContactBook();
+  const { t, i18n } = useTranslation(SELLER_NS);
+  const slug = currentSellerSlug();
+  useAddressBook(slug);
+  const count = listCustomers(slug).length;
+  const status = backupStatus(slug);
   const [message, setMessage] = useState<string | null>(null);
+  const [plan, setPlan] = useState<MergePlan | null>(null);
   const picker = useRef<HTMLInputElement>(null);
 
-  const onExport = useCallback(() => {
-    const blob = new Blob([exportContacts()], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'contacts.json';
-    link.click();
-    URL.revokeObjectURL(url);
-    setMessage(t('phoneMore.exported', { count }));
-  }, [count, t]);
+  const summary = changeSummary(slug, t);
+  let state: string;
+  if (status.lastBackupAt === null) state = count === 0 ? '' : t('customers.never');
+  else if (summary === '') {
+    state = t('customers.upToDate', { date: shortDate(status.lastBackupAt, i18n.language) });
+  } else state = t('customers.pending', { parts: summary });
 
-  const onPick = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = '';
-      if (!file) return;
-      void file
-        .text()
-        .then((text) => {
-          const added = importContacts(text);
-          setMessage(
-            added === null ? t('phoneMore.importBad') : t('phoneMore.imported', { count: added }),
-          );
-        })
-        .catch(() => setMessage(t('phoneMore.importBad')));
-    },
-    [t],
-  );
+  const onDownload = () => {
+    setMessage(t('customers.downloaded', { name: downloadBackup(slug) }));
+  };
+
+  const onPick = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    void file
+      .text()
+      .then((text) => {
+        const rows = parseCustomersCsv(text);
+        setMessage(rows === null ? t('customers.badFile') : null);
+        setPlan(rows === null ? null : planMerge(listCustomers(slug), rows));
+      })
+      .catch(() => setMessage(t('customers.badFile')));
+  };
+
+  const onApply = () => {
+    if (!plan) return;
+    putCustomers(slug, plan.customers);
+    setMessage(t('customers.applied', plan.counts));
+    setPlan(null);
+  };
 
   return (
-    <Block aria-label={t('phoneMore.contactsTitle')}>
-      <Title>{t('phoneMore.contactsTitle')}</Title>
-      <Muted>{t('phoneMore.contactsHelp')}</Muted>
-      <Muted>{t('phoneMore.count', { count })}</Muted>
+    <Block aria-label={t('customers.title')}>
+      <Title>{t('customers.title')}</Title>
+      <Muted>{t('customers.help')}</Muted>
+      <Muted>{t('customers.count', { count })}</Muted>
+      {state ? <Muted role="status">{state}</Muted> : null}
       <Pair>
-        <Button onClick={onExport}>{t('phoneMore.export')}</Button>
-        <Button onClick={() => picker.current?.click()}>{t('phoneMore.import')}</Button>
+        <Button onClick={onDownload}>{t('customers.download')}</Button>
+        <Button onClick={() => picker.current?.click()}>{t('customers.upload')}</Button>
       </Pair>
+      <Muted>{t('customers.private')}</Muted>
       <Hidden
         ref={picker}
         type="file"
-        accept="application/json,.json"
-        aria-label={t('phoneMore.import')}
+        accept=".csv,text/csv"
+        aria-label={t('customers.upload')}
         onChange={onPick}
       />
+      {plan ? (
+        <>
+          <Muted role="status">{t('customers.preview', plan.counts)}</Muted>
+          <Pair>
+            <Button onClick={onApply} disabled={plan.customers.length === 0}>
+              {t('customers.apply')}
+            </Button>
+            <Button onClick={() => setPlan(null)}>{t('customers.cancel')}</Button>
+          </Pair>
+        </>
+      ) : null}
       {message ? <Muted role="status">{message}</Muted> : null}
     </Block>
   );

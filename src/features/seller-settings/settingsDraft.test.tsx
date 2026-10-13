@@ -41,6 +41,7 @@ function pane(id: PaneId) {
             devices={<p>Devices</p>}
             images={<p>Images</p>}
             chefs={<p>Chefs</p>}
+            customers={<p>Customers</p>}
             backup={<p>Backup</p>}
           />
         </MemoryRouter>

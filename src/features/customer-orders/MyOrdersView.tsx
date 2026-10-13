@@ -198,6 +198,26 @@ const Tag = styled.span<{ $tone: 'conf' | 'warn' }>`
   background: ${({ theme, $tone }) => ($tone === 'conf' ? `${theme.c.conf}24` : theme.c.warnTint)};
   color: ${({ theme, $tone }) => ($tone === 'conf' ? theme.c.conf : theme.c.warn)};
 `;
+const FoldButton = styled.button<{ $open: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  border: 0;
+  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  background: none;
+  color: ${({ theme }) => theme.c.muted};
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  svg {
+    transform: rotate(${({ $open }) => ($open ? '90deg' : '0deg')});
+  }
+`;
 const Result = styled.span<{ $tone: ChipTone }>`
   display: inline-flex;
   align-items: center;
@@ -407,6 +427,8 @@ export type MyOrdersViewProps = Readonly<{
   onFind: (code: string, firstName: string) => Promise<FindOutcome>;
   /** The find form searches this phone's last kitchen; false = none saved, so it can't ask. */
   hasKitchen: boolean;
+  /** A home-screen app's own kitchen (plan 068): its orders first, the rest folded. */
+  ownKitchen?: string | null;
   /** That kitchen's name when the customer side knows it. */
   kitchenName: string | null;
   onOpenOrder: (token: string) => void;
@@ -426,6 +448,7 @@ export function MyOrdersView({
   findToken,
   onFind,
   hasKitchen,
+  ownKitchen = null,
   kitchenName,
   onOpenOrder,
   onOpenMenu,
@@ -487,6 +510,15 @@ export function MyOrdersView({
     [onFind, typed, firstName, finding],
   );
 
+  const [othersOpen, setOthersOpen] = useState(false);
+  const toggleOthers = useCallback(() => setOthersOpen((open) => !open), []);
+  const fold = ownKitchen !== null;
+  const mine = (row: { slug: string }) => !fold || row.slug === ownKitchen;
+  const shownCurrent = current.filter(mine);
+  const shownEarlier = earlier.filter(mine);
+  const otherCurrent = fold ? current.filter((row) => !mine(row)) : [];
+  const otherEarlier = fold ? earlier.filter((row) => !mine(row)) : [];
+  const otherCount = otherCurrent.length + otherEarlier.length;
   const empty = status === 'ready' && current.length === 0 && earlier.length === 0;
   return (
     <Page>
@@ -560,24 +592,48 @@ export function MyOrdersView({
         </Empty>
       ) : (
         <>
-          {current.length > 0 ? (
+          {shownCurrent.length > 0 ? (
             <section>
               <SectionLabel>{t('list.thisWeek')}</SectionLabel>
               <List>
-                {current.map((row) => (
+                {shownCurrent.map((row) => (
                   <CurrentItem key={row.token} row={row} lang={lang} onOpen={onOpenOrder} />
                 ))}
               </List>
             </section>
           ) : null}
-          {earlier.length > 0 ? (
+          {shownEarlier.length > 0 ? (
             <section>
               <SectionLabel>{t('list.earlier')}</SectionLabel>
               <List>
-                {earlier.map((row) => (
+                {shownEarlier.map((row) => (
                   <EarlierItem key={row.token} row={row} lang={lang} onOpen={onOpenOrder} />
                 ))}
               </List>
+            </section>
+          ) : null}
+          {otherCount > 0 ? (
+            <section>
+              <FoldButton
+                $open={othersOpen}
+                type="button"
+                aria-expanded={othersOpen}
+                aria-controls="my-orders-others"
+                onClick={toggleOthers}
+              >
+                {t('list.otherKitchens', { count: otherCount })}
+                <Icon name="forward" />
+              </FoldButton>
+              {othersOpen ? (
+                <List id="my-orders-others">
+                  {otherCurrent.map((row) => (
+                    <CurrentItem key={row.token} row={row} lang={lang} onOpen={onOpenOrder} />
+                  ))}
+                  {otherEarlier.map((row) => (
+                    <EarlierItem key={row.token} row={row} lang={lang} onOpen={onOpenOrder} />
+                  ))}
+                </List>
+              ) : null}
             </section>
           ) : null}
         </>

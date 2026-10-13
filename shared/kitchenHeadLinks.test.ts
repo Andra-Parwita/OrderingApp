@@ -86,6 +86,7 @@ describe('the default seller app links (plan 048)', () => {
       icons: Array<{ src: string; sizes: string; type: string; purpose?: string }>;
     };
     expect(manifest).toMatchObject({
+      id: '/seller',
       name: 'ShaggyBobo Seller',
       short_name: 'Seller',
       start_url: '/seller',

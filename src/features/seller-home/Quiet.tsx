@@ -11,6 +11,7 @@ import { fetchPastWeek } from '../../api/client';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Icon } from '../../ui';
 import { agoOf, finishedAtOf, freshness, isRecent, type Ago } from './homeState';
+import { ChefIncomeButton } from '../../components/chef-income';
 import { GoLink, Section } from './homeParts';
 import { HOME_NS } from './i18n/register';
 
@@ -252,6 +253,7 @@ export function LastMenu({
           <CardTop>
             <h2>{t('quiet.menuFor', { date: formatDay(cookingDate, lang) })}</h2>
             <GoLink onClick={onGoOrders}>{t('quiet.goOrders')}</GoLink>
+            <ChefIncomeButton menuId={week?.id ?? 'current'} />
           </CardTop>
           <Numbers>
             <Figure>

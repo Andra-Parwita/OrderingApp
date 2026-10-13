@@ -174,10 +174,10 @@ export const LiveOrderRow = memo(function LiveOrderRow({
         <Code>{formatOrderCode(order.code)}</Code>
         <Name>{order.firstName}</Name>
         {isNew ? <NewTag>{t('live.new')}</NewTag> : null}
-        {order.changed ? (
+        {order.changed || order.addressChanged === 'new' ? (
           <Flag>
             <Icon name="pencil" />
-            {t('live.changed')}
+            {order.addressChanged === 'new' ? t('live.addressChanged') : t('live.changed')}
           </Flag>
         ) : null}
         {order.note ? <SmallIcon icon="note" label={t('live.note')} /> : null}

@@ -73,10 +73,32 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 
 
+
+
+
+
+
+| final gate (071 round): typecheck · lint · format · unit, then full e2e | coordinator · shell | 22:20 | 40 min | | | | — | ⏳ |
+
+| 071 follow-ups: slide-in map panel, View on map in-app, "Address changed" for the seller | builder · sonnet | 22:25 | 30 min | | | | | ⏳ |
+
+
+| 046 · 1–3 maintenance notice bar (sellers + customers), maintenance mode, admin controls | builder · sonnet | 22:45 | 60 min | | | | | ⏳ |
+
+
 ## Done (newest first)
 
 | date | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|---|
+| 2026-10-13 | docs site: sticky header + menu, full width, ⤢ Enlarge viewer for diagrams/images | builder · sonnet | 22:32 | 15 min | 22:50 | 18 min | +3 min | 2 files | ✅ browser-checked |
+| 2026-10-13 | Help: only the list and content scroll on tablet/desktop; topic 13 "address not available" (no keys) | builder · sonnet | 22:29 | 15 min | 22:40 | 11 min | −4 min | 2 files | ✅ 13 tests, browser check |
+| 2026-10-13 | 071 · 4–5 customer code (0019), device address book (IndexedDB), link sheet, CSV backup/restore, Help topic 13; location UX, privacy modal, in-app map panel (MAPS_EMBED_KEY) | builder · sonnet | 21:38 | 60 min | 22:18 | 40 min | −20 min | ~35 files | ✅ unit + 3 e2e |
+| 2026-10-13 | 071 · 1–3 encrypted addresses (0018), guided checkout form + privacy line, seller Deliveries + Directions; texts updated | builder · sonnet | 21:00 | 75 min | 21:50 | ~50 min | −25 min | ~30 files, 8 new | ✅ 13+15 tests, 3 e2e |
+| 2026-10-13 | 069 · 3 per-chef snapshot kept on past menus (migration 0017), docs updated | builder · sonnet | 20:35 | 30 min | 20:52 | 17 min | −13 min | 3 files + docs | ✅ 12 + 281 tests, e2e seller-history |
+| 2026-10-13 | 069 · per-chef income: endpoint (1 round trip), button + panel in 4 places, Team setting (migration 0016); older past menus have no chef split | builder · sonnet | 20:12 | 60 min | 20:50 | 38 min | −22 min | ~20 files, 4 new | ✅ 1196 tests, 3 e2e |
+| 2026-10-13 | 070 · branded docs site (22 pages, `pnpm run docs`), 6 sequences, 3 UX flows, CLAUDE.md rule | builder · sonnet | 20:24 | 60 min | 20:45 | 21 min | −39 min | 7 new, 5 edited | ✅ |
+| 2026-10-13 | docs: architecture refreshed (overview, data model 0001–0016, API, sign-in) + new source-layout page | builder · sonnet | 20:19 | 40 min | 20:30 | 11 min | −29 min | 6 docs | ✅ 8 code/doc mismatches listed |
+| 2026-10-13 | 068 · manifest ids, Menu tab own kitchen, My orders own kitchen first, home-screen card on coming-soon | builder · sonnet | 19:57 | 25 min | 20:25 | 28 min | +3 min | ~14 files | ✅ 726 tests, 2 e2e |
 | 2026-10-13 | 060 follow-up: phone's language unless the seller picks one (0014 amended, local D1 fixed) | builder · sonnet | 06:42 | 25 min | 07:10 | 28 min | +3 min | ~12 files | ✅ 406 tests, 2 e2e; ⚠ killed all node processes (lesson 24) |
 | 2026-10-13 | night gate: typecheck · lint · format · unit · e2e 76/76 (1 real bug fixed, 2 specs updated, 1 overnight hang while the PC slept) | coordinator + fixer | 23:24 | 40 min | 06:36 | 7 h (6 h asleep) | — | — | ✅ |
 | 2026-10-12 | fixer: Settings draft re-written after Save (061 regression found by e2e) | builder · sonnet | 23:36 | 20 min | 23:45 | 9 min | −11 min | 2 files | ✅ 103 tests, e2e settings |

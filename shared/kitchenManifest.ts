@@ -86,6 +86,7 @@ export function safeStartUrl(start: string | null, slug: string): string {
 export type ManifestIcon = { src: string; sizes: string; type: string; purpose?: string };
 
 export type KitchenManifest = {
+  id: string;
   name: string;
   short_name: string;
   start_url: string;
@@ -119,6 +120,8 @@ export function buildManifest(input: {
     { src: iconPath(slug, 512), sizes: '512x512', type, purpose: 'maskable' },
   ];
   return {
+    // Fixed identity (plan 068): equals the plain start_url, so installed apps keep theirs.
+    id: seller === true ? '/seller' : `/${slug}`,
     name,
     short_name: name,
     start_url: seller === true ? '/seller' : safeStartUrl(start, slug),

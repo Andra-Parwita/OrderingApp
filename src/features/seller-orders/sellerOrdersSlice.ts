@@ -111,6 +111,8 @@ export type SellerOrdersState = {
   fresh: Array<string>;
   /** Plan 021: new customer orders since the list was last viewed (the Orders dot, the tab title). */
   unseenNew: number;
+  /** Plan 071: an order just confirmed whose customer code this device has not linked yet. */
+  linkPrompt: { code: string } | null;
 };
 export type SellerOrdersRootState = { sellerOrders: SellerOrdersState };
 
@@ -129,6 +131,7 @@ const initialState: SellerOrdersState = {
   devSampling: false,
   fresh: [],
   unseenNew: 0,
+  linkPrompt: null,
 };
 
 let toastId = 0;
@@ -162,6 +165,12 @@ const sellerOrdersSlice = createSlice({
       state.fresh = state.fresh.filter((id) => !action.payload.ids.includes(id));
     },
     /** The list was on screen (and the page visible): the dot and the tab count go. */
+    linkPromptShown(state, action: PayloadAction<{ code: string }>) {
+      state.linkPrompt = { code: action.payload.code };
+    },
+    linkPromptClosed(state) {
+      state.linkPrompt = null;
+    },
     newOrdersViewed(state) {
       state.unseenNew = 0;
     },
@@ -325,6 +334,8 @@ export const {
   newOrdersArrived,
   freshExpired,
   newOrdersViewed,
+  linkPromptShown,
+  linkPromptClosed,
   weekLoaded,
   statusChangeRequested,
   paidChangeRequested,

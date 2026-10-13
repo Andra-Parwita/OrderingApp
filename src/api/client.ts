@@ -260,6 +260,15 @@ export function markOrderSeen(
   return sellerPost(code, 'seen', undefined, actor, seller);
 }
 
+/** A team member tapped "Got it" on the customer's changed address. */
+export function markOrderAddressSeen(
+  code: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<SellerOrderResponse>> {
+  return sellerPost(code, 'address-seen', undefined, actor, seller);
+}
+
 export function fetchSettings(
   actor?: StaffActor,
   seller?: string,
@@ -455,4 +464,13 @@ export function sendUpdates(
     body: input,
     ...who(actor, seller),
   });
+}
+
+/** Plan 071: "Delete address now" on an order (owner or chef; the server refuses a helper). */
+export function deleteOrderAddress(
+  code: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<SellerOrderResponse>> {
+  return sellerPost(code, 'delete-address', undefined, actor, seller);
 }

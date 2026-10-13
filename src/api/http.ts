@@ -2,6 +2,7 @@ import { parseApiError, type ApiErrorCode, type ApiWarning } from '../../shared/
 import type { StaffActor } from '../../shared/domain';
 import { reportApiFailure } from './clientLog';
 import { dropLegacySessionToken, setSessionHint } from './device/session';
+import { setMaintenanceBlocked } from './maintenanceState';
 import { recordOutcome } from './netState';
 import { isRetryable, retryCount, retryDelayMs } from './retryPolicy';
 
@@ -70,12 +71,17 @@ async function sendWithRetry(
   let sent = await send(path, options);
   for (let retry = 0; retry < retryCount(); retry += 1) {
     const status = 'ok' in sent ? sent.status : sent.response.status;
+    // Plan 046: a maintenance 503 is an answer, not a fault; asking again would only add load.
+    if (!('ok' in sent) && sent.response.headers.get('X-Maintenance')) break;
     if (!isRetryable(method, status)) break;
     const header = 'ok' in sent ? null : sent.response.headers.get('Retry-After');
     await wait(retryDelayMs(retry, header));
     sent = await send(path, options);
   }
-  recordOutcome(method, 'ok' in sent ? sent.status : sent.response.status);
+  const maintenance = !('ok' in sent) && sent.response.headers.get('X-Maintenance') !== null;
+  if (maintenance) setMaintenanceBlocked(true);
+  // The server answered: this is not "server isn't answering" (a 409 is also an answer).
+  recordOutcome(method, maintenance ? 409 : 'ok' in sent ? sent.status : sent.response.status);
   return sent;
 }
 
@@ -89,7 +95,9 @@ async function failureOf(response: Response): Promise<ApiFailure> {
   const apiError = parseApiError(json);
   // The server no longer knows this session (expired, signed out elsewhere, revoked): forget the hint.
   if (apiError?.error === 'unauthorized') setSessionHint(false);
-  reportApiFailure(response.url, response.status, apiError?.error ?? 'bad_response');
+  if (apiError?.error !== 'maintenance') {
+    reportApiFailure(response.url, response.status, apiError?.error ?? 'bad_response');
+  }
   return apiError
     ? {
         ok: false,

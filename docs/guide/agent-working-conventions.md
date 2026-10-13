@@ -131,6 +131,7 @@ Files changed (± lines) · decisions made (one line each) · deviations **with 
 ## 5 · Verification
 
 - **This project (D-055):** while building, only typecheck runs; lint, format, Vitest and the changed specs are batched once at the end of the phase. The loop below applies at that end-of-phase gate.
+- **Docs stay current:** at the end of the phase, confirm any change to `migrations/`, an API route, a role rule or a main flow updated its page in docs/architecture or docs/product (and its diagram), then run `pnpm run docs`.
 - **Development loop:** write → typecheck → the relevant specs → (visual change) capture and **actually look** → (bug fix) prove the new test **fails without the fix** (a guard that can't fail is decoration) → format and lint at the end.
 - **Green is not ready for a visible change.** After agents land, **smoke-load each changed screen live** on scratch ports: zero console errors, and a capture the coordinator looks at beside a sibling screen. A component reused somewhere new gets a capture there.
 - **Read the content of captures, not only the layout:** names, wording, the right person's data. Demo-looking text and data mismatches pass every test.

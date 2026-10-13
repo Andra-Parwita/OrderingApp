@@ -29,6 +29,7 @@ import {
   type SellersResponse,
   type SessionResponse,
 } from '../../shared/authContract';
+import { parseMaintenancePatch } from '../../shared/maintenance';
 import { isImageSlot } from '../../shared/imageSlots';
 import { isValidSlug } from '../../shared/seller';
 import {
@@ -323,6 +324,16 @@ export async function handleAdmin(
   const session = await requireSession(store, request);
   if ('response' in session) return session.response;
   if (session.caller.role !== 'admin') return error('forbidden', 'Admins only');
+
+  // Plan 046: the announced update and maintenance on/off (admin only).
+  if (a === 'maintenance' && !b) {
+    if (method === 'GET') return Response.json(await store.settings.maintenance());
+    if (method === 'PATCH') {
+      const patch = parseMaintenancePatch(await readJson(request));
+      if (!patch) return bad();
+      return Response.json(await store.settings.setMaintenance(patch));
+    }
+  }
 
   if (a === 'sellers') {
     if (!b && method === 'GET') {

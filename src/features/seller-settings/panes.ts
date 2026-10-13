@@ -9,12 +9,13 @@ export const PANE_IDS = [
   'look',
   'chefs',
   'devices',
+  'customers',
   'backup',
 ] as const;
 export type PaneId = (typeof PANE_IDS)[number];
 
 /** Chefs, Devices and Backup sit below a hairline: they are about people and data, not the menu. */
-export const SECOND_GROUP: ReadonlyArray<PaneId> = ['chefs', 'devices', 'backup'];
+export const SECOND_GROUP: ReadonlyArray<PaneId> = ['chefs', 'devices', 'customers', 'backup'];
 
 export function parsePane(value: string | undefined): PaneId | null {
   return PANE_IDS.find((id) => id === value) ?? null;

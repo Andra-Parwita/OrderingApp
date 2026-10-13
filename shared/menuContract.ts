@@ -34,6 +34,10 @@ export type MenuResponse = {
   languages?: Languages;
   /** plan 060: with "both", the language customers see first. Absent = "en". */
   firstLanguage?: Language;
+  /** plan 071: the server can keep delivery addresses (the secret is set); absent = it cannot. */
+  addresses?: true;
+  /** plan 071: the public Google Maps Embed key (not a secret); absent = open the Maps app instead. */
+  mapsEmbedKey?: string;
 };
 
 /** GET /api/seller/menu (of the X-Seller seller): the same menu plus the chef grouping. */
@@ -203,7 +207,11 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
   const ordering = parseOrderingState(input['ordering']);
   if (!seller || !kitchen || !week || !items || !ordering) return null;
   if (items.length > MAX_MENU_ITEMS || kitchen.sellerId !== seller.id) return null;
-  const { theme, pictureUrl, languages, firstLanguage } = input;
+  const { theme, pictureUrl, languages, firstLanguage, addresses, mapsEmbedKey } = input;
+  if (addresses !== undefined && addresses !== true) return null;
+  if (mapsEmbedKey !== undefined && (typeof mapsEmbedKey !== 'string' || mapsEmbedKey === '')) {
+    return null;
+  }
   if (firstLanguage !== undefined && !isOneOf(FIRST_LANGUAGES, firstLanguage)) return null;
   if (languages !== undefined && !isOneOf(LANGUAGES, languages)) return null;
   if (theme !== undefined && !isOneOf(THEMES, theme)) return null;
@@ -219,6 +227,8 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
     ...(pictureUrl !== undefined ? { pictureUrl } : {}),
     ...(languages !== undefined ? { languages } : {}),
     ...(firstLanguage !== undefined ? { firstLanguage } : {}),
+    ...(addresses === true ? { addresses } : {}),
+    ...(mapsEmbedKey !== undefined ? { mapsEmbedKey } : {}),
   };
 }
 

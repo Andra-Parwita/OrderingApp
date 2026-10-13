@@ -14,6 +14,8 @@ import { orderInfo } from './orderInfo';
 export type CurrentRow = Readonly<{
   token: string;
   code: string;
+  /** The kitchen's slug (for the home-screen app's own-kitchen grouping). */
+  slug: string;
   kitchen: string;
   /** The kitchen's small logo, when its menu is loaded. */
   kitchenLogo: string | undefined;
@@ -37,6 +39,7 @@ export type EarlierRow = Readonly<{
   token: string;
   /** Archived entries take it from this phone's saved list. */
   code: string | undefined;
+  slug: string;
   kitchen: string;
   kitchenLogo: string | undefined;
   dayText: string;
@@ -86,6 +89,7 @@ export function buildMyOrders({
       current.push({
         token: order.token,
         code: order.code,
+        slug: order.seller.slug,
         kitchen: order.seller.name,
         kitchenLogo: menu?.kitchen.images?.railImage ?? undefined,
         summary: order.lines.map((line) => `${line.qty} × ${pickText(line.name, lang)}`).join(', '),
@@ -107,6 +111,7 @@ export function buildMyOrders({
       earlier.push({
         token: order.token,
         code: order.code,
+        slug: order.seller.slug,
         kitchen: order.seller.name,
         kitchenLogo: menu?.kitchen.images?.railImage ?? undefined,
         dayText: date !== null ? formatCookingDate(date, lang) : formatDay(order.createdAt, lang),
@@ -119,6 +124,7 @@ export function buildMyOrders({
     earlier.push({
       token: order.token,
       code: saved.find((entry) => entry.token === order.token)?.code,
+      slug: order.seller.slug,
       kitchen: order.seller.name,
       kitchenLogo: menus[order.seller.slug]?.kitchen.images?.railImage ?? undefined,
       dayText: formatCookingDate(order.cookingDate, lang),

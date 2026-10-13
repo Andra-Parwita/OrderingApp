@@ -138,7 +138,12 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
   const lang = useLang();
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
   const send = useCallback(
-    () => openOrderLink(i18n, order, getContactDigits(currentSellerSlug(), order.code)),
+    () =>
+      openOrderLink(
+        i18n,
+        order,
+        getContactDigits(currentSellerSlug(), order.code, order.customerCode),
+      ),
     [i18n, order],
   );
   return (

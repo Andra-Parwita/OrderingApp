@@ -44,6 +44,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   translate_limit: 429,
   translate_unavailable: 503,
   fulfilment_unavailable: 400,
+  maintenance: 503,
 };
 
 export function error(
@@ -52,7 +53,11 @@ export function error(
   extra: { triesLeft?: number; retryAfterSeconds?: number; warning?: ApiWarning } = {},
 ): Response {
   const body: ApiErrorBody = { error: code, message, ...extra };
-  return Response.json(body, { status: STATUS[code] });
+  // A maintenance 503 must not be retried by the app (plan 046): the header says so without reading the body.
+  return Response.json(body, {
+    status: STATUS[code],
+    ...(code === 'maintenance' ? { headers: { 'X-Maintenance': '1', 'Retry-After': '30' } } : {}),
+  });
 }
 
 export function authError(failure: AuthFail): Response {

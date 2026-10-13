@@ -27,6 +27,7 @@
     "find_error": "Could not look it up. Check your connection and try again.",
     "thisWeek": "Current",
     "earlier": "Earlier",
+    "otherKitchens": "Other kitchens ({{count}})",
     "emptyTitle": "Your orders will appear here",
     "emptyBody": "After you order, you can follow it from this page.",
     "toMenu": "Go to the menu",
@@ -107,7 +108,11 @@
       "ordering_closed": "Sorry, ordering is closed right now.",
       "cutoff_passed": "Sorry, the cut-off has passed.",
       "other": "Could not cancel your order. Check your connection and try again."
-    }
+    },
+    "addressAgain": "We can't read your address any more.",
+    "addressWaiting": "Waiting for {{kitchen}} to see your change",
+    "addressSeen": "{{kitchen}} has seen your new address",
+    "addressAgainButton": "Enter your address again"
   },
   "timeline": {
     "label": "Order progress",

@@ -44,6 +44,8 @@ import { HELP_NS, HelpScreen } from '../features/seller-help';
 import { CookScreen } from '../features/seller-cook';
 import {
   ContactsBackup,
+  CustomerDetailsHost,
+  DeliveriesScreen,
   NewOrderScreen,
   PhoneLanguageRow,
   PhoneMoreNote,
@@ -346,7 +348,17 @@ function SellerListRoute({
   const onNewOrder = useCallback(() => void navigate('/seller/new'), [navigate]);
   const onCloseNewOrder = useCallback(() => void navigate('/seller/orders'), [navigate]);
   const onShare = useCallback(() => void navigate('/seller/share'), [navigate]);
-  const props = { filter, query, onFilterChange, onQueryChange, onOpenOrder, onNewOrder, onShare };
+  const onDeliveries = useCallback(() => void navigate('/seller/deliveries'), [navigate]);
+  const props = {
+    filter,
+    query,
+    onFilterChange,
+    onQueryChange,
+    onOpenOrder,
+    onNewOrder,
+    onShare,
+    onDeliveries,
+  };
   return table ? (
     <OrdersTableScreen
       {...props}
@@ -360,6 +372,11 @@ function SellerListRoute({
   ) : (
     <PhoneOrdersScreen {...props} toggles={toggles} onToggle={onToggle} />
   );
+}
+
+function DeliveriesRoute() {
+  const navigate = useNavigate();
+  return <DeliveriesScreen onBack={() => void navigate('/seller/orders')} />;
 }
 
 function SellerDetailRoute({ code }: Readonly<{ code: string }>) {
@@ -468,6 +485,7 @@ function SettingsRoute() {
       devices={<DevicesScreen embedded onSignedOut={signedOut} signOutHere={end} />}
       images={<ImagesScreen embedded />}
       chefs={<TeamScreen embedded />}
+      customers={<ContactsBackup />}
       backup={<BackupScreen embedded />}
     />
   );
@@ -788,6 +806,7 @@ export function AppRoutes() {
                 <KitchenBrandSync />
                 <SellerLayout />
                 <WizardLayerHost />
+                <CustomerDetailsHost />
               </SellerGuard>
             }
           >
@@ -796,6 +815,7 @@ export function AppRoutes() {
             <Route path="orders/print" element={<PrintOrdersRoute />} />
             <Route path="orders/:code" element={<OrdersWorkspace />} />
             <Route path="new" element={<OrdersWorkspace />} />
+            <Route path="deliveries" element={<DeliveriesRoute />} />
             <Route path="cook" element={<CookRoute />} />
             <Route path="sell" element={<SellRoute />} />
             <Route path="share" element={<ShareScreen />} />

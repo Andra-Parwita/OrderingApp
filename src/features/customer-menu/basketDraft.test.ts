@@ -41,7 +41,13 @@ describe('basket draft', () => {
       {
         basket: { 'tempe-mendoan': 1, 'gone-dish': 3 },
         names: { 'gone-dish': { en: 'Gone dish', id: 'Hilang' } },
-        checkout: { fulfilment: null, pickupPlaceId: 'no-such-place', firstName: '', note: null },
+        checkout: {
+          fulfilment: null,
+          pickupPlaceId: 'no-such-place',
+          firstName: '',
+          note: null,
+          address: null,
+        },
       } satisfies BasketDraft,
       '',
     );

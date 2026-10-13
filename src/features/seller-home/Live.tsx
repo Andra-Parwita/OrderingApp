@@ -4,6 +4,7 @@ import { formatCutoff, formatDay, formatWindow } from '../../../shared/dates';
 import type { Language, Order } from '../../../shared/domain';
 import type { MenuView } from '../../../shared/menusContract';
 import { formatMoney } from '../../../shared/money';
+import { ChefIncomeButton } from '../../components/chef-income';
 import { pickText } from '../../../shared/text';
 import { Icon } from '../../ui';
 import { Aside, Columns, GoLink } from './homeParts';
@@ -103,6 +104,15 @@ const Tile = styled.button<{ $warn?: boolean }>`
   span {
     color: ${({ theme }) => theme.c.muted};
     font-size: 0.875rem;
+  }
+`;
+
+const Tools = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  &:empty {
+    display: none;
   }
 `;
 
@@ -296,6 +306,9 @@ export function Taking(props: LiveProps) {
     <>
       <Phases {...props} />
       <NumberTiles {...props} />
+      <Tools>
+        <ChefIncomeButton menuId="current" />
+      </Tools>
       <Columns>
         <DishStock {...props} />
         <OrdersPerPlace {...props} />

@@ -7,6 +7,7 @@ import type {
   Fulfilment,
   InboxEntry,
   Language,
+  OrderAddress,
   OrderLine,
   SellerOrder,
   SellerRef,
@@ -23,6 +24,8 @@ import {
   parseArray,
   parseLocalText,
 } from './parse';
+import { parseDeliveryAddress, type DeliveryAddress } from './address';
+import { parseCustomerCode } from './customerCode';
 import { parseOrderCode } from './orderCode';
 import { isValidSlug } from './seller';
 import { ORDER_STATUSES } from './status';
@@ -45,10 +48,22 @@ export type CreateOrderRequest = {
   returning?: boolean;
   /**
    * plan 001 stage 4: the pickup place (one of the menu's) for a pickup order; the customer picks
-   * it at checkout when the menu uses more than one (stage 12). Ignored for a delivery order. No phone or address
-   * fields exist here, or anywhere else in a request (D-059).
+   * it at checkout when the menu uses more than one (stage 12). Ignored for a delivery order. No phone
+   * field exists here, or anywhere else in a request (D-007). The delivery `address` below is the one
+   * deliberate exception (plan 071, D-099).
    */
   pickupPlaceId?: string;
+  /**
+   * plan 071 (D-099): an optional delivery address (guided fields), kept encrypted
+   * for the kitchen's team and deleted a day after the menu ends. Ignored unless the order is a
+   * delivery and the server has its key. Phone numbers stay out of every request (D-007).
+   */
+  address?: DeliveryAddress;
+  /**
+   * plan 071 (D-099): the anonymous customer code the customer's phone made for this kitchen. Optional
+   * (old apps send none). Stored on the order and returned in seller reads only.
+   */
+  customerCode?: string;
 };
 
 /** POST /api/seller/orders (seller or chef, in the X-Seller seller; D-027 row 8). Defaults: confirmNow true, paid false. */
@@ -64,6 +79,8 @@ export type UpdateOrderRequest = {
   lines?: Array<RequestedLine>;
   fulfilment?: Fulfilment;
   note?: string;
+  /** plan 071: the new address; `null` deletes it. */
+  address?: DeliveryAddress | null;
 };
 
 /**
@@ -188,10 +205,17 @@ function parseNote(input: unknown): string | null {
   return note.length <= NOTE_MAX ? note : null;
 }
 
+/** The address is the one personal field an order request may carry (D-099); the rest stay refused. */
+function withoutAddress(input: Record<string, unknown>): Record<string, unknown> {
+  const rest = { ...input };
+  delete rest['address'];
+  return rest;
+}
+
 type CreateCore = Omit<CreateOrderRequest, 'returning'>;
 
 function parseCreateCore(input: unknown): CreateCore | null {
-  if (!isRecord(input) || hasPersonalData(input)) return null;
+  if (!isRecord(input) || hasPersonalData(withoutAddress(input))) return null;
   const { firstName, language, fulfilment } = input;
   if (typeof firstName !== 'string') return null;
   const name = firstName.trim();
@@ -204,6 +228,18 @@ function parseCreateCore(input: unknown): CreateCore | null {
     const parsed = parseNote(input['note']);
     if (parsed === null) return null;
     if (parsed !== '') note = parsed;
+  }
+  let address: DeliveryAddress | undefined;
+  if (input['address'] !== undefined) {
+    const parsed = parseDeliveryAddress(input['address']);
+    if (parsed === null) return null;
+    address = parsed;
+  }
+  let customerCode: string | undefined;
+  if (input['customerCode'] !== undefined) {
+    const parsed = parseCustomerCode(input['customerCode']);
+    if (parsed === null) return null;
+    customerCode = parsed;
   }
   const placeId = input['pickupPlaceId'];
   if (
@@ -219,6 +255,8 @@ function parseCreateCore(input: unknown): CreateCore | null {
     fulfilment,
     ...(note !== undefined ? { note } : {}),
     ...(placeId !== undefined ? { pickupPlaceId: placeId } : {}),
+    ...(address !== undefined ? { address } : {}),
+    ...(customerCode !== undefined ? { customerCode } : {}),
   };
 }
 
@@ -246,7 +284,7 @@ export function parseCreateSellerOrderRequest(input: unknown): CreateSellerOrder
 }
 
 export function parseUpdateOrderRequest(input: unknown): UpdateOrderRequest | null {
-  if (!isRecord(input) || hasPersonalData(input)) return null;
+  if (!isRecord(input) || hasPersonalData(withoutAddress(input))) return null;
   const out: UpdateOrderRequest = {};
   if (input['lines'] !== undefined) {
     const lines = parseRequestedLines(input['lines']);
@@ -261,6 +299,14 @@ export function parseUpdateOrderRequest(input: unknown): UpdateOrderRequest | nu
     const note = parseNote(input['note']);
     if (note === null) return null;
     out.note = note;
+  }
+  if (input['address'] !== undefined) {
+    if (input['address'] === null) out.address = null;
+    else {
+      const address = parseDeliveryAddress(input['address']);
+      if (address === null) return null;
+      out.address = address;
+    }
   }
   return Object.keys(out).length > 0 ? out : null;
 }
@@ -410,7 +456,15 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
     return null;
   }
   if (collectedAt !== undefined && !isIsoDate(collectedAt)) return null;
+  const rawState = input['addressState'];
+  if (rawState !== undefined && !isOneOf(['saved', 'unreadable'] as const, rawState)) return null;
+  const addressState = rawState;
+  const rawChange = input['addressChange'];
+  if (rawChange !== undefined && !isOneOf(['waiting', 'seen'] as const, rawChange)) return null;
+  const addressChange = rawChange;
   const extra = {
+    ...(addressState !== undefined ? { addressState } : {}),
+    ...(addressChange !== undefined ? { addressChange } : {}),
     ...(pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
     ...(collectedAt !== undefined ? { collectedAt } : {}),
   };
@@ -462,13 +516,35 @@ export function parseOrder(input: unknown): SellerOrder | null {
   if (packed !== undefined && typeof packed !== 'boolean') return null;
   if (collectedAt !== undefined && !isIsoDate(collectedAt)) return null;
   if (collectedBy !== undefined && !isOneOf(COLLECTED_BY, collectedBy)) return null;
+  let customerCode: string | undefined;
+  if (input['customerCode'] !== undefined) {
+    const parsed = parseCustomerCode(input['customerCode']);
+    if (parsed === null) return null;
+    customerCode = parsed;
+  }
+  let address: OrderAddress | undefined;
+  if (input['address'] !== undefined) {
+    const raw = input['address'];
+    if (!isRecord(raw)) return null;
+    if (raw['unavailable'] === true) address = { unavailable: true };
+    else {
+      const parsed = parseDeliveryAddress(raw['address']);
+      if (!parsed) return null;
+      address = { address: parsed };
+    }
+  }
   return {
     ...base,
+    ...(address ? { address } : {}),
+    ...(customerCode !== undefined ? { customerCode } : {}),
     sellerId,
     paid,
     waReceived,
     returning,
     changed,
+    ...(input['addressChanged'] === 'new' || input['addressChanged'] === 'seen'
+      ? { addressChanged: input['addressChanged'] }
+      : {}),
     ...(enteredBy ? { enteredBy } : {}),
     audit,
     ...(pickupPlaceId !== undefined ? { pickupPlaceId } : {}),

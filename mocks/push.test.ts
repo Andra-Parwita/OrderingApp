@@ -482,6 +482,16 @@ describe('web push and kitchen files', () => {
       expect(((await none?.json()) as { start_url: string }).start_url).toBe('/onde-onde');
     });
 
+    it('the manifest id is /<slug>, with or without ?start= (plan 068)', async () => {
+      const id = async (query: string) => {
+        const response = await get(`/k/onde-onde/manifest.webmanifest${query}`);
+        return ((await response?.json()) as { id: string }).id;
+      };
+      expect(await id('')).toBe('/onde-onde');
+      expect(await id('?start=%2Fo%2Fabc123')).toBe('/onde-onde');
+      expect(await id('?start=%2Fonde-onde')).toBe('/onde-onde');
+    });
+
     it('a kitchen with no uploaded icon gets the default PNG icons (and an SVG with its initials)', async () => {
       await world.db
         .stmt(
@@ -601,6 +611,7 @@ describe('web push and kitchen files', () => {
         unknown
       >;
       expect(manifest).toMatchObject({
+        id: '/seller',
         name: 'Onde Onde · Seller',
         start_url: '/seller',
         scope: '/seller',

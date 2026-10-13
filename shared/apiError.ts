@@ -61,6 +61,8 @@ export const API_ERROR_CODES = [
   'translate_unavailable',
   /** A customer order asks for pickup or delivery that the menu does not offer. */
   'fulfilment_unavailable',
+  /** Plan 046: maintenance mode is on; every change is refused until the admin switches it off. */
+  'maintenance',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

@@ -20,3 +20,17 @@ ADMIN_SETUP_KEY=DLV-DEVA-DMIN-SETU-PKEY
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=
+
+# Delivery addresses (plan 071, D-099): the master key that encrypts them (AES-GCM), base64 of 32 random
+# bytes. Make one with:  node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+# Without it the server says addresses are unavailable and the checkout hides the Address field (nothing
+# else breaks). In production it is a Cloudflare secret (`pnpm exec wrangler secret put ADDRESS_KEY`);
+# keep a copy in Keeper. If it is lost, undelivered addresses become unreadable and customers enter
+# them again. Never commit a real key, and never reuse this empty line as a value.
+ADDRESS_KEY=
+
+# Plan 071: Google Maps Embed API key for the checkout's "Check your address" panel. It is NOT a secret
+# (the page shows it; restrict it in Google Cloud to our website and to the Maps Embed API only). Set it
+# live as a plain Cloudflare variable (dashboard, Variables), not a secret and not in wrangler.jsonc.
+# Leave it empty and the button opens the Maps app instead. Needs 20+ letters, digits, - or _.
+MAPS_EMBED_KEY=

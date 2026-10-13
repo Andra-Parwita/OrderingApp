@@ -27,6 +27,7 @@
     "find_error": "Tidak bisa mencari. Periksa koneksi Anda lalu coba lagi.",
     "thisWeek": "Sekarang",
     "earlier": "Sebelumnya",
+    "otherKitchens": "Dapur lain ({{count}})",
     "emptyTitle": "Pesanan Anda akan muncul di sini",
     "emptyBody": "Setelah memesan, Anda bisa memantaunya di halaman ini.",
     "toMenu": "Ke menu",
@@ -106,7 +107,11 @@
       "ordering_closed": "Maaf, pemesanan sedang ditutup.",
       "cutoff_passed": "Maaf, batas waktu sudah lewat.",
       "other": "Pesanan tidak dapat dibatalkan. Periksa koneksi Anda lalu coba lagi."
-    }
+    },
+    "addressAgain": "Alamat Anda tidak bisa dibaca lagi.",
+    "addressWaiting": "Menunggu {{kitchen}} melihat perubahan Anda",
+    "addressSeen": "{{kitchen}} sudah melihat alamat baru Anda",
+    "addressAgainButton": "Isi alamat lagi"
   },
   "timeline": {
     "label": "Perkembangan pesanan",

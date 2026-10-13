@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector, useStore } from 'react-redux';
+import {
+  addressForRequest,
+  addressLine,
+  isAddressComplete,
+  type DeliveryAddress,
+} from '../../../shared/address';
 import type { Fulfilment } from '../../../shared/domain';
+import { savedAddress } from '../../api/device/address';
 import { savedFirstName } from '../../api/device/firstName';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
 import { PageHeader } from '../../ui';
+import { AddressSection } from './AddressSection';
 import {
   BasketView,
   EmptyBasketView,
@@ -142,6 +150,8 @@ function BasketContent({
   const menuSlug = useSelector(selectMenuSlug);
   const editing = editToken !== undefined;
   const [submitted, setSubmitted] = useState(false);
+  // Plan 071: the address remembered on this phone (read once; the checkout may replace it).
+  const [rememberedAddress] = useState(savedAddress);
 
   // The kitchen's colours (D-064).
   const theme = menu.status === 'ready' ? (menu.data.theme ?? 'onde') : undefined;
@@ -162,6 +172,21 @@ function BasketContent({
       : (options[0] ?? 'pickup');
   const note = checkout.note ?? editOrder?.note ?? '';
   const firstName = editing ? (editOrder?.firstName ?? '') : checkout.firstName;
+  // Plan 071: delivery addresses, when the server can keep them. A changed order that already has a
+  // readable address keeps it unless the customer changes it.
+  const addressesOn = menu.status === 'ready' && menu.data.addresses === true;
+  const needsAddress = addressesOn && fulfilment === 'delivery';
+  const keptState = editing ? editOrder?.addressState : undefined;
+  const keepsAddress = keptState === 'saved' && checkout.address === null;
+  const address: DeliveryAddress | null = keepsAddress
+    ? null
+    : (checkout.address ?? (keptState === undefined ? rememberedAddress : null));
+  const addressBlocked = needsAddress && !keepsAddress && !isAddressComplete(address);
+  const addressToSend = needsAddress && !keepsAddress ? addressForRequest(address) : null;
+  const onAddress = useCallback(
+    (value: DeliveryAddress | null) => dispatch(checkoutSet({ address: value })),
+    [dispatch],
+  );
 
   const updatedToken = update.status === 'done' && editToken !== undefined ? editToken : null;
   useEffect(() => {
@@ -246,11 +271,14 @@ function BasketContent({
 
   const submit = useCallback(() => {
     if (editing) {
-      dispatch(updateRequested({ fulfilment, note }));
+      if (addressBlocked) return;
+      dispatch(
+        updateRequested({ fulfilment, note, ...(addressToSend ? { address: addressToSend } : {}) }),
+      );
       return;
     }
     setSubmitted(true);
-    if (firstName.trim() === '') return;
+    if (firstName.trim() === '' || addressBlocked) return;
     dispatch(
       placeRequested({
         firstName,
@@ -258,9 +286,20 @@ function BasketContent({
         fulfilment,
         note,
         ...(fulfilment === 'pickup' && pickupId !== undefined ? { pickupPlaceId: pickupId } : {}),
+        ...(addressToSend ? { address: addressToSend } : {}),
       }),
     );
-  }, [dispatch, editing, firstName, lang, fulfilment, note, pickupId]);
+  }, [
+    dispatch,
+    editing,
+    firstName,
+    lang,
+    fulfilment,
+    note,
+    pickupId,
+    addressBlocked,
+    addressToSend,
+  ]);
 
   const header = (
     <PageHeader title={t('basket.title')} backLabel={t('common.back')} onBack={onBack} />
@@ -322,6 +361,14 @@ function BasketContent({
         fulfilment={fulfilment}
         pickupId={pickupId}
         placing={place.status === 'submitting' || update.status === 'submitting'}
+        addressBlocked={addressBlocked}
+        addressLine={
+          needsAddress && addressToSend
+            ? t('checkout.deliveryTo', { address: addressLine(addressToSend) })
+            : keepsAddress
+              ? t('address.kept')
+              : undefined
+        }
         onFirstName={onFirstName}
         onNote={onNote}
         onSubmit={submit}
@@ -357,6 +404,20 @@ function BasketContent({
       onChangePlace={onChangePlace}
       onNext={goNext}
       onBack={onBack}
+      addressBlocked={addressBlocked}
+      addressSlot={
+        addressesOn ? (
+          <AddressSection
+            kitchenName={data.kitchen.name}
+            {...(data.mapsEmbedKey ? { mapsKey: data.mapsEmbedKey } : {})}
+            delivery={fulfilment === 'delivery'}
+            value={address}
+            saved={rememberedAddress}
+            kept={keptState}
+            onChange={onAddress}
+          />
+        ) : undefined
+      }
     />
   );
 }

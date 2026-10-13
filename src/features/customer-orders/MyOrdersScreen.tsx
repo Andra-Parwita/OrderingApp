@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { findOrder } from '../../api/customer';
 import { lastKitchen } from '../../api/device/lastKitchen';
 import { readMyOrders } from '../../api/device/myOrders';
+import { ownKitchen } from '../../components/install';
 import { ScreenBoundary, isOffline, useLang } from './layout';
 import { buildMyOrders } from './myOrdersModel';
 import { MyOrdersView, type FindOutcome } from './MyOrdersView';
@@ -88,6 +89,7 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
       offline={isOffline(stale)}
       findToken={findToken}
       onFind={onFind}
+      ownKitchen={ownKitchen()}
       hasKitchen={kitchenSlug !== null}
       kitchenName={kitchenName}
       onOpenOrder={onOpenOrder}

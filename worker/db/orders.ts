@@ -161,8 +161,8 @@ export function insertOrderStatements(
     db.stmt(
       `INSERT INTO orders (seller_id, id, code, token, past_week_id, first_name, language, fulfilment, note, status,
          paid, locked, wa_received, is_returning, changed, entered_by_role, entered_by_name, created_at, updated_at,
-         packed, collected_at, collected_by, pickup_place_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         packed, collected_at, collected_by, pickup_place_id, customer_code)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       order.id,
       order.code,
@@ -186,6 +186,7 @@ export function insertOrderStatements(
       order.collectedAt ?? null,
       order.collectedBy ?? null,
       order.pickupPlaceId ?? null,
+      order.customerCode ?? null,
     ),
     ...lineStatements(db, order),
   ];
@@ -214,7 +215,9 @@ export function changeStatements(db: Db, change: OrderChange): Array<D1Statement
       // `packed` and the ticks are not written here: only the pack call changes them (D-066), so a
       // status change read a moment earlier can never undo a tick.
       `UPDATE orders SET status = ?, paid = ?, locked = ?, wa_received = ?, changed = ?, fulfilment = ?,
-         note = ?, collected_at = ?, collected_by = ?, updated_at = ? WHERE seller_id = ? AND id = ?`,
+         note = ?, collected_at = ?, collected_by = ?, updated_at = ?,
+         address_enc = CASE WHEN ? = 'cancelled' THEN NULL ELSE address_enc END
+       WHERE seller_id = ? AND id = ?`,
       order.status,
       order.paid,
       order.locked,
@@ -225,6 +228,8 @@ export function changeStatements(db: Db, change: OrderChange): Array<D1Statement
       order.collectedAt ?? null,
       order.collectedBy ?? null,
       order.updatedAt,
+      // Plan 071: a cancelled order keeps no address.
+      order.status,
       sellerId,
       order.id,
     ),

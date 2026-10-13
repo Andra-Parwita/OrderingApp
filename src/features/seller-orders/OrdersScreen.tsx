@@ -27,6 +27,8 @@ export type OrdersScreenProps = Readonly<{
   onNewOrder?: () => void;
   /** Shows a quiet link to the share-menu screen when given. */
   onShare?: () => void;
+  /** Plan 071: opens the Deliveries list when given. */
+  onDeliveries?: () => void;
   filter: StatusFilter;
   query: string;
   onFilterChange: (next: StatusFilter) => void;

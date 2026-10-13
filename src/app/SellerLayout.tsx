@@ -10,6 +10,7 @@ import { cssUrl } from '../components/cssUrl';
 import { useManifestLinks } from '../components/install';
 import { useBannerCollapsed } from '../components/useBannerCollapsed';
 import { useMediaQuery } from '../components/useMediaQuery';
+import { IncomeAccessProvider } from '../components/chef-income';
 import { ReadOnlyOrdersProvider, useNewOrderTitle } from '../features/seller-orders';
 import { ImageSlot } from '../ui';
 import {
@@ -249,9 +250,13 @@ export function SellerLayout() {
           ) : null}
         </Top>
         <Sheet $tablet={tablet} $fixed={fixed} onScrollCapture={onSheetScroll}>
-          <ReadOnlyOrdersProvider value={me?.role === 'helper'}>
-            <Scroller $on={homeTablet}>{tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}</Scroller>
-          </ReadOnlyOrdersProvider>
+          <IncomeAccessProvider role={me?.role}>
+            <ReadOnlyOrdersProvider value={me?.role === 'helper'}>
+              <Scroller $on={homeTablet}>
+                {tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}
+              </Scroller>
+            </ReadOnlyOrdersProvider>
+          </IncomeAccessProvider>
         </Sheet>
       </Main>
       {tablet || hidesPhoneBar(pathname) ? null : <PhoneBar activeId={activePhoneNav(pathname)} />}

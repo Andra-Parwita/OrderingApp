@@ -737,4 +737,99 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Jangan bagikan passkey Anda. Mintalah undangan.',
     },
   },
+  // 13 (plan 071, D-099)
+  {
+    en: {
+      n: 'Customer addresses and deliveries',
+      s: 'Where addresses are kept, Directions, your customer list',
+      l: 'For delivery orders. Plain words, no tech needed.',
+      steps: [
+        { part: 'Where an address is kept' },
+        {
+          text: 'A customer types their address when they order for delivery. The app keeps it **scrambled (encrypted)** and only your kitchen team (owner, chefs, helpers) can read it. It is never in the customer menu, labels or the WhatsApp post.',
+        },
+        {
+          text: 'It is deleted automatically **one day after your menu ends**, or when the order is cancelled. You can also tap **Delete address now** on the order.',
+        },
+        { part: 'Delivering' },
+        {
+          text: "Open **Deliveries** to see the day's delivery orders: name, address, items. Tap **Directions** to open Google Maps (Apple Maps on iPhone), then **Delivered** when done.",
+        },
+        {
+          text: 'Notes for the driver (gate, unit, "call when here") show on the order, but are not sent to Maps.',
+        },
+        { part: 'Your customer list (on this device only)' },
+        {
+          text: "Phone numbers are never kept in the cloud. If you type a customer's number on an order, it is saved in a list on **this device only**, so **Call** and **WhatsApp** show next time.",
+        },
+        {
+          text: 'When you **Confirm** an order from a phone this device has not seen, the app asks **Link to a saved customer?** Tap **Link** next to the right person, **New customer** for someone new, or **Skip**. After linking, their next orders show their saved number automatically.',
+        },
+        { part: 'Back up and restore' },
+        {
+          text: 'When a menu finishes and there is new customer data, the app asks **Back up your customer details?** Tap **Download backup** to save a file named like customers-yourkitchen-2026-10-13.csv. **Later** asks again next time you open the app.',
+        },
+        {
+          text: 'New phone, or cleared data? Open **Customer details** (Settings, or **More** on a phone), tap **Upload CSV**, check the preview, then **Add to my customers**. It adds and updates, and never deletes anything.',
+        },
+        { part: "If an address says 'not available'" },
+        { text: 'It can happen now and then. The order itself is fine.' },
+        {
+          text: 'Tap **WhatsApp** (or **Call**) on the order and ask the customer for the address, or ask them to open their order and enter it again.',
+        },
+        { text: 'If many orders show it at once, tell ShaggyBobo (the admin).' },
+        { part: 'Keep it safe' },
+        {
+          text: "The backup file has your customers' numbers and addresses. **Keep it private**: do not post it or send it in a group. Delete old copies you do not need.",
+        },
+      ],
+      note: 'Keep it safe: the backup file is private. Only share it with yourself.',
+    },
+    id: {
+      n: 'Alamat pelanggan dan pengantaran',
+      s: 'Di mana alamat disimpan, Petunjuk arah, daftar pelanggan',
+      l: 'Untuk pesanan antar. Bahasa sederhana, tanpa perlu paham teknis.',
+      steps: [
+        { part: 'Di mana alamat disimpan' },
+        {
+          text: 'Pelanggan mengetik alamat saat memesan untuk diantar. Aplikasi menyimpannya **diacak (terenkripsi)** dan hanya tim dapur Anda (pemilik, koki, pembantu) yang bisa membacanya. Alamat tidak pernah ada di menu pelanggan, label, atau kiriman WhatsApp.',
+        },
+        {
+          text: 'Alamat dihapus otomatis **satu hari setelah menu berakhir**, atau saat pesanan dibatalkan. Anda juga bisa mengetuk **Hapus alamat sekarang** di pesanan.',
+        },
+        { part: 'Mengantar' },
+        {
+          text: 'Buka **Pengantaran** untuk melihat pesanan antar hari itu: nama, alamat, isi pesanan. Ketuk **Petunjuk arah** untuk membuka Google Maps (Apple Maps di iPhone), lalu **Terantar** setelah selesai.',
+        },
+        {
+          text: 'Catatan untuk pengantar (gerbang, unit, "telepon kalau sudah sampai") tampil di pesanan, tetapi tidak dikirim ke Maps.',
+        },
+        { part: 'Daftar pelanggan Anda (hanya di perangkat ini)' },
+        {
+          text: 'Nomor telepon tidak pernah disimpan di cloud. Jika Anda mengetik nomor pelanggan di pesanan, nomor itu disimpan di daftar **hanya di perangkat ini**, sehingga **Telepon** dan **WhatsApp** muncul lain kali.',
+        },
+        {
+          text: 'Saat Anda **Konfirmasi** pesanan dari ponsel yang belum dikenal perangkat ini, aplikasi bertanya **Hubungkan ke pelanggan tersimpan?** Ketuk **Hubungkan** di samping orang yang benar, **Pelanggan baru** untuk orang baru, atau **Lewati**. Setelah terhubung, pesanan berikutnya otomatis menampilkan nomor tersimpannya.',
+        },
+        { part: 'Cadangkan dan pulihkan' },
+        {
+          text: 'Saat menu selesai dan ada data pelanggan baru, aplikasi bertanya **Cadangkan data pelanggan Anda?** Ketuk **Unduh cadangan** untuk menyimpan file bernama seperti customers-dapuranda-2026-10-13.csv. **Nanti** akan bertanya lagi saat aplikasi dibuka berikutnya.',
+        },
+        {
+          text: 'Ponsel baru, atau data terhapus? Buka **Data pelanggan** (Pengaturan, atau **Lainnya** di ponsel), ketuk **Unggah CSV**, periksa pratinjau, lalu **Tambahkan ke pelanggan saya**. Ini menambah dan memperbarui, dan tidak pernah menghapus.',
+        },
+        { part: "Jika alamat tertulis 'tidak tersedia'" },
+        { text: 'Ini kadang terjadi. Pesanannya sendiri tidak apa-apa.' },
+        {
+          text: 'Ketuk **WhatsApp** (atau **Telepon**) di pesanan lalu minta alamat ke pelanggan, atau minta mereka membuka pesanannya dan memasukkan alamat lagi.',
+        },
+        { text: 'Jika banyak pesanan menampilkannya sekaligus, kabari ShaggyBobo (admin).' },
+        { part: 'Jaga keamanannya' },
+        {
+          text: 'File cadangan berisi nomor dan alamat pelanggan Anda. **Simpan secara pribadi**: jangan diposting atau dikirim ke grup. Hapus salinan lama yang tidak perlu.',
+        },
+      ],
+      note: 'Jaga keamanannya: file cadangan bersifat pribadi. Kirim hanya ke diri sendiri.',
+    },
+  },
 ];

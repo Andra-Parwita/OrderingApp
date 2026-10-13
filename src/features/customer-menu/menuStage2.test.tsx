@@ -5,7 +5,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { server } from '../../../mocks/server';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { quantitySet } from './customerSlice';
-import { DishesScreen, HowItWorksScreen, MenuScreen } from './MenuScreen';
+import { DishesScreen, HowItWorksScreen, MenuPreview, MenuScreen } from './MenuScreen';
 import { HOW_SEEN_KEY, hasSeenHowItWorks } from './howItWorksSeen';
 import { createTestStore, renderWithStore, setupI18n } from './testSupport';
 
@@ -225,6 +225,23 @@ describe('menu states', () => {
     );
     await act(() => i18n.changeLanguage('id'));
     expect(await screen.findByText('Menu berikutnya segera hadir')).toBeVisible();
+  });
+
+  it('draft menu (not_published): the home-screen card shows above it, not in the preview (plan 068)', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Linux; Android 14) Chrome/120',
+    );
+    const draft = await useMenu((menu) => ({
+      ...withOrdering({ open: false, reason: 'not_published' })(menu),
+      items: [],
+    }));
+    const { unmount } = renderHome();
+    expect(await screen.findByText('The next menu is coming soon')).toBeVisible();
+    expect(screen.getByTestId('home-screen-card')).toBeVisible();
+    unmount();
+    renderWithStore(<MenuPreview slug="onde-onde" menu={draft} />);
+    expect(await screen.findByText('The next menu is coming soon')).toBeVisible();
+    expect(screen.queryByTestId('home-screen-card')).toBeNull();
   });
 
   it('draft menu without a WhatsApp number: no message button', async () => {

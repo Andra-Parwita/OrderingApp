@@ -1,6 +1,12 @@
 import { handleWorkerRequest, type ApiEnv } from './api';
 import { withKitchenLinks } from './pages';
-import { RETENTION_CRON, runAttemptSweep, runAutoFinish, runRetention } from './api/scheduled';
+import {
+  RETENTION_CRON,
+  runAddressSweep,
+  runAttemptSweep,
+  runAutoFinish,
+  runRetention,
+} from './api/scheduled';
 import type { SellerLive } from './live/SellerLive';
 
 // Cloudflare finds a Durable Object class by its export from the Worker's main module.
@@ -39,6 +45,7 @@ export default {
     const now = new Date();
     await runAutoFinish(env, now);
     await runAttemptSweep(env, now);
+    await runAddressSweep(env, now);
     if (controller.cron === RETENTION_CRON) await runRetention(env, now);
   },
 } satisfies ExportedHandler<Env>;

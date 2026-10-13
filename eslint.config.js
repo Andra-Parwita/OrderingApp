@@ -86,6 +86,8 @@ export default tseslint.config(
       'playwright-report',
       'uxDesign',
       'temp',
+      // The built docs site (plan 070): generated, incl. the vendored mermaid bundle.
+      'docs/site',
     ],
   },
   js.configs.recommended,
