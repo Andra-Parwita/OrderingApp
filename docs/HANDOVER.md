@@ -47,7 +47,7 @@ Nothing is built after 1.0.35 yet. **Next time you deploy:** back up first; anno
 ## Next session
 1. Read this file.
 2. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
-3. **Plan 075 About ShaggyBobo + release notes in the seller app** ([draft](plans/075-release-notes.md), plan only, next round): an About item (all roles) with the ShaggyBobo brand panel like the admin page, a short about, the version and the releases. Answered 14 Oct (D-100): no pop-up, notes on About only; the owner writes the about text later; releases start from 1.0.36. **Open: question 2, who writes each release's notes.**
+3. **Plan 075 About ShaggyBobo + release notes in the seller app** ([draft](plans/075-release-notes.md), plan only, next round): an About item (all roles) with the ShaggyBobo brand panel like the admin page, a short about, the version and the releases. Answered 14 Oct (D-100): no pop-up, notes on About only; the owner writes the about text later; releases start from 1.0.36. Claude drafts each release's notes; the owner or the builder decides what goes in. **All answered; next: the About page mock-up.**
 4. Then the other open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie).
 
 ## Known and not done
@@ -62,4 +62,4 @@ Nothing is built after 1.0.35 yet. **Next time you deploy:** back up first; anno
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then continue plan 075 (About + release notes) at question 2, then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.
+> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then make the plan 075 About page mock-up (phone + tablet) for my OK, then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.

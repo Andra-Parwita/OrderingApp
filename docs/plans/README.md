@@ -105,7 +105,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 072 | ✅ | [Tick freely, saved in one go](072-tick-freely-save-in-one-go.md) | approved (2026-10-13); building |
 | 073 | ✅ | [Fewer, smarter server requests (audit)](073-request-audit.md) | draft (2026-10-13); owner to choose stages |
 | 074 | ✅ | [Live updates everywhere: push instead of checking](074-live-updates-everywhere.md) | approved (2026-10-14); building |
-| 075 | ⬜ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | draft (2026-10-14); plan only, next round; questions open |
+| 075 | ⬜ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | answered (2026-10-14, D-100); mock-up next, build next round |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 
