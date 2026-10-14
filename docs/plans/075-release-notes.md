@@ -12,21 +12,21 @@
 1. **About in the seller menu:** a new item **About** (left menu on tablet/computer, under Help; phone: More → About), for every role.
 2. **The About page:** the ShaggyBobo brand panel (scene, mascot, logo) reused from `BrandPanel`, the version (`appVersion`), a few lines "about ShaggyBobo" (who makes it, what it is for, the privacy promise in one line), and a link to Help.
 3. **Releases on the About page:** newest first, each with its version, date and 2–4 plain lines (EN / ID); older releases folded.
-4. **"What's new" after an update** (optional, question 1): a card once after Refresh pointing to About.
+4. ~~"What's new" after an update~~ **No pop-up** (owner, 14 Oct): the notes stay on About.
 5. **Where the notes live:** a small file in the repo (e.g. `shared/releaseNotes.ts`, EN + ID), written as part of each release's checklist; no database, no new dependency.
 
 ## Questions (one at a time)
-1. After an update, does a "What's new" card pop up once, or is About enough? — _open_ (A: card once + About; B: About only, with a dot on About when there is something new; C: one line in the new-version bar)
-2. Who writes the notes, and where they live — _open_ (proposal 5)
-3. The "about" text: what it says, and who appears (ShaggyBobo, the family, a contact?) — _open_
-4. How far back the releases go (from 1.0.35, or earlier ones written up too) — _open_
+1. ~~A "What's new" card after an update?~~ **No, leave it in About** (owner, 14 Oct; D-100).
+2. Who writes each release's notes — _open_
+3. ~~The about text~~ **The owner writes it later** (14 Oct); the page is built with a placeholder the owner fills in.
+4. ~~How far back~~ **From the next release (1.0.36)** (owner, 14 Oct).
 
 ## Stages (after the questions)
 | # | stage |
 |---|---|
 | 1 | mock-up of the About page (phone + tablet) for the owner's OK |
 | 2 | notes file + About page + menu item (all roles), EN/ID |
-| 3 | optional "What's new" card; release checklist gains "write the notes"; Help mentions About |
+| 3 | release checklist gains "write the notes"; Help mentions About |
 | 4 | tests (unit for the notes list, one Playwright check), docs |
 
 **Deploy impact (expected):** none (no migration, no secret).
