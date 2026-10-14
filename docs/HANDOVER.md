@@ -42,7 +42,7 @@
 4. ~~Invite message drafts~~ **Decided (owner A, 13 Oct): fine as is** (name and role kept; the message holds the key, so it is never stored).
 
 ## Deploy impact (tell the builder before the next deploy)
-Nothing is built after 1.0.35 yet. **Next time you deploy:** back up first; announce (admin → Announce an update); switch Maintenance on before the migrations, off after the live check (plan 046 is live now).
+Nothing is built after 1.0.35 yet. **Next time you deploy:** first Claude drafts the release notes and the owner picks which lines are included (D-100); back up; announce (admin → Announce an update); switch Maintenance on before the migrations, off after the live check (plan 046 is live now).
 
 ## Next session
 1. Read this file.

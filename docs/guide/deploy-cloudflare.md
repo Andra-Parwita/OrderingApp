@@ -22,6 +22,10 @@ Copy the `database_id` it prints into `wrangler.jsonc`, replacing `"local-only"`
 pnpm exec wrangler r2 bucket create shaggybobo-images
 ```
 
+## Release notes (plan 075, D-100, from 1.0.36)
+
+Before every deploy, **Claude writes the draft release notes** (2–4 plain lines per change, EN and ID) from the handover, and **the owner reviews them and picks which ones are included**. Only the chosen lines go into the notes file, which ships with the deploy and shows on the seller app's About page.
+
 ## Announce an update and pause the app (plan 046)
 
 Around every release that has a migration:
