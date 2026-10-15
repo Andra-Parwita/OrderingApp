@@ -87,6 +87,9 @@ export type PickupRow = {
   directions_id: string;
   window_start: string;
   window_end: string;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 export type ItemRow = {
   id: string;
@@ -296,6 +299,10 @@ export function pickupOf(point: PickupRow): PickupPoint {
     place: point.place,
     directions: text(point.directions_en, point.directions_id),
     window: { start: point.window_start, end: point.window_end },
+    ...(point.address ? { address: point.address } : {}),
+    ...(point.address && point.lat != null && point.lng != null
+      ? { lat: point.lat, lng: point.lng }
+      : {}),
   };
 }
 

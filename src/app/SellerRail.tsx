@@ -10,6 +10,7 @@ import {
   useUnseenNewOrders,
   type SellerOrdersRootState,
 } from '../features/seller-orders';
+import { ABOUT_NS } from '../features/seller-about';
 import { HELP_NS } from '../features/seller-help';
 import { SellerPicker } from '../components/SellerPicker';
 import { KitchenSwitcher } from './KitchenSwitcher';
@@ -27,6 +28,7 @@ const LABEL_KEY: Readonly<Record<NavId, string>> = {
   menu: 'sellerNav.navMenu',
   settings: 'sellerNav.navSettings',
   help: 'nav',
+  about: 'nav',
 };
 
 // Home's icon is not in the kit (src/ui); it is drawn like the others (outline, current colour).
@@ -292,7 +294,11 @@ export function SellerRail({
   const { t } = useTranslation();
   const kitchenName = kitchen?.name ?? t('sellerNav.kitchen');
   const label = (id: NavId) =>
-    id === 'help' ? t(LABEL_KEY.help, { ns: HELP_NS }) : t(LABEL_KEY[id]);
+    id === 'help'
+      ? t(LABEL_KEY.help, { ns: HELP_NS })
+      : id === 'about'
+        ? t(LABEL_KEY.about, { ns: ABOUT_NS })
+        : t(LABEL_KEY[id]);
   const collapseLabel = t(collapsed ? 'sellerNav.expand' : 'sellerNav.collapse');
   const notPublished = t('sellerNav.notPublished');
   const ordersCount = useOrdersCount();

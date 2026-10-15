@@ -1,0 +1,42 @@
+{
+  "line": {
+    "viewOnMap": "View on map",
+    "viewOnMapLabel": "View on map, {{place}}",
+    "directions": "Directions",
+    "directionsLabel": "Directions, {{place}}"
+  },
+  "panel": {
+    "close": "Close",
+    "mapTitle": "Map of {{place}}",
+    "pickupTime": "Pickup time",
+    "findingIt": "Finding it",
+    "directions": "Directions",
+    "noMap": "The map is not available here. Use Directions to open Google Maps."
+  },
+  "editor": {
+    "label": "Address (optional)",
+    "none": "No address yet. Customers see only the place and the directions.",
+    "add": "Add address",
+    "change": "Change",
+    "remove": "Remove address",
+    "street": "Street number and name",
+    "suburb": "Suburb",
+    "postcode": "Postcode",
+    "notesHint": "To help people find it (gate, car park), use the Directions fields above.",
+    "required": "Enter at least the street.",
+    "tooLong": "The address is too long.",
+    "done": "Use this address",
+    "checkOnMap": "Check on map",
+    "checkTitle": "Check the address",
+    "useLocation": "Use my location",
+    "locating": "Finding you...",
+    "locationHint": "Optional. Stand at the pickup spot to add an exact pin; customers' maps then open on it.",
+    "pinAdded": "Exact pin added",
+    "removePin": "Remove pin",
+    "denied": "Location was not allowed. You can still save the address.",
+    "unavailable": "Location is not available here. You can still save the address.",
+    "pinned": "exact pin",
+    "pinRight": "Is the pin in the right place?",
+    "pinYes": "Yes, looks right"
+  }
+}

@@ -27,7 +27,7 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 | POST | `/api/maintenance` | release token | plan 046: `{ maintenance: boolean }` with `Authorization: Bearer <MAINTENANCE_TOKEN>`; 401 without the secret or with a wrong token; no other route accepts the token |
 | GET | `/images/<key>` | public | stream an image from R2 (content-hashed, cached a year) |
 | GET | `/k/<slug>/manifest.webmanifest` | public | the kitchen's customer web-app manifest (`?start=` for an order page); also `seller.webmanifest`, `icon-<180\|192\|512>.png\|svg` and `apple-touch-icon.png` (always an image: the upload, or the shared default) |
-| GET | `/api/s/:slug/menu` | public | the kitchen's menu, theme, languages and ordering state |
+| GET | `/api/s/:slug/menu` | public | the kitchen's menu, theme, languages and ordering state; each pickup point may carry `address`, `lat`, `lng` (plan 076); `mapsEmbedKey` whenever the server has `MAPS_EMBED_KEY` |
 | POST | `/api/s/:slug/orders` | public | place an order (a delivery order may carry `address`: street, suburb, postcode, notes, lat/lng; ignored when the server has no `ADDRESS_KEY`; the menu answer says `addresses: true` when it has; an optional `customerCode`, 24 hex characters, the phone's anonymous per-kitchen code, stored on the order) |
 | POST | `/api/s/:slug/orders/find` | public | find a lost order by code and first name (2 wrong tries lock that code 15 min; every miss answers alike, D-075) |
 | GET | `/api/s/:slug/team-names` | public | names of people with a password, for the password sign-in picker (D-090) |
@@ -106,8 +106,8 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 | GET, POST | `saved-sets` | owner | saved sets (lists of dishes) |
 | PATCH, DELETE | `saved-sets/:id` | owner | rename or delete a set |
 | POST | `saved-sets/:id/use` | owner | put the set on the menu |
-| GET, POST | `pickup-places` | owner | saved places (max 5: `pickup_place_limit`) |
-| PATCH, DELETE | `pickup-places/:id` | owner | change or remove a place |
+| GET, POST | `pickup-places` | owner | saved places (max 5: `pickup_place_limit`); optional `address`, `lat`, `lng` (plan 076; a pin needs an address, bounds checked) |
+| PATCH, DELETE | `pickup-places/:id` | owner | change or remove a place; `address` replaces address and pin together, `address: null` removes them |
 | GET, PUT | `preferences` | helper (GET), owner (PUT) | colour theme and new-menu defaults (incl. `chefsSeeIncome`) |
 | PUT | `kitchen/name` | owner | rename the kitchen |
 | GET, PUT | `settings` | chef (GET), owner (PUT) | WhatsApp number, greetings, languages |

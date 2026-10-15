@@ -93,6 +93,7 @@ describe('seller shell, tablet', () => {
       'Menu',
       'Settings',
       'Help',
+      'About',
     ]);
     // /seller is Home on a tablet; Orders is /seller/orders.
     expect(within(nav).getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
@@ -117,14 +118,21 @@ describe('seller shell, tablet', () => {
     me = CHEF;
     renderAt('/seller');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
-    expect(linkNames(nav)).toEqual(['Orders', 'Kitchen', 'Pickup & delivery', 'Menu', 'Help']);
+    expect(linkNames(nav)).toEqual([
+      'Orders',
+      'Kitchen',
+      'Pickup & delivery',
+      'Menu',
+      'Help',
+      'About',
+    ]);
   });
 
   it('shows a helper only Orders, Pickup & delivery and Sell', () => {
     me = { role: 'helper', stage: 'full', sellerName: 'Delave', displayName: 'Dewi' };
     renderAt('/seller/orders');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
-    expect(linkNames(nav)).toEqual(['Orders', 'Pickup & delivery', 'Sell', 'Help']);
+    expect(linkNames(nav)).toEqual(['Orders', 'Pickup & delivery', 'Sell', 'Help', 'About']);
   });
 
   it('marks Menu "Not published" with a word while the week is a draft', async () => {
@@ -147,6 +155,7 @@ describe('seller shell, tablet', () => {
       'Menu',
       'Pengaturan',
       'Bantuan',
+      'Tentang',
     ]);
   });
 

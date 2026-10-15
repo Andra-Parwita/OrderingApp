@@ -6,6 +6,7 @@ import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/d
 import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
+import { PickupMapLine, pickupMapInfo } from '../../components/pickup-map';
 import { ImageSlot } from '../../ui';
 import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
@@ -376,6 +377,7 @@ export function MenuHomeView({
                 <li key={point.id}>
                   {point.place} · {formatWindow(point.window.start, point.window.end, lang)}
                   <small>{pickText(point.directions, lang)}</small>
+                  <PickupMapLine info={pickupMapInfo(point, lang, data.mapsEmbedKey, date)} />
                 </li>
               ))}
               {week.delivery.available ? (

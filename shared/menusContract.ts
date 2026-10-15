@@ -13,6 +13,7 @@ import {
   SET_NAME_MAX,
 } from './limits';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
+import { locationOf, parsePickupLocation } from './pickupAddress';
 import { DEFAULT_THEME, THEMES, type ThemeName } from './themes';
 import {
   INSTANT,
@@ -114,6 +115,10 @@ export type UpdatePickupPlaceRequest = {
   place?: string;
   directions?: LocalText;
   window?: PickupPoint['window'];
+  /** Plan 076: sending `address` replaces the whole location; null removes it (lat and lng too). */
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 export type PickupPlaceResponse = { place: PickupPlace };
@@ -139,6 +144,13 @@ export function parseUpdatePickupPlaceRequest(input: unknown): UpdatePickupPlace
     if (!window) return null;
     out.window = window;
   }
+  if (input['address'] !== undefined) {
+    const location = parsePickupLocation(input);
+    if (!location) return null;
+    out.address = location.address ?? null;
+    out.lat = location.lat ?? null;
+    out.lng = location.lng ?? null;
+  } else if (input['lat'] !== undefined || input['lng'] !== undefined) return null;
   return Object.keys(out).length > 0 ? out : null;
 }
 
@@ -150,7 +162,7 @@ export function parsePickupPlace(input: unknown): PickupPlace | null {
   if (typeof id !== 'string' || id === '' || typeof place !== 'string' || !directions || !window) {
     return null;
   }
-  return { id, place, directions, window };
+  return { id, place, directions, window, ...locationOf(input) };
 }
 
 export function parsePickupPlaceResponse(input: unknown): PickupPlaceResponse | null {

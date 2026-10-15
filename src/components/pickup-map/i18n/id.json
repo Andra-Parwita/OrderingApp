@@ -1,0 +1,42 @@
+{
+  "line": {
+    "viewOnMap": "Lihat di peta",
+    "viewOnMapLabel": "Lihat di peta, {{place}}",
+    "directions": "Petunjuk arah",
+    "directionsLabel": "Petunjuk arah, {{place}}"
+  },
+  "panel": {
+    "close": "Tutup",
+    "mapTitle": "Peta {{place}}",
+    "pickupTime": "Waktu ambil",
+    "findingIt": "Cara menemukannya",
+    "directions": "Petunjuk arah",
+    "noMap": "Peta tidak tersedia di sini. Gunakan Petunjuk arah untuk membuka Google Maps."
+  },
+  "editor": {
+    "label": "Alamat (opsional)",
+    "none": "Belum ada alamat. Pelanggan hanya melihat nama tempat dan petunjuknya.",
+    "add": "Tambah alamat",
+    "change": "Ubah",
+    "remove": "Hapus alamat",
+    "street": "Nomor dan nama jalan",
+    "suburb": "Kelurahan / kota",
+    "postcode": "Kode pos",
+    "notesHint": "Untuk membantu orang menemukannya (gerbang, parkir), pakai kolom Petunjuk di atas.",
+    "required": "Isi minimal nama jalan.",
+    "tooLong": "Alamat terlalu panjang.",
+    "done": "Pakai alamat ini",
+    "checkOnMap": "Cek di peta",
+    "checkTitle": "Cek alamat",
+    "useLocation": "Pakai lokasi saya",
+    "locating": "Mencari lokasi...",
+    "locationHint": "Opsional. Berdiri di tempat ambil untuk menambah titik tepat; peta pelanggan lalu terbuka di titik itu.",
+    "pinAdded": "Titik tepat ditambahkan",
+    "removePin": "Hapus titik",
+    "denied": "Lokasi tidak diizinkan. Alamat tetap bisa disimpan.",
+    "unavailable": "Lokasi tidak tersedia di sini. Alamat tetap bisa disimpan.",
+    "pinned": "titik tepat",
+    "pinRight": "Apakah titiknya sudah benar?",
+    "pinYes": "Ya, sudah benar"
+  }
+}

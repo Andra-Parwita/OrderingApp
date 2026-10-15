@@ -8,6 +8,7 @@ import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
 import { PageTopBar } from '../../components/CustomerPage';
+import { PickupMapLine } from '../../components/pickup-map';
 import {
   InstallOverlay,
   NotifyCard,
@@ -577,7 +578,10 @@ export function Details({
             <dt>
               <Muted>{delivery ? t('order.delivery') : t('order.pickup')}</Muted>
             </dt>
-            <dd>{delivery ? (info.dateText ?? '') : place}</dd>
+            <dd>
+              {delivery ? (info.dateText ?? '') : place}
+              {delivery ? null : <PickupMapLine info={info.pickupMap} />}
+            </dd>
           </Row>
         ) : null}
         <Row>

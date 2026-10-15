@@ -475,9 +475,8 @@ export async function handleApiRequest(
       return Response.json({
         ...menu,
         ...(context.addressKey ? { addresses: true } : {}),
-        ...(context.addressKey && context.mapsEmbedKey
-          ? { mapsEmbedKey: context.mapsEmbedKey }
-          : {}),
+        // Plan 076: the pickup map needs the key too, so it no longer waits for delivery addresses.
+        ...(context.mapsEmbedKey ? { mapsEmbedKey: context.mapsEmbedKey } : {}),
       });
     }
     // Plan 074: a customer's live socket. The private order tokens are the only credential (never a

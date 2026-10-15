@@ -14,7 +14,7 @@ import {
 } from './sellerNav';
 
 describe('navIdsFor', () => {
-  it('gives the seller all eight items, Home first and Help right under Settings', () => {
+  it('gives the seller all nine items, Home first, Help right under Settings and About last', () => {
     expect(navIdsFor('seller')).toEqual([
       'home',
       'orders',
@@ -24,16 +24,31 @@ describe('navIdsFor', () => {
       'menu',
       'settings',
       'help',
+      'about',
     ]);
     expect(HREF.sell).toBe('/seller/sell');
     expect(HREF.home).toBe('/seller');
     expect(HREF.orders).toBe('/seller/orders');
   });
   it('shows a helper Orders, Pickup & delivery and Sell only', () => {
-    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell', 'help']);
+    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell', 'help', 'about']);
   });
   it('shows a chef Menu (own dishes, plan 030) but not Home, Sell or Settings', () => {
-    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu', 'help']);
+    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu', 'help', 'about']);
+  });
+});
+
+describe('About (plan 075)', () => {
+  it('is in the menu of every role, right under Help, at /seller/about', () => {
+    for (const role of ['seller', 'chef', 'helper'] as const) {
+      const ids = navIdsFor(role);
+      expect(ids.indexOf('about')).toBe(ids.indexOf('help') + 1);
+    }
+    expect(HREF.about).toBe('/seller/about');
+    expect(activeNav('/seller/about')).toBe('about');
+    expect(helperMayOpen('/seller/about')).toBe(true);
+    expect(fixesPage('/seller/about', false)).toBe(true);
+    expect(fixesPage('/seller/about', true)).toBe(true);
   });
 });
 

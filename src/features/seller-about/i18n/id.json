@@ -1,0 +1,27 @@
+{
+  "nav": "Tentang",
+  "title": "Tentang",
+  "back": "Kembali ke Lainnya",
+  "release": "Rilis {{version}}",
+  "build": "build {{build}}",
+  "whatsNew": "Yang baru",
+  "releases": "Rilis",
+  "current": "Terbaru",
+  "lastFive": "Kami tampilkan 5 rilis terakhir.",
+  "close": "Tutup",
+  "heroLabel": "ShaggyBobo",
+  "aboutLabel": "Tentang ShaggyBobo",
+  "logoAlt": "ShaggyBobo",
+  "hello": "Halo, kami ShaggyBobo",
+  "intro": "Aplikasi mungil HomeMade untuk para juru masak rumahan. Pasang menu, bagikan satu tautan, dan pesanan pun berdatangan, dalam bahasa Inggris atau Indonesia. Kamu fokus masak yang enak-enak, sisanya biar kami yang beresin. 🍲",
+  "safeTitle": "Data pelangganmu aman 🔒",
+  "safe": [
+    "**Nggak perlu daftar.** Cukup nama depan untuk pesan. Nggak ada kata sandi yang bisa lupa.",
+    "**Nomor HP nggak disimpan di cloud.** Ngobrolnya lewat WhatsApp, antara kamu dan mereka.",
+    "**Alamat? Dikunci rapat.** Terenkripsi, cuma timmu yang bisa lihat, dan **terhapus otomatis sehari setelah menu selesai**. Hilang. ✨",
+    "**Tanpa iklan. Tanpa jual data.** Kami nggak pegang uang dan nggak jual info siapa pun. Dulu, sekarang, selamanya.",
+    "**Notifikasi? Terserah pelanggan.** Mau nyala atau mati, bebas kapan saja.",
+    "**Dapurmu, krumu.** Cuma yang kamu undang yang bisa masuk, masing-masing pakai passkey di perangkatnya sendiri."
+  ],
+  "closing": "HomeMade dengan cinta (dan banyak icip-icip). 💛"
+}

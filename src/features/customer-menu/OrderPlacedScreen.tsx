@@ -9,6 +9,7 @@ import { formatOrderCode } from '../../../shared/orderCode';
 import { isReturningCustomer } from '../../api/device/myOrders';
 import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { PageTopBar } from '../../components/CustomerPage';
+import { PickupMapLine, pickupMapInfoForOrder } from '../../components/pickup-map';
 import {
   InstallOverlay,
   UpdatesCard,
@@ -161,6 +162,14 @@ export function OrderPlacedView({
   const install = useOrderInstall(order.token, installOverride);
   const cook = menu?.seller.name ?? order.seller.name;
   const code = formatOrderCode(order.code);
+  const lang: Language = useLang();
+  // Plan 076: one line under the thanks, only for a pickup place that has an address.
+  const pickupMap = pickupMapInfoForOrder(
+    order,
+    menu,
+    lang,
+    menu ? formatCookingDate(menu.week.cookingDate, lang) : null,
+  );
   return (
     <>
       <PageTopBar
@@ -177,6 +186,7 @@ export function OrderPlacedView({
           </h1>
           <p>{t('placed.thanks', { name: order.firstName, cook })}</p>
         </Heading>
+        <PickupMapLine info={pickupMap} />
         <CodeCard type="button" onClick={onShowQr} data-testid="code-card">
           <CodeText>
             <small>{t('placed.orderNumber')}</small>

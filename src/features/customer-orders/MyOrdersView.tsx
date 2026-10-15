@@ -5,6 +5,7 @@ import type { Language, OrderStatus } from '../../../shared/domain';
 import { FIRST_NAME_MAX } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode, parseOrderCode } from '../../../shared/orderCode';
+import { PickupMapLine } from '../../components/pickup-map';
 import { Icon } from '../../ui';
 import type { CurrentRow, EarlierRow } from './myOrdersModel';
 import { ORDERS_NS } from './i18n/register';
@@ -259,6 +260,11 @@ function lookOf(status: OrderStatus | 'archived'): StatusLook {
   }
 }
 
+/** Plan 076: the line sits under the row (not inside its button), indented like the row text. */
+const PickupLineBox = styled.div`
+  padding: 0 ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.md};
+`;
+
 type CurrentRowProps = Readonly<{
   row: CurrentRow;
   lang: Language;
@@ -312,6 +318,11 @@ const CurrentItem = memo(function CurrentItem({ row, lang, onOpen }: CurrentRowP
         </Body>
         <Icon name="forward" />
       </RowButton>
+      {row.pickupMap ? (
+        <PickupLineBox>
+          <PickupMapLine info={row.pickupMap} />
+        </PickupLineBox>
+      ) : null}
     </li>
   );
 });

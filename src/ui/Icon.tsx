@@ -4,6 +4,7 @@ import { styled } from 'styled-components';
 // Small outline icons. They are decoration only: a text label always sits beside them.
 const PATHS = {
   help: 'M12 21a9 9 0 100-18 9 9 0 000 18zM9.5 9.5a2.5 2.5 0 114 2c-1 .7-1.5 1.2-1.5 2.5M12 17h.01',
+  info: 'M12 21a9 9 0 100-18 9 9 0 000 18zM12 11v6M12 7.5h.01',
   star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',
   pencil: 'M4 20l1-4L16.5 4.5a2 2 0 013 3L8 19z',
   note: 'M5 4h14v12l-5 5H5zM14 21v-5h5',

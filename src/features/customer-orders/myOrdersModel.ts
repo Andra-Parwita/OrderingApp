@@ -5,6 +5,7 @@ import type { ExpiredOrder } from '../../../shared/orderContract';
 import { pickText } from '../../../shared/text';
 import { hasUnseenUpdate, type SavedOrder } from '../../api/device/myOrders';
 import { isThisWeek, orderTotalCents } from './helpers';
+import type { PickupMapInfo } from '../../components/pickup-map';
 import { orderInfo } from './orderInfo';
 
 // What the My orders rows show, worked out from the orders, each kitchen's menu and this phone's
@@ -26,6 +27,8 @@ export type CurrentRow = Readonly<{
   fulfilment: Fulfilment;
   /** The pickup place, when the kitchen's menu is loaded. */
   place: string | undefined;
+  /** Plan 076: the pickup place's address and map, when it has an address. */
+  pickupMap?: PickupMapInfo;
   totalCents: number;
   status: OrderStatus;
   locked: boolean;
@@ -97,6 +100,7 @@ export function buildMyOrders({
           cooking !== null ? formatCookingDate(cooking, lang) : formatDay(order.createdAt, lang),
         fulfilment: order.fulfilment,
         place: info.place,
+        ...(info.pickupMap ? { pickupMap: info.pickupMap } : {}),
         totalCents: orderTotalCents(order),
         status: order.status,
         locked: order.locked,

@@ -39,7 +39,7 @@ One menu per kitchen at a time (D-063). `0003` replaced the old `weeks` and `pic
 | table | purpose | key | retention |
 |---|---|---|---|
 | `menus` | the one menu: `state` (`not_published` > `live` > `finished`), `cooking_date`, `cutoff_at`, delivery switch and note, `picture_ref` (one 3:2 picture, D-060), `wizard_step`, `taking_orders`, `published_at`, `finished_at` | PK `seller_id` | replaced when the next menu is made |
-| `pickup_places` | the seller's saved places (max 5, checked by the repository, D-061): `place`, `directions_en/id`, `window_start/end`, `position` | PK `(seller_id, id)` | until removed |
+| `pickup_places` | the seller's saved places (max 5, checked by the repository, D-061): `place`, `directions_en/id`, `window_start/end`, `position`, and (plan 076, migration 0024) an optional public `address` (≤ 200 chars) with an optional map pin `lat` / `lng` (both or neither, only with an address; not encrypted: the seller's own place, unlike D-099) | PK `(seller_id, id)` | until removed |
 | `menu_pickup_places` | the places this menu uses, with an optional time for this menu only | PK `(seller_id, place_id)`; cascade from the place | with the menu |
 | `dishes` | "Your dishes" library: names, descriptions, size, `price_cents`, `portion_limit`, `chef_id` (NULL = whole kitchen), `preorder`, `day_stock` (0011), `last_used_at` | PK `(seller_id, id)` | until removed |
 | `menu_items` | a menu dish: a **copy** with its own price, limit, chef, `sold_out`, `preorder`, `day_stock`; `dish_id` says where it came from and has no foreign key (D-062) | PK `(seller_id, id)` | with the menu |

@@ -15,6 +15,7 @@ import { DAY_STOCK_MAX } from './daySalesContract';
 import { FIRST_LANGUAGES, LANGUAGES } from './languages';
 import { isHexColour } from './kitchenImages';
 import { MAX_MENU_ITEMS } from './limits';
+import { locationOf } from './pickupAddress';
 import { parseSeller } from './seller';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
 import { THEMES, type ThemeName } from './themes';
@@ -112,7 +113,13 @@ function parsePickupPoint(input: unknown): PickupPoint | null {
   const { start, end } = window;
   if (typeof start !== 'string' || typeof end !== 'string') return null;
   if (!TIME.test(start) || !TIME.test(end)) return null;
-  return { id: input['id'], place: input['place'], directions, window: { start, end } };
+  return {
+    id: input['id'],
+    place: input['place'],
+    directions,
+    window: { start, end },
+    ...locationOf(input),
+  };
 }
 
 export function parseWeek(input: unknown): Week | null {

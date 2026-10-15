@@ -1147,11 +1147,19 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
         place: input.place,
         directions: { ...input.directions },
         window: { ...input.window },
+        ...(input.address
+          ? {
+              address: input.address,
+              ...(input.lat !== undefined && input.lng !== undefined
+                ? { lat: input.lat, lng: input.lng }
+                : {}),
+            }
+          : {}),
       };
       await db
         .stmt(
-          `INSERT INTO pickup_places (seller_id, id, position, place, directions_en, directions_id, window_start, window_end)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO pickup_places (seller_id, id, position, place, directions_en, directions_id, window_start, window_end, address, lat, lng)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           sid,
           place.id,
           (counts?.top ?? -1) + 1,
@@ -1160,6 +1168,9 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
           place.directions.id,
           place.window.start,
           place.window.end,
+          place.address ?? null,
+          place.lat ?? null,
+          place.lng ?? null,
         )
         .run();
       return ok(place);
@@ -1176,15 +1187,32 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
       if (patch.place !== undefined) next.place = patch.place;
       if (patch.directions) next.directions = { ...patch.directions };
       if (patch.window) next.window = { ...patch.window };
+      if (patch.address !== undefined) {
+        // The address and its pin are replaced together (null removes them).
+        delete next.address;
+        delete next.lat;
+        delete next.lng;
+        if (patch.address) {
+          next.address = patch.address;
+          if (patch.lat != null && patch.lng != null) {
+            next.lat = patch.lat;
+            next.lng = patch.lng;
+          }
+        }
+      }
       await db
         .stmt(
-          `UPDATE pickup_places SET place = ?, directions_en = ?, directions_id = ?, window_start = ?, window_end = ?
+          `UPDATE pickup_places SET place = ?, directions_en = ?, directions_id = ?, window_start = ?, window_end = ?,
+             address = ?, lat = ?, lng = ?
            WHERE seller_id = ? AND id = ?`,
           next.place,
           next.directions.en,
           next.directions.id,
           next.window.start,
           next.window.end,
+          next.address ?? null,
+          next.lat ?? null,
+          next.lng ?? null,
           sid,
           id,
         )

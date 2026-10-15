@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { registerDraftI18n } from '../../../components/draft/i18n/register';
+import { registerPickupMapI18n } from '../../../components/pickup-map/i18n/register';
 import en from './en.json';
 import id from './id.json';
 
@@ -10,4 +11,5 @@ export function registerSettingsI18n(): void {
   i18n.addResourceBundle('en', SETTINGS_NS, en, true, true);
   i18n.addResourceBundle('id', SETTINGS_NS, id, true, true);
   registerDraftI18n();
+  registerPickupMapI18n();
 }

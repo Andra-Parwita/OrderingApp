@@ -16,6 +16,8 @@
 5. ~~"What's new" after an update~~ **No pop-up** (owner, 14 Oct): the notes stay on About.
 6. **Where the notes live:** a small file in the repo (e.g. `shared/releaseNotes.ts`, EN + ID), written as part of each release's checklist; no database, no new dependency.
 
+**Version shown (owner "A", 15 Oct):** the pinned row shows the **release name** from the newest release-notes entry ("Release 1.0.36" / "Rilis 1.0.36"), with the build code small and muted underneath ("build 1.0.43 · b2c9b3d", plan 020). Release names go +1 per deploy and match the git tags; the build number (commit count) stays for support only.
+
 ## Questions (one at a time)
 1. ~~A "What's new" card after an update?~~ **No, leave it in About** (owner, 14 Oct; D-100).
 2. ~~Who writes the notes~~ **Claude drafts 2–4 plain lines (EN / ID) per release from the handover; the owner or the builder decides what goes in and what doesn't** before the deploy (owner, 14 Oct; D-100).

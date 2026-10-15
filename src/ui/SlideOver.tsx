@@ -121,7 +121,7 @@ export function SlideOver({
 
   useEffect(() => {
     opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panel.current?.focus();
+    panel.current?.focus({ preventScroll: true });
     return () => {
       const target = latestReturn.current?.() ?? opener.current;
       if (target?.isConnected) target.focus();

@@ -255,6 +255,10 @@ export type PickupPoint = {
   directions: LocalText;
   /** Local times on the cooking date, 24h "HH:MM". */
   window: { start: string; end: string };
+  /** Plan 076: optional address and map pin of the place (public); lat and lng come together. */
+  address?: string;
+  lat?: number;
+  lng?: number;
 };
 
 export type Delivery = { available: boolean; note: LocalText };

@@ -105,9 +105,12 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 072 | ✅ | [Tick freely, saved in one go](072-tick-freely-save-in-one-go.md) | approved (2026-10-13); building |
 | 073 | ✅ | [Fewer, smarter server requests (audit)](073-request-audit.md) | draft (2026-10-13); owner to choose stages |
 | 074 | ✅ | [Live updates everywhere: push instead of checking](074-live-updates-everywhere.md) | approved (2026-10-14); building |
-| 075 | ⬜ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | mock-up approved (2026-10-15); build next round |
-| 076 | ⬜ | [Pickup points on the map](076-pickup-on-map.md) | mock-up approved (2026-10-15); build next round; **migration** |
+| 075 | ✅ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | built + gated (2026-10-15); not deployed |
+| 076 | ✅ | [Pickup points on the map](076-pickup-on-map.md) | built + gated (2026-10-15); not deployed; **migration 0024** |
 | 077 | ⬜ | [Times: stored as UTC, shown in the device's time](077-device-time.md) | draft (2026-10-15); ruling D-101; after 075 + 076; **migration** |
+| 078 | ⬜ | [Admin page: pinned header, compact left column, desktop first](078-admin-layout.md) | mock-up approved, Layout A (2026-10-15); this round, after 079 + 080 |
+| 079 | ⬜ | [Help opens inside the seller app](079-help-inside-seller-app.md) | approved (2026-10-15); this round, after the 075 + 076 gate |
+| 080 | ⬜ | [Top bars push the page down instead of covering it](080-top-bars-push-down.md) | approved (2026-10-15); this round, after 079 |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

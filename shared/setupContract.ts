@@ -11,6 +11,7 @@ import type {
 } from './domain';
 import { DAY_STOCK_MAX } from './daySalesContract';
 import { isImageSlot, type ImageSlot } from './imageSlots';
+import { parsePickupLocation } from './pickupAddress';
 import {
   CHEF_NAME_MAX,
   ITEM_DESCRIPTION_MAX,
@@ -88,7 +89,15 @@ export function parsePickupPointInput(input: unknown): PickupPointInput | null {
   if (typeof place !== 'string' || place.trim() === '' || place.trim().length > 80) return null;
   if (!directions || !window) return null;
   if (id !== undefined && (typeof id !== 'string' || id === '')) return null;
-  return { ...(id !== undefined ? { id } : {}), place: place.trim(), directions, window };
+  const location = parsePickupLocation(input);
+  if (!location) return null;
+  return {
+    ...(id !== undefined ? { id } : {}),
+    place: place.trim(),
+    directions,
+    window,
+    ...location,
+  };
 }
 
 export function parseWeekSettingsRequest(input: unknown): WeekSettingsRequest | null {

@@ -116,8 +116,8 @@ export function placeStatement(
   position: number,
 ): D1Statement {
   return db.stmt(
-    `INSERT INTO pickup_places (seller_id, id, position, place, directions_en, directions_id, window_start, window_end)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO pickup_places (seller_id, id, position, place, directions_en, directions_id, window_start, window_end, address, lat, lng)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     sellerId,
     place.id,
     position,
@@ -126,6 +126,9 @@ export function placeStatement(
     place.directions.id,
     place.window.start,
     place.window.end,
+    place.address ?? null,
+    place.address ? (place.lat ?? null) : null,
+    place.address ? (place.lng ?? null) : null,
   );
 }
 

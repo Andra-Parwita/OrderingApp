@@ -4,12 +4,20 @@ import { styled } from 'styled-components';
 import type { PickupPoint } from '../../../shared/domain';
 import { MAX_PICKUP_PLACES, PLACE_DIRECTIONS_MAX, PLACE_NAME_MAX } from '../../../shared/limits';
 import { currentSellerSlug } from '../../api/device/sellerContext';
+import { fetchMenu } from '../../api/client';
 import {
   createPickupPlace,
   deletePickupPlace,
   fetchPickupPlaces,
   updatePickupPlace,
 } from '../../api/menus';
+import {
+  AddressEditor,
+  addressValid,
+  joinAddress,
+  splitAddress,
+  type AddressParts,
+} from '../../components/pickup-map';
 import { DraftNotice, draftKey, fingerprint, useDraft } from '../../components/draft';
 import { Button, ConfirmButton, TextField } from '../../ui';
 import { SETTINGS_NS } from './i18n/register';
@@ -47,7 +55,15 @@ const Directions = styled.span`
   overflow-wrap: anywhere;
 `;
 
-type Draft = { place: string; en: string; id: string; start: string; end: string };
+// Plan 076: the optional address and pin ride in the draft as guided fields (`address`, saved as one line).
+type Draft = {
+  place: string;
+  en: string;
+  id: string;
+  start: string;
+  end: string;
+  address?: AddressParts;
+};
 const EMPTY: Draft = { place: '', en: '', id: '', start: '10:00', end: '12:00' };
 
 const toDraft = (point: PickupPoint): Draft => ({
@@ -56,7 +72,10 @@ const toDraft = (point: PickupPoint): Draft => ({
   id: point.directions.id,
   start: point.window.start,
   end: point.window.end,
+  address: splitAddress(point.address, point.lat, point.lng),
 });
+
+const NO_PARTS = splitAddress(undefined);
 
 function draftValid(d: Draft): boolean {
   return (
@@ -64,11 +83,13 @@ function draftValid(d: Draft): boolean {
     (d.en.trim() !== '' || d.id.trim() !== '') &&
     d.start !== '' &&
     d.end !== '' &&
-    d.end > d.start
+    d.end > d.start &&
+    addressValid(d.address ?? NO_PARTS)
   );
 }
 
 type EditorProps = Readonly<{
+  mapsKey: string | undefined;
   initial: Draft;
   existing: boolean;
   busy: boolean;
@@ -80,7 +101,16 @@ type EditorProps = Readonly<{
   draftId: string;
 }>;
 
-function PlaceEditor({ initial, existing, busy, error, onSave, onCancel, draftId }: EditorProps) {
+function PlaceEditor({
+  initial,
+  existing,
+  busy,
+  error,
+  onSave,
+  onCancel,
+  draftId,
+  mapsKey,
+}: EditorProps) {
   const { t } = useTranslation(SETTINGS_NS);
   const [draft, setDraft, typedDraft] = useDraft(
     draftKey(currentSellerSlug(), 'pickup', draftId),
@@ -128,6 +158,13 @@ function PlaceEditor({ initial, existing, busy, error, onSave, onCancel, draftId
         />
         <TextField label={t('pickup.to')} type="time" value={draft.end} onChange={field('end')} />
       </Two>
+      <AddressEditor
+        place={draft.place.trim() || t('pickup.place')}
+        value={draft.address ?? NO_PARTS}
+        mapsKey={mapsKey}
+        disabled={busy}
+        onChange={(address) => setDraft((d) => ({ ...d, address }))}
+      />
       {(submitted && !draftValid(draft)) || error === 'invalid' ? (
         <ErrorLine role="alert">{t('pickup.invalid')}</ErrorLine>
       ) : error ? (
@@ -163,6 +200,7 @@ export function PickupPane() {
   const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mapsKey, setMapsKey] = useState<string | undefined>(undefined);
   const [notice, setNotice] = useState<{ text: string; warn: boolean } | null>(null);
 
   const load = useCallback(async () => {
@@ -178,6 +216,10 @@ export function PickupPane() {
       if (!live) return;
       if (result.ok) setPlaces(result.data.places);
       else setLoadFailed(true);
+    });
+    // The public Maps key (not a secret) for Check on map; without it the check opens Google Maps.
+    void fetchMenu(slug).then((result) => {
+      if (live && result.ok) setMapsKey(result.data.mapsEmbedKey);
     });
     return () => {
       live = false;
@@ -198,10 +240,31 @@ export function PickupPane() {
         directions: { en: draft.en.trim(), id: draft.id.trim() },
         window: { start: draft.start, end: draft.end },
       };
+      const parts = draft.address ?? NO_PARTS;
+      const address = joinAddress(parts);
+      const pin = address !== '' && parts.lat !== null && parts.lng !== null;
       const result =
         editing === 'new'
-          ? await createPickupPlace(body, undefined, slug)
-          : await updatePickupPlace(editing ?? '', body, undefined, slug);
+          ? await createPickupPlace(
+              {
+                ...body,
+                ...(address !== '' ? { address } : {}),
+                ...(pin ? { lat: parts.lat ?? 0, lng: parts.lng ?? 0 } : {}),
+              },
+              undefined,
+              slug,
+            )
+          : await updatePickupPlace(
+              editing ?? '',
+              {
+                ...body,
+                address: address === '' ? null : address,
+                lat: pin ? parts.lat : null,
+                lng: pin ? parts.lng : null,
+              },
+              undefined,
+              slug,
+            );
       setBusy(false);
       if (result.ok) {
         setNotice(null);
@@ -278,6 +341,7 @@ export function PickupPane() {
                 onSave={save}
                 onCancel={close}
                 draftId={point.id}
+                mapsKey={mapsKey}
               />
             </Item>
           ) : (
@@ -288,6 +352,7 @@ export function PickupPane() {
                 <Directions>
                   <span>EN {point.directions.en}</span>
                   <span>ID {point.directions.id}</span>
+                  {point.address ? <span>{point.address}</span> : null}
                 </Directions>
               </Summary>
               <ButtonRow>
@@ -321,6 +386,7 @@ export function PickupPane() {
           onSave={save}
           onCancel={close}
           draftId="new"
+          mapsKey={mapsKey}
         />
       ) : left > 0 ? (
         <ButtonRow>

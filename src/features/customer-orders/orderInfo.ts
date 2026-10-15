@@ -2,6 +2,7 @@ import type { CustomerOrder, Language } from '../../../shared/domain';
 import { formatCookingDate, formatWindow } from '../../../shared/dates';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
+import { pickupMapInfo, type PickupMapInfo } from '../../components/pickup-map';
 
 /** What the order screens need from the order and the kitchen's menu (which may not be loaded). */
 export type OrderInfo = Readonly<{
@@ -19,6 +20,8 @@ export type OrderInfo = Readonly<{
   directions: string;
   /** "Sat 17 Oct, 2–5 pm". */
   whenText: string | null;
+  /** Plan 076: the pickup place's address line and map, when it has an address. */
+  pickupMap: PickupMapInfo | undefined;
 }>;
 
 export function orderInfo(
@@ -50,5 +53,6 @@ export function orderInfo(
     place: pickup?.place,
     directions: pickup ? pickText(pickup.directions, lang) : '',
     whenText: dateText && windowText ? `${dateText}, ${windowText}` : dateText,
+    pickupMap: pickupMapInfo(pickup, lang, menu?.mapsEmbedKey, dateText),
   };
 }

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShaggyBobo · Admin layout (plan 078 mock-up)</title>
+<style>
+:root{--beige:#EADBC2;--ink:#2B1D12;--bobo:#d9772b;--stage:#d9d4c6;--pill-bg:#fff6ea;--pill-border:#ead8bf}
+*{box-sizing:border-box}
+body{margin:0;background:var(--stage);color:#1C1F1A;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,summary,input,textarea,a{font:inherit;color:inherit}
+button,summary{cursor:pointer}
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:center;align-items:center;padding:12px 16px}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:4px 14px;font-size:.8125rem;font-weight:600;min-height:34px;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+.seg.rec button[data-v=A]::after{content:" (recommended)";font-weight:400}
+.top label{font-size:.8125rem;display:inline-flex;gap:6px;align-items:center;color:var(--ink)}
+.wrap{display:flex;justify-content:center;padding:0 16px 16px;overflow-x:auto}
+
+.frame{--lw:220px;--bg:#F6F2E8;--surf:#FFFDF8;--surf2:#F1EDE1;--line:#E4DED0;--text:#1C1F1A;--muted:#5D6358;--accent:#1F6B5C;--accent-tint:#E3EFEA;--danger:#9B2C2C;--bar:#2B1D12;--bar-text:#F6EBD6;--bubble:#F1E4CB;--bubble-line:#e0cda5;--hover:#EBE6D6;
+ background:var(--bg);color:var(--text);border-radius:14px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;flex-direction:column;height:760px;max-height:calc(100vh - 120px);min-height:520px;flex:none;width:1440px;position:relative}
+.frame[data-theme=dark]{--bg:#141612;--surf:#1B1E19;--surf2:#20241E;--line:#2E332B;--text:#E8E6DD;--muted:#A5AB9D;--accent:#7CC4B0;--accent-tint:#23332E;--danger:#E58B8B;--bar:#0E0F0C;--bar-text:#EADBC2;--bubble:#3A3223;--bubble-line:#54492F;--hover:#262B23}
+.frame.w1280{width:1280px}.frame.w390{width:390px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.maint{flex:none;display:none;align-items:center;gap:10px;padding:6px 12px;background:var(--bar);color:var(--bar-text);font-size:.8125rem}
+.maint.on{display:flex}
+.maint img{height:26px;width:26px;object-fit:contain;flex:none}
+.maint .bub{position:relative;flex:1;min-width:0;background:var(--bubble);border:1px solid var(--bubble-line);color:var(--text);border-radius:14px;padding:5px 12px;margin-left:8px;line-height:1.35}
+.frame:not([data-theme=dark]) .bub{color:var(--ink)}
+.maint .bub::before{content:"";position:absolute;left:-6px;top:50%;margin-top:-5px;width:10px;height:10px;background:var(--bubble);border-left:1px solid var(--bubble-line);border-bottom:1px solid var(--bubble-line);transform:rotate(45deg);border-bottom-left-radius:3px}
+.maint .x{border:0;background:transparent;color:var(--bar-text);width:32px;height:32px;border-radius:50%;font-size:1rem}
+.maint .x:hover{background:rgb(255 255 255/12%)}
+
+.hdr{flex:none;display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;background:var(--surf);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;background:var(--pill-bg);border:1px solid var(--pill-border);border-radius:10px;padding:4px 12px 4px 8px;font-weight:700;letter-spacing:-.04em;font-size:1.0625rem;color:#2a1d14;white-space:nowrap}
+.brand img{height:26px;display:block}.brand i{font-style:normal;color:var(--bobo)}
+.hdr .ttl{font-weight:600;font-size:.9375rem;color:var(--muted);flex:1;border-left:1px solid var(--line);padding-left:12px}
+.btn{border:1px solid var(--line);background:var(--surf);border-radius:8px;min-height:32px;padding:3px 12px;font-size:.8125rem;font-weight:600}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.frame[data-theme=dark] .btn.pri{color:#0E1410}
+.btn.ic{width:32px;padding:0;display:inline-grid;place-items:center}
+.btn.ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn.danger{color:var(--danger)}
+
+.body{flex:1;min-height:0;display:flex}
+.nav{width:var(--lw);flex:none;background:var(--surf2);padding:10px 8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.nav button{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 10px;border:0;border-radius:8px;background:transparent;text-align:left;font-size:.875rem;width:100%}
+.nav button:hover{background:var(--hover)}
+.nav button[aria-current=true]{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.nav .grow{flex:1}
+/* resize handle: thin, on the right edge of the left column */
+.rz{flex:none;width:9px;margin:0 -4px 0 -5px;position:relative;z-index:3;cursor:col-resize;touch-action:none;background:transparent}
+.rz::before{content:"";position:absolute;left:4px;top:0;bottom:0;width:1px;background:var(--line)}
+.rz:hover::before,.rz.drag::before{left:3px;width:3px;background:var(--accent);opacity:.7}
+.rz:focus-visible{outline:none}
+.rz:focus-visible::before{left:3px;width:3px;background:var(--accent);opacity:1}
+.badge{font-size:.6875rem;min-width:20px;text-align:center;padding:1px 6px;border-radius:999px;background:var(--line);color:var(--text);font-weight:600}
+.badge.warn{background:#F3D9C4;color:#6b2f10}
+.frame[data-theme=dark] .badge.warn{background:#5a3622;color:#F6D9C2}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--bobo)}
+.main{flex:1;min-width:0;overflow-y:auto;padding:20px 28px 32px}
+.main h2{margin:0 0 2px;font-size:1.125rem;letter-spacing:-.01em}
+.sub{margin:0 0 14px;color:var(--muted);font-size:.8125rem}
+.muted{color:var(--muted)}
+.row{display:flex;align-items:center;gap:8px}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+
+table{width:100%;border-collapse:collapse;font-size:.875rem}
+th{font-size:.6875rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:600;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:hover{background:var(--hover)}
+td b{font-weight:600}
+.tag{display:inline-block;font-size:.6875rem;padding:1px 8px;border-radius:999px;background:var(--accent-tint);color:var(--accent);font-weight:600;white-space:nowrap}
+.tag.off{background:var(--line);color:var(--muted)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.chev{color:var(--muted);width:20px}
+
+.form{display:grid;gap:12px;max-width:640px}
+.form.cols{grid-template-columns:repeat(3,1fr)}
+.f{display:flex;flex-direction:column;gap:3px;font-size:.75rem;font-weight:600}
+.f input,.f textarea{border:1px solid var(--line);background:var(--surf);color:var(--text);border-radius:8px;padding:6px 10px;min-height:36px;font-size:.875rem;font-weight:400;width:100%}
+.f textarea{resize:vertical;min-height:64px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{border:1px solid var(--line);background:var(--surf);border-radius:10px;padding:14px 16px;max-width:640px}
+.sw{display:flex;align-items:center;gap:10px}
+.sw button{width:40px;height:22px;border-radius:999px;border:1px solid var(--line);background:var(--line);position:relative;padding:0;flex:none}
+.sw button::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surf);box-shadow:0 1px 2px rgb(0 0 0/30%);transition:left .15s}
+.sw button[aria-checked=true]{background:var(--accent);border-color:var(--accent)}
+.sw button[aria-checked=true]::after{left:20px}
+.warn1{margin:8px 0 0;font-size:.8125rem;color:var(--muted)}
+.hr{border:0;border-top:1px solid var(--line);margin:18px 0;max-width:640px}
+
+.dev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.875rem}
+.dev:last-child{border-bottom:0}
+.dev .n{flex:1;min-width:0}
+.dev .n b{font-weight:600}
+.dev .last{font-size:.75rem;color:var(--muted);display:block}
+.devs.card{padding:4px 14px}
+
+.left{width:var(--lw);flex:none;background:var(--surf2);overflow-y:auto;padding:6px 12px 16px}
+.left details{border-bottom:1px solid var(--line);padding:2px 0}
+.left summary{display:flex;align-items:center;gap:8px;min-height:36px;font-weight:600;font-size:.875rem;list-style:none}
+.left summary::-webkit-details-marker{display:none}
+.left summary::before{content:"\25B8";color:var(--muted);width:10px}
+.left details[open] summary::before{content:"\25BE"}
+.left summary .badge,.left summary .dot{margin-left:auto}
+.left .in{padding:0 0 12px}
+.left .dev{padding:5px 0;font-size:.8125rem}
+.left .form{gap:8px}
+.left .two{gap:8px}
+.left .f input,.left .f textarea{min-height:32px;padding:4px 8px;font-size:.8125rem}
+.left .f textarea{min-height:48px}
+
+.w390 .rz{display:none}
+.w390 .hdr{padding:0 10px;gap:8px}
+.w390 .hdr .ttl{padding-left:8px}
+.w390 .body{flex-direction:column}
+.w390 .nav{display:none}
+.selwrap{display:none}
+.w390 .selwrap{display:block;flex:none;padding:10px 16px;background:var(--surf2);border-bottom:1px solid var(--line)}
+.selwrap select{width:100%;min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--surf);color:var(--text);padding:0 12px;font-size:1rem;font-weight:600}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.w390 .main{padding:14px 12px 24px}
+.w390 .left{width:auto;max-height:44%;border-bottom:1px solid var(--line);flex:none}
+.w390 .form.cols,.w390 .two{grid-template-columns:1fr}
+.w390 .hide-s{display:none}
+.w390 .btn.pri.big{min-height:44px}
+
+.notes{max-width:900px;margin:0 auto 32px;background:var(--pill-bg);border:1px solid var(--pill-border);border-radius:12px;padding:14px 20px;color:var(--ink);font-size:.875rem}
+.notes h3{margin:0 0 6px;font-size:.9375rem}
+.notes ul{margin:0;padding-left:18px}.notes li{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="seg rec" id="sLayout" role="group" aria-label="Layout"><button data-v="A" aria-pressed="true">Layout A</button><button data-v="B" aria-pressed="false">Layout B</button></div>
+  <div class="seg" id="sTheme" role="group" aria-label="Theme"><button data-v="light" aria-pressed="false">Light</button><button data-v="dark" aria-pressed="true">Dark</button></div>
+  <div class="seg" id="sSize" role="group" aria-label="Size"><button data-v="w1440" aria-pressed="true">Desktop 1440</button><button data-v="w1280" aria-pressed="false">Laptop 1280</button><button data-v="w390" aria-pressed="false">Phone 390</button></div>
+  <label><input type="checkbox" id="tMaint" checked> Maintenance bar</label>
+</div>
+<div class="wrap"><div class="frame" id="frame" data-theme="dark">
+  <div class="maint on" id="maint">
+    <img src="../../../public/brand/logo-icon.webp" alt="Bobo">
+    <div class="bub">Maintenance on Thu 15 Oct, 9:00 pm to 9:20 pm. The app pauses briefly. Update is coming in, for pickup map/direction.</div>
+    <button class="x" aria-label="Dismiss notice" onclick="document.getElementById('tMaint').click()">&#10005;</button>
+  </div>
+  <header class="hdr">
+    <div class="brand"><img src="../../../public/brand/logo-icon.webp" alt=""><span class="nm">Shaggy<i>Bobo</i></span></div>
+    <div class="ttl">Admin</div>
+    <button class="btn">Sign out</button>
+  </header>
+  <div class="body" id="body"></div>
+</div></div>
+
+<div class="notes">
+  <h3>Notes for the owner</h3>
+  <ul>
+    <li><b>Both:</b> the header is pinned (the maintenance bar sits above it and pushes it down), the page never scrolls on desktop, each area scrolls on its own, devices are one line with small icon buttons, and the left column can be dragged wider (or use the arrow keys on the handle; double-click resets; the width is remembered).</li>
+    <li><b>Layout A (recommended):</b> the left column is a short menu with counts and a dot for a set notice; each section gets the whole main area, so forms have room and nothing grows the column. Cost: one click to reach devices or the announcement.</li>
+    <li><b>Layout B:</b> everything stays in the left column as collapsible sections with tight forms, and Sellers is always visible. Fewer clicks, but the announce form stays cramped unless the column is widened, and the column still scrolls when several sections are open.</li>
+  </ul>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), frame=$('#frame');
+const st={layout:'A',sec:'sellers',dev:[
+ ['Covid PC',true,'Thu 15 Oct 8:53 pm'],['Computer',false,'Sat 10 Oct 10:30 pm'],['AndraPcShaggyBobo',false,'Mon 12 Oct 7:07 pm']]};
+const DEF={A:220,B:340},MIN=200,MAX=480;
+const W={A:DEF.A,B:DEF.B};
+try{for(const k of ['A','B']){const v=parseInt(localStorage.getItem('adminLeftW-'+k),10);if(v>=MIN&&v<=MAX)W[k]=v}}catch(e){}
+function saveW(){try{localStorage.setItem('adminLeftW-'+st.layout,String(W[st.layout]))}catch(e){}}
+function clearW(){try{localStorage.removeItem('adminLeftW-'+st.layout)}catch(e){}}
+function applyW(){frame.style.setProperty('--lw',W[st.layout]+'px');const r=$('.rz');if(r)r.setAttribute('aria-valuenow',W[st.layout])}
+function setW(w,persist){W[st.layout]=Math.max(MIN,Math.min(MAX,Math.round(w)));applyW();if(persist)saveW()}
+function wireHandle(){
+ const r=$('.rz');if(!r)return;
+ r.onpointerdown=e=>{r.setPointerCapture(e.pointerId);r.classList.add('drag');e.preventDefault()};
+ r.onpointermove=e=>{if(!r.classList.contains('drag'))return;setW(e.clientX-$('#body').getBoundingClientRect().left,false)};
+ const end=()=>{if(r.classList.contains('drag')){r.classList.remove('drag');saveW()}};
+ r.onpointerup=end;r.onpointercancel=end;
+ r.ondblclick=()=>{W[st.layout]=DEF[st.layout];applyW();clearW()};
+ r.onkeydown=e=>{if(e.key==='ArrowLeft'){setW(W[st.layout]-16,true);e.preventDefault()}else if(e.key==='ArrowRight'){setW(W[st.layout]+16,true);e.preventDefault()}};
+}
+const handle='<div class="rz" role="separator" aria-orientation="vertical" aria-label="Resize menu" aria-valuemin="'+MIN+'" aria-valuemax="'+MAX+'" aria-valuenow="220" tabindex="0" title="Drag to resize, double-click to reset"></div>';
+const icPen='<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg>';
+const icOut='<svg viewBox="0 0 24 24"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/></svg>';
+const sellers=[['Demo','/demo','Sat 10 Oct',0,0,'Live','Sat 24 Oct',43,'Not active yet'],['DellaVee','/dellavee','Sat 10 Oct',2,3,'Live','Sat 17 Oct',5,'Active Wed 14 Oct'],['OndeOnde','/ondeonde','Sat 10 Oct',3,3,'Not published','',0,'Active Tue 13 Oct'],['Demo2','/demo2','Sat 10 Oct',0,0,'Not published','',0,'Not active yet']];
+function sellersHtml(){
+ return '<div class="bar"><h2 style="flex:1">Sellers</h2><span class="muted hide-s" style="font-size:.75rem">Last updated 20:23 &middot; 7 minutes ago</span><button class="btn">Refresh</button><button class="btn pri">Add a seller</button></div>'+
+ '<table><thead><tr><th>Seller</th><th class="hide-s">Link</th><th class="hide-s">Created</th><th class="num">Devices</th><th class="num hide-s">People</th><th>State</th><th class="num">Orders</th><th class="hide-s">Activity</th><th class="chev"></th></tr></thead><tbody>'+
+ sellers.map(s=>'<tr><td><b>'+s[0]+'</b></td><td class="hide-s muted">'+s[1]+'</td><td class="hide-s muted">'+s[2]+'</td><td class="num">'+s[3]+'</td><td class="num hide-s">'+s[4]+'</td><td><span class="tag '+(s[5]=='Live'?'':'off')+'">'+s[5]+(s[6]?' &middot; '+s[6]:'')+'</span></td><td class="num">'+s[7]+'</td><td class="hide-s muted">'+s[8]+'</td><td class="chev">&rsaquo;</td></tr>').join('')+'</tbody></table>';
+}
+function devRows(){return st.dev.map(d=>'<div class="dev"><div class="n"><b>'+d[0]+'</b>'+(d[1]?' <span class="tag">this device</span>':'')+'<span class="last">Last used '+d[2]+'</span></div>'+
+ '<button class="btn ic" title="Rename" aria-label="Rename '+d[0]+'">'+icPen+'</button>'+(d[1]?'':'<button class="btn ic danger" title="Sign out" aria-label="Sign out '+d[0]+'">'+icOut+'</button>')+'</div>').join('');}
+function devicesHtml(){return '<div class="bar"><h2 style="flex:1">Your devices</h2><button class="btn pri">Add a device</button></div><p class="sub">Admin devices signed in with a passkey. A new device needs a one-time code.</p><div class="devs card">'+devRows()+'</div>';}
+const swTog="this.setAttribute('aria-checked',this.getAttribute('aria-checked')!=='true')";
+function announceHtml(){return '<h2>Announce &amp; maintenance</h2><p class="sub">Everyone sees a quiet notice until the update ends. Times are the cook\'s time (Melbourne).</p>'+
+ '<div class="form"><div class="form cols" style="max-width:none"><label class="f">Date<input type="text" value="15/10/2026"></label><label class="f">Start<input type="text" value="09:00 PM"></label><label class="f">Minutes<input type="text" value="20"></label></div>'+
+ '<div class="two"><label class="f">Note (English, optional)<textarea>Update is coming in, for pickup map/direction</textarea></label><label class="f">Catatan (Indonesia, opsional)<textarea></textarea></label></div>'+
+ '<div class="row"><button class="btn pri big">Announce</button><button class="btn">Clear</button></div></div>'+
+ '<hr class="hr"><div class="card"><div class="sw"><button role="switch" aria-checked="false" aria-label="Maintenance mode" onclick="'+swTog+'"></button><b>Maintenance mode</b></div><p class="warn1">When on, customers and sellers cannot use the app. Turn it on only during the update.</p></div>';}
+function settingsHtml(){return '<h2>Platform settings</h2><p class="sub">How often open screens check for a new version.</p><div class="form" style="max-width:420px"><label class="f">Backup check, customers (minutes)<input type="text" value="5"></label><label class="f">Backup check, sellers (minutes)<input type="text" value="2"></label><div><button class="btn pri big">Save</button></div></div>';}
+function problemsList(){return '<div class="dev"><div class="n"><b>Push failed for 2 customers</b><span class="last">DellaVee &middot; Wed 14 Oct 6:12 pm</span></div><button class="btn">Dismiss</button></div><div class="dev"><div class="n"><b>Image upload timed out</b><span class="last">OndeOnde &middot; Tue 13 Oct 4:40 pm</span></div><button class="btn">Dismiss</button></div>';}
+function problemsHtml(){return '<h2>Problems</h2><p class="sub">Errors reported by the apps.</p><div class="card">'+problemsList()+'</div>';}
+function render(){
+ const b=$('#body');
+ if(st.layout==='A'){
+  const items=[['sellers','Sellers','<span class="badge">4</span>'],['announce','Announce &amp; maintenance','<span class="dot" title="A notice is set"></span>'],['settings','Platform settings',''],['problems','Problems','<span class="badge warn">2</span>'],['devices','Your devices','<span class="badge">3</span>']];
+  const secs={sellers:sellersHtml,announce:announceHtml,settings:settingsHtml,problems:problemsHtml,devices:devicesHtml};
+  const lbl={sellers:'Sellers (4)',announce:'Announce &amp; maintenance •',settings:'Platform settings',problems:'Problems (2)',devices:'Your devices (3)'};
+  const sel='<div class="selwrap"><label class="vh" for="secSel">Section</label><select id="secSel">'+items.map(i=>'<option value="'+i[0]+'"'+(st.sec===i[0]?' selected':'')+'>'+lbl[i[0]]+'</option>').join('')+'</select></div>';
+  b.innerHTML=sel+'<nav class="nav" aria-label="Admin sections">'+items.map(i=>'<button aria-current="'+(st.sec===i[0])+'" data-s="'+i[0]+'"><span>'+i[1]+'</span><span class="grow"></span>'+i[2]+'</button>').join('')+'</nav>'+handle+'<main class="main">'+secs[st.sec]()+'</main>';
+  $('#secSel').onchange=e=>{st.sec=e.target.value;render();$('#secSel').focus()};
+  b.querySelectorAll('.nav button').forEach(x=>x.onclick=()=>{st.sec=x.dataset.s;render()});
+ } else {
+  b.innerHTML='<aside class="left" aria-label="Admin tools">'+
+  '<details open><summary>Your devices <span class="badge">3</span></summary><div class="in">'+devRows()+'<button class="btn" style="margin-top:6px">Add a device</button></div></details>'+
+  '<details open><summary>Announce an update <span class="dot" title="A notice is set"></span></summary><div class="in"><div class="form">'+
+   '<div class="two"><label class="f">Date<input type="text" value="15/10/2026"></label><label class="f">Start<input type="text" value="09:00 PM"></label></div>'+
+   '<label class="f">Minutes<input type="text" value="20" style="width:90px"></label>'+
+   '<label class="f">Note (EN)<textarea>Update is coming in, for pickup map/direction</textarea></label>'+
+   '<label class="f">Catatan (ID)<textarea></textarea></label>'+
+   '<div class="row"><button class="btn pri">Announce</button><button class="btn">Clear</button></div>'+
+   '<div class="sw"><button role="switch" aria-checked="false" aria-label="Maintenance mode" onclick="'+swTog+'"></button><b style="font-size:.8125rem">Maintenance mode</b></div>'+
+   '<p class="warn1" style="margin:0">When on, nobody can use the app.</p></div></div></details>'+
+  '<details><summary>Platform settings</summary><div class="in"><div class="form"><label class="f">Backup check, customers (min)<input type="text" value="5"></label><label class="f">Backup check, sellers (min)<input type="text" value="2"></label><div><button class="btn pri">Save</button></div></div></div></details>'+
+  '<details><summary>Problems <span class="badge warn">2</span></summary><div class="in">'+problemsList()+'</div></details></aside>'+handle+'<main class="main">'+sellersHtml()+'</main>';
+ }
+ applyW();wireHandle();
+}
+function seg(id,fn){const g=$(id);g.querySelectorAll('button').forEach(b=>b.onclick=()=>{g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));fn(b.dataset.v)})}
+seg('#sLayout',v=>{st.layout=v;render()});
+seg('#sTheme',v=>frame.dataset.theme=v);
+seg('#sSize',v=>{frame.classList.remove('w1280','w390');if(v!=='w1440')frame.classList.add(v)});
+$('#tMaint').onchange=e=>$('#maint').classList.toggle('on',e.target.checked);
+render();
+</script>
+</body>
+</html>

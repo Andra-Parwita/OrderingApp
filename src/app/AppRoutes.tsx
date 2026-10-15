@@ -40,6 +40,7 @@ import {
 import { MyOrdersScreen, OrderQrScreen, OrderScreen } from '../features/customer-orders';
 import { menuRequested } from '../features/customer-menu/customerSlice';
 import { CustomerSettingsScreen } from '../features/customer-settings';
+import { ABOUT_NS, AboutScreen } from '../features/seller-about';
 import { HELP_NS, HelpScreen } from '../features/seller-help';
 import { CookScreen } from '../features/seller-cook';
 import {
@@ -554,6 +555,7 @@ const PHONE_LINKS = [
   ['printOrders', '/seller/orders/print'],
   ['devices', '/seller/devices'],
   ['help', SELLER_HELP_PATH],
+  ['about', '/seller/about'],
 ] as const;
 // What the server closes to a chef (D-013); the chef does not see these.
 const CHEF_HIDDEN: ReadonlySet<string> = new Set([
@@ -607,12 +609,18 @@ function MoreRoute() {
         <nav aria-label={t('sellerNav.moreTitle')}>
           {PHONE_LINKS.filter(([key]) =>
             helper
-              ? key === 'sell' || key === 'devices' || key === 'help'
+              ? key === 'sell' || key === 'devices' || key === 'help' || key === 'about'
               : me?.role !== 'chef' || key !== 'sell',
           ).map(([key, to]) => (
             <ListRow
               key={key}
-              primary={key === 'help' ? t('nav', { ns: HELP_NS }) : t(`sellerNav.${key}`)}
+              primary={
+                key === 'help'
+                  ? t('nav', { ns: HELP_NS })
+                  : key === 'about'
+                    ? t('nav', { ns: ABOUT_NS })
+                    : t(`sellerNav.${key}`)
+              }
               trailing="›"
               onClick={() =>
                 void navigate(key === 'dishes' && me?.role === 'chef' ? '/seller/menu' : to)
@@ -853,6 +861,11 @@ export function AppRoutes() {
               }
             />
             <Route path="more" element={<MoreRoute />} />
+            {/* Plan 075: About ShaggyBobo and the release notes; every role. */}
+            <Route
+              path="about"
+              element={<AboutScreen logo={<BrandLogo />} wideQuery={DESKTOP_QUERY} />}
+            />
             <Route
               path="week"
               element={

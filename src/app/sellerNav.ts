@@ -15,10 +15,11 @@ export const NAV_IDS = [
   'menu',
   'settings',
   'help',
+  'about',
 ] as const;
 export type NavId = (typeof NAV_IDS)[number];
 
-const HELPER_NAV_IDS: ReadonlyArray<NavId> = ['orders', 'handover', 'sell', 'help'];
+const HELPER_NAV_IDS: ReadonlyArray<NavId> = ['orders', 'handover', 'sell', 'help', 'about'];
 
 export const PHONE_NAV_IDS = ['orders', 'handover', 'more'] as const;
 export type PhoneNavId = (typeof PHONE_NAV_IDS)[number];
@@ -35,6 +36,8 @@ export const HREF: Readonly<Record<NavId | 'more', string>> = {
   more: '/seller/more',
   // Plan 058: the public Help page, outside the seller layout; every role sees it, right under Settings.
   help: SELLER_HELP_PATH,
+  // Plan 075: About ShaggyBobo and what's new, for every role, right under Help.
+  about: '/seller/about',
 };
 
 /** The Home icon is not in the icon kit (src/ui): the rail draws this path itself. */
@@ -42,6 +45,7 @@ export const HOME_ICON_PATH = 'M4 11l8-7 8 7M6 9.5V20h12V9.5M10 20v-5h4v5';
 
 export const ICON: Readonly<Record<Exclude<NavId, 'home'> | 'more', IconName>> = {
   help: 'help',
+  about: 'info',
   orders: 'list',
   kitchen: 'pot',
   handover: 'box',
@@ -80,6 +84,7 @@ const HELPER_PATHS = [
   '/seller/sell',
   '/seller/more',
   '/seller/devices',
+  '/seller/about',
 ];
 
 export function helperMayOpen(pathname: string): boolean {
@@ -107,6 +112,7 @@ export function activeNav(pathname: string): NavId {
     return 'handover';
   }
   if (under(pathname, '/seller/sell')) return 'sell';
+  if (under(pathname, '/seller/about')) return 'about';
   // Share-menu belongs to making and sharing a menu.
   if (under(pathname, '/seller/menu') || under(pathname, '/seller/share')) return 'menu';
   if (SETTINGS_PATHS.some((path) => under(pathname, path))) return 'settings';
@@ -158,6 +164,8 @@ export function isTaskScreen(pathname: string): boolean {
  */
 export function fixesPage(pathname: string, tablet: boolean): boolean {
   if (pathname === '/seller/orders') return true;
+  // Plan 075: About pins its hero and version; only the about card scrolls.
+  if (pathname === '/seller/about') return true;
   if (pathname === '/seller') return !tablet;
   return tablet && (under(pathname, '/seller/new') || pathname.startsWith('/seller/orders/'));
 }

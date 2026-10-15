@@ -9,7 +9,7 @@ export const USED_SQL = `SELECT l.item_id AS item_id, SUM(l.qty) AS used
 
 /** The places the menu uses with the time that applies to it: this menu's override, else the usual one. */
 export const MENU_PLACES_SQL = `SELECT p.id AS id, p.place AS place, p.directions_en AS directions_en,
-    p.directions_id AS directions_id,
+    p.directions_id AS directions_id, p.address AS address, p.lat AS lat, p.lng AS lng,
     COALESCE(m.window_start, p.window_start) AS window_start,
     COALESCE(m.window_end, p.window_end) AS window_end
   FROM menu_pickup_places m JOIN pickup_places p ON p.seller_id = m.seller_id AND p.id = m.place_id
