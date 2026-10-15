@@ -24,6 +24,8 @@
 4. ~~How far back~~ **From the next release (1.0.36)** (owner, 14 Oct).
 
 #### About text (approved)
+The heading ends with the **ShaggyBobo icon** (`logo-icon`) instead of 👋 (owner, 15 Oct). The text sits in one box (bubble, card or book page: owner to pick) with a **smaller font**; the hero, logo and version stay **pinned** and only the text box scrolls, with a **brand-coloured scrollbar**; a small **What's new ›** button right of the version opens the releases panel.
+
 **EN**
 
 > **Hey, we're ShaggyBobo 👋**
