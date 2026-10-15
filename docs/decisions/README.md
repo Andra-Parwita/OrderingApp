@@ -622,7 +622,8 @@ Format for each entry:
 ## D-101 · Times: UTC stored, the device's time shown; kitchens are in Adelaide (2026-10-15; owner)
 **Ruling:** "A": the kitchens are all in Adelaide for now (the Melbourne clock in the code was a prototype assumption, never a ruling). "Save everything as UTC and device time is what we will show. Seller or admin sets 9 am, it is 9 am on their time." Each kitchen gets a time zone (default `Australia/Adelaide`) for the jobs that have no device (auto-finish, default cut-off). Plan 077.
 **Trade-off:** a customer in another zone sees converted times (with a small "your time" label); in return nobody does time-zone sums in their head.
-**Revisit when:** a kitchen opens outside Adelaide (then the owner picks its zone in Settings).
+**No control to change it** (owner, 16 Oct: "no need to change seller timezone"): a kitchen keeps the zone it was created with (the admin's device), existing kitchens Adelaide.
+**Revisit when:** a kitchen moves to another zone.
 
 ## D-102 · Time code: the browser's built-in tools, no date library (2026-10-16; owner)
 **Ruling:** "A": keep `shared/zone.ts` (about 100 lines on the browser's built-in `Intl`), no js-joda or Temporal add-on for now. The owner has used js-joda in an app used around the world; it was compared (separate kinds of value for a clock time and an exact moment, full summer-time rules) against its size (about 75–150 KB with time-zone data) and its bundled zone rules going stale.

@@ -25,7 +25,7 @@
 **Deploy impact (expected):** ⚠️ one add-only migration; menus already published keep their stored instants (cut-offs were saved as Melbourne instants: an open menu's cut-off shown in Adelaide time will read 30 min earlier, e.g. 20:30 instead of 21:00; check live menus at deploy and re-save if needed).
 
 ## Build decisions (coordinator, 16 Oct)
-- **Migration 0025** (add-only): `kitchens.time_zone TEXT NOT NULL DEFAULT 'Australia/Adelaide'`. A new kitchen takes the zone of the admin's device that creates it (validated IANA name, else the default). No "change zone" control this round (it would need a mock-up); the kitchen's zone only matters for server jobs and for viewers whose device differs.
+- **Migration 0025** (add-only): `kitchens.time_zone TEXT NOT NULL DEFAULT 'Australia/Adelaide'`. A new kitchen takes the zone of the admin's device that creates it (validated IANA name, else the default). No control to change a kitchen's zone (owner, 16 Oct: "no need to change seller timezone"); the kitchen's zone only matters for server jobs and for viewers whose device differs.
 - **One helper** `shared/zone.ts` (device zone, default zone, wall clock ↔ instant in any zone). The 3 hard-coded zones go. Functions the Worker uses take the zone **as a required argument** (the Worker's own zone is UTC); screen formatting defaults to the device zone.
 - **Pickup windows** stay stored as the kitchen's wall-clock `HH:MM` on the cooking date; screens convert them to the device's time (identity when the zones match, which is everyone today).
 - **"your time" label:** a small muted word next to times on the customer menu and order pages, only when the device's zone differs from the kitchen's. Text only, no mock-up.
