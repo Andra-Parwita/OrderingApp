@@ -19,8 +19,40 @@
 ## Questions (one at a time)
 1. ~~A "What's new" card after an update?~~ **No, leave it in About** (owner, 14 Oct; D-100).
 2. ~~Who writes the notes~~ **Claude drafts 2–4 plain lines (EN / ID) per release from the handover; the owner or the builder decides what goes in and what doesn't** before the deploy (owner, 14 Oct; D-100).
-3. ~~The about text~~ **The owner writes it later** (14 Oct); the page is built with a placeholder the owner fills in.
+3. ~~The about text~~ **Approved draft (owner, 15 Oct: "fun, light, young, modern"; "HomeMade" instead of "family-made"; ID casual "kamu / nggak"):**
+   - Full text below ("About text (approved)"). No "we don't store your IP" line while the log limiter keeps a hashed IP (handover cleanup item).
 4. ~~How far back~~ **From the next release (1.0.36)** (owner, 14 Oct).
+
+#### About text (approved)
+**EN**
+
+> **Hey, we're ShaggyBobo 👋**
+> A tiny HomeMade app for home cooks who feed their people. Drop your menu, share one link, and watch the orders roll in, in English or Bahasa. You do the cooking magic. We'll handle the chaos. 🍲
+>
+> **Your customers' stuff stays safe 🔒**
+> - **No sign-ups. Ever.** A first name is all it takes to order. No passwords to forget.
+> - **Phone numbers stay off the cloud.** Chats happen on WhatsApp, between you and them.
+> - **Addresses? Locked up tight.** Encrypted, seen only by your team, and **auto-deleted a day after the menu ends**. Poof. ✨
+> - **Zero ads. Zero selling data.** We don't touch money and we don't sell anyone's info. Not now, not ever.
+> - **Notifications are opt-in.** Customers choose, and can switch them off any time.
+> - **Your kitchen, your crew.** Only people you invite get in, each with a passkey on their own device.
+>
+> HomeMade with love (and a lot of tasting). 💛
+
+**ID**
+
+> **Halo, kami ShaggyBobo 👋**
+> Aplikasi mungil HomeMade untuk para juru masak rumahan. Pasang menu, bagikan satu tautan, dan pesanan pun berdatangan, dalam bahasa Inggris atau Indonesia. Kamu fokus masak yang enak-enak, sisanya biar kami yang beresin. 🍲
+>
+> **Data pelangganmu aman 🔒**
+> - **Nggak perlu daftar.** Cukup nama depan untuk pesan. Nggak ada kata sandi yang bisa lupa.
+> - **Nomor HP nggak disimpan di cloud.** Ngobrolnya lewat WhatsApp, antara kamu dan mereka.
+> - **Alamat? Dikunci rapat.** Terenkripsi, cuma timmu yang bisa lihat, dan **terhapus otomatis sehari setelah menu selesai**. Hilang. ✨
+> - **Tanpa iklan. Tanpa jual data.** Kami nggak pegang uang dan nggak jual info siapa pun. Dulu, sekarang, selamanya.
+> - **Notifikasi? Terserah pelanggan.** Mau nyala atau mati, bebas kapan saja.
+> - **Dapurmu, krumu.** Cuma yang kamu undang yang bisa masuk, masing-masing pakai passkey di perangkatnya sendiri.
+>
+> HomeMade dengan cinta (dan banyak icip-icip). 💛
 
 ## Stages (after the questions)
 | # | stage |

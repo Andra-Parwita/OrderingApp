@@ -614,6 +614,6 @@ Format for each entry:
 **Revisit when:** the owner wants end-to-end encryption (the server unable to read), or longer keeping.
 
 ## D-100 · Seller app About page with release notes (2026-10-14; owner)
-**Ruling:** plan 075. An **About** page in the seller app only (all roles) with the ShaggyBobo branding, the version and the releases. **No "What's new" pop-up** after an update: the notes stay on About (owner: "no, leave it in About"). **The owner writes the about text later.** The release list **starts from the next release** (1.0.36); earlier releases are not written up. Claude drafts each release's notes (2–4 plain lines, EN / ID) from the handover; **the owner or the builder decides what is included** before the deploy.
+**Ruling:** plan 075. An **About** page in the seller app only (all roles) with the ShaggyBobo branding, the version and the releases. **No "What's new" pop-up** after an update: the notes stay on About (owner: "no, leave it in About"). **About text: the owner's approved draft (15 Oct; fun and light, "HomeMade"; plan 075).** The release list **starts from the next release** (1.0.36); earlier releases are not written up. Claude drafts each release's notes (2–4 plain lines, EN / ID) from the handover; **the owner or the builder decides what is included** before the deploy.
 **Trade-off:** sellers only see changes if they open About; in return nothing interrupts their work.
 **Revisit when:** sellers miss changes that matter to them.
