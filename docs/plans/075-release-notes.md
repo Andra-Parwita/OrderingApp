@@ -10,7 +10,8 @@
 
 ## Proposal (to be confirmed question by question)
 1. **About in the seller menu:** a new item **About** (left menu on tablet/computer, under Help; phone: More → About), for every role.
-2. **The About page:** the ShaggyBobo brand panel (scene, mascot, logo) reused from `BrandPanel`, the version (`appVersion`), a few lines "about ShaggyBobo" (who makes it, what it is for, the privacy promise in one line), and a link to Help.
+2. **Livelier with Lottie** (owner, 15 Oct: "for About I want to use maybe better animation or background with Lotties"): the About page gets a Lottie animation or animated background instead of only the still brand panel; shares the Lottie choice (source, library: a new dependency, owner's OK) with the customer app round.
+3. **The About page:** the ShaggyBobo brand panel (scene, mascot, logo) reused from `BrandPanel`, the version (`appVersion`), a few lines "about ShaggyBobo" (who makes it, what it is for, the privacy promise in one line), and a link to Help.
 3. **Releases on the About page:** newest first, each with its version, date and 2–4 plain lines (EN / ID); older releases folded.
 4. ~~"What's new" after an update~~ **No pop-up** (owner, 14 Oct): the notes stay on About.
 5. **Where the notes live:** a small file in the repo (e.g. `shared/releaseNotes.ts`, EN + ID), written as part of each release's checklist; no database, no new dependency.
