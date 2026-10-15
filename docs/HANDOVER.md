@@ -48,7 +48,7 @@ Nothing is built after 1.0.35 yet. **Next time you deploy:** first Claude drafts
 1. Read this file.
 2. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
 3. **Plan 075 About ShaggyBobo + release notes** ([plan](plans/075-release-notes.md)): **mock-up approved 15 Oct** (`uxDesign/seller/mockups/075-seller-about.html`): pinned market scene + CSS walking mascot (no Lottie, no new dependency), logo, version + What's new › (slide-in panel, last 5 releases), the approved fun about text in a card that scrolls alone, light / dark. Next: build, after the owner's go.
-4. **Plan 076 pickup points on the map** ([plan](plans/076-pickup-on-map.md)): answered 15 Oct (public on the menu; address optional; address line + View on map + Directions); mock-up next. **The customer app Lottie round** started 15 Oct: question 1 (where the animations come from: A your files in temp/, B made from the mascot parts, C a mix) is open; no Lottie files in temp/ yet.
+4. **Plan 076 pickup points on the map** ([plan](plans/076-pickup-on-map.md)): answered 15 Oct (public on the menu; address optional; address line + View on map + Directions; My orders too; **additive only**: existing screens incl. the QR code unchanged); **mock-up approved 15 Oct** (`uxDesign/seller/mockups/076-pickup-on-map.html`). Next: build, after the owner's go. **Lottie:** the owner made their own (calm version chosen for About, files in `uxDesign/seller/mockups/lottie/`); the customer app Lottie round is still to plan.
 5. Then the other open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie).
 
 ## Known and not done
@@ -63,4 +63,4 @@ Nothing is built after 1.0.35 yet. **Next time you deploy:** first Claude drafts
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then ask whether to build plan 075 (About; mock-up approved) and plan 076 (pickup on the map; mock-up still to make), then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.
+> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then ask whether to build plan 075 (About; mock-up + calm Lottie approved) and plan 076 (pickup on the map; mock-up approved), then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.

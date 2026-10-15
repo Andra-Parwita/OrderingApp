@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShaggyBobo · Pickup on the map (mock-up)</title>
+<style>
+:root{
+  --beige:#EADBC2; --ink:#2B1D12; --bobo:#d9772b;
+  --bg:#F6F2E8; --surf:#FFFDF8; --surf2:#F4F0E6; --line:#E4DED0;
+  --text:#1C1F1A; --muted:#5D6358; --accent:#1F6B5C; --accent-tint:#E3EFEA; --onacc:#fff;
+  --pill-bg:#fff6ea; --pill-border:#ead8bf; --stage:#d9d4c6; --edge:#7F857A;
+  --m-land:#EAE6DA; --m-block:#E0DBCB; --m-park:#D5E2CB; --m-road:#FFFDF8; --m-main:#F6E2B8; --m-water:#CFE0E6; --m-line:#CFC8B4;
+}
+:root[data-theme=dark]{--bg:#121411;--surf:#181A16;--surf2:#20231E;--line:#2A2E27;--text:#F1EEE6;--muted:#A9AFA3;
+  --accent:#93C590;--accent-tint:rgba(140,192,138,.14);--onacc:#10200f;--pill-bg:#2A2117;--pill-border:#3D3022;--bobo:#E8954F;--edge:#7F857A;
+  --m-land:#23261F;--m-block:#2B2F27;--m-park:#2A3827;--m-road:#3A3E35;--m-main:#51472F;--m-water:#24363D;--m-line:#3A3F36}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--stage);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:root[data-theme=dark] body{background:#0B0C0A}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+button,summary,a{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+/* mock-up chrome */
+.top{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;padding:14px 16px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:6px 14px;font-size:.8125rem;font-weight:600;min-height:36px;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+:root[data-theme=dark] .seg{border-color:#6B5A44}
+:root[data-theme=dark] .seg button{color:#EADBC2}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:#EADBC2;color:#2B1D12}
+.sub{display:flex;justify-content:center;padding:0 16px 12px}
+.frame-wrap{display:flex;justify-content:center;padding:0 16px 24px;overflow-x:auto}
+.frame{position:relative;background:var(--bg);border-radius:18px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;height:780px;max-height:calc(100vh - 150px);min-height:600px;flex:none}
+.frame.phone{width:390px;flex-direction:column}
+.frame.tablet{width:1024px}
+
+/* seller rail */
+.rail{display:none;width:200px;flex:none;background:var(--surf2);border-right:1px solid var(--line);padding:16px 10px;flex-direction:column;gap:2px}
+.tablet .rail.on{display:flex}
+.rail .rb{padding:0 6px 14px;font-weight:700;letter-spacing:-.04em}
+.rail .rb i{font-style:normal;color:var(--bobo)}
+.rail a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9375rem}
+.rail a[aria-current=page]{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.rail svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* app column */
+.col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.hdr{flex:none;display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;background:var(--surf);border-bottom:1px solid var(--line)}
+.hdr h1{margin:0;font-size:1.0625rem;font-weight:700;letter-spacing:-.01em;flex:1}
+.tablet .hdr{padding-left:24px}
+.back,.x{border:0;background:transparent;width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tablet .col>.hdr .back{display:none}
+.crumb{font-size:.75rem;color:var(--muted)}
+.tablet .crumb{display:none}
+.scroll{flex:1;min-height:0;overflow-y:auto}
+.page{max-width:720px;margin:0 auto;padding:4px 16px 28px}
+.tablet .page{padding:8px 24px 32px}
+.tabbar{display:none;flex:none;height:56px;background:var(--surf);border-top:1px solid var(--line)}
+.phone .tabbar.on{display:flex}
+.tabbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.6875rem;color:var(--muted);gap:2px}
+.tabbar div.on{color:var(--accent);font-weight:600}
+.tabbar svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* content */
+h2.sec{margin:20px 0 8px;font-size:1.0625rem;letter-spacing:-.01em}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.muted{color:var(--muted)}
+.small{font-size:.8125rem}
+.hl{border:0;border-top:1px solid var(--line);margin:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--accent);font-weight:600;font-size:.9375rem;text-decoration:none}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+.btn.danger{color:#A93724}
+:root[data-theme=dark] .btn.danger{color:#EE8B78}
+.btn svg.i{width:18px;height:18px}
+.btn.sm{min-height:36px;padding:0 12px;font-size:.8125rem;border-radius:999px}
+.btn.sm svg.i{width:16px;height:16px}
+.tag{font-size:.6875rem;font-weight:600;color:var(--accent);background:var(--accent-tint);border-radius:999px;padding:1px 8px;white-space:nowrap}
+
+/* pickup place rows (customer) */
+.pp{padding:12px 0;border-bottom:1px solid var(--line)}
+.pp:last-child{border-bottom:0}
+.pp .nm{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pp .nm b{font-size:1rem}
+.pp .tm{color:var(--muted);font-size:.875rem}
+.pp .dir{margin:2px 0 0;font-size:.8125rem;color:var(--muted)}
+.addr{display:flex;gap:8px;align-items:flex-start;margin-top:6px;font-size:.875rem}
+.addr svg.i{width:16px;height:16px;margin-top:3px;flex:none;color:var(--muted)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.pp.sel{background:var(--accent-tint);margin:0 -16px;padding-left:16px;padding-right:16px}
+
+/* dishes */
+.dish{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9375rem}
+.dish:last-child{border-bottom:0}
+.dish small{display:block;color:var(--muted);font-size:.8125rem}
+.pill{display:inline-block;font-size:.75rem;font-weight:600;border-radius:999px;padding:2px 10px;background:var(--pill-bg);border:1px solid var(--pill-border);color:var(--text)}
+.ok{width:48px;height:48px;border-radius:50%;background:var(--accent-tint);color:var(--accent);display:grid;place-items:center}
+.ok svg.i{width:26px;height:26px}
+.ordno{font-size:1.5rem;font-weight:700;letter-spacing:.04em}
+
+/* seller form */
+.field{margin:0 0 12px}
+.field label{display:block;font-size:.8125rem;font-weight:600;margin-bottom:4px}
+.field input,.field textarea{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--edge);border-radius:8px;background:var(--surf);color:var(--text);font:inherit;font-size:.9375rem}
+.field textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.addrrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:12px}
+.addrrow .lbl{font-weight:600;font-size:.8125rem;flex:1 1 100%}
+.gform{border:1px solid var(--line);background:var(--surf2);border-radius:12px;padding:14px;margin-bottom:12px}
+.gform h3{margin:0 0 10px;font-size:.9375rem}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px}
+.plist .pl{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9375rem}
+.plist .pl:last-child{border-bottom:0}
+.plist .pl span.t{color:var(--muted);font-size:.8125rem}
+.plist .pl .g{flex:1}
+.plist .pl.cur{font-weight:600}
+.saved{display:flex;gap:10px;align-items:flex-start}
+.saved svg.i{margin-top:2px;color:var(--accent);flex:none}
+
+/* map placeholder */
+.map{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--m-land);aspect-ratio:16/10}
+.map svg{display:block;width:100%;height:100%}
+.map .lab{position:absolute;left:8px;top:8px;background:var(--surf);border:1px solid var(--line);border-radius:999px;padding:1px 10px;font-size:.6875rem;color:var(--muted)}
+.map.tall{aspect-ratio:4/3}
+
+/* panel */
+.backdrop{position:absolute;inset:0;background:rgb(28 20 10/40%);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
+.backdrop.on{opacity:1;pointer-events:auto}
+.panel{position:absolute;top:0;right:0;bottom:0;width:100%;background:var(--surf);z-index:11;display:flex;flex-direction:column;transform:translateX(100%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s;box-shadow:-8px 0 28px rgb(40 30 15/16%)}
+.panel.on{transform:none;visibility:visible;transition:transform .25s ease}
+.tablet .panel{width:420px}
+.phd{flex:none;display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;border-bottom:1px solid var(--line)}
+.phd h2{margin:0;flex:1;font-size:1.0625rem}
+.tablet .pback{display:none}
+.phone .x{display:none}
+.pbody{flex:1;overflow-y:auto;padding:14px 16px 24px}
+.pbody .btn{width:100%;margin-top:14px}
+.pbody h3{margin:16px 0 4px;font-size:.8125rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.pbody p{margin:0}
+@media (prefers-reduced-motion:reduce){.panel,.panel.on,.backdrop{transition:none}}
+
+.notes{max-width:1024px;margin:0 auto 40px;padding:0 16px}
+.notes div{background:var(--surf);border:1px solid #cfc8b4;border-left:3px solid var(--bobo);border-radius:0 10px 10px 0;padding:14px 18px;font-size:.875rem}
+:root[data-theme=dark] .notes div{border-color:#3A3F36;border-left-color:var(--bobo)}
+.notes h3{margin:0 0 6px;font-size:.9375rem}
+.notes ul{margin:0;padding-left:20px}
+@media print{.top,.sub,.notes{display:none}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="seg" role="group" aria-label="Screen" id="scrseg"></div>
+  <div class="seg" role="group" aria-label="Device"><button type="button" data-dev="phone" aria-pressed="true">Phone</button><button type="button" data-dev="tablet" aria-pressed="false">Tablet</button></div>
+  <div class="seg" role="group" aria-label="Theme"><button type="button" data-th="light" aria-pressed="true">Light</button><button type="button" data-th="dark" aria-pressed="false">Dark</button></div>
+  <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="id" aria-pressed="false">ID</button></div>
+</div>
+<div class="sub"><div class="seg" role="group" id="subseg" aria-label="Seller state"></div></div>
+<div class="frame-wrap"><div class="frame phone" id="frame"></div></div>
+<div class="notes" id="notes"></div>
+
+<script>
+const PL=[
+ {id:'gw',n:{en:'Glen Waverley',id:'Glen Waverley'},t:'14:00–17:00',dir:{en:'At the front door, ring the bell.',id:'Di pintu depan, tekan bel.'},
+  a:'12 Kingsway, Glen Waverley VIC 3150',note:{en:'Blue gate, park on the street.',id:'Gerbang biru, parkir di pinggir jalan.'}},
+ {id:'cl',n:{en:'Clayton',id:'Clayton'},t:'11:00–13:00',dir:{en:'In front of the bakery.',id:'Di depan toko roti.'},
+  a:'45 Clayton Rd, Clayton VIC 3168',note:{en:'White van, hazard lights on.',id:'Van putih, lampu hazard menyala.'}},
+ {id:'mg',n:{en:'Mulgrave',id:'Mulgrave'},t:'09:30–10:30',dir:{en:'Meet at the car park entrance.',id:'Bertemu di pintu masuk tempat parkir.'},a:null}
+];
+const I={
+ en:{scr:['Seller · Pickup places','Customer · Menu','Customer · Order placed','Customer · Order page','Customer · My orders'],
+  sub:['No address','Adding address','Address saved'],
+  nav:['Home','Orders','Kitchen','Hand over','Sell','Menu','Settings','Help','About'],tabs:['Home','Orders','Sell','Menu','More'],
+  st:'Settings',stPath:'Settings → Pickup places',pplaces:'Pickup places',edit:'Edit',editing:'Edit pickup place',
+  pname:'Place name',pdirs:'Directions (English)',pdiri:'Directions (Indonesian)',ptime:'Time window',from:'From',to:'To',
+  addrL:'Address (optional)',addAddr:'Add address',noAddr:'No address yet. Customers see the place name and directions only.',
+  gh:'Address for this pickup place',street:'Street',suburb:'Suburb',post:'Postcode',findEn:'Notes for finding it (English)',findId:'Notes for finding it (Indonesian)',
+  check:'Check on map',loc:'Use my location',locHelp:'Drops the pin where you are standing now. Do this when you are at the pickup spot; your location is only used to place the pin.',
+  pinSet:'Pin set',saveA:'Save address',cancel:'Cancel',change:'Change',remove:'Remove address',pub:'Everyone who opens the menu sees this address.',
+  savePl:'Save place',
+  menuT:'Onde Onde kitchen',menuS:'Saturday 24 Oct · cooking day',dishes:[['Nasi kuning set','Rice, chicken, sambal','$14'],['Lemper ayam (4)','Sticky rice rolls','$10'],['Onde-onde (6)','Sweet mung bean balls','$8']],
+  menuH:'This Saturday\'s menu',pick:'Pickup',pickOr:'Or choose delivery to your address.',view:'View on map',dirs:'Directions',
+  mapT:'Pickup map',finding:'How to find it',addr:'Address',timeL:'Pickup time',map:'Map preview',
+  placed:'Order placed',ordNo:'Your order number',wa:'Send this number to the seller on WhatsApp.',waBtn:'Open WhatsApp',sum:'Your order',chosen:'Your pickup place',
+  orderT:'Order A7K2',status:'Ready for pickup',items:'Items',
+  mo:'My orders',moc:['Saturday 24 Oct · Pickup','Saturday 17 Oct · Delivery'],moS:['Confirmed','Delivered'],delAddr:'Delivered to your address',tabsC:['Menu','My orders','Help'],
+  nH:'Notes for the owner',
+  n:['Shown: seller Settings → Pickup places (no address, adding address with Check on map and Use my location, address saved with Change / Remove); the customer Menu, Order placed, Order page and My orders, each with View on map and Directions. Use the switch at the top.',
+     'The map here is a drawn placeholder labelled "Map preview". The real app uses the Google Maps Embed iframe, loaded only when View on map is tapped (or Check on map in the seller form). Nothing from Google loads in this mock-up.',
+     'The address is optional. A place without one looks as today: no buttons, no map.',
+     'The address and pin are public on the menu, confirmation, order page and My orders (your answer B). They are not encrypted; customer delivery addresses still are.',
+     'View on map opens a panel: slides in from the right on tablet and computer, full screen on phone (back arrow and X). Directions opens Google Maps in a new tab (here it is just a link).',
+     'Sample data only: Onde Onde kitchen and the three places are made up.']},
+ id:{scr:['Penjual · Tempat pengambilan','Pelanggan · Menu','Pelanggan · Pesanan dibuat','Pelanggan · Halaman pesanan','Pelanggan · Pesanan saya'],
+  sub:['Tanpa alamat','Menambah alamat','Alamat tersimpan'],
+  nav:['Beranda','Pesanan','Dapur','Serah terima','Jual','Menu','Pengaturan','Bantuan','Tentang'],tabs:['Beranda','Pesanan','Jual','Menu','Lainnya'],
+  st:'Pengaturan',stPath:'Pengaturan → Tempat pengambilan',pplaces:'Tempat pengambilan',edit:'Ubah',editing:'Ubah tempat pengambilan',
+  pname:'Nama tempat',pdirs:'Petunjuk (Inggris)',pdiri:'Petunjuk (Indonesia)',ptime:'Jam pengambilan',from:'Dari',to:'Sampai',
+  addrL:'Alamat (opsional)',addAddr:'Tambah alamat',noAddr:'Belum ada alamat. Pelanggan hanya melihat nama tempat dan petunjuk.',
+  gh:'Alamat tempat pengambilan ini',street:'Jalan',suburb:'Kecamatan / suburb',post:'Kode pos',findEn:'Petunjuk menemukan tempat (Inggris)',findId:'Petunjuk menemukan tempat (Indonesia)',
+  check:'Cek di peta',loc:'Pakai lokasi saya',locHelp:'Menaruh pin di tempat Anda berdiri sekarang. Lakukan saat Anda di lokasi pengambilan; lokasi hanya dipakai untuk menaruh pin.',
+  pinSet:'Pin terpasang',saveA:'Simpan alamat',cancel:'Batal',change:'Ubah',remove:'Hapus alamat',pub:'Semua orang yang membuka menu bisa melihat alamat ini.',
+  savePl:'Simpan tempat',
+  menuT:'Dapur Onde Onde',menuS:'Sabtu 24 Okt · hari memasak',dishes:[['Paket nasi kuning','Nasi, ayam, sambal','$14'],['Lemper ayam (4)','Lemper ketan isi ayam','$10'],['Onde-onde (6)','Bola kacang hijau manis','$8']],
+  menuH:'Menu Sabtu ini',pick:'Ambil sendiri',pickOr:'Atau pilih antar ke alamat Anda.',view:'Lihat di peta',dirs:'Petunjuk arah',
+  mapT:'Peta pengambilan',finding:'Cara menemukannya',addr:'Alamat',timeL:'Jam pengambilan',map:'Pratinjau peta',
+  placed:'Pesanan dibuat',ordNo:'Nomor pesanan Anda',wa:'Kirim nomor ini ke penjual lewat WhatsApp.',waBtn:'Buka WhatsApp',sum:'Pesanan Anda',chosen:'Tempat pengambilan Anda',
+  orderT:'Pesanan A7K2',status:'Siap diambil',items:'Item',
+  mo:'Pesanan saya',moc:['Sabtu 24 Okt · Ambil sendiri','Sabtu 17 Okt · Antar'],moS:['Dikonfirmasi','Terkirim'],delAddr:'Diantar ke alamat Anda',tabsC:['Menu','Pesanan saya','Bantuan'],
+  nH:'Catatan untuk pemilik',
+  n:['Yang ditampilkan: Pengaturan penjual → Tempat pengambilan (tanpa alamat, menambah alamat dengan Cek di peta dan Pakai lokasi saya, alamat tersimpan dengan Ubah / Hapus); lalu Menu, Pesanan dibuat, Halaman pesanan dan Pesanan saya milik pelanggan, masing-masing dengan Lihat di peta dan Petunjuk arah. Gunakan pilihan di atas.',
+     'Peta di sini hanya gambar pengganti berlabel "Pratinjau peta". Aplikasi asli memakai iframe Google Maps Embed, dimuat hanya saat Lihat di peta diketuk (atau Cek di peta di formulir penjual). Tidak ada yang dimuat dari Google di mock-up ini.',
+     'Alamat bersifat opsional. Tempat tanpa alamat tampil seperti sekarang: tanpa tombol, tanpa peta.',
+     'Alamat dan pin bersifat publik di menu, konfirmasi, halaman pesanan dan Pesanan saya (jawaban B Anda). Tidak dienkripsi; alamat antar pelanggan tetap dienkripsi.',
+     'Lihat di peta membuka panel: geser dari kanan di tablet dan komputer, layar penuh di ponsel (panah kembali dan X). Petunjuk arah membuka Google Maps di tab baru (di sini hanya tautan).',
+     'Hanya data contoh: Dapur Onde Onde dan tiga tempatnya karangan.']}
+};
+const P={
+ pin:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+ route:'<path d="M3 11l18-8-8 18-2-8z"/>',
+ back:'<path d="M15 5l-7 7 7 7"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ chk:'<path d="M5 12l5 5 9-10"/>',loc:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>',
+ map:'<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14"/>'
+};
+const I2=k=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+P[k]+'</svg>';
+const NAVI=['<path d="M3 11l9-7 9 7v9H3z"/>','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/>','<path d="M4 11h16v8H4zM8 11V7a4 4 0 018 0v4"/>','<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/>','<path d="M3 6h18l-2 9H5zM8 20h.01M16 20h.01"/>','<path d="M5 4h14v16H5zM9 8h6M9 12h6"/>','<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>','<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"/>','<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>'];
+const nic=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+NAVI[n]+'</svg>';
+
+let scr=0,dev='phone',lang='en',sub=0,pinOn=false,panelOn=false,lastTrig=null;
+const $=s=>document.querySelector(s);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dirUrl=a=>'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(a);
+
+function mapSvg(t,pin){
+  return '<div class="map'+(pin==='tall'?' tall':'')+'" role="img" aria-label="'+esc(t.map)+'"><svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+
+   '<rect width="320" height="200" fill="var(--m-land)"/>'+
+   '<rect x="188" y="12" width="120" height="62" rx="6" fill="var(--m-park)"/>'+
+   '<path d="M-10 168 Q60 150 120 176 T330 160 V210 H-10z" fill="var(--m-water)"/>'+
+   '<g fill="var(--m-block)"><rect x="14" y="14" width="70" height="50" rx="3"/><rect x="96" y="14" width="76" height="50" rx="3"/><rect x="14" y="84" width="70" height="52" rx="3"/><rect x="96" y="84" width="76" height="52" rx="3"/><rect x="188" y="88" width="120" height="48" rx="3"/></g>'+
+   '<g stroke="var(--m-road)" stroke-width="7" fill="none" stroke-linecap="round"><path d="M-5 74H325"/><path d="M90 -5V160"/><path d="M180 -5V160"/><path d="M-5 144H325"/></g>'+
+   '<path d="M-5 74H325" stroke="var(--m-main)" stroke-width="5" fill="none"/>'+
+   '<g stroke="var(--m-line)" stroke-width=".8" fill="none"><path d="M-5 70.5H325M-5 77.5H325M-5 140.5H325M-5 147.5H325M86.5 -5V160M93.5 -5V160M176.5 -5V160M183.5 -5V160"/></g>'+
+   '<g transform="translate(180 74)"><ellipse cx="0" cy="1" rx="9" ry="3" fill="rgb(0 0 0/.22)"/><path d="M0 0C-12-14-14-20-14-26a14 14 0 0 1 28 0c0 6-2 12-14 26z" fill="#C0392B" stroke="#fff" stroke-width="1.5"/><circle cx="0" cy="-26" r="5" fill="#fff"/></g>'+
+   '</svg><span class="lab">'+t.map+'</span></div>';
+}
+
+function pRow(p,t,opts){
+  opts=opts||{};
+  const nm=p.n[lang];
+  return '<div class="pp'+(opts.sel?' sel':'')+'"><div class="nm"><b>'+nm+'</b><span class="tm mono">'+p.t+'</span>'+(opts.sel?'<span class="tag">'+t.chosen+'</span>':'')+'</div>'+
+   (opts.noDir?'':'<p class="dir">'+p.dir[lang]+'</p>')+
+   (p.a?'<div class="addr">'+I2('pin')+'<span>'+p.a+'</span></div><div class="acts"><button type="button" class="btn sm" data-map="'+p.id+'" aria-haspopup="dialog">'+I2('map')+t.view+'</button><a class="btn sm" href="'+dirUrl(p.a)+'" target="_blank" rel="noopener">'+I2('route')+t.dirs+'</a></div>':'')+'</div>';
+}
+
+function hdr(title,back,crumb){
+  return '<div class="hdr">'+(back?'<button class="back" type="button" aria-label="Back">'+I2('back')+'</button>':'')+'<h1>'+title+'</h1>'+(crumb?'<span class="crumb">'+crumb+'</span>':'')+'</div>';
+}
+
+function seller(t){
+  const mg=PL[2],gw=PL[0];
+  const list='<h2 class="sec" style="margin-top:12px">'+t.pplaces+'</h2><div class="card plist">'+
+    PL.map(p=>{const cur=p.id==='mg';return '<div class="pl'+(cur?' cur':'')+'"><div class="g">'+p.n[lang]+' <span class="t mono">'+p.t+'</span>'+(p.a?'<div class="t">'+p.a+'</div>':'')+'</div>'+(p.a&&!cur?'<span class="tag">'+I2('pin').replace('class="i"','class="i" style="width:12px;height:12px;vertical-align:-1px"')+'</span>':'')+'<button type="button" class="btn sm">'+t.edit+'</button></div>'}).join('')+'</div>';
+  let addrBlock='';
+  const a='12 Kingsway, Glen Waverley VIC 3150'; // address used for the edited place in states 1/2 sample
+  const sa={a:'88 Springvale Rd, Mulgrave VIC 3170',note:{en:'Gate at the side of the car park.',id:'Gerbang di samping tempat parkir.'}};
+  if(sub===0){
+    addrBlock='<div class="addrrow"><span class="lbl">'+t.addrL+'</span><span class="muted small" style="flex:1 1 180px">'+t.noAddr+'</span><button type="button" class="btn" data-sub="1">'+t.addAddr+'</button></div>';
+  }else if(sub===1){
+    addrBlock='<div class="addrrow" style="border-bottom:0;margin-bottom:0;padding-bottom:0"><span class="lbl">'+t.addrL+'</span></div>'+
+     '<div class="gform"><h3>'+t.gh+'</h3>'+
+     '<div class="field"><label for="f1">'+t.street+'</label><input id="f1" autocomplete="off" value="88 Springvale Rd"></div>'+
+     '<div class="row3"><div class="field"><label for="f2">'+t.suburb+'</label><input id="f2" value="Mulgrave"></div><div class="field"><label for="f3">'+t.post+'</label><input id="f3" inputmode="numeric" value="3170"></div></div>'+
+     '<div class="field"><label for="f4">'+t.findEn+'</label><textarea id="f4">'+sa.note.en+'</textarea></div>'+
+     '<div class="field"><label for="f5">'+t.findId+'</label><textarea id="f5">'+sa.note.id+'</textarea></div>'+
+     '<div class="btnrow"><button type="button" class="btn" data-check>'+I2('map')+t.check+'</button><button type="button" class="btn" data-locate>'+I2('loc')+t.loc+'</button></div>'+
+     '<p class="muted small" style="margin:0 0 10px">'+t.locHelp+'</p>'+
+     (pinOn?mapSvg(t)+'<p class="small" style="margin:6px 0 0"><span class="tag">'+t.pinSet+'</span> <span class="mono muted">-37.9262, 145.1551</span></p>':'')+
+     '<p class="muted small" style="margin:10px 0">'+t.pub+'</p>'+
+     '<div class="btnrow"><button type="button" class="btn pri" data-sub="2">'+t.saveA+'</button><button type="button" class="btn" data-sub="0">'+t.cancel+'</button></div></div>';
+  }else{
+    addrBlock='<div class="addrrow" style="align-items:flex-start"><span class="lbl">'+t.addrL+'</span><div class="saved" style="flex:1 1 200px">'+I2('pin')+'<div><div>'+sa.a+'</div><div class="muted small">'+sa.note[lang]+'</div><div style="margin-top:4px"><span class="tag">'+t.pinSet+'</span></div></div></div>'+
+     '<div class="btnrow" style="margin:0"><button type="button" class="btn sm" data-sub="1">'+t.change+'</button><button type="button" class="btn sm danger" data-sub="0">'+t.remove+'</button></div></div>';
+  }
+  const ed='<h2 class="sec">'+t.editing+'</h2><div class="card">'+
+    '<div class="field"><label for="e1">'+t.pname+'</label><input id="e1" value="Mulgrave"></div>'+
+    '<div class="field"><label for="e2">'+t.pdirs+'</label><input id="e2" value="'+mg.dir.en+'"></div>'+
+    '<div class="field"><label for="e3">'+t.pdiri+'</label><input id="e3" value="'+mg.dir.id+'"></div>'+
+    '<div class="row2"><div class="field"><label for="e4">'+t.from+'</label><input id="e4" value="09:30"></div><div class="field"><label for="e5">'+t.to+'</label><input id="e5" value="10:30"></div></div>'+
+    addrBlock+
+    '<button type="button" class="btn pri">'+t.savePl+'</button></div>';
+  return [hdr(t.pplaces,true,t.stPath),'<div class="scroll"><div class="page">'+list+ed+'</div></div>'];
+}
+
+function custMenu(t){
+  const body='<h2 class="sec" style="margin-top:12px">'+t.menuH+'</h2><div class="muted small" style="margin-top:-6px">'+t.menuS+'</div>'+
+   '<div class="card" style="margin-top:10px;padding-top:4px;padding-bottom:4px">'+t.dishes.map(d=>'<div class="dish"><div>'+d[0]+'<small>'+d[1]+'</small></div><b>'+d[2]+'</b></div>').join('')+'</div>'+
+   '<h2 class="sec">'+t.pick+'</h2><div class="card" style="padding-top:2px;padding-bottom:2px">'+PL.map(p=>pRow(p,t)).join('')+'</div><p class="muted small">'+t.pickOr+'</p>';
+  return [hdr(t.menuT,false),'<div class="scroll"><div class="page">'+body+'</div></div>'];
+}
+function custPlaced(t){
+  const body='<div style="display:flex;gap:14px;align-items:center;margin:16px 0 8px"><div class="ok">'+I2('chk')+'</div><div><b style="font-size:1.125rem">'+t.placed+'</b><div class="muted small">'+t.ordNo+'</div></div></div>'+
+   '<div class="card"><div class="ordno mono">A7K2</div><p class="muted small" style="margin:4px 0 12px">'+t.wa+'</p><a class="btn pri" href="#" data-noop>'+t.waBtn+'</a></div>'+
+   '<h2 class="sec">'+t.chosen+'</h2><div class="card" style="padding-top:2px;padding-bottom:2px">'+pRow(PL[0],t,{noDir:false})+'</div>'+
+   '<h2 class="sec">'+t.sum+'</h2><div class="card" style="padding-top:4px;padding-bottom:4px">'+t.dishes.slice(0,2).map(d=>'<div class="dish"><div>'+d[0]+'</div><b>'+d[2]+'</b></div>').join('')+'</div>';
+  return [hdr(t.placed,false),'<div class="scroll"><div class="page">'+body+'</div></div>'];
+}
+function custOrder(t){
+  const body='<div style="display:flex;align-items:center;gap:10px;margin:14px 0 4px"><span class="ordno mono">A7K2</span><span class="tag">'+t.status+'</span></div>'+
+   '<div class="muted small">'+t.menuS+'</div>'+
+   '<h2 class="sec">'+t.chosen+'</h2><div class="card" style="padding-top:2px;padding-bottom:2px">'+pRow(PL[1],t)+'</div>'+
+   '<h2 class="sec">'+t.items+'</h2><div class="card" style="padding-top:4px;padding-bottom:4px">'+t.dishes.map(d=>'<div class="dish"><div>'+d[0]+'<small>'+d[1]+'</small></div><b>'+d[2]+'</b></div>').join('')+'</div>';
+  return [hdr(t.orderT,true),'<div class="scroll"><div class="page">'+body+'</div></div>'];
+}
+function custOrders(t){
+  const c1='<div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>'+t.moc[0]+'</b><span class="tag">'+t.moS[0]+'</span></div><div class="muted small mono">A7K2 · $32</div><div style="margin-top:8px;border-top:1px solid var(--line);padding-top:4px">'+pRow(PL[0],t,{noDir:true})+'</div></div>';
+  const c2='<div class="card" style="margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>'+t.moc[1]+'</b><span class="tag">'+t.moS[1]+'</span></div><div class="muted small mono">K9QP · $24</div><div class="muted small" style="margin-top:8px">'+t.delAddr+'</div></div>';
+  return [hdr(t.mo,false),'<div class="scroll"><div class="page">'+c1+c2+'</div></div>'];
+}
+
+function render(){
+  const t=I[lang];
+  document.documentElement.lang=lang;
+  const [h,body]=[seller,custMenu,custPlaced,custOrder,custOrders][scr](t);
+  const isSeller=scr===0;
+  const rail='<nav class="rail'+(isSeller?' on':'')+'" aria-label="Seller"><div class="rb">Shaggy<i>Bobo</i></div>'+t.nav.map((n,i)=>'<a href="#" '+(i===6?'aria-current="page"':'')+'>'+nic(i)+n+'</a>').join('')+'</nav>';
+  const tabs=isSeller?'<nav class="tabbar on" aria-label="Tabs">'+t.tabs.map((x,i)=>'<div class="'+(i===4?'on':'')+'">'+nic([0,1,4,5,6][i])+x+'</div>').join('')+'</nav>':
+    (scr===1||scr===4?'<nav class="tabbar on" aria-label="Tabs">'+t.tabsC.map((x,i)=>'<div class="'+((scr===1?i===0:i===1)?'on':'')+'">'+nic([5,1,7][i])+x+'</div>').join('')+'</nav>':'');
+  const pn='<div class="backdrop" id="bd"></div><aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle" inert><div class="phd"><button class="back pback" type="button" data-close aria-label="Back">'+I2('back')+'</button><h2 id="ptitle"></h2><button class="x" type="button" data-close aria-label="Close">'+I2('x')+'</button></div><div class="pbody" id="pbody"></div></aside>';
+  const f=$('#frame');f.className='frame '+dev;panelOn=false;
+  f.innerHTML=rail+'<div class="col">'+h+body+tabs+'</div>'+pn;
+  $('#scrseg').innerHTML=t.scr.map((s,i)=>'<button type="button" data-scr="'+i+'" aria-pressed="'+(i===scr)+'">'+s+'</button>').join('');
+  const ss=$('#subseg');ss.parentElement.style.display=isSeller?'flex':'none';
+  ss.innerHTML=t.sub.map((s,i)=>'<button type="button" data-sub="'+i+'" aria-pressed="'+(i===sub)+'">'+s+'</button>').join('');
+  $('#notes').innerHTML='<div><h3>'+t.nH+'</h3><ul>'+t.n.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
+  document.querySelectorAll('[data-dev]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dev===dev));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
+}
+
+function openMap(id,trig){
+  const t=I[lang],p=PL.find(x=>x.id===id);lastTrig=trig;
+  $('#ptitle').textContent=p.n[lang];
+  $('#pbody').innerHTML=mapSvg(t,'tall')+
+   '<h3>'+t.addr+'</h3><p>'+p.a+'</p><h3>'+t.timeL+'</h3><p class="mono">'+p.t+'</p><h3>'+t.finding+'</h3><p>'+p.note[lang]+'</p>'+
+   '<a class="btn pri" href="'+dirUrl(p.a)+'" target="_blank" rel="noopener">'+I2('route')+t.dirs+'</a>';
+  panelOn=true;$('#panel').classList.add('on');$('#bd').classList.add('on');$('#panel').inert=false;
+  const pb=$('.panel .pback'),x=$('.panel .x');(pb.offsetParent?pb:x).focus({preventScroll:true});
+}
+function closeMap(){
+  panelOn=false;$('#panel').classList.remove('on');$('#bd').classList.remove('on');$('#panel').inert=true;
+  if(lastTrig&&document.contains(lastTrig))lastTrig.focus({preventScroll:true});
+}
+
+document.addEventListener('click',e=>{
+  const g=s=>e.target.closest(s);
+  let b;
+  if(b=g('[data-scr]')){scr=+b.dataset.scr;render();return}
+  if(b=g('[data-dev]')){dev=b.dataset.dev;render();return}
+  if(b=g('[data-lang]')){lang=b.dataset.lang;render();return}
+  if(b=g('[data-th]')){setTheme(b.dataset.th);return}
+  if(b=g('[data-sub]')){sub=+b.dataset.sub;if(sub!==1)pinOn=false;render();
+    const f=sub===1?$('#f1'):document.querySelector('.addrrow .btn');if(f)f.focus({preventScroll:true});return}
+  if(g('[data-check]')||g('[data-locate]')){pinOn=true;const loc=!!g('[data-locate]');render();
+    const nb=document.querySelector(loc?'[data-locate]':'[data-check]');if(nb)nb.focus({preventScroll:true});return}
+  if(b=g('[data-map]')){openMap(b.dataset.map,b);return}
+  if(g('[data-close]')||e.target.id==='bd'){closeMap();return}
+  if(g('.rail a,.tabbar,[data-noop]'))e.preventDefault();
+});
+function setTheme(m){document.documentElement.dataset.theme=m;document.querySelectorAll('[data-th]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.th===m))}
+document.addEventListener('keydown',e=>{
+  if(!panelOn)return;
+  if(e.key==='Escape')closeMap();
+  if(e.key==='Tab'){const els=[...document.querySelectorAll('#panel button,#panel a')].filter(x=>x.offsetParent);if(!els.length)return;const a=els[0],z=els[els.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
+});
+const q=new URLSearchParams(location.search);
+setTheme(q.get('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+if(q.get('lang')==='id')lang='id';
+if(q.get('dev')==='tablet')dev='tablet';
+if(q.get('scr'))scr=Math.min(4,Math.max(0,+q.get('scr')||0));
+if(q.get('sub'))sub=Math.min(2,Math.max(0,+q.get('sub')||0));
+render();
+</script>
+</body>
+</html>
