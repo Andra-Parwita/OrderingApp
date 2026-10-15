@@ -161,7 +161,9 @@
       "rename": "Ubah nama",
       "renameField": "Nama baru untuk {{name}}",
       "saveName": "Simpan nama",
-      "cancel": "Batal"
+      "cancel": "Batal",
+      "renameDevice": "Ubah nama {{name}}",
+      "signOutDevice": "Keluarkan {{name}}"
     },
     "problems": {
       "title": "Masalah ({{count}})",
@@ -218,6 +220,17 @@
       "save": "Simpan",
       "saved": "Tersimpan.",
       "bad": "Isi {{min}} sampai {{max}} menit."
+    },
+    "nav": {
+      "label": "Bagian admin",
+      "pick": "Bagian",
+      "sellers": "Penjual",
+      "announce": "Pengumuman & pemeliharaan",
+      "settings": "Pengaturan platform",
+      "problems": "Masalah",
+      "devices": "Perangkat Anda",
+      "noticeSet": "pengumuman diatur atau pemeliharaan aktif",
+      "resize": "Ubah lebar menu"
     }
   }
 }

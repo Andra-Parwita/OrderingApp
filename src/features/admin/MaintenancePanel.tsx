@@ -2,6 +2,7 @@
 // Admin only (the page is). The notice reaches every screen; "on" shows the Updating screen and the
 // server refuses changes.
 import { useEffect, useState, type FormEvent } from 'react';
+import { styled } from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import type { Language } from '../../../shared/domain';
 import { cutoffAtFor, formatDayTime, localDate } from '../../../shared/dates';
@@ -11,10 +12,22 @@ import { Button, ConfirmButton, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
 import { failureText, FormSection, Message, Muted, Row, Section, Sub } from './shared';
 
+const Notes = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: ${({ theme }) => theme.spacing.lg};
+  align-self: stretch;
+`;
+const Wide = styled(FormSection)`
+  align-self: stretch;
+  max-width: 48rem;
+`;
+
 const MINUTE = 60_000;
 const LENGTH_MAX = 240;
 
-export function MaintenancePanel() {
+/** `onActive` tells the menu whether a notice is set or maintenance is on (plan 078). */
+export function MaintenancePanel({ onActive }: Readonly<{ onActive?: (active: boolean) => void }>) {
   const { t, i18n } = useTranslation(ADMIN_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [state, setState] = useState<MaintenanceState | null>(null);
@@ -34,6 +47,10 @@ export function MaintenancePanel() {
       live = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (state) onActive?.(state.maintenance || state.notice !== null);
+  }, [state, onActive]);
 
   async function save(patch: Parameters<typeof saveMaintenance>[0]) {
     setProblem(null);
@@ -62,7 +79,7 @@ export function MaintenancePanel() {
     <Section>
       <Sub>{t('home.maintenance.title')}</Sub>
       <Muted>{t('home.maintenance.text')}</Muted>
-      <FormSection onSubmit={announce}>
+      <Wide onSubmit={announce}>
         <Row>
           <TextField
             label={t('home.maintenance.date')}
@@ -86,18 +103,20 @@ export function MaintenancePanel() {
             onChange={(event) => setMinutes(event.target.value)}
           />
         </Row>
-        <TextField
-          label={t('home.maintenance.noteEn')}
-          value={noteEn}
-          maxLength={NOTICE_NOTE_MAX}
-          onChange={(event) => setNoteEn(event.target.value)}
-        />
-        <TextField
-          label={t('home.maintenance.noteId')}
-          value={noteId}
-          maxLength={NOTICE_NOTE_MAX}
-          onChange={(event) => setNoteId(event.target.value)}
-        />
+        <Notes>
+          <TextField
+            label={t('home.maintenance.noteEn')}
+            value={noteEn}
+            maxLength={NOTICE_NOTE_MAX}
+            onChange={(event) => setNoteEn(event.target.value)}
+          />
+          <TextField
+            label={t('home.maintenance.noteId')}
+            value={noteId}
+            maxLength={NOTICE_NOTE_MAX}
+            onChange={(event) => setNoteId(event.target.value)}
+          />
+        </Notes>
         <Row>
           <Button type="submit">{t('home.maintenance.announce')}</Button>
           {notice ? (
@@ -106,7 +125,7 @@ export function MaintenancePanel() {
             </Button>
           ) : null}
         </Row>
-      </FormSection>
+      </Wide>
       <Muted>
         {notice
           ? t('home.maintenance.announced', {

@@ -39,7 +39,9 @@ beforeEach(async () => {
   browserPasskeys.reset();
   await i18n.changeLanguage('en');
 });
+const openSection = (id: string) => window.history.replaceState(null, '', `/?s=${id}`);
 afterEach(() => {
+  window.history.replaceState(null, '', '/');
   vi.restoreAllMocks();
 });
 
@@ -53,6 +55,7 @@ const renderThemed = (ui: React.ReactNode) => render(<AppThemeProvider>{ui}</App
 describe('Maintenance panel (plan 046)', () => {
   it('announces an update, turns maintenance on and off, and clears the announcement', async () => {
     await signInAsAdmin();
+    openSection('announce');
     renderThemed(<AdminHomeScreen />);
     expect(
       await screen.findByText('Maintenance is off. The app works as usual.'),
@@ -91,6 +94,7 @@ describe('Maintenance panel (plan 046)', () => {
 describe('Backup check panel (plan 074)', () => {
   it('saves the two minutes, refuses a value out of 1 to 30, and the status carries them', async () => {
     await signInAsAdmin();
+    openSection('settings');
     renderThemed(<AdminHomeScreen />);
     const customers = await screen.findByLabelText('Backup check, customers');
     const sellers = screen.getByLabelText('Backup check, sellers');

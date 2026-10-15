@@ -14,7 +14,7 @@ test('admin announces an update, switches maintenance on, and the Updating scree
   await page.goto('/?harness=admin&screen=signin');
   await page.getByRole('button', { name: 'Sign in with passkey' }).click();
   await expect(page.getByRole('list', { name: 'Sellers' })).toBeVisible();
-  await page.goto('/admin');
+  await page.goto('/admin?s=announce');
   await page.setViewportSize({ width: 1180, height: 820 });
 
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
@@ -24,7 +24,7 @@ test('admin announces an update, switches maintenance on, and the Updating scree
     await page.getByLabel('Start').fill('22:00');
     await page.getByLabel('Minutes').fill('15');
     await page.getByLabel(/Note \(English/).fill('Short database upgrade.');
-    await page.getByRole('button', { name: 'Announce' }).click();
+    await page.getByRole('button', { name: 'Announce', exact: true }).click();
     await expect(page.getByText(/Announced: /)).toBeVisible();
 
     // Reload so the bar reads the new announcement; it sits above the page.

@@ -165,7 +165,9 @@
       "rename": "Rename",
       "renameField": "New name for {{name}}",
       "saveName": "Save name",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "renameDevice": "Rename {{name}}",
+      "signOutDevice": "Sign out {{name}}"
     },
     "problems": {
       "title": "Problems ({{count}})",
@@ -224,6 +226,17 @@
       "save": "Save",
       "saved": "Saved.",
       "bad": "Enter {{min}} to {{max}} minutes."
+    },
+    "nav": {
+      "label": "Admin sections",
+      "pick": "Section",
+      "sellers": "Sellers",
+      "announce": "Announce & maintenance",
+      "settings": "Platform settings",
+      "problems": "Problems",
+      "devices": "Your devices",
+      "noticeSet": "notice set or maintenance on",
+      "resize": "Resize menu"
     }
   }
 }

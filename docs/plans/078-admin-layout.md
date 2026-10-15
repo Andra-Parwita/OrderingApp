@@ -1,6 +1,6 @@
 # 078 · Admin page: pinned header, compact left column, desktop first
 
-**Status:** **mock-up approved** (owner "A", 2026-10-15): Layout A, [`uxDesign/seller/mockups/078-admin-layout.html`](../../uxDesign/seller/mockups/078-admin-layout.html) (open through a local server). This round, after 079 and 080. Owner (screenshot `temp/bug/img_7.png`, live admin): "the vertical scroll is on the full page so the banner or sign-up on top is not shown, because we have more admin devices and announcement; for admin we should make the left column more concise and not so big; mostly admin will work on PC desktop".
+**Status:** ✅ built + gated (2026-10-15), not deployed. Deviations: the Maintenance on/off keeps its existing buttons (not a switch); signing out another device needs a second tap; all sections stay mounted (counts known up front). Mock-up approved (owner "A"): Layout A, [`uxDesign/seller/mockups/078-admin-layout.html`](../../uxDesign/seller/mockups/078-admin-layout.html) (open through a local server). This round, after 079 and 080. Owner (screenshot `temp/bug/img_7.png`, live admin): "the vertical scroll is on the full page so the banner or sign-up on top is not shown, because we have more admin devices and announcement; for admin we should make the left column more concise and not so big; mostly admin will work on PC desktop".
 **Goal:** on a desktop the admin page keeps its ShaggyBobo header in view, and the left column is short and dense, so devices, the announcement and settings don't push everything down.
 
 ## Today (live 1.0.35)

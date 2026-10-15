@@ -84,7 +84,9 @@ beforeEach(async () => {
   browserPasskeys.reset();
   await i18n.changeLanguage('en');
 });
+const openSection = (id: string) => window.history.replaceState(null, '', `/?s=${id}`);
 afterEach(() => {
+  window.history.replaceState(null, '', '/');
   vi.restoreAllMocks();
 });
 
@@ -208,6 +210,7 @@ describe('AdminHomeScreen problems', () => {
 
   it('shows an empty state when nothing was reported', async () => {
     await signInAsAdmin();
+    openSection('problems');
     renderThemed(<AdminHomeScreen />);
     const toggle = await screen.findByRole('button', { name: 'Problems (0)' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
@@ -219,6 +222,7 @@ describe('AdminHomeScreen problems', () => {
     await signInAsAdmin();
     await mockStores.log.record([problem('first one')]);
     await mockStores.log.record([problem('second one')]);
+    openSection('problems');
     renderThemed(<AdminHomeScreen />);
     fireEvent.click(await screen.findByRole('button', { name: 'Problems (2)' }));
     const list = await screen.findByRole('list', { name: 'Recent problems' });
@@ -236,6 +240,7 @@ describe('AdminHomeScreen problems', () => {
     await signInAsAdmin();
     for (let n = 1; n <= 52; n += 1) await mockStores.log.record([problem(`seller ${String(n)}`)]);
     await mockStores.log.record([{ ...problem('from customer'), app: 'customer', slug: null }]);
+    openSection('problems');
     renderThemed(<AdminHomeScreen />);
     fireEvent.click(await screen.findByRole('button', { name: 'Problems (53)' }));
     const list = await screen.findByRole('list', { name: 'Recent problems' });
@@ -625,12 +630,13 @@ describe('AdminSetupScreen with a 6-digit code (plan 027)', () => {
 describe('AdminHomeScreen two panels (plan 038)', () => {
   it('shows the admin devices and Add a device with no panel open', async () => {
     await signInAsAdmin();
+    openSection('devices');
     renderThemed(<AdminHomeScreen />);
     expect(await screen.findByRole('list', { name: 'Your admin devices' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add a device' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
-    const sellers = await screen.findByRole('list', { name: 'Sellers' });
-    for (const row of within(sellers).getAllByRole('button')) {
+    const sellers = await screen.findByRole('list', { name: 'Sellers', hidden: true });
+    for (const row of within(sellers).getAllByRole('button', { hidden: true })) {
       expect(row).not.toHaveAttribute('aria-current', 'true');
     }
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -705,10 +711,11 @@ describe('AdminHomeScreen row summary (plan 038 stage 3)', () => {
 describe('AdminHomeScreen own devices (plan 027)', () => {
   it('renames this device and shows the new name', async () => {
     await signInAsAdmin();
+    openSection('devices');
     renderThemed(<AdminHomeScreen />);
     const list = await screen.findByRole('list', { name: 'Your admin devices' });
     expect(within(list).getByText('Test PC')).toBeInTheDocument();
-    fireEvent.click(within(list).getByRole('button', { name: 'Rename' }));
+    fireEvent.click(within(list).getByRole('button', { name: 'Rename Test PC' }));
     fireEvent.change(screen.getByLabelText('New name for Test PC'), {
       target: { value: 'Andra iPad' },
     });

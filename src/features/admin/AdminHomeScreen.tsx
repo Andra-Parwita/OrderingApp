@@ -5,29 +5,24 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import type { AdminSeller, DeviceView, SellerSummary } from '../../../shared/authContract';
+import type { AdminSeller, SellerSummary } from '../../../shared/authContract';
 import type { Language } from '../../../shared/domain';
-import { formatCookingDate, formatDay, formatDayTime } from '../../../shared/dates';
-import { DEVICE_NAME_MAX, SELLER_NAME_MAX } from '../../../shared/authContract';
+import { formatCookingDate, formatDay } from '../../../shared/dates';
+import { SELLER_NAME_MAX } from '../../../shared/authContract';
 import { SLUG_MAX } from '../../../shared/seller';
-import {
-  createDeviceCode,
-  createSeller,
-  fetchMyDevices,
-  fetchSellers,
-  renameMyDevice,
-  signOut,
-  signOutDevice,
-} from '../../api/auth';
+import { createSeller, fetchSellers, signOut } from '../../api/auth';
 import type { ApiFailure } from '../../api/http';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { brandColour, brandSize } from '../../theme/brandTokens';
-import { Button, ConfirmButton, Icon, SlideOver, TextField } from '../../ui';
+import { Button, Icon, SlideOver, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
+import { DevicesPanel } from './DevicesPanel';
 import { BackupMinutesPanel } from './BackupMinutesPanel';
 import { MaintenancePanel } from './MaintenancePanel';
 import { ProblemsPanel } from './ProblemsPanel';
@@ -35,19 +30,10 @@ import { RefreshBar } from './RefreshBar';
 import { PauseLabel, SellerDetails } from './SellerDetails';
 import { DraftNotice, draftKey, useDraft } from '../../components/draft';
 import { slugProblem } from './slug';
-import {
-  DeviceItem,
-  DeviceList,
-  failureText,
-  FormSection,
-  Message,
-  Muted,
-  Row,
-  Section,
-  SmallHeading,
-  Sub,
-} from './shared';
-import { SCREEN_HEIGHT, TOP_BARS } from '../../theme/screen';
+import { failureText, FormSection, HiddenText, Message, Muted, SmallHeading, Sub } from './shared';
+import { SECTIONS, useSection, type Section } from './useSection';
+import { COLUMN_MAX, COLUMN_MIN, COLUMN_STEP, useColumnWidth } from './useColumnWidth';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 export type AdminHomeScreenProps = Readonly<{
   /** The admin ended this session. */
@@ -63,10 +49,12 @@ export type AdminHomeScreenProps = Readonly<{
   images?: (sellerId: string) => ReactNode;
 }>;
 
+// Plan 078: the page itself never scrolls; the brand bar stays and the two panes scroll alone.
 const Shell = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: ${SCREEN_HEIGHT};
+  height: ${SCREEN_HEIGHT};
+  overflow: hidden;
   background: ${({ theme }) => theme.c.bg};
   color: ${({ theme }) => theme.c.text};
 `;
@@ -120,51 +108,172 @@ const PlainBar = styled.header`
   background: ${brandColour.beige};
   color: ${brandColour.ink};
 `;
-// Two panels: the admin's own things on a raised surface, the sellers on the page background,
-// a hairline between them (beside on a tablet, between on a phone).
-const Layout = styled.main`
+// Below the bar: a short menu on the left (a dropdown on a phone) and the chosen section.
+const Body = styled.div`
   flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-content: start;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   width: 100%;
 
   @media (min-width: 48rem) {
-    grid-template-columns: 22rem minmax(0, 1fr);
-    align-content: stretch;
+    flex-direction: row;
   }
 `;
-const AdminPanel = styled.aside`
+const Nav = styled.nav`
+  display: flex;
+  flex: none;
   box-sizing: border-box;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.sm};
+  overflow-y: auto;
+  background: ${({ theme }) => theme.c.surf2};
+
+  @media (max-width: 47.99rem) {
+    display: none;
+  }
+`;
+const NavButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-height: 2.25rem;
+  padding: 0 ${({ theme }) => theme.spacing.md};
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: ${({ theme }) => theme.type.size.base};
+  text-align: start;
+  cursor: pointer;
+  &:hover {
+    background: ${({ theme }) => theme.c.surf};
+  }
+  &[aria-current='true'] {
+    background: ${({ theme }) => theme.c.tint};
+    color: ${({ theme }) => theme.c.atext};
+    font-weight: ${({ theme }) => theme.type.weight.strong};
+  }
+  &:focus-visible {
+    outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.atext};
+    outline-offset: -${({ theme }) => theme.border.focus};
+  }
+`;
+const NavLabel = styled.span`
+  flex: 1;
   min-width: 0;
-  padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
-  background: ${({ theme }) => theme.c.surf};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme }) => theme.colour.hairline};
+`;
+const Badge = styled.span`
+  min-width: 1.25rem;
+  padding: 0 ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.radius.pill};
+  background: ${({ theme }) => theme.c.line};
+  color: ${({ theme }) => theme.c.text};
+  font-size: ${({ theme }) => theme.type.size.sm};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+  text-align: center;
+`;
+const Dot = styled.span`
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.c.warn};
+`;
+// The drag handle on the menu's right edge: a thin hairline, thicker on hover and focus.
+const Handle = styled.div`
+  display: block;
+  flex: none;
+  position: relative;
+  z-index: 1;
+  width: 0.5rem;
+  margin: 0 -0.25rem;
+  cursor: col-resize;
+  touch-action: none;
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0.25rem;
+    width: ${({ theme }) => theme.border.hairline};
+    background: ${({ theme }) => theme.c.line};
+  }
+  &:hover::before,
+  &:focus-visible::before,
+  &[data-drag='true']::before {
+    inset-inline-start: 0.1875rem;
+    width: 0.1875rem;
+    background: ${({ theme }) => theme.c.atext};
+  }
+  &:focus-visible {
+    outline: none;
+  }
+
+  @media (max-width: 47.99rem) {
+    display: none;
+  }
+`;
+const PickBar = styled.div`
+  flex: none;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.c.surf2};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 
   @media (min-width: 48rem) {
-    border-bottom: 0;
-    border-inline-end: ${({ theme }) => theme.border.hairline} solid
-      ${({ theme }) => theme.colour.hairline};
+    display: none;
   }
 `;
-const AdminInner = styled.div`
+const Pick = styled.select`
+  box-sizing: border-box;
+  width: 100%;
+  min-height: ${({ theme }) => theme.minTapTarget};
+  padding: 0 ${({ theme }) => theme.spacing.md};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.c.surf};
+  color: ${({ theme }) => theme.c.text};
+  font: inherit;
+`;
+const Main = styled.main`
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: ${({ theme }) => theme.spacing.lg};
+
+  @media (min-width: 48rem) {
+    padding: ${({ theme }) => theme.spacing.xl} 1.75rem;
+  }
+`;
+// Every section stays mounted (so the menu's counts and dot are known); only the chosen one shows.
+const Pane = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xl};
-
-  @media (min-width: 48rem) {
-    position: sticky;
-    top: calc(${TOP_BARS} + ${({ theme }) => theme.spacing.lg});
+  gap: ${({ theme }) => theme.spacing.md};
+  &[hidden] {
+    display: none;
+  }
+  > section:first-child {
+    padding-top: 0;
+    border-top: 0;
   }
 `;
+const Head = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+const HeadTitle = styled(Sub)`
+  flex: 1;
+`;
 const SellersPanel = styled.div`
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
   min-width: 0;
-  padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
 `;
 const RowList = styled.ul`
   margin: 0;
@@ -237,9 +346,12 @@ export function AdminHomeScreen({
   const [panel, setPanel] = useState<{ kind: 'seller'; id: string } | { kind: 'add' } | null>(null);
   const rows = useRef<Record<string, HTMLButtonElement | null>>({});
   const addButton = useRef<HTMLButtonElement | null>(null);
-  const [mine, setMine] = useState<Array<DeviceView> | null>(null);
-  const [code, setCode] = useState<string | null>(null);
-  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
+  const [section, choose] = useSection();
+  const menu = useColumnWidth();
+  const [deviceCount, setDeviceCount] = useState<number | null>(null);
+  const [problemCount, setProblemCount] = useState<number | null>(null);
+  const [noticeSet, setNoticeSet] = useState(false);
+  const body = useRef<HTMLDivElement | null>(null);
   // Plan 061: the new kitchen's name and address survive a reload until it is added.
   const [addForm, setAddForm, addDraft] = useDraft<{ name: string; slug: string }>(
     draftKey('admin', 'add-kitchen'),
@@ -286,17 +398,11 @@ export function AdminHomeScreen({
     void loadSellers();
   }, [loadSellers]);
 
-  const loadMine = useCallback(async () => {
-    const result = await fetchMyDevices();
-    if (result.ok) setMine(result.data.devices);
-  }, []);
-
   useEffect(() => {
     // Calls that set state after a network round trip, started once on mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadSellers();
-    void loadMine();
-  }, [loadSellers, loadMine]);
+  }, [loadSellers]);
 
   const closePanel = useCallback(() => setPanel(null), []);
   const panelSeller =
@@ -342,27 +448,6 @@ export function AdminHomeScreen({
     [addDraft, canAdd, name, slug, refusedHere, setAddForm, t],
   );
 
-  const signOutMine = useCallback(
-    async (deviceId: string) => {
-      const result = await signOutDevice(deviceId);
-      if (result.ok) await loadMine();
-    },
-    [loadMine],
-  );
-
-  const renameMine = useCallback(
-    async (deviceId: string, next: string) => {
-      const result = await renameMyDevice(deviceId, next);
-      if (result.ok) await loadMine();
-    },
-    [loadMine],
-  );
-
-  const addDevice = useCallback(async () => {
-    const result = await createDeviceCode();
-    if (result.ok) setCode(result.data.code);
-  }, []);
-
   const leave = useCallback(async () => {
     await signOut();
     onSignedOut?.();
@@ -391,8 +476,42 @@ export function AdminHomeScreen({
     return parts.join(' · ');
   };
 
-  const when = (device: DeviceView) =>
-    t('home.seller.lastUsed', { when: formatDayTime(device.lastUsedAt, lang) });
+  const navCount = (id: Section): number | null => {
+    if (id === 'sellers') return sellers?.length ?? null;
+    if (id === 'problems') return problemCount;
+    if (id === 'devices') return deviceCount;
+    return null;
+  };
+  /** The phone dropdown's text: "Sellers (4)", "Announce & maintenance •". */
+  const navText = (id: Section): string => {
+    const count = navCount(id);
+    const mark = id === 'announce' && noticeSet ? ' •' : '';
+    return `${t(`home.nav.${id}`)}${count !== null ? ` (${count})` : ''}${mark}`;
+  };
+
+  // The drag handle (plan 078): the width follows the pointer and is saved when it is let go.
+  const [dragging, setDragging] = useState(false);
+  const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDragging(true);
+    event.preventDefault();
+  };
+  const moveDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragging) return;
+    const left = body.current?.getBoundingClientRect().left ?? 0;
+    const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    menu.set((event.clientX - left) / root, false);
+  };
+  const endDrag = () => {
+    if (!dragging) return;
+    setDragging(false);
+    menu.set(menu.width, true);
+  };
+  const keyResize = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    menu.set(menu.width + (event.key === 'ArrowRight' ? COLUMN_STEP : -COLUMN_STEP), true);
+  };
 
   const tools = (
     <BarTools>
@@ -407,145 +526,138 @@ export function AdminHomeScreen({
   return (
     <Shell>
       {top ? top(tools) : <PlainBar>{tools}</PlainBar>}
-      <Layout>
-        <AdminPanel>
-          <AdminInner>
-            <Sub>{t('home.title')}</Sub>
-            <Section>
-              <Sub>{t('home.mine.title')}</Sub>
-              {mine && mine.length === 0 ? <Muted>{t('home.mine.none')}</Muted> : null}
-              {mine && mine.length > 0 ? (
-                <DeviceList aria-label={t('home.mine.title')}>
-                  {mine.map((device) => (
-                    <DeviceItem key={device.id}>
-                      {renaming?.id === device.id ? (
-                        <FormSection
-                          onSubmit={(event) => {
-                            event.preventDefault();
-                            const next = renaming.name.trim();
-                            setRenaming(null);
-                            if (next !== '' && next !== device.name)
-                              void renameMine(device.id, next);
+      <PickBar>
+        <Pick
+          aria-label={t('home.nav.pick')}
+          value={section}
+          onChange={(event) => choose(event.target.value as Section)}
+        >
+          {SECTIONS.map((id) => (
+            <option key={id} value={id}>
+              {navText(id)}
+            </option>
+          ))}
+        </Pick>
+      </PickBar>
+      <Body ref={body}>
+        <Nav aria-label={t('home.nav.label')} style={{ width: `${menu.width}rem` }}>
+          {SECTIONS.map((id) => {
+            const count = navCount(id);
+            return (
+              <NavButton
+                key={id}
+                type="button"
+                aria-current={section === id}
+                onClick={() => choose(id)}
+              >
+                <NavLabel>{t(`home.nav.${id}`)}</NavLabel>
+                {count !== null ? <Badge>{count}</Badge> : null}
+                {id === 'announce' && noticeSet ? (
+                  <>
+                    <Dot aria-hidden="true" />
+                    <HiddenText>{t('home.nav.noticeSet')}</HiddenText>
+                  </>
+                ) : null}
+              </NavButton>
+            );
+          })}
+        </Nav>
+        <Handle
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t('home.nav.resize')}
+          aria-valuenow={menu.width}
+          aria-valuemin={COLUMN_MIN}
+          aria-valuemax={COLUMN_MAX}
+          tabIndex={0}
+          data-drag={dragging}
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onDoubleClick={menu.reset}
+          onKeyDown={keyResize}
+        />
+        <Main>
+          <Pane hidden={section !== 'sellers'}>
+            <SellersPanel>
+              <Head>
+                <HeadTitle>{t('home.sellers')}</HeadTitle>
+                <RefreshBar loadedAt={loadedAt} onRefresh={refresh} />
+              </Head>
+              <Muted>{t('home.privacy')}</Muted>
+              <Toggle
+                ref={addButton}
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => setPanel({ kind: 'add' })}
+              >
+                <RowName>{t('home.add.title')}</RowName>
+                <Chevron>
+                  <Icon name="forward" />
+                </Chevron>
+              </Toggle>
+
+              {loadProblem ? <Message $bad>{loadProblem}</Message> : null}
+              {sellers === null && !loadProblem ? <Muted>{t('loading')}</Muted> : null}
+              {sellers && sellers.length === 0 ? <Muted>{t('home.noSellers')}</Muted> : null}
+              {sellers && sellers.length > 0 ? (
+                <RowList aria-label={t('home.sellersTable')}>
+                  {sellers.map((seller) => {
+                    const devices = counts[seller.id];
+                    return (
+                      <li key={seller.id}>
+                        <Toggle
+                          ref={(element) => {
+                            rows.current[seller.id] = element;
+                          }}
+                          type="button"
+                          aria-haspopup="dialog"
+                          aria-current={panel?.kind === 'seller' && panel.id === seller.id}
+                          onClick={() => {
+                            setAdded(null);
+                            setPanel({ kind: 'seller', id: seller.id });
                           }}
                         >
-                          <TextField
-                            label={t('home.mine.renameField', { name: device.name })}
-                            value={renaming.name}
-                            maxLength={DEVICE_NAME_MAX}
-                            autoComplete="off"
-                            onChange={(event) =>
-                              setRenaming({ id: device.id, name: event.target.value })
-                            }
-                          />
-                          <Row>
-                            <Button
-                              type="submit"
-                              variant="primary"
-                              disabled={renaming.name.trim() === ''}
-                            >
-                              {t('home.mine.saveName')}
-                            </Button>
-                            <Button onClick={() => setRenaming(null)}>
-                              {t('home.mine.cancel')}
-                            </Button>
-                          </Row>
-                        </FormSection>
-                      ) : (
-                        <>
-                          <span>
-                            <strong>{device.name}</strong>
-                            {device.current ? ` · ${t('home.mine.thisDevice')}` : ''}
-                            <Muted>{when(device)}</Muted>
-                          </span>
-                          <Row>
-                            <Button
-                              onClick={() => setRenaming({ id: device.id, name: device.name })}
-                            >
-                              {t('home.mine.rename')}
-                            </Button>
-                            {device.current ? null : (
-                              <ConfirmButton
-                                label={t('home.seller.signOut')}
-                                confirmLabel={t('home.seller.signOutConfirm')}
-                                onConfirm={() => void signOutMine(device.id)}
-                              />
-                            )}
-                          </Row>
-                        </>
-                      )}
-                    </DeviceItem>
-                  ))}
-                </DeviceList>
+                          <RowName>{seller.name}</RowName>
+                          <RowMeta>{`/${seller.slug}`}</RowMeta>
+                          <RowMeta>
+                            {t('home.createdOn', { date: formatDay(seller.createdAt, lang) })}
+                          </RowMeta>
+                          {seller.paused ? <PauseLabel pause={seller.paused} /> : null}
+                          <RowMeta>
+                            {devices === undefined
+                              ? '…'
+                              : t('home.devicesCount', { count: devices })}
+                          </RowMeta>
+                          <Chevron>
+                            <Icon name="forward" />
+                          </Chevron>
+                          {seller.summary ? (
+                            <RowSummary>{summaryText(seller.summary)}</RowSummary>
+                          ) : null}
+                        </Toggle>
+                      </li>
+                    );
+                  })}
+                </RowList>
               ) : null}
-              <Button onClick={() => void addDevice()}>{t('home.mine.addDevice')}</Button>
-              {code ? <Message role="status">{t('home.mine.code', { code })}</Message> : null}
-            </Section>
-            <MaintenancePanel />
+            </SellersPanel>
+          </Pane>
+          <Pane hidden={section !== 'announce'}>
+            <MaintenancePanel onActive={setNoticeSet} />
+          </Pane>
+          <Pane hidden={section !== 'settings'}>
             <BackupMinutesPanel />
-            <ProblemsPanel slugs={slugs} refreshKey={refreshKey} />
-            <Muted>{t('home.privacy')}</Muted>
-          </AdminInner>
-        </AdminPanel>
-
-        <SellersPanel>
-          <Sub>{t('home.sellers')}</Sub>
-          <RefreshBar loadedAt={loadedAt} onRefresh={refresh} />
-          <Toggle
-            ref={addButton}
-            type="button"
-            aria-haspopup="dialog"
-            onClick={() => setPanel({ kind: 'add' })}
-          >
-            <RowName>{t('home.add.title')}</RowName>
-            <Chevron>
-              <Icon name="forward" />
-            </Chevron>
-          </Toggle>
-
-          {loadProblem ? <Message $bad>{loadProblem}</Message> : null}
-          {sellers === null && !loadProblem ? <Muted>{t('loading')}</Muted> : null}
-          {sellers && sellers.length === 0 ? <Muted>{t('home.noSellers')}</Muted> : null}
-          {sellers && sellers.length > 0 ? (
-            <RowList aria-label={t('home.sellersTable')}>
-              {sellers.map((seller) => {
-                const devices = counts[seller.id];
-                return (
-                  <li key={seller.id}>
-                    <Toggle
-                      ref={(element) => {
-                        rows.current[seller.id] = element;
-                      }}
-                      type="button"
-                      aria-haspopup="dialog"
-                      aria-current={panel?.kind === 'seller' && panel.id === seller.id}
-                      onClick={() => {
-                        setAdded(null);
-                        setPanel({ kind: 'seller', id: seller.id });
-                      }}
-                    >
-                      <RowName>{seller.name}</RowName>
-                      <RowMeta>{`/${seller.slug}`}</RowMeta>
-                      <RowMeta>
-                        {t('home.createdOn', { date: formatDay(seller.createdAt, lang) })}
-                      </RowMeta>
-                      {seller.paused ? <PauseLabel pause={seller.paused} /> : null}
-                      <RowMeta>
-                        {devices === undefined ? '…' : t('home.devicesCount', { count: devices })}
-                      </RowMeta>
-                      <Chevron>
-                        <Icon name="forward" />
-                      </Chevron>
-                      {seller.summary ? (
-                        <RowSummary>{summaryText(seller.summary)}</RowSummary>
-                      ) : null}
-                    </Toggle>
-                  </li>
-                );
-              })}
-            </RowList>
-          ) : null}
-        </SellersPanel>
-      </Layout>
+          </Pane>
+          <Pane hidden={section !== 'problems'}>
+            <ProblemsPanel slugs={slugs} refreshKey={refreshKey} onTotal={setProblemCount} />
+          </Pane>
+          <Pane hidden={section !== 'devices'}>
+            <DevicesPanel onCount={setDeviceCount} />
+          </Pane>
+        </Main>
+      </Body>
       {panel?.kind === 'add' ? (
         <SlideOver
           label={t('home.add.title')}

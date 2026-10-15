@@ -74,7 +74,13 @@ const PAGE = LOG_ADMIN_LIMIT;
 export function ProblemsPanel({
   slugs = [],
   refreshKey = 0,
-}: Readonly<{ slugs?: ReadonlyArray<string>; refreshKey?: number }>) {
+  onTotal,
+}: Readonly<{
+  slugs?: ReadonlyArray<string>;
+  refreshKey?: number;
+  /** The unfiltered-or-filtered total, for the menu's count (plan 078). */
+  onTotal?: (total: number) => void;
+}>) {
   const { t, i18n } = useTranslation(ADMIN_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [entries, setEntries] = useState<Array<LogEntry> | null>(null);
@@ -104,6 +110,10 @@ export function ProblemsPanel({
       live = false;
     };
   }, [app, slug, offset, reload, refreshKey]);
+
+  useEffect(() => {
+    onTotal?.(total);
+  }, [total, onTotal]);
 
   const clearAll = async () => {
     const result = await clearAdminLog();

@@ -33,6 +33,7 @@ const PATHS = {
   inbox: 'M3 13l3-8h12l3 8v6H3zM3 13h5a4 4 0 008 0h5',
   tablet: 'M6 2h12a1 1 0 011 1v18a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1zM12 18h.01',
   person: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',
+  signout: 'M10 4H5v16h5M15 8l4 4-4 4M19 12H9',
   history: 'M4 12a8 8 0 108-8 8 8 0 00-6 2.7M4 4v4h4M12 8v5l3 2',
 } as const;
 

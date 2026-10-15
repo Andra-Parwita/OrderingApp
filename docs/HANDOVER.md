@@ -50,8 +50,9 @@
 | 076 | Pickup places: optional address + map pin (seller Settings → Pickup); customers see address · View on map · Directions on the menu, confirmation, order page, My orders (additive only) | ⚠️ **migration 0024** (add-only) before deploying; the public menu now sends `mapsEmbedKey` whenever the key is set |
 | 079 | Help opens inside the seller app (`/seller/help`, menu stays; the public Help address unchanged for sign-in and invites) | none |
 | 080 | Top bars (maintenance notice, new version, offline) push the page down instead of covering it; the notice shows the ShaggyBobo icon with the message in a speech bubble | none |
+| 078 | Admin page Layout A: pinned header, a short menu (Sellers · Announce & maintenance · Platform settings · Problems · Your devices) with the section in the main area (`?s=`), one-line devices with small icon buttons, a left column you can drag wider, a section dropdown on phones | none |
 
-**Queued this round (approved):** 078 admin page Layout A → 077 UTC stored / device time shown (D-101; the kitchens are in Adelaide).
+**Queued this round (approved):** 077 UTC stored / device time shown (D-101; the kitchens are in Adelaide).
 **Local tips:** the local seller app opens without a passkey at `/seller` (dev tools); if it keeps going to sign-in, a `signedIn` note from an earlier local sign-in is in that browser: use a private window or `localStorage.removeItem('signedIn')`. Lint needs `NODE_OPTIONS=--max-old-space-size=8192` on this PC (it ran out of memory without it). If the local app shows a blank page with "X is not defined" after many edits, the dev server missed a change: re-save (touch) the changed files. **Next time you deploy:** first Claude drafts the release notes and the owner picks which lines are included (D-100); back up; announce (admin → Announce an update); switch Maintenance on before the migrations, off after the live check (plan 046 is live now).
 
 ## Next session
