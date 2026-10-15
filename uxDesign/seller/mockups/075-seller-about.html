@@ -219,17 +219,22 @@ details.r li{margin:3px 0;max-width:62ch}
 .mascot img.legl{left:6.7%;right:-6.7%}
 /* Owner, 15 Oct: the right leg 5px to the right (3.3% of the 150px phone mascot) */
 .mascot img.legr{left:3.3%;right:-3.3%}
+.lot{position:absolute;inset:0;z-index:2;pointer-events:none}
+.lot svg{display:block}
+.hero.lot-on .mascot{display:none}
 </style>
 </head>
 <body>
 <div class="top">
   <div class="seg" role="group" aria-label="Device"><button type="button" data-dev="phone" aria-pressed="true">Phone</button><button type="button" data-dev="tablet" aria-pressed="false">Tablet</button></div>
+  <div class="seg" role="group" aria-label="Hero"><button type="button" data-hero="css" aria-pressed="false">CSS</button><button type="button" data-hero="lottie" aria-pressed="false">Lottie</button><button type="button" data-hero="calm" aria-pressed="true">Calm</button></div>
   <div class="seg" role="group" aria-label="Theme"><button type="button" data-th="light" aria-pressed="true">Light</button><button type="button" data-th="dark" aria-pressed="false">Dark</button></div>
   <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="id" aria-pressed="false">ID</button></div>
 </div>
 <div class="frame-wrap"><div class="frame phone" id="frame"></div></div>
 <div class="notes" id="notes"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"></script>
 <script>
 const I={
  en:{about:'About',more:'More',path:'More → About',prev:'Animation preview: the final one will be a Lottie',ver:'Version 1.0.40',
@@ -271,7 +276,7 @@ const IC=['<path d="M3 11l9-7 9 7v9H3z"/>','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2
 const ic=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>';
 const chev='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 const B='../../../public/brand/';
-let dev='phone',lang='en',sty='card';
+let dev='phone',lang='en',sty='card',heroMode=new URLSearchParams(location.search).get('hero')||'calm',anim=null;
 const $=s=>document.querySelector(s);
 const bd=s=>s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
 
@@ -298,6 +303,8 @@ function render(){
   $('#notes').innerHTML='<div><h3>'+t.nH+'</h3><ul>'+t.n.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
   document.querySelectorAll('[data-dev]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dev===dev));
   document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
+  document.querySelectorAll('[data-hero]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.hero===heroMode));
+  mountHero();
 }
 document.addEventListener('click',e=>{
   const d=e.target.closest('[data-dev]'),l=e.target.closest('[data-lang]'),st=e.target.closest('[data-sty]');
@@ -305,12 +312,24 @@ document.addEventListener('click',e=>{
   if(d){dev=d.dataset.dev;render()}
   if(l){lang=l.dataset.lang;render()}
   const th=e.target.closest('[data-th]');if(th)setTheme(th.dataset.th);
+  const hb=e.target.closest('[data-hero]');if(hb){heroMode=hb.dataset.hero;render()}
   if(e.target.closest('.rail a,.help'))e.preventDefault();
   if(e.target.closest('#relrow'))openP();
   if(e.target.closest('[data-close]')||e.target.id==='bd')closeP();
 });
 function setTheme(m){document.documentElement.dataset.theme=m;document.querySelectorAll('[data-th]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.th===m))}
 setTheme(new URLSearchParams(location.search).get('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+// Mock-up only: the owner's Lottie (temp/lottie/), one file per screen shape, over the faded scene.
+function mountHero(){
+  if(anim){anim.destroy();anim=null}
+  const h=$('.hero');if(!h)return;
+  const on=(heroMode==='lottie'||heroMode==='calm')&&window.lottie;h.classList.toggle('lot-on',!!on);if(!on)return;
+  const box=document.createElement('div');box.className='lot';box.setAttribute('aria-hidden','true');h.appendChild(box);
+  const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  anim=lottie.loadAnimation({container:box,renderer:'svg',loop:true,autoplay:!still,path:'lottie/shaggybobo-'+dev+(heroMode==='calm'?'-calm':'')+'.json',rendererSettings:{preserveAspectRatio:'xMidYMid slice'}});
+  if(still)anim.addEventListener('DOMLoaded',()=>anim.goToAndStop(0,true));
+  anim.addEventListener('data_failed',()=>{h.classList.remove('lot-on')});
+}
 function setP(on){panel=on;$('#panel').classList.toggle('on',on);$('#bd').classList.toggle('on',on);$('#panel').inert=!on}
 function openP(){setP(true);const pb=$('.panel .pback'),x=$('.panel .x');(pb.offsetParent?pb:x).focus({preventScroll:true})}
 function closeP(){setP(false);$('#relrow').focus({preventScroll:true})}
