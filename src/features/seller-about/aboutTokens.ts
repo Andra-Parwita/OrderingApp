@@ -8,24 +8,22 @@ export const heroArt = {
   /** Scrollbar thumb: the brand orange, lighter in dark mode for contrast on the card. */
   scroll: { light: brandColour.bobo, dark: '#E8954F' },
   scrollHover: { light: '#b8611f', dark: '#F0A566' },
-  /** The wash over the scene: clear in the middle, the hero's colour toward the bottom. */
-  wash: {
-    light:
-      'linear-gradient(180deg, rgba(234, 219, 194, 0.1) 0%, rgba(234, 219, 194, 0) 45%, rgba(234, 219, 194, 0.55) 100%)',
-    dark: 'linear-gradient(180deg, rgba(18, 20, 17, 0.15) 0%, rgba(18, 20, 17, 0) 45%, rgba(18, 20, 17, 0.6) 100%)',
-  },
   /** The whole hero is dimmed a little in dark mode. */
   darkFilter: 'brightness(0.82) saturate(0.95)',
   sceneOpacity: 0.72,
-  /** Heights, as rem: phone 104 px, tablet 130 px. */
-  heightPhone: '6.5rem',
-  heightTablet: '8.125rem',
+  /** The hero slot's fixed shapes (width / height), so nothing shifts while the Lottie loads. */
+  aspectPhone: '390 / 104',
+  aspectTablet: '672 / 130',
+  /** The fade over the picture inside the card (the page colour toward the bottom). */
+  fade: {
+    light:
+      'linear-gradient(to bottom, rgba(234, 219, 194, 0.1) 0%, rgba(234, 219, 194, 0) 30%, rgba(234, 219, 194, 0) 60%, rgba(234, 219, 194, 0.55) 100%)',
+    dark: 'linear-gradient(to bottom, rgba(18, 20, 17, 0.15) 0%, rgba(18, 20, 17, 0) 30%, rgba(18, 20, 17, 0) 60%, rgba(18, 20, 17, 0.6) 100%)',
+  },
 } as const;
 
-/** Lottie files by screen shape: phone 1200 x 320, tablet 1200 x 231 (the hero's aspect decides). */
+/** Pop-out drone Lottie, owner approved 16 Oct: phone 390 x 104 slot, tablet 672 x 130 slot. */
 export const LOTTIE_SRC = {
-  phone: '/brand/lottie/shaggybobo-phone-calm.json',
-  tablet: '/brand/lottie/shaggybobo-tablet-calm.json',
+  phone: '/brand/lottie/shaggybobo-phone-popout.json',
+  tablet: '/brand/lottie/shaggybobo-tablet-popout.json',
 } as const;
-/** Between the two files' aspect ratios (3.75 and 5.2): wider than this takes the tablet file. */
-export const WIDE_ASPECT = 4.5;

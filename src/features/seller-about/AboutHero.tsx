@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { keyframes, styled } from 'styled-components';
 import { useMediaQuery } from '../../components/useMediaQuery';
-import { heroArt, LOTTIE_SRC, WIDE_ASPECT } from './aboutTokens';
+import { heroArt, LOTTIE_SRC } from './aboutTokens';
 
 // Plan 075: the hero of the About page. The Nusantara market scene, faded and drifting slowly, with
-// the owner's calm Lottie on top (phone file or tablet file, by the hero's shape). The lottie-web
-// light player is loaded only when this mounts. If the player or the file fails, or for anyone who
+// the pop-out drone Lottie, owner approved 16 Oct, on top (phone file or tablet file, by screen
+// shape); the drone flies out of the picture over the logo row. The lottie-web light player is
+// loaded only when this mounts and plays only while visible. If the player or the file fails, or for anyone who
 // asks for less motion, the CSS mascot (earlier approved fallback) stands in; reduced motion shows
 // a still frame and no drift.
 
@@ -13,8 +14,8 @@ const SCENE = '/brand/nusantara-market.webp';
 const BRAND = '/brand';
 
 const drift = keyframes`
-  0%, 100% { transform: translate(-50%, -50%) scale(1.08); }
-  50% { transform: translate(-47%, -50.5%) scale(1.08); }
+  0%, 100% { transform: translate(-3%, 0); }
+  50% { transform: translate(3%, -1.5%); }
 `;
 const blink = keyframes`
   0%, 93%, 100% { opacity: 0; }
@@ -39,50 +40,59 @@ const bob = keyframes`
   50% { translate: 0 -0.1875rem; }
 `;
 
-const Box = styled.div<{ $wide: boolean }>`
+// The slot does not clip, so the drone can fly out over the logo row; the card clips the picture.
+const Slot = styled.div<{ $wide: boolean }>`
   position: relative;
-  height: ${({ $wide }) => ($wide ? heroArt.heightTablet : heroArt.heightPhone)};
-  border-radius: ${({ $wide }) => ($wide ? '0.875rem' : '0')};
-  background: ${heroArt.beige};
-  overflow: hidden;
+  display: block;
+  width: 100%;
+  aspect-ratio: ${({ $wide }) => ($wide ? heroArt.aspectTablet : heroArt.aspectPhone)};
+  overflow: visible;
+  isolation: isolate;
+  pointer-events: none;
+  contain: layout style;
   ${({ theme }) => (theme.mode === 'dark' ? `filter: ${heroArt.darkFilter};` : '')}
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: ${({ theme }) => heroArt.wash[theme.mode]};
-  }
 `;
-const Stage = styled.div`
+const Card = styled.div`
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: max(100%, 26.25rem);
-  aspect-ratio: 3 / 5;
-  transform: translate(-50%, -50%) scale(1.08);
+  inset: 10% 3%; /* must match the Lottie */
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  background: ${heroArt.beige};
+`;
+const Scene = styled.div`
+  position: absolute;
+  inset: -4%;
+  opacity: ${heroArt.sceneOpacity};
+  will-change: transform;
 
   img {
     display: block;
     width: 100%;
     height: 100%;
-    opacity: ${heroArt.sceneOpacity};
+    object-fit: cover;
   }
 
   @media (prefers-reduced-motion: no-preference) {
     animation: ${drift} 18s ease-in-out infinite;
   }
 `;
+const Fade = styled.div`
+  position: absolute;
+  inset: 0;
+  background: ${({ theme }) => heroArt.fade[theme.mode]};
+`;
 const Player = styled.div`
   position: absolute;
   inset: 0;
-  z-index: 2;
-  pointer-events: none;
+  z-index: 1;
 
   svg {
     display: block;
+    overflow: visible;
+  }
+  svg > g {
+    clip-path: none;
   }
 `;
 const Mascot = styled.div<{ $wide: boolean }>`
@@ -143,29 +153,18 @@ type Kind = 'phone' | 'tablet';
 export function AboutHero({ wideQuery }: Readonly<{ wideQuery: string }>) {
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)');
   const tabletScreen = useMediaQuery(wideQuery);
-  const box = useRef<HTMLDivElement>(null);
+  const slot = useRef<HTMLDivElement>(null);
   const player = useRef<HTMLDivElement>(null);
-  // Which file: by the hero's own shape once measured (a wide hero takes the tablet file).
-  const [aspect, setAspect] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
-  const kind: Kind = (aspect ?? (tabletScreen ? 6 : 3)) > WIDE_ASPECT ? 'tablet' : 'phone';
+  const kind: Kind = tabletScreen ? 'tablet' : 'phone';
   const wide = kind === 'tablet';
-
-  useEffect(() => {
-    const el = box.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const watch = new ResizeObserver(() => {
-      if (el.clientHeight > 0) setAspect(el.clientWidth / el.clientHeight);
-    });
-    watch.observe(el);
-    return () => watch.disconnect();
-  }, []);
 
   useEffect(() => {
     const host = player.current;
     if (!host) return;
     let cancelled = false;
     let destroy: (() => void) | null = null;
+    let watch: IntersectionObserver | undefined;
     import('lottie-web/build/player/lottie_light')
       .then((module) => {
         if (cancelled) return;
@@ -175,9 +174,16 @@ export function AboutHero({ wideQuery }: Readonly<{ wideQuery: string }>) {
           loop: true,
           autoplay: !reduced,
           path: LOTTIE_SRC[kind],
-          rendererSettings: { preserveAspectRatio: 'xMidYMid slice' },
+          rendererSettings: { preserveAspectRatio: 'xMidYMid meet' },
         });
         destroy = () => animation.destroy();
+        const el = slot.current;
+        if (!reduced && el && typeof IntersectionObserver !== 'undefined') {
+          watch = new IntersectionObserver(([entry]) =>
+            entry?.isIntersecting ? animation.play() : animation.pause(),
+          );
+          watch.observe(el);
+        }
         animation.addEventListener('data_failed', () => setFailed(true));
         if (reduced) animation.addEventListener('DOMLoaded', () => animation.goToAndStop(0, true));
       })
@@ -186,25 +192,29 @@ export function AboutHero({ wideQuery }: Readonly<{ wideQuery: string }>) {
       });
     return () => {
       cancelled = true;
+      watch?.disconnect();
       destroy?.();
     };
   }, [kind, reduced]);
 
   return (
-    <Box ref={box} $wide={wide} aria-hidden="true">
-      <Stage aria-hidden="true">
-        <img src={SCENE} alt="" />
-      </Stage>
+    <Slot ref={slot} $wide={wide} aria-hidden="true">
+      <Card>
+        <Scene>
+          <img src={SCENE} alt="" />
+        </Scene>
+        <Fade />
+        {failed ? (
+          <Mascot $wide={wide} aria-hidden="true" data-testid="about-mascot">
+            <img className="legr" src={`${BRAND}/mascot-leg-right.webp`} alt="" />
+            <img className="legl" src={`${BRAND}/mascot-leg-left.webp`} alt="" />
+            <img src={`${BRAND}/mascot-body.webp`} alt="" />
+            <img className="lids" src={`${BRAND}/mascot-eyes-closed.webp`} alt="" />
+            <img className="arm" src={`${BRAND}/mascot-arm-spoon.webp`} alt="" />
+          </Mascot>
+        ) : null}
+      </Card>
       <Player ref={player} aria-hidden="true" data-testid="about-lottie" />
-      {failed ? (
-        <Mascot $wide={wide} aria-hidden="true" data-testid="about-mascot">
-          <img className="legr" src={`${BRAND}/mascot-leg-right.webp`} alt="" />
-          <img className="legl" src={`${BRAND}/mascot-leg-left.webp`} alt="" />
-          <img src={`${BRAND}/mascot-body.webp`} alt="" />
-          <img className="lids" src={`${BRAND}/mascot-eyes-closed.webp`} alt="" />
-          <img className="arm" src={`${BRAND}/mascot-arm-spoon.webp`} alt="" />
-        </Mascot>
-      ) : null}
-    </Box>
+    </Slot>
   );
 }

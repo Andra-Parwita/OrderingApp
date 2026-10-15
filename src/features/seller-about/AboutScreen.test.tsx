@@ -54,14 +54,14 @@ function setUp() {
 }
 
 describe('AboutScreen', () => {
-  it('plays the calm Lottie, and destroys it when the page closes', async () => {
+  it('plays the pop-out Lottie, and destroys it when the page closes', async () => {
     const { view } = setUp();
     await waitFor(() => expect(loadAnimation).toHaveBeenCalledTimes(1));
     const options = loadAnimation.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(options.autoplay).toBe(true);
     expect(options.renderer).toBe('svg');
-    expect(String(options.path)).toContain('/brand/lottie/shaggybobo-');
-    expect(options.rendererSettings).toEqual({ preserveAspectRatio: 'xMidYMid slice' });
+    expect(options.path).toBe('/brand/lottie/shaggybobo-tablet-popout.json');
+    expect(options.rendererSettings).toEqual({ preserveAspectRatio: 'xMidYMid meet' });
     view.unmount();
     expect(destroy).toHaveBeenCalled();
   });

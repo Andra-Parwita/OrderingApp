@@ -27,6 +27,8 @@ const Page = styled.div`
   padding-bottom: ${({ theme }) => theme.spacing.md};
 `;
 const Pin = styled.div<{ $wide: boolean }>`
+  position: relative;
+  z-index: 3; /* the hero's drone paints over the logo row and the page below */
   flex: none;
   padding: ${({ $wide, theme }) => ($wide ? `${theme.spacing.lg} ${theme.spacing.xl} 0` : '0')};
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
