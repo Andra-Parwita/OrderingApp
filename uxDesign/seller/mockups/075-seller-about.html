@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShaggyBobo · Seller About (mock-up)</title>
+<style>
+:root{
+  --beige:#EADBC2; --ink:#2B1D12; --bobo:#d9772b;
+  --bg:#F6F2E8; --surf:#FFFDF8; --surf2:#F4F0E6; --line:#E4DED0;
+  --text:#1C1F1A; --muted:#5D6358; --accent:#1F6B5C; --accent-tint:#E3EFEA;
+  --pill-bg:#fff6ea; --pill-border:#ead8bf; --stage:#d9d4c6;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--stage);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+button,summary,a{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace}
+
+/* mock-up chrome */
+.top{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;padding:14px 16px}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:6px 16px;font-size:.8125rem;font-weight:600;min-height:36px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+.frame-wrap{display:flex;justify-content:center;padding:0 16px 24px;overflow-x:auto}
+.frame{background:var(--bg);border-radius:18px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;height:780px;max-height:calc(100vh - 150px);min-height:600px}
+.frame{position:relative}
+.frame.phone{width:390px;flex-direction:column;flex:none}
+.frame.tablet{width:1024px;flex:none}
+
+/* tablet rail */
+.rail{display:none;width:200px;flex:none;background:var(--surf2);border-right:1px solid var(--line);padding:16px 10px;flex-direction:column;gap:2px}
+.tablet .rail{display:flex}
+.rail .rb{display:flex;align-items:center;gap:8px;padding:0 6px 14px;font-weight:700;letter-spacing:-.04em}
+.rail .rb img{height:26px}.rail .rb i{font-style:normal;color:var(--bobo)}
+.rail a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9375rem}
+.rail a:hover{background:#ebe6d6}
+.rail a[aria-current=page]{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.rail svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7}
+.rail .gap{height:10px}
+
+/* app column */
+.col{flex:1;min-width:0;display:flex;flex-direction:column}
+.hdr{flex:none;display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;background:var(--surf);border-bottom:1px solid var(--line)}
+.hdr h1{margin:0;font-size:1.0625rem;font-weight:700;letter-spacing:-.01em;flex:1}
+.back{border:0;background:transparent;width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+.back svg{width:22px;height:22px;stroke:var(--text);fill:none;stroke-width:2}
+.tablet .back{display:none}
+.tablet .hdr{padding-left:24px}
+.crumb{display:none;font-size:.75rem;color:var(--muted)}
+.phone .crumb{display:block;padding:0 4px;text-align:right}
+.tablet .crumb{display:none}
+.scroll{flex:1;overflow-y:auto}
+.page{max-width:720px;margin:0 auto;padding:0 0 28px}
+.tablet .page{padding:0 24px 32px}
+.phone .tabbar{display:flex}
+.tabbar{display:none;flex:none;height:56px;background:var(--surf);border-top:1px solid var(--line)}
+.tabbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.6875rem;color:var(--muted);gap:2px}
+.tabbar div.on{color:var(--accent);font-weight:600}
+.tabbar svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* hero */
+.hero{position:relative;height:104px;background:var(--beige);overflow:hidden;color:var(--ink);container-type:inline-size}
+.tablet .hero{height:130px;border-radius:14px}
+.pin{flex:none;width:100%;max-width:720px;margin:0 auto;background:var(--bg);border-bottom:1px solid var(--line)}
+.tablet .pin{padding:14px 24px 0}
+.tablet .id{padding-bottom:10px}
+.id{padding-bottom:10px}
+.stage{position:absolute;left:50%;top:50%;width:max(100%,420px);aspect-ratio:3/5;transform:translate(-50%,-50%) scale(1.08)}
+.stage img{display:block;width:100%;height:100%;opacity:.9}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(234,219,194,.15),rgba(234,219,194,.55) 100%)}
+.mascot{position:absolute;left:50%;bottom:-14px;width:150px;aspect-ratio:900/635;margin-left:-75px;z-index:2;pointer-events:none}
+.tablet .mascot{width:190px;margin-left:-95px}
+.mascot img{position:absolute;inset:0;width:100%;height:100%}
+.mascot .lids{opacity:0}
+.mascot .arm{transform-origin:7.9% 18.2%}
+.mascot .legl,.mascot .legr{transform-origin:50% 55%}
+.preview{position:absolute;left:10px;top:10px;z-index:3;background:rgba(255,246,234,.92);border:1px solid var(--pill-border);border-radius:999px;padding:2px 10px;font-size:.6875rem;color:#4d4a3f}
+@keyframes blink{0%,93%,100%{opacity:0}94%,99%{opacity:1}}
+@keyframes wave{0%{transform:rotate(0)}4%{transform:rotate(-14deg)}10%{transform:rotate(10deg)}16%{transform:rotate(-14deg)}22%{transform:rotate(10deg)}28%{transform:rotate(-14deg)}36%,100%{transform:rotate(0)}}
+@keyframes stepl{0%,100%{transform:rotate(-5deg) translateY(0)}50%{transform:rotate(5deg) translateY(-2px)}}
+@keyframes stepr{0%,100%{transform:rotate(5deg) translateY(-2px)}50%{transform:rotate(-5deg) translateY(0)}}
+@keyframes bob{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@keyframes drift{0%,100%{transform:translate(-50%,-50%) scale(1.08)}50%{transform:translate(-47%,-50.5%) scale(1.08)}}
+@media (prefers-reduced-motion:no-preference){
+  .mascot .lids{animation:blink 2s steps(1,end) infinite}
+  .mascot .arm{animation:wave 5s ease-in-out infinite}
+  .mascot .legl{animation:stepl .9s ease-in-out infinite}
+  .mascot .legr{animation:stepr .9s ease-in-out infinite}
+  .mascot{animation:bob .9s ease-in-out infinite}
+  .stage{animation:drift 14s ease-in-out infinite}
+}
+
+/* content */
+.id{display:flex;align-items:center;gap:12px;padding:16px 16px 4px}
+.tablet .id{padding:16px 0 4px}
+.brand{display:flex;align-items:center;gap:8px;background:var(--pill-bg);border:1px solid var(--pill-border);border-radius:12px;padding:8px 14px 8px 10px;font-weight:700;letter-spacing:-.04em;font-size:1.125rem;color:#2a1d14;white-space:nowrap}
+.brand img{height:32px;display:block}.brand i{font-style:normal;color:var(--bobo)}
+.ver{font-size:.8125rem;color:var(--muted)}
+section.blk{padding:18px 16px 0}
+.tablet section.blk{padding:20px 0 0}
+section.blk h2{margin:0 0 8px;font-size:1.0625rem;letter-spacing:-.01em}
+.ph{padding:14px;border:1px dashed #8a8f82;border-radius:10px;background:var(--surf2);color:#4d5348;font-size:.875rem}
+.ph b{display:block;font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.sty{margin:0 0 10px;align-items:center}.styl{padding:0 4px 0 12px;font-size:.75rem;color:var(--muted)}.sty button{padding:4px 12px;min-height:32px}
+.about{margin-top:6px}
+.s-card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgb(60 40 20/6%),0 6px 18px rgb(60 40 20/7%)}
+.s-bubble{position:relative;background:#F1E4CB;border:1px solid #e0cda5;border-radius:20px;padding:16px 18px;margin-top:14px;color:var(--ink)}
+.s-bubble::before{content:"";position:absolute;top:-8px;left:50%;margin-left:-8px;width:14px;height:14px;background:#F1E4CB;border-left:1px solid #e0cda5;border-top:1px solid #e0cda5;transform:rotate(45deg);border-top-left-radius:4px}
+.s-bubble p.close{color:#5a4a36}
+.s-book{position:relative;color:#2b2417;border:1px solid #e3d6b8;border-radius:3px 10px 10px 3px;padding:20px 20px 22px 30px;overflow:hidden;
+ background:linear-gradient(90deg,rgba(80,55,25,.16) 0,rgba(80,55,25,.05) 10px,rgba(80,55,25,0) 28px),repeating-linear-gradient(0deg,rgba(120,90,50,.04) 0 1px,transparent 1px 4px),radial-gradient(120% 90% at 30% 10%,#FFFAEC,#F8F0DB);
+ box-shadow:0 1px 2px rgb(60 40 20/8%),0 8px 20px rgb(60 40 20/8%)}
+.s-book::after{content:"";position:absolute;right:0;bottom:0;width:30px;height:30px;background:linear-gradient(315deg,rgba(80,55,25,0) 50%,rgba(80,55,25,.14) 50%,#EFE4C8 100%);border-top-left-radius:8px}
+.s-book h3{font-family:Georgia,"Times New Roman",serif;font-size:1.375rem;font-weight:700}
+.s-book h4{font-family:Georgia,"Times New Roman",serif;font-size:1.0625rem}
+.s-book p,.s-book li{line-height:1.7}
+.s-book ul{list-style:none;padding:0}
+.s-book li{position:relative;padding-left:26px;margin:8px 0}
+.s-book li::before{content:"";position:absolute;left:0;top:.5em;width:14px;height:14px;border:1.5px solid #1F6B5C;border-radius:3px;background:#E3EFEA}
+.s-book li::after{content:"";position:absolute;left:4px;top:calc(.5em + 2px);width:5px;height:8px;border:solid #1F6B5C;border-width:0 2px 2px 0;transform:rotate(45deg) scale(.8);transform-origin:center}
+.s-book p.close{color:#5a4a36;font-style:italic}
+.about h3{margin:0 0 6px;font-size:1.25rem;letter-spacing:-.01em}
+.about h4{margin:16px 0 6px;font-size:1rem}
+.about p{margin:0 0 8px;max-width:62ch;font-size:.9375rem}
+.about ul{margin:0;padding:0 0 0 20px;font-size:.9375rem;max-width:62ch}
+.about li{margin:6px 0}
+.about p.close{margin-top:14px;color:var(--muted)}
+.help{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--accent);font-weight:600;text-decoration:none}
+.help svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2}
+.rel{border-top:1px solid var(--line)}
+details.r{border-bottom:1px solid var(--line)}
+details.r summary{list-style:none;display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 2px}
+details.r summary::-webkit-details-marker{display:none}
+details.r summary .v{font-weight:700}
+details.r summary .d{color:var(--muted);font-size:.8125rem;flex:1}
+details.r summary .tag{font-size:.6875rem;font-weight:600;color:var(--accent);background:var(--accent-tint);border-radius:999px;padding:1px 8px}
+details.r summary svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;transition:transform .15s}
+details.r[open] summary svg{transform:rotate(90deg)}
+details.r ul{margin:0 0 12px;padding:0 0 0 22px;font-size:.9375rem}
+details.r li{margin:3px 0;max-width:62ch}
+.fromline{margin:10px 2px 0;font-size:.8125rem;color:var(--muted)}
+.notes{max-width:1024px;margin:0 auto 40px;padding:0 16px}
+.notes div{background:var(--surf);border:1px solid #cfc8b4;border-left:3px solid var(--bobo);border-radius:0 10px 10px 0;padding:14px 18px;font-size:.875rem}
+.notes h3{margin:0 0 6px;font-size:.9375rem}
+.notes ul{margin:0;padding-left:20px}
+.relbtn{margin-left:auto;display:inline-flex;align-items:center;gap:2px;min-height:32px;padding:0 6px 0 12px;border:1px solid var(--line);border-radius:999px;background:var(--surf);color:var(--accent);font-size:.8125rem;font-weight:600}
+.relbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.backdrop{position:absolute;inset:0;background:rgb(28 20 10/40%);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
+.backdrop.on{opacity:1;pointer-events:auto}
+.panel{position:absolute;top:0;right:0;bottom:0;width:100%;background:var(--surf);z-index:11;display:flex;flex-direction:column;transform:translateX(100%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s;box-shadow:-8px 0 28px rgb(40 30 15/16%)}
+.panel.on{transform:none;visibility:visible;transition:transform .25s ease}
+.tablet .panel{width:420px}
+.phd{flex:none;display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;border-bottom:1px solid var(--line)}
+.phd h2{margin:0;flex:1;font-size:1.0625rem}
+.x{border:0;background:transparent;width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+.x svg{width:20px;height:20px;stroke:var(--text);fill:none;stroke-width:2}
+.tablet .pback{display:none}
+.phone .x{display:none}
+.pbody{flex:1;overflow-y:auto;padding:8px 16px 24px}
+@media (prefers-reduced-motion:reduce){.panel,.panel.on,.backdrop{transition:none}}
+@media print{.top,.notes{display:none}}
+
+/* Owner, 15 Oct: header + logo pinned; only the text box scrolls, with a brand-coloured scrollbar */
+.col{min-height:0}
+.scroll{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.page{flex:1;min-height:0;display:flex;flex-direction:column;width:100%;box-sizing:border-box;padding-bottom:12px}
+.page>.blk:first-child{flex:1;min-height:0;display:flex;flex-direction:column}
+.page>.blk:first-child>h2,.page>.blk:first-child>.sty{flex:none}
+.about{flex:1;min-height:0;display:flex;flex-direction:column}
+.about .ab-in{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:6px;
+  scrollbar-width:thin;scrollbar-color:var(--bobo) transparent}
+.about .ab-in::-webkit-scrollbar{width:6px}
+.about .ab-in::-webkit-scrollbar-track{background:transparent}
+.about .ab-in::-webkit-scrollbar-thumb{background:var(--bobo);border-radius:999px}
+.about .ab-in::-webkit-scrollbar-thumb:hover{background:#b8611f}
+/* Owner, 15 Oct: a smaller font in the text box */
+.about p,.about ul{font-size:.8125rem}
+.about h3{font-size:1.0625rem}
+.about h4{font-size:.875rem;margin-top:12px}
+.s-book h3{font-size:1.125rem}.s-book h4{font-size:.9375rem}
+.s-book p,.s-book li{line-height:1.55}
+.about li{margin:4px 0}
+.page>.blk:first-child>.sty{align-self:flex-start}
+.relbtn{white-space:nowrap;flex:none}
+.phone .ver{font-size:.75rem}
+.about h3{display:flex;align-items:center;gap:6px}
+.about .h-icon{height:1.6em;width:auto;flex:none}
+/* Dark mode: the app's own dark tokens (src/theme/designTokens.ts) */
+:root[data-theme=dark]{--bg:#121411;--panel:#0E100D;--surf:#181A16;--surf2:#20231E;--line:#2A2E27;--text:#F1EEE6;--muted:#A9AFA3;
+  --accent:#93C590;--accent-tint:rgba(140,192,138,.14);--kbg:#1D2A1A;--pill-bg:#2A2117;--pill-border:#3D3022;--bobo:#E8954F}
+:root[data-theme=dark] body{background:#0B0C0A;color:var(--text)}
+:root[data-theme=dark] .brand{color:#F1EEE6}
+:root[data-theme=dark] .rail a:hover{background:#262A23}
+:root[data-theme=dark] .s-card{box-shadow:0 1px 2px rgb(0 0 0/30%),0 6px 18px rgb(0 0 0/35%)}
+:root[data-theme=dark] .s-bubble{background:#2A2117;border-color:#3D3022;color:#F1E6D2}
+:root[data-theme=dark] .s-bubble::before{background:#2A2117;border-color:#3D3022}
+:root[data-theme=dark] .s-bubble p.close{color:#CDBB9E}
+:root[data-theme=dark] .s-book{color:#EFE4CC;border-color:#3A2F20;
+  background:linear-gradient(90deg,rgba(0,0,0,.35) 0,rgba(0,0,0,.12) 10px,rgba(0,0,0,0) 28px),repeating-linear-gradient(0deg,rgba(255,240,210,.025) 0 1px,transparent 1px 4px),radial-gradient(120% 90% at 30% 10%,#2B241A,#211B13);
+  box-shadow:0 1px 2px rgb(0 0 0/30%),0 8px 20px rgb(0 0 0/35%)}
+:root[data-theme=dark] .s-book::after{background:linear-gradient(315deg,rgba(0,0,0,0) 50%,rgba(0,0,0,.3) 50%,#3A3020 100%)}
+:root[data-theme=dark] .s-book p.close{color:#CDBB9E}
+:root[data-theme=dark] .s-book li::before{border-color:#93C590;background:rgba(140,192,138,.10)}
+:root[data-theme=dark] .s-book li::after{border-color:#93C590}
+:root[data-theme=dark] .hero{filter:brightness(.82) saturate(.95)}
+:root[data-theme=dark] .seg{border-color:#6B5A44}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:#EADBC2;color:#2B1D12}
+:root[data-theme=dark] .notes div{border-color:#3A3F36;border-left-color:var(--bobo)}
+/* Owner, 15 Oct: no Lottie label; the scene drifts gently and is faded */
+.stage img{opacity:.72}
+.hero::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(234,219,194,.10) 0%,rgba(234,219,194,0) 45%,rgba(234,219,194,.55) 100%)}
+.mascot{z-index:2}
+@media (prefers-reduced-motion:no-preference){.stage{animation-duration:18s}}
+:root[data-theme=dark] .hero::after{background:linear-gradient(180deg,rgba(18,20,17,.15) 0%,rgba(18,20,17,0) 45%,rgba(18,20,17,.6) 100%)}
+/* Owner, 15 Oct: the left leg 10px to the right (on the phone mascot, 150px wide; kept in proportion on bigger screens) */
+.mascot img.legl{left:6.7%;right:-6.7%}
+/* Owner, 15 Oct: the right leg 5px to the right (3.3% of the 150px phone mascot) */
+.mascot img.legr{left:3.3%;right:-3.3%}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="seg" role="group" aria-label="Device"><button type="button" data-dev="phone" aria-pressed="true">Phone</button><button type="button" data-dev="tablet" aria-pressed="false">Tablet</button></div>
+  <div class="seg" role="group" aria-label="Theme"><button type="button" data-th="light" aria-pressed="true">Light</button><button type="button" data-th="dark" aria-pressed="false">Dark</button></div>
+  <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="id" aria-pressed="false">ID</button></div>
+</div>
+<div class="frame-wrap"><div class="frame phone" id="frame"></div></div>
+<div class="notes" id="notes"></div>
+
+<script>
+const I={
+ en:{about:'About',more:'More',path:'More → About',prev:'Animation preview: the final one will be a Lottie',ver:'Version 1.0.40',
+  aboutH:'About ShaggyBobo',styL:'Style:',sty:['Bubble','Card','Book page'],ab:{h:'Hey, we\'re ShaggyBobo 👋',p:'A tiny HomeMade app for home cooks who feed their people. Drop your menu, share one link, and watch the orders roll in, in English or Bahasa. You do the cooking magic. We\'ll handle the chaos. 🍲',s:'Your customers\' stuff stays safe 🔒',l:['**No sign-ups. Ever.** A first name is all it takes to order. No passwords to forget.','**Phone numbers stay off the cloud.** Chats happen on WhatsApp, between you and them.','**Addresses? Locked up tight.** Encrypted, seen only by your team, and **auto-deleted a day after the menu ends**. Poof. ✨','**Zero ads. Zero selling data.** We don\'t touch money and we don\'t sell anyone\'s info. Not now, not ever.','**Notifications are opt-in.** Customers choose, and can switch them off any time.','**Your kitchen, your crew.** Only people you invite get in, each with a passkey on their own device.'],c:'HomeMade with love (and a lot of tasting). 💛'},help:'Help',helpGo:'Help: short steps in plain words',
+  relH:'Releases',openRel:'Open releases',wn:'What\'s new',row:'What\'s new · Releases',latest:'Current',from:'We show the last 5 releases.',close:'Close',
+  nav:['Home','Orders','Kitchen','Hand over','Sell','Menu','Settings','Help','About'],
+  tabs:['Home','Orders','Sell','Menu','More'],
+  nH:'Notes for the owner',
+  n:['The hero animation is a stand-in made in CSS from the mascot pictures. The final one will be a Lottie.',
+     'Decided: we make the Lottie ourselves, from our mascot parts and the market scene (shared with the customer app round).',
+     'A Lottie needs a new library (a dependency), which needs your OK.',
+     'About text: owner\'s approved draft (15 Oct)',
+     'Pick one text style (Bubble, Card or Book page) with the switch above the text; the app will use only that one. The switch is for this mock-up only.',
+     'Release lines are drafted by Claude (EN / ID) from the handover; you or the builder decide what goes in.',
+     'Sample only: versions 1.0.37 to 1.0.40 and their lines are made up to show the panel with 5 releases; real releases start at 1.0.36.']},
+ id:{about:'Tentang',more:'Lainnya',path:'Lainnya → Tentang',prev:'Pratinjau animasi: yang final akan berupa Lottie',ver:'Versi 1.0.40',
+  aboutH:'Tentang ShaggyBobo',styL:'Gaya:',sty:['Gelembung','Kartu','Halaman buku'],ab:{h:'Halo, kami ShaggyBobo 👋',p:'Aplikasi mungil HomeMade untuk para juru masak rumahan. Pasang menu, bagikan satu tautan, dan pesanan pun berdatangan, dalam bahasa Inggris atau Indonesia. Kamu fokus masak yang enak-enak, sisanya biar kami yang beresin. 🍲',s:'Data pelangganmu aman 🔒',l:['**Nggak perlu daftar.** Cukup nama depan untuk pesan. Nggak ada kata sandi yang bisa lupa.','**Nomor HP nggak disimpan di cloud.** Ngobrolnya lewat WhatsApp, antara kamu dan mereka.','**Alamat? Dikunci rapat.** Terenkripsi, cuma timmu yang bisa lihat, dan **terhapus otomatis sehari setelah menu selesai**. Hilang. ✨','**Tanpa iklan. Tanpa jual data.** Kami nggak pegang uang dan nggak jual info siapa pun. Dulu, sekarang, selamanya.','**Notifikasi? Terserah pelanggan.** Mau nyala atau mati, bebas kapan saja.','**Dapurmu, krumu.** Cuma yang kamu undang yang bisa masuk, masing-masing pakai passkey di perangkatnya sendiri.'],c:'HomeMade dengan cinta (dan banyak icip-icip). 💛'},help:'Bantuan',helpGo:'Bantuan: langkah singkat dengan kata mudah',
+  relH:'Rilis',openRel:'Buka rilis',wn:'Yang baru',row:'Yang baru · Rilis',latest:'Terbaru',from:'Kami tampilkan 5 rilis terakhir.',close:'Tutup',
+  nav:['Beranda','Pesanan','Dapur','Serah terima','Jual','Menu','Pengaturan','Bantuan','Tentang'],
+  tabs:['Beranda','Pesanan','Jual','Menu','Lainnya'],
+  nH:'Catatan untuk pemilik',
+  n:['Animasi di bagian atas hanyalah pengganti yang dibuat dengan CSS dari gambar maskot. Yang final akan berupa Lottie.',
+     'Sudah diputuskan: Lottie kita buat sendiri, dari bagian-bagian maskot dan gambar pasar (sama dengan putaran aplikasi pelanggan).',
+     'Lottie butuh pustaka baru (dependensi), yang perlu persetujuan Anda.',
+     'Teks tentang: draf yang disetujui pemilik (15 Okt)',
+     'Pilih satu gaya teks (Gelembung, Kartu atau Halaman buku) dengan tombol di atas teks; aplikasi hanya memakai satu itu. Tombol ini hanya untuk mock-up.',
+     'Baris rilis dirancang Claude (EN / ID) dari catatan serah terima; Anda atau pembuat yang memutuskan isinya.',
+     'Hanya contoh: versi 1.0.37 sampai 1.0.40 dan barisnya karangan untuk menunjukkan panel dengan 5 rilis; rilis asli mulai dari 1.0.36.']}
+};
+const R=[
+ {v:'1.0.40',d:['15 Nov 2026','15 Nov 2026'],en:['Orders can be printed as a pick list per dish.','Small fixes to the Sell screen.'],id:['Pesanan bisa dicetak sebagai daftar ambil per hidangan.','Perbaikan kecil di layar Jual.']},
+ {v:'1.0.39',d:['8 Nov 2026','8 Nov 2026'],en:['Helpers see the orders to hand over first.','Faster loading of the menu list.'],id:['Asisten melihat pesanan yang harus diserahkan lebih dulu.','Daftar menu dimuat lebih cepat.']},
+ {v:'1.0.38',d:['1 Nov 2026','1 Nov 2026'],en:['You can copy a past menu to start a new one.','Clearer sold-out label for customers.'],id:['Menu lama bisa disalin untuk memulai menu baru.','Label habis yang lebih jelas bagi pelanggan.']},
+ {v:'1.0.37',d:['22 Oct 2026','22 Okt 2026'],en:['Dish pictures upload more reliably on slow networks.','The Team page shows each person\'s devices.'],id:['Gambar hidangan terunggah lebih andal di jaringan lambat.','Halaman Tim menampilkan perangkat tiap orang.']},
+ {v:'1.0.36',d:['15 Oct 2026','15 Okt 2026'],en:['Pickup places show on a map, with a Directions button.','A new About page shows what is new in each version.','My orders for customers also shows the pickup map.'],id:['Tempat pengambilan tampil di peta, dengan tombol Petunjuk arah.','Halaman Tentang yang baru menunjukkan apa yang baru di tiap versi.','Pesanan saya milik pelanggan juga menampilkan peta pengambilan.']}
+];
+let panel=false;
+const IC=['<path d="M3 11l9-7 9 7v9H3z"/>','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/>','<path d="M4 11h16v8H4zM8 11V7a4 4 0 018 0v4"/>','<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/>','<path d="M3 6h18l-2 9H5zM8 20h.01M16 20h.01"/>','<path d="M5 4h14v16H5zM9 8h6M9 12h6"/>','<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>','<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"/>','<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>'];
+const ic=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>';
+const chev='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+const B='../../../public/brand/';
+let dev='phone',lang='en',sty='card';
+const $=s=>document.querySelector(s);
+const bd=s=>s.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+
+function render(){
+  const t=I[lang];
+  document.documentElement.lang=lang;
+  const rail='<nav class="rail" aria-label="Seller">'+
+    '<div class="rb"><img src="'+B+'logo-icon.webp" alt=""><span>Shaggy<i>Bobo</i></span></div>'+
+    t.nav.map((n,i)=>(i===7?'<div class="gap"></div>':'')+'<a href="#" '+(i===8?'aria-current="page"':'')+'>'+ic(i)+n+'</a>').join('')+'</nav>';
+  const hero='<div class="hero"><div class="stage" aria-hidden="true"><img src="'+B+'nusantara-market.webp" alt=""></div>'+
+    '<div class="mascot" aria-hidden="true"><img class="legr" src="'+B+'mascot-leg-right.webp" alt=""><img class="legl" src="'+B+'mascot-leg-left.webp" alt=""><img src="'+B+'mascot-body.webp" alt=""><img class="lids" src="'+B+'mascot-eyes-closed.webp" alt=""><img class="arm" src="'+B+'mascot-arm-spoon.webp" alt=""></div></div>';
+  const pin=hero+
+    '<div class="id"><div class="brand"><img src="'+B+'logo-icon.webp" alt=""><span>Shaggy<i>Bobo</i></span></div><span class="ver mono">'+t.ver+'</span><button type="button" class="relbtn" id="relrow" aria-haspopup="dialog" aria-label="'+t.openRel+'">'+t.wn+' <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div>';
+  const page=
+    '<section class="blk" aria-label="'+t.aboutH+'">'+'<div class="about s-'+sty+'"><div class="ab-in"><h3>'+t.ab.h.replace(' 👋','')+' <img class="h-icon" src="'+B+'logo-icon.webp" alt="ShaggyBobo"></h3><p>'+bd(t.ab.p)+'</p><h4>'+t.ab.s+'</h4><ul>'+t.ab.l.map(x=>'<li>'+bd(x)+'</li>').join('')+'</ul><p class="close">'+t.ab.c+'</p></div></div></section>'+
+    '';
+  const hdr='<div class="hdr"><button class="back" type="button" aria-label="Back">'+'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h1>'+t.about+'</h1><span class="crumb">'+t.path+'</span></div>';
+  const tabs='<nav class="tabbar" aria-label="Tabs">'+t.tabs.map((x,i)=>'<div class="'+(i===4?'on':'')+'">'+ic([0,1,4,5,6][i])+x+'</div>').join('')+'</nav>';
+  const f=$('#frame');
+  f.className='frame '+dev;
+  const k=lang==='id'?'id':'en',di=lang==='id'?1:0;
+  const pn='<div class="backdrop'+(panel?' on':'')+'" id="bd"></div><aside class="panel'+(panel?' on':'')+'" id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle"'+(panel?'':' inert')+'><div class="phd"><button class="back pback" type="button" data-close aria-label="'+t.close+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2 id="ptitle">'+t.relH+'</h2><button class="x" type="button" data-close aria-label="'+t.close+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="pbody"><div class="rel">'+R.map((r,n)=>'<details class="r"'+(n===0?' open':'')+'><summary><span class="v mono">'+r.v+'</span><span class="d">'+r.d[di]+'</span>'+(n===0?'<span class="tag">'+t.latest+'</span>':'')+chev+'</summary><ul>'+r[k].map(x=>'<li>'+x+'</li>').join('')+'</ul></details>').join('')+'</div><p class="fromline">'+t.from+'</p></div></aside>';
+  f.innerHTML=rail+'<div class="col">'+hdr+'<div class="pin">'+pin+'</div><div class="scroll"><div class="page">'+page+'</div></div>'+tabs+'</div>'+pn;
+  $('#notes').innerHTML='<div><h3>'+t.nH+'</h3><ul>'+t.n.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
+  document.querySelectorAll('[data-dev]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dev===dev));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
+}
+document.addEventListener('click',e=>{
+  const d=e.target.closest('[data-dev]'),l=e.target.closest('[data-lang]'),st=e.target.closest('[data-sty]');
+  if(st){sty=st.dataset.sty;try{localStorage.setItem('aboutStyle',sty)}catch(e){}render();const nb=document.querySelector('[data-sty="'+sty+'"]');if(nb)nb.focus()}
+  if(d){dev=d.dataset.dev;render()}
+  if(l){lang=l.dataset.lang;render()}
+  const th=e.target.closest('[data-th]');if(th)setTheme(th.dataset.th);
+  if(e.target.closest('.rail a,.help'))e.preventDefault();
+  if(e.target.closest('#relrow'))openP();
+  if(e.target.closest('[data-close]')||e.target.id==='bd')closeP();
+});
+function setTheme(m){document.documentElement.dataset.theme=m;document.querySelectorAll('[data-th]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.th===m))}
+setTheme(new URLSearchParams(location.search).get('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+function setP(on){panel=on;$('#panel').classList.toggle('on',on);$('#bd').classList.toggle('on',on);$('#panel').inert=!on}
+function openP(){setP(true);const pb=$('.panel .pback'),x=$('.panel .x');(pb.offsetParent?pb:x).focus({preventScroll:true})}
+function closeP(){setP(false);$('#relrow').focus({preventScroll:true})}
+document.addEventListener('keydown',e=>{
+  if(!panel)return;
+  if(e.key==='Escape')closeP();
+  if(e.key==='Tab'){const els=[...document.querySelectorAll('#panel button,#panel summary')].filter(x=>x.offsetParent);if(!els.length)return;const a=els[0],z=els[els.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
+});
+const p=new URLSearchParams(location.search);
+if(p.get('lang')==='id')lang='id';
+if(p.get('dev')==='tablet')dev='tablet';
+render();
+</script>
+</body>
+</html>

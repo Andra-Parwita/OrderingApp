@@ -1,6 +1,6 @@
 # 075 · About ShaggyBobo and release notes in the seller app
 
-**Status:** questions answered (2026-10-14; D-100); plan only, build next round after the mock-up. Owner: "we need to plan for next round to have release notes in the seller app, so we can see what changes" → "we may need to add in seller app 'About' and show the ShaggyBobo branding, fancy, same like in the admin left page, and show the releases and a bit of about; only on the seller app; we don't need to build now, just a plan".
+**Status:** **mock-up approved** (owner "A", 2026-10-15): [`uxDesign/seller/mockups/075-seller-about.html`](../../uxDesign/seller/mockups/075-seller-about.html) (open it through a local server, e.g. `python -m http.server` from the repo root, so the pictures load). Build next round, after the owner's go. Owner: "we need to plan for next round to have release notes in the seller app, so we can see what changes" → "we may need to add in seller app 'About' and show the ShaggyBobo branding, fancy, same like in the admin left page, and show the releases and a bit of about; only on the seller app; we don't need to build now, just a plan".
 **Goal:** sellers (owners, chefs, helpers) can open an **About** page in the seller app that shows the ShaggyBobo branding, a short "about", the current version and **what changed in each release**, in plain EN and ID. Seller app only (not customers, not admin).
 
 ## Today
@@ -59,7 +59,7 @@ The heading ends with the **ShaggyBobo icon** (`logo-icon`) instead of 👋 (own
 ## Stages (after the questions)
 | # | stage |
 |---|---|
-| 1 | mock-up of the About page (phone + tablet) for the owner's OK |
+| 1 | ✅ mock-up approved (15 Oct) |
 | 2 | notes file + About page + menu item (all roles), EN/ID |
 | 3 | release checklist gains "write the notes"; Help mentions About |
 | 4 | tests (unit for the notes list, one Playwright check), docs |
