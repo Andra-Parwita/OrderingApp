@@ -7,10 +7,13 @@ Today's product is deliberately small (see [overview.md](overview.md) and the [c
 ## Now (next rounds)
 | item | plan | state |
 |---|---|---|
+| About ShaggyBobo page with release notes (seller app) | [075](../plans/075-release-notes.md) | answered (D-100); mock-up next |
 | A picture for each dish, shown to customers | [067](../plans/067-dish-pictures.md) | draft |
-| Per-chef portions and income | [069](../plans/069-per-chef-income.md) | building |
-| Branded HTML docs site, kept current | [070](../plans/070-docs-site.md) | draft |
+| Cleanup: state duplication, sweeping expired keys/codes, dead route names, customer socket tokens out of the URL | — | listed in the handover; ask one by one |
+| Help screenshots from the live app | — | to do |
 | The customer app round (Lottie animations) | — | waiting for the owner's animations |
+
+**Done in Release 1.0.35 (14 Oct):** live updates (074), fewer requests (072, 073), delivery addresses with Google Maps (071), maintenance notice (046), per-chef income (069), two kitchens on one phone (068), the docs site (070).
 
 ## Later: three directions
 ### 1 · Square payments
