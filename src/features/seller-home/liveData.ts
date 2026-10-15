@@ -1,4 +1,5 @@
 import { localDate } from '../../../shared/dates';
+import { viewedKitchenZone } from '../../../shared/zone';
 import type { LocalText, Order } from '../../../shared/domain';
 import type { MenuView } from '../../../shared/menusContract';
 import { summariseOrders } from '../../../shared/pastWeeks';
@@ -132,12 +133,10 @@ export function unpaidOf(orders: ReadonlyArray<Order>): Readonly<{ count: number
   return { count: owed.length, cents: owed.reduce((sum, order) => sum + cents(order), 0) };
 }
 
-const ZONE = 'Australia/Melbourne';
-
-/** The clock in the cook's zone, "HH:MM". */
+/** The clock in the kitchen's zone, "HH:MM" (pickup windows are the kitchen's wall clock). */
 export function localClock(now: Date): string {
   return new Intl.DateTimeFormat('en-GB', {
-    timeZone: ZONE,
+    timeZone: viewedKitchenZone(),
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
@@ -151,7 +150,11 @@ export function isRunningNow(
   now: Date,
 ): boolean {
   const clock = localClock(now);
-  return localDate(now) === cookingDate && clock >= window.start && clock < window.end;
+  return (
+    localDate(now, viewedKitchenZone()) === cookingDate &&
+    clock >= window.start &&
+    clock < window.end
+  );
 }
 
 export type TimeLeft =

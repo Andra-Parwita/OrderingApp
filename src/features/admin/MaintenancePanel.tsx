@@ -6,6 +6,8 @@ import { styled } from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import type { Language } from '../../../shared/domain';
 import { cutoffAtFor, formatDayTime, localDate } from '../../../shared/dates';
+
+import { deviceZone, zoneCity } from '../../../shared/zone';
 import { NOTICE_NOTE_MAX, type MaintenanceState } from '../../../shared/maintenance';
 import { fetchMaintenance, saveMaintenance } from '../../api/auth';
 import { Button, ConfirmButton, TextField } from '../../ui';
@@ -31,7 +33,7 @@ export function MaintenancePanel({ onActive }: Readonly<{ onActive?: (active: bo
   const { t, i18n } = useTranslation(ADMIN_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [state, setState] = useState<MaintenanceState | null>(null);
-  const [date, setDate] = useState(() => localDate(new Date()));
+  const [date, setDate] = useState(() => localDate(new Date(), deviceZone()));
   const [start, setStart] = useState('22:00');
   const [minutes, setMinutes] = useState('15');
   const [noteEn, setNoteEn] = useState('');
@@ -66,7 +68,7 @@ export function MaintenancePanel({ onActive }: Readonly<{ onActive?: (active: bo
       setProblem(t('home.maintenance.badLength'));
       return;
     }
-    const from = new Date(cutoffAtFor(date, 0, start)).toISOString();
+    const from = new Date(cutoffAtFor(date, 0, start, deviceZone())).toISOString();
     const until = new Date(Date.parse(from) + length * MINUTE).toISOString();
     void save({ notice: { from, until, noteEn: noteEn.trim(), noteId: noteId.trim() } });
   }
@@ -78,7 +80,7 @@ export function MaintenancePanel({ onActive }: Readonly<{ onActive?: (active: bo
   return (
     <Section>
       <Sub>{t('home.maintenance.title')}</Sub>
-      <Muted>{t('home.maintenance.text')}</Muted>
+      <Muted>{t('home.maintenance.text', { zone: zoneCity(deviceZone()) })}</Muted>
       <Wide onSubmit={announce}>
         <Row>
           <TextField

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MenuView } from '../../../shared/menusContract';
-import { splitInstant, toInstant } from './instant';
+import { splitInstant, toInstant } from '../../../shared/zone';
 import { matchPastDishes } from './pastMenus';
 import { worries } from './worry';
 
@@ -77,10 +77,11 @@ describe('worth a look (D-062)', () => {
 });
 
 describe('instants', () => {
-  it('round-trips a Melbourne wall-clock time, with daylight saving', () => {
-    expect(toInstant('2026-10-16', '21:00')).toBe('2026-10-16T21:00:00+11:00');
-    expect(toInstant('2026-04-10', '21:00')).toBe('2026-04-10T21:00:00+10:00');
-    expect(splitInstant('2026-10-16T21:00:00+11:00')).toEqual({
+  it('round-trips a device wall-clock time (Adelaide), with daylight saving', () => {
+    const zone = 'Australia/Adelaide';
+    expect(toInstant('2026-10-16', '21:00', zone)).toBe('2026-10-16T21:00:00+10:30');
+    expect(toInstant('2026-04-10', '21:00', zone)).toBe('2026-04-10T21:00:00+09:30');
+    expect(splitInstant('2026-10-16T21:00:00+10:30', zone)).toEqual({
       date: '2026-10-16',
       time: '21:00',
     });

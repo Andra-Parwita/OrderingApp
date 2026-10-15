@@ -22,11 +22,11 @@ import { pngFor } from './images';
 const A = 'onde-onde';
 const B = 'dapur-demo';
 
-// Wed 7 Oct 2026 (Melbourne): the sample menus cook Sat 10 Oct, cut-off Fri 9 Oct 21:00.
+// Wed 7 Oct 2026 (Adelaide, +10:30): the sample menus cook Sat 10 Oct, cut-off Fri 9 Oct 21:00.
 const START = new Date('2026-10-07T10:00:00Z');
-// Midnight Melbourne (+11:00) after Sat 10 Oct is 2026-10-10T13:00:00Z.
-const JUST_BEFORE_MIDNIGHT = new Date('2026-10-10T12:59:00Z');
-const JUST_AFTER_MIDNIGHT = new Date('2026-10-10T13:00:30Z');
+// Midnight Adelaide (+10:30) after Sat 10 Oct is 2026-10-10T13:30:00Z.
+const JUST_BEFORE_MIDNIGHT = new Date('2026-10-10T13:29:00Z');
+const JUST_AFTER_MIDNIGHT = new Date('2026-10-10T13:30:30Z');
 
 describe('menus and dishes', () => {
   const create = useWorld('menus');
@@ -172,7 +172,7 @@ describe('menus and dishes', () => {
         state: 'not_published',
         cookingDate: '2026-10-17',
         // The menu defaults: the evening before at 21:00.
-        cutoffAt: '2026-10-16T21:00:00+11:00',
+        cutoffAt: '2026-10-16T21:00:00+10:30',
         wizardStep: 0,
         takingOrders: true,
       });
@@ -196,7 +196,7 @@ describe('menus and dishes', () => {
       });
       await call('POST', '/api/seller/menus/current/finish');
       const made = await call('POST', '/api/seller/menus', { body: { cookingDate: '2026-10-17' } });
-      expect(made.body.menu.menu.cutoffAt).toBe('2026-10-15T18:30:00+11:00');
+      expect(made.body.menu.menu.cutoffAt).toBe('2026-10-15T18:30:00+10:30');
       expect(made.body.menu.menu.delivery).toEqual({
         available: true,
         note: { en: 'Within 5 km', id: 'Dalam 5 km' },
@@ -456,7 +456,7 @@ describe('menus and dishes', () => {
       expect((await call('GET', '/api/seller/past-weeks')).body.weeks).toHaveLength(1);
     });
 
-    it('auto-finishes at midnight (Melbourne) after the cooking day, and only then', async () => {
+    it('auto-finishes at midnight in the kitchen zone after the cooking day, and only then', async () => {
       await orderOnMenu('Rina', 'pickup');
       const lines: Array<string> = [];
       now = JUST_BEFORE_MIDNIGHT;
@@ -475,6 +475,28 @@ describe('menus and dishes', () => {
       expect((await currentMenu(B)).menu.state).toBe('finished');
       expect((await call('GET', '/api/seller/orders')).body.orders).toEqual([]);
       expect(lines).toEqual(['auto-finish: 2 menu(s) finished, 1 open order(s) closed']);
+    });
+
+    it('finishes each kitchen at midnight in its own zone (plan 077)', async () => {
+      // Onde Onde moves to Jakarta (+07:00): its midnight after Sat 10 Oct is 17:00Z, not 13:30Z.
+      await world.db.batch([
+        world.db.stmt(
+          'UPDATE kitchens SET time_zone = ? WHERE seller_id = (SELECT id FROM sellers WHERE slug = ?)',
+          'Asia/Jakarta',
+          A,
+        ),
+      ]);
+      const counts = await runAutoFinish({ DB: world.db.d1 }, JUST_AFTER_MIDNIGHT, () => undefined);
+      expect(counts).toEqual({ menus: 1, orders: 0, failed: 0 }); // only Adelaide's Dapur Demo
+      expect((await currentMenu()).menu.state).toBe('live');
+      expect((await currentMenu(B)).menu.state).toBe('finished');
+      const later = new Date('2026-10-10T17:00:30Z');
+      expect(await runAutoFinish({ DB: world.db.d1 }, later, () => undefined)).toEqual({
+        menus: 1,
+        orders: 0,
+        failed: 0,
+      });
+      expect((await currentMenu()).menu.state).toBe('finished');
     });
 
     it('is idempotent: a second run finds nothing and writes nothing', async () => {

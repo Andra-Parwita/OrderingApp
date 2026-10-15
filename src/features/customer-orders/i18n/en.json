@@ -43,6 +43,7 @@
     "delivery": "Delivery"
   },
   "order": {
+    "yourTime": "your time",
     "title": "Your order",
     "titleShort": "Order",
     "loadError": "Could not load your order.",

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { CustomerOrder, Language, OrderStatus } from '../../../shared/domain';
 import { formatCutoff, formatDayTime } from '../../../shared/dates';
+import { YourTime } from '../../components/YourTime';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
@@ -431,7 +432,10 @@ export function OrderPageView(props: OrderPageViewProps) {
               </OutlineButton>
             </TwoUp>
             {cutoffAt ? (
-              <Hint>{t('order.changeUntil', { when: formatCutoff(cutoffAt, lang) })}</Hint>
+              <Hint>
+                {t('order.changeUntil', { when: formatCutoff(cutoffAt, lang) })}
+                <YourTime label={t('order.yourTime')} />
+              </Hint>
             ) : null}
           </>
         ) : null}

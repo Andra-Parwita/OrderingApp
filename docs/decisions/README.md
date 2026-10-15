@@ -623,3 +623,8 @@ Format for each entry:
 **Ruling:** "A": the kitchens are all in Adelaide for now (the Melbourne clock in the code was a prototype assumption, never a ruling). "Save everything as UTC and device time is what we will show. Seller or admin sets 9 am, it is 9 am on their time." Each kitchen gets a time zone (default `Australia/Adelaide`) for the jobs that have no device (auto-finish, default cut-off). Plan 077.
 **Trade-off:** a customer in another zone sees converted times (with a small "your time" label); in return nobody does time-zone sums in their head.
 **Revisit when:** a kitchen opens outside Adelaide (then the owner picks its zone in Settings).
+
+## D-102 · Time code: the browser's built-in tools, no date library (2026-10-16; owner)
+**Ruling:** "A": keep `shared/zone.ts` (about 100 lines on the browser's built-in `Intl`), no js-joda or Temporal add-on for now. The owner has used js-joda in an app used around the world; it was compared (separate kinds of value for a clock time and an exact moment, full summer-time rules) against its size (about 75–150 KB with time-zone data) and its bundled zone rules going stale.
+**Trade-off:** clock times and exact moments are plain strings, so the code keeps them apart by convention, and the hour skipped or repeated at a summer-time change uses a simple rule; in return nothing extra to download and the zone rules stay current in each browser.
+**Revisit when:** kitchens open in several countries or date sums grow: move to Temporal (the new built-in standard; js-joda's model), with its add-on until Safari has it ([roadmap](../product/roadmap.md)).

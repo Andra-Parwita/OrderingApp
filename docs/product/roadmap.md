@@ -7,11 +7,12 @@ Today's product is deliberately small (see [overview.md](overview.md) and the [c
 ## Now (next rounds)
 | item | plan | state |
 |---|---|---|
-| About ShaggyBobo page with release notes (seller app) | [075](../plans/075-release-notes.md) | answered (D-100); mock-up next |
+| Release 1.0.36: About page (075), pickup on the map (076), times in the device's zone (077), admin layout (078), Help inside the seller app (079), top bars push the page down (080) | 075–080 | built and gated; deploy next |
 | A picture for each dish, shown to customers | [067](../plans/067-dish-pictures.md) | draft |
 | Cleanup: state duplication, sweeping expired keys/codes, dead route names, customer socket tokens out of the URL | — | listed in the handover; ask one by one |
 | Help screenshots from the live app | — | to do |
 | The customer app round (Lottie animations) | — | waiting for the owner's animations |
+| Kitchens in many countries: move the time code (`shared/zone.ts`) to Temporal, JavaScript's new built-in date-time standard (owner A, 16 Oct; js-joda considered) | — | only if we go multi-country; until then the built-in browser tools are enough |
 
 **Done in Release 1.0.35 (14 Oct):** live updates (074), fewer requests (072, 073), delivery addresses with Google Maps (071), maintenance notice (046), per-chef income (069), two kitchens on one phone (068), the docs site (070).
 

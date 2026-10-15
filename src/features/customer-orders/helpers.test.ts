@@ -65,7 +65,7 @@ describe('inboxText', () => {
 
 describe('isThisWeek', () => {
   const base = { status: 'confirmed', createdAt: '2026-10-07T10:00:00.000Z' } as CustomerOrder;
-  const now = new Date('2026-10-09T14:30:00Z'); // Sat 10 Oct 01:30 in Melbourne
+  const now = new Date('2026-10-09T14:30:00Z'); // Sat 10 Oct 01:00 in Adelaide
   it('counts an order for the coming cooking date as current, early on the Saturday', () => {
     expect(isThisWeek(base, '2026-10-17', now)).toBe(true);
   });

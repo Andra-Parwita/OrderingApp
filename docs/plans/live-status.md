@@ -8,6 +8,7 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|
+| 077 · UTC stored, device time shown (all 4 stages) | builder · sonnet | 06:27 (16 Oct) | 90 min | 06:57 | ~30 min | −60 min | ~55 code files +376/−194, `shared/zone.ts`, `YourTime`, migration 0025, docs | ✅ gated: typecheck, lint, format, unit 2,123 (2 fixes by the coordinator; port-busy files re-ran green 158/158), full e2e 91 passed (31 skipped) |
 | 078 · admin page Layout A (pinned header, menu + sections, compact devices, resizable column, phone dropdown) | builder · sonnet | 22:36 (15 Oct) | 60 min | 22:56 | ~15 min | −45 min | `AdminHomeScreen` rewritten, `useSection`, `useColumnWidth`, `DevicesPanel`, signout icon, tests, admin-maintenance spec | ✅ gated: unit 243, e2e admin 2 + maintenance 1, lint, format |
 | 080 · top bars push the page down + Bobo speech bubble | builder · sonnet | 21:41 (15 Oct) | 60 min | 21:48 | ~10 min | −50 min | `src/theme/screen.ts`, `topBars.ts`, 3 bars, ~25 layouts, PageHeader/SlideOver/rail offsets | ✅ gated: full unit 2,228/2,228, full e2e 91 passed (31 skipped), lint, format; captures ✅ |
 | 079 · Help inside the seller app | builder · sonnet | 21:31 (15 Oct) | 40 min | 21:40 | ~25 min | −15 min | HelpScreen `embedded`, `/seller/help` route, nav, tests, e2e `seller-help-in-app` | ✅ gated: unit 165 + 15, e2e 2/2 × 2 + helper-flow, Print contrast fixed |

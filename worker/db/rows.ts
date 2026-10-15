@@ -27,6 +27,7 @@ export type KitchenRow = {
   banner_background: string | null;
   image_alt_en: string;
   image_alt_id: string;
+  time_zone: string;
 };
 export type ImageRow = { slot: ImageSlot; ref: string };
 export type SettingsRow = {
@@ -207,6 +208,7 @@ export function kitchenOf(
     sellerId,
     name: row.name,
     tagline: text(row.tagline_en, row.tagline_id),
+    timeZone: row.time_zone,
     ...(row.banner_image_url !== null ? { bannerImageUrl: row.banner_image_url } : {}),
     ...(Object.keys(images).length > 0 ? { images } : {}),
   };

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Language, MenuItemView } from '../../../shared/domain';
 import { formatCookingDate, formatCutoff } from '../../../shared/dates';
+import { YourTime } from '../../components/YourTime';
 import { LOW_STOCK, MAX_QTY } from '../../../shared/limits';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
@@ -280,6 +281,7 @@ export function DishesView({
           date: formatCookingDate(week.cookingDate, lang),
           dateTime: formatCutoff(week.cutoffAt, lang),
         })}
+        <YourTime label={t('home.yourTime')} kitchenZone={kitchen.timeZone} />
       </Sub>
       <DishList data={data} basket={basket} lang={lang} onQty={onQty} readOnly={readOnly} />
       {count > 0 && !readOnly ? (

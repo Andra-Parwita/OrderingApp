@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { comingSaturday, cutoffAtFor, formatDay } from '../../../shared/dates';
+import { deviceZone } from '../../../shared/zone';
 import type { Language } from '../../../shared/domain';
 import type { DishSet, MenuDefaults } from '../../../shared/menusContract';
 import type { PastWeekSummary } from '../../../shared/pastWeeks';
@@ -101,7 +102,7 @@ const TIME = /^\d{2}:\d{2}$/;
 
 /** The default "Orders close" for a cooking day, as a wall-clock date and time. */
 function defaultClose(cookingDate: string, defaults: MenuDefaults) {
-  const at = cutoffAtFor(cookingDate, defaults.cutoffDaysBefore, defaults.cutoffTime);
+  const at = cutoffAtFor(cookingDate, defaults.cutoffDaysBefore, defaults.cutoffTime, deviceZone());
   return { date: at.slice(0, 10), time: at.slice(11, 16) };
 }
 
@@ -119,7 +120,7 @@ export function NewMenuDialog({
   registerSellerHomeI18n();
   const { t } = useTranslation(HOME_NS);
   const ids = useId();
-  const [day, setDay] = useState(() => comingSaturday(now ?? new Date()));
+  const [day, setDay] = useState(() => comingSaturday(now ?? new Date(), deviceZone()));
   // Until the seller edits Orders close, it follows the cooking day.
   const [closeEdit, setCloseEdit] = useState<{ date: string; time: string } | null>(null);
   const close =
@@ -153,8 +154,8 @@ export function NewMenuDialog({
           : { kind: 'empty' };
     onCreate({
       cookingDate: day,
-      // The cut-off is a wall-clock time in the cook's zone; day 0 gives its offset on that date.
-      cutoffAt: cutoffAtFor(close.date, 0, close.time),
+      // The cut-off is a wall-clock time on the seller's device; day 0 gives its offset on that date.
+      cutoffAt: cutoffAtFor(close.date, 0, close.time, deviceZone()),
       source,
     });
   };

@@ -3,7 +3,7 @@ import type { CustomerOrder } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { buildMyOrders } from './myOrdersModel';
 
-const NOW = new Date('2026-10-17T02:00:00Z'); // Sat 17 Oct, noon in Melbourne
+const NOW = new Date('2026-10-17T02:00:00Z'); // Sat 17 Oct, noon-ish in Adelaide
 
 function order(patch: Partial<CustomerOrder>): CustomerOrder {
   return {

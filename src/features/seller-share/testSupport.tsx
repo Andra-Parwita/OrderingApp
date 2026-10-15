@@ -16,7 +16,7 @@ const none = { en: '', id: '' };
 
 export const MENU: ShareMenu = {
   cookingDate: '2026-10-10',
-  cutoffAt: '2026-10-09T21:00:00+11:00',
+  cutoffAt: '2026-10-09T21:00:00+10:30',
   pickupPoints: [
     {
       id: 'gw',

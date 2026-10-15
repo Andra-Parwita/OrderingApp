@@ -3,6 +3,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { css, styled } from 'styled-components';
 import type { Kitchen, Language } from '../../../shared/domain';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
+import { YourTime } from '../../components/YourTime';
 import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
@@ -350,6 +351,7 @@ export function MenuHomeView({
         <MenuIcon name="clock" />
         <RowText>
           <Trans t={t} i18nKey="home.orderBy" values={{ dateTime: cutoff }} components={bold} />
+          <YourTime label={t('home.yourTime')} kitchenZone={kitchen.timeZone} />
         </RowText>
       </Row>
       {places > 0 ? (
@@ -376,7 +378,9 @@ export function MenuHomeView({
             <Places>
               {week.pickupPoints.map((point) => (
                 <li key={point.id}>
-                  {point.place} · {formatWindow(point.window.start, point.window.end, lang)}
+                  {point.place} ·{' '}
+                  {formatWindow(point.window.start, point.window.end, lang, week.cookingDate)}
+                  <YourTime label={t('home.yourTime')} kitchenZone={kitchen.timeZone} />
                   <small>{pickText(point.directions, lang)}</small>
                   <PickupMapLine info={pickupMapInfo(point, lang, data.mapsEmbedKey, date)} />
                 </li>

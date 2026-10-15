@@ -5,6 +5,7 @@
 import type { D1Like, D1Statement } from '../worker/db/d1';
 import { Db } from '../worker/db/d1';
 import { comingSaturday } from '../shared/dates';
+import { DEFAULT_ZONE } from '../shared/zone';
 import { fixtureStatements, TABLES_CHILDREN_FIRST, wipeAndSeed } from '../worker/db/seed';
 
 const WRITE =
@@ -94,12 +95,12 @@ export function trackWrites(real: D1Like, migrations: ReadonlyArray<string>): Tr
   return {
     d1,
     markFresh(now) {
-      seededWeek = comingSaturday(now);
+      seededWeek = comingSaturday(now, DEFAULT_ZONE);
       dirty.clear();
       everything = false;
     },
     async reset(now) {
-      const week = comingSaturday(now);
+      const week = comingSaturday(now, DEFAULT_ZONE);
       if (week !== seededWeek) everything = true;
       seededWeek = week;
       if (!everything && dirty.size === 0) return;

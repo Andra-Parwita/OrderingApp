@@ -271,7 +271,7 @@ function PlacedBody({
   const dayText = menu ? formatCookingDate(menu.week.cookingDate, lang) : null;
   const when =
     dayText && pickup
-      ? `${dayText}, ${formatWindow(pickup.window.start, pickup.window.end, lang)}`
+      ? `${dayText}, ${formatWindow(pickup.window.start, pickup.window.end, lang, menu?.week.cookingDate)}`
       : null;
   // The message is in the customer's language (the one the order was placed in).
   const waText = buildWhatsAppText(order, i18n.getFixedT(order.language, CUSTOMER_NS), when);

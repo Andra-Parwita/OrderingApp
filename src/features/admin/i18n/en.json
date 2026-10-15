@@ -199,7 +199,7 @@
     },
     "maintenance": {
       "title": "Announce an update",
-      "text": "Everyone sees a quiet notice until the update ends. Times are the cook's time (Melbourne).",
+      "text": "Everyone sees a quiet notice until the update ends. Times are in your time ({{zone}}).",
       "date": "Date",
       "start": "Start",
       "length": "Minutes",

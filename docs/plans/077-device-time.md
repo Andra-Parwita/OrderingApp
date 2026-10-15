@@ -1,6 +1,6 @@
 # 077 · Times: stored as UTC, shown in the device's time
 
-**Status:** draft (2026-10-15); owner ruling given (D-101); build after 075 and 076 land. Owner: "who said Onde Onde is in Melbourne?" → "for now they are all in Adelaide like me, A … but we should also be clear and show device time … maybe we need to save everything as UTC and device time is what we will show? Seller or admin sets 9 am, it is 9 am on their time".
+**Status:** ✅ built and gated (16 Oct; approved: "do 77"); time code choice D-102; owner ruling D-101. Owner: "who said Onde Onde is in Melbourne?" → "for now they are all in Adelaide like me, A … but we should also be clear and show device time … maybe we need to save everything as UTC and device time is what we will show? Seller or admin sets 9 am, it is 9 am on their time".
 **Goal:** no city is hard-coded. Every moment is stored as **UTC**; every screen shows times in **the device's own time zone**; when a seller or admin types "9:00", it means 9:00 **on their device**.
 
 ## Today
@@ -23,3 +23,10 @@
 | 4 | tests in two zones, docs (data-model, flows), Help wording |
 
 **Deploy impact (expected):** ⚠️ one add-only migration; menus already published keep their stored instants (cut-offs were saved as Melbourne instants: an open menu's cut-off shown in Adelaide time will read 30 min earlier, e.g. 20:30 instead of 21:00; check live menus at deploy and re-save if needed).
+
+## Build decisions (coordinator, 16 Oct)
+- **Migration 0025** (add-only): `kitchens.time_zone TEXT NOT NULL DEFAULT 'Australia/Adelaide'`. A new kitchen takes the zone of the admin's device that creates it (validated IANA name, else the default). No "change zone" control this round (it would need a mock-up); the kitchen's zone only matters for server jobs and for viewers whose device differs.
+- **One helper** `shared/zone.ts` (device zone, default zone, wall clock ↔ instant in any zone). The 3 hard-coded zones go. Functions the Worker uses take the zone **as a required argument** (the Worker's own zone is UTC); screen formatting defaults to the device zone.
+- **Pickup windows** stay stored as the kitchen's wall-clock `HH:MM` on the cooking date; screens convert them to the device's time (identity when the zones match, which is everyone today).
+- **"your time" label:** a small muted word next to times on the customer menu and order pages, only when the device's zone differs from the kitchen's. Text only, no mock-up.
+- **Tests:** unit tests run with `TZ=Australia/Adelaide`; Playwright with `timezoneId: 'Australia/Adelaide'`; zone helpers are also tested in a second zone (Asia/Jakarta).

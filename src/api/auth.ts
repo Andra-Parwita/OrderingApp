@@ -8,6 +8,7 @@ import {
   type PublicKeyCredentialCreationOptionsJSON,
   type PublicKeyCredentialRequestOptionsJSON,
 } from '@simplewebauthn/browser';
+import { deviceZone } from '../../shared/zone';
 import {
   parseChefAccessResponse,
   parseCodeResponse,
@@ -284,7 +285,8 @@ export function fetchSellers(): Promise<ApiResult<SellersResponse>> {
 export function createSeller(name: string, slug: string): Promise<ApiResult<SellerResponse>> {
   return request('/api/admin/sellers', parseSellerResponse, {
     method: 'POST',
-    body: { name, slug },
+    // Plan 077: the new kitchen takes the zone of the admin's device.
+    body: { name, slug, timeZone: deviceZone() },
   });
 }
 

@@ -86,8 +86,9 @@ export function newSellerStatements(
   seller: Seller,
   createdAt: string,
   sampleImages = false,
+  zone?: string,
 ): Array<D1Statement> {
-  return sellerSeedStatements(db, blankFixture(seller, createdAt, sampleImages));
+  return sellerSeedStatements(db, blankFixture(seller, createdAt, sampleImages, zone));
 }
 
 /** The two sample kitchens (Onde Onde, Dapur Demo), their week the coming one from `now`. */

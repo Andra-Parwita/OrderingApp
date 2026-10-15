@@ -19,6 +19,7 @@ import { locationOf } from './pickupAddress';
 import { parseSeller } from './seller';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
 import { THEMES, type ThemeName } from './themes';
+import { isValidZone } from './zone';
 
 /** GET /api/s/:slug/menu: public. Never carries chefs or chef ids (D-012). */
 export type MenuResponse = {
@@ -92,10 +93,13 @@ export function parseKitchen(input: unknown): Kitchen | null {
   if (whatsapp !== undefined && typeof whatsapp !== 'string') return null;
   const images = input['images'] === undefined ? undefined : parseImages(input['images']);
   if (images === null) return null;
+  const zone = input['timeZone'];
   return {
     sellerId,
     name: input['name'],
     tagline,
+    // A zone this browser does not know is left out: the screens fall back to the device's.
+    ...(isValidZone(zone) ? { timeZone: zone } : {}),
     ...(banner !== undefined ? { bannerImageUrl: banner } : {}),
     ...(images !== undefined ? { images } : {}),
     ...(whatsapp !== undefined ? { whatsappNumber: whatsapp } : {}),

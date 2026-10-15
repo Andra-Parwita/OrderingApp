@@ -43,6 +43,7 @@
     "delivery": "Diantar"
   },
   "order": {
+    "yourTime": "waktu kamu",
     "title": "Pesanan Anda",
     "titleShort": "Pesanan",
     "loadError": "Pesanan tidak dapat dimuat.",

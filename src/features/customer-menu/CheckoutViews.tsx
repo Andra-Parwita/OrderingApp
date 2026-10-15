@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { css, keyframes, styled } from 'styled-components';
 import type { Fulfilment, Language, PickupPoint } from '../../../shared/domain';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
+import { YourTime } from '../../components/YourTime';
 import { FIRST_NAME_MAX, MAX_QTY, NOTE_MAX } from '../../../shared/limits';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
@@ -242,7 +243,7 @@ export function fulfilmentOptions(week: MenuResponse['week']): ReadonlyArray<Ful
 
 /** What the pickup place row shows: where, and when. */
 function whenAndWhere(point: PickupPoint, cookingDate: string, lang: Language): string {
-  return `${formatCookingDate(cookingDate, lang)} · ${formatWindow(point.window.start, point.window.end, lang)}`;
+  return `${formatCookingDate(cookingDate, lang)} · ${formatWindow(point.window.start, point.window.end, lang, cookingDate)}`;
 }
 
 type LineProps = Readonly<{
@@ -600,7 +601,7 @@ export function PickupPlaceView({ data, lang, selectedId, onSelect, onDone, onBa
                 <OptionText>
                   <b>{point.place}</b>
                   <small>
-                    {formatWindow(point.window.start, point.window.end, lang)} ·{' '}
+                    {formatWindow(point.window.start, point.window.end, lang, week.cookingDate)} ·{' '}
                     {pickText(point.directions, lang)}
                   </small>
                 </OptionText>
@@ -891,7 +892,7 @@ export function YourNameView({
               {fulfilment === 'delivery'
                 ? (addressLine ?? t('checkout.deliveryShort'))
                 : pickup
-                  ? `${pickup.place} · ${formatWindow(pickup.window.start, pickup.window.end, lang)}`
+                  ? `${pickup.place} · ${formatWindow(pickup.window.start, pickup.window.end, lang, week.cookingDate)}`
                   : ''}
             </dd>
           </Summary>
@@ -900,6 +901,7 @@ export function YourNameView({
       <Footer>
         <FooterNote>
           {t('checkout.changeUntil', { when: formatCutoff(week.cutoffAt, lang) })}
+          <YourTime label={t('home.yourTime')} />
         </FooterNote>
         <MainButton type="submit" form="your-name-form" disabled={placing || addressBlocked}>
           {placing ? (

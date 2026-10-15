@@ -56,6 +56,8 @@ export default defineConfig({
     // The server rejects writes without a same-site Origin (D-048); browsers send it, API calls do not.
     extraHTTPHeaders: { Origin: ORIGIN },
     ignoreHTTPSErrors: false,
+    // Plan 077: times show in the device's zone; the sample kitchens are in Adelaide (D-101).
+    timezoneId: 'Australia/Adelaide',
     trace: 'retain-on-failure',
   },
   projects: [

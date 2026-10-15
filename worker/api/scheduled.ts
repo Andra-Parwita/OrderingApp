@@ -1,6 +1,6 @@
 // The Worker's scheduled jobs (wrangler.jsonc `triggers.crons`), run for every seller at once. They
 // do not depend on anyone opening a screen.
-//   - Hourly: finish every live menu whose cooking day has ended, i.e. at midnight (Melbourne)
+//   - Hourly: finish every live menu whose cooking day has ended, i.e. at midnight in the kitchen's own zone
 //     after it (plan 001, D-069 Q5). Hourly is only the polling step; the menu finishes at the
 //     first run after its midnight.
 //   - Weekly (Mondays 03:00 UTC): retention (stage 8.4b, D-027 row 6, D-044). Order details of a

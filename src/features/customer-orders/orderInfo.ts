@@ -42,7 +42,9 @@ export function orderInfo(
       : undefined;
   const date = order.cookingDate ?? week?.cookingDate;
   const dateText = date ? formatCookingDate(date, lang) : null;
-  const windowText = pickup ? formatWindow(pickup.window.start, pickup.window.end, lang) : null;
+  const windowText = pickup
+    ? formatWindow(pickup.window.start, pickup.window.end, lang, date ?? undefined)
+    : null;
   return {
     kitchenName: menu?.kitchen.name ?? order.seller.name,
     cook: menu?.seller.name ?? order.seller.name,

@@ -5,6 +5,7 @@ import { APP_NAME } from './appName';
 import type { PauseKind, Seller } from './domain';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray } from './parse';
 import { parseSeller } from './seller';
+import { isValidZone } from './zone';
 
 /**
  * What a session can do in its active kitchen. 'seller' is a kitchen OWNER (plan 033: a person with
@@ -127,7 +128,12 @@ export type RegisterRequest =
   | { kind: 'passkey'; deviceName: string; response: WebAuthnResponse }
   | { kind: 'password'; password: string; deviceName: string };
 export type RenameDeviceRequest = { name: string };
-export type CreateSellerRequest = { name: string; slug: string };
+export type CreateSellerRequest = {
+  name: string;
+  slug: string;
+  /** Plan 077: the zone of the admin's device; the new kitchen's time zone (default Adelaide). */
+  timeZone?: string;
+};
 export type ChefInviteRequest = { chefId: string };
 /** POST /api/seller/invites (owner). The admin's invite-key takes just `{ displayName? }`. */
 export type InviteRequest = { displayName: string; role: MembershipRole; chefId?: string };
@@ -325,7 +331,10 @@ export function parseCreateSellerRequest(input: unknown): CreateSellerRequest | 
   if (!isRecord(input)) return null;
   const name = text(input['name'], SELLER_NAME_MAX);
   const { slug } = input;
-  return name && typeof slug === 'string' ? { name, slug } : null;
+  if (!name || typeof slug !== 'string') return null;
+  // An unknown zone is not an error: the kitchen gets the default.
+  const zone = input['timeZone'];
+  return { name, slug, ...(isValidZone(zone) ? { timeZone: zone } : {}) };
 }
 
 export function parseSetDemoRequest(input: unknown): SetDemoRequest | null {

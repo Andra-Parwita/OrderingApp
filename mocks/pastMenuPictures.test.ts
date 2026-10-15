@@ -130,7 +130,7 @@ describe('past menu pictures', () => {
     const lines: Array<string> = [];
     const counts = await runAutoFinish(
       { DB: world.db.d1, IMAGES: bucket },
-      new Date('2026-10-10T13:00:30Z'),
+      new Date('2026-10-10T13:30:30Z'),
       (l) => lines.push(l),
     );
     expect(counts.menus).toBeGreaterThanOrEqual(1);

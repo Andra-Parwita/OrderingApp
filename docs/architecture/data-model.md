@@ -27,7 +27,7 @@ Every table below, except `sellers`, the sign-in tables marked "global" and `cli
 | table | purpose | key | retention |
 |---|---|---|---|
 | `sellers` | one row per kitchen: `slug` (unique, lowercase, the customer link), `name`, `demo` (0006, D-076), `paused` (0012, D-086: NULL open, `customers` or `full`) | PK `id` | kept |
-| `kitchens` | the public identity: `name`, `tagline_en/id`, `banner_image_url`, `banner_background` (`#rrggbb`), `image_alt_en/id` | PK `seller_id` | kept |
+| `kitchens` | the public identity: `name`, `tagline_en/id`, `banner_image_url`, `banner_background` (`#rrggbb`), `image_alt_en/id`, and (plan 077, migration 0025) `time_zone` (IANA name, default `Australia/Adelaide`; the kitchen's wall clock for pickup windows and the cooking day, used by the hourly auto-finish and a new menu's default cut-off; set from the admin's device when the admin creates the kitchen) | PK `seller_id` | kept |
 | `kitchen_settings` | the seller's own public `whatsapp_number` (D-027), `post_greeting/closing_en/id`, `theme` (5 themes, D-064), new-menu defaults (`default_cutoff_days/time`, `default_delivery`, `default_delivery_note_en/id`), `languages` (`both`/`en`/`id`, 0013), `first_language` (NULL = the customer's phone language, 0014), `chefs_see_income` (default 1, 0016) | PK `seller_id` | kept |
 | `kitchen_images` | one row per filled slot (`railImage`, `railIcon`, `desktopBanner`, `phoneBanner`, `bannerBackgroundImage`): `ref` (an R2 path, or a `/samples/` path), `updated_at` | PK `(seller_id, slot)` | replaced on upload |
 | `chefs` | the cook list (D-012): `name`, `position` | PK `(seller_id, id)` | until removed |
@@ -126,7 +126,7 @@ One login per **person**, who joins kitchens through memberships. 0007 deleted e
 
 | what | rule | who runs it |
 |---|---|---|
-| Live orders | until the menu finishes (the seller finishes it, or the **hourly** cron does at midnight Melbourne after the cooking day, D-069) | seller / `runAutoFinish` |
+| Live orders | until the menu finishes (the seller finishes it, or the **hourly** cron does at midnight after the cooking day in the kitchen's own `time_zone`, D-069) | seller / `runAutoFinish` |
 | Closed menu, order details | kept until `cooking_date + 4 weeks` (`ORDER_DETAIL_WEEKS`), then orders (with lines, audit, inbox, push rows) are deleted, `details_dropped_at` is set, and an `expired_orders` stub keeps token and date so the old link says "archived" | `dropExpiredDetails`: lazily when a seller opens past menus or a customer opens an old order, and the Monday 03:00 UTC cron for every kitchen. Idempotent |
 | Totals | `past_weeks` and `past_week_items` kept for good | |
 | Past menu pictures | the newest **10** keep theirs; the rest go back to NULL and their R2 file is deleted unless still used | hourly finish job (`finishDueMenus`, `deleteUnusedPictures`) |
@@ -172,4 +172,4 @@ Things worth knowing:
 - **Round trips cost**: reads are batched (`Db.reads`). The free plan allows 50 D1 queries per invocation; `mocks/queries.test.ts` holds every route under 40 with 100 orders in the week. The full budget and how to stay inside it: [state-and-data-flow.md](state-and-data-flow.md#10-database-trips-the-budget).
 - `worker/db/migrate.ts` splits statements itself (a `CREATE TRIGGER ... END;` stays whole) and records applied files in wrangler's `d1_migrations` table.
 - `Repository.dev.reset` refuses to run unless built with `devTools: true`, which only tests and the local server set.
-- A new seller's first menu is for the coming Saturday with the default cut-off (the evening before, 21:00 Melbourne time), from `shared/dates.ts`.
+- A new seller's first menu is for the coming Saturday with the default cut-off (the evening before, 21:00 in the kitchen's time zone), from `shared/dates.ts` and `shared/zone.ts`. Times are stored as instants (UTC offset kept in the ISO string); screens show them in the viewer's device zone (D-101, plan 077). Pickup windows stay the kitchen's wall-clock `HH:MM` on the cooking date and are converted to the device's clock for display and entry.

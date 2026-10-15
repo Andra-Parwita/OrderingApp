@@ -193,7 +193,7 @@
     },
     "maintenance": {
       "title": "Umumkan pembaruan",
-      "text": "Semua orang melihat pemberitahuan singkat sampai pembaruan selesai. Waktu mengikuti jam sang juru masak (Melbourne).",
+      "text": "Semua orang melihat pemberitahuan singkat sampai pembaruan selesai. Waktu mengikuti jam kamu ({{zone}}).",
       "date": "Tanggal",
       "start": "Mulai",
       "length": "Menit",

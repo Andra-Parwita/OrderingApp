@@ -62,13 +62,13 @@ describe('live Home numbers', () => {
 });
 
 describe('time', () => {
-  it('knows a pickup that is running in Melbourne time, on the cooking day only', () => {
+  it('knows a pickup that is running in the kitchen clock, on the cooking day only', () => {
     const window = { start: '10:00', end: '12:00' };
     const at = (iso: string) => isRunningNow(window, '2026-10-17', new Date(iso));
-    expect(at('2026-10-16T23:30:00Z')).toBe(true); // 10:30 on the 17th
-    expect(at('2026-10-17T01:00:00Z')).toBe(false); // 12:00 sharp: over
-    expect(at('2026-10-16T22:59:00Z')).toBe(false); // 09:59
-    expect(isRunningNow(window, '2026-10-24', new Date('2026-10-22T23:30:00Z'))).toBe(false);
+    expect(at('2026-10-17T00:00:00Z')).toBe(true); // 10:30 on the 17th
+    expect(at('2026-10-17T01:30:00Z')).toBe(false); // 12:00 sharp: over
+    expect(at('2026-10-16T23:29:00Z')).toBe(false); // 09:59
+    expect(isRunningNow(window, '2026-10-24', new Date('2026-10-23T00:00:00Z'))).toBe(false);
   });
 
   it('says how long is left: days and hours, hours and minutes, minutes', () => {

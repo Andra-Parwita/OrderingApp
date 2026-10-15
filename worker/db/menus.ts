@@ -3,6 +3,7 @@
 // midnight after its cooking day). Every query filters by `seller_id` (D-036). Rules that write
 // several rows send them as one batch, which D1 runs as one transaction.
 import { comingSaturday, cutoffAtFor, menuFinishesAt } from '../../shared/dates';
+import { DEFAULT_ZONE } from '../../shared/zone';
 import type { InboxEntry, PickupPoint, SellerOrder } from '../../shared/domain';
 import {
   MAX_DISHES,
@@ -366,7 +367,7 @@ export async function finishMenu(
 
 /**
  * The scheduled job (D-069 Q5): finishes every live menu whose cooking day has ended, i.e. at
- * midnight (Melbourne) after it. Idempotent: a finished menu is skipped, so an hourly run is cheap.
+ * midnight in the kitchen's own zone (kitchens.time_zone) after it. Idempotent: a finished menu is skipped, so an hourly run is cheap.
  */
 export async function finishDueMenus(
   db: Db,
@@ -378,13 +379,18 @@ export async function finishDueMenus(
   /** Plan 064: pictures pruned from past menus, per seller; delete them with deleteUnusedPictures. */
   pruned: Array<{ sellerId: string; refs: Array<string> }>;
 }> {
-  const live = await db.all<{ seller_id: string; cooking_date: string }>(
-    "SELECT seller_id, cooking_date FROM menus WHERE state = 'live'",
+  const live = await db.all<{ seller_id: string; cooking_date: string; time_zone: string | null }>(
+    `SELECT m.seller_id, m.cooking_date, k.time_zone FROM menus m
+     LEFT JOIN kitchens k ON k.seller_id = m.seller_id WHERE m.state = 'live'`,
   );
   // At most MAX_FINISH_PER_RUN a run: the free plan allows 50 D1 queries per invocation, and a
   // menu takes about 3. Whatever is left is still due at the next hourly run.
   const due = live
-    .filter((menu) => Date.parse(menuFinishesAt(menu.cooking_date)) <= now.getTime())
+    .filter(
+      (menu) =>
+        Date.parse(menuFinishesAt(menu.cooking_date, menu.time_zone ?? DEFAULT_ZONE)) <=
+        now.getTime(),
+    )
     .slice(0, MAX_FINISH_PER_RUN);
   let menus = 0;
   let orders = 0;
@@ -456,6 +462,14 @@ export async function deleteUnusedPictures(
 export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
   const { db } = deps;
   const nowIso = () => deps.now().toISOString();
+  // The kitchen's zone (plan 077): the Worker itself runs in UTC.
+  const zoneOf = async (): Promise<string> =>
+    (
+      await db.first<{ time_zone: string }>(
+        'SELECT time_zone FROM kitchens WHERE seller_id = ?',
+        sid,
+      )
+    )?.time_zone ?? DEFAULT_ZONE;
 
   async function readView(): Promise<MenuView> {
     const [menus, uses, points, items, used] = await db.reads([
@@ -546,7 +560,8 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
         return fail('menu_in_progress', 'Finish the current menu before making a new one');
       }
       const defaults = preferencesOf(settings[0] as SettingsRow).menuDefaults;
-      const cookingDate = request.cookingDate ?? comingSaturday(deps.now());
+      const zone = await zoneOf();
+      const cookingDate = request.cookingDate ?? comingSaturday(deps.now(), zone);
       // Plan 064: "start from a past menu" brings its picture along (the same file, no new upload).
       const fromPast = request.pictureFromPastMenu;
       const pastPicture =
@@ -567,7 +582,7 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
           id: deps.newId(),
           state: 'not_published',
           cookingDate,
-          cutoffAt: cutoffAtFor(cookingDate, defaults.cutoffDaysBefore, defaults.cutoffTime),
+          cutoffAt: cutoffAtFor(cookingDate, defaults.cutoffDaysBefore, defaults.cutoffTime, zone),
           delivery: defaults.delivery,
           wizardStep: 0,
           takingOrders: true,
@@ -601,7 +616,12 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
         request.cutoffAt ??
         (cookingDate === row.cooking_date
           ? row.cutoff_at
-          : cutoffAtFor(cookingDate, defaults.cutoffDaysBefore, defaults.cutoffTime));
+          : cutoffAtFor(
+              cookingDate,
+              defaults.cutoffDaysBefore,
+              defaults.cutoffTime,
+              await zoneOf(),
+            ));
       const statements: Array<D1Statement> = [
         db.stmt(
           `UPDATE menus SET cooking_date = ?, cutoff_at = ?, delivery_available = ?, delivery_note_en = ?,

@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { PickupPoint } from '../../../shared/domain';
 import { MAX_PICKUP_PLACES, PLACE_DIRECTIONS_MAX, PLACE_NAME_MAX } from '../../../shared/limits';
+import { localDate } from '../../../shared/dates';
+import { deviceZone, windowToDevice, windowToKitchen } from '../../../shared/zone';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchMenu } from '../../api/client';
 import {
@@ -66,12 +68,15 @@ type Draft = {
 };
 const EMPTY: Draft = { place: '', en: '', id: '', start: '10:00', end: '12:00' };
 
+// A place's usual time is stored as the kitchen's clock; the seller sees and types their device's
+// (plan 077). These have no cooking date: today's offsets are used.
+const today = (): string => localDate(new Date(), deviceZone());
+
 const toDraft = (point: PickupPoint): Draft => ({
   place: point.place,
   en: point.directions.en,
   id: point.directions.id,
-  start: point.window.start,
-  end: point.window.end,
+  ...windowToDevice(point.window, today()),
   address: splitAddress(point.address, point.lat, point.lng),
 });
 
@@ -238,7 +243,7 @@ export function PickupPane() {
       const body = {
         place: draft.place.trim(),
         directions: { en: draft.en.trim(), id: draft.id.trim() },
-        window: { start: draft.start, end: draft.end },
+        window: windowToKitchen({ start: draft.start, end: draft.end }, today()),
       };
       const parts = draft.address ?? NO_PARTS;
       const address = joinAddress(parts);
@@ -348,7 +353,7 @@ export function PickupPane() {
             <Item key={point.id}>
               <Summary>
                 <PlaceName>{point.place}</PlaceName>
-                <Times>{t('pickup.window', point.window)}</Times>
+                <Times>{t('pickup.window', windowToDevice(point.window, today()))}</Times>
                 <Directions>
                   <span>EN {point.directions.en}</span>
                   <span>ID {point.directions.id}</span>

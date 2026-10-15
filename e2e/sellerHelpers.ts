@@ -4,11 +4,13 @@
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { comingSaturday, formatCookingDate, formatDay } from '../shared/dates';
+import { deviceZone } from '../shared/zone';
 
 /** The sample week is the coming Saturday (the seed computes it from the clock): "Sat 10 Oct". */
-export const sampleDay = (): string => formatDay(comingSaturday(new Date()), 'en');
+export const sampleDay = (): string => formatDay(comingSaturday(new Date(), deviceZone()), 'en');
 /** The same day as the customer app shows it, in Indonesian: "Sabtu, 10 Okt". */
-export const sampleDayId = (): string => formatCookingDate(comingSaturday(new Date()), 'id');
+export const sampleDayId = (): string =>
+  formatCookingDate(comingSaturday(new Date(), deviceZone()), 'id');
 
 // Orders (plan 001) is a list with the order's panel beside it on a tablet or desktop (600 px and
 // up) and a phone list under 600 px; a row is a button on both. These helpers let one spec drive

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCutoff, formatDay, localDate } from '../../../shared/dates';
+import { viewedKitchenZone } from '../../../shared/zone';
 import type { Language } from '../../../shared/domain';
 import type { PastWeekSummary } from '../../../shared/pastWeeks';
 import { Button, Icon } from '../../ui';
@@ -170,7 +171,7 @@ export function SellerHome({
               .join(' · ')
           : t('live.subTaking', { when: cutoff, left: leftText });
         const eyebrow =
-          stage === 'cookingDay' && localDate(now) === menu.cookingDate
+          stage === 'cookingDay' && localDate(now, viewedKitchenZone()) === menu.cookingDate
             ? t('live.cookingDayToday')
             : t(LIVE_EYEBROW[stage], { day });
         return (

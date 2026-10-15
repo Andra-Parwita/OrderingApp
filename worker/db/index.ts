@@ -190,7 +190,9 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
     async addSeller(name, slug, opts): Promise<AdminSeller> {
       const seller: Seller = { id: `seller-${slug}`, slug, name, demo: false };
       const createdAt = options.now().toISOString();
-      await db.batch(newSellerStatements(db, seller, createdAt, opts?.sampleImages));
+      await db.batch(
+        newSellerStatements(db, seller, createdAt, opts?.sampleImages, opts?.timeZone),
+      );
       return { ...seller, createdAt };
     },
 

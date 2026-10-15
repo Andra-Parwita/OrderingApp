@@ -10,6 +10,7 @@ import {
   type Preferences,
 } from '../../shared/menusContract';
 import type { KitchenImages } from '../../shared/domain';
+import { DEFAULT_ZONE } from '../../shared/zone';
 import type { Db, D1Statement } from './d1';
 
 export function kitchenStatements(db: Db, kitchen: Kitchen, at: string): Array<D1Statement> {
@@ -17,8 +18,8 @@ export function kitchenStatements(db: Db, kitchen: Kitchen, at: string): Array<D
   const images = kitchen.images ?? {};
   const statements = [
     db.stmt(
-      `INSERT INTO kitchens (seller_id, name, tagline_en, tagline_id, banner_image_url, banner_background, image_alt_en, image_alt_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO kitchens (seller_id, name, tagline_en, tagline_id, banner_image_url, banner_background, image_alt_en, image_alt_id, time_zone)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       kitchen.name,
       kitchen.tagline.en,
@@ -27,6 +28,7 @@ export function kitchenStatements(db: Db, kitchen: Kitchen, at: string): Array<D
       images.bannerBackground ?? null,
       images.alt?.en ?? '',
       images.alt?.id ?? '',
+      kitchen.timeZone ?? DEFAULT_ZONE,
     ),
   ];
   for (const slot of IMAGE_SLOTS) {

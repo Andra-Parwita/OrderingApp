@@ -9,7 +9,7 @@ function menu(over: Partial<Menu> = {}): Menu {
     id: 'm1',
     state: 'not_published',
     cookingDate: '2026-10-17',
-    cutoffAt: '2026-10-15T20:00:00+11:00',
+    cutoffAt: '2026-10-15T20:00:00+10:30',
     delivery: { available: false, note: { en: '', id: '' } },
     wizardStep: 0,
     takingOrders: true,
@@ -21,7 +21,7 @@ const dish = { id: 'd1' } as MenuDishView;
 function view(over: Partial<Menu> = {}, dishes: Array<MenuDishView> = []): MenuView {
   return { menu: menu(over), dishes, pickupPoints: [] };
 }
-// Wed 14 Oct 2026, noon in Melbourne.
+// Wed 14 Oct 2026, noon-ish in Adelaide.
 const NOW = new Date('2026-10-14T01:00:00Z');
 
 describe('homeStateOf', () => {
@@ -55,7 +55,7 @@ describe('homeStateOf', () => {
 });
 
 describe('liveStage', () => {
-  const live = { cookingDate: '2026-10-17', cutoffAt: '2026-10-15T20:00:00+11:00' };
+  const live = { cookingDate: '2026-10-17', cutoffAt: '2026-10-15T20:00:00+10:30' };
   it('taking before the cut-off', () => {
     expect(liveStage({ ...live, takingOrders: true }, NOW)).toBe('taking');
   });
@@ -69,14 +69,14 @@ describe('liveStage', () => {
     expect(liveStage({ ...live, takingOrders: false }, friday)).toBe('closed');
   });
   it('cooking day on the cooking date, and after it until the menu finishes', () => {
-    const saturday = new Date('2026-10-17T00:30:00Z'); // Sat 11:30 in Melbourne
+    const saturday = new Date('2026-10-17T00:30:00Z'); // Sat 11:00 in Adelaide
     expect(liveStage({ ...live, takingOrders: true }, saturday)).toBe('cookingDay');
     expect(liveStage({ ...live, takingOrders: false }, new Date('2026-10-18T05:00:00Z'))).toBe(
       'cookingDay',
     );
   });
   it("is the cooking day by the cook's date, not the device's", () => {
-    // Fri 16 Oct 23:30 UTC is already Sat 17 Oct 10:30 in Melbourne.
+    // Fri 16 Oct 23:30 UTC is already Sat 17 Oct 10:00 in Adelaide.
     expect(liveStage({ ...live, takingOrders: true }, new Date('2026-10-16T23:30:00Z'))).toBe(
       'cookingDay',
     );

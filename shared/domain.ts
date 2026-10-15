@@ -222,6 +222,8 @@ export type Kitchen = {
   images?: KitchenImages;
   /** The seller's own WhatsApp number, digits with country code (public, D-027). */
   whatsappNumber?: string;
+  /** Plan 077: the kitchen's IANA time zone. Absent from an older payload = the default. */
+  timeZone?: string;
 };
 
 /** Whether customers can order right now (the switch and the cut-off). */

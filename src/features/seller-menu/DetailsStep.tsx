@@ -19,7 +19,13 @@ import {
 } from '../../ui';
 import { ImageReadError, resizeImage } from '../../components/imageResize';
 import { MENU_NS } from './i18n/register';
-import { splitInstant, toInstant } from './instant';
+import {
+  deviceZone,
+  splitInstant,
+  toInstant,
+  windowToDevice,
+  windowToKitchen,
+} from '../../../shared/zone';
 import { ErrorText, GroupLabel, Muted, useOpWatch, useRunOp } from './menuShared';
 import type { MenuData } from './menuSlice';
 
@@ -310,7 +316,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
   const theme = useTheme();
   const { run, busy } = useRunOp();
   const { menu } = data.view;
-  const cutoff = splitInstant(menu.cutoffAt);
+  const cutoff = splitInstant(menu.cutoffAt, deviceZone());
   // Plan 061: the free text survives a reload until it is saved (the note on blur, a place on its Save).
   const slug = currentSellerSlug();
   const [note, setNote, noteDraft] = useDraft<LocalText>(
@@ -358,7 +364,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
 
   const saveTimes = (date: string, time: string) => {
     if (date === '' || !TIME.test(time)) return;
-    const cutoffAt = toInstant(date, time);
+    const cutoffAt = toInstant(date, time, deviceZone());
     if (cutoffAt !== menu.cutoffAt) run({ kind: 'updateMenu', request: { cutoffAt } });
   };
   const saveNote = () => {
@@ -404,27 +410,31 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
       on ? uses.filter((use) => use.placeId !== place.id) : [...uses, { placeId: place.id }],
     );
   };
+  // Times typed here are the seller's device clock; they are stored as the kitchen's clock (plan 077).
   const setOverride = (place: PickupPlace, window: { start: string; end: string } | undefined) =>
     setPlaces(
       uses.map((use) =>
         use.placeId === place.id
           ? window
-            ? { placeId: use.placeId, window }
+            ? { placeId: use.placeId, window: windowToKitchen(window, menu.cookingDate) }
             : { placeId: use.placeId }
           : use,
       ),
     );
-  const draftOf = (place: PickupPlace | null): PlaceDraft => ({
-    id: place?.id ?? null,
-    place: place?.place ?? '',
-    start: place?.window.start ?? '10:00',
-    end: place?.window.end ?? '12:00',
-    en: place?.directions.en ?? '',
-    id_: place?.directions.id ?? '',
-  });
+  const draftOf = (place: PickupPlace | null): PlaceDraft => {
+    const shown = place ? windowToDevice(place.window, menu.cookingDate) : null;
+    return {
+      id: place?.id ?? null,
+      place: place?.place ?? '',
+      start: shown?.start ?? '10:00',
+      end: shown?.end ?? '12:00',
+      en: place?.directions.en ?? '',
+      id_: place?.directions.id ?? '',
+    };
+  };
   const savePlace = (draft: PlaceDraft) => {
     const directions = { en: draft.en.trim(), id: draft.id_.trim() };
-    const window = { start: draft.start, end: draft.end };
+    const window = windowToKitchen({ start: draft.start, end: draft.end }, menu.cookingDate);
     if (draft.id === null) {
       run({ kind: 'createPlace', request: { place: draft.place.trim(), directions, window } });
     } else {
@@ -529,7 +539,8 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
             <Muted>{t('details.placesHelp')}</Muted>
             {data.places.map((place) => {
               const use = uses.find((candidate) => candidate.placeId === place.id);
-              const window = use?.window ?? place.window;
+              const stored = use?.window ?? place.window;
+              const window = windowToDevice(stored, menu.cookingDate);
               return (
                 <div key={place.id}>
                   <PlaceRow>
@@ -544,7 +555,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
                       <strong>{place.place}</strong>
                       <Muted as="span">{pickText(place.directions, lang)}</Muted>
                     </span>
-                    <span>{formatWindow(window.start, window.end, lang)}</span>
+                    <span>{formatWindow(stored.start, stored.end, lang, menu.cookingDate)}</span>
                     <Pencil
                       type="button"
                       aria-label={t('details.editPlace', { name: place.place })}

@@ -1,6 +1,6 @@
 import { localDate } from '../../../shared/dates';
+import { deviceZone, splitInstant, viewedKitchenZone } from '../../../shared/zone';
 import type { MenuView } from '../../../shared/menusContract';
-import { splitInstant } from './instant';
 
 /** "Worth a look" (D-062): things to check before publishing. None of them ever stops publishing. */
 export type Worry = {
@@ -38,9 +38,10 @@ export function worries(view: MenuView, now: Date): Array<Worry> {
   ) {
     out.push({ id: 'deliveryNote', fix: 'details' });
   }
-  if (menu.cookingDate < localDate(now)) out.push({ id: 'dayPast', fix: 'details' });
+  if (menu.cookingDate < localDate(now, viewedKitchenZone()))
+    out.push({ id: 'dayPast', fix: 'details' });
   if (Date.parse(menu.cutoffAt) <= now.getTime()) out.push({ id: 'cutoffPast', fix: 'details' });
-  if (splitInstant(menu.cutoffAt).date > menu.cookingDate) {
+  if (splitInstant(menu.cutoffAt, deviceZone()).date > menu.cookingDate) {
     out.push({ id: 'cutoffAfterDay', fix: 'details' });
   }
   return out;

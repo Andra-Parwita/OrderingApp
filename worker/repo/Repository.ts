@@ -483,7 +483,11 @@ export type Repository = {
    * The caller has checked the slug (valid, unique). `sampleImages` (local dev only, D-054) starts
    * the kitchen with the five sample pictures; absent means none.
    */
-  addSeller(name: string, slug: string, options?: { sampleImages?: boolean }): Promise<AdminSeller>;
+  addSeller(
+    name: string,
+    slug: string,
+    options?: { sampleImages?: boolean; timeZone?: string },
+  ): Promise<AdminSeller>;
   /** Plan 013: the admin switches a kitchen into or out of demo mode. */
   setSellerDemo(sellerId: string, demo: boolean): Promise<void>;
   /** Plan 032: pause a kitchen (`full` also signs everyone of it out) or resume it (null). */

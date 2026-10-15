@@ -1,4 +1,5 @@
 import { localDate } from '../../../shared/dates';
+import { deviceZone } from '../../../shared/zone';
 import type { CustomerOrder, Fulfilment, InboxEntry, OrderStatus } from '../../../shared/domain';
 
 export type StepState = 'done' | 'current' | 'todo';
@@ -49,15 +50,16 @@ export function inboxNewestFirst(inbox: ReadonlyArray<InboxEntry>): Array<InboxE
 
 /**
  * Which section an order sits in. With the week's cooking date: current when that date is today
- * or later in the cook's zone. Without it, an order that is not finished is.
+ * or later in the kitchen's zone (else the device's). Without it, an order that is not finished is.
  */
 export function isThisWeek(
   order: CustomerOrder,
   cookingDate: string | null,
   now: Date = new Date(),
+  zone: string = deviceZone(),
 ): boolean {
   if (cookingDate === null) return !isFinal(order.status);
-  return cookingDate >= localDate(now);
+  return cookingDate >= localDate(now, zone);
 }
 
 export type InboxText =

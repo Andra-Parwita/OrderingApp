@@ -1,4 +1,5 @@
 import { localDate, menuFinishesAt } from '../../../shared/dates';
+import { viewedKitchenZone } from '../../../shared/zone';
 import type { Menu, MenuView } from '../../../shared/menusContract';
 
 // Which Home the seller sees: the first match of the rules in plan 039 (CHANGES §1), plus the
@@ -18,7 +19,7 @@ export function liveStage(
   menu: Pick<Menu, 'cookingDate' | 'cutoffAt' | 'takingOrders'>,
   now: Date,
 ): LiveStage {
-  if (localDate(now) >= menu.cookingDate) return 'cookingDay';
+  if (localDate(now, viewedKitchenZone()) >= menu.cookingDate) return 'cookingDay';
   if (now.getTime() >= Date.parse(menu.cutoffAt)) return 'closed';
   return menu.takingOrders ? 'taking' : 'paused';
 }
@@ -82,5 +83,5 @@ export function agoOf(finishedAt: string, now: Date): Ago {
 
 /** When the menu finished: the stored time, else the end of its cooking day (older menus have none). */
 export function finishedAtOf(menu: Pick<Menu, 'finishedAt' | 'cookingDate'>): string {
-  return menu.finishedAt ?? menuFinishesAt(menu.cookingDate);
+  return menu.finishedAt ?? menuFinishesAt(menu.cookingDate, viewedKitchenZone());
 }

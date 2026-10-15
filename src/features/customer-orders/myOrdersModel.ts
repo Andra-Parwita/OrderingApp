@@ -69,7 +69,7 @@ type Input = Readonly<{
 }>;
 
 /**
- * Current is by the cook's date in Melbourne (D-044): a closed week's order is always earlier,
+ * Current is by the cook's date in the kitchen's zone, else the device's (D-044): a closed week's order is always earlier,
  * and shows the date of its own week.
  */
 export function buildMyOrders({
@@ -86,7 +86,8 @@ export function buildMyOrders({
   for (const order of orders) {
     const menu = menus[order.seller.slug];
     const cooking = menu?.week.cookingDate ?? null;
-    const isCurrent = order.archived !== true && isThisWeek(order, cooking, now);
+    const isCurrent =
+      order.archived !== true && isThisWeek(order, cooking, now, menu?.kitchen.timeZone);
     if (isCurrent) {
       const info = orderInfo(order, menu, lang);
       current.push({

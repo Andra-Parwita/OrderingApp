@@ -49,7 +49,7 @@ afterEach(() => {
   api.saveSettings.mockReset();
 });
 
-// Wed 14 Oct 2026, noon in Melbourne: the coming Saturday is the 17th.
+// Wed 14 Oct 2026, noon-ish in Adelaide: the coming Saturday is the 17th.
 const NOW = new Date('2026-10-14T01:00:00Z');
 const DAY = 86_400_000;
 
@@ -58,7 +58,7 @@ function menu(over: Partial<Menu> = {}): Menu {
     id: 'm1',
     state: 'not_published',
     cookingDate: '2026-10-17',
-    cutoffAt: '2026-10-15T20:00:00+11:00',
+    cutoffAt: '2026-10-15T20:00:00+10:30',
     delivery: { available: false, note: { en: '', id: '' } },
     wizardStep: 0,
     takingOrders: true,
@@ -193,7 +193,7 @@ describe('Home, first time (state 1)', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create menu' }));
     expect(onStartMenu).toHaveBeenCalledWith({
       cookingDate: '2026-10-17',
-      cutoffAt: '2026-10-16T20:00:00+11:00',
+      cutoffAt: '2026-10-16T20:00:00+10:30',
       source: { kind: 'empty' },
     });
     // No navigation: the same screen is now "Not published".
@@ -424,7 +424,7 @@ const ORDERS: Array<Order> = [
   order({ status: 'cancelled' }),
 ];
 const FRIDAY = new Date('2026-10-16T01:00:00Z');
-const SATURDAY = new Date('2026-10-17T00:00:00Z'); // 11:00 in Melbourne
+const SATURDAY = new Date('2026-10-17T00:00:00Z'); // 10:30 in Adelaide
 
 describe('Home, taking orders (state 3)', () => {
   it('shows the numbers, the dish stock and the orders per place', () => {

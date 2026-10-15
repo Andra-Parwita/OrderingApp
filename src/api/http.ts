@@ -2,6 +2,7 @@ import { parseApiError, type ApiErrorCode, type ApiWarning } from '../../shared/
 import type { StaffActor } from '../../shared/domain';
 import { reportApiFailure } from './clientLog';
 import { DEVICE_ID_HEADER } from '../../shared/liveContract';
+import { noteKitchenZone } from '../../shared/zone';
 import { sellerDeviceId } from './deviceId';
 import { dropLegacySessionToken, setSessionHint } from './device/session';
 import { setMaintenanceBlocked } from './maintenanceState';
@@ -140,6 +141,7 @@ export async function request<T>(
     json = undefined;
   }
   const data = parse(json);
+  noteKitchenZone(data);
   return data === null
     ? {
         ok: false,

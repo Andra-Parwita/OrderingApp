@@ -358,7 +358,10 @@ export async function handleAdmin(
       if (await store.sellerBySlug(input.slug)) {
         return error('slug_taken', 'That link is already taken');
       }
-      const added = await store.addSeller(input.name, input.slug, { sampleImages: devTools });
+      const added = await store.addSeller(input.name, input.slug, {
+        sampleImages: devTools,
+        ...(input.timeZone !== undefined ? { timeZone: input.timeZone } : {}),
+      });
       // The row's summary line shows at once (the same shape the list gives).
       const listed = (await store.adminSellers()).find((row) => row.id === added.id);
       return Response.json({ seller: listed ?? added } satisfies SellerResponse, { status: 201 });

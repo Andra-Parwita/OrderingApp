@@ -11,7 +11,7 @@ const A = 'onde-onde';
 describe('languages for customers (plan 056)', () => {
   const create = useWorld('languages');
   let world: World;
-  // Wed 7 Oct 2026 (Melbourne): the sample menu is open for orders.
+  // Wed 7 Oct 2026 (Adelaide): the sample menu is open for orders.
   const start = new Date('2026-10-07T10:00:00Z');
   beforeEach(async () => {
     world = await create({ now: () => start });

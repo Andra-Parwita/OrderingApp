@@ -2,7 +2,7 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here.
 
-**Last session:** 2026-10-13 → 14 (overnight), the owner's PC (Adelaide), Claude as coordinator. **Live: Release 1.0.35** (`14a4440`, Worker version `afd9eeb0-132a-438b-8ee5-6acac5535271`, deployed 14 Oct by the owner from this PC; `main` fast-forwarded and tagged `v1.0.35`). Backup `backups/shaggybobo-2026-10-14.sql` taken before migrations 0016–0023 (all applied); `MAPS_EMBED_KEY` set. Post-deploy server check ✅: pages, Help, `/api/status` (backupMinutes 5/5), OndeOnde + DellaVee menus.
+**Last session:** 2026-10-14 → 16, the owner's PC (Adelaide), Claude as coordinator. Built and gated plans 075, 076, 077, 078, 079, 080 on `indra/brand_logo_ux` (not deployed). **Live: Release 1.0.35** (`14a4440`, Worker version `afd9eeb0-132a-438b-8ee5-6acac5535271`, deployed 14 Oct by the owner from this PC; `main` fast-forwarded and tagged `v1.0.35`). Backup `backups/shaggybobo-2026-10-14.sql` taken before migrations 0016–0023 (all applied); `MAPS_EMBED_KEY` set.
 
 ## Where things stand
 **Final gate (14 Oct, ~08:30), green:** typecheck ✅ · lint ✅ · format ✅ · **unit 2,199 tests** ✅ (61 failed in the big parallel run only from Windows port exhaustion — EADDRINUSE; all re-ran green, 75/75) · **e2e 81 passed, 0 failed** (`scratch/f-e2e3.log`). The e2e run found an **order-dependent failure, fixed**: the plan 046 maintenance test switched maintenance on while seller-auth ran in parallel; it now runs alone in its own `maintenance-desktop-chromium` project. The docs site is rebuilt (23 pages).
@@ -42,7 +42,7 @@
 4. ~~Invite message drafts~~ **Decided (owner A, 13 Oct): fine as is** (name and role kept; the message holds the key, so it is never stored).
 
 ## Deploy impact (tell the builder before the next deploy)
-**Built after 1.0.35 (15 Oct, gated green, not deployed):**
+**Built after 1.0.35 (15–16 Oct, gated green, not deployed):**
 
 | plan | what | deploy impact |
 |---|---|---|
@@ -51,16 +51,16 @@
 | 079 | Help opens inside the seller app (`/seller/help`, menu stays; the public Help address unchanged for sign-in and invites) | none |
 | 080 | Top bars (maintenance notice, new version, offline) push the page down instead of covering it; the notice shows the ShaggyBobo icon with the message in a speech bubble | none |
 | 078 | Admin page Layout A: pinned header, a short menu (Sellers · Announce & maintenance · Platform settings · Problems · Your devices) with the section in the main area (`?s=`), one-line devices with small icon buttons, a left column you can drag wider, a section dropdown on phones | none |
+| 077 | Times: no city hard-coded (was Melbourne). Each kitchen has a time zone (`kitchens.time_zone`, Adelaide for all today); times are stored as instants and shown in the viewer's device time; a time a seller or admin types is their device's time; the midnight auto-finish and the default cut-off use the kitchen's zone; a small "your time" word appears on customer screens only when the device's zone differs from the kitchen's; admin maintenance says "Times are in your time (Adelaide)" | ⚠️ **migration 0025** (add-only). Open menus keep their stored cut-off, which was saved as Melbourne time: it will now show 30 min earlier (e.g. 8:30 pm instead of 9 pm). After deploying, open each live menu and re-save the cut-off if needed. Auto-finish moves to Adelaide midnight (30 min later than before) |
 
-**Queued this round (approved):** 077 UTC stored / device time shown (D-101; the kitchens are in Adelaide).
-**Local tips:** the local seller app opens without a passkey at `/seller` (dev tools); if it keeps going to sign-in, a `signedIn` note from an earlier local sign-in is in that browser: use a private window or `localStorage.removeItem('signedIn')`. Lint needs `NODE_OPTIONS=--max-old-space-size=8192` on this PC (it ran out of memory without it). If the local app shows a blank page with "X is not defined" after many edits, the dev server missed a change: re-save (touch) the changed files. **Next time you deploy:** first Claude drafts the release notes and the owner picks which lines are included (D-100); back up; announce (admin → Announce an update); switch Maintenance on before the migrations, off after the live check (plan 046 is live now).
+**Queued this round:** nothing; all approved plans are built. Not yet built for 077: a control to change a kitchen's time zone (needs a mock-up), and the Settings "default cut-off time" is still the kitchen's clock (identical today).
+**Local tips:** the local seller app opens without a passkey at `/seller` (dev tools); if it keeps going to sign-in, a `signedIn` note from an earlier local sign-in is in that browser: use a private window or `localStorage.removeItem('signedIn')`. Playwright on this PC needs `NODE_EXTRA_CA_CERTS=C:/Users/Indra/AppData/Local/mkcert/rootCA.pem` (16 Oct: without it every server-side request failed with "unable to verify the first certificate"; with it the full suite is green, 91 passed). Lint needs `NODE_OPTIONS=--max-old-space-size=8192` on this PC (it ran out of memory without it). If the local app shows a blank page with "X is not defined" after many edits, the dev server missed a change: re-save (touch) the changed files. **Next time you deploy:** first Claude drafts the release notes and the owner picks which lines are included (D-100); back up; announce (admin → Announce an update); switch Maintenance on before the migrations, off after the live check (plan 046 is live now).
 
 ## Next session
 1. Read this file.
 2. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
-3. **Plan 075 About ShaggyBobo + release notes** ([plan](plans/075-release-notes.md)): **mock-up approved 15 Oct** (`uxDesign/seller/mockups/075-seller-about.html`): pinned market scene + CSS walking mascot (no Lottie, no new dependency), logo, version + What's new › (slide-in panel, last 5 releases), the approved fun about text in a card that scrolls alone, light / dark. Next: build, after the owner's go.
-4. **Plan 076 pickup points on the map** ([plan](plans/076-pickup-on-map.md)): answered 15 Oct (public on the menu; address optional; address line + View on map + Directions; My orders too; **additive only**: existing screens incl. the QR code unchanged); **mock-up approved 15 Oct** (`uxDesign/seller/mockups/076-pickup-on-map.html`). Next: build, after the owner's go. **Lottie:** the owner made their own (calm version chosen for About, files in `uxDesign/seller/mockups/lottie/`); the customer app Lottie round is still to plan.
-5. Then the other open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie).
+3. **Next deploy = Release 1.0.36** (075–080 above). Order: Claude drafts the release lines and the date in `src/features/seller-about/releaseNotes.ts` (placeholder `'2026-10-xx'` today) and the owner picks (D-100) → `pnpm run docs` → back up → announce → Maintenance on → **migrations 0024 + 0025** → deploy → Maintenance off after the live check → re-save the cut-off of any open menu (077: it was saved as Melbourne time) → push `main` and tag `v1.0.36`.
+4. Then the other open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie), 077 leftovers (a control to change a kitchen's time zone, needs a mock-up; Settings "default cut-off time" still in the kitchen's clock).
 
 ## Known and not done
 - **State duplication found while documenting (13 Oct; see docs/architecture/state-and-data-flow.md "what looks inconsistent") — cleanup candidates, ask the owner first:** seller orders held in two slices (sellerOrders + sellerCook), so one live event triggers two fetches; the current menu copied into four slices; two `menuRequested` actions; the session in three places; several screens call the API directly instead of through a slice.
@@ -74,4 +74,4 @@
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live and `main` is tagged v1.0.35. Ask me first whether my phone checks were OK, then ask whether to build plan 075 (About; mock-up + calm Lottie approved) and plan 076 (pickup on the map; mock-up approved), then go through the open items **one at a time**: two lines on each, then one A / B question, and wait for my answer before the next.
+> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live; plans 075–080 are built and gated on `indra/brand_logo_ux`, not deployed. Ask me first whether my 1.0.35 phone checks were OK, then draft the 1.0.36 release lines for me to pick, then walk me through the deploy steps in "Next session", one step at a time.

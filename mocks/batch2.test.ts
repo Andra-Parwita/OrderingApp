@@ -8,7 +8,7 @@ import type { SellerRepository, StoreResult } from '../worker/repo/Repository';
 import { useWorld, type World } from './impl';
 
 const BEFORE = new Date('2026-10-07T10:00:00Z');
-const AFTER = new Date('2026-10-09T10:00:01Z'); // 21:00:01 Melbourne (+11:00)
+const AFTER = new Date('2026-10-09T10:30:01Z'); // 21:00:01 Adelaide (+10:30)
 const ONDE_ID = 'seller-onde-onde';
 
 const staff = { role: 'seller', name: 'Bu Ani' } as const;

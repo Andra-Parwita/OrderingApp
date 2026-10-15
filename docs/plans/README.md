@@ -107,7 +107,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 074 | ✅ | [Live updates everywhere: push instead of checking](074-live-updates-everywhere.md) | approved (2026-10-14); building |
 | 075 | ✅ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | built + gated (2026-10-15); not deployed |
 | 076 | ✅ | [Pickup points on the map](076-pickup-on-map.md) | built + gated (2026-10-15); not deployed; **migration 0024** |
-| 077 | ⬜ | [Times: stored as UTC, shown in the device's time](077-device-time.md) | draft (2026-10-15); ruling D-101; after 075 + 076; **migration** |
+| 077 | ✅ | [Times: stored as UTC, shown in the device's time](077-device-time.md) | built and gated (16 Oct); rulings D-101, D-102; **migration** |
 | 078 | ✅ | [Admin page: pinned header, compact left column, desktop first](078-admin-layout.md) | built + gated (2026-10-15); not deployed |
 | 079 | ✅ | [Help opens inside the seller app](079-help-inside-seller-app.md) | built + gated (2026-10-15); not deployed |
 | 080 | ✅ | [Top bars push the page down instead of covering it](080-top-bars-push-down.md) | built + gated (2026-10-15); not deployed |

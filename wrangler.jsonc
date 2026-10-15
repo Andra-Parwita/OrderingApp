@@ -58,7 +58,7 @@
   ],
   // Weekly retention (stage 8.4b, D-044): Mondays 03:00 UTC, the first run after a Saturday's
   // cooking date plus 4 weeks has passed. Hourly (plan 001, D-069 Q5): finish every live menu whose
-  // cooking day has ended (midnight Melbourne). The handler is `scheduled` in worker/index.ts; if
+  // cooking day has ended (midnight in the kitchen's own zone). The handler is `scheduled` in worker/index.ts; if
   // the weekly entry changes, change RETENTION_CRON in worker/api/scheduled.ts with it.
   "triggers": {
     "crons": ["0 3 * * 1", "0 * * * *"],

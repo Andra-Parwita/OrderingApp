@@ -9,6 +9,7 @@ import type {
   Week,
 } from '../../shared/domain';
 import { comingSaturday, defaultCutoffAt } from '../../shared/dates';
+import { DEFAULT_ZONE } from '../../shared/zone';
 import {
   DEFAULT_MENU_DEFAULTS,
   DEFAULT_THEME,
@@ -107,8 +108,8 @@ const ondeKitchen: Kitchen = {
 
 // The sample week is computed from `now`: cooking the coming Saturday, cut-off the evening before.
 function sampleWeekDates(now: Date): Pick<Week, 'cookingDate' | 'cutoffAt'> {
-  const cookingDate = comingSaturday(now);
-  return { cookingDate, cutoffAt: defaultCutoffAt(cookingDate) };
+  const cookingDate = comingSaturday(now, DEFAULT_ZONE);
+  return { cookingDate, cutoffAt: defaultCutoffAt(cookingDate, DEFAULT_ZONE) };
 }
 
 const ondeWeek = (now: Date): Week => ({
@@ -335,13 +336,14 @@ export function blankFixture(
   seller: Seller,
   createdAt: string,
   sampleImagesOn = false,
+  zone: string = DEFAULT_ZONE,
 ): SellerFixture {
-  const cookingDate = comingSaturday(new Date(createdAt));
+  const cookingDate = comingSaturday(new Date(createdAt), zone);
   const week: Week = {
     ...(fixtureSellers(new Date(createdAt))[0] as SellerFixture).week,
     status: 'draft',
     cookingDate,
-    cutoffAt: defaultCutoffAt(cookingDate),
+    cutoffAt: defaultCutoffAt(cookingDate, zone),
     pickupPoints: [],
     delivery: { available: false, note: { en: '', id: '' } },
   };
@@ -352,6 +354,7 @@ export function blankFixture(
       sellerId: seller.id,
       name: seller.name,
       tagline: { en: '', id: '' },
+      timeZone: zone,
       ...(sampleImagesOn ? { images: sampleImages(seller.name, seller.name) } : {}),
     },
     week,
