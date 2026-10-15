@@ -616,4 +616,5 @@ Format for each entry:
 ## D-100 · Seller app About page with release notes (2026-10-14; owner)
 **Ruling:** plan 075. An **About** page in the seller app only (all roles) with the ShaggyBobo branding, the version and the releases. **No "What's new" pop-up** after an update: the notes stay on About (owner: "no, leave it in About"). **About text: the owner's approved draft (15 Oct; fun and light, "HomeMade"; plan 075).** The release list **starts from the next release** (1.0.36); earlier releases are not written up. Claude drafts each release's notes (2–4 plain lines, EN / ID) from the handover; **the owner or the builder decides what is included** before the deploy.
 **Trade-off:** sellers only see changes if they open About; in return nothing interrupts their work.
+**Hero (15 Oct):** the owner's own Lottie (one file for phone, one for tablet) over the faded market scene, played with **lottie-web (light build)**, a new dependency loaded only on About; the CSS mascot is the fallback.
 **Revisit when:** sellers miss changes that matter to them.
