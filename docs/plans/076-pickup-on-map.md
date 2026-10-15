@@ -18,13 +18,14 @@
 2. **The address is optional** (owner "A", 15 Oct): places without one work as today; the map shows once the seller adds an address.
 
 3. **On the menu: the address line + View on map + Directions** (owner "A", 15 Oct); View on map opens the map in a panel (like the seller's Deliveries map); no map loads until tapped. The same on the confirmation and order page.
+4. **My orders too** (owner, 15 Oct): a pickup order in My orders shows the place with **View on map** (opens the map panel; slides in on tablet / computer) and **Directions** (opens Google Maps).
 
 The address and pin belong to the saved pickup place (the seller's list), so every menu using that place shows them; changing it updates live menus at once.
 
 ## Stages (after the questions)
 | # | stage |
 |---|---|
-| 1 | mock-up (seller pickup place with Add address; customer menu + order page with map) |
+| 1 | mock-up (seller pickup place with Add address; customer menu, order page and My orders with View on map + Directions) |
 | 2 | migration (add-only: address, lat, lng on `pickup_places`), contracts, Worker |
 | 3 | seller form (reuse plan 071 parts), customer map + Directions, EN / ID |
 | 4 | tests, docs (data-model, flows) |
