@@ -8,15 +8,8 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|
-
-| 037 · 1–3 menu wizard as a layer (modal routes, open from anywhere, look) | builder · sonnet | 16:47 | 50 min | | | | | ⏳ |
-
-
-
-
-
-
-
+| 075 · About page + releases panel + calm Lottie (seller app) | builder · sonnet | 20:24 (15 Oct) | 60 min | | | | | ⏳ |
+| 076 · pickup places on the map (migration 0024, seller Address, customer View on map / Directions) | builder · sonnet | 20:24 (15 Oct) | 75 min | | | | | ⏳ |
 
 ## Before "ready to merge" (checked stage by stage against every plan, 18:35)
 

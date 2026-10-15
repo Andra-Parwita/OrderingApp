@@ -107,6 +107,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 074 | ✅ | [Live updates everywhere: push instead of checking](074-live-updates-everywhere.md) | approved (2026-10-14); building |
 | 075 | ⬜ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | mock-up approved (2026-10-15); build next round |
 | 076 | ⬜ | [Pickup points on the map](076-pickup-on-map.md) | mock-up approved (2026-10-15); build next round; **migration** |
+| 077 | ⬜ | [Times: stored as UTC, shown in the device's time](077-device-time.md) | draft (2026-10-15); ruling D-101; after 075 + 076; **migration** |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

@@ -618,3 +618,8 @@ Format for each entry:
 **Trade-off:** sellers only see changes if they open About; in return nothing interrupts their work.
 **Hero (15 Oct):** the owner's own Lottie, **calm version** (one file for phone, one for tablet, 16 s loop) over the faded market scene, played with **lottie-web (light build)**, a new dependency loaded only on About; the CSS mascot is the fallback.
 **Revisit when:** sellers miss changes that matter to them.
+
+## D-101 · Times: UTC stored, the device's time shown; kitchens are in Adelaide (2026-10-15; owner)
+**Ruling:** "A": the kitchens are all in Adelaide for now (the Melbourne clock in the code was a prototype assumption, never a ruling). "Save everything as UTC and device time is what we will show. Seller or admin sets 9 am, it is 9 am on their time." Each kitchen gets a time zone (default `Australia/Adelaide`) for the jobs that have no device (auto-finish, default cut-off). Plan 077.
+**Trade-off:** a customer in another zone sees converted times (with a small "your time" label); in return nobody does time-zone sums in their head.
+**Revisit when:** a kitchen opens outside Adelaide (then the owner picks its zone in Settings).
