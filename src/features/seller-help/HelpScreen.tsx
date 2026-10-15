@@ -8,6 +8,7 @@ import { STEP_IMAGES } from './images';
 import { HELP_NS } from './i18n/register';
 import { CUSTOMER_TOPICS } from './customerTopics';
 import { TOPICS, type HelpStep, type HelpTopic, type HelpTopicText } from './topics';
+import { SCREEN_HEIGHT, SCREEN_HEIGHT_VH } from '../../theme/screen';
 
 // Plan 058, D-095: the seller Help page. Public (no sign-in), noindex, in the user's language with
 // an EN | ID switch. A tablet shows the topic list beside the steps; a phone shows an accordion.
@@ -25,14 +26,14 @@ const Page = styled.div<{ $split: boolean; $embedded: boolean }>`
   min-height: 0;
   overflow-x: hidden;
   overflow-y: ${$split ? 'hidden' : 'auto'};`
-      : `min-height: 100vh;
-  min-height: 100dvh;
+      : `min-height: ${SCREEN_HEIGHT_VH};
+  min-height: ${SCREEN_HEIGHT};
   ${
     $split
       ? `display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  height: ${SCREEN_HEIGHT_VH};
+  height: ${SCREEN_HEIGHT};
   overflow: hidden;`
       : ''
   }`}

@@ -4,13 +4,14 @@ import { styled } from 'styled-components';
 import { Button, Icon, TextField } from '../../ui';
 import { guessDevice } from './authText';
 import { AUTH_NS } from './i18n/register';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // Shared look of the sign-in screens: tokens only, spacing and hairlines, no heavy borders.
 
 export const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   max-width: min(100%, 32rem);
   margin: 0 auto;
 `;

@@ -18,6 +18,7 @@ import { Icon, ImageSlot, Tooltip } from '../ui';
 import { RAIL_LOGO_PX, RAIL_TOP_COLLAPSED_PX, RAIL_TOP_PX } from './layout';
 import { HOME_ICON_PATH, HREF, ICON, type NavId } from './sellerNav';
 import { RailSwitchPerson } from './SwitchPerson';
+import { SCREEN_HEIGHT, TOP_BARS } from '../theme/screen';
 
 const LABEL_KEY: Readonly<Record<NavId, string>> = {
   home: 'sellerNav.navHome',
@@ -57,13 +58,13 @@ const Column = styled.div`
 `;
 const Rail = styled.nav<{ $collapsed: boolean }>`
   position: sticky;
-  top: 0;
+  top: ${TOP_BARS};
   align-self: start;
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
   width: ${({ $collapsed, theme }) => ($collapsed ? theme.size.navCollapsed : theme.size.navOpen)}px;
-  height: 100dvh;
+  height: ${SCREEN_HEIGHT};
   padding: 0 ${({ $collapsed, theme }) => ($collapsed ? theme.spacing.sm : theme.spacing.md)}
     ${({ theme }) => theme.spacing.lg};
   overflow-x: clip;

@@ -1,5 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 import { brandSize } from './brandTokens';
+import { TOP_BARS } from './screen';
 
 export const GlobalStyle = createGlobalStyle`
   *, *::before, *::after { box-sizing: border-box; }
@@ -12,6 +13,8 @@ export const GlobalStyle = createGlobalStyle`
   html { color-scheme: ${({ theme }) => theme.mode}; }
   body {
     margin: 0;
+    /* Plan 080: the top bars (update, notice, offline) push the page down. */
+    padding-top: ${TOP_BARS};
     background: ${({ theme }) => theme.colour.bg};
     color: ${({ theme }) => theme.colour.text};
     font-family: ${({ theme }) => theme.font.ui};

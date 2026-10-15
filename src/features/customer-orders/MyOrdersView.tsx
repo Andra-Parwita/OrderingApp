@@ -12,6 +12,7 @@ import { ORDERS_NS } from './i18n/register';
 import { OfflineNote, StateMessage, VisuallyHidden } from './layout';
 import { OrderIcon, type OrderIconName } from './orderIcons';
 import { Chip, type ChipTone, MainButton, OutlineButton, SectionLabel } from './orderParts';
+import { screenHeightMinus } from '../../theme/screen';
 
 // My orders (spec §4.5): the "Have an order code?" field, Current rows, Earlier rows, the footnote;
 // or the empty state. Presentational: MyOrdersScreen feeds it from the store, the fixtures page
@@ -21,7 +22,7 @@ const Page = styled.main`
   max-width: 32rem;
   margin: 0 auto;
   /* Leaves room for the customer tab bar when the app shell shows one. */
-  min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
   display: flex;
   flex-direction: column;
 `;

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import { useTopBar } from '../../theme/topBars';
 import { UPDATE_NS } from './i18n/register';
 import { UPDATE_BAR_HEIGHT_VAR, watchForUpdate, type WatchOptions } from './updateCheck';
 
@@ -58,16 +59,9 @@ export function UpdateBar({
   const [newer, setNewer] = useState(false);
   // Every check sets the state again, so a hidden bar comes back at the next check.
   useEffect(() => watchForUpdate(setNewer, watch), [watch]);
-  // The offline banner (plan 062) sits below this bar: it reads the bar's height from this variable.
+  // The notice and the offline banner sit below this bar (plan 080): the height goes to CSS variables.
   const bar = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const root = document.documentElement;
-    if (newer && bar.current)
-      root.style.setProperty(UPDATE_BAR_HEIGHT_VAR, `${bar.current.offsetHeight}px`);
-    return () => {
-      root.style.removeProperty(UPDATE_BAR_HEIGHT_VAR);
-    };
-  }, [newer]);
+  useTopBar('update', bar, newer, UPDATE_BAR_HEIGHT_VAR);
   if (!newer) return null;
   return (
     <Bar ref={bar} role="status">

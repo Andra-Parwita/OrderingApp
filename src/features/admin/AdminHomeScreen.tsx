@@ -47,6 +47,7 @@ import {
   SmallHeading,
   Sub,
 } from './shared';
+import { SCREEN_HEIGHT, TOP_BARS } from '../../theme/screen';
 
 export type AdminHomeScreenProps = Readonly<{
   /** The admin ended this session. */
@@ -65,7 +66,7 @@ export type AdminHomeScreenProps = Readonly<{
 const Shell = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   background: ${({ theme }) => theme.c.bg};
   color: ${({ theme }) => theme.c.text};
 `;
@@ -154,7 +155,7 @@ const AdminInner = styled.div`
 
   @media (min-width: 48rem) {
     position: sticky;
-    top: ${({ theme }) => theme.spacing.lg};
+    top: calc(${TOP_BARS} + ${({ theme }) => theme.spacing.lg});
   }
 `;
 const SellersPanel = styled.div`

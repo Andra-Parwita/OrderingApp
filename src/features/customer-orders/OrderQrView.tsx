@@ -11,11 +11,12 @@ import { ORDERS_NS } from './i18n/register';
 import { OrderIcon } from './orderIcons';
 import { orderInfo } from './orderInfo';
 import { OrderCode } from './orderParts';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // order-qr (spec §4.3): full screen on `surf`. The QR stays dark on white in every theme.
 
 const Screen = styled.div`
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   display: flex;
   flex-direction: column;
   align-items: center;

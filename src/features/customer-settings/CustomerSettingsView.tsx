@@ -16,6 +16,7 @@ import {
 import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import type { ThemePreference } from '../../theme/themePreference';
 import { Icon, ImageSlot, Segmented, type SegmentedOption } from '../../ui';
+import { screenHeightMinus } from '../../theme/screen';
 
 // The customer's Settings tab (spec §4.6): Language, Appearance, Order updates, and the "put it on
 // your home screen" card. Presentational: CustomerSettingsScreen wires it to i18n and the theme
@@ -26,7 +27,7 @@ const Page = styled.main`
   max-width: 32rem;
   margin: 0 auto;
   /* Leaves room for the customer tab bar when the app shell shows one. */
-  min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
 `;
 // Same banner as the menu home (MenuHomeView), kept here because features can't import each other.
 const BannerTop = styled.div<{ $background?: string }>`

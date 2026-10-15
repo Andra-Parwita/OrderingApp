@@ -8,6 +8,7 @@ import { Button, Segmented, Toast, type SegmentedOption } from '../../ui';
 import { SHARE_NS } from './i18n/register';
 import { loadRequested, type ShareRootState } from './shareSlice';
 import { buildShareText, type PostLanguage } from './shareText';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 /** Where the customer link points: `origin/slug`; defaults to the page origin and the signed-in seller. */
 export type ShareScreenProps = Readonly<{ origin?: string; slug?: string }>;
@@ -19,7 +20,7 @@ export type ShareComposerProps = ShareScreenProps &
 const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   max-width: min(100%, 45rem);
   margin: 0 auto;
 `;

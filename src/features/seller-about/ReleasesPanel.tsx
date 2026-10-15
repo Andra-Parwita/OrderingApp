@@ -5,6 +5,7 @@ import { keyframes, styled } from 'styled-components';
 import { Icon } from '../../ui';
 import { ABOUT_NS } from './i18n/register';
 import { visibleReleases, type ReleaseNote } from './releaseNotes';
+import { TOP_BARS } from '../../theme/screen';
 
 // Plan 075: the releases panel. From the right on a tablet (about a third of the width, the page
 // dimmed behind it); the whole screen on a phone, with a back arrow. Escape and the dimmed area
@@ -36,7 +37,7 @@ const Scrim = styled.div`
 `;
 const Panel = styled.div<{ $wide: boolean }>`
   position: absolute;
-  top: 0;
+  top: ${TOP_BARS};
   right: 0;
   bottom: 0;
   display: flex;

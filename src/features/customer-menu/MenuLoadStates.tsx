@@ -3,12 +3,13 @@ import { styled } from 'styled-components';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
 import { CardBody, CardHead, MainButton, StatusCard } from './menuParts';
+import { screenHeightMinus } from '../../theme/screen';
 
 // Loading and load-error states of the menu (spec §4.1): a quiet skeleton, then an error card
 // with Try again. No spinner animation, so reduced motion needs nothing extra.
 
 const Screen = styled.main`
-  min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};

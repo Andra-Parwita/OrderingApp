@@ -3,11 +3,12 @@ import { Link } from 'react-router';
 import { styled } from 'styled-components';
 import { APP_NAME } from '../../shared/appName';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { SCREEN_HEIGHT, screenHeightMinus } from '../theme/screen';
 
 const Page = styled.main`
   max-width: 32rem;
   margin: 0 auto;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
@@ -51,7 +52,7 @@ export function NotFoundPage() {
 
 // The customer pages below sit inside the tab bar shell, so they leave room for it.
 const ShellPage = styled(Page)`
-  min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
 `;
 
 /** `/`: what the app is. Customers arrive through a seller's own link, so no list of sellers. */

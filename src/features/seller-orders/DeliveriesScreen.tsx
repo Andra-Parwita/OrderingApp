@@ -10,6 +10,7 @@ import { itemsSummary, useLang } from './orderText';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import { selectOrders } from './sellerOrdersSelectors';
 import { pollingStarted, pollingStopped, statusChangeRequested } from './sellerOrdersSlice';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // Plan 071 stage 3: the cooking day's deliveries in one list: who, where (Directions), what, and a
 // Delivered tick. Team-only; the addresses come with the orders from the server.
@@ -18,7 +19,7 @@ const Page = styled.main`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   padding: ${({ theme }) => theme.size.pagePadPhone}px;
 `;
 const Head = styled.header`

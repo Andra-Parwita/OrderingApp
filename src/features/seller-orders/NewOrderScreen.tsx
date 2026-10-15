@@ -35,6 +35,7 @@ import {
 } from './sellerOrdersSlice';
 import { useOrderDraft, type OrderForm, type YesNo } from './useOrderDraft';
 import { openOrderLink } from './whatsappLink';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // New order on a phone (plan 001 stage 11; handoff, New order): the tablet slide-over's fields,
 // full screen, plus the customer's number and delivery address. Those two are saved on this phone
@@ -51,7 +52,7 @@ export type NewOrderScreenProps = Readonly<{
 const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
 `;
 const Bar = styled.div`
   display: flex;

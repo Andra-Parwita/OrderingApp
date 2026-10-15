@@ -3,7 +3,7 @@
 // `maintenance`). It asks /api/status every 30 s while the screen is up and returns by itself; the
 // rest of the time it asks every 5 minutes. The admin page never gets the screen (it must switch
 // maintenance off).
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { formatDay, formatTime } from '../../../shared/dates';
@@ -16,6 +16,7 @@ import {
   watchMaintenanceBlocked,
 } from '../../api/maintenanceState';
 import { fetchStatus } from '../../api/status';
+import { useTopBar } from '../../theme/topBars';
 import { MAINTENANCE_NS } from './i18n/register';
 
 export const SCREEN_POLL_MS = 30_000;
@@ -39,7 +40,39 @@ const Bar = styled.div`
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   font-family: ${({ theme }) => theme.font.ui};
   font-size: ${({ theme }) => theme.type.size.sm};
-  text-align: center;
+`;
+
+// Bobo says it (plan 080): the icon on the left, the message in a soft speech bubble whose tail
+// points at Bobo.
+const Bobo = styled.img`
+  flex: none;
+  width: 1.625rem;
+  height: 1.625rem;
+  object-fit: contain;
+`;
+const Bubble = styled.span`
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin-left: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.c.surf};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border-radius: ${({ theme }) => theme.radius.md};
+  line-height: ${({ theme }) => theme.type.lineHeight.tight};
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -0.3125rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-top: -0.25rem;
+    background: ${({ theme }) => theme.c.surf};
+    border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+    border-left: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+    transform: rotate(45deg);
+  }
 `;
 
 const Close = styled.button`
@@ -139,12 +172,10 @@ export function MaintenanceHost({
   useEffect(() => watchMaintenanceBlocked(() => setTick((n) => n + 1)), []);
 
   const showBar = state !== null && !dismissed && noticeVisible(state, now());
-  // The offline banner sits below this bar: it reads the height from this variable.
-  const barRoot = useCallback((node: HTMLDivElement | null) => {
-    const root = document.documentElement;
-    if (node) root.style.setProperty(NOTICE_BAR_HEIGHT_VAR, `${node.offsetHeight}px`);
-    else root.style.removeProperty(NOTICE_BAR_HEIGHT_VAR);
-  }, []);
+  // The page and the offline banner sit below this bar (plan 080): its height goes to CSS variables.
+  const barRoot = useRef<HTMLDivElement>(null);
+  const barUp = showBar && !!state?.notice && !(screenUp && !pathname().startsWith('/admin'));
+  useTopBar('notice', barRoot, barUp, NOTICE_BAR_HEIGHT_VAR);
 
   if (screenUp && !pathname().startsWith('/admin')) {
     return (
@@ -159,14 +190,15 @@ export function MaintenanceHost({
   const note = lang === 'id' ? noteId : noteEn;
   return (
     <Bar ref={barRoot} role="status">
-      <span>
+      <Bobo src="/brand/logo-icon.webp" alt="" />
+      <Bubble>
         {t('notice', {
           day: formatDay(from, lang),
           start: formatTime(from, lang),
           end: formatTime(until, lang),
         })}
         {note ? ` ${note}` : ''}
-      </span>
+      </Bubble>
       <Close type="button" aria-label={t('dismiss')} onClick={() => setDismissed(true)}>
         ✕
       </Close>

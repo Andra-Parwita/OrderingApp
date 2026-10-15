@@ -20,6 +20,7 @@ import {
 } from './sellerOrdersSlice';
 import { useOrderActions } from './useOrderActions';
 import { openOrderLink } from './whatsappLink';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // One order on a phone (plan 001 stage 11; handoff, Home, phone): the same body as the tablet's
 // side panel, a full-screen page with a pinned foot. "Confirm & send on WhatsApp" is the one main
@@ -34,7 +35,7 @@ export type OrderDetailScreenProps = Readonly<{
 const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
 `;
 const Bar = styled.div`
   display: flex;

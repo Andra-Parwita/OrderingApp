@@ -1,11 +1,12 @@
 import { styled } from 'styled-components';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // Shared look of the three setup screens: tokens only, spacing and hairlines, no heavy borders.
 
 export const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   width: 100%;
   max-width: min(100%, 45rem);
   margin: 0 auto;

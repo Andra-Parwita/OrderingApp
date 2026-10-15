@@ -33,6 +33,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
   document.documentElement.style.removeProperty('--notice-bar-height');
+  document.documentElement.style.removeProperty('--top-bars');
 });
 
 const FROM = '2026-10-11T12:00:00.000Z';
@@ -75,11 +76,24 @@ describe('MaintenanceHost', () => {
     current = { maintenance: false, notice };
     await mount();
     expect(screen.getByRole('status')).toHaveTextContent(
-      /🛠 Maintenance on .*–.*\. The app pauses briefly\. Database upgrade/,
+      /Maintenance on .*–.*\. The app pauses briefly\. Database upgrade/,
     );
     expect(screen.queryByRole('alert')).toBeNull();
+    // Bobo on the left, the message in a bubble (plan 080).
+    const bar = screen.getByRole('status');
+    const icon = bar.querySelector('img');
+    expect(icon).toHaveAttribute('src', '/brand/logo-icon.webp');
+    expect(icon).toHaveAttribute('alt', '');
+    expect(bar.firstElementChild).toBe(icon);
+    expect(bar.querySelector('img + span')).toHaveTextContent(/Maintenance on/);
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('--top-bars is 0 with no bar', async () => {
+    current = { maintenance: false, notice: null };
+    await mount();
+    expect(['', '0px']).toContain(document.documentElement.style.getPropertyValue('--top-bars'));
   });
 
   it('hides the bar once the window is over', async () => {
@@ -93,7 +107,7 @@ describe('MaintenanceHost', () => {
     current = { maintenance: false, notice };
     await mount();
     expect(screen.getByRole('status')).toHaveTextContent(
-      /🛠 Pemeliharaan pada .*Aplikasi berhenti sebentar\. Peningkatan/,
+      /Pemeliharaan pada .*Aplikasi berhenti sebentar\. Peningkatan/,
     );
   });
 
@@ -116,6 +130,13 @@ describe('MaintenanceHost', () => {
       .map((style) => style.textContent ?? '')
       .join('');
     expect(rules).toContain('var(--update-bar-height, 0rem) + var(--notice-bar-height, 0rem)');
+    // --top-bars is the sum of the bars showing (plan 080), and returns to 0 after the cross.
+    const topBars = () => document.documentElement.style.getPropertyValue('--top-bars');
+    expect(topBars()).toBe('60px');
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(topBars()).toBe('30px');
+    act(() => recordOutcome('GET', 200));
+    expect(topBars()).toBe('0px');
   });
 
   it('shows the Updating screen while maintenance is on, then returns by itself', async () => {

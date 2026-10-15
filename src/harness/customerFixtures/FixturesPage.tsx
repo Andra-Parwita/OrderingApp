@@ -13,6 +13,7 @@ import { INSTALL_FIXTURE_SCREENS } from './installFixtures';
 import { MENU_FIXTURE_SCREENS } from './menuFixtures';
 import { ORDER_FIXTURE_SCREENS } from './orderFixtures';
 import type { FixtureProps } from './types';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // Dev only: /__fixtures/:screenId?brand=ondeonde&mode=light renders one design screen with the
 // data in fixtures.json (plus that screen's `screenStates`), so every state can be checked against
@@ -62,7 +63,7 @@ const Frame = styled.div<{ $tabs: boolean; $barHeight: string }>`
   --customer-tabbar-height: ${({ $tabs, $barHeight }) => ($tabs ? $barHeight : '0px')};
   max-width: 30rem;
   margin: 0 auto;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   padding-bottom: var(--customer-tabbar-height);
   background: ${({ theme }) => theme.c.bg};
   color: ${({ theme }) => theme.c.text};

@@ -16,11 +16,12 @@ import {
   toastDismissed,
   type SettingsRootState,
 } from './settingsSlice';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   max-width: min(100%, 45rem);
   margin: 0 auto;
 `;

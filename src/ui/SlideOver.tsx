@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, type KeyboardEvent, type ReactNode } fr
 import { keyframes, styled } from 'styled-components';
 import { Button } from './Button';
 import { Icon } from './Icon';
+import { TOP_BARS } from '../theme/screen';
 
 export type SlideOverProps = Readonly<{
   /** Accessible name of the dialog. */
@@ -48,7 +49,7 @@ const Scrim = styled.div`
 `;
 const Panel = styled.div<{ $width: string }>`
   position: absolute;
-  top: 0;
+  top: ${TOP_BARS};
   right: 0;
   bottom: 0;
   display: flex;

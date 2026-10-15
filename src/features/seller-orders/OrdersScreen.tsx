@@ -20,6 +20,7 @@ import { OrderRow } from './OrderRow';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import { selectCookingDate, selectCounts, selectList } from './sellerOrdersSelectors';
 import { refreshRequested } from './sellerOrdersSlice';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 /** The filter and the search text come from the URL (the route wrapper owns them). */
 export type OrdersScreenProps = Readonly<{
@@ -39,7 +40,7 @@ export type OrdersScreenProps = Readonly<{
 const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   max-width: min(100%, 45rem);
   margin: 0 auto;
 `;

@@ -6,6 +6,7 @@ import type { ScreenId } from './flow';
 import { INSTALL_NS } from './i18n/register';
 import { InstallIcon } from './installIcons';
 import type { InstallController } from './useInstallFlow';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // The install and notification screens (plan 004 stage 7, spec 6): a full-screen sheet over the
 // customer app. One step per screen, the instruction at the top, one filled button at most, Skip
@@ -25,7 +26,7 @@ const Column = styled.div`
   gap: ${({ theme }) => theme.spacing.lg};
   box-sizing: border-box;
   max-width: 30rem;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   margin: 0 auto;
   padding: calc(var(--sat) + ${({ theme }) => theme.spacing.lg}) ${({ theme }) => theme.spacing.lg}
     calc(var(--sab) + ${({ theme }) => theme.spacing.lg});

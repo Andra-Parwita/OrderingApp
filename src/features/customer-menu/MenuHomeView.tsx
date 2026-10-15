@@ -12,13 +12,14 @@ import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
 import { CardBody, CardHead, MainButton, OutlineButton, StatusCard, TextLink } from './menuParts';
+import { screenHeightMinus } from '../../theme/screen';
 
 // Menu home and its "not taking orders" states (spec §4.1): the kitchen's banner whole, the menu
 // picture behind a see-through info sheet, and the one main button. Presentational: the routed
 // screen and the fixtures page both feed it a MenuResponse; nothing here fetches.
 
 const Screen = styled.main`
-  min-height: calc(100dvh - var(--customer-tabbar-height, 0rem));
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
   display: flex;
   flex-direction: column;
   background: ${({ theme }) => theme.c.bg};

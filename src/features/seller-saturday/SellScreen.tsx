@@ -14,6 +14,7 @@ import { SATURDAY_NS } from './i18n/register';
 import { summarise } from './daySummary';
 import { Muted, Notice, useLang } from './parts';
 import { useLiveReload, type Wanted } from './useLiveReload';
+import { TOP_BARS } from '../../theme/screen';
 
 /** How long Undo stays on screen after a sale. */
 export const UNDO_MS = 5000;
@@ -77,7 +78,7 @@ const Row = styled.div`
 `;
 const UndoBar = styled.div`
   position: sticky;
-  top: 0;
+  top: ${TOP_BARS};
   z-index: 3;
   display: flex;
   align-items: center;

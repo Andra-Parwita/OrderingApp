@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { styled } from 'styled-components';
 import { Icon } from './Icon';
+import { TOP_BARS } from '../theme/screen';
 
 export type PageHeaderProps = Readonly<{
   title: string;
@@ -15,7 +16,7 @@ export type PageHeaderProps = Readonly<{
 
 const Bar = styled.header`
   position: sticky;
-  top: 0;
+  top: ${TOP_BARS};
   z-index: 5;
   box-sizing: border-box;
   display: flex;

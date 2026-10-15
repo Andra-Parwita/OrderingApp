@@ -38,6 +38,7 @@ import {
 import { TabletOnlyPage } from './TabletOnlyPage';
 import { useNotPublished } from './useNotPublished';
 import { useSession } from './session';
+import { SCREEN_HEIGHT } from '../theme/screen';
 
 // One shell for both layouts: the page (Outlet) keeps the same place in the tree, so crossing the
 // 600 px breakpoint (a rotated tablet, a resized window) does not remount it and lose a
@@ -49,8 +50,8 @@ const Shell = styled.div<{ $tablet: boolean; $fixed: boolean }>`
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: ${({ $fixed }) => ($fixed ? 'minmax(0, 1fr)' : 'auto')};
   flex-direction: column;
-  min-height: 100dvh;
-  ${({ $fixed }) => ($fixed ? 'height: 100dvh; overflow: hidden;' : '')}
+  min-height: ${SCREEN_HEIGHT};
+  ${({ $fixed }) => ($fixed ? `height: ${SCREEN_HEIGHT}; overflow: hidden;` : '')}
   font-size: ${({ $tablet }) => ($tablet ? '0.875rem' : '0.9375rem')};
 `;
 const Main = styled.div<{ $tablet: boolean; $fixed: boolean }>`

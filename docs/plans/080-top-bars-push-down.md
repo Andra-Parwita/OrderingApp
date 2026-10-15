@@ -1,6 +1,6 @@
 # 080 · Top bars push the page down instead of covering it
 
-**Status:** approved (owner "A", 2026-10-15); this round, after plan 079. Owner: "also the maintenance bar ideally pushes everything down and does not overlay the top one; is that possible and not causing breaking?"
+**Status:** ✅ built + gated (2026-10-15); not deployed. The bars stay fixed overlays and the page gets matching top padding (`--top-bars`); the notice bubble uses the app theme colours (not the mock-up's brown bar). Owner: "also the maintenance bar ideally pushes everything down and does not overlay the top one; is that possible and not causing breaking?"
 **Goal:** the maintenance notice (plan 046), the "new version" bar (plan 059) and the offline banner (plan 062) take their own space at the top; the page starts below them, so headers (e.g. the admin brand header, `temp/bug/img_7.png`) are never covered.
 
 ## Today

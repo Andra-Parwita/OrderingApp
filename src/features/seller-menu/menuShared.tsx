@@ -18,13 +18,14 @@ import {
   type MenuRootState,
   type OpResult,
 } from './menuSlice';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 // Pieces shared by the Menu screens: layout, the loader, and a way to run an op and hear back.
 
 export const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   font-size: 0.9375rem;
 `;
 export const Head = styled.header`

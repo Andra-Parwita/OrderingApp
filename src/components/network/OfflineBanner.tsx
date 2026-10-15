@@ -1,10 +1,12 @@
 // One calm banner for "offline", "server isn't answering" and "gave up polling" (plan 062).
 // Muted, role=status, with Try again. It hides itself when a call works again.
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { parseHealth } from '../../../shared/health';
 import { request } from '../../api/http';
 import { requestRetry } from '../../api/netState';
+import { useTopBar } from '../../theme/topBars';
 import { NETWORK_NS } from './i18n/register';
 import { useNetworkState } from './useNetworkState';
 
@@ -54,9 +56,11 @@ function tryAgain() {
 export function OfflineBanner({ onTryAgain = tryAgain }: { onTryAgain?: () => void }) {
   const { t } = useTranslation(NETWORK_NS);
   const state = useNetworkState();
+  const bar = useRef<HTMLDivElement>(null);
+  useTopBar('offline', bar, state !== 'ok');
   if (state === 'ok') return null;
   return (
-    <Bar role="status">
+    <Bar ref={bar} role="status">
       <span>{t(state)}</span>
       <Button type="button" onClick={onTryAgain}>
         {t('tryAgain')}

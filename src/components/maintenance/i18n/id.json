@@ -1,5 +1,5 @@
 {
-  "notice": "🛠 Pemeliharaan pada {{day}}, {{start}}–{{end}}. Aplikasi berhenti sebentar.",
+  "notice": "Pemeliharaan pada {{day}}, {{start}}–{{end}}. Aplikasi berhenti sebentar.",
   "dismiss": "Tutup",
   "title": "Sedang diperbarui, kembali dalam beberapa menit",
   "text": "Tidak ada yang hilang. Halaman ini kembali sendiri."

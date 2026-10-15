@@ -12,6 +12,7 @@ import { CookTab } from './CookTab';
 import { PackTab } from './PackTab';
 import { selectBags, selectCookList, selectCookMenu, selectCounted } from './cookSelectors';
 import { pollingStarted, pollingStopped, refreshRequested, type CookRootState } from './cookSlice';
+import { SCREEN_HEIGHT } from '../../theme/screen';
 
 type Tab = 'cook' | 'pack';
 
@@ -20,7 +21,7 @@ const LABELS_PATH = '/seller/labels';
 const Page = styled.main`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   color: ${({ theme }) => theme.c.text};
 `;
 const Head = styled.header`

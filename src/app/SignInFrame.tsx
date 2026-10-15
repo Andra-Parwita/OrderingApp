@@ -12,6 +12,7 @@ import { useMediaQuery } from '../components/useMediaQuery';
 import { BrandLogo } from './BrandLogo';
 import { BrandColumn, BrandFootLine, type BrandPage } from './BrandPanel';
 import { SPLIT_QUERY } from './layout';
+import { SCREEN_HEIGHT, TOP_BARS } from '../theme/screen';
 
 // D-051: sign-in and set-up pages show the phone banner of the last kitchen this device used,
 // whole (never cropped) on that kitchen's colour or background picture. Without a last kitchen or
@@ -53,7 +54,7 @@ const Split = styled.div<{ $split: boolean }>`
   display: ${({ $split }) => ($split ? 'grid' : 'flex')};
   grid-template-columns: 46fr 54fr;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: ${SCREEN_HEIGHT};
   background: ${({ theme }) => theme.c.bg};
   color: ${({ theme }) => theme.c.text};
 `;
@@ -67,7 +68,7 @@ const Panel = styled.div<{
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  ${({ $split }) => ($split ? 'position: sticky; top: 0; height: 100dvh;' : 'height: 24dvh;')}
+  ${({ $split }) => ($split ? `position: sticky; top: ${TOP_BARS}; height: ${SCREEN_HEIGHT};` : 'height: 24dvh;')}
   padding-top: env(safe-area-inset-top);
   background-color: ${({ theme, $background }) => $background ?? theme.c.surf2};
   ${({ $image }) =>
@@ -92,15 +93,15 @@ const Name = styled.p`
 `;
 const BrandSide = styled.div`
   position: sticky;
-  top: 0;
-  height: 100dvh;
+  top: ${TOP_BARS};
+  height: ${SCREEN_HEIGHT};
 `;
 const FormSide = styled.div<{ $split: boolean }>`
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  ${({ $split }) => ($split ? 'min-height: 100dvh;' : '')}
+  ${({ $split }) => ($split ? `min-height: ${SCREEN_HEIGHT};` : '')}
 `;
 const TopBar = styled.div`
   display: flex;

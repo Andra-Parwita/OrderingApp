@@ -8,6 +8,7 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|
+| 080 · top bars push the page down + Bobo speech bubble | builder · sonnet | 21:41 (15 Oct) | 60 min | 21:48 | ~10 min | −50 min | `src/theme/screen.ts`, `topBars.ts`, 3 bars, ~25 layouts, PageHeader/SlideOver/rail offsets | ✅ gated: full unit 2,228/2,228, full e2e 91 passed (31 skipped), lint, format; captures ✅ |
 | 079 · Help inside the seller app | builder · sonnet | 21:31 (15 Oct) | 40 min | 21:40 | ~25 min | −15 min | HelpScreen `embedded`, `/seller/help` route, nav, tests, e2e `seller-help-in-app` | ✅ gated: unit 165 + 15, e2e 2/2 × 2 + helper-flow, Print contrast fixed |
 | 075 · About page + releases panel + calm Lottie (seller app) | builder · sonnet | 20:24 (15 Oct) | 60 min | 20:30 | ~7 min | −53 min | new `src/features/seller-about/` + nav/rail/routes, `info` icon, lottie-web 5.12.2, 2 calm JSONs, e2e spec | ✅ built + gated |
 | 076 · pickup places on the map (migration 0024, seller Address, customer View on map / Directions) | builder · sonnet | 20:24 (15 Oct) | 75 min | 20:36 | ~12 min | −63 min | migration 0024, `shared/pickupAddress.ts`, `src/components/pickup-map/`, worker pickup + routes, PickupPane, 4 customer screens, SlideOver focus fix, e2e spec | ✅ built + gated |
