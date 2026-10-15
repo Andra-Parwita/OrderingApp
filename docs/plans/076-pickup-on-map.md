@@ -22,6 +22,8 @@
 
 The address and pin belong to the saved pickup place (the seller's list), so every menu using that place shows them; changing it updates live menus at once.
 
+**Additive only (owner, 15 Oct: "don't change existing order etc., you just need to add the View on map … the existing QR code etc. will still show"):** the menu, basket, order placed, order page and My orders screens stay exactly as they are (QR code, order number, items, statuses, everything). The only change is **one small line under the pickup place**: the address + **View on map** + **Directions**, shown only when the place has an address. The mock-up's customer screens are simplified stand-ins to show where that line goes, not a redesign.
+
 ## Stages (after the questions)
 | # | stage |
 |---|---|
