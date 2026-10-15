@@ -24,7 +24,7 @@
 4. ~~How far back~~ **From the next release (1.0.36)** (owner, 14 Oct).
 
 #### About text (approved)
-The heading ends with the **ShaggyBobo icon** (`logo-icon`) instead of 👋 (owner, 15 Oct). The text sits in one box (bubble, card or book page: owner to pick) with a **smaller font**; the hero, logo and version stay **pinned** and only the text box scrolls, with a **brand-coloured scrollbar**; a small **What's new ›** button right of the version opens the releases panel. **Light and dark** follow the app's Appearance setting (the app's dark tokens; the hero dimmed a little in dark).
+The heading ends with the **ShaggyBobo icon** (`logo-icon`) instead of 👋 (owner, 15 Oct). The text sits in a **card** (owner "C", 15 Oct; not the bubble or book page) with a **smaller font**; the hero, logo and version stay **pinned** and only the text box scrolls, with a **brand-coloured scrollbar**; a small **What's new ›** button right of the version opens the releases panel. **Light and dark** follow the app's Appearance setting (the app's dark tokens; the hero dimmed a little in dark).
 
 **EN**
 
