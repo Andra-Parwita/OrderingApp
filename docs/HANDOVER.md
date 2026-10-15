@@ -48,8 +48,9 @@
 |---|---|---|
 | 075 | About page in the seller app (all roles): calm Lottie over the faded market scene, the approved fun about text in a card, "Release 1.0.36" + small build code, What's new › panel (last 5 releases) | new dependency `lottie-web` 5.12.2 (lazy, About only); **write the 1.0.36 release lines and the date in `src/features/seller-about/releaseNotes.ts` before deploying (owner picks, D-100)** |
 | 076 | Pickup places: optional address + map pin (seller Settings → Pickup); customers see address · View on map · Directions on the menu, confirmation, order page, My orders (additive only) | ⚠️ **migration 0024** (add-only) before deploying; the public menu now sends `mapsEmbedKey` whenever the key is set |
+| 079 | Help opens inside the seller app (`/seller/help`, menu stays; the public Help address unchanged for sign-in and invites) | none |
 
-**Queued this round (approved):** 079 Help inside the seller app → 080 top bars push the page down (+ Bobo speech bubble) → 078 admin page Layout A → 077 UTC stored / device time shown (D-101; the kitchens are in Adelaide).
+**Queued this round (approved):** 080 top bars push the page down (+ Bobo speech bubble) → 078 admin page Layout A → 077 UTC stored / device time shown (D-101; the kitchens are in Adelaide).
 **Local tips:** the local seller app opens without a passkey at `/seller` (dev tools); if it keeps going to sign-in, a `signedIn` note from an earlier local sign-in is in that browser: use a private window or `localStorage.removeItem('signedIn')`. Lint needs `NODE_OPTIONS=--max-old-space-size=8192` on this PC (it ran out of memory without it). **Next time you deploy:** first Claude drafts the release notes and the owner picks which lines are included (D-100); back up; announce (admin → Announce an update); switch Maintenance on before the migrations, off after the live check (plan 046 is live now).
 
 ## Next session

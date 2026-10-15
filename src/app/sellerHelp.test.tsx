@@ -15,7 +15,7 @@ import { registerSellerSetupI18n } from '../features/seller-setup';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import { AppRoutes } from './AppRoutes';
-import { navIdsFor } from './sellerNav';
+import { HREF, navIdsFor } from './sellerNav';
 import { createAppStore } from './store';
 
 // Plan 058, D-095: the seller Help page and every way to it.
@@ -152,6 +152,11 @@ describe('ways to Help', () => {
     expect(navIdsFor('helper')).toContain('help');
   });
 
+  it('the menu item opens Help inside the seller app (plan 079)', () => {
+    expect(HREF.help).toBe('/seller/help');
+    expect(HREF.help).not.toBe(SELLER_HELP_PATH);
+  });
+
   const routes = (path: string) => {
     vi.stubGlobal(
       'fetch',
@@ -168,13 +173,17 @@ describe('ways to Help', () => {
     );
   };
 
-  it('opens signed out at the constant, and /seller/help is not a route', async () => {
-    const first = routes(SELLER_HELP_PATH);
+  it('opens signed out at the constant, with its public frame (language switch, footer)', async () => {
+    routes(SELLER_HELP_PATH);
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Seller help');
-    first.unmount();
+    expect(screen.getByRole('group', { name: 'Language' })).toBeInTheDocument();
+  });
+
+  it('/seller/help is inside the seller layout: the menu stays and there is no language switch', async () => {
     routes('/seller/help');
-    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Page not found');
-    expect(screen.queryByText('Seller help')).toBeNull();
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Seller help');
+    expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('href', '/seller/orders');
+    expect(screen.queryByRole('group', { name: 'Language' })).toBeNull();
   });
 
   it('the sign-in page links to it ("Need help?")', async () => {

@@ -16,17 +16,26 @@ import { TOPICS, type HelpStep, type HelpTopic, type HelpTopicText } from './top
 const PHONE_QUERY = '(max-width: 51.25rem)';
 const PIC_DIR = '/help/';
 
-const Page = styled.div<{ $split: boolean }>`
-  min-height: 100vh;
+const Page = styled.div<{ $split: boolean; $embedded: boolean }>`
+  ${({ $embedded, $split }) =>
+    $embedded
+      ? `display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: ${$split ? 'hidden' : 'auto'};`
+      : `min-height: 100vh;
   min-height: 100dvh;
-  ${({ $split }) =>
+  ${
     $split
       ? `display: flex;
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;`
-      : ''}
+      : ''
+  }`}
   background: ${({ theme }) => theme.c.bg};
   color: ${({ theme }) => theme.c.text};
   font-family: ${({ theme }) => theme.font.ui};
@@ -41,6 +50,30 @@ const Page = styled.div<{ $split: boolean }>`
     outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.fill};
     outline-offset: ${({ theme }) => theme.border.focus};
     border-radius: ${({ theme }) => theme.radius.md};
+  }
+`;
+// Inside the seller app (plan 079) there is no brand band: a slim title row with Print.
+const EmbeddedHead = styled.header`
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  box-sizing: border-box;
+  max-width: 73.75rem;
+  width: 100%;
+  margin: 0 auto;
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl} 0;
+
+  h1 {
+    margin: 0;
+    font-size: ${({ theme }) => theme.type.size.lg};
+  }
+  @media (max-width: 51.25rem) {
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg} 0;
+  }
+  @media print {
+    padding-top: 0;
   }
 `;
 const Band = styled.header`
@@ -174,6 +207,12 @@ const PrintButton = styled.button`
   background: ${brandPill.light.bg};
   font-size: ${({ theme }) => theme.type.size.sm};
   font-weight: ${({ theme }) => theme.type.weight.strong};
+`;
+// Inside the seller app the button follows the theme (light and dark), not the brand beige pill.
+const EmbeddedPrint = styled(PrintButton)`
+  border-color: ${({ theme }) => theme.c.line};
+  background: ${({ theme }) => theme.c.surf2};
+  color: ${({ theme }) => theme.c.text};
 `;
 const MascotBox = styled.div`
   position: absolute;
@@ -575,11 +614,13 @@ function topicFromAddress(value: string | null, tab: Tab): number {
 
 export type HelpScreenProps = Readonly<{
   /** The ShaggyBobo logo and the waving mascot come from the app layer (a feature may not import it). */
-  logo: ReactNode;
-  mascot: ReactNode;
+  logo?: ReactNode;
+  mascot?: ReactNode;
+  /** Plan 079: shown inside the seller app (no brand band, footer or language switch); the public page leaves it off. */
+  embedded?: boolean;
 }>;
 
-export function HelpScreen({ logo, mascot }: HelpScreenProps) {
+export function HelpScreen({ logo, mascot, embedded = false }: HelpScreenProps) {
   const { t, i18n } = useTranslation(HELP_NS);
   const lang = i18n.language.startsWith('id') ? 'id' : 'en';
   const phone = useMediaQuery(PHONE_QUERY);
@@ -595,12 +636,13 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
 
   useEffect(() => {
     // Public but not for search engines (D-095): the Worker also sends X-Robots-Tag for this address.
+    if (embedded) return;
     const meta = document.createElement('meta');
     meta.name = 'robots';
     meta.content = 'noindex, nofollow';
     document.head.append(meta);
     return () => meta.remove();
-  }, []);
+  }, [embedded]);
   useEffect(() => {
     const before = () => setPrinting(true);
     const after = () => setPrinting(false);
@@ -658,35 +700,44 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
   }, [current, tab]);
 
   return (
-    <Page $split={!accordion}>
-      <Band>
-        <Scene src="/brand/nusantara-market.webp" alt="" aria-hidden="true" />
-        <BandIn>
-          <Logo>{logo}</Logo>
-          <Heading>
-            <h1>{t('title')}</h1>
-            <p>{t('sub')}</p>
-          </Heading>
-          <Tools>
-            <Switch role="group" aria-label={t('language')}>
-              {(['en', 'id'] as const).map((code) => (
-                <SwitchButton
-                  key={code}
-                  type="button"
-                  aria-pressed={lang === code}
-                  onClick={() => void i18n.changeLanguage(code)}
-                >
-                  {code.toUpperCase()}
-                </SwitchButton>
-              ))}
-            </Switch>
-            <PrintButton type="button" onClick={() => window.print()}>
-              {t('print')}
-            </PrintButton>
-          </Tools>
-        </BandIn>
-        <MascotBox>{mascot}</MascotBox>
-      </Band>
+    <Page $split={!accordion} $embedded={embedded}>
+      {embedded ? (
+        <EmbeddedHead>
+          <h1>{t('title')}</h1>
+          <EmbeddedPrint type="button" onClick={() => window.print()}>
+            {t('print')}
+          </EmbeddedPrint>
+        </EmbeddedHead>
+      ) : (
+        <Band>
+          <Scene src="/brand/nusantara-market.webp" alt="" aria-hidden="true" />
+          <BandIn>
+            <Logo>{logo}</Logo>
+            <Heading>
+              <h1>{t('title')}</h1>
+              <p>{t('sub')}</p>
+            </Heading>
+            <Tools>
+              <Switch role="group" aria-label={t('language')}>
+                {(['en', 'id'] as const).map((code) => (
+                  <SwitchButton
+                    key={code}
+                    type="button"
+                    aria-pressed={lang === code}
+                    onClick={() => void i18n.changeLanguage(code)}
+                  >
+                    {code.toUpperCase()}
+                  </SwitchButton>
+                ))}
+              </Switch>
+              <PrintButton type="button" onClick={() => window.print()}>
+                {t('print')}
+              </PrintButton>
+            </Tools>
+          </BandIn>
+          <MascotBox>{mascot}</MascotBox>
+        </Band>
+      )}
       <Main $split={!accordion}>
         <TabList role="tablist" aria-label={t('tabs')} onKeyDown={onTabKey}>
           {TABS.map((id) => (
@@ -784,7 +835,7 @@ export function HelpScreen({ logo, mascot }: HelpScreenProps) {
             </Detail>
           ) : null}
         </Layout>
-        <Foot>{t('foot')}</Foot>
+        {embedded ? null : <Foot>{t('foot')}</Foot>}
       </Main>
     </Page>
   );

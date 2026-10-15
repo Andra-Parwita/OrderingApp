@@ -109,7 +109,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 076 | ✅ | [Pickup points on the map](076-pickup-on-map.md) | built + gated (2026-10-15); not deployed; **migration 0024** |
 | 077 | ⬜ | [Times: stored as UTC, shown in the device's time](077-device-time.md) | draft (2026-10-15); ruling D-101; after 075 + 076; **migration** |
 | 078 | ⬜ | [Admin page: pinned header, compact left column, desktop first](078-admin-layout.md) | mock-up approved, Layout A (2026-10-15); this round, after 079 + 080 |
-| 079 | ⬜ | [Help opens inside the seller app](079-help-inside-seller-app.md) | approved (2026-10-15); this round, after the 075 + 076 gate |
+| 079 | ✅ | [Help opens inside the seller app](079-help-inside-seller-app.md) | built + gated (2026-10-15); not deployed |
 | 080 | ⬜ | [Top bars push the page down instead of covering it](080-top-bars-push-down.md) | approved (2026-10-15); this round, after 079 |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).

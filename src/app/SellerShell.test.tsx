@@ -3,7 +3,7 @@ import i18n from 'i18next';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Me } from '../../shared/authContract';
-import { registerSellerHelpI18n } from '../features/seller-help';
+import { HelpScreen, registerSellerHelpI18n } from '../features/seller-help';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import { SellerLayout } from './SellerLayout';
@@ -67,6 +67,7 @@ function renderAt(path: string) {
             <Route path="menu" element={<p>Menu page</p>} />
             <Route path="hand-over" element={<p>Hand-over page</p>} />
             <Route path="devices" element={<p>Devices page</p>} />
+            <Route path="help" element={<HelpScreen embedded />} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -101,6 +102,32 @@ describe('seller shell, tablet', () => {
       'href',
       '/seller/orders',
     );
+  });
+
+  it('Help opens inside the layout (rail stays, no public frame) for every role', () => {
+    for (const who of [
+      SELLER,
+      CHEF,
+      { role: 'helper', stage: 'full', sellerName: 'Delave' } as Me,
+    ]) {
+      me = who;
+      const { unmount } = renderAt('/seller/help?topic=3');
+      const nav = screen.getByRole('navigation', { name: 'Seller' });
+      expect(within(nav).getByRole('link', { name: 'Help' })).toHaveAttribute(
+        'href',
+        '/seller/help',
+      );
+      expect(within(nav).getByRole('link', { name: 'Help' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+      expect(within(nav).getByRole('link', { name: 'Orders' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Seller help');
+      expect(screen.getAllByRole('heading', { level: 2 })[0]).toHaveTextContent('3.');
+      // The public page's frame (language switch, footer) is not drawn here.
+      expect(screen.queryByRole('group', { name: 'Language' })).toBeNull();
+      unmount();
+    }
   });
 
   it('marks Orders, not Home, on /seller/orders', () => {

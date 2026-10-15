@@ -1,4 +1,3 @@
-import { SELLER_HELP_PATH } from '../../shared/help';
 import type { IconName } from '../ui';
 
 // The seller navigation (D-058, D-065): Home · Orders · Kitchen · Pickup & delivery · Menu · Settings
@@ -34,8 +33,8 @@ export const HREF: Readonly<Record<NavId | 'more', string>> = {
   // Settings opens on its first pane (stage 10); the phone's More tab keeps /seller/more.
   settings: '/seller/settings/kitchen',
   more: '/seller/more',
-  // Plan 058: the public Help page, outside the seller layout; every role sees it, right under Settings.
-  help: SELLER_HELP_PATH,
+  // Plan 079: Help opens inside the seller layout (the public address stays for sign-in and invites).
+  help: '/seller/help',
   // Plan 075: About ShaggyBobo and what's new, for every role, right under Help.
   about: '/seller/about',
 };
@@ -85,6 +84,7 @@ const HELPER_PATHS = [
   '/seller/more',
   '/seller/devices',
   '/seller/about',
+  '/seller/help',
 ];
 
 export function helperMayOpen(pathname: string): boolean {
@@ -113,6 +113,7 @@ export function activeNav(pathname: string): NavId {
   }
   if (under(pathname, '/seller/sell')) return 'sell';
   if (under(pathname, '/seller/about')) return 'about';
+  if (under(pathname, '/seller/help')) return 'help';
   // Share-menu belongs to making and sharing a menu.
   if (under(pathname, '/seller/menu') || under(pathname, '/seller/share')) return 'menu';
   if (SETTINGS_PATHS.some((path) => under(pathname, path))) return 'settings';
@@ -164,8 +165,8 @@ export function isTaskScreen(pathname: string): boolean {
  */
 export function fixesPage(pathname: string, tablet: boolean): boolean {
   if (pathname === '/seller/orders') return true;
-  // Plan 075: About pins its hero and version; only the about card scrolls.
-  if (pathname === '/seller/about') return true;
+  // Plan 075: About pins its hero and version; only the about card scrolls. Plan 079: so does Help.
+  if (pathname === '/seller/about' || pathname === '/seller/help') return true;
   if (pathname === '/seller') return !tablet;
   return tablet && (under(pathname, '/seller/new') || pathname.startsWith('/seller/orders/'));
 }

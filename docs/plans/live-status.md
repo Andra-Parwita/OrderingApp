@@ -8,6 +8,7 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|
+| 079 · Help inside the seller app | builder · sonnet | 21:31 (15 Oct) | 40 min | 21:40 | ~25 min | −15 min | HelpScreen `embedded`, `/seller/help` route, nav, tests, e2e `seller-help-in-app` | ✅ gated: unit 165 + 15, e2e 2/2 × 2 + helper-flow, Print contrast fixed |
 | 075 · About page + releases panel + calm Lottie (seller app) | builder · sonnet | 20:24 (15 Oct) | 60 min | 20:30 | ~7 min | −53 min | new `src/features/seller-about/` + nav/rail/routes, `info` icon, lottie-web 5.12.2, 2 calm JSONs, e2e spec | ✅ built + gated |
 | 076 · pickup places on the map (migration 0024, seller Address, customer View on map / Directions) | builder · sonnet | 20:24 (15 Oct) | 75 min | 20:36 | ~12 min | −63 min | migration 0024, `shared/pickupAddress.ts`, `src/components/pickup-map/`, worker pickup + routes, PickupPane, 4 customer screens, SlideOver focus fix, e2e spec | ✅ built + gated |
 | gate · 075 + 076 (typecheck, lint, format, full unit, 2 specs × 2 projects) | coordinator | 20:36 | 25 min | 21:30 | ~70 min | +45 min | 5 unit + 4 lint fixes by the builders; lint needs `NODE_OPTIONS=--max-old-space-size=8192` | ✅ green: unit 2,221 (after fixes 184/184 changed), e2e 6/6, lint, format |

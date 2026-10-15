@@ -554,7 +554,7 @@ const PHONE_LINKS = [
   ['labels', '/seller/labels'],
   ['printOrders', '/seller/orders/print'],
   ['devices', '/seller/devices'],
-  ['help', SELLER_HELP_PATH],
+  ['help', '/seller/help'],
   ['about', '/seller/about'],
 ] as const;
 // What the server closes to a chef (D-013); the chef does not see these.
@@ -790,7 +790,7 @@ export function AppRoutes() {
             <Route path="/settings" element={<CustomerSettingsRoute />} />
           </Route>
           {/* Sign-in and setup sit outside the seller shell; the shell needs a finished sign-in. */}
-          {/* Plan 058, D-095: public Help at a hard-to-guess address, outside the seller shell; /seller/help is not a route. */}
+          {/* Plan 058, D-095: public Help at a hard-to-guess address, outside the seller shell; the same content is also at /seller/help inside the seller layout (plan 079). */}
           <Route
             path={SELLER_HELP_PATH}
             element={<HelpScreen logo={<BrandLogo onBeige />} mascot={<WavingMascot />} />}
@@ -861,6 +861,8 @@ export function AppRoutes() {
               }
             />
             <Route path="more" element={<MoreRoute />} />
+            {/* Plan 079: Help inside the seller layout; every role. */}
+            <Route path="help" element={<HelpScreen embedded />} />
             {/* Plan 075: About ShaggyBobo and the release notes; every role. */}
             <Route
               path="about"

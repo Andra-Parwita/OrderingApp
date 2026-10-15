@@ -52,6 +52,16 @@ describe('About (plan 075)', () => {
   });
 });
 
+describe('Help inside the app (plan 079)', () => {
+  it('is at /seller/help, current there, fixed, and open to a helper', () => {
+    expect(HREF.help).toBe('/seller/help');
+    expect(activeNav('/seller/help')).toBe('help');
+    expect(helperMayOpen('/seller/help')).toBe(true);
+    expect(fixesPage('/seller/help', false)).toBe(true);
+    expect(fixesPage('/seller/help', true)).toBe(true);
+  });
+});
+
 describe('activeNav', () => {
   it('marks Sell for /seller/sell', () => {
     expect(activeNav('/seller/sell')).toBe('sell');

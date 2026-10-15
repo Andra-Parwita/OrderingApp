@@ -1,6 +1,6 @@
 # 079 · Help opens inside the seller app
 
-**Status:** approved (owner "A", 2026-10-15); this round, after the 075 + 076 gate. Owner: "when I click Help, it goes to a new tab or replaces the current seller page? That would be bad."
+**Status:** ✅ built + gated (2026-10-15); not deployed. Embedded Help keeps Print (theme button) and drops its own EN/ID switch (the seller app has one). Owner: "when I click Help, it goes to a new tab or replaces the current seller page? That would be bad."
 **Goal:** Help from the seller menu opens **inside the seller app**: the left menu (phone: the tab bar) stays, so one tap returns to Orders. The public Help address (`/help-yw4xsvh8`, D-095) keeps working as it is for the sign-in page and invite messages.
 
 ## Today
