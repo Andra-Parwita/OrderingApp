@@ -10,7 +10,7 @@
 
 ## Proposal (to be confirmed question by question)
 1. **About in the seller menu:** a new item **About** (left menu on tablet/computer, under Help; phone: More → About), for every role.
-2. **Livelier with Lottie** (owner, 15 Oct: "for About I want to use maybe better animation or background with Lotties"): the About page gets a Lottie animation or animated background instead of only the still brand panel; shares the Lottie choice (source, library: a new dependency, owner's OK) with the customer app round. **Source (owner, 15 Oct: "we try to do it ourselves"): we make our own** from the layered mascot parts (body, spoon arm, legs, closed eyes) and the market scene; the player library still needs the owner's OK.
+2. **Hero: the market scene + the walking mascot in CSS, no Lottie** (owner, 15 Oct: "I like what you have without Lottie"): the scene drifts slowly and is faded a little; the mascot steps, waves the spoon and blinks (the mock-up's CSS, as on the sign-in page, plan 036); still under reduced motion; **no new dependency**. A Lottie may replace it later (owner may send one).
 3. **The About page:** the ShaggyBobo brand panel (scene, mascot, logo) reused from `BrandPanel`, the version (`appVersion`), a few lines "about ShaggyBobo" (who makes it, what it is for, the privacy promise in one line). **No Help link** on About (owner, 15 Oct): Help is already in the menu.
 4. **Releases in a slide-in panel** (owner, 15 Oct): About shows one row "What's new · Releases" (latest version + date); tapping it slides a panel in (from the right on tablet, full screen on phone) with **at most the last 5 releases**, newest first and open, older ones folded.
 5. ~~"What's new" after an update~~ **No pop-up** (owner, 14 Oct): the notes stay on About.
