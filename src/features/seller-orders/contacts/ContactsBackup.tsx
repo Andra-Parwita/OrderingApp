@@ -33,7 +33,7 @@ const Hidden = styled.input`
 `;
 
 function shortDate(iso: string, lang: string): string {
-  return new Date(iso).toLocaleDateString(lang, {
+  return new Date(iso).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-AU', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

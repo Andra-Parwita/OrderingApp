@@ -75,7 +75,10 @@ function useNow(active: boolean): number {
 }
 
 function whenText(iso: string, language: string): string {
-  return new Date(iso).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' });
+  return new Date(iso).toLocaleString(language === 'id' ? 'id-ID' : 'en-AU', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 }
 
 type RowProps = Readonly<{

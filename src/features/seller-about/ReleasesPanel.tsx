@@ -171,9 +171,11 @@ export function formatReleaseDate(date: string, lang: string): string {
   const parsed = new Date(`${date}T00:00:00`);
   return Number.isNaN(parsed.getTime())
     ? date
-    : new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric' }).format(
-        parsed,
-      );
+    : new Intl.DateTimeFormat(lang === 'id' ? 'id-ID' : 'en-AU', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      }).format(parsed);
 }
 
 export type ReleasesPanelProps = Readonly<{
