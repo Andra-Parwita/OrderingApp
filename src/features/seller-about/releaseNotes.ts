@@ -12,20 +12,20 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
-  // Draft lines for the owner to pick before the deploy (D-100)
+  // Lines picked by the owner (16 Oct: "2, 1 and 6"); the date is set on deploy day
   {
     version: '1.0.36',
     date: '2026-10-xx',
     lines: {
       en: [
-        'A new About page shows what is new in each version.',
-        'Pickup places can show an address, with View on map and Directions.',
-        'Small fixes.',
+        'Pickup places can show an address, with View on map and Directions for your customers.',
+        "A new About page: who we are, how we keep your customers' info safe, and what's new in each version.",
+        'Small fixes and polish.',
       ],
       id: [
-        'Halaman Tentang yang baru menunjukkan apa yang baru di tiap versi.',
-        'Tempat pengambilan bisa menampilkan alamat, dengan Lihat di peta dan Petunjuk arah.',
-        'Perbaikan kecil.',
+        'Tempat pengambilan bisa menampilkan alamat, dengan Lihat di peta dan Petunjuk arah untuk pelangganmu.',
+        'Halaman Tentang yang baru: siapa kami, cara kami menjaga data pelangganmu, dan apa yang baru di tiap versi.',
+        'Perbaikan kecil dan penyempurnaan.',
       ],
     },
   },

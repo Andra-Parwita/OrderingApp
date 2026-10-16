@@ -54,7 +54,7 @@
 | 077 | Times: no city hard-coded (was Melbourne). Each kitchen has a time zone (`kitchens.time_zone`, Adelaide for all today); times are stored as instants and shown in the viewer's device time; a time a seller or admin types is their device's time; the midnight auto-finish and the default cut-off use the kitchen's zone; a small "your time" word appears on customer screens only when the device's zone differs from the kitchen's; admin maintenance says "Times are in your time (Adelaide)" | ⚠️ **migration 0025** (add-only). Open menus keep their stored cut-off, which was saved as Melbourne time: it will now show 30 min earlier (e.g. 8:30 pm instead of 9 pm). After deploying, open each live menu and re-save the cut-off if needed. Auto-finish moves to Adelaide midnight (30 min later than before) |
 
 **Queued this round:** nothing; all approved plans are built. 077 leftover: the Settings "default cut-off time" is still the kitchen's clock (identical today).
-**Release 1.0.36 notes: drafted, waiting for the owner's pick (D-100).** `src/features/seller-about/releaseNotes.ts` still holds the earlier 3 placeholder lines and date `'2026-10-xx'`. The candidate lines offered on 16 Oct (Claude suggested 1, 2, 3, 6):
+**Release 1.0.36 notes: picked by the owner (16 Oct: "2, 1 and 6", in that order) and written into `src/features/seller-about/releaseNotes.ts`.** Only the date is left: replace `'2026-10-xx'` with the deploy date. The candidate lines offered on 16 Oct, for reference:
 
 | # | English | Indonesian |
 |---|---|---|
@@ -72,7 +72,7 @@
 1. Read this file.
 2. `git pull` on `indra/brand_logo_ux`; `pnpm install` (075 added `lottie-web`); `pnpm db:migrate:local` (applies 0024 + 0025 to your local D1; migrate only, never reseed).
 3. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
-4. **Next deploy = Release 1.0.36** (075–080 above), only when the owner says so. Order: the owner picks the release lines from the table above → put them and the deploy date in `src/features/seller-about/releaseNotes.ts` → `pnpm run docs` → back up → announce → Maintenance on → **migrations 0024 + 0025** → deploy → Maintenance off after the live check → re-save the cut-off of any open menu (077: it was saved as Melbourne time) → push `main` and tag `v1.0.36`.
+4. **Next deploy = Release 1.0.36** (075–080 above), only when the owner says so. Order: put the deploy date in `src/features/seller-about/releaseNotes.ts` → `pnpm run docs` → back up → announce → Maintenance on → **migrations 0024 + 0025** → deploy → Maintenance off after the live check → re-save the cut-off of any open menu (077: it was saved as Melbourne time) → push `main` and tag `v1.0.36`.
 5. Then the other open items, **one at a time**: plan 067 (dish pictures), the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie), 077 leftover (Settings "default cut-off time" still in the kitchen's clock).
 
 ## Known and not done
@@ -87,4 +87,4 @@
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live; plans 075–080 are built, gated and pushed on `indra/brand_logo_ux`, not deployed. Do the setup in "Next session" step 2 first. Then ask (one question at a time): were the 1.0.35 phone checks OK; which 1.0.36 release lines from the table to use; then walk us through the deploy steps one step at a time, only when we say deploy.
+> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live; plans 075–080 are built, gated and pushed on `indra/brand_logo_ux`, not deployed. Do the setup in "Next session" step 2 first. Then ask (one question at a time): were the 1.0.35 phone checks OK; then walk us through the deploy steps one step at a time, only when we say deploy.
