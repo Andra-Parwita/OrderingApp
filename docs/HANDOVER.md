@@ -54,6 +54,7 @@
 | 077 | Times: no city hard-coded (was Melbourne). Each kitchen has a time zone (`kitchens.time_zone`, Adelaide for all today); times are stored as instants and shown in the viewer's device time; a time a seller or admin types is their device's time; the midnight auto-finish and the default cut-off use the kitchen's zone; a small "your time" word appears on customer screens only when the device's zone differs from the kitchen's; admin maintenance says "Times are in your time (Adelaide)" | ⚠️ **migration 0025** (add-only). Open menus keep their stored cut-off, which was saved as Melbourne time: it will now show 30 min earlier (e.g. 8:30 pm instead of 9 pm). After deploying, open each live menu and re-save the cut-off if needed. Auto-finish moves to Adelaide midnight (30 min later than before) |
 
 **Queued this round:** nothing; all approved plans are built. 077 leftover: the Settings "default cut-off time" is still the kitchen's clock (identical today).
+**Dates are day first (owner, 16 Oct: "we are in Australia"):** What's new, Devices and Customer details backup used the bare `en` locale ("Oct 16, 2026"); they now use `en-AU` / `id-ID` like the rest of the app (`29b0cbb`).
 **Release 1.0.36 notes: picked by the owner (16 Oct: "2, 1 and 6", in that order) and written into `src/features/seller-about/releaseNotes.ts`.** Only the date is left: replace `'2026-10-xx'` with the deploy date. The candidate lines offered on 16 Oct, for reference:
 
 | # | English | Indonesian |
