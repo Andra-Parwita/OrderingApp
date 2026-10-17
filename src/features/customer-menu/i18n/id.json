@@ -42,7 +42,9 @@
     "closedByseller": "Penjual sedang menghentikan pemesanan sementara.",
     "closedCutoff": "Batas waktu pemesanan sudah lewat.",
     "messageSeller": "Chat penjual di WhatsApp",
-    "viewOnly": "Anda masih bisa melihat menu."
+    "viewOnly": "Anda masih bisa melihat menu.",
+    "enlargePicture": "Perbesar foto {{name}}",
+    "dishPicture": "Foto {{name}}"
   },
   "home": {
     "yourTime": "waktu kamu",

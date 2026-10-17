@@ -152,7 +152,8 @@
     "removeTitle": "Keluarkan {{name}}?",
     "removeBody_other": "{{count}} porsi {{name}} sudah dipesan. Pesanan itu tetap memilikinya.",
     "keep": "Simpan hidangan",
-    "removeAnyway": "Tetap keluarkan"
+    "removeAnyway": "Tetap keluarkan",
+    "addPicture": "Tambah foto untuk {{name}}"
   },
   "dish": {
     "titleNew": "Hidangan baru",
@@ -211,7 +212,27 @@
     },
     "nameOne": "Nama",
     "descriptionOne": "Deskripsi",
-    "sizeOne": "Ukuran"
+    "sizeOne": "Ukuran",
+    "picture": {
+      "title": "Foto",
+      "optional": "(opsional)",
+      "take": "Ambil foto",
+      "choose": "Pilih foto",
+      "hint": "Persegi, dikecilkan di ponselmu sebelum diunggah.",
+      "replace": "Ganti",
+      "remove": "Hapus",
+      "alt": "Foto {{name}}",
+      "working": "Mengecilkan dan mengunggah…",
+      "failed": "Gagal mengunggah. Coba lagi.",
+      "imageType": "File itu bukan foto yang bisa dipakai. Coba JPEG, PNG, atau WebP.",
+      "imageTooBig": "Fotonya terlalu besar. Coba yang lebih kecil.",
+      "limit": "Batas foto tercapai ({{count}} dari {{max}}). Hapus foto dari hidangan lain untuk menambah yang ini.",
+      "removeTitle": "Hapus foto ini?",
+      "removeBody": "Hidangannya tetap ada; hanya fotonya yang hilang.",
+      "keep": "Simpan foto",
+      "removeConfirm": "Hapus foto",
+      "saveFirst": "Simpan hidangan dulu, lalu kamu bisa menambah foto."
+    }
   },
   "autosave": {
     "saving": "Menyimpan…",

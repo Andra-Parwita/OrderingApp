@@ -38,6 +38,9 @@ export type MenuOp =
   | { kind: 'createDish'; request: CreateDishRequest; addToMenu: boolean }
   | { kind: 'updateDish'; id: string; request: UpdateDishRequest }
   | { kind: 'deleteDish'; id: string }
+  /** Plan 067: the dish's picture (already 600 x 600). */
+  | { kind: 'uploadDishPicture'; id: string; dataUrl: string }
+  | { kind: 'removeDishPicture'; id: string }
   /** D-094: put a library dish on the current menu (PUT dishIds; a chef may for her own dishes). */
   | { kind: 'addDishToMenu'; dishId: string }
   | { kind: 'createSet'; name: string; dishIds: Array<string> }

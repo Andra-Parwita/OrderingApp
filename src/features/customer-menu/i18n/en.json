@@ -43,7 +43,9 @@
     "closedByseller": "The seller has paused ordering for now.",
     "closedCutoff": "The order cut-off has passed.",
     "messageSeller": "Message seller on WhatsApp",
-    "viewOnly": "You can still see the menu."
+    "viewOnly": "You can still see the menu.",
+    "enlargePicture": "Enlarge picture of {{name}}",
+    "dishPicture": "Picture of {{name}}"
   },
   "home": {
     "yourTime": "your time",

@@ -80,6 +80,7 @@ export type DishRow = {
   last_used_at: string | null;
   preorder: number;
   day_stock: number | null;
+  picture_ref: string | null;
 };
 export type PickupRow = {
   id: string;
@@ -108,6 +109,7 @@ export type ItemRow = {
   dish_id: string | null;
   preorder: number;
   day_stock: number | null;
+  picture_ref: string | null;
 };
 export type ChefRow = { id: string; name: string };
 export type SetRow = {
@@ -276,6 +278,7 @@ export function dishOf(row: DishRow): Dish {
     ...(row.chef_id !== null ? { chefId: row.chef_id } : {}),
     ...(row.preorder === 0 ? { preorder: false } : {}),
     ...(row.day_stock !== null ? { dayStock: row.day_stock } : {}),
+    ...(row.picture_ref !== null ? { pictureRef: row.picture_ref } : {}),
     ...(row.last_used_at !== null ? { lastUsedAt: row.last_used_at } : {}),
   };
 }
@@ -320,6 +323,7 @@ export function itemOf(row: ItemRow): MenuItem {
     ...(row.sold_out === 1 ? { soldOut: true as const } : {}),
     ...(row.preorder === 0 ? { preorder: false } : {}),
     ...(row.day_stock !== null ? { dayStock: row.day_stock } : {}),
+    ...(row.picture_ref !== null ? { pictureRef: row.picture_ref } : {}),
   };
 }
 

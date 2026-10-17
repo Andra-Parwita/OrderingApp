@@ -25,9 +25,9 @@ import {
 
 // Your dishes and Saved sets: reachable from the Menu header at all times.
 
-const Row = styled.div`
+const Row = styled.div<{ $thumb?: boolean }>`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 6rem 8rem 3rem;
+  grid-template-columns: ${({ $thumb }) => ($thumb ? '2.5rem minmax(0, 1fr)' : 'minmax(0, 1fr)')} 6rem 8rem 3rem;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   min-height: ${({ theme }) => theme.size.rowCompact + 8}px;
@@ -49,12 +49,33 @@ const Row = styled.div`
 
   /* Phone: name, price, pencil; the last-used date goes. */
   @media (max-width: 37.4375rem) {
-    grid-template-columns: minmax(0, 1fr) auto 3rem;
+    grid-template-columns: ${({ $thumb }) => ($thumb ? '2.5rem minmax(0, 1fr)' : 'minmax(0, 1fr)')} auto 3rem;
 
     .used {
       display: none;
     }
   }
+`;
+// Plan 067: a 40 px picture, or a dashed camera box that opens the editor (only when some dish has one).
+const Thumb = styled.img`
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border-radius: ${({ theme }) => theme.radius.md};
+`;
+const AddPicture = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: ${({ theme }) => theme.border.hairline} dashed ${({ theme }) => theme.c.ctrl};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: transparent;
+  color: ${({ theme }) => theme.c.muted};
+  cursor: pointer;
 `;
 const Pencil = styled.button`
   display: inline-flex;
@@ -111,6 +132,8 @@ export function DishesScreen({ slots }: Readonly<{ slots?: Pick<MenuSlots, 'chef
   const lang = useLang();
   const { data, status } = useMenuData();
   const editor = useDishEditor();
+  // No dish has a picture yet: the rows look as before, with no boxes at all.
+  const anyPicture = data?.dishes.some((dish) => dish.pictureRef !== undefined) === true;
   return (
     <Page>
       <Back title={t('library.title')} />
@@ -131,7 +154,20 @@ export function DishesScreen({ slots }: Readonly<{ slots?: Pick<MenuSlots, 'chef
             const name = pickText(dish.name, lang);
             const size = pickText(dish.size, lang);
             return (
-              <Row key={dish.id}>
+              <Row key={dish.id} $thumb={anyPicture}>
+                {anyPicture ? (
+                  dish.pictureRef ? (
+                    <Thumb src={dish.pictureRef} alt="" width={40} height={40} loading="lazy" />
+                  ) : (
+                    <AddPicture
+                      type="button"
+                      aria-label={t('dishes.addPicture', { name })}
+                      onClick={() => editor.open({ dishId: dish.id })}
+                    >
+                      <Icon name="camera" />
+                    </AddPicture>
+                  )
+                ) : null}
                 <span className="name">
                   {name}
                   {size ? <span className="sub">{size}</span> : null}

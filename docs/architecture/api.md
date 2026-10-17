@@ -103,6 +103,7 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 | GET, POST | `dishes` | chef | the dish library; add a dish (a chef's dish is forced to her own) |
 | POST | `dishes/import` | chef | dish CSV import (a chef: own dishes) |
 | PATCH, DELETE | `dishes/:id` | chef (own) ; delete owner | edit a dish; delete (warns if on the live menu) |
+| PUT, DELETE | `dishes/:id/picture` | chef (own) | plan 067: upload (`{dataUrl}`, square, at most 200 KB, to R2) or remove the dish's one picture; answers `{dish}`; `dish_picture_limit` (409) at 300 pictures; the file is deleted once no dish, menu item, menu or set uses it |
 | GET, POST | `saved-sets` | owner | saved sets (lists of dishes) |
 | PATCH, DELETE | `saved-sets/:id` | owner | rename or delete a set |
 | POST | `saved-sets/:id/use` | owner | put the set on the menu |

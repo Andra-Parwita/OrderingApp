@@ -53,6 +53,18 @@ const Hint = styled.p`
   color: ${({ theme }) => theme.c.muted};
   font-size: ${({ theme }) => theme.type.size.md};
 `;
+const Caption = styled.div`
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.lg} 0;
+  text-align: center;
+
+  b {
+    display: block;
+  }
+  span {
+    color: ${({ theme }) => theme.c.muted};
+    font-size: ${({ theme }) => theme.type.size.md};
+  }
+`;
 const Foot = styled.div`
   padding: 0 ${({ theme }) => theme.spacing.lg}
     calc(${({ theme }) => theme.spacing.lg} + var(--sab));
@@ -67,11 +79,23 @@ type Props = Readonly<{
   onClose: () => void;
   /** Offers the main button under the picture; leave out in the seller's preview. */
   onSeeDishes?: () => void;
+  /** Plan 067: a dish picture. `label` names the dialog; `caption` (name and price) and `detail` (description) sit under it. */
+  label?: string;
+  caption?: string;
+  detail?: string;
 }>;
 
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 
-export function FullPictureViewer({ src, title, onClose, onSeeDishes }: Props) {
+export function FullPictureViewer({
+  src,
+  title,
+  onClose,
+  onSeeDishes,
+  label,
+  caption,
+  detail,
+}: Props) {
   const { t } = useTranslation(CUSTOMER_NS);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
@@ -151,7 +175,7 @@ export function FullPictureViewer({ src, title, onClose, onSeeDishes }: Props) {
       : `translateY(${String(dragDown)}px)`;
 
   return (
-    <Overlay role="dialog" aria-modal="true" aria-label={t('home.pictureViewer')}>
+    <Overlay role="dialog" aria-modal="true" aria-label={label ?? t('home.pictureViewer')}>
       <Top>
         <RoundButton
           ref={closeRef}
@@ -171,6 +195,12 @@ export function FullPictureViewer({ src, title, onClose, onSeeDishes }: Props) {
       >
         <Picture src={src} alt={title} draggable={false} style={{ transform }} />
       </Stage>
+      {caption ? (
+        <Caption>
+          <b>{caption}</b>
+          {detail ? <span>{detail}</span> : null}
+        </Caption>
+      ) : null}
       <Hint>{t('home.pictureHint')}</Hint>
       {onSeeDishes ? (
         <Foot>

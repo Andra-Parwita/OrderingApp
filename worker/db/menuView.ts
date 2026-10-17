@@ -40,5 +40,6 @@ export function itemFromDish(dish: Dish, id: string): MenuItem {
     ...(dish.chefId !== undefined ? { chefId: dish.chefId } : {}),
     ...(dish.preorder === false ? { preorder: false } : {}),
     ...(dish.dayStock !== undefined ? { dayStock: dish.dayStock } : {}),
+    ...(dish.pictureRef !== undefined ? { pictureRef: dish.pictureRef } : {}),
   };
 }

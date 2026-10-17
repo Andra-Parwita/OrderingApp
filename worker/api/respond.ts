@@ -26,6 +26,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   image_type: 400,
   image_too_big: 400,
   image_ratio: 400,
+  dish_picture_limit: 409,
   invalid_backup: 400,
   pickup_place_limit: 409,
   menu_in_progress: 409,

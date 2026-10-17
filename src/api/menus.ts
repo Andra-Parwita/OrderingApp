@@ -223,6 +223,31 @@ export function updateDish(
   });
 }
 
+/** Plan 067: `dataUrl` is already resized to slotSpec('dishPicture') (600 x 600, about 100 KB). */
+export function uploadDishPicture(
+  id: string,
+  dataUrl: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<DishResponse>> {
+  return request(`/api/seller/dishes/${enc(id)}/picture`, parseDishResponse, {
+    method: 'PUT',
+    body: { dataUrl },
+    ...who(actor, seller),
+  });
+}
+
+export function removeDishPicture(
+  id: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<DishResponse>> {
+  return request(`/api/seller/dishes/${enc(id)}/picture`, parseDishResponse, {
+    method: 'DELETE',
+    ...who(actor, seller),
+  });
+}
+
 /** Always allowed; `usedOnLiveMenu` tells the screen to say so. */
 export function deleteDish(
   id: string,

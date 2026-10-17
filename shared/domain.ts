@@ -197,6 +197,8 @@ export type MenuItem = {
   preorder?: boolean;
   /** Plan 029: portions sold at the stall on the day. Absent = not sold on the day. Never sent to customers. */
   dayStock?: number;
+  /** Plan 067: the dish's picture (a copy of the library dish's), square 600 x 600. */
+  pictureRef?: string;
 };
 
 /** Seller images and colour (D-035, D-038). Each is optional; the phone banner falls back to the desktop one. */

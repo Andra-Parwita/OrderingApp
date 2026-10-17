@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShaggyBobo · A picture for each dish (mock-up)</title>
+<style>
+:root{
+  --beige:#EADBC2; --ink:#2B1D12; --bobo:#d9772b;
+  --bg:#F6F2E8; --surf:#FFFDF8; --surf2:#F4F0E6; --line:#E4DED0;
+  --text:#1C1F1A; --muted:#5D6358; --accent:#1F6B5C; --accent-tint:#E3EFEA; --onacc:#fff;
+  --pill-bg:#fff6ea; --pill-border:#ead8bf; --stage:#d9d4c6; --edge:#7F857A;
+  --err:#A93724; --err-tint:rgb(169 55 36/8%); --warn:#8A5A12;
+}
+:root[data-theme=dark]{--bg:#121411;--surf:#181A16;--surf2:#20231E;--line:#2A2E27;--text:#F1EEE6;--muted:#A9AFA3;
+  --accent:#93C590;--accent-tint:rgba(140,192,138,.14);--onacc:#10200f;--pill-bg:#2A2117;--pill-border:#3D3022;--bobo:#E8954F;--edge:#7F857A;
+  --err:#EE8B78;--err-tint:rgb(238 139 120/10%);--warn:#E3B565}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--stage);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:root[data-theme=dark] body{background:#0B0C0A}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+button,summary,a{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+/* mock-up chrome */
+.top{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;padding:14px 16px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:6px 14px;font-size:.8125rem;font-weight:600;min-height:36px;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+:root[data-theme=dark] .seg{border-color:#6B5A44}
+:root[data-theme=dark] .seg button{color:#EADBC2}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:#EADBC2;color:#2B1D12}
+.sub{display:flex;justify-content:center;padding:0 16px 12px}
+.frame-wrap{display:flex;justify-content:center;padding:0 16px 24px;overflow-x:auto}
+.frame{position:relative;background:var(--bg);border-radius:18px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;height:780px;max-height:calc(100vh - 150px);min-height:600px;flex:none}
+.frame.phone{width:390px;flex-direction:column}
+.frame.tablet{width:1024px}
+
+/* seller rail */
+.rail{display:none;width:200px;flex:none;background:var(--surf2);border-right:1px solid var(--line);padding:16px 10px;flex-direction:column;gap:2px}
+.tablet .rail.on{display:flex}
+.rail .rb{padding:0 6px 14px;font-weight:700;letter-spacing:-.04em}
+.rail .rb i{font-style:normal;color:var(--bobo)}
+.rail a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9375rem}
+.rail a[aria-current=page]{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.rail svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* app column */
+.col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.hdr{flex:none;display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;background:var(--surf);border-bottom:1px solid var(--line)}
+.hdr h1{margin:0;font-size:1.0625rem;font-weight:700;letter-spacing:-.01em;flex:1}
+.tablet .hdr{padding-left:24px}
+.back{border:0;background:transparent;width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tablet .col>.hdr .back.sellerback{display:none}
+.scroll{flex:1;min-height:0;overflow-y:auto}
+.page{max-width:720px;margin:0 auto;padding:4px 16px 28px}
+.tablet .page{padding:8px 24px 32px}
+.tabbar{display:none;flex:none;height:56px;background:var(--surf);border-top:1px solid var(--line)}
+.phone .tabbar.on{display:flex}
+.tabbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.6875rem;color:var(--muted);gap:2px}
+.tabbar div.on{color:var(--accent);font-weight:600}
+.tabbar svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* content */
+h2.sec{margin:20px 0 8px;font-size:1.0625rem;letter-spacing:-.01em}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.muted{color:var(--muted)}
+.small{font-size:.8125rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--accent);font-weight:600;font-size:.9375rem;text-decoration:none}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+.btn.danger{color:var(--err)}
+.btn svg.i{width:18px;height:18px}
+.btn.sm{min-height:36px;padding:0 12px;font-size:.8125rem;border-radius:999px}
+.btn.sm svg.i{width:16px;height:16px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.tag{font-size:.6875rem;font-weight:600;color:var(--accent);background:var(--accent-tint);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.pill{display:inline-block;font-size:.75rem;font-weight:600;border-radius:999px;padding:2px 10px;background:var(--pill-bg);border:1px solid var(--pill-border);color:var(--text)}
+
+/* seller form */
+.field{margin:0 0 12px}
+.field label,.field .lab{display:block;font-size:.8125rem;font-weight:600;margin-bottom:4px}
+.field input,.field textarea{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--edge);border-radius:8px;background:var(--surf);color:var(--text);font:inherit;font-size:.9375rem}
+.field textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{font-weight:400;color:var(--muted)}
+
+/* picture field (seller) */
+.pic{padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:12px}
+.pic .lab{display:block;font-size:.8125rem;font-weight:600;margin-bottom:6px}
+.pic .acts{display:flex;flex-wrap:wrap;gap:8px}
+.pic .hint{margin:6px 0 0;font-size:.8125rem;color:var(--muted)}
+.pic .has{display:flex;gap:14px;align-items:flex-start}
+.pic .has .side{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1}
+.pic .meta{font-size:.8125rem;color:var(--muted)}
+.thumb{position:relative;flex:none;width:96px;height:96px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--surf2)}
+.thumb svg.art{display:block;width:100%;height:100%}
+.thumb.dim svg.art{opacity:.45}
+.bar{height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.msg{display:flex;gap:8px;align-items:flex-start;margin:8px 0 0;padding:8px 10px;border-radius:8px;background:var(--err-tint);border:1px solid var(--err);color:var(--err);font-size:.8125rem;font-weight:600}
+.msg svg.i{width:16px;height:16px;margin-top:2px;flex:none}
+.msg.info{background:var(--pill-bg);border-color:var(--pill-border);color:var(--text);font-weight:400}
+.msg.info b{font-weight:700}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:sp 1s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* seller library rows */
+.lib{padding:2px 16px}
+.lrow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.9375rem}
+.lrow:last-child{border-bottom:0}
+.lrow .lt{width:40px;height:40px;flex:none;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--surf2);display:grid;place-items:center;color:var(--muted)}
+.lrow .lt svg.art{display:block;width:100%;height:100%}
+.lrow .lt.add{border-style:dashed;background:transparent}
+.lrow .lt.add svg.i{width:18px;height:18px}
+.lrow .nm{flex:1;min-width:0}
+.lrow .nm small{display:block;color:var(--muted);font-size:.8125rem}
+.lrow .pr{font-variant-numeric:tabular-nums;font-weight:600}
+.pen{border:0;background:transparent;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.pen svg.i{width:18px;height:18px}
+
+/* customer dishes */
+.cl{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.cr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.cr.so{color:var(--muted)}
+.cr .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cr .tx b.n{font-size:1rem}
+.cr .tx .d{color:var(--muted);font-size:.875rem}
+.cr .tx .m{font-size:.875rem}
+.cr .tx .m b{font-weight:700}
+.cr .left{color:var(--warn);font-size:.75rem;font-weight:700}
+.cr .stall{color:var(--muted);font-size:.75rem}
+.cr .ph{flex:none;width:64px;height:64px;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surf2);display:block;position:relative}
+.cr .ph svg.art{display:block;width:100%;height:100%}
+.cr.so .ph svg.art{opacity:.5}
+.pright .cr .ph{order:2}
+.pright .cr .ctl{order:3}
+.ctl{flex:none;display:flex;align-items:center;gap:8px}
+.round{width:44px;height:44px;border-radius:50%;border:1px solid var(--accent);background:var(--surf);color:var(--accent);display:grid;place-items:center;padding:0}
+.round svg.i{width:20px;height:20px}
+.qty{min-width:1.25rem;text-align:center;font-weight:700}
+.sold{font-size:.8125rem;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:4px}
+.basket{flex:none;display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--surf);border-top:1px solid var(--line)}
+.basket .g{flex:1;font-size:.9375rem}
+.basket .g b{font-weight:700}
+
+/* enlarge viewer */
+.viewer{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:var(--bg);color:var(--text)}
+.viewer .vt{display:flex;align-items:center;gap:10px;padding:8px;font-weight:700}
+.viewer .vt .round{border-color:var(--line);color:var(--text)}
+.viewer .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:8px 16px;overflow:hidden;touch-action:none}
+.viewer .stage .sq{width:min(100%,520px);aspect-ratio:1/1;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surf2);max-height:100%}
+.viewer .stage .sq svg.art{display:block;width:100%;height:100%}
+.viewer .cap{padding:4px 16px 0;text-align:center}
+.viewer .cap b{display:block;font-size:1rem}
+.viewer .cap span{color:var(--muted);font-size:.875rem}
+.viewer .hint{margin:0;padding:12px;text-align:center;color:var(--muted);font-size:.875rem}
+
+.notes{max-width:1024px;margin:0 auto 40px;padding:0 16px}
+.notes div{background:var(--surf);border:1px solid #cfc8b4;border-left:3px solid var(--bobo);border-radius:0 10px 10px 0;padding:14px 18px;font-size:.875rem}
+:root[data-theme=dark] .notes div{border-color:#3A3F36;border-left-color:var(--bobo)}
+.notes h3{margin:0 0 6px;font-size:.9375rem}
+.notes ul{margin:0;padding-left:20px}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+@media print{.top,.sub,.notes{display:none}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="seg" role="group" aria-label="Screen" id="scrseg"></div>
+  <div class="seg" role="group" aria-label="Device"><button type="button" data-dev="phone" aria-pressed="true">Phone</button><button type="button" data-dev="tablet" aria-pressed="false">Tablet</button></div>
+  <div class="seg" role="group" aria-label="Theme"><button type="button" data-th="light" aria-pressed="true">Light</button><button type="button" data-th="dark" aria-pressed="false">Dark</button></div>
+  <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="id" aria-pressed="false">ID</button></div>
+</div>
+<div class="sub"><div class="seg" role="group" id="subseg" aria-label="State"></div></div>
+<div class="frame-wrap"><div class="frame phone" id="frame"></div></div>
+<div class="notes" id="notes"></div>
+
+<script>
+const I={
+ en:{scr:['Seller · Dish editor','Seller · Dish library','Customer · Dishes','Customer · Enlarged'],
+  subs:[
+   ['No picture','Picture set','Uploading','Upload failed','Limit reached'],
+   ['No box if none','Camera placeholder'],
+   ['Picture on the left','Picture on the right'],
+   []],
+  nav:['Home','Orders','Kitchen','Hand over','Sell','Menu','Settings','Help','About'],tabs:['Home','Orders','Sell','Menu','More'],
+  edT:'Edit dish',edSub:'Changes show on the next menu you make.',nameL:'Name',descL:'Description',price:'Price',limit:'Limit',
+  picL:'Picture',optional:'(optional)',take:'Take photo',choose:'Choose photo',hint:'Square, shrunk on your phone before upload.',
+  replace:'Replace',remove:'Remove',cancel:'Cancel',retry:'Try again',meta:'600 × 600 · 96 KB',
+  upl:'Shrinking and uploading…',errUp:"Couldn't upload. Try again.",errLim:'Picture limit reached (300 of 300). Remove a picture from another dish to add this one.',
+  save:'Save dish',
+  libT:'Dish library',libH:'Every dish you have made. Tap the pencil to edit.',newDish:'New dish',lastUsed:'Last used',edit:'Edit',addPic:'Add picture for',
+  dishesT:'Dishes',menuS:'Saturday 24 Oct · pickup or delivery',viewB:'View basket',items:'2 items',
+  left:'3 left',soldOut:'Sold out',stall:'Also at the stall',enlarge:'Enlarge picture of',plus:'Add',minus:'Remove one',
+  close:'Close picture',vHint:'Pinch to zoom. Swipe down or tap ✕ to close.',
+  tabsC:['Menu','My orders','Help'],
+  nH:'Notes for the owner',
+  n:['Use the switches at the top: four screens (seller dish editor with five states, seller dish library, customer dishes, customer enlarged picture), phone or tablet, light or dark, EN or ID. Tap a picture on the customer page to open the viewer.',
+     'The pictures here are drawn placeholders. In the app the seller picks or takes a photo, the phone crops it to a square, shrinks it to 600 × 600 (about 100 KB) and uploads it. Nothing large is ever uploaded.',
+     'No picture means no empty box. The customer row simply has no picture, and the stepper stays in the same place on every row. Left or right placement is the first question below.',
+     'Customer pictures load as you scroll (loading="lazy") and take a fixed 64 × 64 slot, so nothing jumps while they load. Tapping one opens the same full-screen viewer as the menu picture (pinch, swipe down, ✕, Esc), here with the dish name and description under it.',
+     'Seller side: when a dish has a picture the editor shows it with Replace and Remove; the limit message appears only when the kitchen already has 300 pictures. Labels, print and CSV stay text-only; they never show the picture.',
+     'Sample data only: the dishes and the 300 count are made up.'],
+  q:'Open questions: (1) picture on the left or right of the dish row (use the switch on the customer screen); (2) in the seller library, no box for dishes without a picture, or a small camera placeholder (use the switch on the library screen).'},
+ id:{scr:['Penjual · Editor hidangan','Penjual · Pustaka hidangan','Pelanggan · Hidangan','Pelanggan · Foto diperbesar'],
+  subs:[
+   ['Belum ada foto','Foto terpasang','Mengunggah','Gagal unggah','Batas tercapai'],
+   ['Tanpa kotak jika kosong','Kotak kamera'],
+   ['Foto di kiri','Foto di kanan'],
+   []],
+  nav:['Beranda','Pesanan','Dapur','Serah terima','Jual','Menu','Pengaturan','Bantuan','Tentang'],tabs:['Beranda','Pesanan','Jual','Menu','Lainnya'],
+  edT:'Ubah hidangan',edSub:'Perubahan tampil di menu berikutnya yang kamu buat.',nameL:'Nama',descL:'Deskripsi',price:'Harga',limit:'Batas',
+  picL:'Foto',optional:'(opsional)',take:'Ambil foto',choose:'Pilih foto',hint:'Persegi, dikecilkan di ponselmu sebelum diunggah.',
+  replace:'Ganti',remove:'Hapus',cancel:'Batal',retry:'Coba lagi',meta:'600 × 600 · 96 KB',
+  upl:'Mengecilkan dan mengunggah…',errUp:'Gagal mengunggah. Coba lagi.',errLim:'Batas foto tercapai (300 dari 300). Hapus foto dari hidangan lain untuk menambah yang ini.',
+  save:'Simpan hidangan',
+  libT:'Pustaka hidangan',libH:'Semua hidangan yang pernah kamu buat. Ketuk pensil untuk mengubah.',newDish:'Hidangan baru',lastUsed:'Terakhir dipakai',edit:'Ubah',addPic:'Tambah foto untuk',
+  dishesT:'Hidangan',menuS:'Sabtu 24 Okt · ambil sendiri atau antar',viewB:'Lihat keranjang',items:'2 item',
+  left:'Sisa 3',soldOut:'Habis',stall:'Ada juga di lapak',enlarge:'Perbesar foto',plus:'Tambah',minus:'Kurangi satu',
+  close:'Tutup foto',vHint:'Cubit untuk zoom. Geser ke bawah atau ketuk ✕ untuk menutup.',
+  tabsC:['Menu','Pesanan saya','Bantuan'],
+  nH:'Catatan untuk pemilik',
+  n:['Pakai pilihan di atas: empat layar (editor hidangan penjual dengan lima kondisi, pustaka hidangan penjual, hidangan pelanggan, foto diperbesar pelanggan), ponsel atau tablet, terang atau gelap, EN atau ID. Ketuk foto di halaman pelanggan untuk membuka penampil.',
+     'Foto di sini hanya gambar pengganti. Di aplikasi, penjual memilih atau mengambil foto, ponsel memotongnya jadi persegi, mengecilkannya ke 600 × 600 (sekitar 100 KB) lalu mengunggah. Tidak pernah ada yang besar diunggah.',
+     'Tanpa foto berarti tanpa kotak kosong. Baris pelanggan tidak punya foto, dan tombol jumlah tetap di tempat yang sama di setiap baris. Foto di kiri atau kanan adalah pertanyaan pertama di bawah.',
+     'Foto pelanggan dimuat saat digulir (loading="lazy") dan memakai ruang tetap 64 × 64, jadi tidak ada yang bergeser saat dimuat. Mengetuknya membuka penampil layar penuh yang sama dengan foto menu (cubit, geser ke bawah, ✕, Esc), di sini dengan nama dan deskripsi hidangan di bawahnya.',
+     'Sisi penjual: jika hidangan punya foto, editor menampilkannya dengan Ganti dan Hapus; pesan batas hanya muncul saat dapur sudah punya 300 foto. Label, cetak, dan CSV tetap hanya teks; foto tidak pernah ikut.',
+     'Hanya data contoh: hidangan dan angka 300 karangan.'],
+  q:'Pertanyaan terbuka: (1) foto di kiri atau kanan baris hidangan (pakai pilihan di layar pelanggan); (2) di pustaka penjual, tanpa kotak untuk hidangan tanpa foto, atau kotak kamera kecil (pakai pilihan di layar pustaka).'}
+};
+const DISH={
+ en:[
+  {k:'rice',n:'Nasi kuning set',d:'Rice, chicken, sambal',p:'$14',sz:'1 serving',used:'10 Oct',left:1,qty:2},
+  {k:'lemper',n:'Lemper ayam (4)',d:'Sticky rice rolls',p:'$10',sz:'4 pieces',used:'10 Oct',qty:0},
+  {k:null,n:'Onde-onde (6)',d:'Sweet mung bean balls',p:'$8',sz:'6 pieces',used:'3 Oct',qty:0,stall:1},
+  {k:'soto',n:'Soto ayam',d:'Chicken soup, yellow broth',p:'$12',sz:'1 bowl',used:'26 Sep',so:1},
+  {k:null,n:'Kue lapis',d:'Steamed layer cake',p:'$9',sz:'1 slice box',used:'–',qty:0},
+  {k:'pisang',n:'Pisang goreng (5)',d:'Crispy fried banana',p:'$7',sz:'5 pieces',used:'3 Oct',qty:0}],
+ id:[
+  {k:'rice',n:'Paket nasi kuning',d:'Nasi, ayam, sambal',p:'$14',sz:'1 porsi',used:'10 Okt',left:1,qty:2},
+  {k:'lemper',n:'Lemper ayam (4)',d:'Lemper ketan isi ayam',p:'$10',sz:'4 buah',used:'10 Okt',qty:0},
+  {k:null,n:'Onde-onde (6)',d:'Bola kacang hijau manis',p:'$8',sz:'6 buah',used:'3 Okt',qty:0,stall:1},
+  {k:'soto',n:'Soto ayam',d:'Soto ayam kuah kuning',p:'$12',sz:'1 mangkuk',used:'26 Sep',so:1},
+  {k:null,n:'Kue lapis',d:'Kue lapis kukus',p:'$9',sz:'1 kotak',used:'–',qty:0},
+  {k:'pisang',n:'Pisang goreng (5)',d:'Pisang goreng renyah',p:'$7',sz:'5 buah',used:'3 Okt',qty:0}]
+};
+const P={
+ back:'<path d="M15 5l-7 7 7 7"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+ img:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/>',
+ swap:'<path d="M4 8h13l-3-3M20 16H7l3 3"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+ pen:'<path d="M4 20l1-4L16 5l3 3L8 19z"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',
+ warn:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>',ban:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>'
+};
+const ic=k=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+P[k]+'</svg>';
+const NAVI=['<path d="M3 11l9-7 9 7v9H3z"/>','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/>','<path d="M4 11h16v8H4zM8 11V7a4 4 0 018 0v4"/>','<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/>','<path d="M3 6h18l-2 9H5zM8 20h.01M16 20h.01"/>','<path d="M5 4h14v16H5zM9 8h6M9 12h6"/>','<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>','<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"/>','<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>'];
+const nic=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+NAVI[n]+'</svg>';
+
+// drawn placeholder "photos" (square, 100x100)
+const ART={
+ rice:'<rect width="100" height="100" fill="#E9D2A0"/><circle cx="50" cy="52" r="40" fill="#FBF7EC"/><circle cx="50" cy="52" r="32" fill="#F4F0E4"/><ellipse cx="46" cy="52" rx="22" ry="17" fill="#EDB92E"/><ellipse cx="40" cy="46" rx="10" ry="6" fill="#F5CE59"/><g fill="#9C5A2A"><ellipse cx="64" cy="62" rx="9" ry="6" transform="rotate(-25 64 62)"/><ellipse cx="58" cy="70" rx="7" ry="5" transform="rotate(20 58 70)"/></g><circle cx="72" cy="42" r="5" fill="#B83A25"/><g fill="#4F8B3A"><circle cx="33" cy="62" r="3"/><circle cx="39" cy="67" r="2.5"/></g>',
+ lemper:'<rect width="100" height="100" fill="#CFE0BD"/><g transform="rotate(-18 50 50)"><rect x="12" y="30" width="76" height="17" rx="8" fill="#4F8B3A"/><rect x="12" y="52" width="76" height="17" rx="8" fill="#5B9A44"/></g><g fill="#fff"><rect x="10" y="32" width="9" height="13" rx="4" transform="rotate(-18 14 38)"/><rect x="82" y="55" width="9" height="13" rx="4" transform="rotate(-18 86 61)"/></g><circle cx="78" cy="22" r="6" fill="#C7452B"/>',
+ soto:'<rect width="100" height="100" fill="#E7D3AB"/><ellipse cx="50" cy="54" rx="40" ry="38" fill="#F9F5EA"/><ellipse cx="50" cy="52" rx="33" ry="31" fill="#EFC53C"/><ellipse cx="42" cy="44" rx="14" ry="8" fill="#F6D868"/><g fill="#fff"><ellipse cx="60" cy="58" rx="8" ry="6"/><ellipse cx="38" cy="62" rx="6" ry="5"/></g><g fill="#4F8B3A"><circle cx="54" cy="42" r="3"/><circle cx="64" cy="48" r="2.5"/><circle cx="46" cy="66" r="2.5"/></g><circle cx="58" cy="58" r="3" fill="#E9A92C"/>',
+ pisang:'<rect width="100" height="100" fill="#EBD7AA"/><circle cx="50" cy="50" r="40" fill="#FBF7EC"/><g fill="#D99A2B"><rect x="22" y="28" width="52" height="15" rx="7" transform="rotate(22 48 36)"/><rect x="26" y="46" width="52" height="15" rx="7" transform="rotate(-12 52 54)"/><rect x="28" y="62" width="44" height="14" rx="7" transform="rotate(8 50 69)"/></g><g fill="#F0BC57"><rect x="30" y="31" width="30" height="5" rx="2.5" transform="rotate(22 45 33)"/><rect x="34" y="49" width="30" height="5" rx="2.5" transform="rotate(-12 49 51)"/></g>'
+};
+const art=(k)=>'<svg class="art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+ART[k]+'</svg>';
+
+let scr=0,dev='phone',lang='en',sub=[0,0,0,0],viewerFor=null,lastTrig=null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function hdr(title,back,cls){
+  return '<div class="hdr">'+(back?'<button class="back '+(cls||'')+'" type="button" aria-label="Back">'+ic('back')+'</button>':'')+'<h1>'+title+'</h1></div>';
+}
+
+function pictureField(t,st){
+  const lab='<span class="lab" id="piclab">'+t.picL+' <span class="opt">'+t.optional+'</span></span>';
+  if(st===0){
+    return '<div class="pic" role="group" aria-labelledby="piclab">'+lab+'<div class="acts"><button type="button" class="btn">'+ic('cam')+t.take+'</button><button type="button" class="btn">'+ic('img')+t.choose+'</button></div><p class="hint">'+t.hint+'</p></div>';
+  }
+  if(st===1){
+    return '<div class="pic" role="group" aria-labelledby="piclab">'+lab+'<div class="has"><div class="thumb">'+art('rice')+'</div><div class="side"><span class="meta mono">'+t.meta+'</span><div class="acts"><button type="button" class="btn sm">'+ic('swap')+t.replace+'</button><button type="button" class="btn sm danger">'+ic('trash')+t.remove+'</button></div></div></div></div>';
+  }
+  if(st===2){
+    return '<div class="pic" role="group" aria-labelledby="piclab">'+lab+'<div class="has"><div class="thumb dim">'+art('rice')+'</div><div class="side"><div style="display:flex;gap:8px;align-items:center"><span class="spin" aria-hidden="true"></span><span class="small" role="status">'+t.upl+'</span></div>'+
+      '<div class="bar" role="progressbar" aria-label="'+esc(t.upl)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60"><i style="width:60%"></i></div><div class="acts"><button type="button" class="btn sm">'+t.cancel+'</button></div></div></div></div>';
+  }
+  if(st===3){
+    return '<div class="pic" role="group" aria-labelledby="piclab">'+lab+'<div class="acts"><button type="button" class="btn">'+ic('cam')+t.take+'</button><button type="button" class="btn">'+ic('img')+t.choose+'</button></div>'+
+      '<div class="msg" role="alert">'+ic('warn')+'<span>'+t.errUp+' <button type="button" class="btn sm" style="margin-left:6px;min-height:32px;color:var(--err);border-color:var(--err);background:transparent">'+t.retry+'</button></span></div></div>';
+  }
+  return '<div class="pic" role="group" aria-labelledby="piclab">'+lab+'<div class="acts"><button type="button" class="btn" disabled aria-disabled="true">'+ic('cam')+t.take+'</button><button type="button" class="btn" disabled aria-disabled="true">'+ic('img')+t.choose+'</button></div>'+
+    '<div class="msg info" role="status">'+ic('warn')+'<span><b>300 / 300.</b> '+t.errLim+'</span></div></div>';
+}
+
+function editor(t){
+  const d=DISH[lang][0];
+  const body='<h2 class="sec" style="margin-top:12px">'+t.edT+'</h2><p class="muted small" style="margin:-4px 0 10px">'+t.edSub+'</p><div class="card">'+
+   '<div class="field"><label for="e1">'+t.nameL+'</label><input id="e1" value="'+esc(d.n)+'"></div>'+
+   '<div class="field"><label for="e2">'+t.descL+'</label><input id="e2" value="'+esc(d.d)+'"></div>'+
+   pictureField(t,sub[0])+
+   '<div class="row2"><div class="field"><label for="e3">'+t.price+'</label><input id="e3" inputmode="decimal" value="14.00"></div><div class="field"><label for="e4">'+t.limit+'</label><input id="e4" inputmode="numeric" value="" placeholder="–"></div></div>'+
+   '<button type="button" class="btn pri">'+t.save+'</button></div>';
+  return [hdr(t.edT,true,'sellerback'),'<div class="scroll"><div class="page">'+body+'</div></div>',''];
+}
+
+function library(t){
+  const camBox=sub[1]===1;
+  const rows=DISH[lang].map((d,i)=>{
+    const th=d.k?'<span class="lt">'+art(d.k)+'</span>':(camBox?'<button type="button" class="lt add" aria-label="'+esc(t.addPic+' '+d.n)+'">'+ic('cam')+'</button>':'');
+    return '<div class="lrow">'+th+'<span class="nm">'+esc(d.n)+'<small>'+esc(d.sz)+' · '+t.lastUsed+' '+esc(d.used)+'</small></span><span class="pr">'+d.p+'</span><button type="button" class="pen" aria-label="'+esc(t.edit+' '+d.n)+'">'+ic('pen')+'</button></div>';
+  }).join('');
+  const body='<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:12px 0 10px"><span class="muted small" style="flex:1 1 200px">'+t.libH+'</span><button type="button" class="btn pri">'+ic('plus')+t.newDish+'</button></div><div class="card lib">'+rows+'</div>';
+  return [hdr(t.libT,true,'sellerback'),'<div class="scroll"><div class="page">'+body+'</div></div>',''];
+}
+
+function custRow(t,d,i){
+  const ph=d.k?'<button type="button" class="ph" data-view="'+i+'" aria-haspopup="dialog" aria-label="'+esc(t.enlarge+' '+d.n)+'">'+art(d.k)+'</button>':'';
+  let ctl;
+  if(d.so) ctl='<span class="sold">'+ic('ban').replace('class="i"','class="i" style="width:16px;height:16px"')+t.soldOut+'</span>';
+  else ctl='<div class="ctl" role="group" aria-label="'+esc(d.n)+'">'+(d.qty>0?'<button type="button" class="round" aria-label="'+esc(t.minus+': '+d.n)+'">'+ic('minus')+'</button><output class="qty">'+d.qty+'</output>':'')+'<button type="button" class="round" aria-label="'+esc(t.plus+': '+d.n)+'">'+ic('plus')+'</button></div>';
+  return '<li class="cr'+(d.so?' so':'')+'">'+ph+'<div class="tx"><b class="n">'+esc(d.n)+'</b><span class="d">'+esc(d.d)+'</span><span class="m">'+esc(d.sz)+' · <b>'+d.p+'</b></span>'+(d.stall?'<span class="stall">'+t.stall+'</span>':'')+(d.left&&!d.so?'<span class="left">'+t.left+'</span>':'')+'</div>'+ctl+'</li>';
+}
+function custDishes(t){
+  const right=sub[2]===1;
+  const body='<div class="'+(right?'pright':'')+'"><div class="muted small" style="padding:10px 16px 8px">'+t.menuS+'</div><ul class="cl">'+DISH[lang].map((d,i)=>custRow(t,d,i)).join('')+'</ul></div>';
+  const bk='<div class="basket"><span class="g"><b>'+t.items+'</b> · $28</span><button type="button" class="btn pri">'+t.viewB+'</button></div>';
+  let v='';
+  if(viewerFor!==null){
+    const d=DISH[lang][viewerFor];
+    v='<div class="viewer" role="dialog" aria-modal="true" aria-label="'+esc(d.n)+'"><div class="vt"><button type="button" class="round" id="vclose" aria-label="'+esc(t.close)+'">'+ic('x')+'</button><span>'+esc(d.n)+'</span></div>'+
+      '<div class="stage"><div class="sq">'+art(d.k)+'</div></div><div class="cap"><b>'+esc(d.n)+' · '+d.p+'</b><span>'+esc(d.d)+'</span></div><p class="hint">'+t.vHint+'</p></div>';
+  }
+  return [hdr(t.dishesT,true),'<div class="scroll">'+body+'</div>'+bk,v];
+}
+
+function render(){
+  const t=I[lang];
+  document.documentElement.lang=lang;
+  const isSeller=scr<=1;
+  if(scr===3&&viewerFor===null)viewerFor=0;
+  if(scr!==2&&scr!==3)viewerFor=null;
+  const sIdx=scr===3?2:scr;
+  const [h,body,over]=[editor,library,custDishes][sIdx](t);
+  const rail='<nav class="rail'+(isSeller?' on':'')+'" aria-label="Seller"><div class="rb">Shaggy<i>Bobo</i></div>'+t.nav.map((n,i)=>'<a href="#" '+(i===5?'aria-current="page"':'')+'>'+nic(i)+n+'</a>').join('')+'</nav>';
+  const tabs=isSeller?'<nav class="tabbar on" aria-label="Tabs">'+t.tabs.map((x,i)=>'<div class="'+(i===3?'on':'')+'">'+nic([0,1,4,5,6][i])+x+'</div>').join('')+'</nav>':'';
+  const f=$('#frame');f.className='frame '+dev;
+  f.innerHTML=rail+'<div class="col">'+h+body+tabs+'</div>'+over;
+  $('#scrseg').innerHTML=t.scr.map((s,i)=>'<button type="button" data-scr="'+i+'" aria-pressed="'+(i===scr)+'">'+s+'</button>').join('');
+  const opts=t.subs[sIdx>=0&&scr!==3?scr:3];
+  const ss=$('#subseg');ss.parentElement.style.display=opts.length?'flex':'none';
+  const si=scr===3?3:scr;
+  ss.innerHTML=opts.map((s,i)=>'<button type="button" data-sub="'+i+'" aria-pressed="'+(i===sub[si])+'">'+s+'</button>').join('');
+  $('#notes').innerHTML='<div><h3>'+t.nH+'</h3><ul>'+t.n.map(x=>'<li>'+x+'</li>').join('')+'</ul><p style="margin:10px 0 0"><b>'+t.q+'</b></p></div>';
+  document.querySelectorAll('[data-dev]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dev===dev));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
+  if(viewerFor!==null){const c=$('#vclose');if(c)c.focus({preventScroll:true});}
+}
+
+function closeViewer(){
+  const i=viewerFor;viewerFor=null;
+  if(scr===3)scr=2;
+  render();
+  const b=document.querySelector('[data-view="'+i+'"]');if(b)b.focus({preventScroll:true});
+}
+
+document.addEventListener('click',e=>{
+  const g=s=>e.target.closest(s);
+  let b;
+  if(b=g('[data-scr]')){scr=+b.dataset.scr;viewerFor=scr===3?0:null;render();return}
+  if(b=g('[data-dev]')){dev=b.dataset.dev;render();return}
+  if(b=g('[data-lang]')){lang=b.dataset.lang;render();return}
+  if(b=g('[data-th]')){setTheme(b.dataset.th);return}
+  if(b=g('[data-sub]')){sub[scr]=+b.dataset.sub;render();return}
+  if(b=g('[data-view]')){viewerFor=+b.dataset.view;render();return}
+  if(g('#vclose')){closeViewer();return}
+  if(g('.rail a,.tabbar'))e.preventDefault();
+});
+function setTheme(m){document.documentElement.dataset.theme=m;document.querySelectorAll('[data-th]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.th===m))}
+document.addEventListener('keydown',e=>{
+  if(viewerFor===null)return;
+  if(e.key==='Escape')closeViewer();
+  if(e.key==='Tab'){e.preventDefault();const c=$('#vclose');if(c)c.focus()}
+});
+const q=new URLSearchParams(location.search);
+setTheme(q.get('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+if(q.get('lang')==='id')lang='id';
+if(q.get('dev')==='tablet')dev='tablet';
+if(q.get('scr'))scr=Math.min(3,Math.max(0,+q.get('scr')||0));
+if(q.get('sub'))sub[scr]=Math.max(0,+q.get('sub')||0);
+render();
+</script>
+</body>
+</html>

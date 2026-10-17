@@ -109,3 +109,25 @@ describe('checkImageUpload', () => {
     });
   });
 });
+
+describe('dishPicture (plan 067)', () => {
+  it('is a 600 x 600 square with a 200 KB cap', () => {
+    expect(slotSpec('dishPicture')).toEqual({ width: 600, height: 600, ratio: 1, maxKB: 200 });
+  });
+
+  it('accepts a square picture up to 200 KB and refuses more, or a wrong shape', () => {
+    const limit = 200 * 1024;
+    const header = 24;
+    expect(checkImageUpload('dishPicture', fakePng(600, 600, limit - header))).toMatchObject({
+      ok: true,
+    });
+    expect(checkImageUpload('dishPicture', fakePng(600, 600, limit - header + 1))).toEqual({
+      ok: false,
+      error: 'image_too_big',
+    });
+    expect(checkImageUpload('dishPicture', fakePng(900, 600))).toEqual({
+      ok: false,
+      error: 'image_ratio',
+    });
+  });
+});

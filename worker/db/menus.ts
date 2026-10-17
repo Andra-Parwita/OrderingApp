@@ -7,6 +7,7 @@ import { DEFAULT_ZONE } from '../../shared/zone';
 import type { InboxEntry, PickupPoint, SellerOrder } from '../../shared/domain';
 import {
   MAX_DISHES,
+  MAX_DISH_PICTURES,
   MAX_MENU_ITEMS,
   MAX_PICKUP_PLACES,
   MAX_SETS,
@@ -80,6 +81,8 @@ export type MenuOps = Pick<
   | 'updateDish'
   | 'importDishes'
   | 'deleteDish'
+  | 'setDishPicture'
+  | 'removeDishPicture'
   | 'listDishSets'
   | 'createDishSet'
   | 'useDishSet'
@@ -1018,6 +1021,59 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
         )
         .run();
       return ok(next);
+    },
+
+    /** Plan 067: the dish's picture. The copies of the dish on the menu take it too. */
+    async setDishPicture(id, dataUrl, ref) {
+      const row = await dishRow(id);
+      if (!row) return fail('not_found', 'Dish not found');
+      const check = checkImageUpload('dishPicture', dataUrl);
+      if (!check.ok) {
+        const message = {
+          image_type: 'Use a jpeg, png or webp image',
+          image_too_big: 'The picture is over 200 KB',
+          image_ratio: 'The picture must be square',
+        }[check.error];
+        return fail(check.error, message);
+      }
+      const others = await db.first<{ n: number }>(
+        'SELECT COUNT(*) AS n FROM dishes WHERE seller_id = ? AND picture_ref IS NOT NULL AND id <> ?',
+        sid,
+        id,
+      );
+      if ((others?.n ?? 0) >= MAX_DISH_PICTURES) {
+        return fail('dish_picture_limit', `At most ${String(MAX_DISH_PICTURES)} dish pictures`);
+      }
+      const next = ref ?? (dataUrl as string);
+      await db.batch([
+        db.stmt('UPDATE dishes SET picture_ref = ? WHERE seller_id = ? AND id = ?', next, sid, id),
+        db.stmt(
+          'UPDATE menu_items SET picture_ref = ? WHERE seller_id = ? AND dish_id = ?',
+          next,
+          sid,
+          id,
+        ),
+      ]);
+      return ok({
+        dish: { ...dishOf(row), pictureRef: next },
+        before: row.picture_ref ?? undefined,
+      });
+    },
+
+    async removeDishPicture(id) {
+      const row = await dishRow(id);
+      if (!row) return fail('not_found', 'Dish not found');
+      await db.batch([
+        db.stmt('UPDATE dishes SET picture_ref = NULL WHERE seller_id = ? AND id = ?', sid, id),
+        db.stmt(
+          'UPDATE menu_items SET picture_ref = NULL WHERE seller_id = ? AND dish_id = ?',
+          sid,
+          id,
+        ),
+      ]);
+      const dish = dishOf(row);
+      delete dish.pictureRef;
+      return ok({ dish, before: row.picture_ref ?? undefined });
     },
 
     /** Deleting a dish never touches a menu or an order; a live menu that uses it is only flagged (D-062). */

@@ -1,4 +1,5 @@
 import { RATIO_TOLERANCE, slotSpec, type UploadSlot } from '../../shared/imageSlots';
+import { DISH_PICTURE_TARGET_KB } from '../../shared/limits';
 
 export type ResizeResult = {
   /** Exactly the slot's size, already small enough to upload. */
@@ -52,7 +53,8 @@ function hasTransparency(context: CanvasRenderingContext2D, width: number, heigh
 /**
  * Draws the picture at the slot's exact size and encodes it under the size limit: JPEG with the
  * quality stepped down, or PNG for a small icon that has see-through parts. A picture whose shape
- * is more than 5% off is fitted whole inside (never cropped), on `background`.
+ * is more than 5% off is fitted whole inside (never cropped), on `background`. A dish picture
+ * (plan 067) is the exception: it is centre-cropped to a square and aimed at about 100 KB.
  */
 export const resizeImage: ResizeFn = async (file, slot, background) => {
   if (!file.type.startsWith('image/')) throw new ImageReadError('image_type');
@@ -71,8 +73,24 @@ export const resizeImage: ResizeFn = async (file, slot, background) => {
   const offRatio = Math.abs(sw / sh - spec.ratio) / spec.ratio > RATIO_TOLERANCE;
   const scale = Math.min(spec.width / sw, spec.height / sh);
   const fitted = { w: sw * scale, h: sh * scale };
+  const cropSquare = slot === 'dishPicture';
   const draw = (fill: boolean) => {
     context.clearRect(0, 0, spec.width, spec.height);
+    if (cropSquare) {
+      const side = Math.min(sw, sh);
+      context.drawImage(
+        img,
+        (sw - side) / 2,
+        (sh - side) / 2,
+        side,
+        side,
+        0,
+        0,
+        spec.width,
+        spec.height,
+      );
+      return;
+    }
     if (!offRatio) {
       if (fill) {
         context.fillStyle = background;
@@ -105,9 +123,10 @@ export const resizeImage: ResizeFn = async (file, slot, background) => {
   }
 
   draw(true);
+  const aimKB = cropSquare ? DISH_PICTURE_TARGET_KB : spec.maxKB;
   for (const quality of QUALITIES) {
     const jpeg = canvas.toDataURL('image/jpeg', quality);
-    if (bytesOf(jpeg) <= spec.maxKB * 1024) {
+    if (bytesOf(jpeg) <= aimKB * 1024) {
       return { dataUrl: jpeg, offRatio, sourceWidth: sw, sourceHeight: sh };
     }
   }

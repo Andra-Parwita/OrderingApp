@@ -16,6 +16,7 @@ import { DRAFT_NS, DraftNotice, draftKey, fingerprint, useDraft } from '../../co
 import { TranslateButton } from '../../components/translate';
 import { Button, SlideOverEditor, TextArea, TextField, WarningDialog } from '../../ui';
 import { FieldFrame, fieldControlStyle, useFieldIds } from '../../ui/Field';
+import { DishPictureField } from './DishPictureField';
 import { MENU_NS } from './i18n/register';
 import {
   EMPTY_DRAFT,
@@ -257,6 +258,8 @@ export function DishEditor({
   };
 
   const libraryDishId = item?.dishId ?? dish?.id;
+  // Plan 067: the picture belongs to the library dish (a menu copy follows it).
+  const pictureDish = dish ?? data.dishes.find((d) => d.id === item?.dishId);
   const onThisMenu = libraryDishId
     ? view.dishes.some((d) => d.dishId === libraryDishId)
     : target.kind === 'menu';
@@ -400,6 +403,12 @@ export function DishEditor({
               </Pair>
             </>
           )}
+          {isNew || pictureDish ? (
+            <DishPictureField
+              dish={pictureDish}
+              pictureCount={data.dishes.filter((d) => d.pictureRef !== undefined).length}
+            />
+          ) : null}
           <Cols>
             <TextField
               label={t('dish.price')}

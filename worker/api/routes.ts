@@ -814,7 +814,11 @@ async function chefOwnDishMay(
 ): Promise<boolean> {
   if (!chefId) return false;
   const method = request.method;
-  const dishRoute = a === 'dishes' && (method === 'POST' ? !b : method === 'PATCH' && !!b && !c);
+  // Plan 067: and the dish picture (PUT / DELETE .../picture), for their own dish only.
+  const pictureRoute =
+    a === 'dishes' && !!b && c === 'picture' && (method === 'PUT' || method === 'DELETE');
+  const dishRoute =
+    pictureRoute || (a === 'dishes' && (method === 'POST' ? !b : method === 'PATCH' && !!b && !c));
   const itemRoute = a === 'menu' && b === 'items' && !!c && method === 'PATCH';
   // Plan 050: the dish CSV import; the store limits a chef to their own dishes.
   if (a === 'dishes' && b === 'import' && !c && method === 'POST') return true;
@@ -1210,9 +1214,43 @@ async function handleSellerRoutes(
       if (!result.ok) return error(result.error, result.message);
       return Response.json({ dish: result.value } satisfies DishResponse);
     }
+    // Plan 067: the dish's picture. A chef may change it only on their own dish (chefOwnDishMay).
+    if (b && c === 'picture' && method === 'PUT') {
+      const input = parseUploadImageRequest(await readJson(request));
+      if (!input) return bad();
+      const stored = context.images
+        ? await putUploadedImage(context.images, sellerId, 'dishPicture', input.dataUrl)
+        : null;
+      const result = await store.setDishPicture(b, input.dataUrl, stored?.ref);
+      if (!result.ok) {
+        if (stored && context.images) {
+          await dropUnusedImageRefs(context.images, store, [stored.ref], sellerId);
+        }
+        return error(result.error, result.message);
+      }
+      if (context.images) {
+        await dropUnusedImageRefs(context.images, store, [result.value.before], sellerId);
+      }
+      await menuChanged();
+      return Response.json({ dish: result.value.dish } satisfies DishResponse);
+    }
+    if (b && c === 'picture' && method === 'DELETE') {
+      const result = await store.removeDishPicture(b);
+      if (!result.ok) return error(result.error, result.message);
+      if (context.images) {
+        await dropUnusedImageRefs(context.images, store, [result.value.before], sellerId);
+      }
+      await menuChanged();
+      return Response.json({ dish: result.value.dish } satisfies DishResponse);
+    }
     if (b && !c && method === 'DELETE') {
+      const pictureRef = context.images
+        ? (await store.listDishes()).find((dish) => dish.id === b)?.pictureRef
+        : undefined;
       const result = await store.deleteDish(b);
       if (!result.ok) return error(result.error, result.message);
+      // The file goes unless a menu copy of the dish still shows it.
+      if (context.images) await dropUnusedImageRefs(context.images, store, [pictureRef], sellerId);
       if (result.value.usedOnLiveMenu) await menuChanged();
       return Response.json({
         ok: true,

@@ -1265,6 +1265,13 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         delete copy.menu.pictureRef;
         droppedImages += 1;
       }
+      // Plan 067: dish pictures too (the library's and the menu copies').
+      for (const entry of [...copy.items, ...(copy.dishes ?? [])]) {
+        if (entry.pictureRef !== undefined && !isOwnImageRef(entry.pictureRef, sid)) {
+          delete entry.pictureRef;
+          droppedImages += 1;
+        }
+      }
       const at = nowIso();
       const chefs = copy.chefs.map((chef) => ({ ...chef, sellerId: sid }));
       const known = new Set(chefs.map((chef) => chef.id));

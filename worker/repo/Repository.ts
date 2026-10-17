@@ -179,6 +179,16 @@ export type SellerRepository = {
     input: ImportDishesRequest,
     asChefId?: string,
   ): Promise<StoreResult<ImportDishesResponse>>;
+  /**
+   * Plan 067: the dish's one picture (square, `dishPicture`); `before` is the ref it replaced, for the
+   * caller to clean up. The menu copies of the dish follow. At most 300 per kitchen (`dish_picture_limit`).
+   */
+  setDishPicture(
+    id: string,
+    dataUrl: unknown,
+    ref?: string,
+  ): Promise<StoreResult<{ dish: Dish; before: string | undefined }>>;
+  removeDishPicture(id: string): Promise<StoreResult<{ dish: Dish; before: string | undefined }>>;
   /** Always allowed (D-062); `usedOnLiveMenu` is the warning flag. */
   deleteDish(id: string): Promise<StoreResult<{ usedOnLiveMenu: boolean }>>;
 

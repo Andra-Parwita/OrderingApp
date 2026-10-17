@@ -120,7 +120,8 @@ export async function deleteImageRefs(
 
 /**
  * Deletes the R2 objects behind these refs unless something still shows them: the kitchen's
- * slots, a saved set (sets keep their own copy of the refs), the menu picture or a past menu's.
+ * slots, a saved set (sets keep their own copy of the refs), the menu picture, a past menu's, or
+ * a dish or menu item picture.
  */
 export async function dropUnusedImageRefs(
   bucket: ImageBucket,
@@ -137,6 +138,11 @@ export async function dropUnusedImageRefs(
     }
   }
   if (backup.menu?.pictureRef !== undefined) inUse.add(backup.menu.pictureRef);
+  // Plan 067: a dish's picture, and the copy of it on a menu item (a deleted dish's file stays
+  // while a live menu still shows it).
+  for (const entry of [...(backup.dishes ?? []), ...backup.items]) {
+    if (entry.pictureRef !== undefined) inUse.add(entry.pictureRef);
+  }
   // Plan 064: past menus keep their picture too.
   for (const week of backup.pastWeeks)
     if (week.pictureUrl !== undefined) inUse.add(week.pictureUrl);

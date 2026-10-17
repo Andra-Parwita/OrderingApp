@@ -321,8 +321,11 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
           text: 'Choose your CSV file, look at the preview, fix any lines with a problem, then tap **Import**.',
           pic: 'the import preview',
         },
+        {
+          text: 'Want customers to see the dish? Save it, open it again, and under **Picture** tap **Take photo** or **Choose photo**. Your phone crops it square and shrinks it. Tap **Replace** or **Remove** to change it. You can add up to 300 pictures.',
+        },
       ],
-      note: 'Lines with a problem are skipped. The others are imported.',
+      note: 'Lines with a problem are skipped. The others are imported. The import file never carries pictures.',
     },
     id: {
       n: 'Tambah hidangan',
@@ -349,8 +352,11 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
           text: 'Pilih file CSV Anda, lihat pratinjau, perbaiki baris yang bermasalah, lalu ketuk **Impor**.',
           pic: 'pratinjau impor',
         },
+        {
+          text: 'Ingin pelanggan melihat hidangannya? Simpan, buka lagi, lalu di bawah **Foto** ketuk **Ambil foto** atau **Pilih foto**. Ponsel Anda memotongnya jadi persegi dan mengecilkannya. Ketuk **Ganti** atau **Hapus** untuk mengubahnya. Anda bisa menambah sampai 300 foto.',
+        },
       ],
-      note: 'Baris yang bermasalah dilewati. Yang lain tetap diimpor.',
+      note: 'Baris yang bermasalah dilewati. Yang lain tetap diimpor. File impor tidak pernah membawa foto.',
     },
   },
   // 6

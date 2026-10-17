@@ -168,6 +168,8 @@ function parseMenuItemView(input: unknown): MenuItemView | null {
   if (limit !== undefined && !isInt(limit, 1, 10_000)) return null;
   if (remaining !== null && !isInt(remaining, 0, 10_000)) return null;
   if (typeof soldOut !== 'boolean') return null;
+  const { pictureRef } = input;
+  if (pictureRef !== undefined && typeof pictureRef !== 'string') return null;
   return {
     id,
     name,
@@ -175,6 +177,7 @@ function parseMenuItemView(input: unknown): MenuItemView | null {
     size,
     priceCents,
     ...(limit !== undefined ? { limit } : {}),
+    ...(pictureRef !== undefined ? { pictureRef } : {}),
     remaining,
     soldOut,
     ...(preorder !== undefined ? { preorder } : {}),

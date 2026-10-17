@@ -200,6 +200,8 @@ export type Dish = {
   /** Plan 029: can be pre-ordered (absent = yes) and the day stock (absent = not sold on the day). */
   preorder?: boolean;
   dayStock?: number;
+  /** Plan 067: the dish's picture (R2 path, or a data URL without a bucket); absent = none. */
+  pictureRef?: string;
   /** When a menu last took a copy of it. */
   lastUsedAt?: string;
 };
@@ -237,6 +239,8 @@ export function parseDish(input: unknown): Dish | null {
   const { preorder, dayStock } = input;
   if (preorder !== undefined && typeof preorder !== 'boolean') return null;
   if (dayStock !== undefined && !isInt(dayStock, 0, DAY_STOCK_MAX)) return null;
+  const { pictureRef } = input;
+  if (pictureRef !== undefined && typeof pictureRef !== 'string') return null;
   return {
     id,
     name,
@@ -247,6 +251,7 @@ export function parseDish(input: unknown): Dish | null {
     ...(chefId !== undefined ? { chefId } : {}),
     ...(preorder !== undefined ? { preorder } : {}),
     ...(dayStock !== undefined ? { dayStock } : {}),
+    ...(pictureRef !== undefined ? { pictureRef } : {}),
     ...(lastUsedAt !== undefined ? { lastUsedAt } : {}),
   };
 }

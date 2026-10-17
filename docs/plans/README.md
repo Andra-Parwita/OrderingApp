@@ -97,7 +97,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 064 | ✅ | [Keep the pictures of the last 10 menus](064-past-menu-pictures.md) | approved (2026-10-12); server now, client after 061 |
 | 065 | ✅ | [My orders: remember the kitchen, kitchen pill on cards](065-my-orders-kitchen.md) | approved (2026-10-12) |
 | 066 | ✅ | [Up to 50 dishes on a menu, labels and print split properly](066-fifty-dishes.md) | approved (2026-10-12) |
-| 067 | ⬜ | [A picture for each dish, shown to customers](067-dish-pictures.md) | draft; after the next deploy |
+| 067 | ✅ | [A picture for each dish, shown to customers](067-dish-pictures.md) | built and gated 16–17 Oct (D-103); in Release 1.0.36 (owner: "B") |
 | 068 | ✅ | [Two kitchens on one phone: safe home-screen apps](068-two-kitchen-icons.md) | approved (2026-10-13); next deploy |
 | 069 | ✅ | [Per-chef portions and income](069-per-chef-income.md) | approved (2026-10-13) |
 | 070 | ✅ | [A branded HTML docs site, kept current](070-docs-site.md) | approved (2026-10-13); building |

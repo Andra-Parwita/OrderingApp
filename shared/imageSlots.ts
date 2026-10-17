@@ -1,5 +1,5 @@
 import type { ApiErrorCode } from './apiError';
-import { IMAGE_MAX_KB } from './limits';
+import { DISH_PICTURE_MAX_KB, IMAGE_MAX_KB } from './limits';
 
 /** The five picture slots of a seller (D-038, D-040). */
 export const IMAGE_SLOTS = [
@@ -13,7 +13,7 @@ export const IMAGE_SLOTS = [
 export type ImageSlot = (typeof IMAGE_SLOTS)[number];
 
 /** The per-menu picture (3:2, D-060) is uploaded like a slot but kept on the menu, not on the kitchen. */
-export type UploadSlot = ImageSlot | 'menuPicture';
+export type UploadSlot = ImageSlot | 'menuPicture' | 'dishPicture';
 
 export type SlotSpec = {
   width: number;
@@ -32,12 +32,19 @@ const SIZES: Record<UploadSlot, { width: number; height: number }> = {
   railIcon: { width: 512, height: 512 },
   bannerBackgroundImage: { width: 1280, height: 256 },
   menuPicture: { width: 1200, height: 800 },
+  // Plan 067: one square picture per dish, shrunk on the device to about 100 KB.
+  dishPicture: { width: 600, height: 600 },
 };
 
 /** Target size of a slot, so the screen can resize before uploading. */
 export function slotSpec(slot: UploadSlot): SlotSpec {
   const { width, height } = SIZES[slot];
-  return { width, height, ratio: width / height, maxKB: IMAGE_MAX_KB };
+  return {
+    width,
+    height,
+    ratio: width / height,
+    maxKB: slot === 'dishPicture' ? DISH_PICTURE_MAX_KB : IMAGE_MAX_KB,
+  };
 }
 
 /** The ratio may be off by this much (5%). */
@@ -136,7 +143,8 @@ export type ImageCheck =
 export function checkImageUpload(slot: UploadSlot, dataUrl: unknown): ImageCheck {
   if (typeof dataUrl !== 'string') return { ok: false, error: 'image_type' };
   // Cheap size guard before the regex and the decode (base64 is 4/3 of the bytes).
-  if (dataUrl.length > Math.ceil(((IMAGE_MAX_KB * 1024) / 3) * 4) + 64) {
+  const { ratio, maxKB } = slotSpec(slot);
+  if (dataUrl.length > Math.ceil(((maxKB * 1024) / 3) * 4) + 64) {
     return { ok: false, error: 'image_too_big' };
   }
   const match = DATA_URL.exec(dataUrl);
@@ -149,10 +157,9 @@ export function checkImageUpload(slot: UploadSlot, dataUrl: unknown): ImageCheck
   } catch {
     return { ok: false, error: 'image_type' };
   }
-  if (bytes.length > IMAGE_MAX_KB * 1024) return { ok: false, error: 'image_too_big' };
+  if (bytes.length > maxKB * 1024) return { ok: false, error: 'image_too_big' };
   const size = readImageSize(bytes, mime);
   if (!size) return { ok: false, error: 'image_type' };
-  const { ratio } = slotSpec(slot);
   if (Math.abs(size.width / size.height - ratio) / ratio > RATIO_TOLERANCE) {
     return { ok: false, error: 'image_ratio' };
   }

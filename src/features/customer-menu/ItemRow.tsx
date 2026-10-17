@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Language, MenuItemView } from '../../../shared/domain';
@@ -6,6 +6,7 @@ import { LOW_STOCK, MAX_QTY } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { Pill, Stepper } from '../../ui';
+import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
 import { Muted, Strong } from './layout';
 
@@ -20,7 +21,29 @@ const Row = styled.li<{ $soldOut: boolean }>`
   color: ${({ theme, $soldOut }) => ($soldOut ? theme.colour.textMuted : theme.colour.text)};
 `;
 
+// Plan 067: a fixed 64 x 64 slot on the left, so nothing jumps while the picture loads.
+const PictureButton = styled.button<{ $soldOut: boolean }>`
+  flex: none;
+  width: 4rem;
+  height: 4rem;
+  padding: 0;
+  overflow: hidden;
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.c.surf};
+  cursor: pointer;
+
+  img {
+    display: block;
+    width: 4rem;
+    height: 4rem;
+    object-fit: cover;
+    opacity: ${({ $soldOut }) => ($soldOut ? 0.5 : 1)};
+  }
+`;
+
 const Text = styled.div`
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -51,8 +74,21 @@ export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty, closed = 
   const name = pickText(item.name, lang);
   const description = pickText(item.description, lang);
   const size = pickText(item.size, lang);
+  const [viewing, setViewing] = useState(false);
+  const closeViewer = useCallback(() => setViewing(false), []);
   return (
     <Row $soldOut={item.soldOut}>
+      {item.pictureRef ? (
+        <PictureButton
+          type="button"
+          $soldOut={item.soldOut}
+          aria-haspopup="dialog"
+          aria-label={t('menu.enlargePicture', { name })}
+          onClick={() => setViewing(true)}
+        >
+          <img src={item.pictureRef} alt="" width={64} height={64} loading="lazy" />
+        </PictureButton>
+      ) : null}
       <Text>
         <Strong>{name}</Strong>
         {description ? <Muted>{description}</Muted> : null}
@@ -79,6 +115,16 @@ export const ItemRow = memo(function ItemRow({ item, qty, lang, onQty, closed = 
         }
         disabled={item.soldOut || item.preorder === false || closed}
       />
+      {viewing && item.pictureRef ? (
+        <FullPictureViewer
+          src={item.pictureRef}
+          title={name}
+          label={t('menu.dishPicture', { name })}
+          caption={`${name} · ${formatMoney(item.priceCents, lang)}`}
+          {...(description ? { detail: description } : {})}
+          onClose={closeViewer}
+        />
+      ) : null}
     </Row>
   );
 });

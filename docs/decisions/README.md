@@ -629,3 +629,8 @@ Format for each entry:
 **Ruling:** "A": keep `shared/zone.ts` (about 100 lines on the browser's built-in `Intl`), no js-joda or Temporal add-on for now. The owner has used js-joda in an app used around the world; it was compared (separate kinds of value for a clock time and an exact moment, full summer-time rules) against its size (about 75–150 KB with time-zone data) and its bundled zone rules going stale.
 **Trade-off:** clock times and exact moments are plain strings, so the code keeps them apart by convention, and the hour skipped or repeated at a summer-time change uses a simple rule; in return nothing extra to download and the zone rules stay current in each browser.
 **Revisit when:** kitchens open in several countries or date sums grow: move to Temporal (the new built-in standard; js-joda's model), with its add-on until Safari has it ([roadmap](../product/roadmap.md)).
+
+## D-103 · Dish pictures: size, limits and where they show (2026-10-16; owner)
+**Ruling:** plan 067. Picture size "A": one square picture per dish, 600 × 600, about 100 KB, shrunk on the seller's device before upload; at most 300 per kitchen. Customer row: picture on the **left** ("ok" to A). Seller dish library: a small dashed camera box for a dish without a picture ("B: if all has no photo then we don't show boxed or dashed boxes at all"). Remove asks first ("B": always confirm).
+**Trade-off:** a little softer than 800 × 800 when enlarged, and an extra tap on Remove; in return R2 use stays tiny (10 full kitchens ≈ 300 MB, 3% of the free 10 GB) and a picture is never removed by a slip.
+**Revisit when:** kitchens ask for several pictures per dish, or R2 use passes 1 GB.

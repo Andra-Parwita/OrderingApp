@@ -24,6 +24,8 @@ export const API_ERROR_CODES = [
   'image_type',
   'image_too_big',
   'image_ratio',
+  /** Plan 067: the kitchen already has 300 dish pictures. */
+  'dish_picture_limit',
   'invalid_backup',
   // Menus and dishes (plan 001, stage 3)
   /** The seller already has 5 saved pickup places (D-061). */

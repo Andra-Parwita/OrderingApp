@@ -17,6 +17,7 @@ import {
   fetchSavedSets,
   finishMenu,
   publishMenu,
+  removeDishPicture,
   removeMenuPicture,
   unpublishMenu,
   usePastMenuPicture,
@@ -24,6 +25,7 @@ import {
   updateCurrentMenu,
   updateDish,
   updatePickupPlace,
+  uploadDishPicture,
   uploadMenuPicture,
 } from '../../api/menus';
 import { MAX_MENU_ITEMS } from '../../../shared/limits';
@@ -81,6 +83,8 @@ const PARTS: Record<MenuOp['kind'], Array<Part>> = {
   createDish: ['view', 'dishes'],
   updateDish: ['view', 'dishes'],
   deleteDish: ['view', 'dishes', 'sets'],
+  uploadDishPicture: ['view', 'dishes'],
+  removeDishPicture: ['view', 'dishes'],
   addDishToMenu: ['view'],
   createSet: ['sets'],
   useSet: ['view'],
@@ -361,6 +365,22 @@ function* execute(op: MenuOp) {
       });
       // The menu copy and the sets that held the dish are read again.
       return outcome.ok ? { ...outcome, reload: ['view', 'dishes', 'sets'] } : outcome;
+    }
+    case 'uploadDishPicture':
+    case 'removeDishPicture': {
+      const result = (yield op.kind === 'uploadDishPicture'
+        ? call(uploadDishPicture, op.id, op.dataUrl, undefined, slug)
+        : call(removeDishPicture, op.id, undefined, slug)) as ApiResult<DishResponse>;
+      if (!result.ok) return toOutcome(result);
+      // The menu holds a copy of the picture too: the dish list gets the answer, the menu is read again.
+      const data = yield* currentData();
+      const dish = result.data.dish;
+      return {
+        ok: true,
+        done: {},
+        reload: ['view'],
+        patch: data ? { dishes: data.dishes.map((d) => (d.id === dish.id ? dish : d)) } : {},
+      } satisfies Outcome;
     }
     case 'createSet': {
       const outcome = toOutcome(

@@ -159,7 +159,8 @@
     "removeBody_one": "{{count}} portion of {{name}} is already ordered. Those orders keep it.",
     "removeBody_other": "{{count}} portions of {{name}} are already ordered. Those orders keep it.",
     "keep": "Keep dish",
-    "removeAnyway": "Remove anyway"
+    "removeAnyway": "Remove anyway",
+    "addPicture": "Add a picture for {{name}}"
   },
   "dish": {
     "titleNew": "New dish",
@@ -218,7 +219,27 @@
     },
     "nameOne": "Name",
     "descriptionOne": "Description",
-    "sizeOne": "Size"
+    "sizeOne": "Size",
+    "picture": {
+      "title": "Picture",
+      "optional": "(optional)",
+      "take": "Take photo",
+      "choose": "Choose photo",
+      "hint": "Square, shrunk on your phone before upload.",
+      "replace": "Replace",
+      "remove": "Remove",
+      "alt": "Picture of {{name}}",
+      "working": "Shrinking and uploading…",
+      "failed": "Couldn't upload. Try again.",
+      "imageType": "That file is not a picture we can use. Try a JPEG, PNG or WebP.",
+      "imageTooBig": "The picture is too big. Try a smaller one.",
+      "limit": "Picture limit reached ({{count}} of {{max}}). Remove a picture from another dish to add this one.",
+      "removeTitle": "Remove this picture?",
+      "removeBody": "The dish stays; only its picture goes.",
+      "keep": "Keep picture",
+      "removeConfirm": "Remove picture",
+      "saveFirst": "Save the dish first, then you can add a picture."
+    }
   },
   "autosave": {
     "saving": "Saving…",

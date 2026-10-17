@@ -30,6 +30,12 @@ export const CHEF_NAME_MAX = 40;
 export const MAX_PICKUP_PLACES = 5;
 /** Dishes in the library ("Your dishes"). */
 export const MAX_DISHES = 200;
+/** Plan 067 (D-103): dish pictures per kitchen (about 30 MB at 100 KB each). */
+export const MAX_DISH_PICTURES = 300;
+/** Plan 067: a dish picture is 600 x 600 and about 100 KB; the server refuses more than this. */
+export const DISH_PICTURE_MAX_KB = 200;
+/** Plan 067: what the device aims for when it shrinks a dish picture. */
+export const DISH_PICTURE_TARGET_KB = 100;
 /** Plan 064: how many past menus keep their menu picture (the newest ones; older pictures are deleted). */
 export const PAST_MENU_PICTURES_KEPT = 10;
 export const PLACE_NAME_MAX = 80;
