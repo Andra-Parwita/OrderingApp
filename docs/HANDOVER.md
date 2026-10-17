@@ -57,7 +57,7 @@
 
 **Queued this round:** nothing; all approved plans are built. 077 leftover: the Settings "default cut-off time" is still the kitchen's clock (identical today).
 **Dates are day first (owner, 16 Oct: "we are in Australia"):** What's new, Devices and Customer details backup used the bare `en` locale ("Oct 16, 2026"); they now use `en-AU` / `id-ID` like the rest of the app (`29b0cbb`).
-**Release 1.0.36 notes: picked by the owner (16 Oct: "2, 1 and 6", in that order) and written into `src/features/seller-about/releaseNotes.ts`.** Only the date is left: replace `'2026-10-xx'` with the deploy date. The candidate lines offered on 16 Oct, for reference:
+**Release 1.0.36 notes: picked by the owner (16 Oct: "2, 1 and 6", in that order; 17 Oct: the dish-photo line added first) and written into `src/features/seller-about/releaseNotes.ts`.** The date is set to 2026-10-17 (deploy planned tonight); change it if the deploy moves. The candidate lines offered on 16 Oct, for reference:
 
 | # | English | Indonesian |
 |---|---|---|
@@ -75,8 +75,8 @@
 1. Read this file.
 2. `git pull` on `indra/brand_logo_ux`; `pnpm install` (075 added `lottie-web`); `pnpm db:migrate:local` (applies 0024 + 0025 to your local D1; migrate only, never reseed).
 3. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
-4. **Next deploy = Release 1.0.36** (067 + 075–080 above), only when the owner says so. Order: put the deploy date in `src/features/seller-about/releaseNotes.ts` → `pnpm run docs` → back up → announce → Maintenance on → **migrations 0024 + 0025 + 0026** → deploy → Maintenance off after the live check → re-save the cut-off of any open menu (077: it was saved as Melbourne time) → push `main` and tag `v1.0.36`.
-5. Then the other open items, **one at a time**: the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie), 077 leftover (Settings "default cut-off time" still in the kitchen's clock).
+4. **Next deploy = Release 1.0.36** (067 + 075–080 above), only when the owner says so. Order: check the date in `src/features/seller-about/releaseNotes.ts` (2026-10-17) → `pnpm run docs` → back up → announce → Maintenance on → **migrations 0024 + 0025 + 0026** → deploy → Maintenance off after the live check → re-save the cut-off of any open menu (077: it was saved as Melbourne time) → push `main` and tag `v1.0.36`.
+5. After the deploy: **plan 081 private orders (Khusus)** for 1.0.37 (owner A, 17 Oct): go through its open questions one at a time, then the mock-up. Then the other open items, **one at a time**: the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie), 077 leftover (Settings "default cut-off time" still in the kitchen's clock).
 
 ## Known and not done
 - **State duplication found while documenting (13 Oct; see docs/architecture/state-and-data-flow.md "what looks inconsistent") — cleanup candidates, ask the owner first:** seller orders held in two slices (sellerOrders + sellerCook), so one live event triggers two fetches; the current menu copied into four slices; two `menuRequested` actions; the session in three places; several screens call the API directly instead of through a slice.

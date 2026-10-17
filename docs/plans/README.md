@@ -111,6 +111,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 078 | ✅ | [Admin page: pinned header, compact left column, desktop first](078-admin-layout.md) | built + gated (2026-10-15); not deployed |
 | 079 | ✅ | [Help opens inside the seller app](079-help-inside-seller-app.md) | built + gated (2026-10-15); not deployed |
 | 080 | ✅ | [Top bars push the page down instead of covering it](080-top-bars-push-down.md) | built + gated (2026-10-15); not deployed |
+| 081 | ⬜ | [Private orders (Khusus): one-off orders for an event](081-private-orders.md) | draft; after the 1.0.36 deploy, for 1.0.37 |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 
