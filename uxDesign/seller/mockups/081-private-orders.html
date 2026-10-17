@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>ShaggyBobo · Private orders (mock-up)</title>
+<style>
+:root{
+  --beige:#EADBC2; --ink:#2B1D12; --bobo:#d9772b;
+  --bg:#F6F2E8; --surf:#FFFDF8; --surf2:#F4F0E6; --line:#E4DED0;
+  --text:#1C1F1A; --muted:#5D6358; --accent:#1F6B5C; --accent-tint:#E3EFEA; --onacc:#fff;
+  --pill-bg:#fff6ea; --pill-border:#ead8bf; --stage:#d9d4c6; --edge:#7F857A;
+  --err:#A93724; --err-tint:rgb(169 55 36/8%); --warn:#8A5A12;
+}
+:root[data-theme=dark]{--bg:#121411;--surf:#181A16;--surf2:#20231E;--line:#2A2E27;--text:#F1EEE6;--muted:#A9AFA3;
+  --accent:#93C590;--accent-tint:rgba(140,192,138,.14);--onacc:#10200f;--pill-bg:#2A2117;--pill-border:#3D3022;--bobo:#E8954F;--edge:#7F857A;
+  --err:#EE8B78;--err-tint:rgb(238 139 120/10%);--warn:#E3B565}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--stage);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:root[data-theme=dark] body{background:#0B0C0A}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+button,summary,a{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+
+/* mock-up chrome */
+.top{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;padding:14px 16px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:6px 14px;font-size:.8125rem;font-weight:600;min-height:36px;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+:root[data-theme=dark] .seg{border-color:#6B5A44}
+:root[data-theme=dark] .seg button{color:#EADBC2}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:#EADBC2;color:#2B1D12}
+.sub{display:flex;justify-content:center;padding:0 16px 12px}
+.frame-wrap{display:flex;justify-content:center;padding:0 16px 24px;overflow-x:auto}
+.frame{position:relative;background:var(--bg);border-radius:18px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;height:780px;max-height:calc(100vh - 150px);min-height:600px;flex:none}
+.frame.phone{width:390px;flex-direction:column}
+.frame.tablet{width:1024px}
+
+/* seller rail */
+.rail{display:none;width:200px;flex:none;background:var(--surf2);border-right:1px solid var(--line);padding:16px 10px;flex-direction:column;gap:2px}
+.tablet .rail.on{display:flex}
+.rail .rb{padding:0 6px 14px;font-weight:700;letter-spacing:-.04em}
+.rail .rb i{font-style:normal;color:var(--bobo)}
+.rail a{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border-radius:8px;color:var(--text);text-decoration:none;font-size:.9375rem}
+.rail a[aria-current=page]{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.rail svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* app column */
+.col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.hdr{flex:none;display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;background:var(--surf);border-bottom:1px solid var(--line)}
+.hdr h1{margin:0 0 0 8px;font-size:1.0625rem;font-weight:700;letter-spacing:-.01em;flex:1}
+.tablet .hdr{padding-left:24px;padding-right:16px}
+.back{border:0;background:transparent;width:44px;height:44px;border-radius:50%;display:grid;place-items:center}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tablet .col>.hdr .back.sellerback{display:none}
+.scroll{flex:1;min-height:0;overflow-y:auto}
+.page{max-width:720px;margin:0 auto;padding:4px 16px 28px}
+.tablet .page{padding:8px 24px 32px}
+.tabbar{display:none;flex:none;height:56px;background:var(--surf);border-top:1px solid var(--line)}
+.phone .tabbar.on{display:flex}
+.tabbar div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.6875rem;color:var(--muted);gap:2px;position:relative}
+.tabbar div.on{color:var(--accent);font-weight:600}
+.tabbar svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7}
+
+/* content */
+h2.sec{margin:20px 0 8px;font-size:1.0625rem;letter-spacing:-.01em}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.muted{color:var(--muted)}
+.small{font-size:.8125rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--accent);font-weight:600;font-size:.9375rem;text-decoration:none}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+.btn.danger{color:var(--err)}
+.btn.block{width:100%}
+.btn svg.i{width:18px;height:18px}
+.btn.sm{min-height:36px;padding:0 12px;font-size:.8125rem;border-radius:999px}
+.btn.sm svg.i{width:16px;height:16px}
+.tag{font-size:.6875rem;font-weight:600;color:var(--accent);background:var(--accent-tint);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.tag.priv{color:var(--text);background:var(--pill-bg);border:1px solid var(--pill-border)}
+.nbadge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:var(--onacc);font-size:.6875rem;font-weight:700;line-height:1}
+.rail a .nbadge{margin-left:auto}
+.tabbar div .nbadge{position:absolute;top:3px;left:calc(50% + 6px)}
+
+/* form */
+.field{margin:0 0 12px}
+.field label,.field .lab{display:block;font-size:.8125rem;font-weight:600;margin-bottom:4px}
+.field input,.field textarea{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--edge);border-radius:8px;background:var(--surf);color:var(--text);font:inherit;font-size:.9375rem}
+.field textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{font-weight:400;color:var(--muted)}
+.seg2{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--edge);border-radius:10px;overflow:hidden}
+.seg2 button{border:0;background:var(--surf);min-height:44px;font-weight:600;font-size:.9375rem;color:var(--text)}
+.seg2 button[aria-pressed=true]{background:var(--accent-tint);color:var(--accent)}
+.seg2 button+button{border-left:1px solid var(--edge)}
+.fh{margin:22px 0 8px;font-size:.9375rem;font-weight:700;padding-top:14px;border-top:1px solid var(--line)}
+.fh:first-child{margin-top:0;border-top:0;padding-top:0}
+.rd{display:flex;gap:8px;align-items:flex-start;color:var(--muted);font-size:.8125rem;margin:12px 0 0}
+.rd svg.i{width:16px;height:16px;flex:none;margin-top:2px}
+
+/* dish picker (like the menu wizard) */
+.pk{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surf)}
+.pr1{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.pr1:last-child{border-bottom:0}
+.pr1.on{background:var(--accent-tint)}
+.pr1 .cb{flex:none;width:22px;height:22px;border:1.5px solid var(--edge);border-radius:6px;display:grid;place-items:center;background:var(--surf)}
+.pr1.on .cb{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+.pr1 .cb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.lt{width:40px;height:40px;flex:none;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--surf2);display:grid;place-items:center;color:var(--muted)}
+.lt svg.art{display:block;width:100%;height:100%}
+.lt.none{border-style:dashed;background:transparent}
+.pr1 .nm{flex:1;min-width:0;font-size:.9375rem}
+.pr1 .nm small{display:block;color:var(--muted);font-size:.75rem}
+.pr1 .lp{color:var(--muted);font-size:.8125rem;font-variant-numeric:tabular-nums}
+.sel{padding:8px 12px 12px 46px;border-bottom:1px solid var(--line);background:var(--accent-tint);display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.sel .mini{display:flex;flex-direction:column;gap:2px}
+.sel .mini label{font-size:.75rem;color:var(--muted);font-weight:600}
+.sel .mini input{width:92px;min-height:40px;padding:4px 10px;border:1px solid var(--edge);border-radius:8px;background:var(--surf);color:var(--text);font:inherit;font-size:.9375rem}
+.sel .lineT{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;padding-bottom:8px}
+.ctl{flex:none;display:flex;align-items:center;gap:8px}
+.round{width:40px;height:40px;border-radius:50%;border:1px solid var(--accent);background:var(--surf);color:var(--accent);display:grid;place-items:center;padding:0}
+.round svg.i{width:18px;height:18px}
+.qty{min-width:1.5rem;text-align:center;font-weight:700}
+.newdish{display:flex;align-items:center;gap:12px;width:100%;padding:8px 12px;border:0;border-top:1px solid var(--line);background:transparent;color:var(--accent);font-weight:600;text-align:left;min-height:56px}
+.newdish small{display:block;color:var(--muted);font-weight:400;font-size:.75rem}
+.tot2{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.tr{display:flex;justify-content:space-between;padding:2px 0;font-variant-numeric:tabular-nums}
+.tr.b{font-weight:700}
+.tr.w{font-weight:700;color:var(--warn)}
+.tr.ok{font-weight:700;color:var(--accent)}
+
+/* list */
+.grp{margin:18px 0 6px;display:flex;align-items:baseline;gap:8px}
+.grp h2{margin:0;font-size:.9375rem}
+.grp span{color:var(--muted);font-size:.8125rem}
+.olist{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:0 16px}
+.orow{display:block;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);padding:11px 0;color:inherit}
+.orow:last-child{border-bottom:0}
+.orow .l1{display:flex;align-items:center;gap:8px}
+.orow .tm{font-variant-numeric:tabular-nums;font-weight:700;font-size:.9375rem}
+.orow .nm{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orow .tot{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.orow .l2{color:var(--muted);font-size:.8125rem;margin-top:2px}
+.orow .l3{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.due{font-size:.8125rem;font-weight:700;color:var(--warn)}
+.paidm{font-size:.8125rem;color:var(--muted)}
+.st{display:inline-block;font-size:.75rem;font-weight:600;border-radius:999px;padding:2px 10px;border:1px solid var(--line);background:var(--surf2);color:var(--text)}
+.st.cook{background:var(--pill-bg);border-color:var(--pill-border)}
+.st.ready{background:var(--accent-tint);border-color:transparent;color:var(--accent)}
+.st.done{color:var(--muted)}
+.more a{display:flex;align-items:center;gap:14px;min-height:52px;padding:0 10px;border-bottom:1px solid var(--line);text-decoration:none;color:var(--text)}
+.more a svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;color:var(--muted);flex:none}
+.more a .sx{margin-left:auto;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.8125rem}
+.more a.hl{background:var(--accent-tint);border-radius:8px;border-bottom-color:transparent}
+.more a.hl svg{color:var(--accent)}
+
+/* detail */
+.steps{display:flex;margin:6px 0 4px;padding:0;list-style:none}
+.steps li{flex:1;text-align:center;font-size:.75rem;color:var(--muted);position:relative;padding-top:24px}
+.steps li:before{content:"";position:absolute;top:7px;left:50%;width:12px;height:12px;border-radius:50%;border:2px solid var(--edge);background:var(--surf);transform:translateX(-50%);z-index:1}
+.steps li:after{content:"";position:absolute;top:12px;left:-50%;width:100%;height:2px;background:var(--line)}
+.steps li:first-child:after{display:none}
+.steps li.d:before{background:var(--accent);border-color:var(--accent)}
+.steps li.d:after,.steps li.c:after{background:var(--accent)}
+.steps li.c{color:var(--text);font-weight:700}
+.steps li.c:before{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-tint)}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;margin:0;font-size:.9375rem}
+.kv dt{color:var(--muted);font-size:.8125rem;padding-top:2px}
+.kv dd{margin:0}
+.itl{margin:0;padding:0;list-style:none}
+.itl li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);align-items:center}
+.itl li:last-child{border-bottom:0}
+.itl .q{font-weight:700;min-width:2.2rem;font-variant-numeric:tabular-nums}
+.itl .n{flex:1}
+.itl .p{color:var(--muted);font-size:.8125rem;font-variant-numeric:tabular-nums}
+.itl .s{font-weight:600;font-variant-numeric:tabular-nums;min-width:3rem;text-align:right}
+.actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.actions .two,.dlg .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scrim{position:absolute;inset:0;z-index:30;background:rgb(20 18 12/50%);display:grid;place-items:center;padding:20px}
+.dlg{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:340px;width:100%}
+.dlg h3{margin:0 0 6px;font-size:1.0625rem}
+.dlg p{margin:0 0 14px;color:var(--muted);font-size:.9375rem}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;letter-spacing:.04em}
+
+/* cook */
+.ckrow{display:flex;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.ckrow:last-child{border-bottom:0}
+.ckrow .nm{flex:1;min-width:0}
+.ckrow .nm small{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:.75rem;flex-wrap:wrap}
+.ckrow .ct{font-weight:700;font-size:1.25rem;font-variant-numeric:tabular-nums}
+
+/* customer */
+.chead{padding:14px 16px 4px}
+.chead .big{font-size:1.25rem;font-weight:700;letter-spacing:-.01em;margin:6px 0 0}
+.cpage{padding:0 16px 28px;max-width:560px;margin:0 auto}
+.ptable{width:100%;border-collapse:collapse;font-size:.9375rem}
+.ptable td{padding:6px 0}
+.ptable td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.ptable tr.w td{color:var(--warn);font-weight:700;border-top:1px solid var(--line);padding-top:8px}
+.ptable tr.ok td{color:var(--accent);font-weight:700;border-top:1px solid var(--line);padding-top:8px}
+
+.notes{max-width:1024px;margin:0 auto 40px;padding:0 16px}
+.notes div{background:var(--surf);border:1px solid #cfc8b4;border-left:3px solid var(--bobo);border-radius:0 10px 10px 0;padding:14px 18px;font-size:.875rem}
+:root[data-theme=dark] .notes div{border-color:#3A3F36;border-left-color:var(--bobo)}
+.notes h3{margin:0 0 6px;font-size:.9375rem}
+.notes ul{margin:0;padding-left:20px}
+@media print{.top,.sub,.notes{display:none}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="seg" role="group" aria-label="Screen" id="scrseg"></div>
+  <div class="seg" role="group" aria-label="Device"><button type="button" data-dev="phone" aria-pressed="true">Phone</button><button type="button" data-dev="tablet" aria-pressed="false">Tablet</button></div>
+  <div class="seg" role="group" aria-label="Theme"><button type="button" data-th="light" aria-pressed="true">Light</button><button type="button" data-th="dark" aria-pressed="false">Dark</button></div>
+  <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="id" aria-pressed="false">ID</button></div>
+</div>
+<div class="sub"><div class="seg" role="group" id="subseg" aria-label="State"></div></div>
+<div class="frame-wrap"><div class="frame phone" id="frame"></div></div>
+<div class="notes" id="notes"></div>
+
+<script>
+const I={
+ en:{scr:['Seller · Private list','Seller · New / edit','Seller · Order detail','Seller · Cook list','Customer · Order page'],
+  subs:[['Upcoming','Past','Phone: More menu'],['Deposit paid','Not paid','Paid in full'],['Order','Cancel asks first'],[],['Deposit paid','Paid in full']],
+  nav:['Home','Orders','Private','Kitchen','Hand over','Sell','Menu','Settings','Help','About'],
+  tabs:['Home','Orders','Sell','Menu','More'],
+  more:'More', moreN:['Kitchen','Hand over','Menu','Settings','Help','About'], dueSoon:'2 today · 1 tomorrow',
+  privT:'Private', priv:'Private', newB:'New private order', up:'Upcoming', past:'Past', today:'Today', tomorrow:'Tomorrow',
+  listH:'One-off orders for an event. Only you and the other owners can change them.',
+  pickup:'Pickup', delivery:'Delivery', paid:'Paid', due:'due', empty:'Nothing here yet',
+  stConfirmed:'Confirmed', stCooking:'Cooking', stReady:'Ready', stDone:'Handed over',
+  edT:'New private order', edT2:'Edit private order',
+  when:'When', date:'Date', time:'Time', how:'Pickup or delivery', place:'Pickup place', placeV:'Home kitchen, Jl. Kenari 7',
+  addr:'Delivery address', addrV:'Jl. Mawar 12, Sanur', addrNote:'Gate code, landmark', addrNoteV:'Blue gate, ring the bell',
+  cust:'Customer', name:'Name', note:'Note', noteV:'Birthday lunch for 20 people. Less spicy.', opt:'(optional)',
+  addrRd:'The address is kept private and deleted one day after the event.',
+  dishes:'Dishes', dishesH:'Pick from your dish library. Change the quantity and the price for this order only.',
+  qty:'Qty', price:'Price each', perOrder:'This order only', lib:'in library',
+  newDish:'New dish', newDishH:'Saved to your dish library so you can use it again.',
+  sub:'Subtotal', total:'Total', pay:'Payment', notPaid:'Not paid', deposit:'Deposit paid', still:'Still to pay', nothing:'Nothing left to pay',
+  payH:'You take the money yourself. The app only keeps the numbers.',
+  save:'Save order', cancel:'Cancel', ownerOnly:'Only owners can create or change a private order. Chefs and helpers see it read-only and can update the status.',
+  detT:'Private order', code:'Order code', send:'Send code on WhatsApp', copy:'Copy code', copied:'Copy code',
+  next:'Mark as Ready', edit:'Edit', cancelO:'Cancel order',
+  dWhen:'When', dHow:'Delivery to', dCust:'Customer', dNote:'Note', items:'Items', pays:'Payment',
+  askT:'Cancel this order for Rina?', askB:'She will see it as cancelled when she opens her code. This can’t be undone.', askKeep:'Keep it', askGo:'Yes, cancel',
+  cookT:'Cook', cookS:'Saturday 17 Oct · all orders for today', menuL:'Menu', privL:'Private', priv2:'Private today', pcs:'total',
+  cT:'Your order', cSub:'Private order · Khusus', cCook:'Maria’s kitchen', cLook:'Items', cDel:'Delivery', cWhere:'Jl. Mawar 12, Sanur',
+  cPaid:'Deposit paid', cStill:'Still to pay', cTotal:'Total', cPaidFull:'Paid in full', cNeed:'Need a change? Message Maria on WhatsApp.',
+  nH:'Notes for the owner',
+  n:['Use the switches at the top: five screens, phone or tablet, light or dark, EN or ID. The small switch below changes the state of the screen (list: upcoming, past, and on phone the More menu).',
+     'Where it sits: tablet has Private in the left rail under Orders. On phone it is inside More, and More shows a small number when a private order is due today or tomorrow (here 3). Open the phone More menu in the first screen to see it.',
+     'One simple list, grouped by date (Today, Tomorrow, then dates). Several orders can share a day. Each row: time, customer, short dish summary, pickup or delivery, status, total and what is still due. Filters are only Upcoming and Past.',
+     'The editor picks dishes the way the menu wizard does: tick dishes from the library (with photo when they have one), then set the quantity and the price for this order. New dish saves to the library. Payment is Paid or Not paid plus an optional deposit; the app shows what is still to pay.',
+     'No phone number anywhere. The seller sends the code on WhatsApp; the customer page shows the order, the status and what is left to pay, nothing editable.',
+     'On the event day the dishes are counted in the Cook list (also Pack, labels and per-chef income) with a small Private tag.',
+     'Sample data only: names, dishes and amounts are made up.'],
+  q:'Open questions: see the report (pickup place field, cancelled orders in Past, how the customer asks for a change).'},
+ id:{scr:['Penjual · Daftar Khusus','Penjual · Baru / ubah','Penjual · Detail pesanan','Penjual · Daftar masak','Pelanggan · Halaman pesanan'],
+  subs:[['Mendatang','Lalu','Ponsel: menu Lainnya'],['Sudah DP','Belum bayar','Lunas'],['Pesanan','Batal minta konfirmasi'],[],['Sudah DP','Lunas']],
+  nav:['Beranda','Pesanan','Khusus','Dapur','Serah terima','Jual','Menu','Pengaturan','Bantuan','Tentang'],
+  tabs:['Beranda','Pesanan','Jual','Menu','Lainnya'],
+  more:'Lainnya', moreN:['Dapur','Serah terima','Menu','Pengaturan','Bantuan','Tentang'], dueSoon:'2 hari ini · 1 besok',
+  privT:'Khusus', priv:'Khusus', newB:'Pesanan khusus baru', up:'Mendatang', past:'Lalu', today:'Hari ini', tomorrow:'Besok',
+  listH:'Pesanan satu kali untuk sebuah acara. Hanya kamu dan pemilik lain yang bisa mengubahnya.',
+  pickup:'Ambil sendiri', delivery:'Antar', paid:'Lunas', due:'kurang', empty:'Belum ada',
+  stConfirmed:'Dikonfirmasi', stCooking:'Dimasak', stReady:'Siap', stDone:'Diserahkan',
+  edT:'Pesanan khusus baru', edT2:'Ubah pesanan khusus',
+  when:'Kapan', date:'Tanggal', time:'Jam', how:'Ambil sendiri atau antar', place:'Tempat ambil', placeV:'Dapur rumah, Jl. Kenari 7',
+  addr:'Alamat antar', addrV:'Jl. Mawar 12, Sanur', addrNote:'Kode pagar, patokan', addrNoteV:'Pagar biru, tekan bel',
+  cust:'Pelanggan', name:'Nama', note:'Catatan', noteV:'Makan siang ulang tahun untuk 20 orang. Jangan terlalu pedas.', opt:'(opsional)',
+  addrRd:'Alamat dirahasiakan dan dihapus sehari setelah acara.',
+  dishes:'Hidangan', dishesH:'Pilih dari pustaka hidangan kamu. Ubah jumlah dan harga hanya untuk pesanan ini.',
+  qty:'Jumlah', price:'Harga satuan', perOrder:'Hanya pesanan ini', lib:'di pustaka',
+  newDish:'Hidangan baru', newDishH:'Disimpan ke pustaka hidangan supaya bisa kamu pakai lagi.',
+  sub:'Subtotal', total:'Total', pay:'Pembayaran', notPaid:'Belum bayar', deposit:'DP dibayar', still:'Masih harus dibayar', nothing:'Tidak ada yang perlu dibayar',
+  payH:'Uang kamu terima sendiri. Aplikasi hanya mencatat angkanya.',
+  save:'Simpan pesanan', cancel:'Batal', ownerOnly:'Hanya pemilik yang bisa membuat atau mengubah pesanan khusus. Koki dan pembantu melihatnya tanpa bisa mengubah, tapi bisa memperbarui status.',
+  detT:'Pesanan khusus', code:'Kode pesanan', send:'Kirim kode lewat WhatsApp', copy:'Salin kode', copied:'Salin kode',
+  next:'Tandai Siap', edit:'Ubah', cancelO:'Batalkan pesanan',
+  dWhen:'Kapan', dHow:'Antar ke', dCust:'Pelanggan', dNote:'Catatan', items:'Isi pesanan', pays:'Pembayaran',
+  askT:'Batalkan pesanan Rina?', askB:'Dia akan melihatnya sebagai dibatalkan saat membuka kodenya. Ini tidak bisa dibatalkan.', askKeep:'Biarkan', askGo:'Ya, batalkan',
+  cookT:'Masak', cookS:'Sabtu 17 Okt · semua pesanan hari ini', menuL:'Menu', privL:'Khusus', priv2:'Khusus hari ini', pcs:'total',
+  cT:'Pesananmu', cSub:'Pesanan khusus', cCook:'Dapur Maria', cLook:'Isi pesanan', cDel:'Antar', cWhere:'Jl. Mawar 12, Sanur',
+  cPaid:'DP dibayar', cStill:'Masih harus dibayar', cTotal:'Total', cPaidFull:'Lunas', cNeed:'Mau ubah? Kabari Maria lewat WhatsApp.',
+  nH:'Catatan untuk pemilik',
+  n:['Pakai pilihan di atas: lima layar, ponsel atau tablet, terang atau gelap, EN atau ID. Pilihan kecil di bawahnya mengubah kondisi layar (daftar: mendatang, lalu, dan di ponsel menu Lainnya).',
+     'Letaknya: di tablet, Khusus ada di menu kiri di bawah Pesanan. Di ponsel ada di dalam Lainnya, dan Lainnya menampilkan angka kecil saat ada pesanan khusus untuk hari ini atau besok (di sini 3). Buka menu Lainnya ponsel di layar pertama untuk melihatnya.',
+     'Satu daftar sederhana, dikelompokkan menurut tanggal (Hari ini, Besok, lalu tanggal). Beberapa pesanan boleh di hari yang sama. Tiap baris: jam, pelanggan, ringkasan hidangan, ambil sendiri atau antar, status, total, dan sisa yang harus dibayar. Filter hanya Mendatang dan Lalu.',
+     'Editor memilih hidangan seperti wizard menu: centang hidangan dari pustaka (dengan foto jika ada), lalu atur jumlah dan harga untuk pesanan ini. Hidangan baru tersimpan ke pustaka. Pembayaran: Lunas atau Belum bayar plus DP opsional; aplikasi menampilkan sisanya.',
+     'Tidak ada nomor telepon di mana pun. Penjual mengirim kode lewat WhatsApp; halaman pelanggan menampilkan pesanan, status, dan sisa pembayaran, tanpa yang bisa diubah.',
+     'Di hari acara, hidangannya ikut terhitung di daftar Masak (juga Kemas, label, dan pendapatan per koki) dengan tanda kecil Khusus.',
+     'Hanya data contoh: nama, hidangan, dan jumlah karangan.'],
+  q:'Pertanyaan terbuka: lihat laporan (kolom tempat ambil, pesanan batal di Lalu, cara pelanggan minta perubahan).'}
+};
+const DN={
+ en:{rice:'Nasi kuning set',lemper:'Lemper ayam (4)',soto:'Soto ayam',pisang:'Pisang goreng (5)',onde:'Onde-onde (6)',lapis:'Kue lapis'},
+ id:{rice:'Paket nasi kuning',lemper:'Lemper ayam (4)',soto:'Soto ayam',pisang:'Pisang goreng (5)',onde:'Onde-onde (6)',lapis:'Kue lapis'}};
+const LIB=[['rice',14,'rice'],['lemper',10,'lemper'],['soto',12,'soto'],['pisang',7,'pisang'],['onde',8,null],['lapis',9,null]];
+const P={
+ back:'<path d="M15 5l-7 7 7 7"/>',plus:'<path d="M12 5v14M5 12h14"/>',minus:'<path d="M5 12h14"/>',
+ pen:'<path d="M4 20l1-4L16 5l3 3L8 19z"/>',wa:'<path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/><path d="M9 9c0 3 3 6 6 6l1-1.5-2-1-1 .8c-1-.4-2-1.4-2.4-2.4l.8-1-1-2z"/>',
+ copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/>',
+ lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+ chev:'<path d="M9 5l7 7-7 7"/>',camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'
+};
+const ic=k=>'<svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+P[k]+'</svg>';
+const CHK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+const NAVI=['<path d="M3 11l9-7 9 7v9H3z"/>','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/>','<path d="M4 9h16v4H4zM6 13v7h12v-7M12 9v11M12 9c-3 0-4-4-1-4 2 0 1 4 1 4zM12 9c3 0 4-4 1-4-2 0-1 4-1 4z"/>','<path d="M4 11h16v8H4zM8 11V7a4 4 0 018 0v4"/>','<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/>','<path d="M3 6h18l-2 9H5zM8 20h.01M16 20h.01"/>','<path d="M5 4h14v16H5zM9 8h6M9 12h6"/>','<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>','<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 115 0c0 1.5-2.5 2-2.5 3.5M12 17h.01"/>','<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>'];
+const nic=n=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+NAVI[n]+'</svg>';
+const ART={
+ rice:'<rect width="100" height="100" fill="#E9D2A0"/><circle cx="50" cy="52" r="40" fill="#FBF7EC"/><circle cx="50" cy="52" r="32" fill="#F4F0E4"/><ellipse cx="46" cy="52" rx="22" ry="17" fill="#EDB92E"/><ellipse cx="40" cy="46" rx="10" ry="6" fill="#F5CE59"/><g fill="#9C5A2A"><ellipse cx="64" cy="62" rx="9" ry="6" transform="rotate(-25 64 62)"/><ellipse cx="58" cy="70" rx="7" ry="5" transform="rotate(20 58 70)"/></g><circle cx="72" cy="42" r="5" fill="#B83A25"/>',
+ lemper:'<rect width="100" height="100" fill="#CFE0BD"/><g transform="rotate(-18 50 50)"><rect x="12" y="30" width="76" height="17" rx="8" fill="#4F8B3A"/><rect x="12" y="52" width="76" height="17" rx="8" fill="#5B9A44"/></g><g fill="#fff"><rect x="10" y="32" width="9" height="13" rx="4" transform="rotate(-18 14 38)"/><rect x="82" y="55" width="9" height="13" rx="4" transform="rotate(-18 86 61)"/></g><circle cx="78" cy="22" r="6" fill="#C7452B"/>',
+ soto:'<rect width="100" height="100" fill="#E7D3AB"/><ellipse cx="50" cy="54" rx="40" ry="38" fill="#F9F5EA"/><ellipse cx="50" cy="52" rx="33" ry="31" fill="#EFC53C"/><ellipse cx="42" cy="44" rx="14" ry="8" fill="#F6D868"/><g fill="#fff"><ellipse cx="60" cy="58" rx="8" ry="6"/><ellipse cx="38" cy="62" rx="6" ry="5"/></g><g fill="#4F8B3A"><circle cx="54" cy="42" r="3"/><circle cx="64" cy="48" r="2.5"/></g>',
+ pisang:'<rect width="100" height="100" fill="#EBD7AA"/><circle cx="50" cy="50" r="40" fill="#FBF7EC"/><g fill="#D99A2B"><rect x="22" y="28" width="52" height="15" rx="7" transform="rotate(22 48 36)"/><rect x="26" y="46" width="52" height="15" rx="7" transform="rotate(-12 52 54)"/><rect x="28" y="62" width="44" height="14" rx="7" transform="rotate(8 50 69)"/></g>'
+};
+const art=k=>'<svg class="art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+ART[k]+'</svg>';
+const thumb=(k)=>k&&ART[k]?'<span class="lt">'+art(k)+'</span>':'<span class="lt none">'+ic('camera').replace('class="i"','class="i" style="width:16px;height:16px"')+'</span>';
+
+let scr=0,dev='phone',lang='en',sub=[0,0,0,0,0];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dn=k=>DN[lang][k];
+
+/* sample orders: d=date group, items [dish,qty,price], dep=deposit, st=status */
+const ORD=[
+ {g:'today',time:'12:00',name:'Rina Wulandari',fu:'delivery',st:'cook',items:[['rice',6,14],['lemper',2,10]],dep:64},
+ {g:'today',time:'16:30',name:'Pak Hendra',fu:'pickup',st:'conf',items:[['soto',5,12]],paid:1},
+ {g:'tomorrow',time:'10:00',name:'Dewi Anggraini',fu:'delivery',st:'conf',items:[['pisang',10,6],['lapis',2,9]],dep:0},
+ {g:'Sat 24 Oct',gi:'Sab 24 Okt',time:'13:00',name:'Komang Sudiarta',fu:'pickup',st:'conf',items:[['rice',12,13]],dep:50},
+ {g:'Fri 30 Oct',gi:'Jum 30 Okt',time:'18:00',name:'Bu Wayan',fu:'delivery',st:'conf',items:[['lemper',10,10],['onde',10,8]],dep:0}
+];
+const PAST=[
+ {g:'Fri 9 Oct',gi:'Jum 9 Okt',time:'19:00',name:'Bu Sari',fu:'pickup',st:'done',items:[['soto',4,12]],paid:1},
+ {g:'Sun 4 Oct',gi:'Min 4 Okt',time:'11:30',name:'Made Artha',fu:'delivery',st:'done',items:[['rice',8,14],['pisang',8,7]],paid:1}
+];
+const total=o=>o.items.reduce((s,i)=>s+i[1]*i[2],0);
+const dueOf=o=>o.paid?0:total(o)-(o.dep||0);
+const summary=o=>o.items.map(i=>i[1]+'× '+dn(i[0]).replace(/ \(\d+\)/,'')).join(', ');
+const stCls={cook:'cook',conf:'',ready:'ready',done:'done'};
+const stTxt=(t,s)=>({cook:t.stCooking,conf:t.stConfirmed,ready:t.stReady,done:t.stDone}[s]);
+
+function hdr(title,back,right){
+  return '<div class="hdr">'+(back?'<button class="back sellerback" type="button" aria-label="Back">'+ic('back')+'</button>':'')+'<h1>'+title+'</h1>'+(right||'')+'</div>';
+}
+
+function orow(t,o){
+  const due=dueOf(o);
+  return '<button type="button" class="orow"><div class="l1"><span class="tm">'+o.time+'</span><span class="nm">'+esc(o.name)+'</span><span class="tag priv">'+t.priv+'</span><span class="tot">$'+total(o)+'</span></div>'+
+   '<div class="l2">'+esc(summary(o))+' · '+(o.fu==='pickup'?t.pickup:t.delivery)+'</div>'+
+   '<div class="l3"><span class="st '+stCls[o.st]+'">'+stTxt(t,o.st)+'</span>'+(due>0?'<span class="due">$'+due+' '+t.due+'</span>':'<span class="paidm">'+t.paid+'</span>')+'</div></button>';
+}
+
+function listScreen(t){
+  if(sub[0]===2&&dev==='phone') return moreScreen(t);
+  const past=sub[0]===1;
+  const src=past?PAST:ORD;
+  const groups=[];
+  src.forEach(o=>{const g=past?(lang==='id'?o.gi:o.g):(o.g==='today'?t.today:o.g==='tomorrow'?t.tomorrow:(lang==='id'?o.gi:o.g));let G=groups.find(x=>x.g===g);if(!G){G={g,l:[]};groups.push(G)}G.l.push(o)});
+  const dateS={ [t.today]:lang==='id'?'Sab 17 Okt':'Sat 17 Oct',[t.tomorrow]:lang==='id'?'Min 18 Okt':'Sun 18 Oct'};
+  const body='<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:12px 0 4px"><span class="muted small" style="flex:1 1 220px">'+t.listH+'</span><button type="button" class="btn pri">'+ic('plus')+t.newB+'</button></div>'+
+   '<div class="seg" role="group" aria-label="Filter" style="margin:10px 0 0"><button type="button" aria-pressed="'+!past+'" data-sub="0">'+t.up+'</button><button type="button" aria-pressed="'+past+'" data-sub="1">'+t.past+'</button></div>'+
+   groups.map(G=>'<div class="grp"><h2>'+G.g+'</h2>'+(dateS[G.g]?'<span>'+dateS[G.g]+'</span>':'')+'</div><div class="olist">'+G.l.map(o=>orow(t,o)).join('')+'</div>').join('');
+  return [hdr(t.privT,false),'<div class="scroll"><div class="page">'+body+'</div></div>',''];
+}
+
+function moreScreen(t){
+  const items=t.moreN.map((n,i)=>'<a href="#">'+nic([3,4,6,7,8,9][i])+n+'</a>');
+  items.splice(2,0,'<a href="#" class="hl" aria-current="page">'+nic(2)+t.privT+'<span class="sx">'+t.dueSoon+' <span class="nbadge" aria-label="3">3</span></span></a>');
+  return [hdr(t.more,false),'<div class="scroll"><div class="page more" style="padding-top:8px">'+items.join('')+'</div></div>',''];
+}
+
+function pickRow(t,d,on,line){
+  const [k,pr,a]=d;
+  let h='<div class="pr1'+(on?' on':'')+'"><span class="cb">'+(on?CHK:'')+'</span>'+thumb(a)+'<span class="nm">'+dn(k)+'</span><span class="lp">$'+pr+'</span></div>';
+  if(on)h+='<div class="sel"><div class="ctl" role="group" aria-label="'+t.qty+'"><button type="button" class="round" aria-label="−">'+ic('minus')+'</button><output class="qty">'+line[1]+'</output><button type="button" class="round" aria-label="+">'+ic('plus')+'</button></div>'+
+    '<div class="mini"><label>'+t.price+'</label><input inputmode="decimal" value="'+line[2]+'.00" aria-label="'+t.price+' '+esc(dn(k))+'"></div><span class="lineT">$'+line[1]*line[2]+'</span></div>';
+  return h;
+}
+
+function editorScreen(t){
+  const o=ORD[0], st=sub[1]; // 0 deposit, 1 not paid, 2 paid
+  const T=total(o);
+  const dep=st===0?64:0, still=st===2?0:T-dep;
+  const picked={};o.items.forEach(i=>picked[i[0]]=i);
+  const rows=LIB.map(d=>pickRow(t,d,!!picked[d[0]],picked[d[0]])).join('');
+  const f=(id,l,v,extra)=>'<div class="field"><label for="'+id+'">'+l+(extra?' <span class="opt">'+extra+'</span>':'')+'</label><input id="'+id+'" value="'+esc(v)+'"></div>';
+  const body='<div class="card" style="margin-top:12px">'+
+   '<h2 class="fh">'+t.when+'</h2><div class="row2">'+f('p1',t.date,lang==='id'?'Sab 17 Okt 2026':'Sat 17 Oct 2026')+f('p2',t.time,'12:00')+'</div>'+
+   '<div class="field"><span class="lab">'+t.how+'</span><div class="seg2" role="group" aria-label="'+t.how+'"><button type="button" aria-pressed="false">'+t.pickup+'</button><button type="button" aria-pressed="true">'+t.delivery+'</button></div></div>'+
+   f('p3',t.addr,t.addrV)+f('p4',t.addrNote,t.addrNoteV,t.opt)+
+   '<div class="rd">'+ic('lock')+'<span>'+t.addrRd+'</span></div>'+
+   '<h2 class="fh">'+t.cust+'</h2>'+f('p5',t.name,'Rina Wulandari')+
+   '<div class="field"><label for="p6">'+t.note+' <span class="opt">'+t.opt+'</span></label><textarea id="p6">'+esc(t.noteV)+'</textarea></div>'+
+   '<h2 class="fh">'+t.dishes+'</h2><p class="muted small" style="margin:-4px 0 8px">'+t.dishesH+'</p>'+
+   '<div class="pk">'+rows+'<button type="button" class="newdish"><span class="lt none" style="border-color:var(--accent);color:var(--accent)">'+ic('plus').replace('class="i"','class="i" style="width:18px;height:18px"')+'</span><span>'+t.newDish+'<small>'+t.newDishH+'</small></span></button></div>'+
+   '<div class="tot2"><div class="tr b"><span>'+t.total+'</span><span>$'+T+'</span></div></div>'+
+   '<h2 class="fh">'+t.pay+'</h2><div class="field"><div class="seg2" role="group" aria-label="'+t.pay+'"><button type="button" aria-pressed="'+(st!==2)+'">'+t.notPaid+'</button><button type="button" aria-pressed="'+(st===2)+'">'+t.paid+'</button></div></div>'+
+   (st!==2?'<div class="field"><label for="p7">'+t.deposit+' <span class="opt">'+t.opt+'</span></label><input id="p7" inputmode="decimal" value="'+(dep?'$'+dep+'.00':'')+'" placeholder="$0.00"></div>':'')+
+   '<div class="tr '+(still>0?'w':'ok')+'"><span>'+(still>0?t.still:t.nothing)+'</span><span>'+(still>0?'$'+still:'$0')+'</span></div>'+
+   '<p class="muted small" style="margin:6px 0 0">'+t.payH+'</p>'+
+   '<div class="actions"><button type="button" class="btn pri block">'+t.save+'</button><button type="button" class="btn block">'+t.cancel+'</button></div>'+
+   '<div class="rd">'+ic('lock')+'<span>'+t.ownerOnly+'</span></div></div>';
+  return [hdr(t.edT2,true),'<div class="scroll"><div class="page">'+body+'</div></div>',''];
+}
+
+function detailScreen(t){
+  const o=ORD[0],T=total(o),still=T-o.dep;
+  const steps=[t.stConfirmed,t.stCooking,t.stReady,t.stDone].map((s,i)=>'<li class="'+(i<1?'d':i===1?'c':'')+'">'+s+'</li>').join('');
+  const items=o.items.map(i=>'<li><span class="q">'+i[1]+'×</span><span class="n">'+dn(i[0])+'</span><span class="p">$'+i[2]+'</span><span class="s">$'+i[1]*i[2]+'</span></li>').join('');
+  const body='<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="code" style="font-size:1.25rem">K7M4-2XQ9</span><span class="tag priv">'+t.priv+'</span><span class="st cook" style="margin-left:auto">'+t.stCooking+'</span></div>'+
+   '<p class="muted small" style="margin:2px 0 8px">'+t.code+'</p><ol class="steps" aria-label="Status">'+steps+'</ol></div>'+
+   '<div class="card" style="margin-top:12px"><dl class="kv"><dt>'+t.dCust+'</dt><dd><b>Rina Wulandari</b></dd><dt>'+t.dWhen+'</dt><dd>'+(lang==='id'?'Sab 17 Okt, 12:00':'Sat 17 Oct, 12:00')+' · '+t.delivery+'</dd><dt>'+t.dHow+'</dt><dd>'+t.addrV+'<br><span class="muted small">'+t.addrNoteV+'</span></dd><dt>'+t.dNote+'</dt><dd>'+t.noteV+'</dd></dl></div>'+
+   '<h2 class="sec" style="margin-top:16px">'+t.items+'</h2><div class="card"><ul class="itl">'+items+'</ul><div class="tot2"><div class="tr b"><span>'+t.total+'</span><span>$'+T+'</span></div><div class="tr"><span>'+t.deposit+'</span><span>$'+o.dep+'</span></div><div class="tr w"><span>'+t.still+'</span><span>$'+still+'</span></div></div></div>'+
+   '<div class="actions"><button type="button" class="btn pri block">'+t.next+'</button><button type="button" class="btn block">'+ic('wa')+t.send+'</button><div class="two"><button type="button" class="btn">'+ic('copy')+t.copy+'</button><button type="button" class="btn">'+ic('pen')+t.edit+'</button></div><button type="button" class="btn danger block">'+ic('trash')+t.cancelO+'</button></div>';
+  const over=sub[2]===1?'<div class="scrim"><div class="dlg" role="alertdialog" aria-labelledby="dt"><h3 id="dt">'+t.askT+'</h3><p>'+t.askB+'</p><div class="two"><button type="button" class="btn">'+t.askKeep+'</button><button type="button" class="btn pri" style="background:var(--err);border-color:var(--err);color:#fff">'+t.askGo+'</button></div></div></div>':'';
+  return [hdr(t.detT,true),'<div class="scroll"><div class="page">'+body+'</div></div>',over];
+}
+
+function cookScreen(t){
+  const rows=[['rice',8,6],['lemper',12,2],['soto',10,5],['pisang',6,0]].map(r=>{const ph=r[2];
+    return '<div class="ckrow">'+thumb(r[0])+'<span class="nm"><b>'+dn(r[0])+'</b><small>'+t.menuL+' '+r[1]+(ph?' · <span class="tag priv">'+t.priv+'</span> '+ph:'')+'</small></span><span class="ct">'+(r[1]+ph)+'</span></div>';}).join('');
+  const body='<p class="muted small" style="margin:12px 0 8px">'+t.cookS+'</p><div class="card" style="padding:4px 16px">'+rows+'</div>'+
+   '<h2 class="sec">'+t.priv2+'</h2><div class="olist">'+ORD.slice(0,2).map(o=>orow(t,o)).join('')+'</div>';
+  return [hdr(t.cookT,false),'<div class="scroll"><div class="page">'+body+'</div></div>',''];
+}
+
+function customerScreen(t){
+  const o=ORD[0],T=total(o),pf=sub[4]===1,still=pf?0:T-o.dep;
+  const steps=[t.stConfirmed,t.stCooking,t.stReady,t.stDone].map((s,i)=>'<li class="'+(i<1?'d':i===1?'c':'')+'">'+s+'</li>').join('');
+  const items=o.items.map(i=>'<li><span class="q">'+i[1]+'×</span><span class="n">'+dn(i[0])+'</span><span class="s">$'+i[1]*i[2]+'</span></li>').join('');
+  const body='<div class="chead"><span class="tag priv">'+t.cSub+'</span><p class="big">'+t.cT+' <span class="code">K7M4-2XQ9</span></p><p class="muted small" style="margin:0">'+t.cCook+'</p></div>'+
+   '<div class="cpage"><div class="card" style="margin-top:12px"><ol class="steps" aria-label="Status">'+steps+'</ol></div>'+
+   '<div class="card" style="margin-top:12px"><dl class="kv"><dt>'+t.dWhen+'</dt><dd>'+(lang==='id'?'Sab 17 Okt, 12:00':'Sat 17 Oct, 12:00')+'</dd><dt>'+t.cDel+'</dt><dd>'+t.cWhere+'</dd><dt>'+t.dNote+'</dt><dd>'+t.noteV+'</dd></dl></div>'+
+   '<h2 class="sec">'+t.cLook+'</h2><div class="card"><ul class="itl">'+items+'</ul>'+
+   '<table class="ptable" style="margin-top:8px;border-top:1px solid var(--line)"><tr><td>'+t.cTotal+'</td><td>$'+T+'</td></tr>'+(pf?'':'<tr><td>'+t.cPaid+'</td><td>$'+o.dep+'</td></tr>')+
+   (pf?'<tr class="ok"><td>'+t.cPaidFull+'</td><td>$'+T+'</td></tr>':'<tr class="w"><td>'+t.cStill+'</td><td>$'+still+'</td></tr>')+'</table></div>'+
+   '<p class="muted small" style="margin:14px 0 0">'+t.cNeed+'</p></div>';
+  return [hdr(t.cT,true),'<div class="scroll">'+body+'</div>',''];
+}
+
+function render(){
+  const t=I[lang];
+  document.documentElement.lang=lang;
+  const seller=scr<=3;
+  const [h,body,over]=[listScreen,editorScreen,detailScreen,cookScreen,customerScreen][scr](t);
+  const railOn=scr===3?3:2;
+  const navI=[0,1,2,3,4,5,6,7,8,9];
+  const rail='<nav class="rail'+(seller?' on':'')+'" aria-label="Seller"><div class="rb">Shaggy<i>Bobo</i></div>'+t.nav.map((n,i)=>'<a href="#" '+(i===railOn?'aria-current="page"':'')+'>'+nic(navI[i])+n+(i===2?'<span class="nbadge" aria-label="3">3</span>':'')+'</a>').join('')+'</nav>';
+  const tabs=seller?'<nav class="tabbar on" aria-label="Tabs">'+t.tabs.map((x,i)=>'<div class="'+(i===4&&scr!==3?'on':'')+'">'+nic([0,1,5,6,3][i])+x+(i===4?'<span class="nbadge" aria-label="3">3</span>':'')+'</div>').join('')+'</nav>':'';
+  const f=$('#frame');f.className='frame '+dev;
+  f.innerHTML=rail+'<div class="col">'+h+body+tabs+'</div>'+(over||'');
+  $('#scrseg').innerHTML=t.scr.map((s,i)=>'<button type="button" data-scr="'+i+'" aria-pressed="'+(i===scr)+'">'+s+'</button>').join('');
+  const opts=t.subs[scr];
+  const ss=$('#subseg');ss.parentElement.style.display=opts.length?'flex':'none';
+  ss.innerHTML=opts.map((s,i)=>'<button type="button" data-sub="'+i+'" aria-pressed="'+(i===sub[scr])+'">'+s+'</button>').join('');
+  $('#notes').innerHTML='<div><h3>'+t.nH+'</h3><ul>'+t.n.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
+  document.querySelectorAll('[data-dev]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dev===dev));
+  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
+}
+document.addEventListener('click',e=>{
+  const g=s=>e.target.closest(s);let b;
+  if(b=g('[data-scr]')){scr=+b.dataset.scr;render();return}
+  if(b=g('[data-dev]')){dev=b.dataset.dev;render();return}
+  if(b=g('[data-lang]')){lang=b.dataset.lang;render();return}
+  if(b=g('[data-th]')){setTheme(b.dataset.th);return}
+  if(b=g('[data-sub]')){sub[scr]=+b.dataset.sub;render();return}
+  if(g('.rail a,.tabbar,.more a'))e.preventDefault();
+});
+function setTheme(m){document.documentElement.dataset.theme=m;document.querySelectorAll('[data-th]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.th===m))}
+const q=new URLSearchParams(location.search);
+setTheme(q.get('theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));
+if(q.get('lang')==='id')lang='id';
+if(q.get('dev')==='tablet')dev='tablet';
+if(q.get('scr'))scr=Math.min(4,Math.max(0,+q.get('scr')||0));
+if(q.get('sub'))sub[scr]=Math.max(0,+q.get('sub')||0);
+render();
+</script>
+</body>
+</html>
