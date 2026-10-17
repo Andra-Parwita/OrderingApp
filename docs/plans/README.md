@@ -97,7 +97,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 064 | ✅ | [Keep the pictures of the last 10 menus](064-past-menu-pictures.md) | approved (2026-10-12); server now, client after 061 |
 | 065 | ✅ | [My orders: remember the kitchen, kitchen pill on cards](065-my-orders-kitchen.md) | approved (2026-10-12) |
 | 066 | ✅ | [Up to 50 dishes on a menu, labels and print split properly](066-fifty-dishes.md) | approved (2026-10-12) |
-| 067 | ✅ | [A picture for each dish, shown to customers](067-dish-pictures.md) | built and gated 16–17 Oct (D-103); in Release 1.0.36 (owner: "B") |
+| 067 | ✅ | [A picture for each dish, shown to customers](067-dish-pictures.md) | built and gated 16–17 Oct (D-103); in Release 1.0.36 (owner: "B") ; **live in 1.0.36 (17 Oct)** |
 | 068 | ✅ | [Two kitchens on one phone: safe home-screen apps](068-two-kitchen-icons.md) | approved (2026-10-13); next deploy |
 | 069 | ✅ | [Per-chef portions and income](069-per-chef-income.md) | approved (2026-10-13) |
 | 070 | ✅ | [A branded HTML docs site, kept current](070-docs-site.md) | approved (2026-10-13); building |
@@ -105,12 +105,12 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 072 | ✅ | [Tick freely, saved in one go](072-tick-freely-save-in-one-go.md) | approved (2026-10-13); building |
 | 073 | ✅ | [Fewer, smarter server requests (audit)](073-request-audit.md) | draft (2026-10-13); owner to choose stages |
 | 074 | ✅ | [Live updates everywhere: push instead of checking](074-live-updates-everywhere.md) | approved (2026-10-14); building |
-| 075 | ✅ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | built + gated (2026-10-15); not deployed |
-| 076 | ✅ | [Pickup points on the map](076-pickup-on-map.md) | built + gated (2026-10-15); not deployed; **migration 0024** |
-| 077 | ✅ | [Times: stored as UTC, shown in the device's time](077-device-time.md) | built and gated (16 Oct); rulings D-101, D-102; **migration** |
-| 078 | ✅ | [Admin page: pinned header, compact left column, desktop first](078-admin-layout.md) | built + gated (2026-10-15); not deployed |
-| 079 | ✅ | [Help opens inside the seller app](079-help-inside-seller-app.md) | built + gated (2026-10-15); not deployed |
-| 080 | ✅ | [Top bars push the page down instead of covering it](080-top-bars-push-down.md) | built + gated (2026-10-15); not deployed |
+| 075 | ✅ | [About ShaggyBobo and release notes in the seller app](075-release-notes.md) | built + gated (2026-10-15) ; **live in 1.0.36 (17 Oct)** |
+| 076 | ✅ | [Pickup points on the map](076-pickup-on-map.md) | built + gated (2026-10-15); **migration 0024** ; **live in 1.0.36 (17 Oct)** |
+| 077 | ✅ | [Times: stored as UTC, shown in the device's time](077-device-time.md) | built and gated (16 Oct); rulings D-101, D-102; **migration** ; **live in 1.0.36 (17 Oct)** |
+| 078 | ✅ | [Admin page: pinned header, compact left column, desktop first](078-admin-layout.md) | built + gated (2026-10-15) ; **live in 1.0.36 (17 Oct)** |
+| 079 | ✅ | [Help opens inside the seller app](079-help-inside-seller-app.md) | built + gated (2026-10-15) ; **live in 1.0.36 (17 Oct)** |
+| 080 | ✅ | [Top bars push the page down instead of covering it](080-top-bars-push-down.md) | built + gated (2026-10-15) ; **live in 1.0.36 (17 Oct)** |
 | 081 | ⬜ | [Private orders (Khusus): one-off orders for an event](081-private-orders.md) | draft; after the 1.0.36 deploy, for 1.0.37 |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).

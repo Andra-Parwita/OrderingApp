@@ -2,7 +2,7 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here.
 
-**Last session:** 2026-10-14 → 17 (ended 17 Oct night; 16 Oct evening: release lines picked, day-first dates, plan 067 built), the owner's PC (Adelaide), Claude as coordinator. Built and gated plans 075, 076, 077, 078, 079, 080 on `indra/brand_logo_ux`, **pushed, not deployed** (owner, 16 Oct: "do not deploy"). **The owner's son (builder) continues from here on his PC.** **Live: Release 1.0.35** (`14a4440`, Worker version `afd9eeb0-132a-438b-8ee5-6acac5535271`, deployed 14 Oct by the owner from this PC; `main` fast-forwarded and tagged `v1.0.35`). Backup `backups/shaggybobo-2026-10-14.sql` taken before migrations 0016–0023 (all applied); `MAPS_EMBED_KEY` set.
+**Last session:** 2026-10-14 → 17, the owner's PC (Adelaide), Claude as coordinator. **Live: Release 1.0.36** (deployed 17 Oct ~11:30 by the owner; Worker version `02aaca1a-a530-48ca-b85e-2037bf6339e1`, site reports `9592e07`; `main` fast-forwarded and tagged `v1.0.36`). Backup `backups/shaggybobo-2026-10-17.sql` (678 rows) taken before migrations 0024–0026 (all applied). No announcement and no maintenance mode (owner: "no need to announce it"; the migrations are add-only). Before: 1.0.35 (`14a4440`, 14 Oct).
 
 ## Where things stand
 **Final gate (14 Oct, ~08:30), green:** typecheck ✅ · lint ✅ · format ✅ · **unit 2,199 tests** ✅ (61 failed in the big parallel run only from Windows port exhaustion — EADDRINUSE; all re-ran green, 75/75) · **e2e 81 passed, 0 failed** (`scratch/f-e2e3.log`). The e2e run found an **order-dependent failure, fixed**: the plan 046 maintenance test switched maintenance on while seller-auth ran in parallel; it now runs alone in its own `maintenance-desktop-chromium` project. The docs site is rebuilt (23 pages).
@@ -42,7 +42,7 @@
 4. ~~Invite message drafts~~ **Decided (owner A, 13 Oct): fine as is** (name and role kept; the message holds the key, so it is never stored).
 
 ## Deploy impact (tell the builder before the next deploy)
-**Built after 1.0.35 (15–16 Oct, gated green, not deployed):**
+**In Release 1.0.36 (deployed 17 Oct):**
 
 | plan | what | deploy impact |
 |---|---|---|
@@ -75,7 +75,7 @@
 1. Read this file.
 2. `git pull` on `indra/brand_logo_ux`; `pnpm install` (075 added `lottie-web`); `pnpm db:migrate:local` (applies 0024 + 0025 to your local D1; migrate only, never reseed).
 3. Ask the owner whether the phone checks of 1.0.35 were OK (seller Orders + Settings, customer "Connection: live ●", Check on map, admin Announce + backup settings).
-4. **Next deploy = Release 1.0.36** (067 + 075–080 above), only when the owner says so. Order: check the date in `src/features/seller-about/releaseNotes.ts` (2026-10-17) → `pnpm run docs` → back up → announce → Maintenance on → **migrations 0024 + 0025 + 0026** → deploy → Maintenance off after the live check → re-save the cut-off of any open menu (077: it was saved as Melbourne time) → push `main` and tag `v1.0.36`.
+4. **Release 1.0.36 is live (17 Oct).** Left after the deploy: the owner's phone checks (About + What's new, a dish photo end to end, pickup map, Help in app); the Demo menu's cut-off shows 8:30 pm (re-save if wanted); Onde Onde's and Demo2's drafts: check the cut-off time when publishing (saved as Melbourne time). For the next deploy, the same order as before: Order: check the date in `src/features/seller-about/releaseNotes.ts` (2026-10-17) → `pnpm run docs` → back up → announce → Maintenance on → **migrations 0024 + 0025 + 0026** → deploy → Maintenance off after the live check → re-save the cut-off of any open menu (077: it was saved as Melbourne time) → push `main` and tag `v1.0.36`.
 5. After the deploy: **plan 081 private orders (Khusus)** for 1.0.37 (owner A, 17 Oct): go through its open questions one at a time, then the mock-up. Then the other open items, **one at a time**: the cleanup list below, customer socket tokens out of the URL, Help screenshots, the customer app round (Lottie), 077 leftover (Settings "default cut-off time" still in the kitchen's clock).
 
 ## Known and not done
@@ -90,4 +90,4 @@
 - The **customer app** round (with the owner's Lottie animations).
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.35 is live; plans 067 and 075–080 are built, gated and pushed on `indra/brand_logo_ux`, not deployed. Do the setup in "Next session" step 2 first. Then ask (one question at a time): were the 1.0.35 phone checks OK; then walk us through the deploy steps one step at a time, only when we say deploy.
+> Read docs/HANDOVER.md and CLAUDE.md. Release 1.0.36 is live (17 Oct, tag v1.0.36). Next: plan 081 private orders (Khusus) for 1.0.37. Do the setup in "Next session" step 2 first. Then ask (one question at a time): were the 1.0.36 phone checks OK; then plan 081's open questions, one at a time, then its mock-up.
