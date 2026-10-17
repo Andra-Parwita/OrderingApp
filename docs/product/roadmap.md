@@ -7,7 +7,7 @@ Today's product is deliberately small (see [overview.md](overview.md) and the [c
 ## Now (next rounds)
 | item | plan | state |
 |---|---|---|
-| Release 1.0.36: About page (075), pickup on the map (076), times in the device's zone (077), admin layout (078), Help inside the seller app (079), top bars push the page down (080) | 075–080 | built and gated; deploy next |
+| Release 1.0.36: dish pictures (067), About page (075), pickup on the map (076), times in the device's zone (077), admin layout (078), Help inside the seller app (079), top bars push the page down (080) | 067, 075–080 | built and gated; deploy tonight (owner, 17 Oct) |
 | A picture for each dish, shown to customers | [067](../plans/067-dish-pictures.md) | draft |
 | Cleanup: state duplication, sweeping expired keys/codes, dead route names, customer socket tokens out of the URL | — | listed in the handover; ask one by one |
 | Help screenshots from the live app | — | to do |
