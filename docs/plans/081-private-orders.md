@@ -39,3 +39,13 @@
 | 2 | data + routes (migration, private order kind, roles) |
 | 3 | seller screens; customer order page |
 | 4 | tests, Help, docs, release line |
+
+## Build design (coordinator + design check, 17 Oct)
+- **Data:** reuse `orders` with `kind` ('menu' | 'private'), `event_date` (kitchen-local YYYY-MM-DD), `event_time` (HH:MM kitchen wall clock, D-101), `deposit_cents`; `order_lines.chef_id` (copied from the dish). Migration **0027_private_orders.sql**, add-only. Lines copy the library dish's name/size/price (D-062) with per-order qty and price.
+- **Guard:** one `LIVE_MENU` SQL fragment (`past_week_id IS NULL AND kind = 'menu'`) at every live-menu site (stock, portion guard, finish, lists, CSV, backup, handover, auth); a unit test fails if a raw `past_week_id IS NULL` appears in `worker/db` outside an allow-list. Private orders never get a `past_week_id` and never touch stock, cut-off, pause or auto-finish.
+- **Address:** the D-099 code; wiped one day after `event_date` in the kitchen's time zone; the order itself is removed after `ORDER_DETAIL_WEEKS` with an "archived" stub. Cancel clears the address.
+- **Routes:** `GET /api/seller/private` (Upcoming / Past, `?day=today`, `?due=1` counts), owner-only `POST /private`, `PATCH /private/<code>`, `POST /private/<code>/cancel`; status/pack/paid/collected through the existing order routes (owner only for cancel and paid on a private order); `GET /private/chef-summary?date=`. Customer reads `/o/<token>`; customer writes on a private order answer `private_order`.
+- **Day tools:** Cook, Pack, labels, Orders ("Private today") and per-chef income fetch the day's private orders and show a "Private" tag; past-menu chef snapshots stay menu-only.
+- **Seller UI:** `src/features/seller-private/`; nav `private` under Orders (tablet), in More on phone with the today/tomorrow count; the library picker taken out of the menu wizard's DishesStep as a shared `DishPicker`.
+- **Stages:** 1 data + repo · 2 routes · 3 seller screens · 4 day tools + customer page · 5 Help, docs, e2e `p081-private-orders.spec.ts`.
+- **Risks:** a missed live-menu SQL site (grep test + stock/finish tests); day boundary in the kitchen's zone; backup restore must leave private rows alone; per-chef history of past menus excludes private income.
