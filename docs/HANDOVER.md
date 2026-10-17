@@ -29,7 +29,7 @@
 
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
-2. `git pull`; `pnpm install`; `pnpm db:migrate:local` (migrate only, never reseed).
+2. **Ask the owner first whether setup is needed** (owner, 17 Oct): on the same PC that ran this session it usually isn't; on another PC (e.g. the builder's): `git pull`; `pnpm install`; `pnpm db:migrate:local` (migrate only, never reseed).
 3. 1.0.38 is live. Ask the owner about their phone checks: **Remember me** on a real phone (turn on, place an order, see ✓ on the seller side, restore on a second phone if they have one), **send a short message** from admin (Short message → New message), the **pickup map and QR scan** (new CSP), and the About animation.
 4. Owner checks still open: 1.0.36/1.0.37 phone checks; **a real label print from the seller's Samsung tablet** (Labels page → A4 → Print; printer paper A4, scale 100%).
 
@@ -46,4 +46,4 @@
 - Passkeys don't work on the LAN-IP dev URL (Remember me hides itself there); use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.38 (tag v1.0.38): short message (086), Remember me (087), security touch-ups (089). Ask the owner before any git write. Do "Next session" step 2, then step 3 (the owner's phone checks), then ask which plan is next, one question at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.38 (tag v1.0.38): short message (086), Remember me (087), security touch-ups (089). Ask the owner before any git write. Ask me whether "Next session" step 2 (setup) is needed, then step 3 (the owner's phone checks), then ask which plan is next, one question at a time.
