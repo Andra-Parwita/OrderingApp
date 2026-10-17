@@ -2,8 +2,8 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-17 evening (~22:15–23:20), the owner's PC (Adelaide), Claude as coordinator. Built and shipped **1.0.39** (hotfix on top of 1.0.38): plan **092 Remember me polish**.
-**Live:** Release **1.0.39** (17 Oct ~23:10; Worker `904ef961-8c17-4e4d-a900-53d23662edab`; health OK, devTools false, site reports `1.0.100 · b63e899` (build number = commit count)). Commit `b63e899` on `indra/brand_logo_ux`; **not yet pushed, merged to `main` or tagged `v1.0.39`** (ask the owner). Previous: 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`, `main` = `63ea073`).
+**Last session:** 2026-10-17 evening (~22:15–23:20), the owner's PC (Adelaide), Claude as coordinator. Built and shipped **1.0.39** (plan **092 Remember me polish**) and **1.0.40** (plan **093** banner no flash), both hotfixes on top of 1.0.38.
+**Live:** Release **1.0.40** (17 Oct ~23:33; Worker `ff9f06f1-5788-4dd3-b6fb-4dc9968065cc`; health OK, devTools false, site reports `1.0.102 · ec41e17` (build number = commit count)); tag `v1.0.40` on `ec41e17`; `main` = the hand-over commit after it. Previous: 1.0.39 (Worker `904ef961…`, tag `v1.0.39` on `b63e899`), 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`).
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -37,7 +37,7 @@ Owner, 17 Oct: "changing page make the image banner on top flashing and kept rel
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. Ask the owner whether setup is needed (same PC: usually not; other PC: `git pull`; `pnpm install`; `pnpm db:migrate:local`, never reseed).
-3. If not done yet: ask the owner about push + merge `main` + tag `v1.0.39`, and the 1.0.39 live checks on the iPhone (Settings rows + sheets, Remember me turn-on with first name, privacy note).
+3. Ask the owner about the 1.0.39/1.0.40 live checks on the iPhone (Settings rows + sheets, Remember me turn-on with first name, privacy note, banner stays still across Menu ↔ My orders ↔ Settings).
 4. Owner checks still open: 1.0.38 pickup map + QR scan (CSP), send one short message, About animation (seller app: More → About), the seller ✓ on a Remember-me order; 1.0.36/1.0.37 phone checks; a real label print from the Samsung tablet.
 
 ## Later (owner rulings recorded)
@@ -53,4 +53,4 @@ Owner, 17 Oct: "changing page make the image banner on top flashing and kept rel
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.38; 1.0.39 (plan 092 Remember me polish) is built and gated (scoped). Ask the owner before any git write. Ask me whether setup is needed, then whether 1.0.39 is committed and deployed, then the open phone checks, then which plan is next, one question at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.40 (tag v1.0.40): Remember me polish (092, in 1.0.39) and banner no flash (093). Ask the owner before any git write. Ask me whether setup is needed, then the open phone checks, then which plan is next, one question at a time.

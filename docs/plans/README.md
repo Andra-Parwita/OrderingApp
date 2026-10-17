@@ -122,7 +122,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 090 | ⬜ | [Clean-up plan (later)](090-cleanup.md) | collected 17 Oct; after current features |
 | 091 | ⬜ | [Faster lint, Prettier and tests](091-faster-tooling.md) | analysis 17 Oct; measure after the 1.0.38 gate |
 | 092 | ✅ | [Remember me polish](092-remember-me-polish.md) | live 17 Oct in 1.0.39 (tag v1.0.39) (D-108) |
-| 093 | ⬜ | [Customer banner doesn't flash on page change](093-banner-no-flash.md) | building 17 Oct, release 1.0.40 |
+| 093 | ✅ | [Customer banner doesn't flash on page change](093-banner-no-flash.md) | live 17 Oct in 1.0.40 (tag v1.0.40) |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 
