@@ -2,8 +2,8 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-17 evening (~22:15–23:20), the owner's PC (Adelaide), Claude as coordinator. Built **1.0.39** (hotfix on top of 1.0.38): plan **092 Remember me polish**. Not committed, not deployed.
-**Live:** Release **1.0.38** (Worker `0708ee42-ea66-46e3-b654-c2a4ad16b327`; tag `v1.0.38`; `main` = `63ea073`). Working branch `indra/brand_logo_ux` (= v1.0.38 + hand-over commit `fd0b8cf`) + the uncommitted 1.0.39 tree.
+**Last session:** 2026-10-17 evening (~22:15–23:20), the owner's PC (Adelaide), Claude as coordinator. Built and shipped **1.0.39** (hotfix on top of 1.0.38): plan **092 Remember me polish**.
+**Live:** Release **1.0.39** (17 Oct ~23:40; Worker `904ef961-8c17-4e4d-a900-53d23662edab`; health OK, devTools false, site reports `1.0.100 · b63e899` (build number = commit count)). Commit `b63e899` on `indra/brand_logo_ux`; **not yet pushed, merged to `main` or tagged `v1.0.39`** (ask the owner). Previous: 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`, `main` = `63ea073`).
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -34,7 +34,7 @@ Release notes: "Small fixes and polish." / "Perbaikan kecil dan penyempurnaan." 
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. Ask the owner whether setup is needed (same PC: usually not; other PC: `git pull`; `pnpm install`; `pnpm db:migrate:local`, never reseed).
-3. If 1.0.39 isn't committed/deployed yet: ask the owner to commit (by path) and deploy; then the live checks above.
+3. If not done yet: ask the owner about push + merge `main` + tag `v1.0.39`, and the 1.0.39 live checks on the iPhone (Settings rows + sheets, Remember me turn-on with first name, privacy note).
 4. Owner checks still open: 1.0.38 pickup map + QR scan (CSP), send one short message, About animation (seller app: More → About), the seller ✓ on a Remember-me order; 1.0.36/1.0.37 phone checks; a real label print from the Samsung tablet.
 
 ## Later (owner rulings recorded)
