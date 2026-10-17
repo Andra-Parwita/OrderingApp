@@ -14,6 +14,7 @@ import {
   type LiveEvent,
   type LiveEventType,
 } from '../../shared/liveContract';
+import { NOTE_NUDGE_EVENT } from '../../shared/shortMessage';
 import { currentSellerSlug } from './device/sellerContext';
 import {
   MAX_REFUSALS,
@@ -151,7 +152,9 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
       schedulePing(current);
       if (typeof message.data !== 'string') return;
       const event = parseLiveEvent(message.data);
-      if (event) onEvent(event);
+      // Plan 086: a short message was sent. The note host asks again; no screen needs to know.
+      if (event?.type === 'notice') window.dispatchEvent(new Event(NOTE_NUDGE_EVENT));
+      else if (event) onEvent(event);
     };
     current.onclose = () => {
       lost(current);

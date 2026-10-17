@@ -148,6 +148,7 @@ export type OrderRow = {
   collected_by: 'customer' | 'seller' | null;
   pickup_place_id: string | null;
   customer_code: string | null;
+  customer_confirmed: number;
   kind: 'menu' | 'private';
   event_date: string | null;
   event_time: string | null;
@@ -414,6 +415,7 @@ export function ordersOf(
     })),
     ...(row.pickup_place_id !== null ? { pickupPlaceId: row.pickup_place_id } : {}),
     ...(row.customer_code !== null ? { customerCode: row.customer_code } : {}),
+    ...(row.customer_confirmed === 1 ? { confirmed: true as const } : {}),
     ...(row.packed === 1 ? { packed: true } : {}),
     ...(row.collected_at !== null && row.collected_by !== null
       ? { collectedAt: row.collected_at, collectedBy: row.collected_by }

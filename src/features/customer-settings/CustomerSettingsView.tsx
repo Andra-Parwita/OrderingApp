@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { RELEASE_VERSION } from '../../../shared/release';
 import type { Kitchen, Language } from '../../../shared/domain';
 import type { CustomerLiveState } from '../../api/customerLiveState';
 import {
@@ -15,6 +14,7 @@ import {
 import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import type { ThemePreference } from '../../theme/themePreference';
 import { KitchenBanner } from '../../components/KitchenBanner';
+import { PrivacyModal, RememberMeCard } from '../../components/remember-me';
 import { Icon, Segmented, type SegmentedOption } from '../../ui';
 import { screenHeightMinus } from '../../theme/screen';
 
@@ -130,27 +130,6 @@ const AboutButton = styled.button`
   font-weight: 700;
   cursor: pointer;
 `;
-const About = styled.ul`
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg}
-    ${({ theme }) => theme.spacing.lg} calc(${({ theme }) => theme.spacing.lg} + 1rem);
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  color: ${({ theme }) => theme.c.muted};
-  font-size: ${({ theme }) => theme.type.size.md};
-  line-height: 1.5;
-`;
-const ABOUT_KEYS = [
-  'aboutKeep',
-  'aboutNever',
-  'aboutDevice',
-  'aboutNotify',
-  'aboutHow',
-  'aboutFind',
-  'aboutNo',
-] as const;
 
 // ---- The home-screen card ----
 
@@ -376,26 +355,24 @@ export function CustomerSettingsView({
           </Label>
           <AboutButton
             type="button"
-            aria-expanded={aboutOpen}
-            aria-controls="settings-about-text"
+            aria-haspopup="dialog"
             aria-describedby="settings-about"
             onClick={() => {
-              setAboutOpen((open) => !open);
+              setAboutOpen(true);
             }}
           >
-            {aboutOpen ? t('customerSettings.aboutHide') : t('customerSettings.aboutShow')}
+            {t('customerSettings.aboutShow')}
           </AboutButton>
         </Row>
-        {aboutOpen ? (
-          <About id="settings-about-text">
-            {ABOUT_KEYS.map((key) => (
-              <li key={key}>{t(`customerSettings.${key}`)}</li>
-            ))}
-            <li>{t('customerSettings.aboutWho', { app: t('app.name') })}</li>
-            <li>{t('customerSettings.aboutVersion', { version: RELEASE_VERSION })}</li>
-          </About>
-        ) : null}
       </Rows>
+      {aboutOpen ? (
+        <PrivacyModal
+          onClose={() => {
+            setAboutOpen(false);
+          }}
+        />
+      ) : null}
+      <RememberMeCard kitchenName={kitchen?.name} />
       {connection ? (
         <Connection role="status">
           {connection.mode === 'live' ? (

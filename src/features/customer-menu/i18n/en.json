@@ -130,6 +130,7 @@
       "other": "Could not place your order. Check your connection and try again.",
       "order_locked": "The seller has locked this order. Message them on WhatsApp to change it.",
       "ordering_closed": "Sorry, ordering is closed right now.",
+      "too_many_orders": "Too many orders in a short time. Please wait a few minutes or message the kitchen.",
       "fulfilment_unavailable": "Sorry, this menu doesn't offer that way to receive your order. Please choose another option.",
       "fulfilment_unavailable_pickup": "Sorry, this menu doesn't offer pickup. Please choose delivery.",
       "fulfilment_unavailable_delivery": "Sorry, this menu doesn't offer delivery. Please choose pickup.",

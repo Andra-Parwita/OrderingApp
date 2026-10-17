@@ -5,6 +5,7 @@ import type { Order } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { ListRow, Pill } from '../../ui';
+import { ConfirmedPill } from './ConfirmedMark';
 import { SELLER_NS } from './i18n/register';
 import { KIND_MARK, customerKind } from './customerKind';
 import { toneOf } from './orderStatus';
@@ -38,6 +39,7 @@ export const OrderRow = memo(function OrderRow({ order, onOpen }: OrderRowProps)
     <>
       <Code>{formatOrderCode(order.code)}</Code>
       {order.firstName}
+      <ConfirmedPill order={order} />
       {order.paid ? <Mark>{t('orders.paid')}</Mark> : null}
     </>
   );

@@ -68,6 +68,13 @@ import {
 } from './device/session';
 import { reportPasskeyError } from './clientLog';
 import { request, type ApiResult } from './http';
+import {
+  parseMessages,
+  parseShortMessage,
+  type MessageRequest,
+  type MessagesResponse,
+  type ShortMessage,
+} from '../../shared/shortMessage';
 
 const enc = encodeURIComponent;
 
@@ -450,6 +457,25 @@ export function removeTeamMember(
     method: 'DELETE',
     ...(seller ? { seller } : {}),
   });
+}
+
+/** Plan 086: the admin's short messages (newest first), send one, stop one (admin only). */
+export function fetchMessages(): Promise<ApiResult<MessagesResponse>> {
+  return request('/api/admin/messages', parseMessages);
+}
+
+export function sendMessage(
+  input: MessageRequest & { sameText?: boolean },
+): Promise<ApiResult<ShortMessage>> {
+  return request(
+    '/api/admin/messages',
+    (body) => parseShortMessage((body as { message?: unknown } | null)?.message),
+    { method: 'POST', body: { ...input, timeZone: deviceZone() } },
+  );
+}
+
+export function stopMessage(id: string): Promise<ApiResult<MessagesResponse>> {
+  return request(`/api/admin/messages/${enc(id)}`, parseMessages, { method: 'DELETE' });
 }
 
 /** Plan 046: the announced update and maintenance on/off (admin only). */

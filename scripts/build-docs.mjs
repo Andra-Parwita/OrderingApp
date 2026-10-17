@@ -181,6 +181,19 @@ const nav = (current) =>
     return `<section><h2>${esc(group)}</h2><ul>${lis}</ul></section>`;
   }).join('\n');
 
+// Release version: single source is shared/release.ts (parsed, not imported); package.json is the fallback.
+const releaseVersion = (() => {
+  try {
+    const m = /RELEASE_VERSION\s*=\s*['"]([^'"]+)['"]/.exec(
+      readFileSync(path.join(root, 'shared', 'release.ts'), 'utf8'),
+    );
+    if (m) return m[1];
+  } catch {
+    // fall through to package.json
+  }
+  return JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).version;
+})();
+
 const brand = (f) => `assets/${f}`;
 
 function shell({ title, body, current, hasDiagram, toc }) {
@@ -205,7 +218,7 @@ function shell({ title, body, current, hasDiagram, toc }) {
   <div class="scene" aria-hidden="true"><img src="${brand('nusantara-market.webp')}" alt=""></div>
   <div class="band-in">
     <a class="brand" href="index.html"><img src="${brand('logo-icon.webp')}" alt=""><span><b>Shaggy</b><i>Bobo</i></span></a>
-    <div class="title"><p class="h1">ShaggyBobo · Docs</p><p class="sub">${esc(title)}</p></div>
+    <div class="title"><p class="h1">ShaggyBobo · Docs <span class="ver" title="Release version">v${esc(releaseVersion)}</span></p><p class="sub">${esc(title)}</p></div>
     <div class="tools">
       <button type="button" id="menu-btn" class="pill menu-btn" aria-expanded="false" aria-controls="side">Menu</button>
       <button type="button" id="theme-btn" class="pill" aria-label="Switch light or dark theme">Theme</button>

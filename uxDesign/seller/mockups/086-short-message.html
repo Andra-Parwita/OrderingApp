@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>ShaggyBobo · Short message (plan 086 mock-up)</title>
+<style>
+:root{--beige:#EADBC2;--ink:#2B1D12;--stage:#d9d4c6;--pill-bg:#fff6ea;--pill-border:#ead8bf}
+*{box-sizing:border-box}
+body{margin:0;background:var(--stage);color:#1C1F1A;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,textarea,a{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #1F6B5C;outline-offset:2px;border-radius:6px}
+
+/* mock-up chrome */
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:center;align-items:center;padding:12px 16px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:4px 14px;font-size:.8125rem;font-weight:600;min-height:36px;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+.wrap{display:flex;justify-content:center;gap:24px;padding:0 16px 16px;overflow-x:auto;align-items:flex-start}
+.notes{max-width:1000px;margin:0 auto;padding:0 16px 32px;font-size:.875rem;color:#2B1D12}
+.notes h2{font-size:1rem;margin:8px 0}
+.notes li{margin:4px 0}
+
+/* every frame carries its own tokens, so light and dark can sit side by side */
+.frame{--bg:#F6F2E8;--surf:#FFFDF8;--surf2:#F1EDE1;--line:#E4DED0;--text:#1C1F1A;--muted:#5D6358;--accent:#1F6B5C;--accent-tint:#E3EFEA;--onacc:#fff;--edge:#7F857A;--hover:#EBE6D6;--danger:#9B2C2C;--bubble:#FFFDF8;--bline:#E4DED0;--bobo:#d9772b;
+ background:var(--bg);color:var(--text);border-radius:16px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;flex-direction:column;position:relative;flex:none;height:760px;max-height:calc(100vh - 120px);min-height:560px}
+.frame[data-theme=dark]{--bg:#121411;--surf:#181A16;--surf2:#20231E;--line:#2E332B;--text:#F1EEE6;--muted:#A9AFA3;--accent:#93C590;--accent-tint:#23332E;--onacc:#10200f;--edge:#8C9387;--hover:#262B23;--danger:#EE8B78;--bubble:#2E332B;--bline:#434A3F}
+.frame.desk{width:1180px}.frame.phone{width:390px}.frame.tab{width:1024px}
+[hidden]{display:none!important}
+.cap{text-align:center;font-size:.8125rem;color:#2B1D12;margin:0 0 6px;font-weight:600}
+.col1{display:flex;flex-direction:column}
+
+/* shared bits */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--accent);font-weight:600;font-size:.875rem}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--onacc)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--danger)}
+.tag{display:inline-block;font-size:.6875rem;padding:1px 8px;border-radius:999px;background:var(--accent-tint);color:var(--accent);font-weight:600}
+.muted{color:var(--muted)}.small{font-size:.8125rem}
+
+/* ===== the note (sibling of the maintenance bar) ===== */
+.snote{position:relative;flex:none;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;background:var(--surf2);border-bottom:1px solid var(--line);font-size:.875rem;
+  animation:slidein .45s cubic-bezier(.2,.8,.2,1) both;transition:opacity .6s ease,max-height .6s ease,padding .6s ease}
+.snote.over{position:absolute;top:0;left:0;right:0;z-index:5;box-shadow:0 6px 18px rgb(40 30 15/14%)}
+.snote.gone{opacity:0;max-height:0;padding-top:0;padding-bottom:0;overflow:hidden;border-bottom-width:0;pointer-events:none}
+.snote img{width:26px;height:26px;object-fit:contain;flex:none;animation:float 3.2s ease-in-out infinite}
+.snote .bub{position:relative;flex:1;min-width:0;background:var(--bubble);border:1px solid var(--bline);border-radius:12px;padding:6px 12px;margin-left:6px;line-height:1.35;color:var(--text)}
+.snote .bub::before{content:"";position:absolute;left:-6px;top:50%;margin-top:-5px;width:10px;height:10px;background:var(--bubble);border-left:1px solid var(--bline);border-bottom:1px solid var(--bline);transform:rotate(45deg);border-bottom-left-radius:3px}
+.snote .x{flex:none;border:0;background:transparent;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.snote .x:hover{background:var(--hover);color:var(--text)}
+.snote .x svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.snote .prog{position:absolute;left:0;bottom:-1px;height:2px;background:var(--accent);width:var(--p,70%);transform-origin:left}
+.snote .prog.live{width:100%;animation:drain 30s linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes slidein{from{transform:translateY(-100%);opacity:0}to{transform:none;opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.snote,.snote img{animation:none}.snote .prog.live{animation-duration:30s}}
+
+/* ===== admin ===== */
+.hdr{flex:none;display:flex;align-items:center;gap:12px;height:56px;padding:0 16px;background:var(--surf);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px;background:#fff6ea;border:1px solid #ead8bf;border-radius:10px;padding:4px 12px 4px 8px;font-weight:700;letter-spacing:-.04em;font-size:1.0625rem;color:#2a1d14;white-space:nowrap}
+.brand img{height:26px}.brand i{font-style:normal;color:var(--bobo)}
+.hdr .ttl{font-weight:600;font-size:.9375rem;color:var(--muted);flex:1;border-left:1px solid var(--line);padding-left:12px}
+.body{flex:1;min-height:0;display:flex}
+.nav{width:220px;flex:none;background:var(--surf2);padding:10px 8px;display:flex;flex-direction:column;gap:2px}
+.nav div{display:flex;align-items:center;min-height:36px;padding:0 10px;border-radius:8px;font-size:.875rem}
+.nav div[aria-current=true]{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.main{flex:1;min-width:0;overflow-y:auto;padding:20px 28px 32px}
+.main h2{margin:0 0 2px;font-size:1.125rem}
+.sub{margin:0 0 14px;color:var(--muted);font-size:.8125rem}
+.card{border:1px solid var(--line);background:var(--surf);border-radius:10px;padding:14px 16px;max-width:680px;margin-bottom:14px}
+.card h3{margin:0 0 2px;font-size:.9375rem}
+.card .sub{margin-bottom:12px}
+.card.off{opacity:.9}
+.f{display:flex;flex-direction:column;gap:3px;font-size:.75rem;font-weight:600;margin-bottom:12px}
+.f>span.l,.fl{font-size:.75rem;font-weight:600;display:block;margin-bottom:4px}
+.f input[type=text],.f textarea{border:1px solid var(--edge);background:var(--surf);color:var(--text);border-radius:8px;padding:6px 10px;min-height:40px;font-size:.875rem;font-weight:400;width:100%}
+.f textarea{resize:vertical;min-height:56px}
+.cnt{align-self:flex-end;font-weight:400;color:var(--muted);font-size:.75rem}
+.chk{display:inline-flex;align-items:center;gap:8px;min-height:36px;font-size:.875rem;margin-right:14px;font-weight:400}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.s2{display:inline-flex;border:1px solid var(--edge);border-radius:10px;overflow:hidden;flex-wrap:wrap}
+.s2 button{border:0;background:var(--surf);min-height:40px;padding:0 16px;font-weight:600;font-size:.875rem;color:var(--text)}
+.s2 button+button{border-left:1px solid var(--edge)}
+.s2 button[aria-pressed=true]{background:var(--accent-tint);color:var(--accent)}
+.grp{margin-bottom:12px}
+.kitchens{display:flex;flex-wrap:wrap;gap:0 4px;padding:4px 0 0 4px}
+.pv{border:1px dashed var(--edge);border-radius:10px;padding:10px;background:var(--bg);margin-bottom:12px}
+.pv .snote{animation:none;border:1px solid var(--line);border-radius:10px;padding-right:14px}
+.pv .snote .x{display:none}
+.pv .snote .prog{display:none}
+.pvl{font-size:.75rem;color:var(--muted);margin:0 0 6px;font-weight:600}
+.send{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sent{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--accent-tint);color:var(--text);font-size:.875rem}
+.sent b{color:var(--accent)}
+.sent svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sent .btn{margin-left:auto;min-height:36px}
+.fine{display:flex;gap:8px;color:var(--muted);font-size:.8125rem;margin-top:10px}
+
+/* ===== customer phone ===== */
+.chdr{flex:none;display:flex;align-items:center;gap:10px;height:52px;padding:0 14px;background:var(--surf);border-bottom:1px solid var(--line)}
+.chdr b{flex:1;font-size:1rem}
+.chdr .lang{font-size:.75rem;font-weight:600;border:1px solid var(--edge);border-radius:999px;padding:2px 10px;color:var(--muted)}
+.cscroll{flex:1;min-height:0;overflow:hidden;padding:12px 14px}
+.cscroll h4{margin:4px 0 2px;font-size:1.0625rem}
+.dish{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.dish .ph{width:56px;height:56px;border-radius:10px;background:var(--accent-tint);flex:none}
+.dish .nm{flex:1;min-width:0;font-size:.9375rem}.dish .nm small{display:block;color:var(--muted);font-size:.8125rem}
+.dish .pr{font-variant-numeric:tabular-nums;font-size:.875rem;font-weight:600}
+.cbar{flex:none;margin:10px 14px 14px;min-height:44px;border-radius:12px;background:var(--accent);color:var(--onacc);display:flex;align-items:center;justify-content:center;font-weight:600}
+.state{margin-top:6px;text-align:center;font-size:.8125rem;color:#2B1D12}
+.replay{margin:6px auto 0;display:block;border:1px solid var(--ink);background:var(--pill-bg);color:var(--ink);border-radius:999px;padding:4px 14px;font-size:.8125rem;font-weight:600;min-height:36px}
+
+/* ===== seller tablet ===== */
+.rail{width:200px;flex:none;background:var(--surf2);border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.rail .rb{padding:0 6px 14px;font-weight:700;letter-spacing:-.04em}.rail .rb i{font-style:normal;color:var(--bobo)}
+.rail div{display:flex;align-items:center;min-height:40px;padding:0 12px;border-radius:8px;font-size:.9375rem}
+.rail div[aria-current=true]{background:var(--accent-tint);color:var(--accent);font-weight:600}
+.scol{flex:1;min-width:0;display:flex;flex-direction:column;position:relative}
+.shdr{flex:none;display:flex;align-items:center;height:52px;padding:0 24px;background:var(--surf);border-bottom:1px solid var(--line);font-weight:700;font-size:1.0625rem}
+.spage{padding:16px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:820px}
+.spage .card{margin:0;max-width:none}
+.big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}
+.orow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:.875rem}
+.orow:last-child{border-bottom:0}
+</style>
+</head>
+<body>
+<div class="top" role="toolbar" aria-label="Mock-up controls">
+  <div class="seg" id="scr" role="group" aria-label="Screen"></div>
+  <div class="seg" id="theme" role="group" aria-label="Theme">
+    <button data-v="light" aria-pressed="true">Light</button><button data-v="dark" aria-pressed="false">Dark</button>
+  </div>
+  <div class="seg" id="lang" role="group" aria-label="Language">
+    <button data-v="en" aria-pressed="true">EN</button><button data-v="id" aria-pressed="false">ID</button>
+  </div>
+  <div class="seg" id="st" role="group" aria-label="State"></div>
+</div>
+
+<div class="wrap" id="stage"></div>
+<div class="notes" id="notes"></div>
+
+<script>
+const LOGO='/public/brand/logo-icon.webp';
+const T={
+en:{scr:['Admin · Short message','Customer phone','Seller tablet'],
+ st:{0:['Compose','Sent'],1:['Showing','Replay 30 s','Faded away'],2:['Showing','Faded away']},
+ nav:['Sellers','Announce & maintenance','Platform settings','Problems','Your devices'],
+ adminT:'Admin', annT:'Announce & maintenance', annS:'Tell everyone about an update, or switch maintenance on.',
+ c1T:'Announcement & maintenance', c1S:'Unchanged. The bar for planned updates stays here.', c1V:'Maintenance Sat 17 Oct, 9:00–9:15 pm', c1On:'Announced',
+ mT:'Short message', mS:'A quick note that shows for up to 30 seconds, then fades. No phone notification, ever.',
+ tEn:'Text (English)', tId:'Text (Bahasa Indonesia)', same:'Same text for both', cnt:'/ 90',
+ kit:'Kitchens', all:'All kitchens', pick:'Pick kitchens', aud:'Who sees it', audO:['Everyone','Sellers','Customers'],
+ act:'Active for', actH:'New visitors can still get it during this time.', actO:['15 minutes','1 hour','Today'],
+ pv:'Preview (what people see)', send:'Send', sentL:'Sent', until:'active until', stop:'Stop now', stopped:'Stopped. Nobody new will see it.',
+ fine:'Open screens get it instantly. Everyone else gets it when they next open the app, while it is active. Each device shows it once.',
+ msg:'Everything is running fine again. Thanks for your patience!', x:'Close',
+ cust:'Onde Onde · Menu', cm:'Menu Sat 17 Oct', dishes:[['Nasi bakar ayam','Pickup or delivery'],['Soto ayam','Serves 2'],['Klepon (6 pcs)','Sweet snack']], cta:'View basket · $42.00',
+ sHome:'Home', sNav:['Home','Orders','Private','Kitchen','Hand over','Sell','Menu','Settings'], c:['Orders today','Cooking','Ready'], ord:[['Rina','Confirmed'],['Putu','Cooking'],['Dewi','Ready']],
+ n:['Use the switches: three screens, light or dark, EN or ID, and the small state switch (Compose / Sent, Showing / Replay / Faded away). In Compose, type, tick kitchens and press Send.',
+    'The note is a sibling of the maintenance bar: same Bobo, same speech bubble, same soft strip. It adds a ✕ (40 px tap target) and a thin line that shrinks over 30 seconds. Replay 30 s runs the real timing, then the note fades.',
+    'The text is plain (no links, no formatting). Receivers see their own language; with "Same text for both" everyone sees the one text.',
+    'Kitchens: All, or tick specific ones. Audience: Everyone / Sellers / Customers. Active for: 15 min / 1 hour / Today (until midnight, admin time). Here "now" is 9:30 pm.',
+    'A device shows a message once. Reopening or reloading the app does not show it again. Never a phone notification.',
+    'If a maintenance bar is also showing, the note sits right under it. Sample data only.']},
+id:{scr:['Admin · Pesan singkat','Ponsel pelanggan','Tablet penjual'],
+ st:{0:['Tulis','Terkirim'],1:['Tampil','Putar ulang 30 d','Sudah hilang'],2:['Tampil','Sudah hilang']},
+ nav:['Penjual','Pengumuman & pemeliharaan','Pengaturan platform','Masalah','Perangkatmu'],
+ adminT:'Admin', annT:'Pengumuman & pemeliharaan', annS:'Kabari semua orang soal pembaruan, atau nyalakan mode pemeliharaan.',
+ c1T:'Pengumuman & pemeliharaan', c1S:'Tidak berubah. Bar untuk pembaruan terjadwal tetap di sini.', c1V:'Pemeliharaan Sab 17 Okt, 21.00–21.15', c1On:'Sudah diumumkan',
+ mT:'Pesan singkat', mS:'Catatan cepat yang tampil maksimal 30 detik, lalu hilang. Tidak ada notifikasi ke ponsel, sama sekali.',
+ tEn:'Teks (Inggris)', tId:'Teks (Bahasa Indonesia)', same:'Teks sama untuk keduanya', cnt:'/ 90',
+ kit:'Dapur', all:'Semua dapur', pick:'Pilih dapur', aud:'Siapa yang lihat', audO:['Semua orang','Penjual','Pelanggan'],
+ act:'Aktif selama', actH:'Pengunjung baru masih bisa menerimanya selama waktu ini.', actO:['15 menit','1 jam','Hari ini'],
+ pv:'Pratinjau (yang dilihat orang)', send:'Kirim', sentL:'Terkirim', until:'aktif sampai', stop:'Hentikan sekarang', stopped:'Dihentikan. Tidak ada yang baru akan melihatnya.',
+ fine:'Layar yang sedang terbuka langsung menerimanya. Yang lain menerimanya saat membuka aplikasi lagi, selama masih aktif. Tiap perangkat hanya melihatnya sekali.',
+ msg:'Semua sudah jalan normal lagi. Makasih sudah sabar ya!', x:'Tutup',
+ cust:'Onde Onde · Menu', cm:'Menu Sab 17 Okt', dishes:[['Nasi bakar ayam','Ambil atau antar'],['Soto ayam','Untuk 2 orang'],['Klepon (6 pcs)','Camilan manis']], cta:'Lihat keranjang · $42.00',
+ sHome:'Beranda', sNav:['Beranda','Pesanan','Khusus','Dapur','Serah terima','Jual','Menu','Pengaturan'], c:['Pesanan hari ini','Dimasak','Siap'], ord:[['Rina','Dikonfirmasi'],['Putu','Dimasak'],['Dewi','Siap']],
+ n:['Pakai tombol di atas: tiga layar, terang atau gelap, EN atau ID, dan tombol status kecil (Tulis / Terkirim, Tampil / Putar ulang / Sudah hilang). Di "Tulis", ketik, centang dapur, lalu tekan Kirim.',
+    'Catatannya mirip bar pemeliharaan: Bobo yang sama, gelembung ucapan yang sama, strip lembut yang sama. Ditambah ✕ (area ketuk 40 px) dan garis tipis yang menyusut selama 30 detik. "Putar ulang 30 d" menjalankan waktu aslinya, lalu catatan memudar.',
+    'Teksnya polos (tanpa tautan atau format). Penerima melihat bahasanya sendiri; dengan "Teks sama untuk keduanya" semua melihat satu teks.',
+    'Dapur: Semua, atau centang yang tertentu. Penerima: Semua orang / Penjual / Pelanggan. Aktif selama: 15 menit / 1 jam / Hari ini (sampai tengah malam, waktu admin). Di sini "sekarang" pukul 21.30.',
+    'Satu perangkat hanya melihat satu pesan sekali. Dibuka ulang atau dimuat ulang tidak muncul lagi. Tidak pernah notifikasi ke ponsel.',
+    'Kalau bar pemeliharaan juga tampil, catatan ini ada tepat di bawahnya. Data contoh saja.']}
+};
+const KIT=['Onde Onde','Dellavee','Demo'];
+const S={scr:0,theme:'light',lang:'en',st:[0,0,0],same:false,en:'',id:'',allK:true,k:[true,false,false],aud:0,act:0};
+const UNTIL=['9:45 pm','10:30 pm','12:00 am'], UNTILID=['21.45','22.30','24.00'];
+const t=()=>T[S.lang];
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const X='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const CK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function text(){ // what a receiver in the current language sees
+  const own=S.lang==='id'&&!S.same?S.id:(S.same?S.en:(S.lang==='en'?S.en:S.id));
+  return own.trim()||T[S.lang].msg;
+}
+function note(cls,pcls,style){
+  return `<div class="snote ${cls||''}" role="status"><img src="${LOGO}" alt=""><div class="bub">${esc(text())}</div><button class="x" aria-label="${t().x}">${X}</button><span class="prog ${pcls||''}" style="${style||''}"></span></div>`;
+}
+function btns(el,arr,cur,fn){el.innerHTML=arr.map((l,i)=>`<button data-i="${i}" aria-pressed="${i===cur}">${l}</button>`).join('');el.onclick=e=>{const b=e.target.closest('button');if(b)fn(+b.dataset.i)}}
+
+function admin(){
+  const d=t(), sent=S.st[0]===1;
+  const un=S.lang==='id'?UNTILID[S.act]:UNTIL[S.act];
+  const ks=KIT.map((k,i)=>`<label class="chk"><input type="checkbox" data-k="${i}" ${S.allK||S.k[i]?'checked':''} ${S.allK?'disabled':''}>${k}</label>`).join('');
+  return `<div class="frame desk" data-theme="${S.theme}">
+ <div class="hdr"><div class="brand"><img src="${LOGO}" alt=""><span>Shaggy<i>Bobo</i></span></div><div class="ttl">${d.adminT}</div></div>
+ <div class="body"><nav class="nav" aria-label="Admin">${d.nav.map((n,i)=>`<div ${i===1?'aria-current="true"':''}>${n}</div>`).join('')}</nav>
+ <div class="main"><h2>${d.annT}</h2><p class="sub">${d.annS}</p>
+  <div class="card off"><h3>${d.c1T} <span class="tag">${d.c1On}</span></h3><p class="sub" style="margin:0 0 6px">${d.c1S}</p><div class="small">${d.c1V}</div></div>
+  <div class="card"><h3>${d.mT}</h3><p class="sub">${d.mS}</p>
+   <div class="f"><span class="l">${d.tEn}</span><input type="text" id="ten" maxlength="90" value="${esc(S.en)}" placeholder="${T.en.msg}"><span class="cnt">${S.en.length} ${d.cnt}</span></div>
+   <label class="chk"><input type="checkbox" id="same" ${S.same?'checked':''}>${d.same}</label>
+   <div class="f" ${S.same?'hidden':''} style="margin-top:6px"><span class="l">${d.tId}</span><input type="text" id="tid" maxlength="90" value="${esc(S.id)}" placeholder="${T.id.msg}"><span class="cnt">${S.id.length} ${d.cnt}</span></div>
+   <div class="grp"><span class="fl">${d.kit}</span>
+    <div class="s2" id="kmode"><button data-i="0" aria-pressed="${S.allK}">${d.all}</button><button data-i="1" aria-pressed="${!S.allK}">${d.pick}</button></div>
+    <div class="kitchens">${ks}</div></div>
+   <div class="grp"><span class="fl">${d.aud}</span><div class="s2" id="aud">${d.audO.map((o,i)=>`<button data-i="${i}" aria-pressed="${S.aud===i}">${o}</button>`).join('')}</div></div>
+   <div class="grp"><span class="fl">${d.act}</span><div class="s2" id="act">${d.actO.map((o,i)=>`<button data-i="${i}" aria-pressed="${S.act===i}">${o}</button>`).join('')}</div><div class="small muted" style="margin-top:4px">${d.actH}</div></div>
+   <p class="pvl">${d.pv}</p><div class="pv">${note('')}</div>
+   <div class="send">${sent?`<div class="sent" style="flex:1">${CK}<span><b>${d.sentL}</b> · ${d.until} ${un}</span><button class="btn danger" id="stop">${d.stop}</button></div>`:`<button class="btn pri" id="send">${d.send}</button>`}</div>
+   <div class="fine"><span aria-hidden="true">ⓘ</span><span>${d.fine}</span></div>
+  </div></div></div></div>`;
+}
+function phone(theme,state,extraCap){
+  const d=t();
+  const gone=state==='faded';
+  const n=gone?'':note('over', state==='live'?'live':'', state==='live'?'':'--p:70%');
+  return `<div class="col1"><p class="cap">${extraCap}</p><div class="frame phone" data-theme="${theme}" data-ph="${state}">
+ <div class="chdr"><b>${d.cust}</b><span class="lang">EN · ID</span></div>
+ <div class="cscroll"><h4>${d.cm}</h4><p class="muted small" style="margin:0">12 King William St, Adelaide · 11:00–14:00</p>
+  ${d.dishes.map((x,i)=>`<div class="dish"><div class="ph"></div><div class="nm">${x[0]}<small>${x[1]}</small></div><div class="pr">${['$18.00','$14.00','$10.00'][i]}</div></div>`).join('')}</div>
+ <div class="cbar">${d.cta}</div>${n}</div></div>`;
+}
+function customer(){
+  const stt=['showing','live','faded'][S.st[1]];
+  const lab=S.lang==='id'?['Terang','Gelap']:['Light','Dark'];
+  return phone('light',stt,lab[0])+phone('dark',stt,lab[1]);
+}
+function seller(){
+  const d=t(), gone=S.st[2]===1;
+  return `<div class="frame tab" data-theme="${S.theme}" style="flex-direction:row">
+ <nav class="rail"><div class="rb">Shaggy<i>Bobo</i></div>${d.sNav.map((n,i)=>`<div ${i===0?'aria-current="true"':''}>${n}</div>`).join('')}</nav>
+ <div class="scol">${gone?'':note('','','--p:70%')}
+  <div class="shdr">${d.sHome}</div>
+  <div class="spage">${d.c.map((c,i)=>`<div class="card"><div class="small muted">${c}</div><div class="big">${[14,5,3][i]}</div></div>`).join('')}
+   <div class="card" style="grid-column:1/-1">${d.ord.map(o=>`<div class="orow"><b>${o[0]}</b><span class="tag">${o[1]}</span></div>`).join('')}</div></div>
+ </div></div>`;
+}
+function render(){
+  const stage=document.getElementById('stage');
+  stage.innerHTML=[admin,customer,seller][S.scr]();
+  document.documentElement.lang=S.lang;
+  btns(document.getElementById('scr'),t().scr,S.scr,i=>{S.scr=i;render()});
+  const stEl=document.getElementById('st');
+  btns(stEl,t().st[S.scr],S.st[S.scr],i=>{S.st[S.scr]=i;render()});
+  for(const [id,v] of [['theme',S.theme],['lang',S.lang]]){const el=document.getElementById(id);el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v))}
+  document.getElementById('theme').style.display=S.scr===1?'none':'';
+  document.getElementById('notes').innerHTML='<h2>'+(S.lang==='id'?'Catatan untuk pemilik':'Notes for the owner')+'</h2><ul>'+t().n.map(x=>`<li>${x}</li>`).join('')+'</ul>';
+  bind();
+}
+function bind(){
+  const q=s=>document.querySelector(s);
+  if(S.scr===0){
+    q('#ten').oninput=e=>{S.en=e.target.value;keep('#ten')};
+    q('#same').onchange=e=>{S.same=e.target.checked;render()};
+    const ti=q('#tid'); if(ti) ti.oninput=e=>{S.id=e.target.value;keep('#tid')};
+    q('#kmode').onclick=e=>{const b=e.target.closest('button');if(b){S.allK=b.dataset.i==='0';render()}};
+    document.querySelectorAll('[data-k]').forEach(c=>c.onchange=()=>{S.k[+c.dataset.k]=c.checked;});
+    q('#aud').onclick=e=>{const b=e.target.closest('button');if(b){S.aud=+b.dataset.i;render()}};
+    q('#act').onclick=e=>{const b=e.target.closest('button');if(b){S.act=+b.dataset.i;render()}};
+    const s=q('#send'); if(s) s.onclick=()=>{S.st[0]=1;render()};
+    const p=q('#stop'); if(p) p.onclick=()=>{S.st[0]=0;render();alert(t().stopped)};
+  }
+  document.querySelectorAll('.frame:not(.desk) .snote .x').forEach(b=>b.onclick=()=>{if(S.scr===1)S.st[1]=2;else S.st[2]=1;render()});
+  const live=q('.prog.live'); if(live) live.onanimationend=()=>{S.st[1]=2;render()};
+}
+function keep(sel){ // re-render the preview only, keep typing focus
+  const el=document.querySelector(sel),pos=el.selectionStart;render();const n=document.querySelector(sel);n.focus();n.setSelectionRange(pos,pos);
+}
+document.getElementById('theme').onclick=e=>{const b=e.target.closest('button');if(b){S.theme=b.dataset.v;render()}};
+document.getElementById('lang').onclick=e=>{const b=e.target.closest('button');if(b){S.lang=b.dataset.v;render()}};
+render();
+</script>
+</body>
+</html>

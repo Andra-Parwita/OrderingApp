@@ -231,12 +231,52 @@
       "label": "Admin sections",
       "pick": "Section",
       "sellers": "Sellers",
-      "announce": "Announce & maintenance",
+      "announce": "Announce update",
       "settings": "Platform settings",
       "problems": "Problems",
       "devices": "Your devices",
       "noticeSet": "notice set or maintenance on",
-      "resize": "Resize menu"
+      "resize": "Resize menu",
+      "maintenance": "Maintenance",
+      "message": "Short message"
+    },
+    "message": {
+      "title": "Short message",
+      "text": "A quick note that shows for up to 30 seconds, then fades. No phone notification, ever.",
+      "new": "New message",
+      "detailTitle": "Message",
+      "sent": "Sent",
+      "activeUntil": "Active until {{time}}",
+      "ended": "Ended",
+      "stopped": "Stopped",
+      "stop": "Stop now",
+      "again": "Send again as new",
+      "none": "No messages sent yet.",
+      "listLabel": "Short messages",
+      "textEn": "Text (English)",
+      "textId": "Text (Bahasa Indonesia)",
+      "same": "Same text for both",
+      "kitchens": "Kitchens",
+      "allKitchens": "All kitchens",
+      "pick": "Pick kitchens",
+      "audienceLabel": "Who sees it",
+      "audience": {
+        "everyone": "Everyone",
+        "sellers": "Sellers",
+        "customers": "Customers"
+      },
+      "window": "Active for",
+      "windows": {
+        "15m": "15 minutes",
+        "1h": "1 hour",
+        "today": "Today"
+      },
+      "windowHelp": "New visitors can still get it during this time.",
+      "send": "Send",
+      "preview": "Preview (what people see)",
+      "sample": "Everything is running fine again. Thanks for your patience!",
+      "sentAt": "Sent",
+      "fine": "Open screens get it instantly. Everyone else gets it when they next open the app, while it is active. Each device shows it once."
     }
   }
 }

@@ -27,7 +27,7 @@ const CAPTURES = /\/p0(33|39)-captures\.spec\.ts$/;
 // Closes a week and resets the mock in `finally`: runs alone, after everything else.
 const ARCHIVED = /archived-orders\.spec\.ts$/;
 // The one spec that orders a limited item. It runs last, alone, so nothing else sells that item out.
-const LIMITS = /limits\.spec\.ts$/;
+const LIMITS = /\/(limits|p089-order-limit)\.spec\.ts$/;
 // Sign-in specs change the one admin's and Dapur Demo's accounts (keys, passwords, devices), so
 // they run in the "auth-*" projects, one project after another, after the settings and limits
 // specs. The two files that share Dapur Demo's account (seller-auth, session-flow) never overlap.
@@ -43,6 +43,9 @@ const IPHONE_SMOKE =
   /\/(customer-batch1|native-customer|order-flow|batch2-flow|customer-live)\.spec\.ts$/;
 // Plan 046: turns maintenance on for a moment, which every page shows; runs alone, after the auth specs and before archived (which resets the database, and with it the admin).
 const MAINTENANCE = /\/admin-maintenance\.spec\.ts$/;
+// Plan 086: signs in with the same admin passkey as MAINTENANCE, so it runs after it, never beside it (two
+// browsers on one passkey break the signature counter).
+const SHORT_MESSAGE = /\/p086-short-message\.spec\.ts$/;
 const MAIN = ['iphone-chromium', 'mobile-chromium', 'desktop-chromium'];
 
 export default defineConfig({
@@ -90,6 +93,7 @@ export default defineConfig({
         CHEF_DISHES,
         DAY_SELLING,
         MAINTENANCE,
+        SHORT_MESSAGE,
         CAPTURES,
       ],
       use: { ...devices['Pixel 7'] },
@@ -106,6 +110,7 @@ export default defineConfig({
         CHEF_DISHES,
         DAY_SELLING,
         MAINTENANCE,
+        SHORT_MESSAGE,
         CAPTURES,
       ],
       use: { ...devices['Desktop Chrome'] },
@@ -167,6 +172,12 @@ export default defineConfig({
     {
       name: 'archived-desktop-chromium',
       testMatch: ARCHIVED,
+      dependencies: ['short-message-desktop-chromium'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'short-message-desktop-chromium',
+      testMatch: SHORT_MESSAGE,
       dependencies: ['maintenance-desktop-chromium'],
       use: { ...devices['Desktop Chrome'] },
     },

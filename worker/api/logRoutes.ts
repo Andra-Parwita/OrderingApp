@@ -10,7 +10,6 @@ import {
   parseLogRequest,
   type LogListResponse,
 } from '../../shared/logContract';
-import { sha256Hex } from '../db/crypto';
 import type { Repository } from '../repo/Repository';
 import { requireSession } from './authRoutes';
 import { error } from './respond';
@@ -37,7 +36,7 @@ export async function handleLog(store: Repository, request: Request): Promise<Re
   }
   const parsed = parseLogRequest(json);
   if (!parsed || parsed.entries.length === 0) return NO_CONTENT();
-  const client = await sha256Hex(request.headers.get('CF-Connecting-IP') ?? 'local');
+  const client = await store.auth.ipKey(request.headers.get('CF-Connecting-IP'));
   const wait = await store.auth.rateLimit(`log:${client}`, LOG_RATE_MAX, LOG_RATE_WINDOW_SECONDS);
   if (wait > 0) return NO_CONTENT();
   await store.log.record(parsed.entries);

@@ -33,6 +33,11 @@ test('admin announces an update, switches maintenance on, and the Updating scree
     await expect(bar).toContainText('The app pauses briefly. Short database upgrade.');
     await page.screenshot({ path: 'captures/p046/notice-bar.png' });
 
+    // Maintenance has its own admin page (plan 086 split it from the announcement).
+    await page
+      .getByRole('navigation', { name: 'Admin sections' })
+      .getByRole('button', { name: 'Maintenance' })
+      .click();
     await page.getByRole('button', { name: 'Turn maintenance on' }).click();
     await page.getByRole('button', { name: 'Tap again to turn on' }).click();
     await expect(page.getByText(/Maintenance is ON/)).toBeVisible();

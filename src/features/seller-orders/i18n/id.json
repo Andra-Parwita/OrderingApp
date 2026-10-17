@@ -224,6 +224,10 @@
     "list": "Pesanan",
     "status": "Status pesanan"
   },
+  "confirmed": {
+    "title": "Dikonfirmasi passkey",
+    "hint": "Dipesan pelanggan yang masuk dengan Ingat aku"
+  },
   "panel": {
     "changedBy": "{{name}} mengubah pesanan ini · {{when}}",
     "items": "Pesanan",

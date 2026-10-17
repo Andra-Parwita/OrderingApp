@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export const SECTIONS = ['sellers', 'announce', 'settings', 'problems', 'devices'] as const;
+export const SECTIONS = [
+  'sellers',
+  'announce',
+  'maintenance',
+  'message',
+  'settings',
+  'problems',
+  'devices',
+] as const;
 export type Section = (typeof SECTIONS)[number];
 
 const PARAM = 's';

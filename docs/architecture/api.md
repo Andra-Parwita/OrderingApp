@@ -24,14 +24,15 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 |---|---|---|---|
 | GET | `/api/health` | public | liveness, server time, version, whether dev tools are on |
 | GET | `/api/status` | public | plan 046: `{ maintenance, notice: { from, until, noteEn, noteId } \| null, time, backupMinutes: { customer, seller } }` (plan 074: minutes between backup checks while a live connection is down, 1 to 30, default 5 each; clients use 5 when absent); cached 5 s; every screen reads it (every 5 min, every 30 s while the Updating screen is up) |
+| GET | `/api/notes?audience=sellers\|customers&kitchens=slug,slug` | public | plan 086: the short messages this page may show now (not stopped, not expired, for this side and any of these kitchens; "all kitchens" messages always): `{ notes: [{ id, textEn, textId, expiresAt }] }`; 400 for another audience; `no-store`. The page asks on open and again on a live `notice` nudge |
 | POST | `/api/maintenance` | release token | plan 046: `{ maintenance: boolean }` with `Authorization: Bearer <MAINTENANCE_TOKEN>`; 401 without the secret or with a wrong token; no other route accepts the token |
 | GET | `/images/<key>` | public | stream an image from R2 (content-hashed, cached a year) |
 | GET | `/k/<slug>/manifest.webmanifest` | public | the kitchen's customer web-app manifest (`?start=` for an order page); also `seller.webmanifest`, `icon-<180\|192\|512>.png\|svg` and `apple-touch-icon.png` (always an image: the upload, or the shared default) |
 | GET | `/api/s/:slug/menu` | public | the kitchen's menu, theme, languages and ordering state; each pickup point may carry `address`, `lat`, `lng` (plan 076); `mapsEmbedKey` whenever the server has `MAPS_EMBED_KEY` |
-| POST | `/api/s/:slug/orders` | public | place an order (a delivery order may carry `address`: street, suburb, postcode, notes, lat/lng; ignored when the server has no `ADDRESS_KEY`; the menu answer says `addresses: true` when it has; an optional `customerCode`, 24 hex characters, the phone's anonymous per-kitchen code, stored on the order) |
+| POST | `/api/s/:slug/orders` | public | place an order (a delivery order may carry `address`: street, suburb, postcode, notes, lat/lng; ignored when the server has no `ADDRESS_KEY`; the menu answer says `addresses: true` when it has; an optional `customerCode`, 24 hex characters, the phone's anonymous per-kitchen code, stored on the order). Plan 089: 5 orders per 10 minutes per kitchen per client, else 429 `too_many_orders` with `retryAfterSeconds`; the client is the signed-in customer's account, otherwise the salted network key (no address, as in dev: no limit); an attempt counts once the request is well-formed, before the order is checked; seller-entered and private orders are not limited |
 | POST | `/api/s/:slug/orders/find` | public | find a lost order by code and first name (2 wrong tries lock that code 15 min; every miss answers alike, D-075) |
 | GET | `/api/s/:slug/team-names` | public | names of people with a password, for the password sign-in picker (D-090) |
-| GET | `/api/s/:slug/live?tokens=a,b` | token | plan 074: WebSocket (upgrade) for a customer's live updates; up to 20 tokens, each must be an unfinished order of this kitchen on its active menu (else 404 `not_found`; 400 for none or more than 20; 426 without upgrade). The room sends only `order.changed` for those orders (`{type, code?, at}`; no code = a bare nudge), never kitchen-wide events |
+| GET | `/api/s/:slug/live?tokens=a,b` | token | plan 074: WebSocket (upgrade) for a customer's live updates; up to 20 tokens, each must be an unfinished order of this kitchen on its active menu (else 404 `not_found`; 400 for none or more than 20; 426 without upgrade). The room sends `order.changed` for those orders (and, plan 086, the bare `notice` nudge when a short message is sent) (`{type, code?, at}`; no code = a bare nudge), never kitchen-wide events |
 | GET | `/api/orders?tokens=a,b` | token | My orders: up to 20 tokens across kitchens (live, archived, expired) |
 | GET | `/api/orders/:token` | token | one order (live, archived, or expired stub) |
 | PATCH | `/api/orders/:token` | token | customer edit (items, fulfilment, note, `address` or `address: null`) |
@@ -39,7 +40,7 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 | POST | `/api/orders/:token/collected` | token | "I've collected it" (idempotent) |
 | POST, DELETE | `/api/orders/:token/push` | token | turn web push on or off for this order |
 | GET | `/api/push/public-key` | public | the VAPID public key; 404 when push is not set up |
-| POST | `/api/log` | public | a device sends a few scrubbed error entries (rate limited by a hashed address) |
+| POST | `/api/log` | public | a device sends a few scrubbed error entries (rate limited by a daily-salted keyed hash of the address; the address is never stored) |
 
 ## Sign-in
 
@@ -60,7 +61,27 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 | GET | `/api/auth/devices` | signed in | my devices |
 | PATCH, DELETE | `/api/auth/devices/:id` | signed in | rename, or sign out and remove, one of my devices |
 
-Sign-in calls are rate limited per browser id (30 per minute; no IP is stored). Five wrong tries lock a key or person for 15 minutes (`locked_out` with `retryAfterSeconds`). A paused kitchen answers `kitchen_paused`.
+Sign-in calls are rate limited per browser id (30 per minute). The few limiters that look at a network address (find my order, log intake, phone codes) keep only an HMAC of it with a random per-day salt (kept two days); no IP is stored. Five wrong tries lock a key or person for 15 minutes (`locked_out` with `retryAfterSeconds`). A paused kitchen answers `kitchen_paused`.
+
+## Remember me (customers, plan 087, D-107)
+
+Optional customer passkey under `/api/customer/*`. Its own cookie `__Host-customer` (90 days, sliding, HttpOnly, Secure) and its own tables; a customer cookie gets 401 on every seller, admin and live route, and a seller passkey offered here (or the reverse) gets a friendly refusal (`other_kind`). State-changing calls need the same-site `Origin` (D-048). `POST /api/s/:slug/orders` also reads the customer cookie: a valid session sets `orders.customer_confirmed`; a bad cookie never blocks ordering.
+
+| method | path | who | purpose |
+|---|---|---|---|
+| POST | `/api/customer/register/options` | public | WebAuthn options to turn Remember me on (first name, plan 071 codes to adopt) |
+| POST | `/api/customer/register` | public | verify the passkey, create the account and a session; adopts device codes only with proof |
+| POST | `/api/customer/passkey/options` | public | options to sign in with an existing passkey (restore) |
+| POST | `/api/customer/passkey` | public | verify the passkey, start a session |
+| POST | `/api/customer/phone-codes` | signed in | make a 6-digit "add another phone" code (5 minutes, single use) |
+| POST | `/api/customer/code` | public | redeem the 6-digit code: starts a setup session (30 minutes to add a passkey) |
+| POST | `/api/customer/passkeys/options`, `/api/customer/passkeys` | session | add this phone's own passkey (a setup session becomes a full one) |
+| POST | `/api/customer/sign-out` | public | end this phone's session, clear the cookie |
+| GET, PATCH, DELETE | `/api/customer/me` | session | GET: first name, passkey/prf state and (`?slug=`) the customer code for that kitchen; PATCH: first name; DELETE: **delete my saved data**, one cascade delete of the account and everything on our side |
+| GET, POST | `/api/customer/orders` | session | My orders for the account (links up to 200); POST merges the phone's order tokens |
+| GET, PUT, DELETE | `/api/customer/address` | session | the sealed address blob (`{ sealed: {v, iv, ct} or null }`); PUT is refused without a confirmed order in the last 30 days and over 2 KB |
+
+Limits: 5 wrong 6-digit codes lock a phone (and its network key) for 15 minutes; more than 50 wrong codes anywhere in 5 minutes cancel every live code. The PRF output never leaves the phone (stripped before any request, tested). Sweeps: see Retention in [data-model.md](data-model.md).
 
 ## Admin
 
@@ -71,6 +92,8 @@ All under `/api/admin/`. The admin has no kitchen session and sees no order data
 | POST | `setup` | public | create the first admin with the `ADMIN_SETUP_KEY` secret (`admin_exists` once one exists) |
 | GET, POST | `sellers` | admin | list kitchens; add one (name and slug; `slug_taken`). Each row's `summary` carries `people`, `devices` (plan 073: the device count for the row, so the admin home needs no `members` call per kitchen), `menu`, `orders` and `lastActiveAt`, all from four grouped queries, so the list is one request and a fixed number of D1 trips however many kitchens there are |
 | GET, PATCH | `maintenance` | admin | plan 046: read, or change `maintenance` (on/off) and the announced `notice` (`null` clears it; `until` after `from`; notes max 200) |
+| GET, POST | `messages` | admin | plan 086 (D-106): list the newest 20 (`{ messages }`), or send one: `{ textEn, textId \| sameText: true, audience: everyone\|sellers\|customers, sellerIds: string[] \| null (all kitchens), window: '15m'\|'1h'\|'today', timeZone? }`; each text 1 to 90 characters, plain; 400 for bad input or an unknown kitchen; 201 `{ message }`; "today" ends at midnight in `timeZone` (else Adelaide). Sending nudges the live rooms of the chosen kitchens (`notice`) |
+| DELETE | `messages/:id` | admin | plan 086: Stop now (sets `stopped_at`); answers the list; 404 `not_found` |
 | GET, PATCH | `backup-minutes` | admin | plan 074: read, or change `{ customer?, seller? }` (whole minutes 1 to 30; anything else or an empty body is 400); rides on `GET /api/status` |
 | PATCH | `sellers/:id` | admin | switch demo mode on or off |
 | POST | `sellers/:id/pause`, `sellers/:id/resume` | admin | pause (`customers` or `full`, a full pause signs everyone out) or resume (D-086) |
@@ -88,7 +111,7 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 
 | method | path | who | purpose |
 |---|---|---|---|
-| GET | `live` | any staff | WebSocket to the kitchen's Durable Object: "something changed" events, no customer data |
+| GET | `live` | any staff | WebSocket to the kitchen's Durable Object: "something changed" events, no customer data (plan 086: also `notice`, a nudge to ask `GET /api/notes` again) |
 | POST | `translate` | chef | translate dish text EN/ID with Workers AI (see [Errors](#errors)) |
 | GET | `menu` | helper | the menu with remaining portions, chefs, ordering state |
 | PATCH | `menu/items/:id` | chef (own item), helper (sold-out switch alone) | change an item; the sold-out switch |
@@ -154,6 +177,10 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 | admin | no `/api/seller/*` (403); only `/api/admin/*` and own sign-in |
 
 A helper's actions in an order's history carry the role `chef` with the helper's own name (D-092).
+
+## Response headers
+
+The Worker sets these on every response it sends (`worker/securityHeaders.ts`; `/assets/*` files get `nosniff` from `public/_headers`): `Content-Security-Policy` (own origin for scripts, connections and the live socket; styles also inline and the Google Fonts stylesheet; fonts from Google Fonts; images self, `data:`, `blob:`; frames only the Google Maps embed; `object-src 'none'`, `frame-ancestors 'none'`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, and a `Permissions-Policy` that allows camera, geolocation and passkeys for the site itself only. With `DEV_TOOLS=1` (local only) scripts also allow inline, for vite's dev server.
 
 ## Errors
 

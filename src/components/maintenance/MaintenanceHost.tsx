@@ -64,8 +64,8 @@ const Bubble = styled.span`
   min-width: 0;
   margin-left: ${({ theme }) => theme.spacing.xs};
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.c.surf};
-  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  background: ${({ theme }) => theme.bubble.bg};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.bubble.line};
   border-radius: ${({ theme }) => theme.radius.md};
   line-height: ${({ theme }) => theme.type.lineHeight.tight};
   &::before {
@@ -76,9 +76,9 @@ const Bubble = styled.span`
     width: 0.5rem;
     height: 0.5rem;
     margin-top: -0.25rem;
-    background: ${({ theme }) => theme.c.surf};
-    border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-    border-left: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+    background: ${({ theme }) => theme.bubble.bg};
+    border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.bubble.line};
+    border-left: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.bubble.line};
     transform: rotate(45deg);
   }
 `;

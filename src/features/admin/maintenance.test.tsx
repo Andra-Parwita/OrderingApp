@@ -73,6 +73,8 @@ describe('Maintenance panel (plan 046)', () => {
       15 * 60_000,
     );
 
+    // Maintenance has its own page now.
+    fireEvent.click(screen.getByRole('button', { name: 'Maintenance' }));
     fireEvent.click(screen.getByRole('button', { name: 'Turn maintenance on' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Tap again to turn on' }));
     expect(await screen.findByText(/Maintenance is ON/)).toBeInTheDocument();
@@ -81,6 +83,7 @@ describe('Maintenance panel (plan 046)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Turn maintenance off' }));
     await waitFor(async () => expect((await fetchStatus())?.maintenance).toBe(false));
 
+    fireEvent.click(screen.getByRole('button', { name: /^Announce update/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Clear announcement' }));
     expect(await screen.findByText('No update announced.')).toBeInTheDocument();
   });

@@ -135,6 +135,8 @@ export type SellerOrder = {
    * reads only (never in a customer view); lets the seller's device link repeat orders.
    */
   customerCode?: string;
+  /** Plan 087: placed by a customer with a full Remember me session; set only by the server. */
+  confirmed?: true;
   /** Kitchen · Pack (D-066): a flag only. Never changes the status, never shown to the customer. */
   packed?: boolean;
   /** When and by whom the hand-over was confirmed; both or neither. */

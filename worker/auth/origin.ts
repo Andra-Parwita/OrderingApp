@@ -6,7 +6,7 @@
 import { error } from '../api/respond';
 
 const CHANGING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-const GUARDED_PREFIXES = ['/api/seller/', '/api/admin/', '/api/auth/'];
+const GUARDED_PREFIXES = ['/api/seller/', '/api/admin/', '/api/auth/', '/api/customer/'];
 const PUSH_PATH = /^\/api\/orders\/[^/]+\/push$/;
 
 /** The 403 to send instead of handling the request, or null when it may go on. */

@@ -68,12 +68,6 @@
     "pickup": "Ambil",
     "delivery": "Antar"
   },
-  "label": {
-    "qrName": "Kode QR pesanan",
-    "pickup": "Ambil · {{day}}",
-    "delivery": "Antar · {{day}}",
-    "part": "{{index}} dari {{of}}"
-  },
   "autosave": {
     "saving": "Menyimpan…",
     "saved": "Tersimpan ✓",

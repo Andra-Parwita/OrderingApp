@@ -47,6 +47,9 @@ const STATUS: Record<ApiErrorCode, number> = {
   fulfilment_unavailable: 400,
   maintenance: 503,
   private_order: 403,
+  passkey_other_kind: 409,
+  no_recent_order: 409,
+  too_many_orders: 429,
 };
 
 export function error(

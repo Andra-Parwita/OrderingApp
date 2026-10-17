@@ -16,6 +16,7 @@ import {
   type MessagesResponse,
 } from '../../shared/handoverContract';
 import { parseBackupFile } from '../../shared/backup';
+import { reaches, type NotesResponse } from '../../shared/shortMessage';
 import { parseTokenSwitch, type StatusResponse } from '../../shared/maintenance';
 import { isRecord } from '../../shared/parse';
 import type {
@@ -145,12 +146,15 @@ import {
 import type { ChefSummaryResponse } from '../../shared/chefSummaryContract';
 import { parseAddMadeRequest, type MadeResponse } from '../../shared/madeContract';
 import { chefAccess, handleAdmin, handleAuth } from './authRoutes';
+import { handleCustomer } from './customerRoutes';
 import { handleAdminLog, handleLog } from './logRoutes';
 import { sessionTokenOf } from '../auth/cookie';
 import { sha256Hex } from '../db/crypto';
 import { parseDeliveryAddress, type DeliveryAddress } from '../../shared/address';
 import { decryptAddress, encryptAddress } from '../db/address';
 import { bustMaintenanceCache, maintenanceOn } from './maintenanceGuard';
+import { placeCustomerOrder } from './customerOrder';
+import { orderLimitResponse } from './orderLimit';
 import { authError, error, readJson } from './respond';
 import type { Repository, SellerRepository, StoreResult } from '../repo/Repository';
 
@@ -452,6 +456,24 @@ export async function handleApiRequest(
       { headers: { 'Cache-Control': 'public, max-age=5' } },
     );
   }
+  // Plan 086: the short messages a page may show now. The page names its side (sellers or
+  // customers) and the kitchens it knows (a seller's own, or the customer's page and saved orders).
+  if (area === 'notes' && !a && method === 'GET') {
+    const side = searchParams.get('audience');
+    if (side !== 'sellers' && side !== 'customers') return bad();
+    const slugs = (searchParams.get('kitchens') ?? '').split(',').filter(Boolean).slice(0, 12);
+    const ids: Array<string> = [];
+    for (const slug of slugs) {
+      const found = await store.sellerBySlug(slug);
+      if (found) ids.push(found.seller.id);
+    }
+    const notes = (await store.messages.active())
+      .filter((message) => reaches(message, side, ids))
+      .map(({ id, textEn, textId, expiresAt }) => ({ id, textEn, textId, expiresAt }));
+    return Response.json({ notes } satisfies NotesResponse, {
+      headers: { 'Cache-Control': 'no-store' },
+    });
+  }
   // Plan 046: the release token switches maintenance without a passkey; it works on this route only.
   if (area === 'maintenance' && !a && method === 'POST') {
     const sent = /^Bearer (.+)$/.exec(request.headers.get('Authorization') ?? '')?.[1];
@@ -520,7 +542,14 @@ export async function handleApiRequest(
     if (b === 'orders' && !c && method === 'POST') {
       const input = parseCreateOrderRequest(await readJson(request));
       if (!input) return bad();
-      const created = await sellerStore.createOrder(input);
+      const tooMany = await orderLimitResponse(
+        store,
+        sellerStore.seller.id,
+        request,
+        context.devTools === true,
+      );
+      if (tooMany) return tooMany;
+      const created = await placeCustomerOrder(store, sellerStore, request, input);
       await storeAddress(sellerStore, context, created, input.address);
       const result = await afterOrderWrite(
         context,
@@ -543,7 +572,7 @@ export async function handleApiRequest(
       if (!input) return bad();
       // Only a hash of the address is kept: wrong-try rows (and so the hash) are swept by the hourly
       // cron once they are older than the lock time and not locked.
-      const client = await sha256Hex(request.headers.get('CF-Connecting-IP') ?? 'local');
+      const client = await store.auth.ipKey(request.headers.get('CF-Connecting-IP'));
       const perCode = `find:${sellerStore.seller.id}:${input.code}`;
       const wanted = input.firstName.toLowerCase();
       const found = await store.auth.guessLimited(
@@ -674,6 +703,7 @@ export async function handleApiRequest(
 
   if (area === 'log' && !a) return handleLog(store, request);
   if (area === 'auth') return handleAuth(store, request, [a, b]);
+  if (area === 'customer') return handleCustomer(store, request, [a, b], searchParams);
   if (area === 'admin' && a === 'log' && !b) return handleAdminLog(store, request);
   if (area === 'admin')
     return handleAdmin(
@@ -682,6 +712,7 @@ export async function handleApiRequest(
       [a, b, c, segments[5], segments[6]],
       context.devTools === true,
       context.images,
+      context.live,
     );
 
   if (pathname === LIVE_PATH) {

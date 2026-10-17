@@ -18,11 +18,16 @@ import {
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { APP_NAME } from '../../shared/appName';
 import { passkeysAvailable, RP_NAME, type Me } from '../../shared/authContract';
+import { REMEMBER_ME_LABEL } from '../../shared/customerContract';
 import { fromHex, sha256Hex } from '../db/crypto';
 import type {
   AuthRepository,
   AuthResult,
   Caller,
+  CustomerCaller,
+  CustomerChallengeBinding,
+  CustomerGrant,
+  CustomerRepository,
   SessionGrant,
   StoredPasskey,
 } from '../repo/Repository';
@@ -198,4 +203,171 @@ export function signInWithPasskey(
     },
     slug,
   );
+}
+
+// ---- Customers (plan 087, "Remember me") ----
+// The same checks for the customers' own passkeys, challenges and sessions. Separate user handle
+// ("customer-handle:"), separate tables, separate cookie: a customer passkey never signs in a seller.
+
+/** Opaque per account, not the account id itself. */
+async function customerHandle(accountId: string): Promise<Uint8Array<ArrayBuffer>> {
+  return fromHex(await sha256Hex(`customer-handle:${accountId}`)) as Uint8Array<ArrayBuffer>;
+}
+
+/** "<first name> · Remember me": what the phone's passkey list shows (never "account"). */
+function customerLabel(firstName: string): string {
+  return firstName === '' ? REMEMBER_ME_LABEL : `${firstName} · ${REMEMBER_ME_LABEL}`;
+}
+
+/** Options to make the customer's first passkey. The new account id rides in the challenge row. */
+export async function customerRegistrationOptions(
+  customers: CustomerRepository,
+  rp: RelyingParty,
+  clientDeviceId: string,
+  firstName: string,
+): Promise<Record<string, unknown>> {
+  const accountId = customers.newAccountId();
+  const label = customerLabel(firstName);
+  const options = await generateRegistrationOptions({
+    rpName: RP_NAME,
+    rpID: rp.id,
+    userName: label,
+    userDisplayName: label,
+    userID: await customerHandle(accountId),
+    attestationType: 'none',
+    authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
+  });
+  await customers.saveChallenge(
+    options.challenge,
+    { purpose: 'register', clientDeviceId },
+    { accountId, firstName },
+  );
+  return options as unknown as Record<string, unknown>;
+}
+
+/** Options to add a passkey to a signed-in (or just joined) customer. */
+export async function customerAddOptions(
+  customers: CustomerRepository,
+  rp: RelyingParty,
+  caller: CustomerCaller,
+  firstName: string,
+): Promise<Record<string, unknown>> {
+  const label = customerLabel(firstName);
+  const existing = await customers.passkeysOfAccount(caller.accountId);
+  const options = await generateRegistrationOptions({
+    rpName: RP_NAME,
+    rpID: rp.id,
+    userName: label,
+    userDisplayName: label,
+    userID: await customerHandle(caller.accountId),
+    attestationType: 'none',
+    excludeCredentials: existing.map((item) => ({
+      id: item.credentialId,
+      transports: item.transports,
+    })),
+    authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
+  });
+  await customers.saveChallenge(options.challenge, { purpose: 'add', sessionToken: caller.token });
+  return options as unknown as Record<string, unknown>;
+}
+
+/**
+ * The new passkey (and, for a first registration, the account id and name kept with the challenge),
+ * or null when the answer is not valid for this binding and site. The challenge is single use.
+ */
+export async function checkCustomerRegistration(
+  customers: CustomerRepository,
+  rp: RelyingParty,
+  binding: CustomerChallengeBinding,
+  response: Record<string, unknown>,
+): Promise<{ passkey: StoredPasskey; accountId: string | null; firstName: string } | null> {
+  const challenge = challengeOf(response);
+  if (!challenge) return null;
+  const taken = await customers.takeChallenge(challenge, binding);
+  if (!taken) return null;
+  try {
+    const checked = await verifyRegistrationResponse({
+      response: response as unknown as RegistrationResponseJSON,
+      expectedChallenge: challenge,
+      expectedOrigin: rp.origin,
+      expectedRPID: rp.id,
+      requireUserVerification: false,
+    });
+    if (!checked.verified) return null;
+    const { credential } = checked.registrationInfo;
+    const sent = (response as { response?: { transports?: unknown } }).response?.transports;
+    return {
+      accountId: taken.accountId,
+      firstName: taken.firstName,
+      passkey: {
+        credentialId: credential.id,
+        publicKey: isoBase64URL.fromBuffer(credential.publicKey),
+        counter: credential.counter,
+        transports:
+          credential.transports ??
+          (Array.isArray(sent)
+            ? sent.filter((item): item is string => typeof item === 'string')
+            : []),
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Options for a customer sign-in; an unknown credential id gets the same kind of options. */
+export async function customerAuthenticationOptions(
+  customers: CustomerRepository,
+  rp: RelyingParty,
+  clientDeviceId: string,
+  credentialId?: string,
+): Promise<Record<string, unknown>> {
+  const known = credentialId ? await customers.passkeyById(credentialId) : undefined;
+  const options = await generateAuthenticationOptions({
+    rpID: rp.id,
+    userVerification: 'preferred',
+    ...(credentialId
+      ? {
+          allowCredentials: [
+            { id: credentialId, ...(known ? { transports: known.transports } : {}) },
+          ],
+        }
+      : {}),
+  });
+  await customers.saveChallenge(options.challenge, { purpose: 'authenticate', clientDeviceId });
+  return options as unknown as Record<string, unknown>;
+}
+
+/** A customer passkey sign-in: wrong challenge, site, signature or counter is one invalid_credentials. */
+export function customerSignInWithPasskey(
+  customers: CustomerRepository,
+  rp: RelyingParty,
+  clientDeviceId: string,
+  response: Record<string, unknown> & { id: string },
+): Promise<AuthResult<CustomerGrant>> {
+  return customers.signInPasskey(clientDeviceId, response.id, async (passkey) => {
+    const challenge = challengeOf(response);
+    if (!challenge) return null;
+    if (!(await customers.takeChallenge(challenge, { purpose: 'authenticate', clientDeviceId }))) {
+      return null;
+    }
+    try {
+      const checked = await verifyAuthenticationResponse({
+        response: response as unknown as AuthenticationResponseJSON,
+        expectedChallenge: challenge,
+        expectedOrigin: rp.origin,
+        expectedRPID: rp.id,
+        credential: {
+          id: passkey.credentialId,
+          publicKey: isoBase64URL.toBuffer(passkey.publicKey),
+          counter: passkey.counter,
+          transports: passkey.transports,
+        },
+        requireUserVerification: false,
+      });
+      return checked.verified ? checked.authenticationInfo.newCounter : null;
+    } catch {
+      return null;
+    }
+  });
 }

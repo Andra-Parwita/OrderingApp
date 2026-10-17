@@ -6,7 +6,9 @@
 //   - Weekly (Mondays 03:00 UTC): retention (stage 8.4b, D-027 row 6, D-044). Order details of a
 //     closed week are dropped 4 weeks after its cooking date; totals stay, and each dropped order
 //     leaves a stub so its old link says "archived". The day-sales log (plan 029) is cut to 10 weeks.
+import { dropOldIpSalts } from '../auth/ipKey';
 import { wipeOldAddresses } from '../db/address';
+import { sweepCustomerHourly, sweepCustomerWeekly } from '../db/customerAuth';
 import { Db, type D1Like } from '../db/d1';
 import { dropOldDaySales } from '../db/daySales';
 import { deleteUnusedPictures, finishDueMenus } from '../db/menus';
@@ -14,13 +16,23 @@ import type { ImageBucket } from '../images/r2';
 import { dropExpiredDetails, dropStaleFindAttempts, type RetentionCounts } from '../db/retention';
 
 /** Hourly: forgets old wrong tries of "find my order" (D-075). Returns how many rows went. */
-export function runAttemptSweep(env: { DB: D1Like }, now: Date): Promise<number> {
-  return dropStaleFindAttempts(new Db(env.DB), now);
+export async function runAttemptSweep(env: { DB: D1Like }, now: Date): Promise<number> {
+  const db = new Db(env.DB);
+  await dropOldIpSalts(db, now);
+  return dropStaleFindAttempts(db, now);
 }
 
 /** Hourly (plan 071): wipes delivery addresses a day after their menu finished. Returns a count only. */
 export function runAddressSweep(env: { DB: D1Like }, now: Date): Promise<number> {
   return wipeOldAddresses(new Db(env.DB), now);
+}
+
+/**
+ * Hourly (plan 087): sealed customer addresses with no order for 30 days, and expired customer
+ * sessions, challenges and codes. Returns how many addresses went (a count only).
+ */
+export async function runCustomerSweep(env: { DB: D1Like }, now: Date): Promise<number> {
+  return (await sweepCustomerHourly(new Db(env.DB), now)).addresses;
 }
 
 /** The cron entry (in wrangler.jsonc) that runs retention. The hourly entry only finishes menus. */
@@ -42,6 +54,13 @@ export async function runRetention(
   log(
     `retention: ${String(counts.weeks)} week(s) archived, ${String(counts.orders)} order(s) dropped`,
   );
+  // Plan 087: Remember me unused for 12 months, and order links whose details are gone.
+  const customers = await sweepCustomerWeekly(db, now);
+  if (customers.accounts > 0 || customers.links > 0) {
+    log(
+      `retention: ${String(customers.accounts)} Remember me account(s), ${String(customers.links)} link(s) dropped`,
+    );
+  }
   // Plan 029: the day-sales log is kept 10 weeks per kitchen.
   const sales = await dropOldDaySales(db, now);
   if (sales > 0) log(`retention: ${String(sales)} day-sales row(s) dropped`);

@@ -1,2 +1,5 @@
 /version.json
   Cache-Control: no-store
+
+/assets/*
+  X-Content-Type-Options: nosniff

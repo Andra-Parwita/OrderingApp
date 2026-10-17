@@ -608,6 +608,7 @@ export function parseOrder(input: unknown): SellerOrder | null {
     ...(privateInfo ? { private: privateInfo } : {}),
     ...(address ? { address } : {}),
     ...(customerCode !== undefined ? { customerCode } : {}),
+    ...(input['confirmed'] === true ? { confirmed: true as const } : {}),
     sellerId,
     paid,
     waReceived,

@@ -89,6 +89,7 @@ One login per **person**, who joins kitchens through memberships. 0007 deleted e
 | `auth_codes` | add-device codes: `code_hash` (6 digits), `account_id`, `seller_id`, `expires_at`, `used` | PK `id`; cascade from the account | **10 minutes**, one use |
 | `auth_attempts` | lockouts, by `scope` (`seller:...`, `device:...`, `find:<seller>:<code>`, `find:ip:<hash>`, `codes:...`) with `fails`, `locked_until`, `updated_at` | PK `scope` | 5 fails lock 15 minutes; a successful sign-in clears its scopes; the hourly cron deletes old `find:` rows |
 | `auth_challenges` | one-time WebAuthn challenges (0002) | PK `challenge` | 5 minutes; single use (reading it deletes it); expired rows are deleted at the next register or sign-in start |
+| `ip_salts` | (0030) `day` (UTC date) and a random 32-byte `salt` (hex) for the network keys above | PK `day` | rows older than yesterday are deleted by the hourly cron |
 | `auth_rate` | request counts per `rate:<clientDeviceId>` (30 per 60 seconds on `/api/auth`) and `log:<hash>` (the log intake) | PK `scope` | `log:` rows older than an hour are deleted on each log write |
 
 ### Client error log (0009, plan 026)
@@ -97,10 +98,28 @@ One login per **person**, who joins kitchens through memberships. 0007 deleted e
 |---|---|---|
 | `client_log` | app, version, slug, path, kind, code, a scrubbed message, user agent, installed or not. No names, notes, codes, tokens, IPs or cookies (D-007) | a ring of the **newest 500**, trimmed in the same batch as each insert; the admin can clear it |
 
+### Remember me (0029, plan 087, D-107)
+
+An optional customer passkey. Separate from the sellers' accounts, sessions and passkeys on purpose: a customer can never reach a seller route. No email, password or phone number. The server never holds a readable address.
+
+| table | purpose | retention |
+|---|---|---|
+| `customer_accounts` | `id` (random, opaque), `first_name`, `code_salt` (the per-kitchen customer code is `HMAC(code_salt, "customer-code:v1:" + seller)`), `created_at`, `last_used_at`, `last_order_at` | deleted with everything of theirs after **12 idle months** (weekly cron) or by "Delete my saved data" |
+| `customer_passkeys` | `credential_id`, public key, counter, transports, `prf` flag | cascade from the account |
+| `customer_sessions` | cookie `__Host-customer` (token stored as a SHA-256 hash), 90-day sliding, `setup` = 1 for a phone that joined by code and has no passkey yet (30 minutes to add one) | by `expires_at` (hourly sweep) |
+| `customer_challenges` | WebAuthn challenges (`register`, `authenticate`, `add`), 5 minutes | by `expires_at` (hourly sweep) |
+| `customer_phone_codes` | the 6-digit "add another phone" code, stored as a hash, 5 minutes, single use | by `expires_at` (hourly sweep) |
+| `customer_order_links` | `(account_id, token, seller_id)`: My orders for the account (up to 200). No foreign key to `orders` | dropped when the order details are gone (weekly cron) |
+| `customer_kitchen_codes` | only plan 071 device codes adopted with proof (an order with that token, kitchen and code); UNIQUE `(seller_id, code)`. Every other kitchen's code is derived | cascade from the account |
+| `customer_sealed_addresses` | the saved delivery address **sealed on the phone** (WebAuthn PRF, HKDF, AES-GCM): `v`, `iv`, `ct` (at most 2 KB), one per passkey; the server cannot read it | **30 days** after the last confirmed order (hourly sweep); cascade |
+
+`orders.customer_confirmed` (0/1) is set only when the order request carried a valid customer session (a flag in the body is ignored); sellers see "✓ Passkey-confirmed · C-xxxx" and never get the account id.
+
 ### Platform settings (0022, plan 046)
 
 | table | purpose | retention |
 |---|---|---|
+| `short_messages` | plan 086 (migration 0028): `id`, `text_en`, `text_id` (plain, max 90), `audience` (everyone / sellers / customers), `seller_ids` (JSON list, NULL = all kitchens), `created_at`, `expires_at` (ISO), `stopped_at`. A device gets a message while `stopped_at` is NULL and `expires_at` is in the future; the admin list shows the newest 20 | kept (a small log; wiped only by dev reset) |
 | `app_settings` | one row (`id = 1`): `maintenance` (0/1), `notice_from`, `notice_until` (ISO instants), `notice_text_en`, `notice_text_id`, and (plan 074, migration 0023) `backup_customer_min`, `backup_seller_min` (default 5 each; 1 to 30 checked by the Worker). No row = all off and 5 / 5. Read by `GET /api/status` and before every write; changed by the admin or the release token | kept; the admin clears the announcement |
 
 ## Hashed, never stored
@@ -113,12 +132,13 @@ One login per **person**, who joins kitchens through memberships. 0007 deleted e
 | Passwords | PBKDF2-SHA256, 100 000 iterations (the Workers maximum), random salt, all three stored |
 | Admin setup key | a Worker secret (`ADMIN_SETUP_KEY`), never in the database |
 | Passkeys | only credential id, public key, counter and transports (public data) |
-| Client address | the "find my order" limiter keeps a SHA-256 of `CF-Connecting-IP` in `auth_attempts`, and the log intake limiter one in `auth_rate`; both are swept (see Retention) |
+| Client address | the "find my order", log-intake and phone-code limiters keep `HMAC-SHA256(daily salt, CF-Connecting-IP)` (`worker/auth/ipKey.ts`) in `auth_attempts` / `auth_rate`. The salt is 32 random bytes per UTC day in `ip_salts`; only today's and yesterday's are kept (hourly sweep), so a stored key cannot be reversed to an address and does not match across days. Counts restart at midnight UTC. The address itself is never stored |
+| Customer (Remember me) session tokens, add-phone codes | SHA-256 (`customer_sessions.token_hash`, `customer_phone_codes.code_hash`); the raw token lives only in the `__Host-customer` cookie |
 | Order `token` | stored **in the clear**: the seller must be able to show the customer's link. It is a long random capability, unique, and never listed across customers. |
 
 **Delivery address (D-099, plan 071; amends D-007 for addresses only):** `orders.address_enc` holds one JSON value `{street, suburb, postcode, notes?, lat?, lng?}` encrypted with **AES-GCM 256** (Web Crypto, a random 12-byte IV per value, stored `iv.ciphertext` in base64). The key is the secret `ADDRESS_KEY` (never in the database or a backup). The repository sees only the ciphertext (`setOrderAddress`, `orderAddresses`); the routes encrypt and decrypt. It is decrypted only for the kitchen's signed-in team (owner, chef, helper) on `/api/seller/orders*`; customer answers carry only `addressState` (`saved` / `unreadable`); the backup, the CSV, labels, the public menu and logs never include it. It is set to NULL when the order is cancelled (in `changeStatements`), by "Delete address now", and one day after the menu finishes (hourly `runAddressSweep`, using `past_weeks.closed_at`). If the key is lost or changed, a stored value reads as "unavailable" and the customer enters it again.
 
-**Never stored (D-007):** a customer's phone number or email. The cloud holds only the customer's first name, an optional order note (the UI warns not to put private details there), the items and the statuses. The seller's own WhatsApp number is public (D-027) and is stored. Push subscriptions are browser endpoints, not phone numbers, and belong to an order, never to a person.
+**Never stored (D-007):** a customer's phone number or email (also with Remember me, D-107). The cloud holds only the customer's first name, an optional order note (the UI warns not to put private details there), the items and the statuses. The seller's own WhatsApp number is public (D-027) and is stored. Push subscriptions are browser endpoints, not phone numbers, and belong to an order, never to a person.
 
 **On the customer's device only:** the order tokens that My orders reads (`localStorage`), the last kitchen visited, language and theme choices, and drafts of half-typed forms (`draft:v1:<slug>:<form>:<id>`, 7 days). The device's own sign-in cookie and a random browser id (for lockouts) are the only identity the seller side keeps there.
 
@@ -132,6 +152,7 @@ One login per **person**, who joins kitchens through memberships. 0007 deleted e
 | Past menu pictures | the newest **10** keep theirs; the rest go back to NULL and their R2 file is deleted unless still used | hourly finish job (`finishDueMenus`, `deleteUnusedPictures`) |
 | Day sales log | **10 weeks** per kitchen | weekly cron |
 | Client error log | newest **500** | each insert |
+| Remember me (D-107) | sealed address 30 days after the last confirmed order; the whole account after 12 idle months; sessions, challenges and phone codes by expiry; order links when their order details are gone | hourly `sweepCustomerHourly`, weekly `sweepCustomerWeekly` (in `scheduled.ts`) |
 | Delivery address (`orders.address_enc`) | **one day after the menu finishes**, on cancel, or on "Delete address now" | hourly cron (`runAddressSweep`), `changeStatements`, the delete-address route |
 | "Find my order" tries | wrong-try rows that are older than the lock time and not locked | hourly cron (`runAttemptSweep`) |
 | Message log, made counts | belong to one menu; rows of any other menu are dropped when a new one is written | repository |
@@ -158,7 +179,7 @@ sellers 1──1 kitchens
 accounts 1──* memberships *──1 sellers        (role owner / chef / helper)
 accounts 1──* devices 1──0..1 sessions        accounts 1──* sessions (setup: no device)
 accounts 1──* auth_codes        sellers 1──* auth_keys 1──1 auth_key_redemptions
-auth_attempts, auth_challenges, auth_rate, client_log, app_settings   (stand-alone)
+auth_attempts, auth_challenges, auth_rate, client_log, app_settings, short_messages   (stand-alone)
 ```
 
 ## Repository

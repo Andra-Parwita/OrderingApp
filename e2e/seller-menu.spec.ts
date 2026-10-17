@@ -57,7 +57,12 @@ test('add a dish, edit its price, change it on the menu, then remove it', async 
   await page.goto('/seller/menu/edit/prices');
   const price = page.getByLabel(`Price of ${name}`);
   await price.fill('12');
+  // The price saves on blur: wait for that save before leaving, or the page change can cancel it.
+  const saved = page.waitForResponse(
+    (response) => response.request().method() !== 'GET' && response.url().includes('/api/seller/'),
+  );
   await price.blur();
+  await saved;
   await page.goto('/seller/menu');
   await expect(dishes.getByRole('row', { name: new RegExp(name) })).toContainText('$12.00');
 

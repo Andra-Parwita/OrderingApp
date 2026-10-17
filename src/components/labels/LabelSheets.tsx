@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo } from 'react';
 import { createGlobalStyle, styled } from 'styled-components';
 import type { Fulfilment, SellerOrder } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
@@ -215,62 +215,4 @@ export function LabelSheets({
       ))}
     </Sheet>
   ));
-}
-
-const OffScreen = styled.div`
-  position: fixed;
-  left: -200vw;
-  top: 0;
-`;
-
-/**
- * Prints these labels now and then calls `onDone`. The labels sit off screen until the browser's
- * print dialog (which blocks) shows them through the print CSS.
- */
-export function PrintJob({
-  parts,
-  paper,
-  text,
-  onDone,
-}: Readonly<{
-  parts: ReadonlyArray<LabelPart>;
-  paper: LabelPaper;
-  text: LabelText;
-  onDone: () => void;
-}>) {
-  useEffect(() => {
-    let cancelled = false;
-    let fallback = 0;
-    const finish = () => {
-      window.removeEventListener('afterprint', finish);
-      window.clearTimeout(fallback);
-      onDone();
-    };
-    // Let fonts and the QR paint first. Keep the labels mounted until the print is over: on a tablet
-    // window.print() returns at once and the page is captured afterwards.
-    const fontsReady = 'fonts' in document ? document.fonts.ready : Promise.resolve();
-    void fontsReady.then(() =>
-      requestAnimationFrame(() => {
-        if (cancelled) return;
-        window.addEventListener('afterprint', finish);
-        fallback = window.setTimeout(finish, 120_000);
-        window.print();
-      }),
-    );
-    return () => {
-      cancelled = true;
-      window.removeEventListener('afterprint', finish);
-      window.clearTimeout(fallback);
-    };
-  }, [onDone]);
-  return (
-    <>
-      <LabelPrintStyle $paper={paper} />
-      <OffScreen aria-hidden="true">
-        <div data-print-area data-paper={paper} data-testid="print-job">
-          <LabelSheets parts={parts} paper={paper} text={text} />
-        </div>
-      </OffScreen>
-    </>
-  );
 }

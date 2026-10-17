@@ -127,6 +127,7 @@
       "other": "Pesanan tidak dapat dikirim. Periksa koneksi Anda lalu coba lagi.",
       "order_locked": "Penjual sudah mengunci pesanan ini. Chat penjual di WhatsApp untuk mengubahnya.",
       "ordering_closed": "Maaf, pemesanan sedang ditutup.",
+      "too_many_orders": "Terlalu banyak pesanan dalam waktu singkat. Tunggu beberapa menit atau kabari dapurnya.",
       "fulfilment_unavailable": "Maaf, menu ini tidak menyediakan cara penerimaan itu. Silakan pilih opsi lain.",
       "fulfilment_unavailable_pickup": "Maaf, menu ini tidak menyediakan ambil di tempat. Silakan pilih diantar.",
       "fulfilment_unavailable_delivery": "Maaf, menu ini tidak menyediakan pengantaran. Silakan pilih ambil di tempat.",

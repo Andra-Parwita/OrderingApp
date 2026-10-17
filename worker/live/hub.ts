@@ -52,6 +52,7 @@ export function broadcastToCustomers(
   signal: LiveSignal,
   now: Date,
 ): number {
+  if (signal.type === 'notice') return broadcast(sockets, signal, now);
   if (signal.type !== 'order.changed') return 0;
   // Never the writer's device id: that is for the seller's own screens only.
   const forCustomers: LiveSignal = { type: signal.type };

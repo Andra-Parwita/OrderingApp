@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next';
 import { ThemeProvider } from 'styled-components';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { registerInstallI18n, type Environment } from '../../components/install';
+import { registerRememberMeI18n } from '../../components/remember-me';
 import en from '../../i18n/en.json';
 import id from '../../i18n/id.json';
 import { lightTheme } from '../../theme/themes';
@@ -17,6 +18,7 @@ beforeAll(async () => {
     interpolation: { escapeValue: false },
   });
   registerInstallI18n();
+  registerRememberMeI18n();
 });
 
 const base: Environment = {
@@ -136,12 +138,15 @@ describe('CustomerSettingsView', () => {
   it('opens About and privacy in English and in Indonesian', async () => {
     show();
     fireEvent.click(screen.getByRole('button', { name: /Read/ }));
+    expect(screen.getByRole('dialog', { name: 'How we keep your data private' })).toBeVisible();
     expect(screen.getByText(/only the kitchen.s team can see it/)).toBeVisible();
+    expect(screen.getByText(/sealed with your passkey/)).toBeVisible();
     expect(screen.getByText(/4 weeks after the cooking day/)).toBeVisible();
-    expect(screen.getByText('Version 1.0.37')).toBeVisible();
+    expect(screen.getByText('Version 1.0.38')).toBeVisible();
     await i18n.changeLanguage('id');
     expect(screen.getByText(/hanya tim dapur yang bisa melihatnya/)).toBeVisible();
-    expect(screen.getByText('Versi 1.0.37')).toBeVisible();
+    expect(screen.getByText('Versi 1.0.38')).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Cara kami menjaga datamu' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /Tutup/ }));
     expect(screen.queryByText(/hanya tim dapur yang bisa melihatnya/)).toBeNull();
     await i18n.changeLanguage('en');

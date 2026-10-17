@@ -10,6 +10,7 @@ import { PickupMapLine } from '../../components/pickup-map';
 import { Icon } from '../../ui';
 import type { CurrentRow, EarlierRow } from './myOrdersModel';
 import { ORDERS_NS } from './i18n/register';
+import { RestoreOrders } from '../../components/remember-me';
 import { OfflineNote, StateMessage, VisuallyHidden } from './layout';
 import { OrderIcon, type OrderIconName } from './orderIcons';
 import { Chip, type ChipTone, MainButton, OutlineButton, SectionLabel } from './orderParts';
@@ -606,6 +607,7 @@ export function MyOrdersView({
               {t('list.toMenu')}
             </MainButton>
           </Pad>
+          <RestoreOrders />
         </Empty>
       ) : (
         <>

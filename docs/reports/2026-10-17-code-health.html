@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Code health report · 17 Oct 2026</title>
+<style>
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --text: #1f2429;
+    --muted: #5a626c;
+    --line: #dcdfe3;
+    --accent: #3b5f7a;
+    --note-bg: #f1f2f3;
+    --green-bg: #dcefe3; --green-fg: #1d4f33;
+    --amber-bg: #f6e8c6; --amber-fg: #5f4304;
+    --red-bg: #f3d9d7;   --red-fg: #772a24;
+    --grey-bg: #e7e9ec;  --grey-fg: #3c434b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181c;
+      --surface: #1d2126;
+      --text: #e6e8eb;
+      --muted: #a7aeb7;
+      --line: #343a42;
+      --accent: #8fb4cf;
+      --note-bg: #242930;
+      --green-bg: #1f3b2c; --green-fg: #b9e4c8;
+      --amber-bg: #4a3a12; --amber-fg: #f2d58a;
+      --red-bg: #4a2420;   --red-fg: #f0b7b2;
+      --grey-bg: #2c323a;  --grey-fg: #cfd4da;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.05rem; margin: 24px 0 8px; }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .sub { color: var(--muted); margin-bottom: 20px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .lights { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 12px 0 16px; }
+  .light { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .light .area { font-size: 0.85rem; color: var(--muted); }
+  .light .verdict { font-weight: 600; margin-top: 2px; }
+  .badge {
+    display: inline-block;
+    padding: 1px 9px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+  .green { background: var(--green-bg); color: var(--green-fg); }
+  .amber { background: var(--amber-bg); color: var(--amber-fg); }
+  .red   { background: var(--red-bg);   color: var(--red-fg); }
+  .grey  { background: var(--grey-bg);  color: var(--grey-fg); }
+  .tablewrap { overflow-x: auto; margin: 8px 0 16px; }
+  table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 0.95rem; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 600; color: var(--muted); font-size: 0.85rem; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .builder {
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-family: ui-monospace, Consolas, "SFMono-Regular", Menlo, monospace;
+    margin-top: 4px;
+    word-break: break-all;
+  }
+  .note { background: var(--note-bg); border-radius: 6px; padding: 10px 12px; font-size: 0.92rem; margin: 12px 0; }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 0.95rem; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+  strong { font-weight: 600; }
+  @media (max-width: 480px) { h1 { font-size: 1.35rem; } main { padding-top: 16px; } }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Code health report</h1>
+<p class="sub">Weekly food ordering app · 17 October 2026 · a read-only look at the code as it stands on the <em>indra/brand_logo_ux</em> branch, while three features are still being built.</p>
+
+<section class="card">
+  <h2 style="margin-top:0;border:0;padding:0">In short</h2>
+  <p>The app is in <strong>good shape</strong>. It is well organised, strict about types, tested against a real database, and the security basics are done properly. The weak spots are not bugs: they are <strong>repetition</strong> (the same little buttons, tags and sheets written again in many screens), <strong>the same data held in several places</strong>, and a handful of <strong>very large files</strong> that are getting hard to change safely.</p>
+
+  <div class="lights">
+    <div class="light"><div class="area">Code organisation</div><div class="verdict"><span class="badge green">Good</span></div></div>
+    <div class="light"><div class="area">State management</div><div class="verdict"><span class="badge amber">OK, some duplication</span></div></div>
+    <div class="light"><div class="area">UI consistency</div><div class="verdict"><span class="badge amber">Works, repetitive</span></div></div>
+    <div class="light"><div class="area">Security &amp; privacy</div><div class="verdict"><span class="badge green">Good</span></div></div>
+    <div class="light"><div class="area">Tests &amp; tooling</div><div class="verdict"><span class="badge green">Good</span></div></div>
+  </div>
+
+  <p><strong>Top five findings</strong></p>
+  <ol>
+    <li><strong>Nothing needs fixing urgently.</strong> No security hole was found; dependencies have no known vulnerabilities; the last full quality gate (14 Oct) was green with 2,199 unit tests and 81 end-to-end runs.</li>
+    <li><strong>The UI kit is under-used.</strong> There are about 1,400 one-off styles in screens against 85 in the shared kit: 116 hand-made buttons, 22 hand-made tags, 31 hand-made overlays and sheets, 33 hand-made notices. Five small shared components would absorb most of these.</li>
+    <li><strong>Orders and the current menu live in several places at once.</strong> The seller's orders are loaded by two parts of the app (Orders and Cook), each with its own live refresh; the current menu sits in four. It works, but every change touches two files, and two screens open means double the requests.</li>
+    <li><strong>Four files carry most of the server.</strong> One file routes all 110 server calls (1,698 lines) and three database files are 1,300 to 1,800 lines each. Fine for now; splitting them by area is the single best investment for the next year of changes.</li>
+    <li><strong>Two small privacy touch-ups</strong> keep the "no IP stored" promise literal: salt the short-lived IP hash used by two rate limiters, and add the standard browser security headers that are currently missing.</li>
+  </ol>
+</section>
+
+<h2>1. How the code is organised</h2>
+<p><strong>Verdict: <span class="badge green">Good</span></strong>. Things are easy to find. The code is cut into clear layers, and a lint rule (an automatic checker) enforces the boundaries: screens of one feature may not reach into another feature, shared building blocks may not depend on screens, the browser app and the server never import each other, and loops of imports (A needs B needs A) are forbidden. The same checker forbids literal colours and pixel sizes in styles, so the theme stays the single source of truth.</p>
+
+<dl class="kv">
+  <dt>Browser app</dt><dd>18 features (seller-orders, seller-menu, customer-menu, admin…), 104 shared component files, a 34-file UI kit, 57 API files</dd>
+  <dt>Shared</dt><dd>82 files of contracts and helpers used by both app and server</dd>
+  <dt>Server (Worker)</dt><dd>46 files, about 12,800 lines, 29 database migrations</dd>
+  <dt>Tests</dt><dd>243 unit test files + 53 end-to-end specs; server tests run the real routes against a real local database (15,000 lines of them)</dd>
+  <dt>Hygiene</dt><dd>0 uses of <code>any</code> (the escape hatch from type checking), 0 type-check overrides, 1 TODO, 3 stray console logs, 16 lint overrides (14 of them the two React "effect" rules)</dd>
+</dl>
+
+<h3>The ten largest files</h3>
+<p>Big files are not wrong by themselves, but each one below is a place where two people cannot work at the same time and where a mistake is harder to spot.</p>
+<div class="tablewrap">
+<table>
+  <tr><th>File (plain words)</th><th class="num">Lines</th><th>Comment</th></tr>
+  <tr><td>Seller database: orders and dishes<span class="builder">worker/db/seller.ts</span></td><td class="num">1,819</td><td>Everything the kitchen does to orders. Could split: orders / stock / audit.</td></tr>
+  <tr><td>Server route table<span class="builder">worker/api/routes.ts</span></td><td class="num">1,698</td><td>110 routes in one function, matched by hand. Auth, kitchen and log routes already live in their own files; customer, seller and admin should follow. <em>Work in progress touches this file now.</em></td></tr>
+  <tr><td>Menu database<span class="builder">worker/db/menus.ts</span></td><td class="num">1,386</td><td>Menus, publishing, finishing, past weeks.</td></tr>
+  <tr><td>Sign-in database<span class="builder">worker/db/auth.ts</span></td><td class="num">1,319</td><td>Passkeys, sessions, lockouts, devices. Growing with customer passkeys (plan 087, in progress).</td></tr>
+  <tr><td>Help topics (text)<span class="builder">src/features/seller-help/topics.ts</span></td><td class="num">1,005</td><td>Content, not logic. Fine.</td></tr>
+  <tr><td>Browser route table<span class="builder">src/app/AppRoutes.tsx</span></td><td class="num">996</td><td>About 40 small route wrappers plus the "More" page. Easy to cut into customer / seller / more.</td></tr>
+  <tr><td>Install screens<span class="builder">src/components/install/InstallScreens.tsx</span></td><td class="num">963</td><td>Several screens in one file.</td></tr>
+  <tr><td>Checkout views<span class="builder">src/features/customer-menu/CheckoutViews.tsx</span></td><td class="num">919</td><td>Basket, name, address steps together.</td></tr>
+  <tr><td>Help screen<span class="builder">src/features/seller-help/HelpScreen.tsx</span></td><td class="num">843</td><td></td></tr>
+  <tr><td>Seller orders table<span class="builder">src/features/seller-orders/OrdersTableScreen.tsx</span></td><td class="num">756</td><td></td></tr>
+</table>
+</div>
+<p>By feature, the three heaviest are seller-orders (8,600 lines), seller-menu (6,600) and customer-menu (4,900). That matches where the product is richest, so it is not a surprise.</p>
+
+<h3>Circular imports</h3>
+<p>Forbidden by the lint rule, and the project's own gate ran it green on 14 Oct. Today's run of the linter did not finish: it ran out of memory (over 4 GB) on this PC while other builders were running. Worth a look so the gate stays reliable.<span class="builder">eslint.config.js: 'import-x/no-cycle'. Today's run: scratch/code-health-lint.log (heap out of memory, exit 134).</span></p>
+
+<h3>Dead code, checked</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>Candidate</th><th>Finding</th></tr>
+  <tr><td>Print job component<span class="builder">src/components/labels/LabelSheets.tsx:230 export function PrintJob</span></td><td><span class="badge red">Dead</span> Exported but never imported anywhere. Safe to remove with its text.</td></tr>
+  <tr><td>Cook "label" wording keys<span class="builder">src/features/seller-cook/i18n/en.json + id.json, block "label" (qrName, pickup, delivery, part)</span></td><td><span class="badge red">Dead</span> The labels screen uses its own copy of the same four keys in seller-labels/i18n. The cook copies are never read.</td></tr>
+  <tr><td>Dish picture code in the customer's item row<span class="builder">src/features/customer-menu/ItemRow.tsx (pictureRef, FullPictureViewer)</span></td><td><span class="badge green">Live</span> Not dead: the server sends <code>pictureRef</code> for dishes with a picture (plans 067 / 082). Keep it.</td></tr>
+</table>
+</div>
+
+<h2>2. State management</h2>
+<p><strong>Verdict: <span class="badge amber">OK, some duplication</span></strong>. The right tools are mostly in the right places: <strong>Redux (the app's shared memory)</strong> with <strong>sagas (the background workers that fetch and listen)</strong> for the big shared things like orders and menus; plain local state for forms; <strong>React context (a value handed down a screen tree)</strong> for the signed-in person and a few access flags. What is missing is a single, written rule for <em>where data lives</em>, so over time the same thing has been loaded in several places.</p>
+
+<dl class="kv">
+  <dt>Redux slices</dt><dd>9 (customer menu, customer orders, seller orders, cook, menu, private, settings, setup, share), each with its own saga</dd>
+  <dt>Contexts</dt><dd>6 (session, read-only orders flag, income access, chef id, autosave gate, "real location")</dd>
+  <dt>Local state</dt><dd>164 <code>useState</code> in feature screens; 103 reads from Redux</dd>
+  <dt>Screens that fetch themselves</dt><dd>42 screen files call the API directly from an effect (admin, sign-in, history, labels, Saturday screens, several seller-orders and seller-menu helpers)</dd>
+  <dt>Small caches</dt><dd>two 60-second in-memory caches in the API layer for settings, preferences and the "is the menu published" flag</dd>
+</dl>
+
+<h3>Where the same data lives twice</h3>
+<ul>
+  <li><strong>Seller orders:</strong> held by both the Orders slice and the Cook slice; each loads the list and each runs its own live loop. With Orders and Cook both open, every change is fetched twice.<span class="builder">src/features/seller-orders/sellerOrdersSaga.ts:138 · src/features/seller-cook/cookSaga.ts:27 (both call fetchSellerOrders)</span></li>
+  <li><strong>The current menu:</strong> in four slices (seller orders, menu, share, cook) and also fetched by settings. A live event refreshes only the one whose loop is running.</li>
+  <li><strong>Customer menu:</strong> the basket's menu and the My orders page's per-kitchen menu cache are loaded separately, and both slices have an action with the same name.</li>
+  <li><strong>The signed-in person:</strong> in a context for screens and in a module for sagas, kept in step by hand; a third signal says "signed out".<span class="builder">src/app/session.tsx · src/api/device/sellerContext.ts · src/api/staffSignedOut.ts</span></li>
+</ul>
+<p class="note">The project's own architecture page already lists these honestly ("Things that look inconsistent"). This report agrees with it and adds the numbers.<span class="builder">docs/architecture/state-and-data-flow.md §8</span></p>
+
+<h3>Live refresh: three ways of doing one thing</h3>
+<p>Keeping a screen up to date is done three ways: saga loops for Orders, Cook and Private; a hook for the Saturday screens (Sell, Hand over, Deliveries); and a separate connection plus a slow backup timer for customers. All three share the same back-off policy and the same "stop after 5 refusals" rule, which is good, but a change to that behaviour has to be made in three places.<span class="builder">src/api/live.ts (saga loops) · src/features/seller-saturday/useLiveReload.ts · src/features/customer-orders/liveConnection.ts + orderPoll.ts</span></p>
+
+<h3>Is context used where Redux would be better, or the reverse?</h3>
+<p>No real misuse. Context is used for things that rarely change (who is signed in, "can this person see income"), which is what it is for. Redux holds the lists. The admin and sign-in areas skip Redux entirely and fetch on each screen; that is fine while each piece of data is shown on one screen only.</p>
+
+<h3>Most valuable improvements</h3>
+<ol>
+  <li><strong>One source for the kitchen's orders.</strong> Let Cook read from the Orders slice (or a shared "kitchen data" slice) and drop its own fetch and live loop. Halves the requests when both are open. <em>Size M.</em></li>
+  <li><strong>One current-menu slice</strong> that the other slices read from. <em>Size M.</em></li>
+  <li><strong>One live-refresh helper</strong> used by both sagas and hooks, so the back-off and "stop after 5" rules exist once. <em>Size M.</em></li>
+  <li><strong>Write the rule down:</strong> "shown on two or more screens → Redux; one screen → a hook that calls the API". Then move the three or four helpers that broke it as they come up. <em>Size S each.</em></li>
+  <li><strong>One holder for the signed-in person</strong>, with the context fed from the module rather than two writes. <em>Size S.</em></li>
+</ol>
+
+<h2>3. Copy-paste and UI consistency</h2>
+<p><strong>Verdict: <span class="badge amber">Works, repetitive</span></strong>. The screens look consistent to a customer because the theme tokens (named colours, spacing and sizes) are enforced. Under the surface, though, the same small pieces are re-written per screen instead of coming from the kit in <code>src/ui</code>. That costs lines, and it means a fix to a focus ring, a 44-px tap target or a dark-mode colour has to be repeated.</p>
+
+<div class="tablewrap">
+<table>
+  <tr><th>Pattern</th><th class="num">Hand-made copies</th><th>What the kit already has</th></tr>
+  <tr><td>Buttons written from scratch<span class="builder">grep "styled.button" outside src/ui: 116 in 60 files; styled(Button): 6</span></td><td class="num">116</td><td><code>Button</code> (variants), <code>IconButton</code>, <code>ConfirmButton</code></td></tr>
+  <tr><td>Tags, pills, chips, badges<span class="builder">22 locals in 16 files (Badge ×5, Tag ×4, Pill ×2, Chip ×2, NewTag ×2, KitchenPill, PackedTag…); ui/Pill used in 7 files</span></td><td class="num">22</td><td><code>Pill</code>, but it is status-only (needs a tone)</td></tr>
+  <tr><td>Overlays, sheets, scrims, dialogs<span class="builder">31 locals in 12 files (Overlay ×12, Sheet ×7, Scrim ×2…); role="dialog" ×12</span></td><td class="num">31</td><td><code>SlideOver</code>, <code>BottomSheet</code>, <code>WarningDialog</code>, <code>FullLayer</code></td></tr>
+  <tr><td>Notices, hints, banners<span class="builder">33 locals in 19 files (Hint ×10, Notice ×5, Banner ×4…)</span></td><td class="num">33</td><td>nothing generic</td></tr>
+  <tr><td>Two-way toggles and switches<span class="builder">15 locals in 10 files (Toggle ×5, Switch ×3, SwitchButton ×2…); ui/Segmented used in 30 files</span></td><td class="num">15</td><td><code>Segmented</code> (used widely, but a compact two-state variant is missing)</td></tr>
+  <tr><td>List rows<span class="builder">60 "*Row" locals, 33 of them named exactly Row</span></td><td class="num">60</td><td><code>ListRow</code>, <code>TableRow</code></td></tr>
+  <tr><td>Quantity steppers<span class="builder">Qty in customer-menu/DishesView, seller-cook/PackTab, seller-cook/WhoOrderedPanel</span></td><td class="num">3</td><td><code>Stepper</code></td></tr>
+  <tr><td>Empty states<span class="builder">Empty in DishesView, MyOrdersView, orderParts, DeliveriesScreen</span></td><td class="num">4</td><td><code>EmptyState</code></td></tr>
+  <tr><td>Cards<span class="builder">30 "*Card" locals</span></td><td class="num">30</td><td>nothing generic (by design: "no boxed-in cards")</td></tr>
+</table>
+</div>
+<p>In total there are about <strong>1,426 one-off styled pieces</strong> in screens and components against <strong>85 in the kit</strong>.</p>
+
+<h3>Corner radii: two rule books</h3>
+<p>Rounded corners use two different token sets (one says 8 px for controls, the other 10 px) plus 25 hand-typed values in <code>rem</code>, which the lint rule does not catch because it only looks for <code>px</code>. Pick one set and add <code>rem</code> to the rule.<span class="builder">theme.radius.md (8px, src/theme/tokens.ts) ×52 · theme.size.radiusControl (10, src/theme/designTokens.ts) ×53 · theme.size.radiusSheet ×22 · literals 0.75rem ×10, 1.25rem ×6, 0.125rem ×6, 1rem ×3</span></p>
+
+<h3>Recommended shared components</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>Add or extend</th><th>Replaces</th><th>Why</th></tr>
+  <tr><td><strong>ui/Tag</strong> (neutral text tag; variants neutral / accent / new)</td><td>the 22 tags, badges and chips</td><td><code>Pill</code> is for statuses; screens need a plain label too</td></tr>
+  <tr><td><strong>ui/Notice</strong> (tone info / warning / success; title, one line, optional action)</td><td>the 33 hints, notices and banners</td><td>one place for colour, icon and contrast rules</td></tr>
+  <tr><td><strong>ui/Overlay</strong> primitive (scrim, focus trap, Escape, scroll lock) under <code>BottomSheet</code>, <code>WarningDialog</code>, <code>SlideOver</code></td><td>the 12 local overlays and 7 sheets in dialogs across home, menu, Saturday, releases, picture viewer</td><td>accessibility (keyboard, screen readers) done once</td></tr>
+  <tr><td><strong>Segmented</strong> compact two-state variant (or a small <strong>ui/Toggle</strong>)</td><td>the 15 switches and toggles</td><td>same look and 44-px target everywhere</td></tr>
+  <tr><td><strong>Button</strong> extra variants (ghost / link / text-with-icon)</td><td>a good share of the 116 local buttons</td><td>most locals are plain text or icon-and-text buttons</td></tr>
+  <tr><td><strong>ListRow</strong> with leading / trailing slots and a compact density</td><td>part of the 60 rows</td><td>keeps rows dense and consistent on phones</td></tr>
+  <tr><td>Adopt <strong>Stepper</strong> and <strong>EmptyState</strong></td><td>3 steppers, 4 empty states</td><td>already built; just not used</td></tr>
+</table>
+</div>
+<p><strong>What it would save:</strong> roughly 1,000 to 1,500 lines, and more importantly one place to fix contrast, focus rings, dark mode and tap targets. Do it gradually: add the component, then convert screens as they are touched; no big-bang rewrite.</p>
+
+<h2>4. Security and privacy, in plain words</h2>
+<p><strong>Verdict: <span class="badge green">Good</span></strong>. The things that matter most for an app like this are in place and were checked in the code, not assumed. Nothing was found that needs an emergency fix. Two small touch-ups are worth doing soon because they keep a written promise literal.</p>
+
+<h3>Fine</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>Area</th><th>What was checked</th><th>Why it matters</th></tr>
+  <tr><td>Sign-in sessions</td><td>The session lives in a browser cookie that scripts cannot read, is sent only over HTTPS and only to this site, lasts 30 days, and the server stores only a hash of it.<span class="builder">worker/auth/cookie.ts (__Host-session; HttpOnly; Secure; SameSite=Strict) · worker/db/auth.ts (sha256Hex of tokens)</span></td><td>A stolen database or a rogue script cannot be used to sign in as someone.</td></tr>
+  <tr><td>Forged requests (CSRF)</td><td>Every changing request to the seller, admin, sign-in, push and log areas must come from this site, or it is refused, on top of the strict cookie.<span class="builder">worker/auth/origin.ts, applied at the door in worker/api/index.ts:67</span></td><td>Another website cannot make a seller's browser change orders behind her back.</td></tr>
+  <tr><td>Passkeys and passwords</td><td>Passkeys use the approved SimpleWebAuthn library, tied to the site's domain; the password fallback is stretched 100,000 times before storing; 5 wrong tries lock for 15 minutes; 30 sign-in calls a minute per device.<span class="builder">worker/auth/webauthn.ts · worker/db/crypto.ts (PBKDF2 100 000) · worker/api/authRoutes.ts:93</span></td><td>Guessing a password or replaying a login is impractical.</td></tr>
+  <tr><td>Who may do what</td><td>The session always wins over any header, so kitchen A can never act as kitchen B; admins are refused all order data; helpers get a short allow-list; a chef only edits her own dishes.<span class="builder">worker/api/routes.ts:718-748 · helperMay at :892</span></td><td>The wrong person cannot reach another kitchen's orders or the owner's settings.</td></tr>
+  <tr><td>Input checking</td><td>Every request body goes through a parser that rejects anything unexpected; sizes are capped (50 dishes a menu, 99 portions a line, 20 order tokens a request, 600 KB and three allowed types for images).<span class="builder">46 parse*Request calls in worker/api/routes.ts · shared/parse.ts · shared/limits.ts · shared/imageSlots.ts:160</span></td><td>Bad or oversized data cannot break the server or the database.</td></tr>
+  <tr><td>Delivery addresses (D-099)</td><td>Encrypted with a fresh random nonce each time, using a key that lives only in Cloudflare's secret store; readable by the kitchen's team only; wiped by the hourly job one day after the menu finishes. Without the key nothing is stored.<span class="builder">worker/db/address.ts (AES-GCM, 12-byte IV, ADDRESS_KEEP_MS) · wipeOldAddresses on the hourly cron</span></td><td>A database copy reveals no street addresses, and old ones do not linger.</td></tr>
+  <tr><td>Keeping data only as long as needed</td><td>Order details are dropped four weeks after the cooking day; push subscriptions go with them; a stub keeps old links saying "archived".<span class="builder">worker/db/retention.ts</span></td><td>Matches the "no private information in the cloud" ruling (D-007).</td></tr>
+  <tr><td>Secrets</td><td>Secrets come from Cloudflare or a git-ignored local file; a missing admin setup key becomes a random value nobody can use; no keys or passwords were found typed into the code.<span class="builder">worker/api/index.ts (ApiEnv) · .gitignore (.dev.vars, .env, backups/)</span></td><td>Nothing secret is in the repository or the build.</td></tr>
+  <tr><td>Dependencies</td><td><code>pnpm audit</code> on 17 Oct: no known vulnerabilities. Few dependencies, all mainstream.<span class="builder">scratch/code-health-audit.log</span></td><td>Known holes in libraries are the commonest way in.</td></tr>
+  <tr><td>Offline cache</td><td>The service worker never caches seller, admin, sign-in, push or dev calls.<span class="builder">public/sw.js NEVER_CACHE_API</span></td><td>A shared phone cannot show someone else's kitchen data from cache.</td></tr>
+</table>
+</div>
+
+<h3>Watch</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>Area</th><th>What was found</th><th>Why it matters</th></tr>
+  <tr><td>Chef permissions are a "deny list"</td><td>Helpers get an allow-list (closed unless opened). Chefs get the opposite: a list of what is closed, so a brand-new seller route is open to chefs until someone remembers to add it.<span class="builder">worker/api/routes.ts:812 chefMayNot vs :892 helperMay</span></td><td>Easy to forget on a busy day; flipping it to an allow-list is a medium job but removes the trap.</td></tr>
+  <tr><td>Private order tokens in web addresses</td><td>A customer's private order tokens travel in the query part of two addresses: "My orders" and the live connection. Web sockets cannot send headers, so this is normal; today Worker request logging is off, so they are not written anywhere.<span class="builder">src/features/customer-orders/liveConnection.ts:49 · src/api/client.ts:118 · worker/api/routes.ts:520 · wrangler.jsonc has no observability/logpush</span></td><td>If request logging is ever switched on at Cloudflare, those tokens would land in logs. Note it in the runbook.</td></tr>
+  <tr><td>Nobody limits how fast orders can be placed</td><td>Order placement has stock and portion limits but no per-client rate limit (sign-in, log intake and "find my order" do).<span class="builder">worker/api/routes.ts POST /api/s/&lt;slug&gt;/orders</span></td><td>Someone with the link could flood a menu with junk orders. Small audience, so low risk; a cheap limiter would close it.</td></tr>
+  <tr><td>Customer passkeys (plan 087)</td><td>Work in progress: new tables for customer accounts and "Remember me". Kept apart from seller accounts on purpose.<span class="builder">migrations/0029_remember_me.sql · worker/db/auth.ts · shared/customerCode.ts</span></td><td>Review when done: its own cookie name, the same lockouts, and no path from a customer session to a seller route.</td></tr>
+  <tr><td>Linter memory</td><td>Today's lint run died at 4 GB while builders were running. The gate passed on 14 Oct.</td><td>A gate that cannot run on a busy PC gets skipped.</td></tr>
+</table>
+</div>
+
+<h3>Fix soon (small jobs)</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>Area</th><th>What was found</th><th>Why it matters</th></tr>
+  <tr><td>IP hash vs "no IP stored"</td><td>Two limiters keep a plain SHA-256 of the visitor's IP address for a short time (an hour for log intake; the lock time for "find my order"); both are swept, as the docs say. But a plain hash of an IPv4 address can be reversed by trying all four billion of them.<span class="builder">worker/api/routes.ts:565 · worker/api/logRoutes.ts:40 · swept by worker/db/clientLog.ts:52 and retention.ts dropStaleFindAttempts · docs/architecture/api.md:64 says "no IP is stored"</span></td><td>Hashing with a secret salt (or keeping only part of the address) makes the written promise literally true. A one-line change.</td></tr>
+  <tr><td>Browser security headers</td><td>The pages are served without a content security policy, frame protection or a referrer policy; only the version file has a header.<span class="builder">public/_headers (only /version.json) · no CSP in worker or index.html</span></td><td>Cheap defence in depth: stops the app being framed by another site and limits what an injected script could do. Add with care because of the Maps embed and push.</td></tr>
+</table>
+</div>
+
+<h2>5. Overall health and what to do first</h2>
+<div class="lights">
+  <div class="light"><div class="area">Code organisation</div><div class="verdict"><span class="badge green">Good</span></div><div style="font-size:.85rem;color:var(--muted)">clear layers, enforced; a few giant files</div></div>
+  <div class="light"><div class="area">State management</div><div class="verdict"><span class="badge amber">OK</span></div><div style="font-size:.85rem;color:var(--muted)">right tools, data held twice</div></div>
+  <div class="light"><div class="area">UI consistency</div><div class="verdict"><span class="badge amber">OK</span></div><div style="font-size:.85rem;color:var(--muted)">looks consistent, built repetitively</div></div>
+  <div class="light"><div class="area">Security &amp; privacy</div><div class="verdict"><span class="badge green">Good</span></div><div style="font-size:.85rem;color:var(--muted)">two small touch-ups</div></div>
+  <div class="light"><div class="area">Tests &amp; tooling</div><div class="verdict"><span class="badge green">Good</span></div><div style="font-size:.85rem;color:var(--muted)">real-database tests; lint is heavy</div></div>
+</div>
+
+<h3>Top ten, in order</h3>
+<div class="tablewrap">
+<table>
+  <tr><th>#</th><th>Do</th><th>Size</th><th>Benefit</th></tr>
+  <tr><td>1</td><td>Salt the IP hash in the two limiters (or keep only part of the address)</td><td><span class="badge grey">S</span></td><td>The privacy promise becomes literally true.</td></tr>
+  <tr><td>2</td><td>Add standard security headers (content security policy, no framing, referrer policy)</td><td><span class="badge grey">S</span></td><td>Defence in depth for almost no effort.</td></tr>
+  <tr><td>3</td><td>Remove the dead print job component and the cook copy of the "label" wording</td><td><span class="badge grey">S</span></td><td>Less to read and translate.</td></tr>
+  <tr><td>4</td><td>Pick one corner-radius token set and make the lint rule catch <code>rem</code> literals too</td><td><span class="badge grey">S</span></td><td>One rule book; the checker keeps it so.</td></tr>
+  <tr><td>5</td><td>Add a per-client limit on placing orders</td><td><span class="badge grey">S</span></td><td>Closes the one unlimited door.</td></tr>
+  <tr><td>6</td><td>Add <strong>Tag</strong> and <strong>Notice</strong> to the UI kit; convert screens as they are touched</td><td><span class="badge grey">M</span></td><td>Absorbs 55 one-off pieces; consistent contrast and dark mode.</td></tr>
+  <tr><td>7</td><td>One source for the kitchen's orders (Cook reads from Orders)</td><td><span class="badge grey">M</span></td><td>Half the requests; one live loop to maintain.</td></tr>
+  <tr><td>8</td><td>Turn chef permissions into an allow-list</td><td><span class="badge grey">M</span></td><td>A new route can no longer leak to chefs by accident.</td></tr>
+  <tr><td>9</td><td>Split the server route file by area (customer / seller / admin), <em>after</em> the features now in progress land</td><td><span class="badge grey">M</span></td><td>Two people can work on the server at once; smaller reviews.</td></tr>
+  <tr><td>10</td><td>One current-menu slice and one live-refresh helper</td><td><span class="badge grey">L</span></td><td>Removes the last "change it in three places" traps.</td></tr>
+</table>
+</div>
+<p class="note">Also worth a look when convenient: an overlay primitive under the three dialog patterns (M), the lint memory problem (S), and breaking the two biggest database files into orders / stock / audit (L). None of these blocks a release.</p>
+
+<p class="sub" style="margin-top:32px">Method: sizes and counts come from line and pattern counts over the source on 17 Oct 2026; every security statement was read in the code at the paths shown. Areas marked "work in progress" (admin screens, maintenance notes, customer passkeys in the Worker) were analysed as they stand and not changed. Sizes: S = under half a day, M = one to three days, L = a week or more.</p>
+
+</main>
+</body>
+</html>

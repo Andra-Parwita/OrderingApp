@@ -67,6 +67,12 @@ export const API_ERROR_CODES = [
   'maintenance',
   /** Plan 081: a customer tried to change, cancel or collect a private order; only the team may (403). */
   'private_order',
+  /** Plan 087: a passkey of the other kind (customer vs. seller) was offered at this sign-in (409). */
+  'passkey_other_kind',
+  /** Plan 087: the sealed address can only be saved within 30 days of a confirmed order (409). */
+  'no_recent_order',
+  /** Plan 089: this client placed 5 orders in this kitchen in the last 10 minutes (429). */
+  'too_many_orders',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

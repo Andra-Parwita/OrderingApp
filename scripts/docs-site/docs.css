@@ -187,6 +187,19 @@ a {
   line-height: 1.2;
   letter-spacing: -0.01em;
 }
+.title .ver {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border: 1px solid var(--pill-border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
+  background: var(--pill-bg);
+}
 .title .sub {
   font-size: 0.875rem;
   margin-top: 2px;

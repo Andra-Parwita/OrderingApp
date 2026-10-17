@@ -72,12 +72,6 @@
     "pickup": "Pickup",
     "delivery": "Delivery"
   },
-  "label": {
-    "qrName": "Order QR code",
-    "pickup": "Pickup · {{day}}",
-    "delivery": "Delivery · {{day}}",
-    "part": "{{index}} of {{of}}"
-  },
   "autosave": {
     "saving": "Saving…",
     "saved": "Saved ✓",

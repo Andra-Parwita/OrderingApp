@@ -25,6 +25,24 @@ flowchart TD
     J --> N["Show QR at pickup<br/>/o/:token/qr"]
 ```
 
+### Customer: Remember me (optional, D-107)
+
+```mermaid
+flowchart TD
+    A["Menu home chip<br/>Remember me"] --> B["Explanation sheet<br/>(why it is safe, what a passkey is)"]
+    B --> C["Turn on: passkey with PRF"]
+    C --> D["Settings: On + customer code C-xxxx"]
+    D --> E["Order while signed in<br/>seller sees Passkey-confirmed + C-xxxx"]
+    E --> F["Saved address sealed on the phone<br/>(30 days after the last order)"]
+    G["New phone: My orders, Restore them"] --> H["Passkey sign-in<br/>orders, name, address back"]
+    D --> I["Add another phone: 6-digit code"] --> J["New phone types it, makes its own passkey"]
+    D --> K["Delete my saved data<br/>(asks first)"]
+```
+
+- Everything is optional; ordering, links and My orders on one phone work without it. Offered by the chip (dismissable for good), the Settings card, one line after the second order and an empty My orders.
+- A phone without the passkey PRF feature keeps the address on the phone only (a note says so).
+- "Delete my saved data" removes everything on our side at once; the phone keeps its own My orders; orders already placed are untouched.
+
 ## Seller: from dishes to a finished menu
 
 The seller works in the app at `/seller`. A menu is made in a four-step wizard (**Dishes, Details, Check, Publish**), shown as a layer over the current screen. A live menu keeps three tabs (Dishes, Details, Prices) and has no Publish step. On the cooking day the seller packs, hands over and sells; **Finish** archives the orders and closes the menu, after which a new one can be made.

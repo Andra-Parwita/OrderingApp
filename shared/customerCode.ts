@@ -9,3 +9,18 @@ export const CUSTOMER_CODE_RE = /^[a-f0-9]{24}$/;
 export function parseCustomerCode(input: unknown): string | null {
   return typeof input === 'string' && CUSTOMER_CODE_RE.test(input) ? input : null;
 }
+
+/** Crockford base32: no I, L, O or U, so a code read aloud is not ambiguous. */
+const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+
+/**
+ * Plan 087: how a seller sees a customer code, "C-7K3M": the first 20 bits of the 24-character
+ * code as 4 Crockford base32 characters. Null when the code is not well-formed.
+ */
+export function shortCustomerCode(code: string): string | null {
+  if (parseCustomerCode(code) === null) return null;
+  const bits = parseInt(code.slice(0, 5), 16);
+  let out = 'C-';
+  for (let shift = 15; shift >= 0; shift -= 5) out += CROCKFORD.charAt((bits >> shift) & 31);
+  return out;
+}

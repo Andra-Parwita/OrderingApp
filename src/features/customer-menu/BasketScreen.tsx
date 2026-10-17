@@ -70,6 +70,7 @@ function otherErrorKey(
   offered: ReadonlyArray<Fulfilment>,
 ): string {
   if (code === 'order_locked') return 'basket.errors.order_locked';
+  if (code === 'too_many_orders') return 'basket.errors.too_many_orders';
   if (code === 'fulfilment_unavailable') {
     // Say which one is missing when the menu on screen tells us.
     return offered.includes(fulfilment)

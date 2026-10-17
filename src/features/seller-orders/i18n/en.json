@@ -224,6 +224,10 @@
     "list": "Orders",
     "status": "Order status"
   },
+  "confirmed": {
+    "title": "Passkey-confirmed",
+    "hint": "Placed by a customer signed in with Remember me"
+  },
   "panel": {
     "changedBy": "{{name}} changed this order · {{when}}",
     "items": "Items",

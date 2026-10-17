@@ -8,6 +8,8 @@ declare module 'styled-components' {
     mode: 'light' | 'dark';
     /** Every colour, from `makeColors(brand, mode)` (the seller design tokens). */
     c: ThemeColors;
+    /** Background and border of a speech bubble (Bobo's notes). */
+    bubble: { bg: string; line: string };
     font: typeof font;
     size: typeof size;
     /**

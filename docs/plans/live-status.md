@@ -4,10 +4,31 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Release 1.0.38: estimate vs actual (owner, 17 Oct: "make sure it has comparisons estimated and actual")
+ETA given at 19:06: **ready to deploy ~21:00–22:00**.
+
+| step | estimate | started | ended | actual | ± estimate | note |
+|---|---|---|---|---|---|---|
+| 1 · Remember me stage 4 (e2e, docs, D-107) | 20–40 min | ~18:28 | 19:08 | ~40 min | at the top of the range | |
+| 2a · typecheck | (part of 40 min gate) | 19:10 | 19:10 | 31 s | | |
+| 2b · lint | (part of 40 min gate) | 19:10 | 19:13 | 162 s | | needs 8 GB |
+| 2c · format | (part of 40 min gate) | 19:13 | 19:13 | 24 s | | after normalising 6 CRLF files |
+| 2d · unit tests (1st try) | (part of 40 min gate) | 19:13 | 19:26 | 770 s | wasted | collided with a stray first run (my mistake) |
+| 2e · unit + e2e (re-run) | ~23 min (unit ~13, e2e ~10) | 19:26 | 19:44 | 18 min (unit 684 s, e2e 374 s) | −5 min | unit: 6 files (likely flakes, re-checking); **e2e 21 failed**: order placement stuck + seller pages fail fast → suspects: new order limit / CSP |
+| 3 · fixes from the gate | 15–45 min (given 19:06) | 19:45 | 21:08 | 83 min | **+38 to +68 min** | real bugs: order limit shared one budget in tests (dev-mode switch + X-Dev-Order-Limit test header), 6-digit code display race, two specs on one admin passkey, a save-on-blur race; new e2e p089 (6th order shows the message); 7 full runs, remaining failures = load flakes |
+| 3b · release notes 1.0.38 + version + Help FAQ + docs version label | ~10 min | 20:58 | 21:09 | ~11 min | ≈ 0 | |
+| 3c · final lint + format + full e2e (2 workers) | ~15 min | 21:10 | 21:24 | 14 min (lint 143 s, format 16 s, e2e 643 s) | ≈ 0 | **e2e 99 passed, 0 failed**; format: one CRLF-only file normalised |
+| 3d · final full unit run | ~12 min | 21:24 | 21:37 | 12.5 min (745 s) | ≈ 0 | 2,427 passed; 3 files port-flaked, 48/48 alone |
+| 4 · coordinator look at the screens | ~15 min | 21:25 | 21:33 | ~8 min | −7 min | About 1.0.38, Settings Remember me card, menu; no CSP errors |
+| **ready to deploy** | **21:00–22:00** (given 19:06) · 21:30–22:15 (19:45) · 21:50–22:30 (20:57) | | **21:40** | | **inside the first window** | |
+| 3 · fixes from the gate | 15–45 min | | | | | |
+
 ## Now
 
 | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|
+| 1.0.38 · step 1: Remember me stage 4 (e2e, docs, D-107) | builder · sonnet | ~18:40 (17 Oct) | 20–40 min (given 19:06) | 19:08 | ~40 min | ≈ 0 to +20 | e2e p087 (167), docs, D-107 | ✅ e2e 1/1, unit 44 |
+| 1.0.38 · step 2: full gate (lint, format, typecheck, unit, full e2e) | coordinator | 19:08 (17 Oct) | 40 min | (rerun) | | | typecheck 31 s · lint 162 s · format 24 s ✅; unit + e2e collided with a stray first run (a backgrounded `&` that kept running) → killed by PID, scratch DBs cleared, unit + e2e re-run 19:30 | ⏳ re-running |
 | 081 · delivery row option A (one step row for all, quiet map links, cards, one-line step) | builder · sonnet | ~14:35 (17 Oct) | 30 min | ~14:50 | ~15 min | −15 min | DeliveryRunScreen, parts (cards), QuietMapLinks, shared/address text links, PrivateRow pickups, Private list/detail links | ✅ unit 547, e2e p081 + seller-saturday, typecheck, lint, format, docs; coordinator checked 360/390 px |
 | gate · 081 (typecheck, lint, format, full unit, full e2e) | coordinator | 13:54 (17 Oct) | 30 min | ~14:30 | ~35 min | +5 min | — | ✅ lint, format, typecheck, unit (6 port-busy files re-ran green 163/163), full e2e 93 passed |
 | 081 · today's private orders in Pickup & delivery (phone, Directions) | builder · sonnet | 13:44 (17 Oct) | 30 min | 13:54 | ~9 min | −21 min | seller-saturday PrivateRow, usePrivateHandover, HandOverScreen, PickupView, DeliveryRunScreen, e2e step | ✅ unit 388, e2e 1/1, coordinator checked live at 390 px |

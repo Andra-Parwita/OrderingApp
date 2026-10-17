@@ -80,7 +80,9 @@ import type {
 } from '../../shared/setupContract';
 import type { SendUpdatesRequest, UpdateResult } from '../../shared/updateContract';
 import type { AppSettingsRepository } from '../db/appSettings';
+import type { ShortMessageRepository } from '../db/shortMessages';
 import type { ClientLogRepository } from '../db/clientLog';
+import type { AdoptItem, CustomerMe, SealedAddress } from '../../shared/customerContract';
 import type {
   AdminSeller,
   CodeResponse,
@@ -411,6 +413,109 @@ export type ChallengeBinding =
   | { purpose: 'register'; sessionToken: string }
   | { purpose: 'authenticate'; clientDeviceId: string };
 
+// ---- Plan 087: Remember me (customers). Separate from the sellers' accounts and sessions. ----
+
+/** A live customer session, resolved from the `__Host-customer` cookie. */
+export type CustomerCaller = {
+  token: string;
+  accountId: string;
+  /** The passkey that signed in; null while a phone that joined by code has none yet. */
+  credentialId: string | null;
+  /** True for a phone that joined by code and has not added its passkey (short, limited). */
+  setup: boolean;
+};
+
+/** The cookie to set after a sign-in. */
+export type CustomerGrant = { token: string; setup: boolean };
+
+export type CustomerChallengeBinding =
+  | { purpose: 'register'; clientDeviceId: string }
+  | { purpose: 'authenticate'; clientDeviceId: string }
+  | { purpose: 'add'; sessionToken: string };
+
+export type TakenChallenge = { accountId: string | null; firstName: string };
+
+export type CustomerRepository = {
+  /** A fresh opaque id for an account that is about to register. */
+  newAccountId(): string;
+  /** The live session for a token, renewed on use (full sessions: 90 days from now). */
+  resolve(token: string | undefined): Promise<CustomerCaller | undefined>;
+  /** Whether a customer passkey with this credential id exists (for the friendly cross-refusal). */
+  hasPasskey(credentialId: string): Promise<boolean>;
+  passkeysOfAccount(
+    accountId: string,
+  ): Promise<Array<{ credentialId: string; transports: Array<string> }>>;
+  passkeyById(
+    credentialId: string,
+  ): Promise<{ credentialId: string; transports: Array<string> } | undefined>;
+
+  saveChallenge(
+    challenge: string,
+    binding: CustomerChallengeBinding,
+    extra?: { accountId?: string; firstName?: string },
+  ): Promise<void>;
+  /** Single use: gone after this call, whatever the outcome. Null unless it matches the binding. */
+  takeChallenge(
+    challenge: string,
+    binding: CustomerChallengeBinding,
+  ): Promise<TakenChallenge | null>;
+
+  /** A new account with its first passkey, its order links and the adopted plan 071 codes. */
+  register(input: {
+    accountId: string;
+    firstName: string;
+    passkey: StoredPasskey;
+    prf: boolean;
+    links: ReadonlyArray<{ token: string; sellerId: string }>;
+    adopt: ReadonlyArray<AdoptItem & { sellerId: string }>;
+  }): Promise<AuthResult<CustomerGrant>>;
+  /** `verify` checks the signature and answers the new counter (null = wrong). */
+  signInPasskey(
+    clientDeviceId: string,
+    credentialId: string,
+    verify: (passkey: StoredPasskey) => Promise<number | null>,
+  ): Promise<AuthResult<CustomerGrant>>;
+  /** A second passkey (a phone that joined by code, or another one); the session becomes full. */
+  addPasskey(
+    caller: CustomerCaller,
+    passkey: StoredPasskey,
+    prf: boolean,
+  ): Promise<AuthResult<CustomerGrant>>;
+
+  me(caller: CustomerCaller, sellerId?: string): Promise<CustomerMe>;
+  setFirstName(caller: CustomerCaller, firstName: string): Promise<void>;
+  /** Everything of this account in one cascade. */
+  deleteAccount(accountId: string): Promise<void>;
+  signOut(token: string): Promise<void>;
+
+  orders(caller: CustomerCaller): Promise<Array<{ token: string; slug: string }>>;
+  /** Merges order links (capped at 200, newest kept). */
+  linkOrders(
+    caller: CustomerCaller,
+    links: ReadonlyArray<{ token: string; sellerId: string }>,
+  ): Promise<void>;
+
+  /**
+   * Plan 087: marks a just-placed order as confirmed by this full session (code, link, last order).
+   * Answers the order as stored; undefined when the session is no longer a full one.
+   */
+  confirmOrder(caller: CustomerCaller, order: SellerOrder): Promise<SellerOrder | undefined>;
+
+  sealedAddress(caller: CustomerCaller): Promise<SealedAddress | null>;
+  /** False when there was no confirmed order in the last 30 days (a new account: 30 days from creation). */
+  putSealedAddress(caller: CustomerCaller, sealed: SealedAddress): Promise<boolean>;
+  deleteSealedAddress(caller: CustomerCaller): Promise<void>;
+
+  /** From a signed-in phone: 6 digits, 5 minutes, one use. */
+  createPhoneCode(caller: CustomerCaller): Promise<{ code: string; expiresAt: string }>;
+  /** A new phone joins with a code; `ipHash` (a hash, never the address) adds a per-network limit. */
+  joinWithCode(
+    clientDeviceId: string,
+    ipHash: string | undefined,
+    code: string,
+  ): Promise<AuthResult<CustomerGrant>>;
+};
+
 /** Accounts, devices, sessions, keys, add-device codes and lockouts (D-011, D-013, D-027). */
 export type AuthRepository = {
   /** The live session for a token, renewed on use. */
@@ -497,6 +602,8 @@ export type AuthRepository = {
     clearOnHit: Array<string>,
     attempt: () => Promise<T | null>,
   ): Promise<AuthResult<T>>;
+  /** The limiter key for a visitor's network address: a salted hash, never the address (api.md). */
+  ipKey(ip: string | null): Promise<string>;
   /** Counts one request for `scope`; the seconds to wait when over the limit, else 0. */
   rateLimit(scope: string, max: number, windowSeconds: number): Promise<number>;
 
@@ -545,11 +652,15 @@ export type Repository = {
   liveOrderOwners(tokens: ReadonlyArray<string>): Promise<Map<string, string>>;
 
   auth: AuthRepository;
+  /** Plan 087: Remember me for customers (own accounts, passkeys and sessions). */
+  customers: CustomerRepository;
 
   /** Plan 026: the client error log (a ring of the newest 500). */
   log: ClientLogRepository;
   /** Plan 046: maintenance mode and the announced update. */
   settings: AppSettingsRepository;
+  /** Plan 086: the admin's short messages. */
+  messages: ShortMessageRepository;
 
   /** Dev tools: only for a local database, and only when DEV_TOOLS is on (see worker/api). */
   dev: {

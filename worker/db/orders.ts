@@ -174,8 +174,8 @@ export function insertOrderStatements(
     db.stmt(
       `INSERT INTO orders (seller_id, id, code, token, past_week_id, first_name, language, fulfilment, note, status,
          paid, locked, wa_received, is_returning, changed, entered_by_role, entered_by_name, created_at, updated_at,
-         packed, collected_at, collected_by, pickup_place_id, customer_code, kind, event_date, event_time, deposit_cents)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         packed, collected_at, collected_by, pickup_place_id, customer_code, kind, event_date, event_time, deposit_cents, customer_confirmed)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       order.id,
       order.code,
@@ -204,6 +204,7 @@ export function insertOrderStatements(
       order.private?.eventDate ?? null,
       order.private?.eventTime ?? null,
       order.private?.depositCents ?? null,
+      order.confirmed === true && !order.private,
     ),
     ...lineStatements(db, order),
   ];

@@ -225,12 +225,52 @@
       "label": "Bagian admin",
       "pick": "Bagian",
       "sellers": "Penjual",
-      "announce": "Pengumuman & pemeliharaan",
+      "announce": "Umumkan pembaruan",
       "settings": "Pengaturan platform",
       "problems": "Masalah",
       "devices": "Perangkat Anda",
       "noticeSet": "pengumuman diatur atau pemeliharaan aktif",
-      "resize": "Ubah lebar menu"
+      "resize": "Ubah lebar menu",
+      "maintenance": "Pemeliharaan",
+      "message": "Pesan singkat"
+    },
+    "message": {
+      "title": "Pesan singkat",
+      "text": "Catatan cepat yang tampil maksimal 30 detik, lalu hilang. Tidak ada notifikasi ke ponsel, sama sekali.",
+      "new": "Pesan baru",
+      "detailTitle": "Pesan",
+      "sent": "Terkirim",
+      "activeUntil": "Aktif sampai {{time}}",
+      "ended": "Selesai",
+      "stopped": "Dihentikan",
+      "stop": "Hentikan sekarang",
+      "again": "Kirim lagi sebagai baru",
+      "none": "Belum ada pesan terkirim.",
+      "listLabel": "Pesan singkat",
+      "textEn": "Teks (Inggris)",
+      "textId": "Teks (Bahasa Indonesia)",
+      "same": "Teks sama untuk keduanya",
+      "kitchens": "Dapur",
+      "allKitchens": "Semua dapur",
+      "pick": "Pilih dapur",
+      "audienceLabel": "Siapa yang lihat",
+      "audience": {
+        "everyone": "Semua orang",
+        "sellers": "Penjual",
+        "customers": "Pelanggan"
+      },
+      "window": "Aktif selama",
+      "windows": {
+        "15m": "15 menit",
+        "1h": "1 jam",
+        "today": "Hari ini"
+      },
+      "windowHelp": "Pengunjung baru masih bisa menerimanya selama waktu ini.",
+      "send": "Kirim",
+      "preview": "Pratinjau (yang dilihat orang)",
+      "sample": "Semua sudah jalan normal lagi. Makasih sudah sabar ya!",
+      "sentAt": "Terkirim",
+      "fine": "Layar yang sedang terbuka langsung menerimanya. Yang lain menerimanya saat membuka aplikasi lagi, selama masih aktif. Tiap perangkat hanya melihatnya sekali."
     }
   }
 }

@@ -1,6 +1,6 @@
 # 086 · Admin short message: a 30-second note everyone can see
 
-**Status:** draft (17 Oct); timing for after 1.0.37 unless the owner says otherwise.
+**Status:** ✅ built and gated 17 Oct (D-106), in 1.0.38; was: next (owner, 17 Oct: "want to do short message and passkey for customer first"); mock-up in progress.
 **Owner, 17 Oct:** "in admin we have announcement .. what if I just want to send an announcement to say everything is okay etc, or a short message that everyone can see, and it will be shown max 30 seconds and disappear?" Delivery: **A** (instant for open seller screens and customers following an order through the live connection; on the next page open for everyone else while the message is active).
 
 ## How it works
@@ -13,6 +13,8 @@
 - **Active window:** the admin picks each time: 15 min / 1 hour / today (until midnight in the admin's time) (owner "C", 17 Oct).
 - **Who receives it:** the admin can pick kitchens (all, or specific ones), plus the audience everyone / sellers / customers (owner, 17 Oct: "if admin can pick is better").
 - **In-app only:** no phone notification, ever (owner "B", 17 Oct).
+- **Dark mode bubble** (owner, 17 Oct): the note's speech-bubble background one step lighter in dark mode; the existing maintenance bar bubble matches.
+- **AUD and Adelaide only** in samples (owner: "we used only AUD").
 
 ## Open questions
 - none left; mock-up next, build after 1.0.37.

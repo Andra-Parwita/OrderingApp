@@ -6,6 +6,7 @@ import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Icon } from '../../ui';
+import { ConfirmedPill } from './ConfirmedMark';
 import { getContactDigits } from './contacts';
 import { SELLER_NS } from './i18n/register';
 import { StatusMark } from './StatusMark';
@@ -151,6 +152,7 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
       <Open type="button" onClick={open}>
         <Top>
           <Name>{order.firstName}</Name>
+          <ConfirmedPill order={order} />
           {isNew ? <NewTag>{t('live.new')}</NewTag> : null}
           <Code>{formatOrderCode(order.code)}</Code>
           <Total>{formatMoney(orderTotalCents(order), lang)}</Total>

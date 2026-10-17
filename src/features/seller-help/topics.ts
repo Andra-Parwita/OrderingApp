@@ -1002,4 +1002,73 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Tidak ada yang dikirim ke printer sebelum Anda mengetuk Cetak di jendela cetak.',
     },
   },
+  // 16
+  {
+    en: {
+      n: 'Remember me (customers)',
+      s: 'The optional passkey your customers can turn on',
+      l: 'Customers can keep their orders on every phone. You never have to do anything.',
+      steps: [
+        { part: 'What it is' },
+        {
+          text: 'A customer can turn on **Remember me**. It is a passkey on their phone (face, fingerprint or phone PIN): no email, no password, no phone number. Their orders, first name and saved delivery address then follow them to a new phone.',
+        },
+        {
+          text: 'It is optional. Customers who do not use it order exactly as before.',
+        },
+        { part: 'What you see' },
+        {
+          text: 'An order placed while a customer is signed in shows **✓ Passkey-confirmed · C-7K3M** next to their name. The code is the same at every order from that person in your kitchen, so you know it is really them.',
+        },
+        {
+          text: 'Another kitchen sees a different code for the same person. Nobody can link a customer across kitchens.',
+        },
+        { part: 'What you cannot see' },
+        {
+          text: 'No email, no phone number and no account id. You never see their saved address except inside an order, as today. It is sealed with their passkey, so not even we can read it.',
+        },
+        { part: 'How customers turn it off' },
+        {
+          text: 'In the customer app: **Settings** → **Remember me** → **Delete my saved data**. Everything on our side is deleted at once. Their phone keeps its own My orders, and their orders still work from the link.',
+        },
+        {
+          text: 'The passkey itself stays in their phone password manager until they remove it (iPhone: Settings → Passwords; Android: Google Password Manager). It does nothing without our data.',
+        },
+      ],
+      note: 'A Remember me that is not used for 12 months is deleted automatically.',
+    },
+    id: {
+      n: 'Ingat aku (pelanggan)',
+      s: 'Passkey opsional yang bisa dinyalakan pelanggan',
+      l: 'Pelanggan bisa menyimpan pesanan di semua HP-nya. Anda tidak perlu melakukan apa pun.',
+      steps: [
+        { part: 'Apa itu' },
+        {
+          text: 'Pelanggan bisa menyalakan **Ingat aku**. Ini passkey di HP mereka (wajah, sidik jari, atau PIN HP): tanpa email, tanpa kata sandi, tanpa nomor HP. Pesanan, nama depan, dan alamat antar tersimpan mereka lalu ikut ke HP baru.',
+        },
+        {
+          text: 'Sifatnya opsional. Pelanggan yang tidak memakainya memesan persis seperti sebelumnya.',
+        },
+        { part: 'Yang Anda lihat' },
+        {
+          text: 'Pesanan yang dibuat saat pelanggan sudah masuk menampilkan **✓ Dikonfirmasi passkey · C-7K3M** di samping namanya. Kodenya sama di setiap pesanan orang itu di dapur Anda, jadi Anda tahu itu benar dia.',
+        },
+        {
+          text: 'Dapur lain melihat kode yang berbeda untuk orang yang sama. Tidak ada yang bisa menghubungkan pelanggan antar dapur.',
+        },
+        { part: 'Yang tidak bisa Anda lihat' },
+        {
+          text: 'Tidak ada email, nomor HP, atau id akun. Alamat tersimpan mereka hanya terlihat di dalam pesanan, seperti biasa. Alamat itu disegel dengan passkey mereka, jadi kami pun tidak bisa membacanya.',
+        },
+        { part: 'Cara pelanggan mematikannya' },
+        {
+          text: 'Di aplikasi pelanggan: **Pengaturan** → **Ingat aku** → **Hapus data tersimpanku**. Semua di sisi kami dihapus sekaligus. HP mereka tetap menyimpan Pesananku sendiri, dan pesanan tetap bisa dibuka dari tautannya.',
+        },
+        {
+          text: 'Passkey-nya tetap ada di pengelola kata sandi HP sampai mereka menghapusnya (iPhone: Pengaturan → Kata Sandi; Android: Google Password Manager). Tanpa data kami, passkey itu tidak berguna.',
+        },
+      ],
+      note: 'Ingat aku yang tidak dipakai selama 12 bulan dihapus otomatis.',
+    },
+  },
 ];

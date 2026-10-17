@@ -46,7 +46,7 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
   {
     en: {
       n: 'My customer lost their order. How do they get it back?',
-      s: 'Three ways',
+      s: 'Four ways',
       l: 'The order is not lost. It is saved on the server.',
       steps: [
         { part: 'Way 1 · Their WhatsApp chat' },
@@ -60,12 +60,16 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
         },
         { part: 'Way 3 · You send the link again' },
         { text: 'In **Orders**, open the order and tap **Send link on WhatsApp**.' },
+        { part: 'Way 4 · Remember me, on a new phone' },
+        {
+          text: 'If they turned on **Remember me**, they open **My orders** on the new phone, tap **Restore them** and unlock with their face or fingerprint. Their orders, first name and saved address come back.',
+        },
       ],
       note: 'Find my order searches the last kitchen they used on that phone.',
     },
     id: {
       n: 'Pelanggan saya kehilangan pesanannya. Bagaimana mendapatkannya lagi?',
-      s: 'Tiga cara',
+      s: 'Empat cara',
       l: 'Pesanannya tidak hilang. Pesanan tersimpan di server.',
       steps: [
         { part: 'Cara 1 · Chat WhatsApp mereka' },
@@ -81,6 +85,10 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
         },
         { part: 'Cara 3 · Anda kirim tautannya lagi' },
         { text: 'Di **Pesanan**, buka pesanannya dan ketuk **Kirim tautan lewat WhatsApp**.' },
+        { part: 'Cara 4 · Ingat aku, di ponsel baru' },
+        {
+          text: 'Kalau mereka menyalakan **Ingat aku**, mereka membuka **Pesanan saya** di ponsel baru, mengetuk **Pulihkan** lalu membuka kunci dengan wajah atau sidik jari. Pesanan, nama depan, dan alamat tersimpan mereka kembali.',
+        },
       ],
       note: 'Cari pesanan saya mencari di dapur terakhir yang mereka pakai di ponsel itu.',
     },
@@ -289,6 +297,82 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
         },
       ],
       note: 'Pelanggan melihat penjelasan ini atas nama dapur Anda, tepat di bawah kolom alamat.',
+    },
+  },
+  // 9
+  {
+    en: {
+      n: 'What is Remember me?',
+      s: 'An optional passkey that keeps a customer’s data',
+      l: 'No email, no password and no phone number. Only a passkey: their face, fingerprint or phone PIN.',
+      steps: [
+        {
+          text: 'It keeps their orders, first name and saved address, so they come back on a new phone.',
+        },
+        {
+          text: 'The saved address is sealed so only their own phones can read it. It is deleted after 30 days without an order.',
+        },
+        {
+          text: 'On their orders you see **✓ Passkey-confirmed · C-xxxx**. It tells you the order comes from the same customer as before.',
+        },
+        {
+          text: 'To turn it on, they tap the **🔒 Remember me** chip on the menu, or go to **Settings** → **Remember me**.',
+        },
+        {
+          text: 'To turn it off, they go to **Settings** → **Remember me** → **Delete my saved data**.',
+        },
+      ],
+      note: 'It is optional. Customers who do not turn it on order exactly as before.',
+    },
+    id: {
+      n: 'Apa itu Ingat aku?',
+      s: 'Passkey opsional yang menyimpan data pelanggan',
+      l: 'Tanpa email, tanpa kata sandi, dan tanpa nomor telepon. Hanya passkey: wajah, sidik jari, atau PIN ponsel mereka.',
+      steps: [
+        {
+          text: 'Passkey menyimpan pesanan, nama depan, dan alamat tersimpan mereka, jadi semuanya kembali di ponsel baru.',
+        },
+        {
+          text: 'Alamat tersimpan disegel agar hanya ponsel mereka sendiri yang bisa membacanya. Alamat dihapus setelah 30 hari tanpa pesanan.',
+        },
+        {
+          text: 'Di pesanan mereka Anda melihat **✓ Dikonfirmasi passkey · C-xxxx**. Itu menandakan pesanan datang dari pelanggan yang sama seperti sebelumnya.',
+        },
+        {
+          text: 'Untuk menyalakannya, mereka mengetuk chip **🔒 Ingat aku** di menu, atau buka **Pengaturan** → **Ingat aku**.',
+        },
+        {
+          text: 'Untuk mematikannya, mereka buka **Pengaturan** → **Ingat aku** → **Hapus data tersimpanku**.',
+        },
+      ],
+      note: 'Ini opsional. Pelanggan yang tidak menyalakannya memesan seperti biasa.',
+    },
+  },
+  // 10
+  {
+    en: {
+      n: 'My customer sees "Too many orders in a short time".',
+      s: 'A safety limit, not a fault',
+      l: 'One phone can place about 5 new orders per 10 minutes, per kitchen. Changing an existing order is not limited.',
+      steps: [
+        { text: 'They wait a few minutes, then place the order again.' },
+        {
+          text: 'Or they send you the order on WhatsApp and you enter it yourself as a seller order. Seller orders are not limited.',
+        },
+      ],
+      note: 'The limit protects your kitchen from accidental or abusive floods of orders.',
+    },
+    id: {
+      n: 'Pelanggan saya melihat "Terlalu banyak pesanan dalam waktu singkat".',
+      s: 'Batas pengaman, bukan kerusakan',
+      l: 'Satu ponsel bisa membuat sekitar 5 pesanan baru per 10 menit, per dapur. Mengubah pesanan yang sudah ada tidak dibatasi.',
+      steps: [
+        { text: 'Mereka menunggu beberapa menit, lalu memesan lagi.' },
+        {
+          text: 'Atau mereka mengirim pesanan ke Anda lewat WhatsApp dan Anda memasukkannya sendiri sebagai pesanan penjual. Pesanan penjual tidak dibatasi.',
+        },
+      ],
+      note: 'Batas ini melindungi dapur Anda dari banjir pesanan yang tidak disengaja atau disalahgunakan.',
     },
   },
 ];

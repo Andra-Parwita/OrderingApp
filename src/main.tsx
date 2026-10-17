@@ -26,6 +26,8 @@ import { mountMaintenance } from './components/maintenance';
 import { mountOfflineBanner } from './components/network';
 import { mountUpdateBar } from './components/update';
 import { startClientLog } from './api/clientLog';
+import { startRememberMeSync } from './api/customer/sync';
+import { registerRememberMeI18n } from './components/remember-me';
 import { initI18n } from './i18n/init';
 
 const container = document.getElementById('root');
@@ -60,6 +62,8 @@ void initI18n().then(async () => {
   registerCustomerI18n();
   registerCustomerOrdersI18n();
   registerInstallI18n();
+  registerRememberMeI18n();
+  startRememberMeSync();
   startInstallSupport();
   registerSellerI18n();
   registerCookI18n();

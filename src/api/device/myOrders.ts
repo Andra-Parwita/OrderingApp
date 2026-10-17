@@ -58,6 +58,11 @@ function writeMyOrders(entries: ReadonlyArray<SavedOrder>): void {
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(MY_ORDERS_CHANGED));
 }
 
+/** Plan 087: Remember me puts the merged list in place (orders from another phone). */
+export function replaceMyOrders(entries: ReadonlyArray<SavedOrder>): void {
+  writeMyOrders(entries);
+}
+
 /** ISO time of the newest inbox entry, or undefined when the inbox is empty. */
 export function newestInboxAt(order: CustomerOrder): string | undefined {
   let newest: string | undefined;

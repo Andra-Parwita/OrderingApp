@@ -5,6 +5,7 @@ import type { Order } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { Icon, type IconName } from '../../ui';
+import { ConfirmedPill } from './ConfirmedMark';
 import { SELLER_NS } from './i18n/register';
 import { StatusMark } from './StatusMark';
 import { customerKind } from './customerKind';
@@ -173,6 +174,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
       <Line>
         <Code>{formatOrderCode(order.code)}</Code>
         <Name>{order.firstName}</Name>
+        <ConfirmedPill order={order} />
         {isNew ? <NewTag>{t('live.new')}</NewTag> : null}
         {order.changed || order.addressChanged === 'new' ? (
           <Flag>

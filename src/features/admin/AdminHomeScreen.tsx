@@ -25,6 +25,7 @@ import { ADMIN_NS } from './i18n/register';
 import { DevicesPanel } from './DevicesPanel';
 import { BackupMinutesPanel } from './BackupMinutesPanel';
 import { MaintenancePanel } from './MaintenancePanel';
+import { MessagesPanel } from './MessagesPanel';
 import { ProblemsPanel } from './ProblemsPanel';
 import { RefreshBar } from './RefreshBar';
 import { PauseLabel, SellerDetails } from './SellerDetails';
@@ -351,6 +352,7 @@ export function AdminHomeScreen({
   const [deviceCount, setDeviceCount] = useState<number | null>(null);
   const [problemCount, setProblemCount] = useState<number | null>(null);
   const [noticeSet, setNoticeSet] = useState(false);
+  const [maintenanceOn, setMaintenanceOn] = useState(false);
   const body = useRef<HTMLDivElement | null>(null);
   // Plan 061: the new kitchen's name and address survive a reload until it is added.
   const [addForm, setAddForm, addDraft] = useDraft<{ name: string; slug: string }>(
@@ -485,7 +487,8 @@ export function AdminHomeScreen({
   /** The phone dropdown's text: "Sellers (4)", "Announce & maintenance •". */
   const navText = (id: Section): string => {
     const count = navCount(id);
-    const mark = id === 'announce' && noticeSet ? ' •' : '';
+    const mark =
+      (id === 'announce' && noticeSet) || (id === 'maintenance' && maintenanceOn) ? ' •' : '';
     return `${t(`home.nav.${id}`)}${count !== null ? ` (${count})` : ''}${mark}`;
   };
 
@@ -552,7 +555,7 @@ export function AdminHomeScreen({
               >
                 <NavLabel>{t(`home.nav.${id}`)}</NavLabel>
                 {count !== null ? <Badge>{count}</Badge> : null}
-                {id === 'announce' && noticeSet ? (
+                {(id === 'announce' && noticeSet) || (id === 'maintenance' && maintenanceOn) ? (
                   <>
                     <Dot aria-hidden="true" />
                     <HiddenText>{t('home.nav.noticeSet')}</HiddenText>
@@ -645,7 +648,13 @@ export function AdminHomeScreen({
             </SellersPanel>
           </Pane>
           <Pane hidden={section !== 'announce'}>
-            <MaintenancePanel onActive={setNoticeSet} />
+            <MaintenancePanel part="announce" onActive={setNoticeSet} />
+          </Pane>
+          <Pane hidden={section !== 'maintenance'}>
+            <MaintenancePanel part="mode" onActive={setMaintenanceOn} />
+          </Pane>
+          <Pane hidden={section !== 'message'}>
+            <MessagesPanel sellers={sellers} refused={refusedHere} />
           </Pane>
           <Pane hidden={section !== 'settings'}>
             <BackupMinutesPanel />

@@ -12,6 +12,21 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // Lines picked by the owner (17 Oct, "B", then "A" for the passkey wording); the date is set on deploy day
+  {
+    version: '1.0.38',
+    date: '2026-10-17',
+    lines: {
+      en: [
+        "Remember me: customers can keep their orders on a new phone with a passkey, safely unlocked with their face or fingerprint (no password), and you'll see ✓ on their orders.",
+        'Small fixes and polish.',
+      ],
+      id: [
+        'Ingat aku: pelanggan bisa membawa pesanannya ke HP baru dengan passkey, aman dibuka dengan wajah atau sidik jari (tanpa kata sandi), dan kamu melihat tanda ✓ di pesanan mereka.',
+        'Perbaikan kecil dan penyempurnaan.',
+      ],
+    },
+  },
   // Lines picked by the owner (17 Oct: "just high level: private orders and bug fixes; and ability to
   // change pickup/delivery by seller; in bug fixes mention print too"); the date is set on deploy day
   {

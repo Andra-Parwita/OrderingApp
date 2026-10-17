@@ -32,3 +32,22 @@ export function customerCodeFor(slug: string): string | null {
   }
   return code;
 }
+
+/** The code this phone already holds for the kitchen, or null (never makes one). */
+export function storedCustomerCode(slug: string): string | null {
+  try {
+    return parseCustomerCode(localStorage.getItem(`${prefix}${slug}`));
+  } catch {
+    return null;
+  }
+}
+
+/** Plan 087: Remember me gives every phone the same code for a kitchen; this phone adopts it. */
+export function setCustomerCode(slug: string, code: string): void {
+  if (parseCustomerCode(code) === null) return;
+  try {
+    localStorage.setItem(`${prefix}${slug}`, code);
+  } catch {
+    // storage unavailable: the phone keeps using what it has
+  }
+}

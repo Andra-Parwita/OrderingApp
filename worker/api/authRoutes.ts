@@ -29,6 +29,8 @@ import {
   type SellersResponse,
   type SessionResponse,
 } from '../../shared/authContract';
+import type { LiveNotifier } from '../live/hub';
+import { expiryOf, parseMessageRequest, type MessagesResponse } from '../../shared/shortMessage';
 import { bustMaintenanceCache } from './maintenanceGuard';
 import { parseBackupMinutesPatch, parseMaintenancePatch } from '../../shared/maintenance';
 import { isImageSlot } from '../../shared/imageSlots';
@@ -107,6 +109,22 @@ function rpOrRefusal(request: Request): RelyingParty | Response {
   return relyingParty(request) ?? noPasskeyHere();
 }
 
+/**
+ * Plan 087: a customer's "Remember me" passkey offered at a kitchen sign-in (the phone's passkey
+ * list shows both). A plain refusal, not a counted wrong try, naming what to choose instead.
+ */
+async function isCustomerPasskey(store: Repository, credentialId: string): Promise<boolean> {
+  return (
+    !(await store.auth.passkeyById(credentialId)) &&
+    (await store.customers.hasPasskey(credentialId))
+  );
+}
+const customerPasskeyRefusal = () =>
+  error(
+    'passkey_other_kind',
+    'That passkey is for Remember me (customers), not for kitchen sign-in. Choose your kitchen passkey.',
+  );
+
 /** A full person session sent with a key redemption: the person who joins. */
 async function joinerOf(
   auth: AuthRepository,
@@ -142,6 +160,9 @@ export async function handleAuth(
     if (slowDown) return slowDown;
     const rp = rpOrRefusal(request);
     if (rp instanceof Response) return rp;
+    if (input.credentialId && (await isCustomerPasskey(store, input.credentialId))) {
+      return customerPasskeyRefusal();
+    }
     const options = await authenticationOptions(auth, rp, input.deviceId, input.credentialId);
     return Response.json({ options } satisfies PasskeyOptionsResponse);
   }
@@ -184,6 +205,7 @@ export async function handleAuth(
       if (slowDown) return slowDown;
       const rp = rpOrRefusal(request);
       if (rp instanceof Response) return rp;
+      if (await isCustomerPasskey(store, input.response.id)) return customerPasskeyRefusal();
       return sessionResult(
         await signInWithPasskey(auth, rp, input.deviceId, input.response, input.slug),
       );
@@ -309,6 +331,7 @@ export async function handleAdmin(
   ],
   devTools = false,
   images?: ImageBucket,
+  live?: LiveNotifier,
 ): Promise<Response | null> {
   const method = request.method;
 
@@ -335,6 +358,34 @@ export async function handleAdmin(
       const saved = await store.settings.setMaintenance(patch);
       bustMaintenanceCache();
       return Response.json(saved);
+    }
+  }
+
+  // Plan 086: the short message (admin only). Sending nudges the open pages of the chosen kitchens.
+  if (a === 'messages') {
+    if (!b && method === 'GET') {
+      return Response.json({ messages: await store.messages.recent() } satisfies MessagesResponse);
+    }
+    if (!b && method === 'POST') {
+      const input = parseMessageRequest(await readJson(request));
+      if (!input) return bad();
+      const known = (await store.adminSellers()).map((seller) => seller.id);
+      if (input.sellerIds !== null && !input.sellerIds.every((id) => known.includes(id))) {
+        return bad();
+      }
+      const message = await store.messages.create(input, (sent) =>
+        expiryOf(input.window, sent, input.timeZone),
+      );
+      await Promise.all(
+        (input.sellerIds ?? known).map(
+          (id) => live?.notify(id, { type: 'notice' }) ?? Promise.resolve(),
+        ),
+      );
+      return Response.json({ message }, { status: 201 });
+    }
+    if (b && !c && method === 'DELETE') {
+      if (!(await store.messages.stop(b))) return error('not_found', 'No such message');
+      return Response.json({ messages: await store.messages.recent() } satisfies MessagesResponse);
     }
   }
 

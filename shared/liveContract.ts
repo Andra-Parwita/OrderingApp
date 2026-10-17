@@ -10,12 +10,16 @@ export const LIVE_PATH = '/api/seller/live';
 export const LIVE_PING = 'ping';
 export const LIVE_PONG = 'pong';
 
-/** `stock.changed` (plan 029): a day sale or a set count; the seller devices reload the stock. */
+/**
+ * `stock.changed` (plan 029): a day sale or a set count; the seller devices reload the stock.
+ * `notice` (plan 086): the admin sent a short message; every open page asks for its notes again.
+ */
 export const LIVE_EVENT_TYPES = [
   'order.created',
   'order.changed',
   'menu.changed',
   'stock.changed',
+  'notice',
 ] as const;
 export type LiveEventType = (typeof LIVE_EVENT_TYPES)[number];
 

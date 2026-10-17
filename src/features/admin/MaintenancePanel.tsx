@@ -28,8 +28,14 @@ const Wide = styled(FormSection)`
 const MINUTE = 60_000;
 const LENGTH_MAX = 240;
 
-/** `onActive` tells the menu whether a notice is set or maintenance is on (plan 078). */
-export function MaintenancePanel({ onActive }: Readonly<{ onActive?: (active: boolean) => void }>) {
+/**
+ * Two pages share this code: "Announce update" (`part="announce"`) and "Maintenance" (`part="mode"`).
+ * `onActive` tells the menu whether a notice is set (announce) or maintenance is on (mode).
+ */
+export function MaintenancePanel({
+  part,
+  onActive,
+}: Readonly<{ part: 'announce' | 'mode'; onActive?: (active: boolean) => void }>) {
   const { t, i18n } = useTranslation(ADMIN_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [state, setState] = useState<MaintenanceState | null>(null);
@@ -51,8 +57,8 @@ export function MaintenancePanel({ onActive }: Readonly<{ onActive?: (active: bo
   }, []);
 
   useEffect(() => {
-    if (state) onActive?.(state.maintenance || state.notice !== null);
-  }, [state, onActive]);
+    if (state) onActive?.(part === 'mode' ? state.maintenance : state.notice !== null);
+  }, [state, part, onActive]);
 
   async function save(patch: Parameters<typeof saveMaintenance>[0]) {
     setProblem(null);
@@ -79,75 +85,88 @@ export function MaintenancePanel({ onActive }: Readonly<{ onActive?: (active: bo
   const notice = state.notice;
   return (
     <Section>
-      <Sub>{t('home.maintenance.title')}</Sub>
-      <Muted>{t('home.maintenance.text', { zone: zoneCity(deviceZone()) })}</Muted>
-      <Wide onSubmit={announce}>
-        <Row>
-          <TextField
-            label={t('home.maintenance.date')}
-            type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-          />
-          <TextField
-            label={t('home.maintenance.start')}
-            type="time"
-            value={start}
-            onChange={(event) => setStart(event.target.value)}
-          />
-          <TextField
-            label={t('home.maintenance.length')}
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={LENGTH_MAX}
-            value={minutes}
-            onChange={(event) => setMinutes(event.target.value)}
-          />
-        </Row>
-        <Notes>
-          <TextField
-            label={t('home.maintenance.noteEn')}
-            value={noteEn}
-            maxLength={NOTICE_NOTE_MAX}
-            onChange={(event) => setNoteEn(event.target.value)}
-          />
-          <TextField
-            label={t('home.maintenance.noteId')}
-            value={noteId}
-            maxLength={NOTICE_NOTE_MAX}
-            onChange={(event) => setNoteId(event.target.value)}
-          />
-        </Notes>
-        <Row>
-          <Button type="submit">{t('home.maintenance.announce')}</Button>
-          {notice ? (
-            <Button type="button" variant="secondary" onClick={() => void save({ notice: null })}>
-              {t('home.maintenance.clear')}
-            </Button>
-          ) : null}
-        </Row>
-      </Wide>
-      <Muted>
-        {notice
-          ? t('home.maintenance.announced', {
-              when: formatDayTime(notice.from, lang),
-              minutes: Math.round((Date.parse(notice.until) - Date.parse(notice.from)) / MINUTE),
-            })
-          : t('home.maintenance.none')}
-      </Muted>
-      <Sub>{t('home.maintenance.modeTitle')}</Sub>
-      <Muted>{on ? t('home.maintenance.modeOn') : t('home.maintenance.modeOff')}</Muted>
-      {on ? (
-        <Button type="button" onClick={() => void save({ maintenance: false })}>
-          {t('home.maintenance.turnOff')}
-        </Button>
+      {part === 'announce' ? (
+        <>
+          <Sub>{t('home.maintenance.title')}</Sub>
+          <Muted>{t('home.maintenance.text', { zone: zoneCity(deviceZone()) })}</Muted>
+          <Wide onSubmit={announce}>
+            <Row>
+              <TextField
+                label={t('home.maintenance.date')}
+                type="date"
+                value={date}
+                onChange={(event) => setDate(event.target.value)}
+              />
+              <TextField
+                label={t('home.maintenance.start')}
+                type="time"
+                value={start}
+                onChange={(event) => setStart(event.target.value)}
+              />
+              <TextField
+                label={t('home.maintenance.length')}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={LENGTH_MAX}
+                value={minutes}
+                onChange={(event) => setMinutes(event.target.value)}
+              />
+            </Row>
+            <Notes>
+              <TextField
+                label={t('home.maintenance.noteEn')}
+                value={noteEn}
+                maxLength={NOTICE_NOTE_MAX}
+                onChange={(event) => setNoteEn(event.target.value)}
+              />
+              <TextField
+                label={t('home.maintenance.noteId')}
+                value={noteId}
+                maxLength={NOTICE_NOTE_MAX}
+                onChange={(event) => setNoteId(event.target.value)}
+              />
+            </Notes>
+            <Row>
+              <Button type="submit">{t('home.maintenance.announce')}</Button>
+              {notice ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void save({ notice: null })}
+                >
+                  {t('home.maintenance.clear')}
+                </Button>
+              ) : null}
+            </Row>
+          </Wide>
+          <Muted>
+            {notice
+              ? t('home.maintenance.announced', {
+                  when: formatDayTime(notice.from, lang),
+                  minutes: Math.round(
+                    (Date.parse(notice.until) - Date.parse(notice.from)) / MINUTE,
+                  ),
+                })
+              : t('home.maintenance.none')}
+          </Muted>
+        </>
       ) : (
-        <ConfirmButton
-          label={t('home.maintenance.turnOn')}
-          confirmLabel={t('home.maintenance.turnOnConfirm')}
-          onConfirm={() => void save({ maintenance: true })}
-        />
+        <>
+          <Sub>{t('home.maintenance.modeTitle')}</Sub>
+          <Muted>{on ? t('home.maintenance.modeOn') : t('home.maintenance.modeOff')}</Muted>
+          {on ? (
+            <Button type="button" onClick={() => void save({ maintenance: false })}>
+              {t('home.maintenance.turnOff')}
+            </Button>
+          ) : (
+            <ConfirmButton
+              label={t('home.maintenance.turnOn')}
+              confirmLabel={t('home.maintenance.turnOnConfirm')}
+              onConfirm={() => void save({ maintenance: true })}
+            />
+          )}
+        </>
       )}
       {problem ? (
         <Message $bad role="alert">

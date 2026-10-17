@@ -17,6 +17,9 @@ const scrim: Record<Mode, string> = {
   light: 'rgba(28, 31, 26, 0.42)',
 };
 
+/** Speech bubbles (maintenance bar, short message): one step lighter than the bar in dark mode. */
+const bubbleDark = { bg: '#2E332B', line: '#434A3F' };
+
 export function makeTheme(brand: Brand, mode: Mode): DefaultTheme {
   const c = colorsFor(brand, mode);
   return {
@@ -24,6 +27,7 @@ export function makeTheme(brand: Brand, mode: Mode): DefaultTheme {
     c,
     font,
     size,
+    bubble: mode === 'dark' ? bubbleDark : { bg: c.surf, line: c.line },
     // Deprecated aliases, all derived from `c`.
     colour: {
       bg: c.bg,

@@ -37,6 +37,7 @@ import type {
   StoredPasskey,
 } from '../repo/Repository';
 import { marks, type D1Statement, type Db } from './d1';
+import { ipKey } from '../auth/ipKey';
 import { liveMenu } from './orders';
 import {
   formatKey,
@@ -1113,6 +1114,8 @@ export function createAuthRepository(deps: AuthDeps): AuthRepository {
       await clearFailures(clearOnHit);
       return ok(value);
     },
+
+    ipKey: (ip: string | null) => ipKey(db, new Date(now()), ip),
 
     /** Fixed window per scope: the seconds until the window ends when over `max`, else 0. */
     async rateLimit(scope: string, max: number, windowSeconds: number) {

@@ -10,6 +10,7 @@ import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
 import { ChangeFulfilment } from '../../components/change-fulfilment';
 import { Button, Icon, Menu, WarningDialog, type IconName, type MenuItem } from '../../ui';
+import { ConfirmedNote } from './ConfirmedMark';
 import { DeliveryAddressBlock } from './DeliveryAddressBlock';
 import { SELLER_NS } from './i18n/register';
 import { StatusMark } from './StatusMark';
@@ -224,6 +225,7 @@ export function OrderPanelBody({
             {order.paid ? t('live.paid') : t('live.notPaid')}
           </MetaItem>
         </Meta>
+        <ConfirmedNote order={order} />
       </Head>
 
       {order.changed ? (

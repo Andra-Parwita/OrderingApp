@@ -130,7 +130,7 @@ Recommendation from the ticketing work: **start on the Cloudflare free plan.** A
 ## Principles from the ticketing app
 
 - **No phone numbers in the cloud.** The seller gets them through WhatsApp and keeps them on their own device.
-- **No customer accounts.** The phone remembers the customer's orders.
+- **No customer account needed.** The phone remembers the customer's orders; an optional passkey ("Remember me", D-107) can bring them to a new phone.
 - **Web app from a normal link,** optionally added to the iPhone Home Screen (needed for notifications on iPhone). No App Store.
 - **Feels like a native app** on phones.
 - **Bilingual:** English and Bahasa Indonesia throughout.

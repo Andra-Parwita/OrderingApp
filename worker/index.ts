@@ -1,10 +1,12 @@
 import { handleWorkerRequest, type ApiEnv } from './api';
 import { withKitchenLinks } from './pages';
+import { withSecurityHeaders } from './securityHeaders';
 import {
   RETENTION_CRON,
   runAddressSweep,
   runAttemptSweep,
   runAutoFinish,
+  runCustomerSweep,
   runRetention,
 } from './api/scheduled';
 import type { SellerLive } from './live/SellerLive';
@@ -24,21 +26,24 @@ type Env = Omit<ApiEnv, 'DB' | 'IMAGES' | 'SELLER_LIVE'> & {
   ASSETS: Fetcher;
 };
 
+async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  // wrangler.jsonc sends every path but the hashed assets here. The API, images and kitchen files
+  // are the Worker's own; everything else is a page or a static file from the assets.
+  if (/^\/(api|k|images)\//.test(new URL(request.url).pathname)) {
+    return handleWorkerRequest(request, env, ctx);
+  }
+  // No conditional headers: a 304 for the plain file would let a phone keep a page without (or with
+  // another kitchen's) links.
+  const headers = new Headers(request.headers);
+  headers.delete('If-None-Match');
+  headers.delete('If-Modified-Since');
+  const page = await env.ASSETS.fetch(new Request(request, { headers }));
+  return withKitchenLinks(request, env, page);
+}
+
 export default {
-  fetch: async (request: Request, env: Env, ctx: ExecutionContext): Promise<Response> => {
-    // wrangler.jsonc sends every path but the hashed assets here. The API, images and kitchen files
-    // are the Worker's own; everything else is a page or a static file from the assets.
-    if (/^\/(api|k|images)\//.test(new URL(request.url).pathname)) {
-      return handleWorkerRequest(request, env, ctx);
-    }
-    // No conditional headers: a 304 for the plain file would let a phone keep a page without (or with
-    // another kitchen's) links.
-    const headers = new Headers(request.headers);
-    headers.delete('If-None-Match');
-    headers.delete('If-Modified-Since');
-    const page = await env.ASSETS.fetch(new Request(request, { headers }));
-    return withKitchenLinks(request, env, page);
-  },
+  fetch: async (request: Request, env: Env, ctx: ExecutionContext): Promise<Response> =>
+    withSecurityHeaders(request, await route(request, env, ctx), env.DEV_TOOLS === '1'),
   // The crons in wrangler.jsonc. Every run finishes the menus whose cooking day has ended (hourly);
   // the Monday 03:00 UTC run also does retention for every seller.
   scheduled: async (controller: ScheduledController, env: Env): Promise<void> => {
@@ -46,6 +51,7 @@ export default {
     await runAutoFinish(env, now);
     await runAttemptSweep(env, now);
     await runAddressSweep(env, now);
+    await runCustomerSweep(env, now);
     if (controller.cron === RETENTION_CRON) await runRetention(env, now);
   },
 } satisfies ExportedHandler<Env>;

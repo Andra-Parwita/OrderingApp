@@ -8,6 +8,7 @@ import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
 import { PickupMapLine, pickupMapInfo } from '../../components/pickup-map';
 import { KitchenBanner } from '../../components/KitchenBanner';
+import { RememberMeChip } from '../../components/remember-me';
 import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
@@ -388,6 +389,7 @@ export function MenuHomeView({
           <RowText>{t('home.deliveryOnly')}</RowText>
         </Row>
       ) : null}
+      <RememberMeChip />
       {onHowItWorks ? (
         <RowButton type="button" onClick={onHowItWorks}>
           <MenuIcon name="help" />

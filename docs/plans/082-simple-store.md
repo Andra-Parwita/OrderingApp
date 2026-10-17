@@ -1,6 +1,6 @@
 # 082 · Store mode: a simple online store (up to 100 products, 20 categories)
 
-**Status:** on the roadmap, later (owner, 17 Oct: "the store is in roadmap plan, we fix and will deploy the kitchen first"). Draft analysis (Fable agent, read-only); questions 2–9 resume when the owner picks it up. Not approved for building.
+**Status:** on the roadmap, **much later** (owner, 17 Oct) (owner, 17 Oct: "the store is in roadmap plan, we fix and will deploy the kitchen first"). Draft analysis (Fable agent, read-only); questions 2–9 resume when the owner picks it up. Not approved for building.
 **Owner, 17 Oct:** "analyse to adapt this in admin for a seller to sell or make it like a simple online store (Amazon-like) with up to 50–100 items with up to 20 categories only, so My orders etc. should be the same but the product list display could be different." **Payments:** "still same until later in roadmap when we will support Square payments" (no online payments; Paid tick + optional deposit).
 
 ## Owner rulings
@@ -8,6 +8,8 @@
 - **One person, many places, one passkey** (owner, 17 Oct: "a person can be a store owner and a kitchen chef ... so can share passkey, i.e. keep one passkey"): the same person can own a store and be a chef in a kitchen (or own several of each), signing in with one passkey and switching between them, as plan 068 / D-088 already do for kitchens.
 - **Payments:** none until Square (above).
 - **Small photos only, few stores** (owner, 17 Oct: "for store we don't really need big photo, and not many will have a store"): one product picture of about 300 × 300 (~30 KB); 100 products ≈ 3 MB per store; a handful of stores ≈ under 10 MB in R2.
+- **Store home without pickup/delivery** (owner, 17 Oct): the home shows no pickup/delivery lines; the choice, place and hours appear at checkout and on the order page / My orders.
+- **Products for the mock-up:** traditional Indonesian bags and clothes (owner, 17 Oct); sizes/colours shown as an idea (variants still an open question).
 
 ## What it means
 A per-kitchen **mode** set by the admin: `menu` (today) or `store`. A store kitchen has an always-open catalogue (products in up to 20 categories) instead of a dated menu. Everything from the basket on stays the same: checkout, pickup/delivery, encrypted address (D-099), order code and `/o/<token>`, My orders, statuses, push, live updates, seller Orders / Kitchen / Pickup & delivery / labels / income, privacy rules.
