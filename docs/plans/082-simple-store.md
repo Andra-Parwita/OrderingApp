@@ -7,6 +7,7 @@
 - **Mode is set once** when the admin creates the kitchen or store (owner "A", 17 Oct: "it sets one time, a person can have multiple store and kitchens").
 - **One person, many places, one passkey** (owner, 17 Oct: "a person can be a store owner and a kitchen chef ... so can share passkey, i.e. keep one passkey"): the same person can own a store and be a chef in a kitchen (or own several of each), signing in with one passkey and switching between them, as plan 068 / D-088 already do for kitchens.
 - **Payments:** none until Square (above).
+- **Small photos only, few stores** (owner, 17 Oct: "for store we don't really need big photo, and not many will have a store"): one product picture of about 300 × 300 (~30 KB); 100 products ≈ 3 MB per store; a handful of stores ≈ under 10 MB in R2.
 
 ## What it means
 A per-kitchen **mode** set by the admin: `menu` (today) or `store`. A store kitchen has an always-open catalogue (products in up to 20 categories) instead of a dated menu. Everything from the basket on stays the same: checkout, pickup/delivery, encrypted address (D-099), order code and `/o/<token>`, My orders, statuses, push, live updates, seller Orders / Kitchen / Pickup & delivery / labels / income, privacy rules.

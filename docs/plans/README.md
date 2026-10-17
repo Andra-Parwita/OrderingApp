@@ -116,6 +116,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 083 | ✅ | [The seller changes pickup ↔ delivery and the customer is told](083-seller-changes-fulfilment.md) | built 17 Oct (D-105), for 1.0.37 |
 | 084 | ✅ | [Printing: preview first, A4 by default, label printer optional, Help "How to print"](084-printing-preview.md) | built 17 Oct, for 1.0.37; label printer switch per device |
 | 086 | ⬜ | [Admin short message: a 30-second note everyone can see](086-admin-short-message.md) | draft 17 Oct; delivery A |
+| 087 | ⬜ | [Keep my orders: optional, privacy-first (customers)](087-keep-my-orders.md) | draft analysis 17 Oct; owner questions next |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 
