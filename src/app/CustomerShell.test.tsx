@@ -274,6 +274,27 @@ describe('customer menu as a native app', () => {
   });
 });
 
+describe('kitchen banner across the tab pages (plan 093)', () => {
+  it('stays the same <img> from Menu to My orders to Settings, so it never reloads', async () => {
+    // A first-timer is sent to "How ordering works"; this phone has seen it.
+    localStorage.setItem('howItWorksSeen', '1');
+    renderAt('/onde-onde');
+    await screen.findByRole('heading', { name: 'Onde Onde' });
+    const banner = screen.getByRole('img', { name: /Onde Onde/ });
+    expect(banner.tagName).toBe('IMG');
+    expect(screen.getAllByRole('img', { name: /Onde Onde/ })).toHaveLength(1);
+
+    act(() => void navigateTo('/my-orders'));
+    await screen.findByRole('heading', { name: 'My orders' });
+    expect(screen.getByRole('img', { name: /Onde Onde/ })).toBe(banner);
+
+    act(() => void navigateTo('/settings'));
+    await screen.findByRole('heading', { name: 'Settings' });
+    expect(screen.getByRole('img', { name: /Onde Onde/ })).toBe(banner);
+    expect(banner.isConnected).toBe(true);
+  });
+});
+
 describe('basket after ordering', () => {
   it('opens empty on the next visit instead of redirecting to the old order', async () => {
     const { store } = renderAt('/onde-onde/basket');

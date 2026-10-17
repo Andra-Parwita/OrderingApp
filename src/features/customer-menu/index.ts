@@ -19,4 +19,4 @@ export {
 } from './customerSlice';
 export { registerCustomerI18n } from './i18n/register';
 export { customerSaga } from './saga';
-export { selectKitchenMissing, selectMenu, selectPlace } from './selectors';
+export { selectKitchenMissing, selectMenu, selectMenuSlug, selectPlace } from './selectors';

@@ -1,5 +1,7 @@
+import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { ShellOwnsBanner } from '../../components/KitchenBanner';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
 import { CardBody, CardHead, MainButton, StatusCard } from './menuParts';
@@ -9,7 +11,7 @@ import { screenHeightMinus } from '../../theme/screen';
 // with Try again. No spinner animation, so reduced motion needs nothing extra.
 
 const Screen = styled.main`
-  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem) - var(--customer-banner-height, 0rem)')};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
@@ -33,9 +35,10 @@ const Picture = styled.div`
 `;
 
 function Skeleton() {
+  const shellOwns = useContext(ShellOwnsBanner);
   return (
     <>
-      <Banner />
+      {shellOwns ? null : <Banner />}
       <Picture />
       <Block $h="1.75rem" $w="55%" />
       <Block $h="1rem" $w="75%" />

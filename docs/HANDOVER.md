@@ -3,7 +3,7 @@
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
 **Last session:** 2026-10-17 evening (~22:15–23:20), the owner's PC (Adelaide), Claude as coordinator. Built and shipped **1.0.39** (hotfix on top of 1.0.38): plan **092 Remember me polish**.
-**Live:** Release **1.0.39** (17 Oct ~23:40; Worker `904ef961-8c17-4e4d-a900-53d23662edab`; health OK, devTools false, site reports `1.0.100 · b63e899` (build number = commit count)). Commit `b63e899` on `indra/brand_logo_ux`; **not yet pushed, merged to `main` or tagged `v1.0.39`** (ask the owner). Previous: 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`, `main` = `63ea073`).
+**Live:** Release **1.0.39** (17 Oct ~23:10; Worker `904ef961-8c17-4e4d-a900-53d23662edab`; health OK, devTools false, site reports `1.0.100 · b63e899` (build number = commit count)). Commit `b63e899` on `indra/brand_logo_ux`; **not yet pushed, merged to `main` or tagged `v1.0.39`** (ask the owner). Previous: 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`, `main` = `63ea073`).
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -30,6 +30,9 @@ Source: the owner's first real-phone use of Remember me (iPhone home-screen app,
 Release notes: "Small fixes and polish." / "Perbaikan kecil dan penyempurnaan." (owner "B").
 **Gate (scoped, 17 Oct 23:06):** typecheck, lint, format ✅; unit 105/105; e2e 14/14 over p087-remember-me, customer-batch1/2, native-customer, pickup-map, p083-change-fulfilment, seller-saturday, seller-list-scroll (mobile-chromium + iphone-chromium). Captures at 390 px checked.
 **Deploy impact 1.0.39:** no migration, no new secret; client + worker labels only. Existing passkeys keep their old names. Low risk. Deploy order: `pnpm build` → `pnpm exec wrangler deploy` → live check (Settings rows + sheets, Remember me turn-on with first name on a real iPhone, privacy note) → merge `main` + tag `v1.0.39` (ask first).
+
+## 1.0.40 (plan 093): banner doesn't flash
+Owner, 17 Oct: "changing page make the image banner on top flashing and kept reloading" (older bug, since `key={pathname}` on the page slide, 10 Oct). Fix: the banner is drawn once in `CustomerShell` (`src/app/ShellBanner.tsx`) above the sliding page; pages' own `KitchenBanner` renders nothing inside the shell (context `ShellOwnsBanner`), still renders in seller preview; the last loaded banner stays while the same kitchen reloads; the skeleton is now banner-sized (3:1). Release note reuses "Small fixes and polish." **Gate (scoped, 23:31):** typecheck, lint, format ✅; unit 370 + 99; e2e customer-batch1/2, native-customer, p087, pickup-map 12/12; capture: banner stays across My orders ↔ Settings. **Deploy impact:** client only, no migration, no secret. Live check: switch Menu ↔ My orders ↔ Settings on the iPhone; the banner must not flash.
 
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.

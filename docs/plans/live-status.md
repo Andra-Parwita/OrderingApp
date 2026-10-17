@@ -4,6 +4,14 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Plan 093 banner no flash (release 1.0.40)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 0 · cause search | Explore · sonnet | ~23:13 | 10 min | ~23:14 | 34 s | −9 min | — | ✅ |
+| 1 · build items 1–3 | general-purpose · sonnet | 23:17 | 20 min | ~23:27 | 10.3 min | −10 min | 10 files + new ShellBanner.tsx | ✅ unit 370 + 99 |
+| 1b · version 1.0.40 | general-purpose · sonnet | ~23:27 | 2 min | ~23:29 | 95 s | ≈ 0 | 8 files | ✅ |
+| 2 · scoped gate + captures | coordinator | ~23:29 | 5 min | 23:31 | ~2 min | −3 min | — | ✅ lint, format; e2e 5 specs 12/12; banner stays across My orders ↔ Settings |
+
 ## Plan 092 Remember me polish
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|

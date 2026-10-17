@@ -29,7 +29,7 @@ const Page = styled.main`
   max-width: 32rem;
   margin: 0 auto;
   /* Leaves room for the customer tab bar when the app shell shows one. */
-  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem) - var(--customer-banner-height, 0rem)')};
 `;
 const Title = styled.h1`
   margin: 0;

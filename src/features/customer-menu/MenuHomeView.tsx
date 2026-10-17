@@ -20,7 +20,7 @@ import { screenHeightMinus } from '../../theme/screen';
 // screen and the fixtures page both feed it a MenuResponse; nothing here fetches.
 
 const Screen = styled.main`
-  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
+  min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem) - var(--customer-banner-height, 0rem)')};
   display: flex;
   flex-direction: column;
   background: ${({ theme }) => theme.c.bg};

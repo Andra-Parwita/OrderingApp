@@ -4,10 +4,12 @@ import { Link, NavigationType, Outlet, useLocation, useNavigationType } from 're
 import { css, keyframes, styled } from 'styled-components';
 import { isValidSlug } from '../../shared/seller';
 import { appKitchen, lastKitchen, rememberAppKitchen } from '../api/device/lastKitchen';
+import { ShellOwnsBanner } from '../components/KitchenBanner';
 import { manifestTarget, readEnvironment, useManifestLinks } from '../components/install';
 import { useForcedKitchenLanguage } from '../features/customer-menu';
 import { CustomerLiveHost, selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
 import { Icon, type IconName } from '../ui';
+import { SHELL_BANNER_HEIGHT, ShellBanner, useShellBanner } from './ShellBanner';
 
 // The customer app's bottom tab bar (D-039): Menu · My orders · Settings, fixed to the bottom,
 // icon above label, safe-area aware. Pages leave room for it through --customer-tabbar-height.
@@ -64,8 +66,10 @@ const TAB_HEIGHT = '3.5rem';
 export const TAB_BAR_HEIGHT = `calc(${TAB_HEIGHT} + var(--sab, 0px))`;
 const MAX_WIDTH = '30rem'; // 480 px: phone width, centred on wider screens
 
-const Wrap = styled.div<{ $tabs: boolean }>`
+const Wrap = styled.div<{ $tabs: boolean; $banner: boolean }>`
   --customer-tabbar-height: ${({ $tabs }) => ($tabs ? TAB_BAR_HEIGHT : '0px')};
+  /* The banner above the page (plan 093): pages take it off their minimum height. */
+  --customer-banner-height: ${({ $banner }) => ($banner ? SHELL_BANNER_HEIGHT : '0px')};
   max-width: ${MAX_WIDTH};
   margin: 0 auto;
   overflow-x: clip; /* the sliding page starts off-screen */
@@ -217,11 +221,16 @@ export function CustomerShell() {
   useForcedKitchenLanguage();
   const navigationType = useNavigationType();
   const tabs = hasTabBar(pathname);
+  const banner = useShellBanner(pathname);
+  const hasBanner = banner.kind !== 'none';
   return (
-    <Wrap $tabs={tabs}>
+    <Wrap $tabs={tabs} $banner={hasBanner}>
       <CustomerLiveHost />
+      <ShellBanner state={banner} />
       <Slide key={pathname} $push={navigationType === NavigationType.Push && !isRootPage(pathname)}>
-        <Outlet />
+        <ShellOwnsBanner.Provider value={hasBanner}>
+          <Outlet />
+        </ShellOwnsBanner.Provider>
       </Slide>
       {tabs ? (
         <CustomerTabBar
