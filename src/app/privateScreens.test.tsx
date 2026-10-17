@@ -64,6 +64,14 @@ describe('the Private list', () => {
     expect(screen.getByText('Paid')).toBeTruthy();
   });
 
+  it('shows the pickup place name on a pickup row', () => {
+    mountPrivate(
+      <PrivateListScreen canEdit places={{ home: 'Home kitchen' }} />,
+      readyState({ orders: [{ ...komang, pickupPlaceId: 'home' }], view: 'upcoming' }),
+    );
+    expect(screen.getByRole('button', { name: /Pickup · Home kitchen/ })).toBeTruthy();
+  });
+
   it('shows the quiet Directions link only on a delivery row on its event day', () => {
     mountPrivate(<PrivateListScreen canEdit />, listState);
     const directions = screen.getAllByRole('link', { name: /^Directions to / });
@@ -166,6 +174,25 @@ describe('a private order', () => {
     expect(screen.queryByText('Still to pay')).toBeNull();
   });
 
+  it('plan 083: shows the Change link only when the person may change pickup / delivery', () => {
+    const allowed = mountPrivate(
+      <PrivateDetailScreen
+        code={rina.code}
+        canEdit={false}
+        canChangeFulfilment
+        openOrderLink={openOrderLink}
+      />,
+      detailState(),
+    );
+    expect(screen.getByRole('button', { name: 'Change pickup or delivery' })).toBeTruthy();
+    allowed.unmount();
+    mountPrivate(
+      <PrivateDetailScreen code={rina.code} canEdit={false} openOrderLink={openOrderLink} />,
+      detailState(),
+    );
+    expect(screen.queryByRole('button', { name: 'Change pickup or delivery' })).toBeNull();
+  });
+
   it('gives an owner Edit and Cancel, and the whole team the next status and the code', () => {
     const owner = mountPrivate(
       <PrivateDetailScreen code={rina.code} canEdit openOrderLink={openOrderLink} />,
@@ -245,7 +272,7 @@ describe('the editor', () => {
     fireEvent.change(screen.getByLabelText('Street address'), {
       target: { value: 'Jl. Mawar 12' },
     });
-    fireEvent.click(screen.getByRole('checkbox', { name: 'On this menu: Nasi kuning' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Add Nasi kuning to this order' }));
     fireEvent.click(screen.getByRole('button', { name: 'One more Nasi kuning' }));
     fireEvent.click(screen.getByRole('button', { name: 'One more Nasi kuning' }));
     fireEvent.change(screen.getByLabelText('Price each, Nasi kuning'), {
@@ -275,10 +302,11 @@ describe('the editor', () => {
     fireEvent.change(screen.getByLabelText('Street address'), {
       target: { value: 'Jl. Mawar 12' },
     });
-    fireEvent.click(screen.getByRole('checkbox', { name: 'On this menu: Nasi kuning' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Add Nasi kuning to this order' }));
     fireEvent.change(screen.getByLabelText(/^Deposit paid/), { target: { value: '5000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save order' }));
     expect(screen.getByText('The deposit is more than the total.')).toBeTruthy();
+    expect(screen.queryByText(/Nothing left to pay/)).toBeNull();
     expect(actions.find((a) => a.type === 'sellerPrivate/saveRequested')).toBeUndefined();
   });
 

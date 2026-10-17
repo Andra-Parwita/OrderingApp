@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router';
 import { styled } from 'styled-components';
-import { appVersion } from '../../../shared/buildInfo';
+import { RELEASE_VERSION } from '../../../shared/release';
 import { useSellerInstall } from '../../components/install';
 import { Toast } from '../../ui';
 import { Version } from './paneParts';
@@ -187,7 +187,7 @@ export function SettingsPanes({ pane, devices, images, chefs, customers, backup 
           {content[pane]}
         </Content>
       </Layout>
-      <Version>{t('version', { version: appVersion() })}</Version>
+      <Version>{t('version', { version: RELEASE_VERSION })}</Version>
       <Toast message={sliceToast || flash ? t('saved') : null} onDismiss={dismiss} />
     </Page>
   );

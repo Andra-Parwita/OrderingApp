@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bobo in the update bar</title>
+<style>
+  :root { --bg: #f6f2e8; --text: #1f2a1f; --muted: #5d665c; --bubble: #fffdf8; --line: #e1dccf; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #121412; --text: #ecefeb; --muted: #a4aaa3; --bubble: #1d201d; --line: #2e322e; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; } p.lead { margin: 0 0 18px; color: var(--muted); }
+  h2 { font-size: 15px; margin: 22px 0 8px; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--bg); }
+  .bubble { position: relative; background: var(--bubble); border: 1px solid var(--line); border-radius: 12px; padding: 6px 12px; font-size: 14px; }
+  .bubble::before { content: ""; position: absolute; left: -6px; top: 50%; width: 10px; height: 10px; background: var(--bubble); border-left: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: translateY(-50%) rotate(45deg); }
+  .note { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+
+  /* A: today's round logo, gentle float only */
+  .logo { width: 40px; height: 40px; flex: none; animation: float 3.2s ease-in-out infinite; }
+  /* B: the mascot's own layers (body + closed eyes on top), float + blink */
+  .mascot { position: relative; width: 56px; height: 40px; flex: none; animation: float 3.2s ease-in-out infinite; }
+  .mascot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .mascot .eyes { opacity: 0; animation: blink 4s steps(1, end) infinite; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  /* closed for ~0.15 s every 4 s, with a quick double blink now and then */
+  @keyframes blink { 0%, 90% { opacity: 0; } 91%, 94% { opacity: 1; } 95%, 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .logo, .mascot, .mascot .eyes { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Bobo in the update bar</h1>
+  <p class="lead">The bar at the top when you announce an update. Both options move only a little: a slow 3-pixel float, and in B an eye blink every few seconds. Everything stops for people who turn off motion on their phone.</p>
+
+  <h2>A · Today's round logo, gentle float</h2>
+  <div class="bar"><img class="logo" src="/public/brand/logo-icon.webp" alt=""><div class="bubble">Maintenance on Sat 17 Oct, 9:00–9:15 pm. Ordering pauses for a few minutes.</div></div>
+  <p class="note">The logo is one flat picture, so it can float but its eyes can't blink.</p>
+
+  <h2>B · The mascot (like the Help page), float + eye blink (suggested)</h2>
+  <div class="bar"><div class="mascot"><img src="/public/brand/mascot-body.webp" alt=""><img class="eyes" src="/public/brand/mascot-eyes-closed.webp" alt=""></div><div class="bubble">Maintenance on Sat 17 Oct, 9:00–9:15 pm. Ordering pauses for a few minutes.</div></div>
+  <p class="note">Uses the mascot's layers the app already has (body + closed eyes), the same Bobo that jumps on the sign-in page and waves on Help.</p>
+</main>
+</body>
+</html>

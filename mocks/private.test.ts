@@ -472,6 +472,12 @@ describe('private orders (plan 081)', () => {
     const pastList = await get('?view=past');
     expect(pastList.orders.map((o) => o.code)).toEqual([cancelled.code, past.code]);
     expect((await get('?day=today')).orders.map((o) => o.code)).toEqual([a.code]);
+    // A handed-over order is no longer due (here set straight in the database).
+    const handed = await makePrivate(boss.token, { eventDate: '2026-10-07', firstName: 'H' });
+    expect((await get('?due=1')).due).toEqual({ today: 2, tomorrow: 1 });
+    await world.db.batch([
+      world.db.stmt("UPDATE orders SET status = 'delivered' WHERE code = ?", handed.code),
+    ]);
     const due = await get('?due=1');
     expect(due.orders).toEqual([]);
     expect(due.due).toEqual({ today: 1, tomorrow: 1 });
@@ -487,6 +493,7 @@ describe('private orders (plan 081)', () => {
     expect(later.due).toEqual({ today: 1, tomorrow: 0 });
     expect((await get('?view=past')).orders.map((o) => o.code)).toEqual([
       cancelled.code,
+      handed.code,
       a.code,
       past.code,
     ]);

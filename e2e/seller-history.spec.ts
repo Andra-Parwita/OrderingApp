@@ -55,7 +55,9 @@ test('labels show the order with its note cut to 70 characters', async ({
     fullPage: true,
   });
 
-  // Roll option, then the paper the printer sees: only the labels, no app controls.
+  // Roll option (hidden until this device says it has a label printer), then the paper the
+  // printer sees: only the labels, no app controls.
+  await page.getByRole('checkbox', { name: 'I have a label printer (62 mm roll)' }).check();
   await page.getByRole('radio', { name: 'Label printer (62 mm roll)' }).click();
   await expect(page.getByTestId('label-sheets')).toHaveAttribute('data-paper', 'roll');
   await page.getByRole('radio', { name: 'A4 sheet (2 × 7 labels)' }).click();

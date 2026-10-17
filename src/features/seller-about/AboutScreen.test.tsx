@@ -83,10 +83,10 @@ describe('AboutScreen', () => {
     expect(screen.getByTestId('about-mascot')).toBeInTheDocument();
   });
 
-  it('names the release and, smaller, the build', () => {
+  it('names the release number only', () => {
     setUp();
-    expect(screen.getByText('Release 1.0.36')).toBeInTheDocument();
-    expect(screen.getByText('build dev')).toBeInTheDocument();
+    expect(screen.getByText('Release 1.0.37')).toBeInTheDocument();
+    expect(screen.queryByText(/build/)).toBeNull();
   });
 
   it('opens the releases panel (current release open) and closes it with Escape', () => {

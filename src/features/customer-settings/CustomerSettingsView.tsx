@@ -1,10 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { appVersion } from '../../../shared/buildInfo';
+import { RELEASE_VERSION } from '../../../shared/release';
 import type { Kitchen, Language } from '../../../shared/domain';
 import type { CustomerLiveState } from '../../api/customerLiveState';
-import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import {
   INSTALL_NS,
   InstallOverlay,
@@ -15,7 +14,8 @@ import {
 } from '../../components/install';
 import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import type { ThemePreference } from '../../theme/themePreference';
-import { Icon, ImageSlot, Segmented, type SegmentedOption } from '../../ui';
+import { KitchenBanner } from '../../components/KitchenBanner';
+import { Icon, Segmented, type SegmentedOption } from '../../ui';
 import { screenHeightMinus } from '../../theme/screen';
 
 // The customer's Settings tab (spec §4.6): Language, Appearance, Order updates, and the "put it on
@@ -28,11 +28,6 @@ const Page = styled.main`
   margin: 0 auto;
   /* Leaves room for the customer tab bar when the app shell shows one. */
   min-height: ${screenHeightMinus('var(--customer-tabbar-height, 0rem)')};
-`;
-// Same banner as the menu home (MenuHomeView), kept here because features can't import each other.
-const BannerTop = styled.div<{ $background?: string }>`
-  padding-top: var(--sat);
-  background: ${({ theme, $background }) => $background ?? theme.c.surf2};
 `;
 const Title = styled.h1`
   margin: 0;
@@ -316,17 +311,7 @@ export function CustomerSettingsView({
             : ti('settings.off');
   return (
     <Page>
-      {kitchen ? (
-        <BannerTop $background={kitchen.images?.bannerBackground}>
-          <ImageSlot
-            aspectRatio="3 / 1"
-            background={kitchen.images?.bannerBackground}
-            src={phoneBannerSrc(kitchen.images) ?? kitchen.bannerImageUrl}
-            alt={bannerAlt(kitchen, lang)}
-            placeholder={kitchen.name}
-          />
-        </BannerTop>
-      ) : null}
+      {kitchen ? <KitchenBanner kitchen={kitchen} lang={lang} placeholder={kitchen.name} /> : null}
       <Title>{t('customerSettings.title')}</Title>
       <Rows>
         {showLanguage ? (
@@ -407,7 +392,7 @@ export function CustomerSettingsView({
               <li key={key}>{t(`customerSettings.${key}`)}</li>
             ))}
             <li>{t('customerSettings.aboutWho', { app: t('app.name') })}</li>
-            <li>{t('customerSettings.aboutVersion', { version: appVersion() })}</li>
+            <li>{t('customerSettings.aboutVersion', { version: RELEASE_VERSION })}</li>
           </About>
         ) : null}
       </Rows>

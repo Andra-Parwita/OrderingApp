@@ -3,7 +3,6 @@
   "title": "About",
   "back": "Back to More",
   "release": "Release {{version}}",
-  "build": "build {{build}}",
   "whatsNew": "What's new",
   "releases": "Releases",
   "current": "Current",

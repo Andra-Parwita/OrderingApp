@@ -145,6 +145,24 @@ describe('Pickup & delivery · private orders today', () => {
     expect(within(menuRow).getByRole('button', { name: 'Out for delivery' })).toBeVisible();
   });
 
+  it('reads a private address with only a street, and hides the minutes once delivered', async () => {
+    const streetOnly = priv('PRV5', 'Rina', 'delivery', '10:00', {
+      address: { street: '3 Short St', suburb: '', postcode: '' },
+    });
+    const done = { ...priv('PRV6', 'Tono', 'delivery', '11:00', FULL), status: 'delivered' };
+    mocks.fetchPrivate.mockResolvedValue({
+      ok: true,
+      data: { orders: [streetOnly, done], due: { today: 2, tomorrow: 0 }, today: '2026-10-17' },
+    });
+    renderThemed(<HandOverScreen view="delivery" />);
+    const row = await screen.findByRole('listitem', { name: /Rina/ });
+    expect(within(row).getByText('3 Short St')).toBeVisible();
+    expect(within(row).getByRole('link', { name: 'Directions to Rina' })).toBeVisible();
+    expect(within(row).getByLabelText(/Minutes until/)).toBeVisible();
+    const delivered = screen.getByRole('listitem', { name: /Tono/ });
+    expect(within(delivered).queryByLabelText(/Minutes until/)).not.toBeInTheDocument();
+  });
+
   it('gives menu delivery rows Directions and Map when an address is saved on the phone', async () => {
     const menuCode = await menuOrder('Ani', 'delivery');
     renderThemed(

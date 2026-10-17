@@ -4,10 +4,8 @@
     "brand": {
       "sellerSetup": "Seller setup",
       "sellerSignIn": "Seller sign-in",
-      "build": "build {{commit}}",
       "production": "production",
       "development": "development",
-      "draft": "draft",
       "copyright": "© {{year}} ShaggyBobo"
     }
   },

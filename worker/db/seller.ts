@@ -2,7 +2,9 @@
 // query filters by `seller_id` (D-036). Rules run in TypeScript on rows read from D1; each
 // operation that writes several rows sends them as one batch, which D1 runs as one transaction.
 import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
+import { isAddressReadable } from '../../shared/address';
 import { diffOrder } from '../../shared/auditDiff';
+import { FULFILMENT_CHANGED_KEY, fulfilmentChangedText } from '../../shared/pushText';
 import { BACKUP_VERSION, type BackupFile } from '../../shared/backup';
 import { ordersToCsv } from '../../shared/csv';
 import type { SampleOrdersResponse } from '../../shared/devContract';
@@ -36,6 +38,7 @@ import {
 } from '../../shared/menusContract';
 import type { MenuResponse, SellerMenuResponse } from '../../shared/menuContract';
 import type {
+  ChangeFulfilmentRequest,
   CreateOrderRequest,
   CreateSellerOrderRequest,
   RequestedLine,
@@ -1640,6 +1643,65 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       return changeByCode(code, (order) =>
         ok(withOrder(draft(order), { locked, updatedAt: nowIso() })),
       );
+    },
+
+    /**
+     * Plan 083: the seller (owner or chef) switches pickup <-> delivery, also after the cut-off and
+     * on a locked order; menu and private orders alike. The address itself is stored by the route
+     * (encrypted, D-099). With `notify` the customer gets an inbox entry in the order's language
+     * (and so a push). Cancelled, delivered and collected orders are refused.
+     */
+    async changeFulfilment(code: string, input: ChangeFulfilmentRequest, actor: StaffActor) {
+      const order = await readLiveOrder(db, sid, 'code', code);
+      if (!order) return fail('not_found', 'Order not found');
+      if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
+      let place: { name: string; times: string } | undefined;
+      if (input.fulfilment === 'pickup') {
+        const row = await db.first<{ place: string; window_start: string; window_end: string }>(
+          'SELECT place, window_start, window_end FROM pickup_places WHERE seller_id = ? AND id = ?',
+          sid,
+          input.pickupPlaceId ?? '',
+        );
+        if (!row) return fail('invalid_request', 'Unknown pickup place');
+        // This menu's own time for the place wins over the place's usual one.
+        const point = (await loadState(order.id)).week.pickupPoints.find(
+          (candidate) => candidate.id === input.pickupPlaceId,
+        );
+        const window = point?.window ?? { start: row.window_start, end: row.window_end };
+        place = { name: row.place, times: `${window.start}–${window.end}` };
+      } else if (!isAddressReadable(input.address)) {
+        return fail('invalid_request', 'A delivery address needs a street');
+      }
+      const next: SellerOrder = { ...order, fulfilment: input.fulfilment };
+      delete next.pickupPlaceId;
+      if (input.fulfilment === 'pickup' && input.pickupPlaceId !== undefined) {
+        next.pickupPlaceId = input.pickupPlaceId;
+      }
+      const diff = diffOrder(order, next);
+      let d = addAudit(draft(next), {
+        by: actor,
+        what: 'edited',
+        detail: 'fulfilment',
+        ...(diff ? { diff } : {}),
+      });
+      if (input.notify) {
+        const text = fulfilmentChangedText(
+          order.language,
+          place ? { pickup: place.name, times: place.times } : { delivery: true },
+        );
+        d = addInbox(d, { kind: 'message', textKey: FULFILMENT_CHANGED_KEY, text });
+      }
+      await db.batch([
+        ...changeStatements(db, d),
+        db.stmt(
+          'UPDATE orders SET pickup_place_id = ? WHERE seller_id = ? AND id = ?',
+          next.pickupPlaceId ?? null,
+          sid,
+          order.id,
+        ),
+      ]);
+      if (d.inboxes.length > 0) notify?.([{ order: d.order, entries: d.inboxes }]);
+      return ok(d.order);
     },
 
     setWaReceived(code: string, received: boolean) {

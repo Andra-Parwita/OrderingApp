@@ -368,20 +368,22 @@ function DeliveryRow({ order, step, lang, busy, address, onOpen, onStep }: RowPr
               </StepButton>
             ))}
           </StepBar>
-          <Minutes>
-            {t('delivery.minutesLabel')}
-            <select
-              value={minutes}
-              onChange={(event) => setMinutes(Number(event.target.value))}
-              aria-label={t('delivery.minutesAria', { code })}
-            >
-              {ARRIVING_MINUTES.map((m) => (
-                <option key={m} value={m}>
-                  {m === 0 ? t('delivery.noTime') : t('message.minutes', { count: m })}
-                </option>
-              ))}
-            </select>
-          </Minutes>
+          {step === 'delivered' || order.status === 'delivered' ? null : (
+            <Minutes>
+              {t('delivery.minutesLabel')}
+              <select
+                value={minutes}
+                onChange={(event) => setMinutes(Number(event.target.value))}
+                aria-label={t('delivery.minutesAria', { code })}
+              >
+                {ARRIVING_MINUTES.map((m) => (
+                  <option key={m} value={m}>
+                    {m === 0 ? t('delivery.noTime') : t('message.minutes', { count: m })}
+                  </option>
+                ))}
+              </select>
+            </Minutes>
+          )}
         </Steps>
       )}
     </OrderRowRoot>

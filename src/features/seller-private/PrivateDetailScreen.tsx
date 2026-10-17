@@ -11,6 +11,7 @@ import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { nextStatuses } from '../../../shared/status';
 import { pickText } from '../../../shared/text';
+import { ChangeFulfilment } from '../../components/change-fulfilment';
 import { Button, Icon, PageHeader, Pill, WarningDialog } from '../../ui';
 import { PRIVATE_NS } from './i18n/register';
 import { orderStillToPay, readableAddress, stepIndex, stepsFor, toneOf, totalCents } from './model';
@@ -188,10 +189,13 @@ const Two = styled.div`
 export function PrivateDetailScreen({
   code,
   canEdit,
+  canChangeFulfilment = false,
   openOrderLink,
 }: Readonly<{
   code: string;
   canEdit: boolean;
+  /** Plan 083: owners and chefs may switch pickup / delivery (the server refuses a helper). */
+  canChangeFulfilment?: boolean;
   /** Opens WhatsApp with the order link (the orders feature's, passed in by the app). */
   openOrderLink: (i18n: I18n, order: SellerOrder) => void;
 }>) {
@@ -305,6 +309,9 @@ export function PrivateDetailScreen({
             <dt>{t('detail.when')}</dt>
             <dd>
               {when} · {t(order.fulfilment)}
+              {canChangeFulfilment && nextStatuses(order).length > 0 ? (
+                <ChangeFulfilment order={order} onChanged={() => dispatch(refreshRequested())} />
+              ) : null}
             </dd>
             {order.fulfilment === 'delivery' ? (
               <>

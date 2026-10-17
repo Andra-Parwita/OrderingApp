@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { appVersion } from '../../shared/buildInfo';
+import { RELEASE_VERSION } from '../../shared/release';
 import { brandColour, brandSize } from '../theme/brandTokens';
 import { BrandLogo } from './BrandLogo';
 import { WalkingMascot } from './BrandMascot';
@@ -140,12 +140,6 @@ const Version = styled.span`
   }
 `;
 
-/** "1.0.20 · c1239a6 · draft" → its parts; "dev" (unit tests) has no commit. */
-export function versionParts(version: string) {
-  const [number = version, commit, flag] = version.split(' · ');
-  return { number, commit, draft: flag === 'draft' };
-}
-
 function BrandHeaderParts({ page }: Readonly<{ page: BrandPage }>) {
   const { t } = useTranslation();
   return (
@@ -159,17 +153,12 @@ function BrandHeaderParts({ page }: Readonly<{ page: BrandPage }>) {
 
 function BrandFooterParts() {
   const { t } = useTranslation();
-  const { number, commit, draft } = versionParts(appVersion());
   const env = t(import.meta.env.PROD ? 'app.brand.production' : 'app.brand.development');
   return (
     <>
       <Build>
-        <Version>v{number}</Version>
-        <span>
-          {commit ? `${t('app.brand.build', { commit })} · ` : ''}
-          {env}
-          {draft ? ` · ${t('app.brand.draft')}` : ''}
-        </span>
+        <Version>v{RELEASE_VERSION}</Version>
+        <span>{env}</span>
       </Build>
       <span>{t('app.brand.copyright', { year: new Date().getFullYear() })}</span>
     </>

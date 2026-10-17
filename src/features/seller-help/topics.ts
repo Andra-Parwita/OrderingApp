@@ -921,4 +921,85 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Pesanan khusus tidak pernah menyentuh menu, batas, atau batas waktu pesan Anda.',
     },
   },
+  // 15
+  {
+    en: {
+      n: 'How to print',
+      s: 'Labels and order lists on a normal A4 printer',
+      l: 'Every Print button shows a preview first, so you see what to expect.',
+      steps: [
+        { part: 'Where to print' },
+        {
+          text: 'Labels: **More** → **Labels**. Pick which orders, check the preview, then tap **Print**.',
+        },
+        {
+          text: 'One bag: in **Kitchen** → **Pack**, tap **Print label**. It opens **Labels** with that order selected, so you see the preview before you print.',
+        },
+        {
+          text: 'Order list: **Orders** → **Print**. The preview shows the A4 pages with the totals.',
+        },
+        { part: 'Paper' },
+        {
+          text: 'Labels print on plain A4, or on A4 sticker sheets with 14 labels per sheet (99.1 × 38.1 mm), for example Avery L7163 or "14-up address labels" from Officeworks or Kmart. Load the sheet the right way up and print one page first.',
+        },
+        {
+          text: 'In the printer window, set the paper to **A4** and the scale to **100%** (turn **Fit to page** off). If the printout looks different from the preview, this is almost always why.',
+        },
+        {
+          text: 'On a Samsung or other Android tablet: tap **Print**, choose your printer at the top, set **Paper size** to **A4** and the scale to **100%**. If your printer is not listed, install its print service from the Play Store first.',
+        },
+        { part: 'A label printer (optional)' },
+        {
+          text: 'Most sellers do not need one. If you have a label printer, open **More** → **Labels** → **Printer settings** and switch on **I have a label printer (62 mm roll)**. The **Paper** choice then appears. It is saved on that device only.',
+        },
+        {
+          text: "For example a Brother QL-810W (Wi-Fi) with the Brother DK-22205 62 mm roll from Officeworks. On a Samsung tablet, install Brother's print plugin first.",
+        },
+        { part: 'Scanner (optional)' },
+        {
+          text: "A Bluetooth 2D / QR scanner can scan the QR on a customer's phone, or the QR on a label, at pickup. Pair it with the tablet, tap the search box in **Pickup & delivery**, **Orders** or **Pack**, and scan: the order appears.",
+        },
+      ],
+      note: 'Nothing is sent to the printer until you tap Print in the print window.',
+    },
+    id: {
+      n: 'Cara mencetak',
+      s: 'Label dan daftar pesanan dengan printer A4 biasa',
+      l: 'Setiap tombol Cetak menampilkan pratinjau dulu, jadi Anda tahu hasilnya.',
+      steps: [
+        { part: 'Di mana mencetak' },
+        {
+          text: 'Label: **Lainnya** → **Label**. Pilih pesanan mana, periksa pratinjau, lalu ketuk **Cetak**.',
+        },
+        {
+          text: 'Satu kantong: di **Dapur** → **Kemas**, ketuk **Cetak label**. Halaman **Label** terbuka dengan pesanan itu terpilih, jadi Anda melihat pratinjau sebelum mencetak.',
+        },
+        {
+          text: 'Daftar pesanan: **Pesanan** → **Cetak**. Pratinjau menampilkan halaman A4 beserta totalnya.',
+        },
+        { part: 'Kertas' },
+        {
+          text: 'Label dicetak di kertas A4 biasa, atau di lembar stiker A4 berisi 14 label per lembar (99,1 × 38,1 mm), misalnya Avery L7163 atau "14-up address labels" dari Officeworks atau Kmart. Masukkan lembar dengan arah yang benar dan cetak satu halaman dulu.',
+        },
+        {
+          text: 'Di jendela printer, atur kertas ke **A4** dan skala ke **100%** (matikan **Fit to page**). Kalau hasil cetak beda dari pratinjau, hampir selalu ini penyebabnya.',
+        },
+        {
+          text: 'Di tablet Samsung atau Android lain: ketuk **Cetak**, pilih printer di bagian atas, atur **Ukuran kertas** ke **A4** dan skala ke **100%**. Kalau printer Anda tidak ada di daftar, pasang dulu layanan cetaknya dari Play Store.',
+        },
+        { part: 'Printer label (opsional)' },
+        {
+          text: 'Kebanyakan penjual tidak membutuhkannya. Kalau Anda punya printer label, buka **Lainnya** → **Label** → **Pengaturan printer** dan nyalakan **Saya punya printer label (rol 62 mm)**. Pilihan **Kertas** lalu muncul. Tersimpan di perangkat itu saja.',
+        },
+        {
+          text: 'Misalnya Brother QL-810W (Wi-Fi) dengan rol Brother DK-22205 62 mm dari Officeworks. Di tablet Samsung, pasang dulu plugin cetak Brother.',
+        },
+        { part: 'Pemindai (opsional)' },
+        {
+          text: 'Pemindai 2D / QR Bluetooth bisa memindai QR di ponsel pelanggan, atau QR di label, saat pengambilan. Pasangkan dengan tablet, ketuk kotak cari di **Serah terima**, **Pesanan** atau **Kemas**, lalu pindai: pesanannya muncul.',
+        },
+      ],
+      note: 'Tidak ada yang dikirim ke printer sebelum Anda mengetuk Cetak di jendela cetak.',
+    },
+  },
 ];

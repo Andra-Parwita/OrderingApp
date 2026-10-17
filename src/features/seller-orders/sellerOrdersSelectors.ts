@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 import type { Order } from '../../../shared/domain';
-import { parseOrderCode } from '../../../shared/orderCode';
+import { parseOrderCode, scannedText } from '../../../shared/orderCode';
 import { filterOf, type StatusFilter } from './orderStatus';
 import type { SellerOrdersRootState } from './sellerOrdersSlice';
 
@@ -30,7 +30,7 @@ export const selectCounts = createSelector([selectOrders], (orders): StatusCount
 
 /** Forgiving: a full code in any spelling, or part of a first name. */
 export function matchesQuery(order: Order, query: string): boolean {
-  const text = query.trim();
+  const text = scannedText(query).trim();
   if (text === '') return true;
   const code = parseOrderCode(text);
   if (code !== null && order.code === code) return true;

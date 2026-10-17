@@ -111,6 +111,11 @@ export function isAddressComplete(address: DeliveryAddress | null | undefined): 
   );
 }
 
+/** A private order's address can be read and put on a map: a street is enough (suburb and postcode are optional). */
+export function isAddressReadable(address: DeliveryAddress | null | undefined): boolean {
+  return !!address && address.street.trim() !== '';
+}
+
 /** What the checkout sends: trimmed, no empty notes; null when it is not complete or not valid. */
 export function addressForRequest(
   address: DeliveryAddress | null | undefined,

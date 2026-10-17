@@ -12,6 +12,24 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // Lines picked by the owner (17 Oct: "just high level: private orders and bug fixes; and ability to
+  // change pickup/delivery by seller; in bug fixes mention print too"); the date is set on deploy day
+  {
+    version: '1.0.37',
+    date: '2026-10-17',
+    lines: {
+      en: [
+        'Private orders: make a one-off order for a party or event, take a deposit, and send the customer their order code.',
+        'Change an order between pickup and delivery, and tell the customer if you like.',
+        'Bug fixes, including printing labels from a tablet.',
+      ],
+      id: [
+        'Pesanan khusus: buat pesanan sekali untuk acara atau pesta, catat DP, dan kirim kode pesanan ke pelanggan.',
+        'Ubah pesanan dari ambil sendiri ke antar (atau sebaliknya), dan kabari pelanggan kalau mau.',
+        'Perbaikan bug, termasuk mencetak label dari tablet.',
+      ],
+    },
+  },
   // Lines picked by the owner (16 Oct: "2, 1 and 6"; 17 Oct: dish pictures added); the date is set on deploy day
   {
     version: '1.0.36',

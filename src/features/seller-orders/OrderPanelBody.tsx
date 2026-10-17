@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Order } from '../../../shared/domain';
 import { formatAuditDiff } from '../../../shared/auditDiff';
@@ -8,12 +8,14 @@ import { formatDay, formatDayTime } from '../../../shared/dates';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
+import { ChangeFulfilment } from '../../components/change-fulfilment';
 import { Button, Icon, Menu, WarningDialog, type IconName, type MenuItem } from '../../ui';
 import { DeliveryAddressBlock } from './DeliveryAddressBlock';
 import { SELLER_NS } from './i18n/register';
 import { StatusMark } from './StatusMark';
 import { actorLabel, orderTotalCents } from './orderText';
 import { selectCookingDate, selectCurrent } from './sellerOrdersSelectors';
+import { refreshRequested } from './sellerOrdersSlice';
 import { auditText, useOrderActions } from './useOrderActions';
 
 // The order beside the list (384 px; handoff, Home): changed note, items, the customer's note,
@@ -147,6 +149,11 @@ const Details = styled.dl`
     overflow-wrap: anywhere;
   }
 `;
+const HowLine = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+`;
 const Recent = styled.ul`
   display: flex;
   flex-direction: column;
@@ -177,6 +184,7 @@ export function OrderPanelBody({
   const current = useSelector(selectCurrent);
   const cookingDate = useSelector(selectCookingDate);
   const a = useOrderActions(order);
+  const dispatch = useDispatch();
   const { lang, failed, audit, kind, diff, lastEdit } = a;
 
   const place =
@@ -289,7 +297,18 @@ export function OrderPanelBody({
       <Group>{t('detail.status')}</Group>
       <Details>
         <dt>{t(order.fulfilment === 'delivery' ? 'panel.delivery' : 'panel.pickup')}</dt>
-        <dd>{pickupText}</dd>
+        <dd>
+          <HowLine>
+            <span>{pickupText}</span>
+            {a.readOnly || a.final ? null : (
+              <ChangeFulfilment
+                order={order}
+                {...(current.status === 'ready' ? { windows: current.view.pickupPoints } : {})}
+                onChanged={() => dispatch(refreshRequested())}
+              />
+            )}
+          </HowLine>
+        </dd>
         <dt>{t('panel.language')}</dt>
         <dd>{t(order.language === 'id' ? 'panel.langId' : 'panel.langEn')}</dd>
         <dt>{t('panel.whatsapp')}</dt>

@@ -2,14 +2,13 @@ import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { styled } from 'styled-components';
-import { appVersion } from '../../../shared/buildInfo';
+import { RELEASE_VERSION } from '../../../shared/release';
 import { useMediaQuery } from '../../components/useMediaQuery';
 import { Icon, PageHeader } from '../../ui';
 import { AboutHero } from './AboutHero';
 import { heroArt } from './aboutTokens';
 import { ABOUT_NS } from './i18n/register';
 import { ReleasesPanel } from './ReleasesPanel';
-import { currentRelease } from './releaseNotes';
 
 // Plan 075: About ShaggyBobo. The hero and the version row stay pinned; only the about card scrolls.
 
@@ -49,12 +48,6 @@ const Versions = styled.div`
 const Release = styled.span`
   font-size: ${({ theme }) => theme.type.size.md};
   font-weight: 700;
-`;
-const Build = styled.span`
-  overflow-wrap: anywhere;
-  color: ${({ theme }) => theme.c.muted};
-  font-family: ${({ theme }) => theme.font.mono};
-  font-size: 0.6875rem;
 `;
 const WhatsNew = styled.button`
   display: inline-flex;
@@ -201,8 +194,7 @@ export function AboutScreen({ logo, wideQuery }: AboutScreenProps) {
         <IdRow $wide={wide}>
           {logo}
           <Versions>
-            <Release>{t('release', { version: currentRelease()?.version ?? '' })}</Release>
-            <Build>{t('build', { build: appVersion() })}</Build>
+            <Release>{t('release', { version: RELEASE_VERSION })}</Release>
           </Versions>
           <WhatsNew type="button" ref={opener} aria-haspopup="dialog" onClick={() => setOpen(true)}>
             {t('whatsNew')}

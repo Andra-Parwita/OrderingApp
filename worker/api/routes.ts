@@ -79,6 +79,7 @@ import {
 } from '../../shared/pushContract';
 import {
   parseCreateOrderRequest,
+  parseChangeFulfilmentRequest,
   parseCreateSellerOrderRequest,
   parseFindOrderRequest,
   parseUpdateOrderRequest,
@@ -863,7 +864,8 @@ async function chefOwnDishMay(
 
 /**
  * What a helper may do (plan 028), deny by default: read orders (and the menu the screens show),
- * mark an item sold out, and move an order along (status, collected, "Got it" on a changed address). Everything else,
+ * mark an item sold out, and move an order along (status, collected, "Got it" on a changed address).
+ * Plan 083: changing pickup / delivery (PATCH orders/<code>/fulfilment) is not on the list: owner and chef only. Everything else,
  * including every other read (backup, team,
  * settings) and the demo samples, is refused.
  */
@@ -1585,6 +1587,21 @@ async function handleSellerRoutes(
             await changed(await store.setStatus(code, input.to, actor, input.force === true)),
           )
         : error('not_found', 'Order not found');
+    }
+    // Plan 083: the seller (owner or chef; a helper gets 403 from helperMay) switches pickup <-> delivery.
+    if (b && c === 'fulfilment' && method === 'PATCH') {
+      const input = parseChangeFulfilmentRequest(await readJson(request));
+      if (!input) return bad();
+      if (!code) return error('not_found', 'Order not found');
+      const result = await store.changeFulfilment(code, input, actor);
+      // Pickup clears the address (null); delivery stores the typed one, encrypted (D-099).
+      await storeAddress(
+        store,
+        context,
+        result,
+        input.fulfilment === 'pickup' ? null : input.address,
+      );
+      return sellerResult(await changed(result));
     }
     // Plan 071: "Delete address now". A helper may not (the helper gate allows only status and collected).
     if (b && c === 'delete-address' && method === 'POST') {

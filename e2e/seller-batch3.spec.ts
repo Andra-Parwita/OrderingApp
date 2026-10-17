@@ -70,9 +70,10 @@ test('menu, then Settings: pictures and backup, and Kitchen: print labels', asyn
   await page.getByRole('button', { name: 'Print labels' }).click();
   await expect(page).toHaveURL(/\/seller\/labels$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Print labels' })).toBeVisible();
-  await expect(page.getByRole('radio', { name: 'A4 sheet (2 × 7 labels)' })).toBeChecked();
-  await expect(page.getByRole('radio', { name: 'Label printer (62 mm roll)' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: /^Preview · / })).toBeVisible();
+  // Plan 084: A4 is the default and the paper choice is hidden until "I have a label printer" is on.
+  await expect(
+    page.getByRole('heading', { name: 'Preview · A4 sheet (2 × 7 labels)' }),
+  ).toBeVisible();
   await page.screenshot({ path: `captures/b3-labels-${project}.png`, fullPage: true });
 
   expect(errors).toEqual([]);

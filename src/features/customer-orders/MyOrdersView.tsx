@@ -1,10 +1,11 @@
 import { memo, useCallback, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import type { Language, OrderStatus } from '../../../shared/domain';
+import type { Kitchen, Language, OrderStatus } from '../../../shared/domain';
 import { FIRST_NAME_MAX } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode, parseOrderCode } from '../../../shared/orderCode';
+import { KitchenBanner } from '../../components/KitchenBanner';
 import { PickupMapLine } from '../../components/pickup-map';
 import { Icon } from '../../ui';
 import type { CurrentRow, EarlierRow } from './myOrdersModel';
@@ -443,6 +444,8 @@ export type MyOrdersViewProps = Readonly<{
   ownKitchen?: string | null;
   /** That kitchen's name when the customer side knows it. */
   kitchenName: string | null;
+  /** The kitchen whose banner shows on top (the app's own, else the last one opened). None = no banner. */
+  kitchen?: Kitchen;
   onOpenOrder: (token: string) => void;
   /** Empty state: the last kitchen's menu, or the home page. */
   onOpenMenu: () => void;
@@ -462,6 +465,7 @@ export function MyOrdersView({
   hasKitchen,
   ownKitchen = null,
   kitchenName,
+  kitchen,
   onOpenOrder,
   onOpenMenu,
   onRetry,
@@ -534,6 +538,7 @@ export function MyOrdersView({
   const empty = status === 'ready' && current.length === 0 && earlier.length === 0;
   return (
     <Page>
+      {kitchen ? <KitchenBanner kitchen={kitchen} lang={lang} placeholder={kitchen.name} /> : null}
       <Title>{t('list.title')}</Title>
       <CodeForm onSubmit={onSubmit}>
         <CodeInput

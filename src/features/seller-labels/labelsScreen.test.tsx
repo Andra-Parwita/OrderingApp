@@ -8,6 +8,7 @@ import { LONG_NOTE, line, makeOrder, renderThemed, sampleOrders, setupI18n } fro
 
 beforeAll(setupI18n);
 afterEach(async () => {
+  window.localStorage.clear();
   await i18n.changeLanguage('en');
 });
 
@@ -71,18 +72,39 @@ describe('LabelsScreen', () => {
     expect(screen.getByRole('button', { name: 'Print' })).toBeEnabled();
   });
 
-  it('the paper option switches the print layout', async () => {
+  it('offers only A4 until this device says it has a label printer', async () => {
     await openLabels();
     const sheets = screen.getByTestId('label-sheets');
-    expect(sheets).toHaveAttribute('data-paper', 'a4');
-    expect(sheets.children).toHaveLength(1);
+    expect(screen.queryByRole('radio', { name: 'Label printer (62 mm roll)' })).toBeNull();
+    expect(screen.getByText(/set the printer's paper to A4 and scale to 100%/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'I have a label printer (62 mm roll)' }));
+    expect(window.localStorage.getItem('labels.hasRoll')).toBe('1');
     fireEvent.click(screen.getByRole('radio', { name: 'Label printer (62 mm roll)' }));
     expect(sheets).toHaveAttribute('data-paper', 'roll');
     // On a roll every label is its own page.
     expect(sheets.children).toHaveLength(2);
+    expect(
+      screen.getByText(/set the printer's paper to 62 × 40 mm and scale to 100%/),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('radio', { name: 'A4 sheet (2 × 7 labels)' }));
     expect(sheets).toHaveAttribute('data-paper', 'a4');
     expect(sheets.children).toHaveLength(1);
+  });
+
+  it('prints on A4 when the roll was chosen before but the printer switch is off', async () => {
+    window.localStorage.setItem('labels.paper', 'roll');
+    await openLabels();
+    expect(screen.getByTestId('label-sheets')).toHaveAttribute('data-paper', 'a4');
+    expect(screen.getByRole('checkbox', { name: /label printer/ })).not.toBeChecked();
+  });
+
+  it('opens on the one order asked for, with the Selected filter', async () => {
+    serveOrders();
+    renderThemed(<LabelsScreen orderCode="R8P4WB" />);
+    await screen.findByRole('article', { name: 'R8P-4WB' });
+    expect(screen.getAllByRole('article')).toHaveLength(1);
+    expect(screen.getByRole('radio', { name: 'Selected (1)' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Print' })).toBeEnabled();
   });
 
   it('continues a long order on a second label instead of cutting items', async () => {
@@ -128,7 +150,10 @@ describe('LabelsScreen', () => {
     await screen.findByRole('article', { name: 'K7F-2QX' });
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Cetak label');
     expect(screen.getByRole('radio', { name: 'Terkonfirmasi (2)' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Lembar A4 (2 × 7 label)' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', { name: 'Saya punya printer label (rol 62 mm)' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/atur kertas printer ke A4 dan skala 100%/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cetak' })).toBeInTheDocument();
     const label = screen.getByRole('article', { name: 'K7F-2QX' });
     expect(within(label).getByText(/^Ambil · /)).toBeInTheDocument();

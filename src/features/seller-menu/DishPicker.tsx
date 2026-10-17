@@ -77,6 +77,8 @@ export type DishPickerProps = Readonly<{
   showLastUsed?: boolean;
   /** Something under a ticked dish's row (the private editor's quantity and price). */
   renderSelected?: (dish: Dish) => ReactNode;
+  /** Accessible name of a dish's tick box; absent = the menu wizard's "On this menu: …". */
+  tickLabel?: (name: string) => string;
 }>;
 
 export function DishPicker({
@@ -89,6 +91,7 @@ export function DishPicker({
   onEdit,
   showLastUsed = true,
   renderSelected,
+  tickLabel,
 }: DishPickerProps) {
   const { t } = useTranslation(MENU_NS);
   const [search, setSearch] = useState('');
@@ -149,7 +152,7 @@ export function DishPicker({
                     type="checkbox"
                     checked={on}
                     disabled={!on && full}
-                    aria-label={t('dishes.onMenuFor', { name })}
+                    aria-label={tickLabel ? tickLabel(name) : t('dishes.onMenuFor', { name })}
                     onChange={() => onToggle(dish)}
                   />
                   <span role="cell" className="name">

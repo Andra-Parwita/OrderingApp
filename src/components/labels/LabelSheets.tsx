@@ -1,8 +1,9 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect } from 'react';
 import { createGlobalStyle, styled } from 'styled-components';
 import type { Fulfilment, SellerOrder } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { OrderQr } from '../OrderQr';
+import { printAreaCss } from './printArea';
 import {
   LABELS_PER_SHEET,
   chunk,
@@ -31,11 +32,7 @@ export const LabelPrintStyle = createGlobalStyle<{ $paper: LabelPaper }>`
     margin: 0;
   }
   @media print {
-    html, body { height: auto; margin: 0; background: white; }
-    body * { visibility: hidden; }
-    [data-print-area], [data-print-area] * { visibility: visible; }
-    [data-print-area] { position: absolute; top: 0; left: 0; }
-    [data-no-print] { display: none; }
+    ${printAreaCss}
   }
 `;
 
@@ -241,12 +238,30 @@ export function PrintJob({
   text: LabelText;
   onDone: () => void;
 }>) {
-  const printed = useRef(false);
   useEffect(() => {
-    if (printed.current) return; // StrictMode runs effects twice in dev
-    printed.current = true;
-    window.print();
-    onDone();
+    let cancelled = false;
+    let fallback = 0;
+    const finish = () => {
+      window.removeEventListener('afterprint', finish);
+      window.clearTimeout(fallback);
+      onDone();
+    };
+    // Let fonts and the QR paint first. Keep the labels mounted until the print is over: on a tablet
+    // window.print() returns at once and the page is captured afterwards.
+    const fontsReady = 'fonts' in document ? document.fonts.ready : Promise.resolve();
+    void fontsReady.then(() =>
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+        window.addEventListener('afterprint', finish);
+        fallback = window.setTimeout(finish, 120_000);
+        window.print();
+      }),
+    );
+    return () => {
+      cancelled = true;
+      window.removeEventListener('afterprint', finish);
+      window.clearTimeout(fallback);
+    };
   }, [onDone]);
   return (
     <>

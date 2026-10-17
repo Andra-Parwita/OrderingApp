@@ -4,11 +4,10 @@ import { css, styled } from 'styled-components';
 import type { Kitchen, Language } from '../../../shared/domain';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
 import { YourTime } from '../../components/YourTime';
-import { bannerAlt, phoneBannerSrc } from '../../../shared/kitchenImages';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
 import { PickupMapLine, pickupMapInfo } from '../../components/pickup-map';
-import { ImageSlot } from '../../ui';
+import { KitchenBanner } from '../../components/KitchenBanner';
 import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
@@ -28,10 +27,6 @@ const Screen = styled.main`
 `;
 const BannerBox = styled.div`
   position: relative;
-`;
-const BannerTop = styled.div<{ $background?: string }>`
-  padding-top: var(--sat);
-  background: ${({ theme, $background }) => $background ?? theme.c.surf2};
 `;
 const Hero = styled.div`
   position: relative;
@@ -225,15 +220,7 @@ function Banner({ kitchen, lang }: Readonly<{ kitchen: Kitchen; lang: Language }
   const { t } = useTranslation(CUSTOMER_NS);
   return (
     <BannerBox>
-      <BannerTop $background={kitchen.images?.bannerBackground}>
-        <ImageSlot
-          aspectRatio="3 / 1"
-          background={kitchen.images?.bannerBackground}
-          src={phoneBannerSrc(kitchen.images) ?? kitchen.bannerImageUrl}
-          alt={bannerAlt(kitchen, lang)}
-          placeholder={t('menu.bannerImage')}
-        />
-      </BannerTop>
+      <KitchenBanner kitchen={kitchen} lang={lang} placeholder={t('menu.bannerImage')} />
     </BannerBox>
   );
 }

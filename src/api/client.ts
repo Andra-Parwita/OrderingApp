@@ -25,6 +25,7 @@ import {
   parseFetchedOrderResponse,
   parseSellerOrderResponse,
   parseSellerOrdersResponse,
+  type ChangeFulfilmentRequest,
   type CreateOrderRequest,
   type CreateSellerOrderRequest,
   type CustomerOrderResponse,
@@ -463,6 +464,20 @@ export function sendUpdates(
 ): Promise<ApiResult<SendUpdatesResponse>> {
   return request('/api/seller/updates', parseSendUpdatesResponse, {
     method: 'POST',
+    body: input,
+    ...who(actor, seller),
+  });
+}
+
+/** Plan 083: the seller (owner or chef) switches an order between pickup and delivery. */
+export function changeOrderFulfilment(
+  code: string,
+  input: ChangeFulfilmentRequest,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<SellerOrderResponse>> {
+  return request(`/api/seller/orders/${enc(code)}/fulfilment`, parseSellerOrderResponse, {
+    method: 'PATCH',
     body: input,
     ...who(actor, seller),
   });

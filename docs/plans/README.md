@@ -112,6 +112,10 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 079 | ✅ | [Help opens inside the seller app](079-help-inside-seller-app.md) | built + gated (2026-10-15) ; **live in 1.0.36 (17 Oct)** |
 | 080 | ✅ | [Top bars push the page down instead of covering it](080-top-bars-push-down.md) | built + gated (2026-10-15) ; **live in 1.0.36 (17 Oct)** |
 | 081 | ✅ | [Private orders (Khusus): one-off orders for an event](081-private-orders.md) | built 17 Oct (D-104); not committed; for 1.0.37; **migration 0027** |
+| 082 | ⬜ | [Store mode: a simple online store (100 products, 20 categories)](082-simple-store.md) | roadmap, later (owner 17 Oct); draft analysis, questions 2–9 open |
+| 083 | ✅ | [The seller changes pickup ↔ delivery and the customer is told](083-seller-changes-fulfilment.md) | built 17 Oct (D-105), for 1.0.37 |
+| 084 | ✅ | [Printing: preview first, A4 by default, label printer optional, Help "How to print"](084-printing-preview.md) | built 17 Oct, for 1.0.37; label printer switch per device |
+| 086 | ⬜ | [Admin short message: a 30-second note everyone can see](086-admin-short-message.md) | draft 17 Oct; delivery A |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

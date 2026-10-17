@@ -110,3 +110,23 @@ export function pushEntryOf(entries: ReadonlyArray<InboxEntry>): InboxEntry | un
   const worth = entries.filter((entry) => pushBodyOf(entry, 'en') !== undefined);
   return worth.find((entry) => entry.kind === 'message') ?? worth[worth.length - 1];
 }
+
+/** Plan 083: the push title and inbox text kept on a "the seller changed pickup / delivery" entry. */
+export const FULFILMENT_CHANGED_KEY = 'fulfilmentChanged';
+export const FULFILMENT_CHANGED_TITLE: Record<Language, string> = {
+  en: 'Order changed',
+  id: 'Pesanan diubah',
+};
+
+/** The sentence the customer gets, in the order's language. Delivery never names the street (D-105: the inbox text outlives the address). */
+export function fulfilmentChangedText(
+  language: Language,
+  to: { delivery: true } | { pickup: string; times: string },
+): string {
+  if ('delivery' in to) {
+    return language === 'id' ? 'Pesananmu sekarang diantar.' : 'Your order is now for delivery.';
+  }
+  return language === 'id'
+    ? `Pesananmu sekarang diambil di ${to.pickup}, ${to.times}`
+    : `Your order is now for pickup at ${to.pickup}, ${to.times}`;
+}

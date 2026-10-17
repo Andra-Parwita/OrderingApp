@@ -53,17 +53,17 @@ const topicButtons = () =>
     .filter((b) => b.hasAttribute('aria-controls') && b.getAttribute('role') !== 'tab');
 
 describe('Help page', () => {
-  it('lists all 14 topics in English and in Indonesian', async () => {
-    expect(TOPICS).toHaveLength(14);
+  it('lists all 15 topics in English and in Indonesian', async () => {
+    expect(TOPICS).toHaveLength(15);
     render(help());
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Seller help');
-    expect(topicButtons()).toHaveLength(14);
+    expect(topicButtons()).toHaveLength(15);
     expect(topicButtons()[0]).toHaveTextContent('Get started');
     fireEvent.click(screen.getByRole('button', { name: 'ID' }));
     await waitFor(() =>
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Bantuan penjual'),
     );
-    expect(topicButtons()).toHaveLength(14);
+    expect(topicButtons()).toHaveLength(15);
     expect(topicButtons()[0]).toHaveTextContent('Mulai');
   });
 

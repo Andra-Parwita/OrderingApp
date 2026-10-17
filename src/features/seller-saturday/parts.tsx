@@ -7,6 +7,7 @@ import { formatCookingDate } from '../../../shared/dates';
 import type { MessageLogEntry, MessageText } from '../../../shared/handoverContract';
 import type { LiveEventType } from '../../../shared/liveContract';
 import { formatMoney } from '../../../shared/money';
+import { scannedText } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
 import { fetchCurrentMenu, fetchSellerOrders } from '../../api/client';
 import { currentSellerSlug } from '../../api/device/sellerContext';
@@ -51,9 +52,9 @@ export function customText(text: MessageText | undefined, lang: Language): strin
   return (lang === 'id' ? (text.id ?? text.en) : (text.en ?? text.id)) ?? '';
 }
 
-/** Does the search match the bag code or the first name? */
+/** Does the search match the bag code or the first name? A scanned link counts as its code. */
 export function matches(order: SellerOrder, query: string): boolean {
-  const q = query.trim().toLowerCase();
+  const q = scannedText(query).trim().toLowerCase();
   if (q === '') return true;
   const compact = q.replace(/[\s-]/g, '');
   return (

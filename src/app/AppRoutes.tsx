@@ -437,7 +437,9 @@ function CookRoute() {
 /** Plan 081: private orders. The whole team reads them and moves the status; owners make, edit and cancel. */
 function PrivateRoute() {
   const { me } = useSession();
-  return <PrivateListScreen canEdit={canEditPrivate(me?.role)} />;
+  const { data } = PRIVATE_MENU_SLOTS.useMenuData();
+  const places = Object.fromEntries((data?.places ?? []).map((place) => [place.id, place.place]));
+  return <PrivateListScreen canEdit={canEditPrivate(me?.role)} places={places} />;
 }
 function PrivateDetailRoute() {
   const { code = '' } = useParams();
@@ -446,6 +448,7 @@ function PrivateDetailRoute() {
     <PrivateDetailScreen
       code={code}
       canEdit={canEditPrivate(me?.role)}
+      canChangeFulfilment={me?.role === undefined || me.role === 'seller' || me.role === 'chef'}
       openOrderLink={openOrderLink}
     />
   );
@@ -552,9 +555,10 @@ function WeekRoute() {
 }
 function LabelsRoute() {
   const { t } = useTranslation();
+  const [params] = useSearchParams();
   return (
     <MorePage title={t('sellerNav.labels')}>
-      <LabelsScreen />
+      <LabelsScreen orderCode={params.get('order') ?? undefined} />
     </MorePage>
   );
 }

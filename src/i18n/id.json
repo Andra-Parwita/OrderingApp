@@ -4,10 +4,8 @@
     "brand": {
       "sellerSetup": "Pengaturan penjual",
       "sellerSignIn": "Masuk penjual",
-      "build": "build {{commit}}",
       "production": "produksi",
       "development": "pengembangan",
-      "draft": "draf",
       "copyright": "© {{year}} ShaggyBobo"
     }
   },

@@ -86,6 +86,7 @@
     "note": "Note",
     "dishes": "Dishes",
     "dishesHelp": "Pick from your dish library. Change the quantity and the price for this order only.",
+    "addDish": "Add {{name}} to this order",
     "qtyOf": "Quantity of {{name}}",
     "less": "One less {{name}}",
     "more": "One more {{name}}",

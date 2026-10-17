@@ -3,7 +3,6 @@
   "title": "Tentang",
   "back": "Kembali ke Lainnya",
   "release": "Rilis {{version}}",
-  "build": "build {{build}}",
   "whatsNew": "Yang baru",
   "releases": "Rilis",
   "current": "Terbaru",

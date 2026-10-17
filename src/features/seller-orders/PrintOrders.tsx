@@ -7,6 +7,7 @@ import { formatDay, formatDayTime } from '../../../shared/dates';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { fetchMenu } from '../../api/client';
+import { printAreaCss } from '../../components/labels/printArea';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { SELLER_NS } from './i18n/register';
@@ -33,11 +34,8 @@ import { useLiveOrders } from './useLiveOrders';
 const PrintStyle = createGlobalStyle`
   @page { size: A4 portrait; margin: 12mm; }
   @media print {
-    html, body { height: auto; margin: 0; background: white; }
-    body * { visibility: hidden; }
-    [data-print-area], [data-print-area] * { visibility: visible; }
-    [data-print-area] { position: absolute; top: 0; left: 0; width: 100%; }
-    [data-no-print] { display: none; }
+    ${printAreaCss}
+    [data-print-area] { width: 100%; }
   }
 `;
 
@@ -390,6 +388,7 @@ export function PrintOrdersScreen({ onBack }: Readonly<{ onBack?: () => void }>)
         </Field>
       </Controls>
       {ready ? <Muted data-no-print>{t('print.hint', { count: pages.length })}</Muted> : null}
+      {ready && !empty ? <Muted data-no-print>{t('print.paperHint')}</Muted> : null}
       {!ready ? (
         <Muted role="status" data-no-print>
           {t('print.loading')}

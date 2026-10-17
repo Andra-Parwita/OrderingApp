@@ -365,6 +365,27 @@ describe('OrderScreen', () => {
     expect(updates).toHaveTextContent('Update from the seller');
   });
 
+  it("plan 083: shows the seller's pickup / delivery change in the updates and the new way on the page", async () => {
+    const placed = await place();
+    const order: CustomerOrder = {
+      ...placed,
+      fulfilment: 'delivery',
+      inbox: [
+        {
+          at: '2026-10-07T12:00:00.000Z',
+          kind: 'message',
+          textKey: 'fulfilmentChanged',
+          text: 'Your order is now for delivery to 5 Rose Street',
+        },
+        ...placed.inbox,
+      ],
+    };
+    server.use(http.get('*/api/orders/:token', () => HttpResponse.json({ order })));
+    renderOrder(placed.token);
+    const updates = await screen.findByTestId('updates');
+    expect(updates).toHaveTextContent('Your order is now for delivery to 5 Rose Street');
+  });
+
   const SATURDAY_KEYS: ReadonlyArray<{ key: string; minutes?: number; en: string; id: string }> = [
     { key: 'readyIn', minutes: 15, en: 'Ready in 15 min', id: 'Siap dalam 15 menit' },
     {

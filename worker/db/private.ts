@@ -346,7 +346,7 @@ export function createPrivateOps(deps: PrivateDeps, sid: string) {
     const tomorrow = addDays(today, 1);
     const rows = await db.all<{ event_date: string; n: number }>(
       `SELECT event_date, COUNT(*) AS n FROM orders
-       WHERE seller_id = ? AND kind = 'private' AND status <> 'cancelled' AND event_date IN (?, ?)
+       WHERE seller_id = ? AND kind = 'private' AND status NOT IN ('cancelled', 'delivered', 'collected') AND event_date IN (?, ?)
        GROUP BY event_date`,
       sid,
       today,

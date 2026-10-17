@@ -67,6 +67,7 @@ import type {
   UseDishSetResponse,
 } from '../../shared/menusContract';
 import type {
+  ChangeFulfilmentRequest,
   CreateOrderRequest,
   CreateSellerOrderRequest,
   UpdateOrderRequest,
@@ -310,6 +311,12 @@ export type SellerRepository = {
   setPaid(code: string, paid: boolean, actor: StaffActor): Promise<StoreResult<SellerOrder>>;
   setLocked(code: string, locked: boolean): Promise<StoreResult<SellerOrder>>;
   setWaReceived(code: string, received: boolean): Promise<StoreResult<SellerOrder>>;
+  /** Plan 083: owner or chef switches pickup <-> delivery (place or address), optionally telling the customer. */
+  changeFulfilment(
+    code: string,
+    input: ChangeFulfilmentRequest,
+    actor: StaffActor,
+  ): Promise<StoreResult<SellerOrder>>;
   nudge(code: string, force?: boolean): Promise<StoreResult<SellerOrder>>;
   markSeen(code: string): Promise<StoreResult<SellerOrder>>;
   markAddressSeen(code: string): Promise<StoreResult<SellerOrder>>;

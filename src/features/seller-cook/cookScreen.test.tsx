@@ -1,4 +1,5 @@
 import { fireEvent, screen, within } from '@testing-library/react';
+import { useLocation } from 'react-router';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockStore } from '../../../mocks/handlers';
 import * as kitchen from '../../api/kitchen';
@@ -27,6 +28,11 @@ async function waitFor(check: () => boolean): Promise<void> {
     await sleep(10);
   }
   throw new Error('timed out');
+}
+
+function Location() {
+  const { pathname, search } = useLocation();
+  return <p data-testid="location">{pathname + search}</p>;
 }
 
 beforeAll(setupI18n);
@@ -174,18 +180,21 @@ describe('Kitchen · Pack', () => {
     ).toHaveLength(3);
   });
 
-  it('prints just the open bag with Print label', () => {
-    let labels = -1;
-    const print = vi.spyOn(window, 'print').mockImplementation(() => {
-      labels = document.querySelectorAll('[data-testid="print-job"] article').length;
-    });
-    openPack();
+  it('Print label opens the Labels page with the open bag selected', () => {
+    const store = createTestStore({ saga: false });
+    seed(store, sampleOrders());
+    renderWithStore(
+      <>
+        <CookScreen />
+        <Location />
+      </>,
+      store,
+    );
+    fireEvent.click(screen.getByRole('tab', { name: /Pack/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Print label' }));
-    expect(print).toHaveBeenCalledTimes(1);
-    expect(labels).toBe(1);
-    // The job is removed once printed, so it cannot print again on the next render.
-    expect(screen.queryByTestId('print-job')).not.toBeInTheDocument();
-    print.mockRestore();
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      /^\/seller\/labels\?order=[A-Z0-9]{6}$/,
+    );
   });
 
   it('ticks an item and saves the whole ticked set', async () => {

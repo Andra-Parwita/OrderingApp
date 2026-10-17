@@ -2,13 +2,14 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { styled } from 'styled-components';
-import { addressLine, directionsUrl } from '../../../shared/address';
+import { addressLine, checkOnMapUrl, directionsUrl } from '../../../shared/address';
 import type { Order } from '../../../shared/domain';
 import { deleteOrderAddress, markOrderAddressSeen } from '../../api/client';
 import { whatsAppUrl } from '../../api/device/whatsapp';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button } from '../../ui';
 import { isIphone } from '../../components/isIphone';
+import { QuietMapLinks } from '../../components/QuietMapLinks';
 import { getContactDigits } from './contacts';
 import { SELLER_NS } from './i18n/register';
 import { useReadOnlyOrders } from './orderAccess';
@@ -141,9 +142,11 @@ export function DeliveryAddressBlock({
       ) : null}
       {a.lat !== undefined ? <p className="muted">{t('address.pinned')}</p> : null}
       <Actions>
-        <Link href={directionsUrl(a)} target="_blank" rel="noopener noreferrer">
-          {t('address.directions')}
-        </Link>
+        {/* Plan 083: quiet Directions / Map links, like the private orders (plan 081). */}
+        <QuietMapLinks
+          directions={{ href: directionsUrl(a), label: t('address.directions') }}
+          map={{ href: checkOnMapUrl(a), label: t('address.viewOnMap') }}
+        />
         {isIphone() ? (
           <Link href={directionsUrl(a, true)} target="_blank" rel="noopener noreferrer">
             {t('address.appleMaps')}

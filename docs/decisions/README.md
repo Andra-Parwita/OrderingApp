@@ -645,3 +645,14 @@ Format for each entry:
 **Data:** private orders reuse `orders` with `kind = 'private'` (migration 0027), never get a `past_week_id`, and are kept out of every live-menu query by one `LIVE_MENU` guard; per-chef history of past menus stays menu-only.
 **Trade-off:** one more kind of order to keep out of the weekly menu's numbers (a guard and a test for it), and a private order has no customer-side edit; in return the owner can take a big one-off order in the same app, with the same code, status and notifications, and nothing in the weekly flow changes.
 **Revisit when:** customers should place private orders themselves, a phone number or online payment is wanted, or a chef needs to see private orders on other days in Cook.
+
+## D-105 · Seller changes pickup / delivery (2026-10-17; owner)
+**Ruling:** plan 083. Owner, 17 Oct: "seller need to be able to change order from pickup to delivery or vice versa and notify customer".
+- **Who:** owners and chefs; helpers see the change but cannot make it ("A").
+- **Notify:** the seller chooses: a "Tell the customer" tick, on by default ("seller should be able to choose to send notification"). Ticked: an inbox entry ("Updates from the seller") and a web push in the order's language ("Your order is now for delivery." / "...for pickup at {place}, {times}"; ID "Pesananmu sekarang diantar." / "...diambil di ..."; the delivery text has no street, see Privacy below). Unticked: no entry and no push; the order page still shows the new way.
+- **After the cut-off:** allowed, also on a locked order (the switch exists mainly for changes after the customer can no longer edit); not on a cancelled, delivered or collected order.
+- **Map links** ("when add delivery, also have some small button to view in map"): a small "Check on map" link in the change sheet; after saving, the quiet Directions / Map links under the address.
+- Pickup needs a place (first one preselected); delivery needs an address with a street; switching to pickup deletes the address.
+**Data:** no migration. One route `PATCH /api/seller/orders/:code/fulfilment` for menu and private orders. The inbox text is kept 4 weeks after the cooking day.
+**Privacy:** the delivery notification does not contain the street, because the inbox text lives 4 weeks but D-099 deletes addresses a day after the menu. Owner, 17 Oct: "A". The pickup text keeps the place and times (not personal).
+**Revisit when:** a customer asks for the change themselves after the cut-off, or the street in the inbox is a privacy concern.

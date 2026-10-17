@@ -17,3 +17,6 @@
 No mock-up: same bars and pages, only the overlap goes away; the coordinator shows before / after captures.
 
 **Deploy impact (expected):** none.
+
+## Follow-up (17 Oct, for 1.0.37)
+- Owner: "in the update announcement bar, can we animate the icon logo of ShaggyBobo a bit? like simple eyes blinking and smooth smaller up/down movement?" → mock-up `uxDesign/seller/mockups/085-bar-bobo.html`, owner chose **A**: the round logo gets a gentle 3 px float (no blink); stops for reduced motion.

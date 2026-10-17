@@ -333,6 +333,7 @@ function EditorForm({
             selected: draft.lines.map((line) => line.dishId),
             full: draft.lines.length >= MAX_MENU_ITEMS,
             onToggle: toggle,
+            tickLabel: (name) => t('editor.addDish', { name }),
             renderSelected: (dish) => {
               const line = draft.lines.find((candidate) => candidate.dishId === dish.id);
               if (!line) return null;
@@ -392,10 +393,12 @@ function EditorForm({
                 : {})}
             />
           )}
-          <Row $tone={still > 0 ? 'warn' : 'ok'}>
-            <span>{still > 0 ? t('editor.still') : t('editor.nothingToPay')}</span>
-            <span>{formatMoney(still, lang)}</span>
-          </Row>
+          {err('depositOver') ? null : (
+            <Row $tone={still > 0 ? 'warn' : 'ok'}>
+              <span>{still > 0 ? t('editor.still') : t('editor.nothingToPay')}</span>
+              <span>{formatMoney(still, lang)}</span>
+            </Row>
+          )}
           <Muted>{t('editor.paymentHelp')}</Muted>
 
           {action.status === 'error' ? (

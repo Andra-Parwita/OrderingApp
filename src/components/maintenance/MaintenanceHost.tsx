@@ -5,7 +5,7 @@
 // maintenance off).
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { formatDay, formatTime } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
 import { noticeVisible, type MaintenanceState } from '../../../shared/maintenance';
@@ -44,11 +44,19 @@ const Bar = styled.div`
 
 // Bobo says it (plan 080): the icon on the left, the message in a soft speech bubble whose tail
 // points at Bobo.
+const boboFloat = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.1875rem); }
+`;
 const Bobo = styled.img`
   flex: none;
   width: 1.625rem;
   height: 1.625rem;
   object-fit: contain;
+  animation: ${boboFloat} 3.2s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 const Bubble = styled.span`
   position: relative;

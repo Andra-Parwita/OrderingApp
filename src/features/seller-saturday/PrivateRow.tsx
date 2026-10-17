@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { isAddressComplete, type DeliveryAddress } from '../../../shared/address';
+import { isAddressReadable, type DeliveryAddress } from '../../../shared/address';
 import type { Language, SellerOrder } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { PrivateTag } from '../../components/PrivateTag';
@@ -76,7 +76,7 @@ const CollectedButton = styled.button`
 export function privateAddress(order: SellerOrder): DeliveryAddress | null {
   const held = order.address;
   if (!held || !('address' in held)) return null;
-  return isAddressComplete(held.address) ? held.address : null;
+  return isAddressReadable(held.address) ? held.address : null;
 }
 
 type Props = Readonly<{

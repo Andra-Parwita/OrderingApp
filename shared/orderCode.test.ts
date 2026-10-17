@@ -5,6 +5,7 @@ import {
   generateToken,
   ORDER_CODE_ALPHABET,
   parseOrderCode,
+  scannedText,
 } from './orderCode';
 
 describe('order codes', () => {
@@ -61,5 +62,26 @@ describe('generateToken', () => {
     expect(a).toMatch(/^[A-Za-z0-9_-]+$/);
     expect(a.length * 6).toBeGreaterThanOrEqual(128);
     expect(generateToken()).not.toBe(a);
+  });
+});
+
+describe('scannedText', () => {
+  it('keeps the raw, dashed and lowercase code as typed', () => {
+    for (const input of ['AYSBXH', 'AYS-BXH', 'aysbxh', ' ays-bxh ']) {
+      expect(scannedText(input)).toBe(input);
+      expect(parseOrderCode(scannedText(input))).toBe('AYSBXH');
+    }
+  });
+
+  it('takes the code out of a link', () => {
+    expect(scannedText('https://order.shaggybobo.app/o/AYSBXH')).toBe('AYSBXH');
+    expect(scannedText('https://order.shaggybobo.app/kitchen?order=ays-bxh#x')).toBe('AYSBXH');
+  });
+
+  it('leaves names and codeless links alone', () => {
+    expect(scannedText('Rina')).toBe('Rina');
+    expect(scannedText('https://order.shaggybobo.app/o/aBcDeFgHiJkLmNoPqRsTuVwX')).toBe(
+      'https://order.shaggybobo.app/o/aBcDeFgHiJkLmNoPqRsTuVwX',
+    );
   });
 });

@@ -138,10 +138,10 @@ describe('CustomerSettingsView', () => {
     fireEvent.click(screen.getByRole('button', { name: /Read/ }));
     expect(screen.getByText(/only the kitchen.s team can see it/)).toBeVisible();
     expect(screen.getByText(/4 weeks after the cooking day/)).toBeVisible();
-    expect(screen.getByText('Version dev')).toBeVisible();
+    expect(screen.getByText('Version 1.0.37')).toBeVisible();
     await i18n.changeLanguage('id');
     expect(screen.getByText(/hanya tim dapur yang bisa melihatnya/)).toBeVisible();
-    expect(screen.getByText('Versi dev')).toBeVisible();
+    expect(screen.getByText('Versi 1.0.37')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /Tutup/ }));
     expect(screen.queryByText(/hanya tim dapur yang bisa melihatnya/)).toBeNull();
     await i18n.changeLanguage('en');

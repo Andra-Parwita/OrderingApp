@@ -1,19 +1,15 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router';
+import { Link, useInRouterContext, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import type { Language, Order } from '../../../shared/domain';
-import { formatDay } from '../../../shared/dates';
 import { pickText } from '../../../shared/text';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { packOrder } from '../../api/kitchen';
 import { AutoSaveStatus } from '../../components/autoSave/AutoSaveStatus';
 import { isKeptCode, useAutoSave, type SaveResult } from '../../components/autoSave/autoSave';
 import { draftKey } from '../../components/draft';
-import { PrintJob, type LabelText } from '../../components/labels/LabelSheets';
-import { splitOrder } from '../../components/labels/labelModel';
-import { useLabelPaper } from '../../components/labels/useLabelPaper';
 import { PrivateTag } from '../../components/PrivateTag';
 import { Button, Icon, Segmented, WarningDialog, type SegmentedOption } from '../../ui';
 import { COOK_NS } from './i18n/register';
@@ -242,6 +238,22 @@ const Centered = styled.p`
   color: ${({ theme }) => theme.c.muted};
 `;
 
+/** Plan 084: the Labels page shows the preview, the paper and Print for this one order. */
+function PrintLabelButton({ code }: Readonly<{ code: string }>) {
+  const { t } = useTranslation(COOK_NS);
+  const navigate = useNavigate();
+  const go = useCallback(
+    () => void navigate(`/seller/labels?order=${encodeURIComponent(code)}`),
+    [navigate, code],
+  );
+  return (
+    <Button onClick={go}>
+      <Icon name="print" />
+      {t('pack.printLabel')}
+    </Button>
+  );
+}
+
 /** A bag's ticks as the seller left them, with the bag as the server held it (to put back). */
 type PackPending = Record<string, { base: Order; ticked: Array<string> }>;
 
@@ -256,9 +268,7 @@ export function PackTab() {
   const [sort, setSort] = useState<PackSort>('time');
   const [openCode, setOpenCode] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
-  const [paper] = useLabelPaper();
-  const [printing, setPrinting] = useState<Order | null>(null);
-  const printed = useCallback(() => setPrinting(null), []);
+  const inRouter = useInRouterContext();
   const [warn, setWarn] = useState<{ code: string; count: number } | null>(null);
 
   const sorted = useMemo(() => sortBags(bags, sort), [bags, sort]);
@@ -267,16 +277,6 @@ export function PackTab() {
     sorted.find((bag) => !bag.packed) ??
     sorted[0];
 
-  const day = menu ? formatDay(menu.cookingDate, lang) : '';
-  const labelText: LabelText = {
-    qrName: t('label.qrName'),
-    where: (fulfilment, order) => {
-      const own = order.private ? formatDay(order.private.eventDate, lang) : day;
-      const text = t(fulfilment === 'pickup' ? 'label.pickup' : 'label.delivery', { day: own });
-      return order.private ? `${t('privateTag')} · ${text}` : text;
-    },
-    part: (index, of) => t('label.part', { index, of }),
-  };
   const sortOptions: ReadonlyArray<SegmentedOption<PackSort>> = SORTS.map((value) => ({
     value,
     label: t(`pack.sort.${value}`),
@@ -503,10 +503,7 @@ export function PackTab() {
                   : t('pack.notTicked', { count: untickedCount })}
           </Hint>
           <Actions>
-            <Button onClick={() => setPrinting(open.order)}>
-              <Icon name="print" />
-              {t('pack.printLabel')}
-            </Button>
+            {inRouter ? <PrintLabelButton code={open.order.code} /> : null}
             {open.packed ? (
               <Button variant="quiet" onClick={() => void unpack(open)}>
                 {t('pack.unpack')}
@@ -525,15 +522,6 @@ export function PackTab() {
           </Actions>
         </Footer>
       </Detail>
-
-      {printing ? (
-        <PrintJob
-          parts={splitOrder(printing, paper)}
-          paper={paper}
-          text={labelText}
-          onDone={printed}
-        />
-      ) : null}
 
       {warn ? (
         <WarningDialog

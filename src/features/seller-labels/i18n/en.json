@@ -31,5 +31,15 @@
   "previewCount_other": "{{count}} labels for {{orders}}",
   "ordersCount_one": "{{count}} order",
   "ordersCount_other": "{{count}} orders",
-  "privateTag": "Private"
+  "privateTag": "Private",
+  "hint": "If the printout looks different from this, set the printer's paper to {{size}} and scale to 100%.",
+  "hintSize": {
+    "a4": "A4",
+    "roll": "62 × 40 mm"
+  },
+  "printer": {
+    "title": "Printer settings",
+    "hasRoll": "I have a label printer (62 mm roll)",
+    "help": "Leave this off if you print on a normal A4 printer. It is saved on this device only."
+  }
 }

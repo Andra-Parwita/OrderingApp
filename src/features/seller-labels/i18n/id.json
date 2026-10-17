@@ -29,5 +29,15 @@
   },
   "previewCount_other": "{{count}} label untuk {{orders}}",
   "ordersCount_other": "{{count}} pesanan",
-  "privateTag": "Khusus"
+  "privateTag": "Khusus",
+  "hint": "Kalau hasil cetak beda dari ini, atur kertas printer ke {{size}} dan skala 100%.",
+  "hintSize": {
+    "a4": "A4",
+    "roll": "62 × 40 mm"
+  },
+  "printer": {
+    "title": "Pengaturan printer",
+    "hasRoll": "Saya punya printer label (rol 62 mm)",
+    "help": "Biarkan mati kalau Anda mencetak dengan printer A4 biasa. Tersimpan di perangkat ini saja."
+  }
 }

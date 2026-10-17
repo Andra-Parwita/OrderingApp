@@ -8,7 +8,12 @@
 import type { InboxEntry, SellerOrder } from '../../shared/domain';
 import { iconPath } from '../../shared/kitchenManifest';
 import type { PushPayload } from '../../shared/pushContract';
-import { pushBodyOf, pushEntryOf } from '../../shared/pushText';
+import {
+  FULFILMENT_CHANGED_KEY,
+  FULFILMENT_CHANGED_TITLE,
+  pushBodyOf,
+  pushEntryOf,
+} from '../../shared/pushText';
 import { marks, type Db } from '../db/d1';
 import type { PushSender, PushTarget } from './sender';
 
@@ -98,7 +103,11 @@ export function createPushDispatcher(options: {
         const body = entry ? pushBodyOf(entry, change.order.language) : undefined;
         if (body === undefined) continue;
         const payload: PushPayload = {
-          title: change.kitchenName,
+          // Plan 083: a pickup / delivery change says "Order changed" (the kitchen is in the icon and page).
+          title:
+            entry?.textKey === FULFILMENT_CHANGED_KEY
+              ? FULFILMENT_CHANGED_TITLE[change.order.language]
+              : change.kitchenName,
           body,
           icon: iconPath(change.slug, 192),
           data: { url: `/o/${change.order.token}` },

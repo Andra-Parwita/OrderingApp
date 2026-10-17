@@ -15,6 +15,7 @@ export type PrivateDishPickerProps = Readonly<{
   full: boolean;
   onToggle: (dish: Dish) => void;
   renderSelected: (dish: Dish) => ReactNode;
+  tickLabel: (name: string) => string;
 }>;
 
 /** The dish library (picker with a New dish button, editor dialog), made by the app (a feature may not import another feature). */

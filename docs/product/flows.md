@@ -50,6 +50,8 @@ flowchart TD
     N --> B
 ```
 
+**Changing pickup or delivery (plan 083, D-105):** on an order's detail an owner or chef taps the quiet **Change** link next to the Pickup / Delivery line (menu and private orders; also after the cut-off). A sheet switches between a pickup place and a delivery address, with "Check on map" and a "Tell <name>" tick (on by default): ticked, the customer gets an inbox update and a push in their language; either way the order page shows the new way and Cook, Pack, labels and Pickup & delivery follow.
+
 ## Seller: a private order (Khusus)
 
 A private order is a one-off order for an event (a birthday, a party) that only an owner makes, under **Private** in the left menu (phone: **More**). It is never on the menu and never touches its limits or cut-off. The owner picks library dishes, the event date and time, delivery or pickup and an optional deposit, then sends the order code on WhatsApp. The customer follows it on `/o/:token`, read-only, with what is still to pay. On the event day it is counted in Cook, Pack, labels and per-chef income with a "Private" tag; a cancelled one moves to Past.

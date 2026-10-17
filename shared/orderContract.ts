@@ -86,6 +86,17 @@ export type UpdateOrderRequest = {
 };
 
 /**
+ * PATCH /api/seller/orders/:code/fulfilment (plan 083; owner and chef). Pickup needs a place of the
+ * kitchen, delivery an address with a street; `notify` tells the customer (inbox entry + push).
+ */
+export type ChangeFulfilmentRequest = {
+  fulfilment: Fulfilment;
+  pickupPlaceId?: string;
+  address?: DeliveryAddress;
+  notify: boolean;
+};
+
+/**
  * A closed-week order whose details were dropped after 4 weeks (D-044 / D-027 row 6): only whose
  * and which week it was is left, enough to show "archived on <date> from <seller>".
  */
@@ -324,6 +335,20 @@ export function parseUpdateOrderRequest(input: unknown): UpdateOrderRequest | nu
     }
   }
   return Object.keys(out).length > 0 ? out : null;
+}
+
+export function parseChangeFulfilmentRequest(input: unknown): ChangeFulfilmentRequest | null {
+  if (!isRecord(input) || hasPersonalData(withoutAddress(input))) return null;
+  const { fulfilment, pickupPlaceId, notify } = input;
+  if (!isOneOf(FULFILMENTS, fulfilment) || typeof notify !== 'boolean') return null;
+  if (fulfilment === 'pickup') {
+    if (typeof pickupPlaceId !== 'string' || pickupPlaceId === '' || pickupPlaceId.length > 64) {
+      return null;
+    }
+    return { fulfilment, pickupPlaceId, notify };
+  }
+  const address = parseDeliveryAddress(input['address']);
+  return address ? { fulfilment, address, notify } : null;
 }
 
 function parseOrderLine(input: unknown): OrderLine | null {

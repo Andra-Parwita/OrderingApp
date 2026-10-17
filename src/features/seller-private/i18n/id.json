@@ -86,6 +86,7 @@
     "note": "Catatan",
     "dishes": "Hidangan",
     "dishesHelp": "Pilih dari pustaka hidangan kamu. Ubah jumlah dan harga hanya untuk pesanan ini.",
+    "addDish": "Tambah {{name}} ke pesanan ini",
     "qtyOf": "Jumlah {{name}}",
     "less": "Kurangi {{name}}",
     "more": "Tambah {{name}}",

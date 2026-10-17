@@ -1,4 +1,8 @@
-import { parseDeliveryAddress, type DeliveryAddress } from '../../../shared/address';
+import {
+  isAddressReadable,
+  parseDeliveryAddress,
+  type DeliveryAddress,
+} from '../../../shared/address';
 import type { Fulfilment, Language, OrderStatus, SellerOrder } from '../../../shared/domain';
 import type { StatusTone } from '../../theme/tokens';
 import {
@@ -107,7 +111,9 @@ export function dueCount(due: PrivateDue): number {
 /** The readable address of an order, or null (none yet, wiped after the event, or unreadable). */
 export function readableAddress(order: SellerOrder): DeliveryAddress | null {
   const { address } = order;
-  return address && 'address' in address ? address.address : null;
+  return address && 'address' in address && isAddressReadable(address.address)
+    ? address.address
+    : null;
 }
 
 /**

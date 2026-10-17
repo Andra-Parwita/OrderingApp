@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Language, SellerOrder } from '../../../shared/domain';
@@ -84,6 +84,12 @@ const PickRow = styled.label`
     accent-color: ${({ theme }) => theme.colour.accent};
   }
 `;
+const Settings = styled.fieldset`
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
+`;
 const PreviewTitle = styled.h2`
   margin: 0;
   font-size: ${({ theme }) => theme.type.size.md};
@@ -95,13 +101,16 @@ type LoadState =
   | Readonly<{ status: 'error' }>
   | Readonly<{ status: 'ready'; orders: Array<SellerOrder>; cookingDate: string }>;
 
-/** S12. Route-agnostic: 6.3 puts it on a route. Print uses the browser's print dialog. */
-export function LabelsScreen() {
+/**
+ * S12. Route-agnostic: 6.3 puts it on a route. Print uses the browser's print dialog. Plan 084:
+ * `orderCode` (from Pack's "Print label") opens it on the Selected filter with that one order.
+ */
+export function LabelsScreen({ orderCode }: Readonly<{ orderCode?: string }>) {
   const { t, i18n } = useTranslation(LABELS_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const [state, setState] = useState<LoadState>({ status: 'loading' });
-  const [paper, setPaper] = useLabelPaper();
-  const [filter, setFilter] = useState<LabelFilter>('confirmed');
+  const { paper, choose: setPaper, hasRoll, setHasRoll } = useLabelPaper();
+  const [filter, setFilter] = useState<LabelFilter>(orderCode ? 'selected' : 'confirmed');
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [attempt, setAttempt] = useState(0);
 
@@ -115,6 +124,10 @@ export function LabelsScreen() {
       fetchPrivate({ day: 'today' }, slug),
     ]).then(([orders, menu, privateToday]) => {
       if (!live) return;
+      const all =
+        orders.ok && privateToday.ok ? [...orders.data.orders, ...privateToday.data.orders] : [];
+      const wanted = orderCode ? all.find((order) => order.code === orderCode) : undefined;
+      if (wanted) setSelected(new Set([wanted.id]));
       setState(
         orders.ok && menu.ok && privateToday.ok
           ? {
@@ -128,13 +141,17 @@ export function LabelsScreen() {
     return () => {
       live = false;
     };
-  }, [attempt]);
+  }, [attempt, orderCode]);
 
   const retry = useCallback(() => {
     setState({ status: 'loading' });
     setAttempt((n) => n + 1);
   }, []);
   const print = useCallback(() => window.print(), []);
+  const setHasPrinter = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setHasRoll(event.target.checked),
+    [setHasRoll],
+  );
   const toggle = useCallback((id: string) => {
     setSelected((now) => {
       const next = new Set(now);
@@ -202,15 +219,17 @@ export function LabelsScreen() {
       {state.status === 'ready' ? (
         <>
           <Controls data-no-print>
-            <Field>
-              <FieldName>{t('paper.label')}</FieldName>
-              <Segmented
-                label={t('paper.label')}
-                options={paperOptions}
-                value={paper}
-                onChange={setPaper}
-              />
-            </Field>
+            {hasRoll ? (
+              <Field>
+                <FieldName>{t('paper.label')}</FieldName>
+                <Segmented
+                  label={t('paper.label')}
+                  options={paperOptions}
+                  value={paper}
+                  onChange={setPaper}
+                />
+              </Field>
+            ) : null}
             <Field>
               <FieldName>{t('which.label')}</FieldName>
               <Segmented
@@ -257,6 +276,18 @@ export function LabelsScreen() {
           <div data-print-area data-paper={paper} data-testid="label-sheets">
             <LabelSheets parts={parts} paper={paper} text={text} />
           </div>
+          {chosen.length > 0 ? (
+            <Muted data-no-print>{t('hint', { size: t(`hintSize.${paper}`) })}</Muted>
+          ) : null}
+
+          <Settings data-no-print>
+            <PickerLegend>{t('printer.title')}</PickerLegend>
+            <PickRow>
+              <input type="checkbox" checked={hasRoll} onChange={setHasPrinter} />
+              <span>{t('printer.hasRoll')}</span>
+            </PickRow>
+            <Muted>{t('printer.help')}</Muted>
+          </Settings>
         </>
       ) : null}
     </Page>

@@ -27,6 +27,21 @@ export function parseOrderCode(input: string): string | null {
   return code;
 }
 
+/**
+ * What a scanner typed into a search box, as an order code when it holds one: the raw code, the
+ * dashed one, any case, or a link carrying the code in its path or query ("https://x/o/AYSBXH").
+ * Anything else (a first name) comes back unchanged.
+ */
+export function scannedText(input: string): string {
+  const text = input.trim();
+  if (parseOrderCode(text) !== null || !/^https?:\/\//i.test(text)) return input;
+  for (const part of text.split(/[/?&=#]+/)) {
+    const code = parseOrderCode(part);
+    if (code !== null) return code;
+  }
+  return input;
+}
+
 /** The private order-link token: 24 random bytes (192 bits) as base64url. */
 export function generateToken(fill: FillRandom = cryptoFill): string {
   const bytes = fill(new Uint8Array(24));

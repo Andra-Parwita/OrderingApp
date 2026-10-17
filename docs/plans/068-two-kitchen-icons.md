@@ -21,3 +21,6 @@
 ## End of phase
 - [ ] typecheck · eslint · unit · e2e `native-customer`, `kitchen-links`
 - **Deploy impact:** none to apply. Installed apps keep working (same id as before).
+
+## Follow-up (17 Oct, for 1.0.37)
+- Owner: "in My orders (customer app) the kitchen banner should be shown, as in the other 2 pages" → "A": My orders shows the banner of the kitchen you came from (the home-screen app's kitchen, else the last kitchen opened; an order link without context uses the kitchen of the last order opened); orders keep the plan 068 grouping (this kitchen first, "Other kitchens (N)" folded, kitchen pill per order).

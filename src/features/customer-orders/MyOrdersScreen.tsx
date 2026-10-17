@@ -8,7 +8,7 @@ import { ScreenBoundary, isOffline, useLang } from './layout';
 import { buildMyOrders } from './myOrdersModel';
 import { MyOrdersView, type FindOutcome } from './MyOrdersView';
 import { selectList, selectMenus } from './selectors';
-import { listRequested } from './slice';
+import { listRequested, menuRequested } from './slice';
 
 type Props = Readonly<{
   /** Used by the empty state's "Go to the menu" button (the header has no back arrow: tab root). */
@@ -58,6 +58,24 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
           : undefined) ??
         null);
 
+  // The banner is the kitchen the customer came from: the home-screen app's own, else the last one
+  // opened (opening an order remembers its kitchen too). Plan 068 follow-up.
+  const bannerSlug = ownKitchen() ?? kitchenSlug;
+  const bannerMenu = bannerSlug === null ? undefined : menus[bannerSlug];
+  // Once the list is in, fetch the menu only when loading the list did not already (it loads the
+  // menu of every kitchen with a current order).
+  const listCoversBanner =
+    list.status === 'ready' &&
+    list.orders.some((order) => order.seller.slug === bannerSlug && order.archived !== true);
+  const needsBannerMenu =
+    bannerSlug !== null &&
+    bannerMenu === undefined &&
+    (list.status === 'ready' || list.status === 'error') &&
+    !listCoversBanner;
+  useEffect(() => {
+    if (bannerSlug !== null && needsBannerMenu) dispatch(menuRequested(bannerSlug));
+  }, [bannerSlug, needsBannerMenu, dispatch]);
+
   const load = useCallback(() => {
     dispatch(listRequested());
   }, [dispatch]);
@@ -92,6 +110,7 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
       ownKitchen={ownKitchen()}
       hasKitchen={kitchenSlug !== null}
       kitchenName={kitchenName}
+      kitchen={bannerMenu?.kitchen}
       onOpenOrder={onOpenOrder}
       onOpenMenu={onBack}
       onRetry={load}

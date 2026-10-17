@@ -42,6 +42,23 @@ describe('orders for a helper (read only)', () => {
     }
   });
 
+  it('plan 083: the Change link for pickup / delivery is for owners and chefs, not a helper', () => {
+    const store = createTestStore({ saga: false });
+    seed(store, [makeOrder()]);
+    const { unmount } = renderWithStore(<OrderDetailScreen code="K7F2QX" onBack={noop} />, store);
+    expect(screen.getByRole('button', { name: 'Change pickup or delivery' })).toBeInTheDocument();
+    unmount();
+    renderWithStore(
+      <ReadOnlyOrdersProvider value>
+        <OrderDetailScreen code="K7F2QX" onBack={noop} />
+      </ReadOnlyOrdersProvider>,
+      store,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Change pickup or delivery' }),
+    ).not.toBeInTheDocument();
+  });
+
   function renderTable() {
     const store = createTestStore({ saga: false });
     seed(store, [makeOrder({ id: '1', code: 'AAA222', firstName: 'Rina' })]);

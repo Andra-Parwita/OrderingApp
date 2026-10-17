@@ -148,8 +148,15 @@ function OrderRow({
   order,
   today,
   lang,
+  placeName,
   onOpen,
-}: Readonly<{ order: SellerOrder; today: string; lang: Language; onOpen: () => void }>) {
+}: Readonly<{
+  order: SellerOrder;
+  today: string;
+  lang: Language;
+  placeName: string | undefined;
+  onOpen: () => void;
+}>) {
   const { t } = useTranslation(PRIVATE_NS);
   const still = orderStillToPay(order);
   const cancelled = order.status === 'cancelled';
@@ -167,6 +174,7 @@ function OrderRow({
         </span>
         <span className="l2">
           {summaryOf(order, lang)} · {t(order.fulfilment)}
+          {order.fulfilment === 'pickup' && placeName ? ` · ${placeName}` : ''}
         </span>
         <span className="l3">
           <Pill tone={toneOf(order.status)}>{t(`status.${order.status}`)}</Pill>
@@ -205,8 +213,15 @@ function Group({
   group,
   today,
   lang,
+  placeNames,
   onOpen,
-}: Readonly<{ group: DateGroup; today: string; lang: Language; onOpen: (code: string) => void }>) {
+}: Readonly<{
+  group: DateGroup;
+  today: string;
+  lang: Language;
+  placeNames: PlaceNames;
+  onOpen: (code: string) => void;
+}>) {
   const { t } = useTranslation(PRIVATE_NS);
   const dateText = formatCookingDate(group.date, lang);
   return (
@@ -222,6 +237,7 @@ function Group({
             order={order}
             today={today}
             lang={lang}
+            placeName={order.pickupPlaceId ? placeNames[order.pickupPlaceId] : undefined}
             onOpen={() => onOpen(order.code)}
           />
         ))}
@@ -230,7 +246,13 @@ function Group({
   );
 }
 
-export function PrivateListScreen({ canEdit }: Readonly<{ canEdit: boolean }>) {
+/** Pickup place names by id (the app gives them; this feature does not read the menu's data). */
+export type PlaceNames = Readonly<Record<string, string>>;
+
+export function PrivateListScreen({
+  canEdit,
+  places = {},
+}: Readonly<{ canEdit: boolean; places?: PlaceNames }>) {
   const { t } = useTranslation(PRIVATE_NS);
   const lang = useLang();
   const dispatch = useDispatch();
@@ -301,6 +323,7 @@ export function PrivateListScreen({ canEdit }: Readonly<{ canEdit: boolean }>) {
             group={group}
             today={kitchenToday}
             lang={lang}
+            placeNames={places}
             onOpen={(code) => void navigate(`/seller/private/${code}`)}
           />
         ))}
