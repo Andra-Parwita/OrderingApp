@@ -21,6 +21,8 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 3d · final full unit run | ~12 min | 21:24 | 21:37 | 12.5 min (745 s) | ≈ 0 | 2,427 passed; 3 files port-flaked, 48/48 alone |
 | 4 · coordinator look at the screens | ~15 min | 21:25 | 21:33 | ~8 min | −7 min | About 1.0.38, Settings Remember me card, menu; no CSP errors |
 | **ready to deploy** | **21:00–22:00** (given 19:06) · 21:30–22:15 (19:45) · 21:50–22:30 (20:57) | | **21:40** | | **inside the first window** | |
+| deploy 1.0.38 (owner) | ~15–20 min | 21:41 | 21:45 | ~4 min (build-first order) | −11 min | Worker dc3bc02f |
+| CSP follow-up: analytics + nonce, redeploy | — (added after the live check) | 21:50 | 22:15 | ~25 min | | Worker 0708ee42; console clean |
 | 3 · fixes from the gate | 15–45 min | | | | | |
 
 ## Now

@@ -3,8 +3,8 @@
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
 **Last session:** 2026-10-14 → 17 (long session), the owner's PC (Adelaide), Claude as coordinator. Shipped 1.0.35, 1.0.36 and 1.0.37 the same week; built 1.0.38.
-**Live:** Release **1.0.37** (17 Oct ~17:40; Worker `4e161e69-89f3-4906-9e3e-9ba41ea52009`; tag `v1.0.37` = `3aca8f4`; `main` = that commit).
-**Release 1.0.38:** built and **gated green on 17 Oct (21:40)**: typecheck, lint, format, unit (2,427 + flaky files green alone), **e2e 99 passed / 0 failed** (with `--workers=2`; 3 workers flakes under load). Commit, push and deploy only when the owner says.
+**Live:** Release **1.0.38** (17 Oct ~22:15; Worker `0708ee42-ea66-46e3-b654-c2a4ad16b327`; site reports `63ea073`; tag `v1.0.38`; `main` = that commit). Backup before its migrations: `backups/shaggybobo-2026-10-17-c.sql` (697 rows); migrations 0028, 0029, 0030 applied. Live check: health OK, devTools false, all security headers present, **console clean** (Cloudflare Web Analytics allowed; Cloudflare stamps the per-page CSP nonce on its injected bot-detection script). Previous: 1.0.37 (`3aca8f4`, Worker `4e161e69…`).
+**Release 1.0.38:** gated green (17 Oct 21:40: unit green, e2e 99 passed / 0 failed with `--workers=2`), deployed 21:45 (`dc3bc02f`), then a CSP follow-up deployed ~22:15 (`0708ee42`): Cloudflare Web Analytics allowed + per-page nonce.
 
 ## House rules learned this session (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree (lessons 27).
@@ -30,7 +30,7 @@
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. `git pull`; `pnpm install`; `pnpm db:migrate:local` (migrate only, never reseed).
-3. If 1.0.38 isn't deployed yet: finish its gate (see live-status), write the release lines with the owner, ask "commit and push?", then walk the owner through the deploy one step at a time.
+3. 1.0.38 is live. Ask the owner about their phone checks: **Remember me** on a real phone (turn on, place an order, see ✓ on the seller side, restore on a second phone if they have one), **send a short message** from admin (Short message → New message), the **pickup map and QR scan** (new CSP), and the About animation.
 4. Owner checks still open: 1.0.36/1.0.37 phone checks; **a real label print from the seller's Samsung tablet** (Labels page → A4 → Print; printer paper A4, scale 100%).
 
 ## Later (owner rulings recorded)
@@ -46,4 +46,4 @@
 - Passkeys don't work on the LAN-IP dev URL (Remember me hides itself there); use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.37; 1.0.38 (086 short message, 087 Remember me, 089 security) is built — check its status in docs/plans/live-status.md. Ask the owner before any git write. Do "Next session" step 2, then continue with step 3 one question at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.38 (tag v1.0.38): short message (086), Remember me (087), security touch-ups (089). Ask the owner before any git write. Do "Next session" step 2, then step 3 (the owner's phone checks), then ask which plan is next, one question at a time.
