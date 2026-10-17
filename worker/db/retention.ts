@@ -5,6 +5,7 @@
 import { LOCKOUT_MINUTES } from '../../shared/authContract';
 import { keepsOrderDetails } from '../../shared/pastWeeks';
 import type { Db } from './d1';
+import { dropExpiredPrivate } from './private';
 
 /** What one run did. Counts only: no tokens, names or notes ever reach a log. */
 export type RetentionCounts = { weeks: number; orders: number };
@@ -28,9 +29,11 @@ export async function dropExpiredDetails(
           sellerId,
         );
   const expired = weeks.filter((week) => !keepsOrderDetails(week.cooking_date, now));
-  if (expired.length === 0) return { weeks: 0, orders: 0 };
+  // Plan 081: private orders go ORDER_DETAIL_WEEKS after their event date; they count as orders.
+  const privateOrders = await dropExpiredPrivate(db, now, sellerId);
+  if (expired.length === 0) return { weeks: 0, orders: privateOrders };
   // One batch per 30 weeks keeps every statement under D1's limit of 100 bound values.
-  let orders = 0;
+  let orders = privateOrders;
   for (let from = 0; from < expired.length; from += 30) {
     const group = expired.slice(from, from + 30);
     const counted = await db.all<{ n: number }>(

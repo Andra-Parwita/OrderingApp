@@ -46,6 +46,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   translate_unavailable: 503,
   fulfilment_unavailable: 400,
   maintenance: 503,
+  private_order: 403,
 };
 
 export function error(

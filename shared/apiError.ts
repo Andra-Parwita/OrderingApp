@@ -65,6 +65,8 @@ export const API_ERROR_CODES = [
   'fulfilment_unavailable',
   /** Plan 046: maintenance mode is on; every change is refused until the admin switches it off. */
   'maintenance',
+  /** Plan 081: a customer tried to change, cancel or collect a private order; only the team may (403). */
+  'private_order',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

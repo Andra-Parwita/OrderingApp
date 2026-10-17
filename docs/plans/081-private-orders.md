@@ -23,6 +23,7 @@
 - **Cancelled** (owner "A", 17 Oct): a cancelled private order moves to Past with a "Cancelled" label; filters stay Upcoming / Past.
 - **Changes** (owner "A", 17 Oct): the customer asks on WhatsApp only ("Need a change? Message <kitchen> on WhatsApp."); the owner edits the order. No request button.
 - **Seller Help** (owner, 17 Oct: "don't forget to add in help for seller about private menu"): a new Seller help topic "Private orders" (EN + ID): make one, delivery or pickup, dishes from the library, deposit, send the code, how it shows in Cook/Pack on the day, cancel.
+- **Map and directions** (owner, 17 Oct: "in delivery ... should also allow me to open map or direction"): a private delivery order's address shows View on map and Directions for the team (order detail, Private list row, and the Deliveries list on the day), reusing the plan 071 Deliveries links.
 - **Simple to check or see** (owner, 17 Oct: "make it simple to check or see"): one clear list in the seller app's Private page.
 
 ## Open questions

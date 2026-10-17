@@ -9,6 +9,12 @@
 import type { ApiErrorCode, ApiWarning } from '../../shared/apiError';
 import type { ChefSummaryResponse } from '../../shared/chefSummaryContract';
 import type {
+  CreatePrivateRequest,
+  PrivateChefSummaryResponse,
+  PrivateListResponse,
+  UpdatePrivateRequest,
+} from '../../shared/privateContract';
+import type {
   DeliveryStepRequest,
   DeliveryStepResponse,
   MarkCollectedRequest,
@@ -263,6 +269,24 @@ export type SellerRepository = {
     actor: StaffActor,
   ): Promise<StoreResult<SellerOrder>>;
   getByCode(code: string): Promise<SellerOrder | undefined>;
+
+  // Private (Khusus) orders (plan 081). The owner-only gate is in the routes; the store trusts it.
+  createPrivate(input: CreatePrivateRequest, actor: StaffActor): Promise<StoreResult<SellerOrder>>;
+  updatePrivate(
+    code: string,
+    patch: UpdatePrivateRequest,
+    actor: StaffActor,
+  ): Promise<StoreResult<SellerOrder>>;
+  /** Status cancelled, address cleared, customer told. Cancelling a cancelled order is a no-op. */
+  cancelPrivate(code: string, actor: StaffActor): Promise<StoreResult<SellerOrder>>;
+  listPrivate(options?: {
+    view?: 'upcoming' | 'past';
+    day?: 'today';
+    dueOnly?: boolean;
+  }): Promise<PrivateListResponse>;
+  privateChefSummary(date: string): Promise<PrivateChefSummaryResponse>;
+  /** The order by code when it is a private one, else undefined. */
+  getPrivate(code: string): Promise<SellerOrder | undefined>;
   /**
    * Plan 071: the encrypted delivery address of a live order of this kitchen, by order id (the
    * routes encrypt and decrypt; storage only ever sees the ciphertext). `null` deletes it.

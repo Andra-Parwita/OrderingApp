@@ -148,6 +148,10 @@ export type OrderRow = {
   collected_by: 'customer' | 'seller' | null;
   pickup_place_id: string | null;
   customer_code: string | null;
+  kind: 'menu' | 'private';
+  event_date: string | null;
+  event_time: string | null;
+  deposit_cents: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -161,6 +165,7 @@ export type LineRow = {
   size_id: string;
   price_cents: number;
   qty: number;
+  chef_id: string | null;
 };
 export type AuditRow = {
   order_id: string;
@@ -375,6 +380,7 @@ export function ordersOf(
       size: text(line.size_en, line.size_id),
       priceCents: line.price_cents,
       qty: line.qty,
+      ...(line.chef_id !== null && line.chef_id !== undefined ? { chefId: line.chef_id } : {}),
       ...(line.ticked === 1 ? { ticked: true } : {}),
     })),
     fulfilment: row.fulfilment,
@@ -411,6 +417,15 @@ export function ordersOf(
     ...(row.packed === 1 ? { packed: true } : {}),
     ...(row.collected_at !== null && row.collected_by !== null
       ? { collectedAt: row.collected_at, collectedBy: row.collected_by }
+      : {}),
+    ...(row.kind === 'private' && row.event_date !== null
+      ? {
+          private: {
+            eventDate: row.event_date,
+            ...(row.event_time !== null ? { eventTime: row.event_time } : {}),
+            ...(row.deposit_cents !== null ? { depositCents: row.deposit_cents } : {}),
+          },
+        }
       : {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,

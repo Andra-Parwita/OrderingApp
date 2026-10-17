@@ -5,6 +5,17 @@ import { Db, type D1Statement } from './d1';
 import { ordersOf, type AuditRow, type InboxRow, type LineRow, type OrderRow } from './rows';
 
 /**
+ * Plan 081: the orders of the live MENU, under the alias `o` (or none: `liveMenu('')`). Private orders
+ * also have no `past_week_id`, so every live-menu query (stock, portion guard, finish, lists, CSV,
+ * backup, hand-over, stats) uses this, never a bare `past_week_id IS NULL`. A test enforces it.
+ */
+export const liveMenu = (alias = 'o'): string => {
+  const dot = alias === '' ? '' : `${alias}.`;
+  return `${dot}past_week_id IS NULL AND ${dot}kind = 'menu'`;
+};
+export const LIVE_MENU = liveMenu('o');
+
+/**
  * The four reads behind a set of orders (orders, lines, audit, inbox) for a filter over the alias
  * `o`. `assembleOrders` turns their results into orders, so a caller can send them together with
  * other reads in one round trip.
@@ -69,6 +80,7 @@ export async function readLiveOrder(
   const [order] = await readOrders(
     db,
     sellerId,
+    // Kind-blind on purpose: a private order is read, updated and answered by code or token too.
     `o.past_week_id IS NULL AND o.${column} = ?`,
     value,
   );
@@ -130,8 +142,8 @@ export function inboxStatement(
 function lineStatements(db: Db, order: SellerOrder): Array<D1Statement> {
   return order.lines.map((line, position) =>
     db.stmt(
-      `INSERT INTO order_lines (seller_id, order_id, position, item_id, name_en, name_id, size_en, size_id, price_cents, qty, ticked)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO order_lines (seller_id, order_id, position, item_id, name_en, name_id, size_en, size_id, price_cents, qty, ticked, chef_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       order.sellerId,
       order.id,
       position,
@@ -143,6 +155,7 @@ function lineStatements(db: Db, order: SellerOrder): Array<D1Statement> {
       line.priceCents,
       line.qty,
       line.ticked === true,
+      line.chefId ?? null,
     ),
   );
 }
@@ -161,8 +174,8 @@ export function insertOrderStatements(
     db.stmt(
       `INSERT INTO orders (seller_id, id, code, token, past_week_id, first_name, language, fulfilment, note, status,
          paid, locked, wa_received, is_returning, changed, entered_by_role, entered_by_name, created_at, updated_at,
-         packed, collected_at, collected_by, pickup_place_id, customer_code)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         packed, collected_at, collected_by, pickup_place_id, customer_code, kind, event_date, event_time, deposit_cents)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       order.id,
       order.code,
@@ -187,6 +200,10 @@ export function insertOrderStatements(
       order.collectedBy ?? null,
       order.pickupPlaceId ?? null,
       order.customerCode ?? null,
+      order.private ? 'private' : 'menu',
+      order.private?.eventDate ?? null,
+      order.private?.eventTime ?? null,
+      order.private?.depositCents ?? null,
     ),
     ...lineStatements(db, order),
   ];

@@ -3,6 +3,7 @@
 // IV per value. Without a usable key nothing is stored and nothing is readable. The text and the key
 // never reach a log.
 import type { Db } from './d1';
+import { wipePrivateAddresses } from './private';
 
 /** One day after the menu finishes, the address goes. */
 export const ADDRESS_KEEP_MS = 24 * 60 * 60 * 1000;
@@ -73,7 +74,9 @@ export async function wipeOldAddresses(db: Db, now: Date): Promise<number> {
     cutoff,
   );
   const count = found[0]?.n ?? 0;
-  if (count === 0) return 0;
+  // Plan 081: a private order's address goes once the kitchen-local day after its event is over.
+  const privateCount = await wipePrivateAddresses(db, now);
+  if (count === 0) return privateCount;
   await db.batch([
     db.stmt(
       `UPDATE orders SET address_enc = NULL WHERE address_enc IS NOT NULL AND past_week_id IN
@@ -81,5 +84,5 @@ export async function wipeOldAddresses(db: Db, now: Date): Promise<number> {
       cutoff,
     ),
   ]);
-  return count;
+  return count + privateCount;
 }

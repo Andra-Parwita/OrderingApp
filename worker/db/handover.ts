@@ -25,7 +25,7 @@ import { isFinalStatus } from '../../shared/status';
 import type { SellerRepository, StoreResult } from '../repo/Repository';
 import { marks, type D1Statement } from './d1';
 import type { MenuDeps } from './menus';
-import { changeStatements, readLiveOrder, readOrders, type OrderChange } from './orders';
+import { changeStatements, LIVE_MENU, readLiveOrder, readOrders, type OrderChange } from './orders';
 
 export type HandoverOps = Pick<
   SellerRepository,
@@ -394,11 +394,7 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
       }
       // A pickup order with no place counts as the menu's first place.
       const first = places[0]?.place_id;
-      const orders = await readOrders(
-        db,
-        sid,
-        "o.past_week_id IS NULL AND o.fulfilment = 'pickup'",
-      );
+      const orders = await readOrders(db, sid, `${LIVE_MENU} AND o.fulfilment = 'pickup'`);
       // A retry after a partial failure: an order the earlier run already readied (a Ready line in
       // its inbox within the repeat window) is not told twice.
       const since = new Date(deps.now().getTime() - REPEAT_WINDOW_MINUTES * 60_000).toISOString();

@@ -78,6 +78,8 @@ export type OrderLine = {
   qty: number;
   /** Seller-only packing tick (D-066). Absent means not ticked; never in the customer's view. */
   ticked?: boolean;
+  /** Plan 081: a private order's line keeps the chef of the library dish it was copied from. */
+  chefId?: string;
 };
 
 export type CollectedBy = 'customer' | 'seller';
@@ -138,8 +140,18 @@ export type SellerOrder = {
   /** When and by whom the hand-over was confirmed; both or neither. */
   collectedAt?: string;
   collectedBy?: CollectedBy;
+  /** Plan 081: set only on a private (Khusus) order; a menu order has none. */
+  private?: PrivateInfo;
   createdAt: string;
   updatedAt: string;
+};
+
+/** Plan 081: what makes an order private. `eventDate` is kitchen-local (YYYY-MM-DD), `eventTime` HH:MM. */
+export type PrivateInfo = {
+  eventDate: string;
+  eventTime?: string;
+  /** Deposit already paid, in cents (optional; no money is handled by the app). */
+  depositCents?: number;
 };
 
 /** Seller-side name kept so existing seller code keeps compiling. */
@@ -165,6 +177,8 @@ export type CustomerOrder = Pick<
   | 'collectedAt'
   | 'paid'
 > & {
+  /** Plan 081: a private order's event and what is still to pay (total minus deposit, or 0 when paid). */
+  private?: PrivateInfo & { toPayCents: number };
   /** Customers are not seller-scoped: each order says whose it is (My orders spans sellers). */
   seller: SellerRef;
   /**

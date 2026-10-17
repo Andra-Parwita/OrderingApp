@@ -93,6 +93,11 @@ import {
   type SellerOrderResponse,
   type SellerOrdersResponse,
 } from '../../shared/orderContract';
+import {
+  isEventDate,
+  parseCreatePrivateRequest,
+  parseUpdatePrivateRequest,
+} from '../../shared/privateContract';
 import { parseOrderCode } from '../../shared/orderCode';
 import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
 import {
@@ -150,6 +155,10 @@ import type { Repository, SellerRepository, StoreResult } from '../repo/Reposito
 const DEMO_SAMPLE_COUNT = 50;
 const noSeller = () => error('seller_not_found', 'Seller not found');
 const weekClosed = () => error('week_closed', 'This week is closed');
+/** Plan 081: a customer may not change, cancel or collect a private order; the owner does, on WhatsApp's word. */
+const privateRefusal = () =>
+  error('private_order', 'This is a private order: message the kitchen on WhatsApp to change it');
+const ownerOnly = () => error('forbidden', 'Only the owner can do this');
 
 /** Header `X-Actor: seller:Bu Ani` or `chef:Wati`. */
 const DEFAULT_ACTOR: StaffActor = { role: 'seller', name: 'Bu Ani' };
@@ -595,6 +604,7 @@ export async function handleApiRequest(
         if (!patch) return bad();
         if (!hit) return error('not_found', 'Order not found');
         if (hit.kind !== 'live') return weekClosed();
+        if (hit.order.private) return privateRefusal();
         const updated = await hit.sellerRepo.updateOrder(a, patch);
         await storeAddress(hit.sellerRepo, context, updated, patch.address, true);
         const result = await afterOrderWrite(
@@ -613,6 +623,7 @@ export async function handleApiRequest(
       const hit = await store.lookupByToken(a);
       if (!hit) return error('not_found', 'Order not found');
       if (hit.kind !== 'live') return weekClosed();
+      if (hit.order.private) return privateRefusal();
       const result = await afterOrderWrite(
         context,
         hit.sellerRepo.seller.id,
@@ -640,6 +651,7 @@ export async function handleApiRequest(
       const hit = await store.lookupByToken(a);
       if (!hit) return error('not_found', 'Order not found');
       if (hit.kind !== 'live') return weekClosed();
+      if (hit.order.private) return privateRefusal();
       const result = await afterOrderWrite(
         context,
         hit.sellerRepo.seller.id,
@@ -780,6 +792,8 @@ function chefMayNot(method: string, a: string | undefined): boolean {
   if (a === 'invites' || a === 'team') return true;
   // Plan 029: selling on the day is for owners and helpers; a chef gets 403 on every method.
   if (a === 'day') return true;
+  // Plan 081: private orders are made, edited and cancelled by the owner; others only read them.
+  if (a === 'private') return method !== 'GET';
   const closed = [
     'menu',
     'chefs',
@@ -865,6 +879,8 @@ async function helperMay(
       method === 'POST' && !!b && (c === 'status' || c === 'collected' || c === 'address-seen')
     );
   }
+  // Plan 081: a helper reads the private orders (list, a day's chef summary); writes stay closed.
+  if (a === 'private') return method === 'GET';
   // The read-only GETs the helper's screens fetch (Orders, Dishes, Hand over, Sell): the seller
   // menu, the current menu, the message log and the kitchen colour theme (preferences). Settings, team, backup and past weeks stay closed.
   if (
@@ -907,7 +923,10 @@ async function handleSeller(
     };
   }
   const response = await handleSellerRoutes(...args);
-  return response && args[3][0] === 'orders' ? withAddresses(response, args[1], args[6]) : response;
+  const area = args[3][0];
+  return response && (area === 'orders' || area === 'private')
+    ? withAddresses(response, args[1], args[6])
+    : response;
 }
 
 /** Everything under /api/seller/*, for the one seller the request is scoped to. */
@@ -1483,6 +1502,53 @@ async function handleSellerRoutes(
     });
   }
 
+  // Plan 081: private (Khusus) orders. Writes are owner only (chefMayNot / helperMay / actor).
+  if (a === 'private') {
+    if (!b && method === 'GET') {
+      const params = new URL(request.url).searchParams;
+      const view = params.get('view');
+      if (view !== null && view !== 'upcoming' && view !== 'past') return bad();
+      const day = params.get('day');
+      if (day !== null && day !== 'today') return bad();
+      return Response.json(
+        await store.listPrivate({
+          ...(view !== null ? { view } : {}),
+          ...(day !== null ? { day } : {}),
+          ...(params.get('due') === '1' ? { dueOnly: true } : {}),
+        }),
+      );
+    }
+    if (b === 'chef-summary' && !c && method === 'GET') {
+      const date = new URL(request.url).searchParams.get('date');
+      if (!isEventDate(date)) return bad();
+      return Response.json(await store.privateChefSummary(date));
+    }
+    // Owner only, whatever the caller's header: chefs and helpers are refused before they get here,
+    // and a DEV_TOOLS call is checked as well.
+    if (actor.role !== 'seller') return ownerOnly();
+    if (!b && method === 'POST') {
+      const input = parseCreatePrivateRequest(await readJson(request));
+      if (!input) return bad();
+      const created = await store.createPrivate(input, actor);
+      await storeAddress(store, context, created, input.address);
+      return sellerResult(await afterOrderWrite(context, sellerId, 'order.created', created), 201);
+    }
+    const code = b ? parseOrderCode(b) : null;
+    if (b && !c && method === 'PATCH') {
+      const input = parseUpdatePrivateRequest(await readJson(request));
+      if (!input) return bad();
+      if (!code) return error('not_found', 'Order not found');
+      const updated = await store.updatePrivate(code, input, actor);
+      await storeAddress(store, context, updated, input.address);
+      return sellerResult(await changed(updated));
+    }
+    if (b && c === 'cancel' && method === 'POST') {
+      if (!code) return error('not_found', 'Order not found');
+      return sellerResult(await changed(await store.cancelPrivate(code, actor)));
+    }
+    return null;
+  }
+
   if (a === 'orders') {
     if (!b && method === 'GET') {
       return Response.json({ orders: await store.listOrders() } satisfies SellerOrdersResponse);
@@ -1505,6 +1571,10 @@ async function handleSellerRoutes(
     if (b && c === 'status' && method === 'POST') {
       const input = parseSetStatusRequest(await readJson(request));
       if (!input) return bad();
+      // Plan 081: on a private order only the owner cancels (others move it along).
+      if (input.to === 'cancelled' && code && actor.role !== 'seller') {
+        if (await store.getPrivate(code)) return ownerOnly();
+      }
       return code
         ? sellerResult(
             await changed(await store.setStatus(code, input.to, actor, input.force === true)),
@@ -1548,6 +1618,8 @@ async function handleSellerRoutes(
     if (b && c === 'paid' && method === 'POST') {
       const input = parseSetPaidRequest(await readJson(request));
       if (!input) return bad();
+      // Plan 081: on a private order only the owner changes paid.
+      if (code && actor.role !== 'seller' && (await store.getPrivate(code))) return ownerOnly();
       return code
         ? sellerResult(await changed(await store.setPaid(code, input.paid, actor)))
         : error('not_found', 'Order not found');

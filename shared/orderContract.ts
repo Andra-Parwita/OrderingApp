@@ -9,6 +9,7 @@ import type {
   Language,
   OrderAddress,
   OrderLine,
+  PrivateInfo,
   SellerOrder,
   SellerRef,
   StaffActor,
@@ -25,6 +26,7 @@ import {
   parseLocalText,
 } from './parse';
 import { parseDeliveryAddress, type DeliveryAddress } from './address';
+import { isEventDate, isEventTime, PRIVATE_MAX_DEPOSIT_CENTS } from './privateContract';
 import { parseCustomerCode } from './customerCode';
 import { parseOrderCode } from './orderCode';
 import { isValidSlug } from './seller';
@@ -155,8 +157,21 @@ export function toCustomerOrder(order: SellerOrder, seller: SellerRef): Customer
     inbox: order.inbox,
     ...(order.pickupPlaceId !== undefined ? { pickupPlaceId: order.pickupPlaceId } : {}),
     ...(order.collectedAt !== undefined ? { collectedAt: order.collectedAt } : {}),
+    ...(order.private ? { private: privateCustomerView(order) } : {}),
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
+  };
+}
+
+/** Plan 081: the event and what is still to pay (nothing once the order is marked paid). */
+function privateCustomerView(order: SellerOrder): NonNullable<CustomerOrder['private']> {
+  const info = order.private as NonNullable<SellerOrder['private']>;
+  const total = order.lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0);
+  return {
+    eventDate: info.eventDate,
+    ...(info.eventTime !== undefined ? { eventTime: info.eventTime } : {}),
+    ...(info.depositCents !== undefined ? { depositCents: info.depositCents } : {}),
+    toPayCents: order.paid ? 0 : Math.max(0, total - (info.depositCents ?? 0)),
   };
 }
 
@@ -319,12 +334,15 @@ function parseOrderLine(input: unknown): OrderLine | null {
   if (typeof itemId !== 'string' || !name || !size) return null;
   if (!isInt(priceCents, 0, 1_000_000) || !isInt(qty, 1, MAX_QTY)) return null;
   if (input['ticked'] !== undefined && typeof input['ticked'] !== 'boolean') return null;
+  const chefId = input['chefId'];
+  if (chefId !== undefined && (typeof chefId !== 'string' || chefId === '')) return null;
   return {
     itemId,
     name,
     size,
     priceCents,
     qty,
+    ...(chefId !== undefined ? { chefId } : {}),
     ...(input['ticked'] === true ? { ticked: true } : {}),
   };
 }
@@ -443,6 +461,19 @@ function parseSellerRef(input: unknown): SellerRef | null {
   return isValidSlug(slug) && typeof name === 'string' ? { slug, name } : null;
 }
 
+/** Plan 081: the event of a private order (the customer's view adds `toPayCents`). */
+function parsePrivateInfo(input: unknown): PrivateInfo | null {
+  if (!isRecord(input) || !isEventDate(input['eventDate'])) return null;
+  const { eventTime, depositCents } = input;
+  if (eventTime !== undefined && !isEventTime(eventTime)) return null;
+  if (depositCents !== undefined && !isInt(depositCents, 0, PRIVATE_MAX_DEPOSIT_CENTS)) return null;
+  return {
+    eventDate: input['eventDate'],
+    ...(eventTime !== undefined ? { eventTime } : {}),
+    ...(depositCents !== undefined ? { depositCents } : {}),
+  };
+}
+
 export function parseCustomerOrder(input: unknown): CustomerOrder | null {
   if (!isRecord(input)) return null;
   const core = parseCoreFields(input);
@@ -462,7 +493,15 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
   const rawChange = input['addressChange'];
   if (rawChange !== undefined && !isOneOf(['waiting', 'seen'] as const, rawChange)) return null;
   const addressChange = rawChange;
+  let customerPrivate: CustomerOrder['private'];
+  if (input['private'] !== undefined) {
+    const info = parsePrivateInfo(input['private']);
+    const toPay = isRecord(input['private']) ? input['private']['toPayCents'] : undefined;
+    if (!info || !isInt(toPay, 0, PRIVATE_MAX_DEPOSIT_CENTS * 10)) return null;
+    customerPrivate = { ...info, toPayCents: toPay };
+  }
   const extra = {
+    ...(customerPrivate ? { private: customerPrivate } : {}),
     ...(addressState !== undefined ? { addressState } : {}),
     ...(addressChange !== undefined ? { addressChange } : {}),
     ...(pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
@@ -533,8 +572,15 @@ export function parseOrder(input: unknown): SellerOrder | null {
       address = { address: parsed };
     }
   }
+  let privateInfo: PrivateInfo | undefined;
+  if (input['private'] !== undefined) {
+    const parsed = parsePrivateInfo(input['private']);
+    if (!parsed) return null;
+    privateInfo = parsed;
+  }
   return {
     ...base,
+    ...(privateInfo ? { private: privateInfo } : {}),
     ...(address ? { address } : {}),
     ...(customerCode !== undefined ? { customerCode } : {}),
     sellerId,

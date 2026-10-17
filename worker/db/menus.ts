@@ -31,7 +31,7 @@ import { checkImageUpload } from '../../shared/imageSlots';
 import type { SellerRepository, StoreResult } from '../repo/Repository';
 import { marks, type D1Statement, type Db } from './d1';
 import { itemFromDish, MENU_PLACES_SQL, sellerView, USED_SQL } from './menuView';
-import { readOrders } from './orders';
+import { LIVE_MENU, liveMenu, readOrders } from './orders';
 import {
   dishOf,
   itemOf,
@@ -139,7 +139,7 @@ async function readChefRows(
       `SELECT i.chef_id AS chef_id, SUM(l.qty) AS qty, SUM(l.qty * l.price_cents) AS cents
        FROM order_lines l JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
        LEFT JOIN menu_items i ON i.seller_id = l.seller_id AND i.id = l.item_id
-       WHERE o.seller_id = ? AND o.status <> 'cancelled'
+       WHERE o.seller_id = ? AND o.status <> 'cancelled' AND o.kind = 'menu'
          AND COALESCE(o.past_week_id, (SELECT id FROM menus WHERE seller_id = ?)) = (SELECT id FROM menus WHERE seller_id = ?)
        GROUP BY i.chef_id`,
       sid,
@@ -238,7 +238,7 @@ export async function planFinish(
   const row =
     known ?? (await db.first<MenuRow>('SELECT * FROM menus WHERE seller_id = ?', sellerId));
   if (!row || row.state === 'finished') return null;
-  const orders = await readOrders(db, sellerId, 'o.past_week_id IS NULL');
+  const orders = await readOrders(db, sellerId, LIVE_MENU);
   const totals = summariseOrders(orders);
   const open = closeOpenOrders ? orders.filter((order) => !isFinalStatus(order.status)) : [];
   const at = now.toISOString();
@@ -311,7 +311,7 @@ export async function planFinish(
                  COALESCE((SELECT MAX(i.seq) FROM order_inbox i WHERE i.seller_id = o.seller_id AND i.order_id = o.id), 0) + 1,
                  ?, 'status', CASE o.fulfilment WHEN 'pickup' THEN 'collected' ELSE 'delivered' END
                FROM orders o
-               WHERE o.seller_id = ? AND o.past_week_id IS NULL AND o.status NOT IN ('collected', 'delivered', 'cancelled')`,
+               WHERE o.seller_id = ? AND ${LIVE_MENU} AND o.status NOT IN ('collected', 'delivered', 'cancelled')`,
               at,
               sellerId,
             ),
@@ -322,16 +322,21 @@ export async function planFinish(
             db.stmt(
               `UPDATE orders SET status = CASE fulfilment WHEN 'pickup' THEN 'collected' ELSE 'delivered' END,
                  changed = 0, updated_at = ?
-               WHERE seller_id = ? AND past_week_id IS NULL AND status NOT IN ('collected', 'delivered', 'cancelled')`,
+               WHERE seller_id = ? AND ${liveMenu('')} AND status NOT IN ('collected', 'delivered', 'cancelled')`,
               at,
               sellerId,
             ),
           ]
         : []),
       // The week is over: its orders have nothing more to push (cascade deletes the rest later).
-      db.stmt('DELETE FROM push_subscriptions WHERE seller_id = ?', sellerId),
       db.stmt(
-        'UPDATE orders SET past_week_id = ? WHERE seller_id = ? AND past_week_id IS NULL',
+        `DELETE FROM push_subscriptions WHERE seller_id = ? AND order_id IN
+           (SELECT o.id FROM orders o WHERE o.seller_id = ? AND ${LIVE_MENU})`,
+        sellerId,
+        sellerId,
+      ),
+      db.stmt(
+        `UPDATE orders SET past_week_id = ? WHERE seller_id = ? AND ${liveMenu('')}`,
         row.id,
         sellerId,
       ),
@@ -713,7 +718,7 @@ export function createMenuOps(deps: MenuDeps, sid: string): MenuOps {
           : await db.all<{ item_id: string }>(
               `SELECT DISTINCT l.item_id AS item_id FROM order_lines l
                JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
-               WHERE o.seller_id = ? AND o.past_week_id IS NULL AND o.status <> 'cancelled'
+               WHERE o.seller_id = ? AND ${LIVE_MENU} AND o.status <> 'cancelled'
                  AND l.item_id IN (${marks(removed.length)})`,
               sid,
               ...removed,

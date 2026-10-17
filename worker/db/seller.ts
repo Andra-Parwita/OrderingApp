@@ -63,11 +63,13 @@ import { createMenuOps, type CustomerNotice, type MenuDeps } from './menus';
 import {
   changeStatements,
   insertOrderStatements,
+  LIVE_MENU,
   readLiveOrder,
   readOrders,
   type OrderChange,
 } from './orders';
 import { createDayOps } from './daySales';
+import { createPrivateOps } from './private';
 import { createHandoverOps } from './handover';
 import { createPushOps } from './push';
 import type { CustomerChange } from '../push/dispatch';
@@ -236,6 +238,17 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
   const menuOps = createMenuOps(menuDeps, sid);
   const handover = createHandoverOps(menuDeps, sid);
   const dayOps = createDayOps(menuDeps, sid);
+  const privateOps = createPrivateOps(
+    {
+      db,
+      now: deps.now,
+      newId: deps.newId,
+      newCode: deps.newCode,
+      newToken: deps.newToken,
+      ...(notify ? { notify } : {}),
+    },
+    sid,
+  );
   const pushOps = createPushOps(db, deps.now, sid);
 
   // ---- Reading ----
@@ -515,7 +528,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
          SELECT 1 FROM want w JOIN menu_items m ON m.seller_id = ? AND m.id = w.item_id
          WHERE m.portion_limit IS NOT NULL AND m.portion_limit < w.qty + COALESCE((
            SELECT SUM(l.qty) FROM order_lines l JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
-           WHERE o.seller_id = m.seller_id AND o.past_week_id IS NULL AND o.status <> 'cancelled'
+           WHERE o.seller_id = m.seller_id AND ${LIVE_MENU} AND o.status <> 'cancelled'
              AND l.item_id = w.item_id AND o.id <> ?), 0)
        ) THEN abs(-9223372036854775808) ELSE 0 END AS guard`,
       JSON.stringify(order.lines.map((line) => [line.itemId, line.qty])),
@@ -942,6 +955,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
     seller,
     ...handover,
     ...dayOps,
+    ...privateOps,
     ...pushOps,
     addDemoSamples: addSampleOrders,
     clearDemoSamples: clearSampleOrders,
@@ -1182,7 +1196,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
         await Promise.all([
           loadState(),
           readSets(),
-          readOrders(db, sid, 'o.past_week_id IS NULL'),
+          readOrders(db, sid, LIVE_MENU),
           readPastWeeks(),
           readOrders(db, sid, 'o.past_week_id IS NOT NULL'),
           db.all<{ id: string; past_week_id: string }>(
@@ -1336,15 +1350,23 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
       };
       const forMe = (order: SellerOrder): SellerOrder => ({ ...order, sellerId: sid });
       const own = (table: string) => db.stmt(`DELETE FROM ${table} WHERE seller_id = ?`, sid);
+      const ownMenu = (table: string, column: string) =>
+        db.stmt(
+          `DELETE FROM ${table} WHERE seller_id = ? AND ${column} IN (SELECT id FROM orders WHERE seller_id = ? AND kind = 'menu')`,
+          sid,
+          sid,
+        );
       const chefList = [...known];
 
       const statements: Array<D1Statement> = [
         // Everything this seller has, children before parents. Chefs that stay keep their account.
         own('message_log'),
-        own('order_audit'),
-        own('order_inbox'),
-        own('order_lines'),
-        own('orders'),
+        // Plan 081: private orders are not in a backup, so a restore leaves them (and their lines,
+        // audit and inbox) alone.
+        ownMenu('order_audit', 'order_id'),
+        ownMenu('order_inbox', 'order_id'),
+        ownMenu('order_lines', 'order_id'),
+        db.stmt("DELETE FROM orders WHERE seller_id = ? AND kind = 'menu'", sid),
         own('expired_orders'),
         own('past_week_items'),
         own('past_weeks'),
@@ -1465,7 +1487,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
     /** Every live order, oldest first, as CSV with a BOM for Excel. */
     async ordersCsv() {
-      return ordersToCsv(await readOrders(db, sid, 'o.past_week_id IS NULL'));
+      return ordersToCsv(await readOrders(db, sid, LIVE_MENU));
     },
 
     // ---- Orders: customer side ----
@@ -1579,7 +1601,7 @@ export function createSellerInternal(deps: Deps, seller: Seller): SellerInternal
 
     /** Newest first. */
     async listOrders() {
-      return (await readOrders(db, sid, 'o.past_week_id IS NULL')).reverse();
+      return (await readOrders(db, sid, LIVE_MENU)).reverse();
     },
 
     /** Moves the order on, tells the customer, and clears the "changed" flag. */

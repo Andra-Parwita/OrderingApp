@@ -8,6 +8,8 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 | plan · stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|
+| 081 · stages 1–2: data, LIVE_MENU guard, private repo, routes | builder · sonnet | 11:42 (17 Oct) | 60 min | | | | | ⏳ running |
+| 081 · design check (data model, day tools, stages) | Plan · opus (uncertain design) | 11:36 (17 Oct) | 10 min | 11:41 | ~5 min | −5 min | — (read-only) | ✅ saved in plan 081 "Build design" |
 | 081 · mock-up: private orders (list, editor, detail, Cook tag, customer page) | builder · sonnet | 11:28 (17 Oct) | 30 min | 11:32 | ~4 min | −26 min | new `uxDesign/seller/mockups/081-private-orders.html` (~480) | ✅ coordinator checked 5 screens, dark, ID, no console errors; ⏸ owner review |
 | gate · 067 (typecheck, lint, format, full unit, full e2e, live check) | coordinator + 4 sonnet fixers | 23:41 (16 Oct) | 40 min | ~01:30 (17 Oct) | ~110 min | +70 min | fixes: lint (rem/tokens, hook in test, any), customer picture moved into `DishesView`, library grid CSS | ✅ lint, format, typecheck, unit (flakes re-ran green), full e2e 92 passed, live check by eye |
 | 067 · build all 3 stages (migration 0026, worker routes, seller editor + library, customer rows + enlarge, Help, docs) | builder · sonnet | 18:40 (16 Oct) | 60 min | 18:54 | ~14 min | −46 min | 37 files +462/−34, 6 new (migration 0026, DishPictureField, 3 unit test files, e2e spec) | ✅ typecheck; gate next |

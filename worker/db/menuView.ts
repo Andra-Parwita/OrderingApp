@@ -1,11 +1,12 @@
 // Small pieces shared by worker/db/seller.ts and worker/db/menus.ts (neither imports the other).
 import type { MenuItem, SellerMenuItemView } from '../../shared/domain';
 import type { Dish } from '../../shared/menusContract';
+import { LIVE_MENU } from './orders';
 
 /** Portions taken per item by the seller's live (not cancelled) orders; add `GROUP BY l.item_id`. */
 export const USED_SQL = `SELECT l.item_id AS item_id, SUM(l.qty) AS used
   FROM order_lines l JOIN orders o ON o.seller_id = l.seller_id AND o.id = l.order_id
-  WHERE o.seller_id = ? AND o.past_week_id IS NULL AND o.status <> 'cancelled'`;
+  WHERE o.seller_id = ? AND ${LIVE_MENU} AND o.status <> 'cancelled'`;
 
 /** The places the menu uses with the time that applies to it: this menu's override, else the usual one. */
 export const MENU_PLACES_SQL = `SELECT p.id AS id, p.place AS place, p.directions_en AS directions_en,

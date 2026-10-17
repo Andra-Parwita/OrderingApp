@@ -37,6 +37,7 @@ import type {
   StoredPasskey,
 } from '../repo/Repository';
 import { marks, type D1Statement, type Db } from './d1';
+import { liveMenu } from './orders';
 import {
   formatKey,
   fromHex,
@@ -1282,7 +1283,7 @@ export async function sellerSummaries(db: Db): Promise<Map<string, SellerSummary
       cooking_date: string;
     }>('SELECT seller_id, state, cooking_date FROM menus'),
     db.all<{ seller_id: string; n: number }>(
-      "SELECT seller_id, COUNT(*) AS n FROM orders WHERE past_week_id IS NULL AND status <> 'cancelled' GROUP BY seller_id",
+      `SELECT seller_id, COUNT(*) AS n FROM orders WHERE ${liveMenu('')} AND status <> 'cancelled' GROUP BY seller_id`,
     ),
     db.all<{ seller_id: string; n: number }>(
       'SELECT seller_id, COUNT(*) AS n FROM memberships GROUP BY seller_id',
