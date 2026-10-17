@@ -8,7 +8,7 @@ Today's product is deliberately small (see [overview.md](overview.md) and the [c
 | item | plan | state |
 |---|---|---|
 | Release 1.0.36: dish pictures (067), About page (075), pickup on the map (076), times in the device's zone (077), admin layout (078), Help inside the seller app (079), top bars push the page down (080) | 067, 075–080 | ✅ live 17 Oct (v1.0.36) |
-| Private orders (Khusus): a seller makes a one-off order for an event, sends the customer its code | [081](../plans/081-private-orders.md) | draft; after the 1.0.36 deploy (owner A, 17 Oct) |
+| Private orders (Khusus): a seller makes a one-off order for an event, sends the customer its code | [081](../plans/081-private-orders.md) | built 17 Oct, not committed; for Release 1.0.37 |
 | Cleanup: state duplication, sweeping expired keys/codes, dead route names, customer socket tokens out of the URL | — | listed in the handover; ask one by one |
 | Help screenshots from the live app | — | to do |
 | The customer app round (Lottie animations) | — | waiting for the owner's animations |

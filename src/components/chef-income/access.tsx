@@ -8,13 +8,16 @@ import { fetchPreferencesCached } from '../../api/cachedReads';
 export type IncomeAccess = 'all' | 'own' | null;
 
 const AccessContext = createContext<IncomeAccess>(null);
+// Plan 081: a chef's own id, to show only her row of the private orders' figures.
+const ChefIdContext = createContext<string | undefined>(undefined);
 
 type Role = 'seller' | 'chef' | 'helper' | 'admin' | undefined;
 
 export function IncomeAccessProvider({
   role,
+  chefId,
   children,
-}: Readonly<{ role: Role; children: ReactNode }>) {
+}: Readonly<{ role: Role; chefId?: string | undefined; children: ReactNode }>) {
   const [chefMay, setChefMay] = useState(false);
   useEffect(() => {
     if (role !== 'chef') return undefined;
@@ -28,9 +31,17 @@ export function IncomeAccessProvider({
   }, [role]);
   const access: IncomeAccess =
     role === 'seller' ? 'all' : role === 'chef' && chefMay ? 'own' : null;
-  return <AccessContext.Provider value={access}>{children}</AccessContext.Provider>;
+  return (
+    <AccessContext.Provider value={access}>
+      <ChefIdContext.Provider value={chefId}>{children}</ChefIdContext.Provider>
+    </AccessContext.Provider>
+  );
 }
 
 export function useIncomeAccess(): IncomeAccess {
   return useContext(AccessContext);
+}
+
+export function useIncomeChefId(): string | undefined {
+  return useContext(ChefIdContext);
 }

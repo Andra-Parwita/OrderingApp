@@ -58,7 +58,8 @@
     "warnBody_other": "{{count}} menu di kantong ini belum dicentang. Tandai dikemas saja?",
     "warnCancel": "Lanjut mengemas",
     "warnContinue": "Tandai dikemas",
-    "printLabel": "Cetak label"
+    "printLabel": "Cetak label",
+    "openPrivate": "Buka pesanan khusus"
   },
   "who": {
     "open": "Siapa yang pesan {{name}}",
@@ -79,5 +80,7 @@
     "notSaved": "Belum tersimpan",
     "tryAgain": "Coba lagi",
     "other": "Perubahan tidak diterima, jadi dibatalkan."
-  }
+  },
+  "privateTag": "Khusus",
+  "menuPrivate": "Menu {{menu}} · Khusus {{private}}"
 }

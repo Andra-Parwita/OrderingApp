@@ -5,7 +5,9 @@ import type { Language, SellerOrder } from '../../../shared/domain';
 import { formatDay } from '../../../shared/dates';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
+import { fetchPrivate } from '../../api/private';
 import { currentSellerSlug } from '../../api/device/sellerContext';
+import { PrivateTag } from '../../components/PrivateTag';
 import { LabelPrintStyle, LabelSheets, type LabelText } from '../../components/labels/LabelSheets';
 import {
   labelsFor,
@@ -106,20 +108,23 @@ export function LabelsScreen() {
   useEffect(() => {
     let live = true;
     const slug = currentSellerSlug();
-    void Promise.all([fetchSellerOrders(undefined, slug), fetchSellerMenu(undefined, slug)]).then(
-      ([orders, menu]) => {
-        if (!live) return;
-        setState(
-          orders.ok && menu.ok
-            ? {
-                status: 'ready',
-                orders: orders.data.orders,
-                cookingDate: menu.data.week.cookingDate,
-              }
-            : { status: 'error' },
-        );
-      },
-    );
+    // Plan 081: today's private orders print with the menu's, tagged Private.
+    void Promise.all([
+      fetchSellerOrders(undefined, slug),
+      fetchSellerMenu(undefined, slug),
+      fetchPrivate({ day: 'today' }, slug),
+    ]).then(([orders, menu, privateToday]) => {
+      if (!live) return;
+      setState(
+        orders.ok && menu.ok && privateToday.ok
+          ? {
+              status: 'ready',
+              orders: [...orders.data.orders, ...privateToday.data.orders],
+              cookingDate: menu.data.week.cookingDate,
+            }
+          : { status: 'error' },
+      );
+    });
     return () => {
       live = false;
     };
@@ -163,7 +168,11 @@ export function LabelsScreen() {
   const day = state.status === 'ready' ? formatDay(state.cookingDate, lang) : '';
   const text: LabelText = {
     qrName: t('label.qrName'),
-    where: (fulfilment) => t(fulfilment === 'pickup' ? 'label.pickup' : 'label.delivery', { day }),
+    where: (fulfilment, order) => {
+      const own = order.private ? formatDay(order.private.eventDate, lang) : day;
+      const text = t(fulfilment === 'pickup' ? 'label.pickup' : 'label.delivery', { day: own });
+      return order.private ? `${t('privateTag')} · ${text}` : text;
+    },
     part: (index, of) => t('label.part', { index, of }),
   };
 
@@ -225,7 +234,8 @@ export function LabelsScreen() {
                     onChange={() => toggle(order.id)}
                   />
                   <span>
-                    {formatOrderCode(order.code)} · {order.firstName}
+                    {formatOrderCode(order.code)} · {order.firstName}{' '}
+                    {order.private ? <PrivateTag label={t('privateTag')} /> : null}
                   </span>
                 </PickRow>
               ))}

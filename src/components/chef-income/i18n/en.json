@@ -21,5 +21,6 @@
   "noValue": "—",
   "settingTitle": "Chefs can see their own income",
   "settingHint": "A chef sees only her own portions and income, never the others. Helpers never see it.",
-  "settingFailed": "Could not save this. Try again."
+  "settingFailed": "Could not save this. Try again.",
+  "privateTitle": "Private · {{date}}"
 }

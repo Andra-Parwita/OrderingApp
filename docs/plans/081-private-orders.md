@@ -1,6 +1,6 @@
 # 081 · Private orders (Khusus): one-off orders for an event
 
-**Status:** owner rulings and mock-up done 17 Oct; building (owner: "all good, let's start private order"); goes in Release 1.0.37 (owner, 17 Oct: "A"). Plan and mock-up first (D-055).
+**Status:** ✅ built 17 Oct (D-104), final gate running; **not committed** (owner: no git writes without asking) (owner: "all good, let's start private order"); goes in Release 1.0.37 (owner, 17 Oct: "A"). Plan and mock-up first (D-055).
 **Owner, 17 Oct:** "when seller want to add 'private event/order' so we may have a page on left menu, private, khusus, where seller can create order for a customer say for birthday, etc, that contain dishes and customer info and address .. which seller can send the order code to customer to follow up .. so this will be maintained by the seller only". Release notes will mention it.
 
 ## Understanding (to confirm with the owner, one question at a time)
@@ -26,6 +26,8 @@
 - **Map and directions** (owner, 17 Oct: "in delivery ... should also allow me to open map or direction"): a private delivery order's address shows View on map and Directions for the team (order detail, Private list row, and the Deliveries list on the day), reusing the plan 071 Deliveries links.
 - **One order:** the Private page always shows the list, even with one order (owner, 17 Oct: "leave it as this").
 - **Directions on the day, phone first** (owner, 17 Oct): on the event day each delivery row in the Private list has a simple Directions / Map button, big enough to tap on a phone, that opens the phone's maps app.
+- **Pickup & delivery on the phone** (owner, 17 Oct: "on seller phone Pickup and delivery, within it should also show private orders on today, so seller/helper on phone can then launch Google Maps for direction"): today's private orders appear in `/seller/hand-over` (Delivery tab with Directions; Pickup tab under their place), tagged Private.
+- **Delivery row** (owner "A", 17 Oct, mock-up `uxDesign/seller/mockups/081-delivery-row-options.html`): private deliveries use the SAME delivery row as menu orders in Pickup & delivery: the step control Out for delivery · Arriving soon (minutes) · Delivered, which sends the customer updates, plus the Private tag, event time and address. Directions and Map are small grey icon links (no button box), also on menu delivery rows that have an address on the phone. The ticked step stays on ONE line (owner: "why the out for delivery has 2 lines when ticked? that's ugly"): segments size to their label, no wrap, check icon inside. The Private page's day-of Directions becomes the same quiet link. Private pickups: Collected with a check icon in the step style. **Separation** (owner, 17 Oct: "a bit separation between orders" → "that's better"): each order in Pickup & delivery is its own quiet card (hairline border, small radius, gap between), as in the mock-up.
 - **Simple to check or see** (owner, 17 Oct: "make it simple to check or see"): one clear list in the seller app's Private page.
 
 ## Open questions
@@ -52,3 +54,11 @@
 - **Seller UI:** `src/features/seller-private/`; nav `private` under Orders (tablet), in More on phone with the today/tomorrow count; the library picker taken out of the menu wizard's DishesStep as a shared `DishPicker`.
 - **Stages:** 1 data + repo · 2 routes · 3 seller screens · 4 day tools + customer page · 5 Help, docs, e2e `p081-private-orders.spec.ts`.
 - **Risks:** a missed live-menu SQL site (grep test + stock/finish tests); day boundary in the kitchen's zone; backup restore must leave private rows alone; per-chef history of past menus excludes private income.
+
+## Build notes (coordinator, 17 Oct)
+- Stages 1–5 built by sonnet builders; design check by opus. Statuses follow the real model (no "Cooking" step): Confirmed → Ready → Handed over (pickup) or Confirmed → Out for delivery → Delivered.
+- Editor extra: "Customer's language" (EN / ID). Deposit above the total is refused (editor and server).
+- Today's private orders also appear in Orders ("Private today"), Deliveries, Cook / Pack / labels (tagged Private), per-chef income ("Private · date"), and Pickup & delivery on the phone (Directions button).
+- Fixed at the gate: the private chef summary now follows the plan 069 income rules (chef own row only, helper never); cross-feature imports replaced by slots from `src/app` and `shared/priceInput.ts`; detail opens at the top; "Nothing left to pay" wording.
+- Left as is: the customer page shows no delivery address (as for menu orders, D-099); the type-only import cycle `shared/domain → address → parse` predates 081.
+- Live check by the coordinator (local app, phone + tablet): create with deposit, list with Directions, More count, detail, Cook tag, customer page, deposit refusal, cancel → Past, Pickup & delivery Delivery tab with Directions.

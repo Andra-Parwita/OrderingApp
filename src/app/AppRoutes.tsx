@@ -44,6 +44,14 @@ import { ABOUT_NS, AboutScreen } from '../features/seller-about';
 import { HELP_NS, HelpScreen } from '../features/seller-help';
 import { CookScreen } from '../features/seller-cook';
 import {
+  PRIVATE_NS,
+  PrivateDetailScreen,
+  PrivateEditorScreen,
+  PrivateListScreen,
+  canEditPrivate,
+  usePrivateDue,
+} from '../features/seller-private';
+import {
   ContactsBackup,
   CustomerDetailsHost,
   DeliveriesScreen,
@@ -53,6 +61,7 @@ import {
   getContact,
   OrderDetailScreen,
   OrdersTableScreen,
+  openOrderLink,
   PrintOrdersScreen,
   PhoneOrdersScreen,
   parseStatusFilter,
@@ -71,6 +80,7 @@ import {
   useCloseWizard,
   wizardBackground,
 } from '../features/seller-menu';
+import { PRIVATE_MENU_SLOTS } from './privateMenuSlots';
 import { SettingsPanes, paneHref, parsePane, type PaneId } from '../features/seller-settings';
 import { DevicesScreen } from '../features/seller-auth';
 import { HandOverScreen, SellScreen } from '../features/seller-saturday';
@@ -424,6 +434,32 @@ function CookRoute() {
   return <CookScreen />;
 }
 
+/** Plan 081: private orders. The whole team reads them and moves the status; owners make, edit and cancel. */
+function PrivateRoute() {
+  const { me } = useSession();
+  return <PrivateListScreen canEdit={canEditPrivate(me?.role)} />;
+}
+function PrivateDetailRoute() {
+  const { code = '' } = useParams();
+  const { me } = useSession();
+  return (
+    <PrivateDetailScreen
+      code={code}
+      canEdit={canEditPrivate(me?.role)}
+      openOrderLink={openOrderLink}
+    />
+  );
+}
+/** New (no code) or edit (a code): owners only, anyone else goes back to the list or the order. */
+function PrivateEditorRoute() {
+  const { code } = useParams();
+  const { me } = useSession();
+  if (!canEditPrivate(me?.role)) {
+    return <Navigate to={code ? `/seller/private/${code}` : '/seller/private'} replace />;
+  }
+  return <PrivateEditorScreen code={code ?? null} menu={PRIVATE_MENU_SLOTS} />;
+}
+
 function NewOrderRoute() {
   const navigate = useNavigate();
   const desktop = useMediaQuery(DESKTOP_QUERY);
@@ -549,6 +585,7 @@ const MORE_LINKS = [
 // Phone: Kitchen and Labels are reached from More (plan 035); the rest is tablet-only.
 const PHONE_LINKS = [
   ['dishes', '/seller/menu/dishes'],
+  ['private', '/seller/private'],
   ['kitchen', '/seller/cook'],
   ['sell', '/seller/sell'],
   ['labels', '/seller/labels'],
@@ -590,6 +627,7 @@ function MoreRoute() {
   const { me, end } = useSession();
   const desktop = useMediaQuery(DESKTOP_QUERY);
   const sellerInstall = useSellerInstall();
+  const due = usePrivateDue();
   const helper = me?.role === 'helper';
   const links = MORE_LINKS.filter(([key]) =>
     helper
@@ -609,7 +647,11 @@ function MoreRoute() {
         <nav aria-label={t('sellerNav.moreTitle')}>
           {PHONE_LINKS.filter(([key]) =>
             helper
-              ? key === 'sell' || key === 'devices' || key === 'help' || key === 'about'
+              ? key === 'sell' ||
+                key === 'private' ||
+                key === 'devices' ||
+                key === 'help' ||
+                key === 'about'
               : me?.role !== 'chef' || key !== 'sell',
           ).map(([key, to]) => (
             <ListRow
@@ -619,9 +661,24 @@ function MoreRoute() {
                   ? t('nav', { ns: HELP_NS })
                   : key === 'about'
                     ? t('nav', { ns: ABOUT_NS })
-                    : t(`sellerNav.${key}`)
+                    : key === 'private'
+                      ? t('nav', { ns: PRIVATE_NS })
+                      : t(`sellerNav.${key}`)
               }
-              trailing="›"
+              {...(key === 'private' && due.today + due.tomorrow > 0
+                ? {
+                    secondary: t('dueSoon', {
+                      ns: PRIVATE_NS,
+                      today: due.today,
+                      tomorrow: due.tomorrow,
+                    }),
+                  }
+                : {})}
+              trailing={
+                key === 'private' && due.today + due.tomorrow > 0
+                  ? `${due.today + due.tomorrow} ›`
+                  : '›'
+              }
               onClick={() =>
                 void navigate(key === 'dishes' && me?.role === 'chef' ? '/seller/menu' : to)
               }
@@ -694,7 +751,18 @@ function HandOverRoute() {
     (code: string) => void navigate(`/seller/orders/${code}`),
     [navigate],
   );
-  return <HandOverScreen phone={phone} addressOf={addressOf} onOpenOrder={openOrder} />;
+  const openPrivate = useCallback(
+    (code: string) => void navigate(`/seller/private/${code}`),
+    [navigate],
+  );
+  return (
+    <HandOverScreen
+      phone={phone}
+      addressOf={addressOf}
+      onOpenOrder={openOrder}
+      onOpenPrivate={openPrivate}
+    />
+  );
 }
 
 /** Screens of other features that the menu wizard shows: the customer's menu, the post, the New menu dialog. */
@@ -825,6 +893,10 @@ export function AppRoutes() {
             <Route path="new" element={<OrdersWorkspace />} />
             <Route path="deliveries" element={<DeliveriesRoute />} />
             <Route path="cook" element={<CookRoute />} />
+            <Route path="private" element={<PrivateRoute />} />
+            <Route path="private/new" element={<PrivateEditorRoute />} />
+            <Route path="private/:code" element={<PrivateDetailRoute />} />
+            <Route path="private/:code/edit" element={<PrivateEditorRoute />} />
             <Route path="sell" element={<SellRoute />} />
             <Route path="share" element={<ShareScreen />} />
             <Route

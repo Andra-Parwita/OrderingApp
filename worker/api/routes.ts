@@ -97,6 +97,7 @@ import {
   isEventDate,
   parseCreatePrivateRequest,
   parseUpdatePrivateRequest,
+  type PrivateChefSummaryResponse,
 } from '../../shared/privateContract';
 import { parseOrderCode } from '../../shared/orderCode';
 import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
@@ -880,7 +881,8 @@ async function helperMay(
     );
   }
   // Plan 081: a helper reads the private orders (list, a day's chef summary); writes stay closed.
-  if (a === 'private') return method === 'GET';
+  // The chef summary is income: a helper never sees it.
+  if (a === 'private') return method === 'GET' && b !== 'chef-summary';
   // The read-only GETs the helper's screens fetch (Orders, Dishes, Hand over, Sell): the seller
   // menu, the current menu, the message log and the kitchen colour theme (preferences). Settings, team, backup and past weeks stay closed.
   if (
@@ -1521,7 +1523,10 @@ async function handleSellerRoutes(
     if (b === 'chef-summary' && !c && method === 'GET') {
       const date = new URL(request.url).searchParams.get('date');
       if (!isEventDate(date)) return bad();
-      return Response.json(await store.privateChefSummary(date));
+      // Plan 069 rules: the owner sees every row; a chef only her own and only while the setting allows.
+      const summary = await store.privateChefSummary(date, chefId);
+      if (summary === 'private') return error('forbidden', 'The kitchen keeps income private');
+      return Response.json(summary satisfies PrivateChefSummaryResponse);
     }
     // Owner only, whatever the caller's header: chefs and helpers are refused before they get here,
     // and a DEV_TOOLS call is checked as well.

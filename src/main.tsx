@@ -12,6 +12,7 @@ import { registerAdminI18n } from './features/admin';
 import { registerSellerAuthI18n } from './features/seller-auth';
 import { registerSellerSaturdayI18n } from './features/seller-saturday';
 import { registerCookI18n } from './features/seller-cook';
+import { registerPrivateI18n } from './features/seller-private';
 import { registerSellerI18n } from './features/seller-orders';
 import { registerSellerHistoryI18n } from './features/seller-history';
 import { registerSellerLabelsI18n } from './features/seller-labels';
@@ -62,6 +63,7 @@ void initI18n().then(async () => {
   startInstallSupport();
   registerSellerI18n();
   registerCookI18n();
+  registerPrivateI18n();
   registerShareI18n();
   registerSettingsI18n();
   registerSellerMenuI18n();

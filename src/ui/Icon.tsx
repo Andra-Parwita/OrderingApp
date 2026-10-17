@@ -37,6 +37,9 @@ const PATHS = {
   camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 16.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z',
   image: 'M3 5h18v14H3zM9 10a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zM4 18l5-5 4 4 3-3 4 4',
   history: 'M4 12a8 8 0 108-8 8 8 0 00-6 2.7M4 4v4h4M12 8v5l3 2',
+  gift: 'M4 9h16v4H4zM6 13v7h12v-7M12 9v11M12 9c-3 0-4-4-1-4 2 0 1 4 1 4zM12 9c3 0 4-4 1-4-2 0-1 4-1 4z',
+  navigation: 'M3 11l18-8-8 18-2-8z',
+  pin: 'M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11zM12 12a2 2 0 100-4 2 2 0 000 4z',
 } as const;
 
 export type IconName = keyof typeof PATHS;

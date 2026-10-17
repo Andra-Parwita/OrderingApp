@@ -468,5 +468,10 @@
       "later": "Later",
       "close": "Close"
     }
+  },
+  "private": {
+    "today": "Private today",
+    "tag": "Private",
+    "viewOnMap": "View on map"
   }
 }

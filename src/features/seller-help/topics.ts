@@ -838,4 +838,87 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       note: 'Jaga keamanannya: file cadangan bersifat pribadi. Kirim hanya ke diri sendiri.',
     },
   },
+  // 14 (plan 081, D-104)
+  {
+    en: {
+      n: 'Private orders',
+      s: 'A one-off order for an event, made by you',
+      l: 'For a birthday, a party or a big order. It is not on your menu.',
+      steps: [
+        { part: 'Make one' },
+        {
+          text: 'On a tablet or computer, open **Private** in the left menu (under **Orders**). On a phone, open **More** → **Private**. Tap **New private order**. Only owners can make, change or cancel one.',
+        },
+        {
+          text: 'Pick the **date** and **time** of the event. A new order starts on **Delivery**: type the street address. For **Pickup**, pick one of your pickup places. The address is kept private and deleted one day after the event.',
+        },
+        {
+          text: "Type the customer's **name** and a **note** if you like. There is no phone number: you talk to them on WhatsApp.",
+        },
+        { part: 'Dishes and payment' },
+        {
+          text: 'Pick the dishes from your **dish library**, the same way as when you make a menu. Change the quantity and the price for this order only. Need something new? Add a **New dish**: it is saved to your library so you can use it again.',
+        },
+        {
+          text: 'Under **Payment**, tap **Paid**, or **Not paid** with a **Deposit paid** amount. The app shows **Still to pay**. You take the money yourself.',
+        },
+        { part: 'Send the code' },
+        {
+          text: 'Tap **Save order**, then **Send code on WhatsApp**. Your customer opens the link to see the order, its status and what is still to pay. They cannot change it: they message you, and you edit the order with **Edit**.',
+        },
+        { part: 'On the day' },
+        {
+          text: 'On the event day each delivery in the **Private** list has a **Directions** button that opens the maps app. **View on map** is there too, and in **Deliveries**.',
+        },
+        {
+          text: "The dishes are counted in **Cook**, a bag for each private order is in **Pack**, labels print, and each chef's income shows a **Private** block. They carry a small **Private** tag. Owners, chefs and helpers can move the status along (**Ready**, **Handed over** or **Out for delivery**, **Delivered**).",
+        },
+        { part: 'Cancel' },
+        {
+          text: 'Open the order and tap **Cancel order**, then **Yes, cancel**. It moves to **Past** marked **Cancelled**, and your customer sees it as cancelled.',
+        },
+      ],
+      note: 'Private orders never touch your menu, its limits or its cut-off.',
+    },
+    id: {
+      n: 'Pesanan khusus',
+      s: 'Pesanan satu kali untuk sebuah acara, dibuat oleh Anda',
+      l: 'Untuk ulang tahun, pesta, atau pesanan besar. Tidak ada di menu Anda.',
+      steps: [
+        { part: 'Membuatnya' },
+        {
+          text: 'Di tablet atau komputer, buka **Khusus** di menu kiri (di bawah **Pesanan**). Di ponsel, buka **Lainnya** → **Khusus**. Ketuk **Pesanan khusus baru**. Hanya pemilik yang bisa membuat, mengubah, atau membatalkannya.',
+        },
+        {
+          text: 'Pilih **tanggal** dan **jam** acara. Pesanan baru dimulai dari **Antar**: ketik alamat jalannya. Untuk **Ambil sendiri**, pilih salah satu tempat ambil Anda. Alamat dirahasiakan dan dihapus sehari setelah acara.',
+        },
+        {
+          text: 'Ketik **nama** pelanggan dan **catatan** jika perlu. Tidak ada nomor telepon: Anda berbicara dengan mereka lewat WhatsApp.',
+        },
+        { part: 'Hidangan dan pembayaran' },
+        {
+          text: 'Pilih hidangan dari **pustaka hidangan** Anda, sama seperti saat membuat menu. Ubah jumlah dan harga hanya untuk pesanan ini. Perlu yang baru? Tambah **Hidangan baru**: tersimpan di pustaka Anda sehingga bisa dipakai lagi.',
+        },
+        {
+          text: 'Di **Pembayaran**, ketuk **Lunas**, atau **Belum bayar** dengan jumlah **DP dibayar**. Aplikasi menampilkan **Masih harus dibayar**. Uangnya Anda terima sendiri.',
+        },
+        { part: 'Kirim kodenya' },
+        {
+          text: 'Ketuk **Simpan pesanan**, lalu **Kirim kode lewat WhatsApp**. Pelanggan membuka tautan untuk melihat pesanan, statusnya, dan sisa pembayaran. Mereka tidak bisa mengubahnya: mereka menghubungi Anda, dan Anda mengubah pesanan dengan **Ubah**.',
+        },
+        { part: 'Di hari acara' },
+        {
+          text: 'Di hari acara, setiap pesanan antar di daftar **Khusus** punya tombol **Rute** yang membuka aplikasi peta. **Lihat di peta** juga ada di sana, dan di **Pengantaran**.',
+        },
+        {
+          text: 'Hidangannya ikut dihitung di **Masak**, tiap pesanan khusus punya satu kantong di **Kemas**, label bisa dicetak, dan pendapatan tiap koki menampilkan blok **Khusus**. Semuanya bertanda kecil **Khusus**. Pemilik, koki, dan pembantu bisa memajukan statusnya (**Siap**, **Diserahkan** atau **Sedang diantar**, **Terantar**).',
+        },
+        { part: 'Membatalkan' },
+        {
+          text: 'Buka pesanan lalu ketuk **Batalkan pesanan**, kemudian **Ya, batalkan**. Pesanan pindah ke **Lalu** dengan tanda **Dibatalkan**, dan pelanggan melihatnya sebagai dibatalkan.',
+        },
+      ],
+      note: 'Pesanan khusus tidak pernah menyentuh menu, batas, atau batas waktu pesan Anda.',
+    },
+  },
 ];

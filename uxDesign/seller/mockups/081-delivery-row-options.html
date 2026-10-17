@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delivery row options</title>
+<style>
+  :root {
+    --bg: #121412; --card: #181b18; --line: #2a2e2a; --text: #ecefeb; --muted: #a4aaa3;
+    --accent: #8cc08a; --accent-ink: #10230f; --chip: #223022; --warn: #e2b04a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0b0c0b; color: var(--text); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { max-width: 1100px; margin: 0 auto; padding: 20px 16px 4px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  header p { margin: 0; color: var(--muted); }
+  .cols { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
+  .col h2 { font-size: 16px; margin: 0 0 4px; }
+  .col .why { color: var(--muted); margin: 0 0 12px; font-size: 14px; }
+  .phone { width: 100%; max-width: 390px; background: var(--bg); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+  .bar { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+  .bar b { font-size: 18px; }
+  .seg { display: inline-flex; margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 14px; }
+  .seg span { padding: 6px 12px; } .seg .on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  /* each order is its own quiet card with a gap between, so orders never run together */
+  .phone { padding-bottom: 12px; }
+  .row { margin: 12px 12px 0; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .top { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+  .top .amt { margin-left: auto; font-weight: 700; }
+  .code { font-family: ui-monospace, Consolas, monospace; color: var(--muted); font-size: 13px; }
+  .tag { font-size: 12px; background: var(--chip); color: var(--accent); padding: 1px 7px; border-radius: 999px; }
+  .tag.menu { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .sub .ok { color: var(--accent); }
+  .addr { font-weight: 600; font-size: 14px; margin-top: 4px; }
+  /* quiet navigation links */
+  .nav { display: flex; gap: 18px; margin-top: 6px; }
+  .nav a { color: var(--muted); text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 5px; padding: 6px 0; }
+  .nav a svg { width: 16px; height: 16px; }
+  /* status steps (existing menu delivery control) */
+  .steps { display: flex; margin-top: 10px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  /* one line always: segments size to their label, the ticked one is filled, never bolder or wrapped */
+  .steps span { flex: 1 1 auto; white-space: nowrap; text-align: center; padding: 9px 8px; font-size: 13px; border-right: 1px solid var(--line); display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+  .steps span:last-child { border-right: 0; }
+  .steps .cur { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .steps .cur svg { width: 14px; height: 14px; flex: none; }
+  .mins { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .mins u { text-decoration: none; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--text); }
+  /* option B: one distinct delivered button */
+  .done { margin-top: 10px; display: flex; justify-content: flex-end; }
+  .done span { display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--accent); color: var(--accent); border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 14px; }
+  .note { max-width: 1100px; margin: 0 auto; padding: 0 16px 28px; color: var(--muted); font-size: 14px; }
+  .note b { color: var(--text); }
+  .label { font-size: 12px; color: var(--warn); margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pickup &amp; delivery, Delivery tab (phone)</h1>
+  <p>Same two private orders plus one normal menu order. Compare how the rows work.</p>
+</header>
+
+<div class="cols">
+  <!-- OPTION A -->
+  <section class="col">
+    <h2>A · One delivery row for all orders (suggested)</h2>
+    <p class="why">Private orders use the <b>same row as menu orders</b>: the step control Out for delivery → Arriving soon → Delivered. Each step sends the customer an update. Directions and Map are quiet links.</p>
+    <div class="phone">
+      <div class="bar"><b>Pickup &amp; delivery · Sat 17 Oct</b><br><span class="seg"><span>Pickup · 0</span><span class="on">Delivery · 3</span></span></div>
+
+      <div class="row">
+        <p class="label">Menu order (looks like today, now with quiet links)</p>
+        <div class="top"><span class="code">K7M-4XQ</span><b>Dewi</b><span class="amt">$24.00</span></div>
+        <div class="sub">2× Soto ayam · <span class="ok">✓ Confirmed</span></div>
+        <div class="addr">5 Rundle St, Kent Town 5067</div>
+        <div class="nav"><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>Directions</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Map</a></div>
+        <div class="steps"><span>Out for delivery</span><span>Arriving soon</span><span>Delivered</span></div>
+        <div class="mins">Arriving in <u>10 min ▾</u></div>
+      </div>
+
+      <div class="row">
+        <p class="label">Private order: the same row + Private tag</p>
+        <div class="top"><b>17:00</b><b>Bu Wayan</b><span class="code">DQ6-G5E</span><span class="tag">Private</span><span class="amt">$28.00</span></div>
+        <div class="sub">2× Chicken soto · <span class="ok">✓ Confirmed</span></div>
+        <div class="addr">1 North Terrace, Adelaide 5000 · Blue gate</div>
+        <div class="nav"><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>Directions</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Map</a></div>
+        <div class="steps"><span class="cur"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg>Out for delivery</span><span>Arriving soon</span><span>Delivered</span></div>
+        <div class="mins">Arriving in <u>10 min ▾</u></div>
+      </div>
+
+      <div class="row">
+        <div class="top"><b>18:30</b><b>Rina</b><span class="code">AYS-BXH</span><span class="tag">Private</span><span class="amt">$42.00</span></div>
+        <div class="sub">3× Chicken soto · <span class="ok">✓ Confirmed</span></div>
+        <div class="addr">12 King William St, Adelaide 5000</div>
+        <div class="nav"><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>Directions</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Map</a></div>
+        <div class="steps"><span>Out for delivery</span><span>Arriving soon</span><span>Delivered</span></div>
+        <div class="mins">Arriving in <u>10 min ▾</u></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTION B -->
+  <section class="col">
+    <h2>B · Private rows stay separate, just restyled</h2>
+    <p class="why">Menu orders keep their step control. Private orders get their <b>own simpler row</b>: quiet links and one distinct ✓ Delivered button. No "on the way" updates for private customers.</p>
+    <div class="phone">
+      <div class="bar"><b>Pickup &amp; delivery · Sat 17 Oct</b><br><span class="seg"><span>Pickup · 0</span><span class="on">Delivery · 3</span></span></div>
+
+      <div class="row">
+        <p class="label">Menu order (unchanged: steps, no map links)</p>
+        <div class="top"><span class="code">K7M-4XQ</span><b>Dewi</b><span class="amt">$24.00</span></div>
+        <div class="sub">2× Soto ayam · <span class="ok">✓ Confirmed</span></div>
+        <div class="addr">5 Rundle St, Kent Town 5067</div>
+        <div class="steps"><span>Out for delivery</span><span>Arriving soon</span><span>Delivered</span></div>
+        <div class="mins">Arriving in <u>10 min ▾</u></div>
+      </div>
+
+      <div class="row">
+        <p class="label">Private order: a different row</p>
+        <div class="top"><b>17:00</b><b>Bu Wayan</b><span class="code">DQ6-G5E</span><span class="tag">Private</span><span class="amt">$28.00</span></div>
+        <div class="sub">2× Chicken soto · <span class="ok">✓ Confirmed</span></div>
+        <div class="addr">1 North Terrace, Adelaide 5000 · Blue gate</div>
+        <div class="nav"><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>Directions</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Map</a></div>
+        <div class="done"><span>✓ Delivered</span></div>
+      </div>
+
+      <div class="row">
+        <div class="top"><b>18:30</b><b>Rina</b><span class="code">AYS-BXH</span><span class="tag">Private</span><span class="amt">$42.00</span></div>
+        <div class="sub">3× Chicken soto · <span class="ok">✓ Confirmed</span></div>
+        <div class="addr">12 King William St, Adelaide 5000</div>
+        <div class="nav"><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>Directions</a><a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Map</a></div>
+        <div class="done"><span>✓ Delivered</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<p class="note">In both: <b>Directions / Map</b> are small grey links with an icon (they only open Maps), so they never look like the status control. The difference is the <b>status part</b>: A uses the same 3-step control for every delivery and private customers get "on the way / arriving soon" updates; B gives private orders a single ✓ Delivered button.</p>
+</body>
+</html>

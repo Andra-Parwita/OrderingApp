@@ -1,5 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { server } from '../../../mocks/server';
 import type { DeliveryAddress } from '../../../shared/address';
 import { saveContact } from './contacts';
 import { DeliveriesScreen } from './DeliveriesScreen';
@@ -135,5 +137,41 @@ describe('delivery address on the seller side', () => {
       screen.getByText('No address in the app. Ask the customer on WhatsApp.'),
     ).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /Delivered/ })).toHaveLength(2);
+  });
+});
+
+describe('private deliveries (plan 081)', () => {
+  it("lists today's private deliveries with View on map and Directions", async () => {
+    server.use(
+      http.get('*/api/seller/private', () =>
+        HttpResponse.json({
+          orders: [
+            makeOrder({
+              id: 'p1',
+              code: 'PPPPPP',
+              firstName: 'Bu Wayan',
+              fulfilment: 'delivery',
+              private: { eventDate: '2026-10-10', eventTime: '12:00' },
+              address: { address: A },
+            }),
+          ],
+          due: { today: 1, tomorrow: 0 },
+          today: '2026-10-10',
+        }),
+      ),
+    );
+    const s = store();
+    seed(s, []);
+    renderWithStore(<DeliveriesScreen onBack={() => undefined} />, s);
+    expect(await screen.findByText('Bu Wayan')).toBeInTheDocument();
+    expect(screen.getByText('Private')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View on map' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('google.com/maps/search'),
+    );
+    expect(screen.getByRole('link', { name: 'Directions' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('google.com/maps/dir'),
+    );
   });
 });

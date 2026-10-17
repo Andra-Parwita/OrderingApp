@@ -3,6 +3,7 @@ import type {
   Fulfilment,
   LocalText,
   Order,
+  OrderLine,
   PickupPoint,
   SellerMenuItemView,
 } from '../../../shared/domain';
@@ -23,13 +24,22 @@ export type CookMenu = {
   pickupPoints?: Array<PickupPoint>;
 };
 
-export type CookWho = { code: string; firstName: string; qty: number; fulfilment: Fulfilment };
+export type CookWho = {
+  code: string;
+  firstName: string;
+  qty: number;
+  fulfilment: Fulfilment;
+  /** Plan 081: from a private order (its page is under Private). */
+  private?: true;
+};
 
 export type CookRow = {
   itemId: string;
   name: LocalText;
   size: LocalText;
   qty: number;
+  /** Plan 081: how many of `qty` come from private orders (0 = none). */
+  privateQty: number;
   /** Only set where `qty` is the item's whole total (group by item or chef). */
   limit?: number;
   who: Array<CookWho>;
@@ -86,10 +96,19 @@ export function cookNotes(counted: ReadonlyArray<Order>): Array<CookNote> {
 export type ChefFilter = string;
 export const ALL_CHEFS: ChefFilter = 'all';
 
+/** Plan 081: a private order's line carries its own chef (its dish may not be on the menu). */
+type ChefLine = { itemId: OrderLine['itemId']; chefId?: OrderLine['chefId'] };
+
+/** The chef id of a line: its own (private order), else its menu item's; undefined = the kitchen. */
+function chefIdOf(menu: CookMenu | null, line: ChefLine): string | undefined {
+  const chefId = line.chefId ?? menu?.items.find((item) => item.id === line.itemId)?.chefId;
+  return menu?.chefs.some((chef) => chef.id === chefId) ? chefId : undefined;
+}
+
 /** Who makes a dish: 'seller' for no chef (or one no longer on the menu), else `chef-<id>`. */
-export function chefKey(menu: CookMenu | null, itemId: string): ChefFilter {
-  const chefId = menu?.items.find((item) => item.id === itemId)?.chefId;
-  return menu?.chefs.some((chef) => chef.id === chefId) ? `chef-${chefId}` : 'seller';
+export function chefKey(menu: CookMenu | null, line: ChefLine): ChefFilter {
+  const chefId = chefIdOf(menu, line);
+  return chefId === undefined ? 'seller' : `chef-${chefId}`;
 }
 
 /** The filter choices after "All": the kitchen itself, then each chef. Empty when no chefs. */
@@ -102,8 +121,8 @@ export function chefChoices(menu: CookMenu | null): Array<{ value: ChefFilter; l
 }
 
 /** Does this dish belong to the chosen chef? Always true for 'all'. */
-export function isOwnItem(menu: CookMenu | null, filter: ChefFilter, itemId: string): boolean {
-  return filter === ALL_CHEFS || chefKey(menu, itemId) === filter;
+export function isOwnItem(menu: CookMenu | null, filter: ChefFilter, line: ChefLine): boolean {
+  return filter === ALL_CHEFS || chefKey(menu, line) === filter;
 }
 
 /** Orders cut down to the chosen chef's lines; orders left with none are dropped. */
@@ -114,7 +133,7 @@ export function filterByChef(
 ): ReadonlyArray<Order> {
   if (filter === ALL_CHEFS) return orders;
   return orders.flatMap((order) => {
-    const lines = order.lines.filter((line) => isOwnItem(menu, filter, line.itemId));
+    const lines = order.lines.filter((line) => isOwnItem(menu, filter, line));
     return lines.length > 0 ? [{ ...order, lines }] : [];
   });
 }
@@ -141,17 +160,20 @@ function rowsFrom(
         name: line.name,
         size: line.size,
         qty: 0,
+        privateQty: 0,
         ...(limit !== undefined ? { limit } : {}),
         who: [],
       };
       byItem.set(line.itemId, row);
     }
     row.qty += line.qty;
+    if (order.private) row.privateQty += line.qty;
     row.who.push({
       code: formatOrderCode(order.code),
       firstName: order.firstName,
       qty: line.qty,
       fulfilment: order.fulfilment,
+      ...(order.private ? { private: true as const } : {}),
     });
   }
   // Menu order first; items no longer on the menu (D-020 snapshots) last.
@@ -178,9 +200,8 @@ export function cookGroups(
       return [{ key: 'all', title: null, rows: rowsFrom(picks, menu, true) }];
     case 'chef': {
       const chefOf = ({ order, lineIndex }: Pick): string | undefined => {
-        const itemId = order.lines[lineIndex]?.itemId;
-        const chefId = menu?.items.find((item) => item.id === itemId)?.chefId;
-        return menu?.chefs.some((chef) => chef.id === chefId) ? chefId : undefined;
+        const line = order.lines[lineIndex];
+        return line ? chefIdOf(menu, line) : undefined;
       };
       const groups: Array<CookGroup> = [];
       // Items without a chef belong to the seller: they group under the kitchen name (D-012).

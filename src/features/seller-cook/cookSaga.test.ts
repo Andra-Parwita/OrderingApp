@@ -1,10 +1,11 @@
+import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { mockStore } from '../../../mocks/handlers';
 import { server } from '../../../mocks/server';
 import { createFakeLive } from '../../api/liveTestSupport';
 import { staffSignedOut } from '../../api/staffSignedOut';
 import { pollingStarted } from './cookSlice';
-import { createTestStore } from './testSupport';
+import { createTestStore, line, makeOrder } from './testSupport';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -37,5 +38,30 @@ describe('cookSaga', () => {
     await sleep(120); // several fallback periods
     expect(counter.count).toBe(atSignOut);
     server.events.removeAllListeners();
+  });
+
+  it('loads the private orders of today next to the menu orders (plan 081)', async () => {
+    const privateOrder = makeOrder({
+      id: 'p1',
+      code: 'PPPPPP',
+      private: { eventDate: '2026-10-17', eventTime: '12:00' },
+      lines: [line('nasi', 6)],
+    });
+    server.use(
+      http.get('*/api/seller/private', ({ request }) => {
+        expect(new URL(request.url).searchParams.get('day')).toBe('today');
+        return HttpResponse.json({
+          orders: [privateOrder],
+          due: { today: 1, tomorrow: 0 },
+          today: '2026-10-17',
+        });
+      }),
+    );
+    const store = createTestStore({ saga: true, pollMs: 50 });
+    store.dispatch(pollingStarted());
+    await waitFor(() => store.getState().sellerCook.list.status === 'ready');
+    expect(store.getState().sellerCook.privateOrders.map((o) => o.code)).toEqual(['PPPPPP']);
+    expect(store.getState().sellerCook.orders).toHaveLength(0);
+    store.dispatch(staffSignedOut());
   });
 });

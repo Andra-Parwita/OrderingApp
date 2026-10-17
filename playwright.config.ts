@@ -13,9 +13,10 @@ const ORIGIN = `https://localhost:${PORT}`;
 // one before), so nothing else is running while ordering is closed.
 // seller-setup changes the shared kitchens' pictures, pickup places and chefs (and puts them back),
 // which banners and the order specs read, so it is here too. Plan 067's dish-pictures adds a dish to
-// the live menu for a moment, so it is here as well.
+// the live menu for a moment, so it is here as well. Plan 081's p081-private-orders makes a private order
+// for today (and cancels it), which Cook counts, so it is here too.
 const ISOLATED =
-  /(seller-settings.*|seller-menu|seller-batch3|seller-setup|dish-pictures)\.spec\.ts$/;
+  /(seller-settings.*|seller-menu|seller-batch3|seller-setup|dish-pictures|p081-private-orders)\.spec\.ts$/;
 // Plan 029: changes Onde Onde's stock of one dish (and puts it back); the order specs read it, so it
 // runs alone, after limits, on the Android phone project.
 const DAY_SELLING = /\/day-selling\.spec\.ts$/;

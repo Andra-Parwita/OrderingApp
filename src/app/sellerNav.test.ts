@@ -14,10 +14,11 @@ import {
 } from './sellerNav';
 
 describe('navIdsFor', () => {
-  it('gives the seller all nine items, Home first, Help right under Settings and About last', () => {
+  it('gives the seller all ten items, Home first, Private right under Orders, Help right under Settings and About last', () => {
     expect(navIdsFor('seller')).toEqual([
       'home',
       'orders',
+      'private',
       'kitchen',
       'handover',
       'sell',
@@ -31,10 +32,38 @@ describe('navIdsFor', () => {
     expect(HREF.orders).toBe('/seller/orders');
   });
   it('shows a helper Orders, Pickup & delivery and Sell only', () => {
-    expect(navIdsFor('helper')).toEqual(['orders', 'handover', 'sell', 'help', 'about']);
+    expect(navIdsFor('helper')).toEqual(['orders', 'private', 'handover', 'sell', 'help', 'about']);
   });
   it('shows a chef Menu (own dishes, plan 030) but not Home, Sell or Settings', () => {
-    expect(navIdsFor('chef')).toEqual(['orders', 'kitchen', 'handover', 'menu', 'help', 'about']);
+    expect(navIdsFor('chef')).toEqual([
+      'orders',
+      'private',
+      'kitchen',
+      'handover',
+      'menu',
+      'help',
+      'about',
+    ]);
+  });
+});
+
+describe('Private orders (plan 081)', () => {
+  it('is at /seller/private, current for it and its pages, and open to a helper', () => {
+    expect(HREF.private).toBe('/seller/private');
+    for (const path of [
+      '/seller/private',
+      '/seller/private/new',
+      '/seller/private/K7M42XQ9/edit',
+    ]) {
+      expect(activeNav(path)).toBe('private');
+      expect(helperMayOpen(path)).toBe(true);
+    }
+  });
+  it('is inside More on a phone, and its pages are full screens without the tab bar', () => {
+    expect(activePhoneNav('/seller/private')).toBe('more');
+    expect(hidesPhoneBar('/seller/private')).toBe(false);
+    expect(hidesPhoneBar('/seller/private/new')).toBe(true);
+    expect(hidesPhoneBar('/seller/private/K7M42XQ9')).toBe(true);
   });
 });
 

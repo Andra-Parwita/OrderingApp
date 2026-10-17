@@ -20,3 +20,4 @@ export { useNewOrderTitle, useUnseenNewOrders } from './newOrderBadge';
 export { useLiveOrders } from './useLiveOrders';
 export { ReadOnlyOrdersProvider } from './orderAccess';
 export { DeliveriesScreen } from './DeliveriesScreen';
+export { openOrderLink } from './whatsappLink';

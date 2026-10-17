@@ -3,14 +3,31 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { PickupPoint, SellerOrder } from '../../../shared/domain';
 import type { DeliveryStep, MessagePlaceResponse } from '../../../shared/handoverContract';
+import { setOrderStatus } from '../../api/client';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 import { ScanEntry, SCAN_NS } from '../../components/scan';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { DeliveryView } from './DeliveryRunScreen';
 import { PickupView } from './PickupView';
 import { SATURDAY_NS } from './i18n/register';
 import { matches, Muted, Notice, useHandoverData, useLang } from './parts';
+import { usePrivateHandover } from './usePrivateHandover';
 
 export type HandoverViewName = 'pickup' | 'delivery';
+
+/** Menu orders first, then today's private ones by event time. */
+export function mergeOrders(
+  menu: ReadonlyArray<SellerOrder>,
+  privateToday: ReadonlyArray<SellerOrder>,
+  fulfilment: SellerOrder['fulfilment'],
+): ReadonlyArray<SellerOrder> {
+  const mine = privateToday
+    .filter((o) => o.fulfilment === fulfilment)
+    .sort((a, b) =>
+      (a.private?.eventTime ?? '99:99').localeCompare(b.private?.eventTime ?? '99:99'),
+    );
+  return [...menu.filter((o) => o.fulfilment === fulfilment), ...mine];
+}
 
 const Page = styled.main`
   display: flex;
@@ -90,6 +107,8 @@ type Props = Readonly<{
   addressOf?: (code: string) => string | undefined;
   /** A scanned order opens here (its page, with the hand-over button). */
   onOpenOrder?: (code: string) => void;
+  /** Plan 081: a private order opens here (`/seller/private/<code>`). */
+  onOpenPrivate?: (code: string) => void;
 }>;
 
 /** Pickup & delivery (plan 001 stage 9): tell customers, never collect for them (D-068). */
@@ -98,6 +117,7 @@ export function HandOverScreen({
   phone = false,
   addressOf,
   onOpenOrder,
+  onOpenPrivate,
 }: Props) {
   const { t } = useTranslation(SATURDAY_NS);
   const { t: scan } = useTranslation(SCAN_NS);
@@ -108,13 +128,30 @@ export function HandOverScreen({
   const [note, setNote] = useState<string | null>(null);
 
   const ready = data.status === 'ready' ? data : null;
+  // Plan 081: today's private orders join the menu's, never entering the menu's own list.
+  const { orders: privateToday, reload: reloadPrivate } = usePrivateHandover(ready?.orders);
   const pickup = useMemo<ReadonlyArray<SellerOrder>>(
-    () => (ready ? ready.orders.filter((o) => o.fulfilment === 'pickup') : []),
-    [ready],
+    () => mergeOrders(ready?.orders ?? [], privateToday, 'pickup'),
+    [ready, privateToday],
   );
   const delivery = useMemo<ReadonlyArray<SellerOrder>>(
-    () => (ready ? ready.orders.filter((o) => o.fulfilment === 'delivery') : []),
-    [ready],
+    () => mergeOrders(ready?.orders ?? [], privateToday, 'delivery'),
+    [ready, privateToday],
+  );
+  const [busyCode, setBusyCode] = useState<string | null>(null);
+  const markPrivate = useCallback(
+    (order: SellerOrder) => {
+      setBusyCode(order.code);
+      const to = order.fulfilment === 'delivery' ? 'delivered' : 'collected';
+      void setOrderStatus(order.code, to, undefined, currentSellerSlug(), true).then((result) => {
+        setBusyCode(null);
+        if (result.ok) {
+          setNote(t(`note.private.${to}`, { name: order.firstName }));
+          reloadPrivate();
+        } else setNote(t('common.actionFailed'));
+      });
+    },
+    [reloadPrivate, t],
   );
   const live = (orders: ReadonlyArray<SellerOrder>) =>
     orders.filter((o) => o.status !== 'cancelled');
@@ -149,14 +186,16 @@ export function HandOverScreen({
     (order: SellerOrder, step: DeliveryStep) => {
       setNote(t(`note.step.${step}`, { name: order.firstName }));
       void reload();
+      if (order.private) reloadPrivate();
     },
-    [reload, t],
+    [reload, reloadPrivate, t],
   );
 
   // A scanned order opens on its own page when the route says how; else the list narrows to it.
   const openScanned = (code: string) => {
+    if (onOpenPrivate && privateToday.some((o) => o.code === code)) return onOpenPrivate(code);
     if (onOpenOrder) return onOpenOrder(code);
-    const found = ready?.orders.find((o) => o.code === code);
+    const found = [...(ready?.orders ?? []), ...privateToday].find((o) => o.code === code);
     if (found) setView(found.fulfilment);
     setQuery(code);
   };
@@ -181,7 +220,7 @@ export function HandOverScreen({
           />
         </Search>
         <ScanEntry
-          find={(code) => ready?.orders.find((o) => o.code === code)}
+          find={(code) => [...(ready?.orders ?? []), ...privateToday].find((o) => o.code === code)}
           onOpen={openScanned}
         />
         <Muted>{scan('hint')}</Muted>
@@ -223,6 +262,9 @@ export function HandOverScreen({
             lang={lang}
             onSent={sent}
             single={phone}
+            onOpenPrivate={onOpenPrivate}
+            onMarkPrivate={markPrivate}
+            busyCode={busyCode}
           />
         ) : null}
         {ready && view === 'delivery' ? (
@@ -231,6 +273,7 @@ export function HandOverScreen({
             messages={ready.messages}
             lang={lang}
             onDone={stepped}
+            onOpenPrivate={onOpenPrivate}
             addressOf={phone ? addressOf : undefined}
           />
         ) : null}

@@ -221,8 +221,11 @@ export const OrderRowRoot = styled.li<{ $dim: boolean }>`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.125rem ${({ theme }) => theme.spacing.md};
+  margin: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.md} 0;
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  border-radius: ${({ theme }) => theme.size.radiusSheet}px;
+  background: ${({ theme }) => theme.c.surf};
   color: ${({ theme, $dim }) => ($dim ? theme.c.muted : theme.c.text)};
   list-style: none;
 `;

@@ -62,7 +62,8 @@
     "warnBody_other": "{{count}} items in this bag aren't ticked. Mark the bag packed anyway?",
     "warnCancel": "Keep packing",
     "warnContinue": "Mark packed anyway",
-    "printLabel": "Print label"
+    "printLabel": "Print label",
+    "openPrivate": "Open private order"
   },
   "who": {
     "open": "Who ordered {{name}}",
@@ -83,5 +84,7 @@
     "notSaved": "Not saved yet",
     "tryAgain": "Try again",
     "other": "The change was not accepted, so it was undone."
-  }
+  },
+  "privateTag": "Private",
+  "menuPrivate": "Menu {{menu}} · Private {{private}}"
 }

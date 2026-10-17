@@ -3,7 +3,13 @@
 // (stock, portion guard, finish, lists, CSV, backup; see LIVE_MENU) ever sees them. Every function
 // filters by the seller id (D-036). Only the owner writes (the routes gate that).
 import type { ApiErrorCode } from '../../shared/apiError';
-import type { AuditEntry, InboxEntry, OrderLine, SellerOrder, StaffActor } from '../../shared/domain';
+import type {
+  AuditEntry,
+  InboxEntry,
+  OrderLine,
+  SellerOrder,
+  StaffActor,
+} from '../../shared/domain';
 import { AUDIT_MAX, INBOX_MAX, ORDER_DETAIL_WEEKS } from '../../shared/limits';
 import { diffOrder } from '../../shared/auditDiff';
 import { isFinalStatus } from '../../shared/status';
@@ -152,6 +158,11 @@ export function createPrivateOps(deps: PrivateDeps, sid: string) {
     }
     const lines = await buildLines(input.lines);
     if (!lines.ok) return lines;
+    if (
+      input.depositCents !== undefined &&
+      input.depositCents > lines.value.reduce((sum, l) => sum + l.priceCents * l.qty, 0)
+    )
+      return fail('invalid_request', 'The deposit is more than the total');
     const at = nowIso();
     const order: SellerOrder = {
       id: deps.newId(),
@@ -216,6 +227,8 @@ export function createPrivateOps(deps: PrivateDeps, sid: string) {
       patch.eventTime === undefined ? info.eventTime : (patch.eventTime ?? undefined);
     const deposit =
       patch.depositCents === undefined ? info.depositCents : (patch.depositCents ?? undefined);
+    if (deposit !== undefined && deposit > lines.reduce((sum, l) => sum + l.priceCents * l.qty, 0))
+      return fail('invalid_request', 'The deposit is more than the total');
     const pickup =
       fulfilment === 'delivery'
         ? undefined
@@ -384,7 +397,18 @@ export function createPrivateOps(deps: PrivateDeps, sid: string) {
   }
 
   /** Per chef: portions and money of the day's private orders (cancelled excluded). */
-  async function chefSummary(date: string): Promise<PrivateChefSummaryResponse> {
+  async function chefSummary(
+    date: string,
+    asChefId?: string,
+  ): Promise<PrivateChefSummaryResponse | 'private'> {
+    // Same rule as the menu's per-chef income (plan 069): a chef only while the setting is on.
+    if (asChefId !== undefined) {
+      const setting = await db.first<{ chefs_see_income: number }>(
+        'SELECT chefs_see_income FROM kitchen_settings WHERE seller_id = ?',
+        sid,
+      );
+      if (setting?.chefs_see_income === 0) return 'private';
+    }
     const rows = await db.all<{
       chef_id: string | null;
       name: string | null;
@@ -401,12 +425,14 @@ export function createPrivateOps(deps: PrivateDeps, sid: string) {
     );
     return {
       date,
-      rows: rows.map((row): PrivateChefRow => ({
-        chefId: row.chef_id,
-        ...(row.name !== null ? { chefName: row.name } : {}),
-        qty: row.qty,
-        cents: row.cents,
-      })),
+      rows: rows
+        .filter((row) => asChefId === undefined || row.chef_id === asChefId)
+        .map((row): PrivateChefRow => ({
+          chefId: row.chef_id,
+          ...(row.name !== null ? { chefName: row.name } : {}),
+          qty: row.qty,
+          cents: row.cents,
+        })),
     };
   }
 

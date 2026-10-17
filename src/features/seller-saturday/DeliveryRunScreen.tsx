@@ -7,11 +7,22 @@ import {
   type DeliveryStep,
   type MessageLogEntry,
 } from '../../../shared/handoverContract';
+import {
+  addressLine,
+  checkOnMapUrl,
+  directionsUrl,
+  textDirectionsUrl,
+  textMapUrl,
+} from '../../../shared/address';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { sendDeliveryStep } from '../../api/handover';
 import { Icon, WarningDialog } from '../../ui';
 import { SATURDAY_NS } from './i18n/register';
+import { PrivateTag } from '../../components/PrivateTag';
+import { QuietMapLinks } from '../../components/QuietMapLinks';
+import { isIphone } from '../../components/isIphone';
+import { privateAddress } from './PrivateRow';
 import {
   isClosed,
   itemsShort,
@@ -36,26 +47,44 @@ const List = styled.ul`
 const Steps = styled.div`
   grid-column: 1 / -1;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-top: ${({ theme }) => theme.spacing.sm};
 `;
+// One bar of segments that size to their label: the ticked step stays on one line.
+const StepBar = styled.div`
+  display: flex;
+  align-self: stretch;
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  overflow: hidden;
+`;
 const StepButton = styled.button<{ $current: boolean }>`
   display: inline-flex;
+  flex: 1 1 auto;
   align-items: center;
+  justify-content: center;
   gap: ${({ theme }) => theme.spacing.xs};
   min-height: ${({ theme }) => theme.minTapTarget};
-  padding: 0 ${({ theme }) => theme.spacing.md};
-  border: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme, $current }) => ($current ? theme.c.fill : theme.c.ctrl)};
-  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+  border: 0;
+  border-right: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
   background: ${({ theme, $current }) => ($current ? theme.c.fill : 'transparent')};
   color: ${({ theme, $current }) => ($current ? theme.c.on : theme.c.text)};
   font: inherit;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: ${({ $current }) => ($current ? 600 : 400)};
+  white-space: nowrap;
   cursor: pointer;
 
+  &:last-child {
+    border-right: 0;
+  }
+  svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
   &:disabled {
     cursor: default;
     opacity: 0.6;
@@ -94,6 +123,22 @@ const Sub = styled.span`
 const Name = styled.b`
   margin-left: ${({ theme }) => theme.spacing.sm};
 `;
+const Top = styled.span`
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+const OpenLink = styled.button`
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+`;
 
 /** The step an order is at: the latest delivery message sent for it, else what its status says. */
 export function currentStep(
@@ -121,10 +166,12 @@ type Props = Readonly<{
   onDone: (order: SellerOrder, step: DeliveryStep) => void;
   /** Phone only: the delivery address saved on this phone (D-059), given by the app; never on a tablet. */
   addressOf?: (code: string) => string | undefined;
+  /** Plan 081: a private order in `orders` opens its page on a tap of its name. */
+  onOpenPrivate?: (code: string) => void;
 }>;
 
 /** Delivery: per order Out for delivery, then Arriving soon (minutes), then Delivered. */
-export function DeliveryView({ orders, messages, lang, onDone, addressOf }: Props) {
+export function DeliveryView({ orders, messages, lang, onDone, addressOf, onOpenPrivate }: Props) {
   const { t } = useTranslation(SATURDAY_NS);
   const slug = currentSellerSlug();
   const [busy, setBusy] = useState(false);
@@ -183,7 +230,8 @@ export function DeliveryView({ orders, messages, lang, onDone, addressOf }: Prop
             step={currentStep(order, messages)}
             lang={lang}
             busy={busy}
-            address={addressOf?.(order.code)}
+            address={order.private ? undefined : addressOf?.(order.code)}
+            onOpen={onOpenPrivate}
             onStep={(step, minutes) =>
               void run({ order, step, minutes, code: formatOrderCode(order.code) }, false)
             }
@@ -213,50 +261,113 @@ type RowProps = Readonly<{
   step: DeliveryStep | null;
   lang: Language;
   busy: boolean;
+  /** A menu order's address kept on this phone (free text). */
   address?: string;
+  onOpen?: (code: string) => void;
   onStep: (step: DeliveryStep, minutes: number) => void;
 }>;
 
-function DeliveryRow({ order, step, lang, busy, address, onStep }: RowProps) {
+function DeliveryRow({ order, step, lang, busy, address, onOpen, onStep }: RowProps) {
   const { t } = useTranslation(SATURDAY_NS);
   const [minutes, setMinutes] = useState(10);
   const code = formatOrderCode(order.code);
   const closed = isClosed(order.status);
+  const isPrivate = order.private !== undefined;
+  const held = isPrivate ? privateAddress(order) : null;
+  const apple = isIphone();
+  const time = order.private?.eventTime;
+  const shown = held ? addressLine(held) : address;
+  const links = held
+    ? { directions: directionsUrl(held, apple), map: checkOnMapUrl(held, apple) }
+    : address
+      ? { directions: textDirectionsUrl(address, apple), map: textMapUrl(address, apple) }
+      : null;
+  const right = isPrivate
+    ? money(totalCents(order), lang)
+    : order.paid
+      ? t('common.paid')
+      : t('common.notPaid', { amount: money(totalCents(order), lang) });
   return (
     <OrderRowRoot
       $dim={closed}
       aria-label={t('delivery.rowLabel', { code, name: order.firstName })}
     >
-      <span>
-        <Mono>{code}</Mono>
-        <Name>{order.firstName}</Name>
-      </span>
-      <Right>
-        {order.paid
-          ? t('common.paid')
-          : t('common.notPaid', { amount: money(totalCents(order), lang) })}
-      </Right>
+      {isPrivate ? (
+        <Top>
+          {time ? <b>{time}</b> : null}
+          {onOpen ? (
+            <OpenLink
+              type="button"
+              aria-label={t('private.open', { name: order.firstName })}
+              onClick={() => onOpen(order.code)}
+            >
+              {order.firstName}
+            </OpenLink>
+          ) : (
+            <b>{order.firstName}</b>
+          )}
+          <Mono>{code}</Mono>
+          <PrivateTag label={t('private.tag')} />
+        </Top>
+      ) : (
+        <span>
+          <Mono>{code}</Mono>
+          <Name>{order.firstName}</Name>
+        </span>
+      )}
+      <Right>{right}</Right>
       <Sub>
         <span>{itemsShort(order.lines, lang)}</span>
         <StatusMark status={order.status} />
         {order.packed === true ? <PackedTag>{t('common.packed')}</PackedTag> : null}
       </Sub>
-      {address ? <Sub>{address}</Sub> : null}
+      {shown ? (
+        <Sub>
+          <b>{shown}</b>
+        </Sub>
+      ) : isPrivate ? (
+        <Sub>
+          <span>{t('private.noAddress')}</span>
+        </Sub>
+      ) : null}
+      {held?.notes ? (
+        <Sub>
+          {t('private.notes')}: {held.notes}
+        </Sub>
+      ) : null}
+      {links ? (
+        <Sub>
+          <QuietMapLinks
+            directions={{
+              href: links.directions,
+              label: t('links.directions'),
+              aria: t('links.directionsTo', { name: order.firstName }),
+            }}
+            map={{
+              href: links.map,
+              label: t('links.map'),
+              aria: t('links.mapOf', { name: order.firstName }),
+            }}
+          />
+        </Sub>
+      ) : null}
       {order.status === 'cancelled' ? null : (
         <Steps role="group" aria-label={t('delivery.stepsLabel', { code })}>
-          {DELIVERY_STEPS.map((id) => (
-            <StepButton
-              key={id}
-              type="button"
-              $current={step === id}
-              aria-current={step === id ? 'step' : undefined}
-              disabled={busy}
-              onClick={() => onStep(id, minutes)}
-            >
-              {step === id ? <Icon name="check" /> : null}
-              {t(`delivery.step.${id}`)}
-            </StepButton>
-          ))}
+          <StepBar>
+            {DELIVERY_STEPS.map((id) => (
+              <StepButton
+                key={id}
+                type="button"
+                $current={step === id}
+                aria-current={step === id ? 'step' : undefined}
+                disabled={busy}
+                onClick={() => onStep(id, minutes)}
+              >
+                {step === id ? <Icon name="check" /> : null}
+                {t(`delivery.step.${id}`)}
+              </StepButton>
+            ))}
+          </StepBar>
           <Minutes>
             {t('delivery.minutesLabel')}
             <select

@@ -28,5 +28,6 @@
     "part": "{{index}} dari {{of}}"
   },
   "previewCount_other": "{{count}} label untuk {{orders}}",
-  "ordersCount_other": "{{count}} pesanan"
+  "ordersCount_other": "{{count}} pesanan",
+  "privateTag": "Khusus"
 }

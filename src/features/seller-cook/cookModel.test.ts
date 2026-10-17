@@ -180,3 +180,37 @@ describe('cookNotes', () => {
     expect(cookNotes(countedOrders(orders, 'all'))).toEqual([]);
   });
 });
+
+describe('private orders on the day (plan 081)', () => {
+  const privateOrder = makeOrder({
+    id: 'p1',
+    code: 'PPPPPP',
+    firstName: 'Rina',
+    private: { eventDate: '2026-10-10', eventTime: '12:00' },
+    lines: [
+      { ...line('nasi', 6) },
+      {
+        itemId: 'library-dish',
+        name: { en: 'Birthday cake', id: 'Kue ulang tahun' },
+        size: { en: '1 cake', id: '1 kue' },
+        priceCents: 5000,
+        qty: 1,
+        chefId: 'wati',
+      },
+    ],
+  });
+
+  it('adds private portions to the dish total and counts them apart', () => {
+    const groups = cookGroups([...sampleOrders().slice(0, 1), privateOrder], MENU, 'item');
+    const nasi = groups[0]?.rows.find((row) => row.itemId === 'nasi');
+    expect(nasi).toMatchObject({ qty: 7, privateQty: 6 });
+    expect(nasi?.who.filter((who) => who.private)).toHaveLength(1);
+  });
+
+  it('takes the chef from the line when the dish is not on the menu', () => {
+    const groups = cookGroups([privateOrder], MENU, 'chef');
+    const wati = groups.find((group) => group.key === 'chef-wati');
+    expect(wati?.rows.map((row) => row.itemId)).toEqual(['library-dish']);
+    expect(filterByChef([privateOrder], MENU, 'chef-wati')[0]?.lines).toHaveLength(1);
+  });
+});

@@ -50,6 +50,23 @@ flowchart TD
     N --> B
 ```
 
+## Seller: a private order (Khusus)
+
+A private order is a one-off order for an event (a birthday, a party) that only an owner makes, under **Private** in the left menu (phone: **More**). It is never on the menu and never touches its limits or cut-off. The owner picks library dishes, the event date and time, delivery or pickup and an optional deposit, then sends the order code on WhatsApp. The customer follows it on `/o/:token`, read-only, with what is still to pay. On the event day it is counted in Cook, Pack, labels and per-chef income with a "Private" tag; a cancelled one moves to Past.
+
+```mermaid
+flowchart TD
+    A["Private<br/>/seller/private"] --> B["New private order<br/>owner only"]
+    B --> C["Dishes from the library, date, time,<br/>delivery or pickup, deposit"]
+    C --> D["Order detail<br/>send code on WhatsApp"]
+    D --> E["Customer page /o/:token<br/>read-only, still to pay"]
+    D --> F{"Event day"}
+    F --> G["Cook, Pack, labels, per-chef income<br/>tagged Private"]
+    F --> H["Directions and map<br/>Deliveries list"]
+    G --> I["Status: Ready, Handed over or Out for delivery, Delivered"]
+    D -- "cancel" --> J["Past, marked Cancelled"]
+```
+
 ## Admin: kitchens and the first sign-in
 
 The admin is the developer, a separate login (`/admin/sign-in`, first created at `/admin/setup`). The admin sees kitchens, people, devices, keys and the error log, and **never order data**. To open a kitchen, the admin adds it and invites its first owner, who then follows [invite and setup](../architecture/sequences.md#4-invite-then-setup-with-the-key).

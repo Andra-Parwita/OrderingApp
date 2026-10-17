@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import { pickText } from '../../../shared/text';
+import { PrivateTag } from '../../components/PrivateTag';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { COOK_NS } from './i18n/register';
 import { WhoOrderedPanel } from './WhoOrderedPanel';
@@ -192,8 +193,15 @@ const Row = memo(function Row({ row, lang, counting, made, onChange, onWho }: Ro
     <RowBox $done={done}>
       <Big>{row.qty}</Big>
       <Name $done={done}>
-        <span>{shown}</span>
-        <Sub>{pickText(row.size, lang)}</Sub>
+        <span>
+          {shown} {row.privateQty > 0 ? <PrivateTag label={t('privateTag')} /> : null}
+        </span>
+        <Sub>
+          {pickText(row.size, lang)}
+          {row.privateQty > 0
+            ? ` · ${t('menuPrivate', { menu: row.qty - row.privateQty, private: row.privateQty })}`
+            : ''}
+        </Sub>
       </Name>
       <Aside>
         <Split>{split}</Split>

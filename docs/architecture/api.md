@@ -130,6 +130,11 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 | POST | `orders/:code/address-seen` | helper | "Got it" on the customer's changed address (plan 071); customer order answers then say `addressChange: 'seen'` |
 | POST | `orders/:code/delete-address` | chef | "Delete address now" (plan 071; not a helper) |
 | POST | `orders/:code/pack`, `delivery-step`, `paid`, `lock`, `wa-received`, `nudge`, `seen` | chef | packing ticks, delivery step, paid, lock, WhatsApp received, nudge, clear "changed" |
+| GET | `private` | helper | plan 081: private (Khusus) orders, `?view=upcoming\|past` (default upcoming: event date today or later, not cancelled; past: earlier or cancelled), `?day=today` (the kitchen's today, not cancelled; used by Cook, Pack, labels and the Orders "Private today" section), `?due=1` (counts only, for the count on More); answers `{orders, due: {today, tomorrow}, today}`; each order carries the decrypted `address` like every seller order answer |
+| GET | `private/chef-summary?date=YYYY-MM-DD` | helper | plan 081: portions and cents per chef of that day's private orders (cancelled excluded); the app shows a chef only her own row and a helper nothing (the per-chef button is not offered to a helper) |
+| POST | `private` | owner | plan 081: make a private order (name, language, event date and time, delivery (default) or pickup, address, note, paid, `depositCents`, 1-50 library dishes with a per-order price); answers `{order}` |
+| PATCH | `private/:code` | owner | plan 081: edit a private order (any field; `null` clears) |
+| POST | `private/:code/cancel` | owner | plan 081: cancel (clears the address); the order moves to Past |
 | POST | `updates` | chef | bulk message (and optional status) to up to 200 order codes |
 | GET | `messages` | helper | the current menu's message log |
 | POST | `messages/place/:placeId` | chef | message everyone waiting at a place |

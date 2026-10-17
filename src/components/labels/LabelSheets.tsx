@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import { createGlobalStyle, styled } from 'styled-components';
-import type { Fulfilment } from '../../../shared/domain';
+import type { Fulfilment, SellerOrder } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { OrderQr } from '../OrderQr';
 import {
@@ -15,8 +15,8 @@ import {
 /** What a label says, already translated by the screen that prints it. */
 export type LabelText = Readonly<{
   qrName: string;
-  /** "Pickup · Sat 10 Oct" / "Delivery · Sat 10 Oct". */
-  where: (fulfilment: Fulfilment) => string;
+  /** "Pickup · Sat 10 Oct" / "Delivery · Sat 10 Oct"; a private order (plan 081) is asked with its order. */
+  where: (fulfilment: Fulfilment, order: SellerOrder) => string;
   /** "1 of 2"; only asked for when an order has more than one label. */
   part: (index: number, of: number) => string;
 }>;
@@ -185,8 +185,8 @@ const Label = memo(function Label({ part, paper, text }: LabelProps) {
   const code = formatOrderCode(order.code);
   const partText = part.of > 1 ? text.part(part.index, part.of) : '';
   const where = partText
-    ? `${text.where(order.fulfilment)} · ${partText}`
-    : text.where(order.fulfilment);
+    ? `${text.where(order.fulfilment, order)} · ${partText}`
+    : text.where(order.fulfilment, order);
   return (
     <LabelBox $paper={paper} aria-label={partText ? `${code} ${partText}` : code}>
       <Code>{code}</Code>

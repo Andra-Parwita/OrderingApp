@@ -348,9 +348,6 @@ describe('private orders (plan 081)', () => {
     for (const who of [chef, helper]) {
       expect((await call('GET', '/api/seller/private', who)).status).toBe(200);
       expect((await call('GET', '/api/seller/private?due=1', who)).status).toBe(200);
-      expect(
-        (await call('GET', '/api/seller/private/chef-summary?date=2026-10-10', who)).status,
-      ).toBe(200);
       const create403 = await call('POST', '/api/seller/private', {
         ...who,
         body: { firstName: 'X', language: 'en', eventDate: '2026-10-10', lines: [body] },
@@ -509,7 +506,7 @@ describe('private orders (plan 081)', () => {
     expect(summary.rows).toEqual([
       {
         chefId: a?.chefId ?? null,
-        ...(a?.chefId ? { chefName: expect.any(String) as unknown as string } : {}),
+        ...(a?.chefId ? { chefName: expect.any(String) as string } : {}),
         qty: 2,
         cents: 2000,
       },
@@ -517,6 +514,34 @@ describe('private orders (plan 081)', () => {
     expect((await call('GET', '/api/seller/private/chef-summary?date=nope', boss)).status).toBe(
       400,
     );
+  });
+
+  it('chef summary follows the plan 069 income rules: owner all, chef own, helper never', async () => {
+    const { boss, helper, chef } = await people();
+    const all = await dishes();
+    const mine = all.find((d) => d.chefId === 'wati');
+    const other = all.find((d) => d.chefId !== 'wati');
+    await makePrivate(boss.token, {
+      lines: [
+        { dishId: mine?.id, qty: 2, priceCents: 1000 },
+        { dishId: other?.id, qty: 3, priceCents: 500 },
+      ],
+    });
+    const url = '/api/seller/private/chef-summary?date=2026-10-10';
+    const rowsOf = async (who: { token: string }) =>
+      ((await call('GET', url, who)).body as PrivateChefSummaryResponse).rows;
+    const ownerRows = await rowsOf(boss);
+    expect(ownerRows.length).toBeGreaterThan(1);
+    expect((await rowsOf(chef)).map((r) => [r.chefId, r.qty, r.cents])).toEqual([
+      ['wati', 2, 2000],
+    ]);
+    expect((await call('GET', url, helper)).status).toBe(403);
+    const setting = (chefsSeeIncome: boolean) =>
+      call('PUT', '/api/seller/preferences', { token: boss.token, body: { chefsSeeIncome } });
+    expect((await setting(false)).status).toBe(200);
+    expect((await call('GET', url, chef)).status).toBe(403);
+    expect(await rowsOf(boss)).toEqual(ownerRows);
+    expect((await call('GET', url, helper)).status).toBe(403);
   });
 
   it('wipes the address at the kitchen-zone day boundary after the event', async () => {
@@ -599,6 +624,16 @@ describe('private orders (plan 081)', () => {
     expect((await post({ ...base, firstName: 'x'.repeat(41) })).status).toBe(400);
     expect((await post({ ...base, note: 'x'.repeat(201) })).status).toBe(400);
     expect((await post({ ...base, depositCents: -5 })).status).toBe(400);
+    const tooMuch = await post({ ...base, depositCents: 5_000_00 });
+    expect(tooMuch.status).toBe(400);
+    const created = await post({ ...base, depositCents: 100 });
+    expect(created.status).toBe(201);
+    const code = parseSellerOrderResponse(created.body)?.order.code;
+    const patchHigh = await call('PATCH', `/api/seller/private/${code}`, {
+      ...boss,
+      body: { depositCents: 5_000_00 },
+    });
+    expect(patchHigh.status).toBe(400);
     expect((await post({ ...base, phone: '0400000000' })).status).toBe(400);
     expect(
       (

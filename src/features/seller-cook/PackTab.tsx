@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router';
 import { styled } from 'styled-components';
 import type { Language, Order } from '../../../shared/domain';
 import { formatDay } from '../../../shared/dates';
@@ -13,6 +14,7 @@ import { draftKey } from '../../components/draft';
 import { PrintJob, type LabelText } from '../../components/labels/LabelSheets';
 import { splitOrder } from '../../components/labels/labelModel';
 import { useLabelPaper } from '../../components/labels/useLabelPaper';
+import { PrivateTag } from '../../components/PrivateTag';
 import { Button, Icon, Segmented, WarningDialog, type SegmentedOption } from '../../ui';
 import { COOK_NS } from './i18n/register';
 import {
@@ -268,7 +270,11 @@ export function PackTab() {
   const day = menu ? formatDay(menu.cookingDate, lang) : '';
   const labelText: LabelText = {
     qrName: t('label.qrName'),
-    where: (fulfilment) => t(fulfilment === 'pickup' ? 'label.pickup' : 'label.delivery', { day }),
+    where: (fulfilment, order) => {
+      const own = order.private ? formatDay(order.private.eventDate, lang) : day;
+      const text = t(fulfilment === 'pickup' ? 'label.pickup' : 'label.delivery', { day: own });
+      return order.private ? `${t('privateTag')} · ${text}` : text;
+    },
     part: (index, of) => t('label.part', { index, of }),
   };
   const sortOptions: ReadonlyArray<SegmentedOption<PackSort>> = SORTS.map((value) => ({
@@ -388,7 +394,7 @@ export function PackTab() {
   const untickedCount = open.total - open.ticked;
   const where = open.place
     ? `${open.place}${open.time ? ` · ${t('pack.pickupAt', { time: open.time })}` : ''}`
-    : t('pack.delivery');
+    : `${t('pack.delivery')}${open.private && open.time ? ` · ${open.time}` : ''}`;
 
   return (
     <Layout>
@@ -417,11 +423,12 @@ export function PackTab() {
                 <BagText>
                   <BagName>
                     {bag.order.firstName} <Mono>{bag.code}</Mono>
+                    {bag.private ? <PrivateTag label={t('privateTag')} /> : null}
                   </BagName>
                   <Sub>
                     {bag.place
                       ? `${bag.place}${bag.time ? ` · ${bag.time}` : ''}`
-                      : t('pack.delivery')}
+                      : `${t('pack.delivery')}${bag.private && bag.time ? ` · ${bag.time}` : ''}`}
                   </Sub>
                 </BagText>
                 <Progress $done={bag.packed}>
@@ -441,6 +448,12 @@ export function PackTab() {
           </BigName>
           <Sub>{t('pack.inBag', { ticked: open.ticked, total: open.total })}</Sub>
         </DetailHead>
+        {open.private ? (
+          <Where>
+            <PrivateTag label={t('privateTag')} />
+            <Link to={`/seller/private/${open.order.code}`}>{t('pack.openPrivate')}</Link>
+          </Where>
+        ) : null}
         <Where>
           <Icon name="bag" />
           {where}
@@ -453,7 +466,7 @@ export function PackTab() {
         <Items>
           {open.order.lines.map((line) => {
             const on = line.ticked === true;
-            const other = !isOwnItem(menu, chef.filter, line.itemId);
+            const other = !isOwnItem(menu, chef.filter, line);
             return (
               <li key={line.itemId}>
                 <ItemButton

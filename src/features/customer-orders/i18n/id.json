@@ -112,7 +112,14 @@
     "addressAgain": "Alamat Anda tidak bisa dibaca lagi.",
     "addressWaiting": "Menunggu {{kitchen}} melihat perubahan Anda",
     "addressSeen": "{{kitchen}} sudah melihat alamat baru Anda",
-    "addressAgainButton": "Isi alamat lagi"
+    "addressAgainButton": "Isi alamat lagi",
+    "private": "Pesanan khusus",
+    "privateTotal": "Total",
+    "deposit": "DP dibayar",
+    "stillToPay": "Masih harus dibayar",
+    "paidInFull": "Lunas",
+    "privateWhen": "Kapan",
+    "privateChange": "Mau ubah? Kabari {{kitchen}} lewat WhatsApp."
   },
   "timeline": {
     "label": "Perkembangan pesanan",

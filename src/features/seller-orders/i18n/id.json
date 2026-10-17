@@ -468,5 +468,10 @@
       "later": "Nanti",
       "close": "Tutup"
     }
+  },
+  "private": {
+    "today": "Khusus hari ini",
+    "tag": "Khusus",
+    "viewOnMap": "Lihat di peta"
   }
 }

@@ -40,11 +40,20 @@ export function orderInfo(
       ? (week?.pickupPoints.find((point) => point.id === order.pickupPlaceId) ??
         week?.pickupPoints[0])
       : undefined;
-  const date = order.cookingDate ?? week?.cookingDate;
+  // Plan 081: a private order has its own event date and time (the kitchen's wall clock, shown in
+  // the device's zone like a pickup window); it is not tied to the weekly menu's date.
+  const event = order.private;
+  const date = event?.eventDate ?? order.cookingDate ?? week?.cookingDate;
   const dateText = date ? formatCookingDate(date, lang) : null;
-  const windowText = pickup
-    ? formatWindow(pickup.window.start, pickup.window.end, lang, date ?? undefined)
-    : null;
+  const windowText = event
+    ? event.eventTime
+      ? // One time: format a zero-length window and keep the second half ("12–12 pm" -> "12 pm").
+        (formatWindow(event.eventTime, event.eventTime, lang, event.eventDate).split('–')[1] ??
+        null)
+      : null
+    : pickup
+      ? formatWindow(pickup.window.start, pickup.window.end, lang, date ?? undefined)
+      : null;
   return {
     kitchenName: menu?.kitchen.name ?? order.seller.name,
     cook: menu?.seller.name ?? order.seller.name,

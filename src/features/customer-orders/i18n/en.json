@@ -113,7 +113,14 @@
     "addressAgain": "We can't read your address any more.",
     "addressWaiting": "Waiting for {{kitchen}} to see your change",
     "addressSeen": "{{kitchen}} has seen your new address",
-    "addressAgainButton": "Enter your address again"
+    "addressAgainButton": "Enter your address again",
+    "private": "Private order",
+    "privateTotal": "Total",
+    "deposit": "Deposit paid",
+    "stillToPay": "Still to pay",
+    "paidInFull": "Paid in full",
+    "privateWhen": "When",
+    "privateChange": "Need a change? Message {{kitchen}} on WhatsApp."
   },
   "timeline": {
     "label": "Order progress",

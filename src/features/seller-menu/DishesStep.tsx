@@ -10,6 +10,7 @@ import type { Dish } from '../../../shared/menusContract';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { Button, Icon, Segmented, TextField, WarningDialog } from '../../ui';
+import { DishPicker, Pencil } from './DishPicker';
 import { AutoSaveStatus } from './AutoSaveStatus';
 import { useAutoSave } from './autoSave';
 import { MENU_NS } from './i18n/register';
@@ -60,47 +61,6 @@ const Bar = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
-const Row = styled.div<{ $head?: boolean }>`
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) 5.5rem 6rem 3rem;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  min-height: ${({ theme }) => theme.size.rowCompact + 8}px;
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  color: ${({ $head, theme }) => ($head ? theme.c.muted : theme.c.text)};
-  font-size: ${({ $head }) => ($head ? '0.8125rem' : '0.9375rem')};
-  font-weight: ${({ $head }) => ($head ? 700 : 400)};
-  font-variant-numeric: tabular-nums;
-
-  .name {
-    font-weight: 600;
-  }
-  .sub {
-    display: block;
-    color: ${({ theme }) => theme.c.muted};
-    font-size: 0.8125rem;
-    font-weight: 400;
-  }
-  .num {
-    text-align: right;
-  }
-`;
-const Tick = styled.input`
-  width: 1.375rem;
-  height: 1.375rem;
-  accent-color: ${({ theme }) => theme.c.fill};
-`;
-const Pencil = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.size.tap}px;
-  height: ${({ theme }) => theme.size.tap}px;
-  border: 0;
-  background: transparent;
-  color: ${({ theme }) => theme.c.muted};
-  cursor: pointer;
-`;
 const OnMenu = styled.li`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -137,10 +97,6 @@ const Foot = styled.div`
   padding-top: ${({ theme }) => theme.spacing.lg};
 `;
 
-function sizeOf(dish: Pick<Dish, 'size'>, lang: Language): string {
-  return pickText(dish.size, lang);
-}
-
 export function DishesStep({
   data,
   lang,
@@ -158,7 +114,6 @@ export function DishesStep({
   const { t } = useTranslation(MENU_NS);
   const { run, busy } = useRunOp();
   const [source, setSource] = useState<Source>('dishes');
-  const [search, setSearch] = useState('');
   const [naming, setNaming] = useState(false);
   const [setName, setSetName] = useState('');
   const [note, setNote] = useState<string | null>(null);
@@ -201,13 +156,6 @@ export function DishesStep({
     });
   }, [pending, view.dishes, data.dishes]);
   const full = onMenuIds.length >= MAX_MENU_ITEMS;
-  const needle = search.trim().toLowerCase();
-  const shown = data.dishes.filter(
-    (dish) =>
-      needle === '' ||
-      dish.name.en.toLowerCase().includes(needle) ||
-      dish.name.id.toLowerCase().includes(needle),
-  );
 
   useOpWatch(['useSet', 'usePast', 'createSet'], {
     onDone: (result) => {
@@ -261,70 +209,15 @@ export function DishesStep({
         </Bar>
         {source === 'dishes' ? (
           <>
-            <Bar>
-              <div style={{ flex: 1, minWidth: '12rem' }}>
-                <TextField
-                  label={t('dishes.search')}
-                  value={search}
-                  placeholder={t('dishes.searchHint')}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </div>
-              <Button onClick={onNewDish}>
-                <Icon name="plus" />
-                {t('dishes.newDish')}
-              </Button>
-            </Bar>
-            {data.dishes.length === 0 ? <Muted>{t('dishes.noneYet')}</Muted> : null}
-            {data.dishes.length > 0 ? (
-              <div role="table" aria-label={t('dishes.yours')}>
-                <Row $head role="row">
-                  <span />
-                  <span role="columnheader">{t('dishes.dish')}</span>
-                  <span role="columnheader" className="num">
-                    {t('dishes.lastPrice')}
-                  </span>
-                  <span role="columnheader" className="num">
-                    {t('dishes.lastOn')}
-                  </span>
-                  <span />
-                </Row>
-                {shown.map((dish) => {
-                  const on = onMenuIds.includes(dish.id);
-                  const name = pickText(dish.name, lang);
-                  return (
-                    <Row key={dish.id} role="row">
-                      <Tick
-                        type="checkbox"
-                        checked={on}
-                        disabled={!on && full}
-                        aria-label={t('dishes.onMenuFor', { name })}
-                        onChange={() => toggle(dish)}
-                      />
-                      <span role="cell" className="name">
-                        {name}
-                        {sizeOf(dish, lang) ? (
-                          <span className="sub">{sizeOf(dish, lang)}</span>
-                        ) : null}
-                      </span>
-                      <span role="cell" className="num">
-                        {formatMoney(dish.priceCents, lang)}
-                      </span>
-                      <span role="cell" className="num">
-                        {dish.lastUsedAt ? formatDay(dish.lastUsedAt, lang) : '–'}
-                      </span>
-                      <Pencil
-                        type="button"
-                        aria-label={t('dishes.edit', { name })}
-                        onClick={() => onEdit(dish.id)}
-                      >
-                        <Icon name="pencil" />
-                      </Pencil>
-                    </Row>
-                  );
-                })}
-              </div>
-            ) : null}
+            <DishPicker
+              dishes={data.dishes}
+              lang={lang}
+              selected={onMenuIds}
+              full={full}
+              onToggle={toggle}
+              onNewDish={onNewDish}
+              onEdit={onEdit}
+            />
           </>
         ) : null}
         {source === 'sets' ? (

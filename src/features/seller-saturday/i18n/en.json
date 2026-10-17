@@ -36,6 +36,10 @@
       "out_for_delivery": "{{name}}'s order is out for delivery.",
       "arriving_soon": "Told {{name}} the order is arriving soon.",
       "delivered": "{{name}}'s order is delivered."
+    },
+    "private": {
+      "collected": "{{name}}'s private order is collected.",
+      "delivered": "{{name}}'s private order is delivered."
     }
   },
   "pickup": {
@@ -160,5 +164,19 @@
       "count": "Set count",
       "undo": "Undo"
     }
+  },
+  "private": {
+    "tag": "Private",
+    "open": "Open {{name}}'s private order",
+    "noAddress": "No address saved",
+    "notes": "Notes",
+    "delivered": "Delivered",
+    "collected": "Collected"
+  },
+  "links": {
+    "directions": "Directions",
+    "directionsTo": "Directions to {{name}}",
+    "map": "Map",
+    "mapOf": "View on map: {{name}}"
   }
 }

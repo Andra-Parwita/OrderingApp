@@ -39,7 +39,7 @@ describe('packModel', () => {
     const mixed = makeOrder({
       lines: [{ ...line('lemper', 1), ticked: true }, line('nasi', 1)],
     });
-    const bags = bagsOf([mixed, orders[0]!], POINTS, (id) => id === 'lemper');
+    const bags = bagsOf([mixed, orders[0]!], POINTS, (l) => l.itemId === 'lemper');
     expect(bags).toHaveLength(1);
     expect(bags[0]).toMatchObject({ ticked: 1, total: 1 });
   });
@@ -62,5 +62,21 @@ describe('packModel', () => {
     expect(toggledIds(order, 'tempe').sort()).toEqual(['nasi', 'tempe']);
     expect(toggledIds(order, 'nasi')).toEqual([]);
     expect(withTicks(order, ['tempe']).lines.map((l) => l.ticked)).toEqual([undefined, true]);
+  });
+});
+
+describe('private bags (plan 081)', () => {
+  it('tags a private order and packs it for its event time, after the earlier pickups', () => {
+    const priv = makeOrder({
+      id: 'p',
+      code: 'PPPPPP',
+      fulfilment: 'delivery',
+      private: { eventDate: '2026-10-10', eventTime: '10:30' },
+      lines: [line('nasi', 1)],
+    });
+    const bags = sortBags(bagsOf([...orders, priv], POINTS), 'time');
+    expect(bags.map((bag) => bag.order.id)).toEqual(['b', 'p', 'a', 'c']);
+    expect(bags[1]).toMatchObject({ private: true, time: '10:30', place: null });
+    expect(bags[0]?.private).toBe(false);
   });
 });

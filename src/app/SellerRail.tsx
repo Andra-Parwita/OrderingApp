@@ -11,6 +11,7 @@ import {
   type SellerOrdersRootState,
 } from '../features/seller-orders';
 import { ABOUT_NS } from '../features/seller-about';
+import { PRIVATE_NS, usePrivateDueCount } from '../features/seller-private';
 import { HELP_NS } from '../features/seller-help';
 import { SellerPicker } from '../components/SellerPicker';
 import { KitchenSwitcher } from './KitchenSwitcher';
@@ -23,6 +24,7 @@ import { SCREEN_HEIGHT, TOP_BARS } from '../theme/screen';
 const LABEL_KEY: Readonly<Record<NavId, string>> = {
   home: 'sellerNav.navHome',
   orders: 'sellerNav.navOrders',
+  private: 'nav',
   kitchen: 'sellerNav.navKitchen',
   handover: 'sellerNav.navHandover',
   sell: 'sellerNav.navSell',
@@ -299,11 +301,14 @@ export function SellerRail({
       ? t(LABEL_KEY.help, { ns: HELP_NS })
       : id === 'about'
         ? t(LABEL_KEY.about, { ns: ABOUT_NS })
-        : t(LABEL_KEY[id]);
+        : id === 'private'
+          ? t(LABEL_KEY.private, { ns: PRIVATE_NS })
+          : t(LABEL_KEY[id]);
   const collapseLabel = t(collapsed ? 'sellerNav.expand' : 'sellerNav.collapse');
   const notPublished = t('sellerNav.notPublished');
   const ordersCount = useOrdersCount();
   const unseenNew = useUnseenNewOrders();
+  const privateDue = usePrivateDueCount();
   return (
     <Column>
       <Rail aria-label={t('sellerNav.label')} $collapsed={collapsed}>
@@ -359,6 +364,16 @@ export function SellerRail({
                     {collapsed ? <Hidden>{tip}</Hidden> : label(id)}
                     {id === 'orders' && ordersCount !== null && !collapsed ? (
                       <Count>{ordersCount}</Count>
+                    ) : null}
+                    {id === 'private' && privateDue > 0 ? (
+                      collapsed ? (
+                        <>
+                          <Dot aria-hidden="true" />
+                          <Hidden>{privateDue}</Hidden>
+                        </>
+                      ) : (
+                        <Count>{privateDue}</Count>
+                      )
                     ) : null}
                     {flagged && !collapsed ? (
                       <Badge>

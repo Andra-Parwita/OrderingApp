@@ -4,6 +4,7 @@ import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import { parseOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
+import { PrivateTag } from '../../components/PrivateTag';
 import { SlideOver } from '../../ui';
 import { COOK_NS } from './i18n/register';
 import type { CookRow } from './cookModel';
@@ -68,8 +69,11 @@ export function WhoOrderedPanel({
       <List>
         {people.map((who) => (
           <li key={who.code}>
-            <Person to={`/seller/orders/${parseOrderCode(who.code) ?? who.code}`}>
+            <Person
+              to={`/seller/${who.private ? 'private' : 'orders'}/${parseOrderCode(who.code) ?? who.code}`}
+            >
               <b>{who.firstName}</b>
+              {who.private ? <PrivateTag label={t('privateTag')} /> : null}
               <Mono>{who.code}</Mono>
               <Qty>×{who.qty}</Qty>
               <Muted>{t(`who.${who.fulfilment}`)}</Muted>

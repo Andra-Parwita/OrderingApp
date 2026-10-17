@@ -6,9 +6,11 @@ import type { ApiResult } from '../../api/http';
 import { staffSignedOut } from '../../api/staffSignedOut';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchMade } from '../../api/made';
+import { fetchPrivate } from '../../api/private';
 import { fetchSellerMenu, fetchSellerOrders } from '../../api/client';
 import type { MadeResponse } from '../../../shared/madeContract';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
+import type { PrivateListResponse } from '../../../shared/privateContract';
 import type { SellerOrdersResponse } from '../../../shared/orderContract';
 import { loaded, loadFailed, pollingStarted, pollingStopped, refreshRequested } from './cookSlice';
 
@@ -21,22 +23,31 @@ export function* loadCook(changed: Changed) {
   const wantMenu = everything || changed.has('menu.changed');
   if (!wantOrders && !wantMenu) return;
   const slug = currentSellerSlug();
-  const [orders, made, menu] = (yield all([
+  const [orders, made, menu, privateToday] = (yield all([
     wantOrders ? call(fetchSellerOrders, undefined, slug) : null,
     wantOrders ? call(fetchMade, undefined, slug) : null,
     wantMenu ? call(fetchSellerMenu, undefined, slug) : null,
+    // Plan 081: today's private orders move with the same order events.
+    wantOrders ? call(fetchPrivate, { day: 'today' }, slug) : null,
   ])) as [
     ApiResult<SellerOrdersResponse> | null,
     ApiResult<MadeResponse> | null,
     ApiResult<SellerMenuResponse> | null,
+    ApiResult<PrivateListResponse> | null,
   ];
-  if ((orders && !orders.ok) || (made && !made.ok) || (menu && !menu.ok)) {
+  if (
+    (orders && !orders.ok) ||
+    (made && !made.ok) ||
+    (menu && !menu.ok) ||
+    (privateToday && !privateToday.ok)
+  ) {
     yield put(loadFailed());
     return;
   }
   yield put(
     loaded({
       ...(orders?.ok ? { orders: orders.data.orders } : {}),
+      ...(privateToday?.ok ? { privateOrders: privateToday.data.orders } : {}),
       ...(made?.ok ? { made: made.data.made } : {}),
       ...(menu?.ok
         ? {

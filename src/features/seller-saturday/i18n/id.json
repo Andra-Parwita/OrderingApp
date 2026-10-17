@@ -36,6 +36,10 @@
       "out_for_delivery": "Pesanan {{name}} sedang diantar.",
       "arriving_soon": "{{name}} diberi tahu pesanan hampir tiba.",
       "delivered": "Pesanan {{name}} sudah terkirim."
+    },
+    "private": {
+      "collected": "Pesanan khusus {{name}} sudah diambil.",
+      "delivered": "Pesanan khusus {{name}} sudah terkirim."
     }
   },
   "pickup": {
@@ -159,5 +163,19 @@
       "count": "Atur jumlah",
       "undo": "Batal"
     }
+  },
+  "private": {
+    "tag": "Khusus",
+    "open": "Buka pesanan khusus {{name}}",
+    "noAddress": "Alamat belum disimpan",
+    "notes": "Catatan",
+    "delivered": "Terkirim",
+    "collected": "Diambil"
+  },
+  "links": {
+    "directions": "Petunjuk arah",
+    "directionsTo": "Petunjuk arah ke {{name}}",
+    "map": "Peta",
+    "mapOf": "Lihat di peta: {{name}}"
   }
 }

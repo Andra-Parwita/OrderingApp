@@ -1,4 +1,4 @@
-import type { Order, PickupPoint } from '../../../shared/domain';
+import type { Order, OrderLine, PickupPoint } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
 
 // Pure Kitchen · Pack maths (D-066). Cancelled orders and orders without items have no bag.
@@ -10,24 +10,26 @@ export type Bag = {
   code: string;
   /** The pickup place name, or null for a delivery. */
   place: string | null;
-  /** "HH:MM" the pickup window opens; null for a delivery. */
+  /** "HH:MM" the pickup window opens (a private order: its event time); null for a delivery. */
   time: string | null;
   ticked: number;
   total: number;
   packed: boolean;
+  /** Plan 081: a private order (tagged Private; its page is under Private). */
+  private: boolean;
 };
 
 export function bagsOf(
   orders: ReadonlyArray<Order>,
   points: ReadonlyArray<PickupPoint> | undefined,
   /** Chef filter: only orders with a line for which this is true; ticks count those lines. */
-  own: (itemId: string) => boolean = () => true,
+  own: (line: OrderLine) => boolean = () => true,
 ): Array<Bag> {
   const list = points ?? [];
   return orders
-    .filter((order) => order.status !== 'cancelled' && order.lines.some((line) => own(line.itemId)))
+    .filter((order) => order.status !== 'cancelled' && order.lines.some(own))
     .map((order) => {
-      const mine = order.lines.filter((line) => own(line.itemId));
+      const mine = order.lines.filter(own);
       const point =
         order.fulfilment === 'pickup'
           ? (list.find((candidate) => candidate.id === order.pickupPlaceId) ?? list[0])
@@ -36,7 +38,9 @@ export function bagsOf(
         order,
         code: formatOrderCode(order.code),
         place: point?.place ?? null,
-        time: point?.window.start ?? null,
+        // Plan 081: a private order is packed for its event time (delivery included).
+        time: order.private?.eventTime ?? point?.window.start ?? null,
+        private: order.private !== undefined,
         ticked: mine.filter((line) => line.ticked === true).length,
         total: mine.length,
         packed: order.packed === true,

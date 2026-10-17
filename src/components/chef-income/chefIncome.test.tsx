@@ -53,10 +53,10 @@ function prefs(chefsSeeIncome: boolean) {
   );
 }
 
-function show(role: 'seller' | 'chef' | 'helper') {
+function show(role: 'seller' | 'chef' | 'helper', chefId?: string) {
   return render(
     <AppThemeProvider>
-      <IncomeAccessProvider role={role}>
+      <IncomeAccessProvider role={role} chefId={chefId}>
         <ChefIncomeButton menuId="current" />
       </IncomeAccessProvider>
     </AppThemeProvider>,
@@ -155,5 +155,45 @@ describe('per-chef income (plan 069)', () => {
     fireEvent.click(box);
     await waitFor(() => expect(sent).toEqual({ chefsSeeIncome: false }));
     expect(box).not.toBeChecked();
+  });
+
+  describe('the private block (plan 081)', () => {
+    function privateToday() {
+      return [
+        http.get('*/api/seller/menus/current/chef-summary', () => HttpResponse.json(SUMMARY)),
+        http.get('*/api/seller/private', () =>
+          HttpResponse.json({ orders: [], due: { today: 0, tomorrow: 0 }, today: '2026-10-17' }),
+        ),
+        http.get('*/api/seller/private/chef-summary', () =>
+          HttpResponse.json({
+            date: '2026-10-17',
+            rows: [
+              { chefId: 'dewi', chefName: 'Chef Dewi', qty: 4, cents: 6000 },
+              { chefId: 'wati', chefName: 'Chef Wati', qty: 2, cents: 2400 },
+            ],
+          }),
+        ),
+      ];
+    }
+
+    it('the owner sees every chef of the day under "Private · date"', async () => {
+      await mockStore.reset();
+      server.use(...privateToday());
+      show('seller');
+      fireEvent.click(screen.getByRole('button', { name: 'Per chef' }));
+      const block = await screen.findByRole('region', { name: /^Private · / });
+      expect(within(block).getAllByRole('row')).toHaveLength(4); // header, 2 chefs, total
+      expect(block).toHaveTextContent('$84.00');
+    });
+
+    it('a chef sees only her own row', async () => {
+      await mockStore.reset();
+      server.use(prefs(true), ...privateToday());
+      show('chef', 'wati');
+      fireEvent.click(await screen.findByRole('button', { name: 'My income' }));
+      const block = await screen.findByRole('region', { name: /^Private · / });
+      expect(block).toHaveTextContent('Chef Wati');
+      expect(block).not.toHaveTextContent('Chef Dewi');
+    });
   });
 });

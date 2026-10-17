@@ -6,6 +6,7 @@ import type { MessageLogEntry, MessagePlaceResponse } from '../../../shared/hand
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
 import { Icon } from '../../ui';
+import { PrivateRow } from './PrivateRow';
 import { describeMessage, MessageDialog } from './MessageDialog';
 import { SATURDAY_NS } from './i18n/register';
 import {
@@ -143,6 +144,10 @@ type Props = Readonly<{
   onSent: (result: MessagePlaceResponse, place: PickupPoint) => void;
   /** Phone: one place at a time, chosen from a select. */
   single?: boolean;
+  /** Plan 081: private orders in `orders` open their page and are marked collected here. */
+  onOpenPrivate?: (code: string) => void;
+  onMarkPrivate?: (order: SellerOrder) => void;
+  busyCode?: string | null;
 }>;
 
 /** Which column an order belongs to: its place, else the menu's first (as the server counts it). */
@@ -152,7 +157,17 @@ function placeOf(order: SellerOrder, places: ReadonlyArray<PickupPoint>): string
 }
 
 /** Pickup: one column per place of the current menu. No per-row buttons (D-066, handoff). */
-export function PickupView({ places, orders, messages, lang, onSent, single = false }: Props) {
+export function PickupView({
+  places,
+  orders,
+  messages,
+  lang,
+  onSent,
+  single = false,
+  onOpenPrivate,
+  onMarkPrivate,
+  busyCode = null,
+}: Props) {
   const { t } = useTranslation(SATURDAY_NS);
   const [open, setOpen] = useState<PickupPoint | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
@@ -180,6 +195,8 @@ export function PickupView({ places, orders, messages, lang, onSent, single = fa
         {shown.map((place) => {
           const mine = orders.filter((o) => placeOf(o, places) === place.id);
           const waiting = mine.filter((o) => !isClosed(o.status)).length;
+          // A message reaches menu customers only: a private order has no WhatsApp contact here.
+          const reachable = mine.filter((o) => !o.private && !isClosed(o.status)).length;
           const collected = mine.filter((o) => o.status === 'collected').length;
           const last = messages.find((m) => m.group === `place:${place.id}`);
           return (
@@ -211,16 +228,27 @@ export function PickupView({ places, orders, messages, lang, onSent, single = fa
                 >
                   <Icon name="bell" />
                   {t('pickup.message')}
-                  <span>{waiting}</span>
+                  <span>{reachable}</span>
                 </MessageButton>
               </Head>
               {mine.length === 0 ? (
                 <Muted role="status">{t('pickup.empty')}</Muted>
               ) : (
                 <List>
-                  {mine.map((order) => (
-                    <PickupRow key={order.code} order={order} lang={lang} />
-                  ))}
+                  {mine.map((order) =>
+                    order.private ? (
+                      <PrivateRow
+                        key={order.code}
+                        order={order}
+                        lang={lang}
+                        busy={busyCode === order.code}
+                        onOpen={onOpenPrivate}
+                        onMark={(o) => onMarkPrivate?.(o)}
+                      />
+                    ) : (
+                      <PickupRow key={order.code} order={order} lang={lang} />
+                    ),
+                  )}
                 </List>
               )}
             </Column>
@@ -230,7 +258,11 @@ export function PickupView({ places, orders, messages, lang, onSent, single = fa
       {open ? (
         <MessageDialog
           place={open}
-          reach={orders.filter((o) => placeOf(o, places) === open.id && !isClosed(o.status)).length}
+          reach={
+            orders.filter(
+              (o) => !o.private && placeOf(o, places) === open.id && !isClosed(o.status),
+            ).length
+          }
           sent={messages.filter((m) => m.group === `place:${open.id}`)}
           lang={lang}
           onClose={() => setOpen(null)}

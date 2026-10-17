@@ -134,4 +134,28 @@ describe('LabelsScreen', () => {
     expect(within(label).getByText(/^Ambil · /)).toBeInTheDocument();
     expect(within(label).getByRole('img', { name: 'Kode QR pesanan' })).toBeInTheDocument();
   });
+
+  it('prints the private orders of today too, marked Private (plan 081)', async () => {
+    serveOrders();
+    server.use(
+      http.get('*/api/seller/private', () =>
+        HttpResponse.json({
+          orders: [
+            makeOrder({
+              id: 'p1',
+              code: 'PPPPPP',
+              firstName: 'Bu Wayan',
+              fulfilment: 'delivery',
+              private: { eventDate: '2026-10-17', eventTime: '12:00' },
+            }),
+          ],
+          due: { today: 1, tomorrow: 0 },
+          today: '2026-10-17',
+        }),
+      ),
+    );
+    renderThemed(<LabelsScreen />);
+    const label = await screen.findByRole('article', { name: 'PPP-PPP' });
+    expect(within(label).getByText('Private · Delivery · Sat 17 Oct')).toBeInTheDocument();
+  });
 });

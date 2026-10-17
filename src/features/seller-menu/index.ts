@@ -11,4 +11,9 @@ export {
 } from './useMenuWizard';
 export { registerSellerMenuI18n } from './i18n/register';
 export { menuSaga } from './menuSaga';
-export { menuReducer, opRequested, type MenuRootState } from './menuSlice';
+export { menuReducer, opRequested, type MenuData, type MenuRootState } from './menuSlice';
+// Plan 081: the private order editor picks dishes the way the wizard does and makes new ones.
+export { DishPicker } from './DishPicker';
+export { DishEditorHost, useDishEditor } from './DishEditorHost';
+export { useMenuData, useOpWatch } from './menuShared';
+export { parsePriceInput, priceInputOf } from './itemForm';

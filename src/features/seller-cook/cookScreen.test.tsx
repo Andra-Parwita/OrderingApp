@@ -11,6 +11,8 @@ import {
   MENU,
   createTestStore,
   renderWithStore,
+  line,
+  makeOrder,
   sampleOrders,
   seed,
   setupI18n,
@@ -38,6 +40,31 @@ function renderKitchen(): TestStore {
 }
 
 describe('Kitchen · Cook', () => {
+  it('adds the private orders of today to the dish totals, tagged Private (plan 081)', () => {
+    const store = createTestStore({ saga: false });
+    store.dispatch(
+      loaded({
+        orders: sampleOrders(),
+        menu: MENU,
+        privateOrders: [
+          makeOrder({
+            id: 'p1',
+            code: 'PPPPPP',
+            firstName: 'Bu Wayan',
+            private: { eventDate: '2026-10-10', eventTime: '12:00' },
+            lines: [line('lemper', 6)],
+          }),
+        ],
+      }),
+    );
+    renderWithStore(<CookScreen />, store);
+    const row = screen.getByText('Chicken lemper').closest('li');
+    if (!row) throw new Error('row');
+    expect(within(row).getByText('Private')).toBeInTheDocument();
+    expect(within(row).getByText(/Menu 5 · Private 6/)).toBeInTheDocument();
+    expect(within(row).getByText('0/11')).toBeInTheDocument();
+  });
+
   it('shows the title with the cooking day, the rows and the pickup / delivery split', () => {
     renderKitchen();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Kitchen · Sat 10 Oct');

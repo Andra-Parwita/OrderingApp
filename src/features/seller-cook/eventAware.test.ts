@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 describe('Cook reloads by event type', () => {
-  it('order.changed = orders + made; menu.changed = the menu; stock.changed = nothing', async () => {
+  it('order.changed = orders + made + private today; menu.changed = the menu; stock.changed = nothing', async () => {
     const live = createFakeLive();
     const store = createCookStore({ saga: true, pollMs: 100_000, channel: live.channel });
     store.dispatch(cookStarted());
@@ -46,9 +46,13 @@ describe('Cook reloads by event type', () => {
     expect(paths).toEqual([]);
 
     live.event('order.changed');
-    await waitFor(() => paths.length >= 2);
+    await waitFor(() => paths.length >= 3);
     await sleep(100);
-    expect([...paths].sort()).toEqual(['/api/seller/made', '/api/seller/orders']);
+    expect([...paths].sort()).toEqual([
+      '/api/seller/made',
+      '/api/seller/orders',
+      '/api/seller/private',
+    ]);
 
     paths = [];
     live.event('menu.changed');

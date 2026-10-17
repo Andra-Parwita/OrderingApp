@@ -28,6 +28,7 @@ import {
 import { ChevronDownIcon, SearchIcon } from './PhoneIcons';
 import { PhoneOrderRow } from './PhoneOrderRow';
 import { ChefIncomeButton } from '../../components/chef-income';
+import { PrivateToday } from './PrivateToday';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import {
   selectCounts,
@@ -382,6 +383,7 @@ function PhoneOrdersContent({
         </SearchRow>
       ) : null}
       <ListScroll>
+        <PrivateToday />
         {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
         {list.status === 'error' ? (
           <ErrorBox role="alert">

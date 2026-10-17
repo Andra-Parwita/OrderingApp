@@ -21,5 +21,6 @@
   "noValue": "—",
   "settingTitle": "Koki bisa melihat pendapatannya sendiri",
   "settingHint": "Koki hanya melihat porsi dan pendapatannya sendiri, tidak milik koki lain. Pembantu tidak pernah melihatnya.",
-  "settingFailed": "Tidak bisa menyimpan. Coba lagi."
+  "settingFailed": "Tidak bisa menyimpan. Coba lagi.",
+  "privateTitle": "Khusus · {{date}}"
 }

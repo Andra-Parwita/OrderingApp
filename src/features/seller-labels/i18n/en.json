@@ -30,5 +30,6 @@
   "previewCount_one": "{{count}} label for {{orders}}",
   "previewCount_other": "{{count}} labels for {{orders}}",
   "ordersCount_one": "{{count}} order",
-  "ordersCount_other": "{{count}} orders"
+  "ordersCount_other": "{{count}} orders",
+  "privateTag": "Private"
 }

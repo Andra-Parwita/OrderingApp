@@ -17,6 +17,7 @@ import {
 import { LiveDot } from '../../components/LiveDot';
 import { useLang } from './orderText';
 import { OrderRow } from './OrderRow';
+import { PrivateToday } from './PrivateToday';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import { selectCookingDate, selectCounts, selectList } from './sellerOrdersSelectors';
 import { refreshRequested } from './sellerOrdersSlice';
@@ -164,6 +165,7 @@ function OrdersContent({
           enterKeyHint="search"
         />
       </Block>
+      <PrivateToday />
       <Grow>
         {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
         {list.status === 'error' ? (

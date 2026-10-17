@@ -330,7 +330,8 @@ export function OrderPageView(props: OrderPageViewProps) {
   // Change and Cancel only while the order is Ordered or Confirmed (spec §4.4): not once it is
   // ready or out for delivery.
   const stillOpen = order.status === 'ordered' || order.status === 'confirmed';
-  const canChange = !order.locked && stillOpen && orderingOpen;
+  // Plan 081: a private order is changed by the kitchen only (the customer asks on WhatsApp).
+  const canChange = !order.private && !order.locked && stillOpen && orderingOpen;
   const cutoffAt = menu?.week.cutoffAt;
   const step = deliveryStep(order);
   const readyPickup = order.fulfilment === 'pickup' && order.status === 'ready_for_pickup';
@@ -348,6 +349,13 @@ export function OrderPageView(props: OrderPageViewProps) {
       />
       <VisuallyHidden as="h1">{t('order.title')}</VisuallyHidden>
       <OrderHead eyebrow={eyebrow} code={order.code} onShowQr={props.onShowQr} />
+      {order.private ? (
+        <ChipRow>
+          <Chip tone="muted" icon="lock">
+            {t('order.private')}
+          </Chip>
+        </ChipRow>
+      ) : null}
 
       {order.status === 'cancelled' ? (
         <Banner $tone="danger" role="status">
@@ -374,7 +382,7 @@ export function OrderPageView(props: OrderPageViewProps) {
               {t('list.locked')}
             </Chip>
           ) : null}
-          {paid === undefined ? null : paid ? (
+          {order.private || paid === undefined ? null : paid ? (
             <Chip tone="conf" icon="check">
               {t('order.paid')}
             </Chip>
@@ -445,7 +453,12 @@ export function OrderPageView(props: OrderPageViewProps) {
             <span>{t('order.lockedBanner')}</span>
           </Note>
         ) : null}
-        {!order.locked && stillOpen && !orderingOpen ? <Hint>{t('order.closed')}</Hint> : null}
+        {!order.locked && !order.private && stillOpen && !orderingOpen ? (
+          <Hint>{t('order.closed')}</Hint>
+        ) : null}
+        {order.private ? (
+          <Hint role="status">{t('order.privateChange', { kitchen: info.kitchenName })}</Hint>
+        ) : null}
         {props.cancelError ? <Alert role="alert">{props.cancelError}</Alert> : null}
         <OutlineButton type="button" onClick={props.onWhatsApp}>
           <OrderIcon name="chat" />
@@ -570,20 +583,54 @@ export function Details({
         <Row>
           <dt>
             <Bold>
-              {paid === true ? t('order.totalPaid') : t('order.totalPay', { cook: info.cook })}
+              {order.private
+                ? t('order.privateTotal')
+                : paid === true
+                  ? t('order.totalPaid')
+                  : t('order.totalPay', { cook: info.cook })}
             </Bold>
           </dt>
           <dd>
             <Bold>{formatMoney(orderTotalCents(order), lang)}</Bold>
           </dd>
         </Row>
+        {order.private && (order.private.depositCents ?? 0) > 0 ? (
+          <Row>
+            <dt>{t('order.deposit')}</dt>
+            <dd>{formatMoney(order.private.depositCents ?? 0, lang)}</dd>
+          </Row>
+        ) : null}
+        {order.private ? (
+          <Row>
+            <dt>
+              <Bold>
+                {order.private.toPayCents > 0 ? t('order.stillToPay') : t('order.paidInFull')}
+              </Bold>
+            </dt>
+            {order.private.toPayCents > 0 ? (
+              <dd>
+                <Bold>{formatMoney(order.private.toPayCents, lang)}</Bold>
+              </dd>
+            ) : (
+              <dd />
+            )}
+          </Row>
+        ) : null}
+        {order.private && !delivery && info.whenText ? (
+          <Row>
+            <dt>
+              <Muted>{t('order.privateWhen')}</Muted>
+            </dt>
+            <dd>{info.whenText}</dd>
+          </Row>
+        ) : null}
         {delivery || place ? (
           <Row>
             <dt>
               <Muted>{delivery ? t('order.delivery') : t('order.pickup')}</Muted>
             </dt>
             <dd>
-              {delivery ? (info.dateText ?? '') : place}
+              {delivery ? (order.private ? (info.whenText ?? '') : (info.dateText ?? '')) : place}
               {delivery ? null : <PickupMapLine info={info.pickupMap} />}
             </dd>
           </Row>

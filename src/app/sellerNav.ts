@@ -8,6 +8,7 @@ import type { IconName } from '../ui';
 export const NAV_IDS = [
   'home',
   'orders',
+  'private',
   'kitchen',
   'handover',
   'sell',
@@ -18,7 +19,14 @@ export const NAV_IDS = [
 ] as const;
 export type NavId = (typeof NAV_IDS)[number];
 
-const HELPER_NAV_IDS: ReadonlyArray<NavId> = ['orders', 'handover', 'sell', 'help', 'about'];
+const HELPER_NAV_IDS: ReadonlyArray<NavId> = [
+  'orders',
+  'private',
+  'handover',
+  'sell',
+  'help',
+  'about',
+];
 
 export const PHONE_NAV_IDS = ['orders', 'handover', 'more'] as const;
 export type PhoneNavId = (typeof PHONE_NAV_IDS)[number];
@@ -26,6 +34,8 @@ export type PhoneNavId = (typeof PHONE_NAV_IDS)[number];
 export const HREF: Readonly<Record<NavId | 'more', string>> = {
   home: '/seller',
   orders: '/seller/orders',
+  // Plan 081: private (Khusus) orders sit under Orders; on a phone they are inside More.
+  private: '/seller/private',
   kitchen: '/seller/cook',
   handover: '/seller/hand-over',
   sell: '/seller/sell',
@@ -46,6 +56,7 @@ export const ICON: Readonly<Record<Exclude<NavId, 'home'> | 'more', IconName>> =
   help: 'help',
   about: 'info',
   orders: 'list',
+  private: 'gift',
   kitchen: 'pot',
   handover: 'box',
   sell: 'coin',
@@ -76,9 +87,11 @@ const under = (pathname: string, base: string) =>
 export const HELPER_HOME = '/seller/orders';
 
 // The pages a helper may open (plan 028): Orders (one order, not New order), Hand over, Sell, and
-// the phone's More and Devices. Anything else is turned back to Orders.
+// the phone's More and Devices. Anything else is turned back to Orders. Plan 081: and the private
+// orders (read-only; they move the status).
 const HELPER_PATHS = [
   '/seller/orders',
+  '/seller/private',
   '/seller/hand-over',
   '/seller/sell',
   '/seller/more',
@@ -112,6 +125,7 @@ export function activeNav(pathname: string): NavId {
     return 'handover';
   }
   if (under(pathname, '/seller/sell')) return 'sell';
+  if (under(pathname, '/seller/private')) return 'private';
   if (under(pathname, '/seller/about')) return 'about';
   if (under(pathname, '/seller/help')) return 'help';
   // Share-menu belongs to making and sharing a menu.
@@ -178,5 +192,9 @@ export function isPhoneOrdersList(pathname: string): boolean {
 
 /** Phone: one order and New order are full-screen tasks with their own pinned buttons, so the tab bar steps aside. */
 export function hidesPhoneBar(pathname: string): boolean {
-  return under(pathname, '/seller/new') || pathname.startsWith('/seller/orders/');
+  return (
+    under(pathname, '/seller/new') ||
+    pathname.startsWith('/seller/orders/') ||
+    pathname.startsWith('/seller/private/')
+  );
 }

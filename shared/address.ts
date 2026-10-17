@@ -85,6 +85,22 @@ export function directionsUrl(address: DeliveryAddress, apple = false): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
 }
 
+/** Directions to a free-text address (a menu order's address kept on the phone). Plan 081. */
+export function textDirectionsUrl(text: string, apple = false): string {
+  const query = encodeURIComponent(text.trim());
+  return apple
+    ? `https://maps.apple.com/?daddr=${query}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${query}`;
+}
+
+/** A map search for a free-text address. */
+export function textMapUrl(text: string, apple = false): string {
+  const query = encodeURIComponent(text.trim());
+  return apple
+    ? `https://maps.apple.com/?q=${query}`
+    : `https://www.google.com/maps/search/?api=1&query=${query}`;
+}
+
 /** Street, suburb and postcode are all filled (the checkout needs them before it goes on). */
 export function isAddressComplete(address: DeliveryAddress | null | undefined): boolean {
   return (

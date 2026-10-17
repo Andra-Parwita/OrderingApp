@@ -284,7 +284,10 @@ export type SellerRepository = {
     day?: 'today';
     dueOnly?: boolean;
   }): Promise<PrivateListResponse>;
-  privateChefSummary(date: string): Promise<PrivateChefSummaryResponse>;
+  privateChefSummary(
+    date: string,
+    asChefId?: string,
+  ): Promise<PrivateChefSummaryResponse | 'private'>;
   /** The order by code when it is a private one, else undefined. */
   getPrivate(code: string): Promise<SellerOrder | undefined>;
   /**

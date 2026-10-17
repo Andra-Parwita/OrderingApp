@@ -251,7 +251,7 @@ export function SellerLayout() {
           ) : null}
         </Top>
         <Sheet $tablet={tablet} $fixed={fixed} onScrollCapture={onSheetScroll}>
-          <IncomeAccessProvider role={me?.role}>
+          <IncomeAccessProvider role={me?.role} chefId={me?.chefId}>
             <ReadOnlyOrdersProvider value={me?.role === 'helper'}>
               <Scroller $on={homeTablet}>
                 {tabletOnlyHere ? <TabletOnlyPage /> : <Outlet />}

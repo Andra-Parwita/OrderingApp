@@ -8,13 +8,21 @@ export type CookListState =
 export type CookState = {
   list: CookListState;
   orders: Array<Order>;
+  /** Plan 081: the kitchen's private orders of today (not cancelled), shown with the menu's. */
+  privateOrders: Array<Order>;
   menu: CookMenu | null;
   /** Dishes made so far, from the server (shared by every device). */
   made: Record<string, number>;
 };
 export type CookRootState = { sellerCook: CookState };
 
-const initialState: CookState = { list: { status: 'loading' }, orders: [], menu: null, made: {} };
+const initialState: CookState = {
+  list: { status: 'loading' },
+  orders: [],
+  privateOrders: [],
+  menu: null,
+  made: {},
+};
 
 const cookSlice = createSlice({
   name: 'sellerCook',
@@ -30,6 +38,7 @@ const cookSlice = createSlice({
       state,
       action: PayloadAction<{
         orders?: Array<Order>;
+        privateOrders?: Array<Order>;
         menu?: CookMenu;
         made?: Record<string, number>;
       }>,
@@ -41,6 +50,12 @@ const cookSlice = createSlice({
         JSON.stringify(state.orders) !== JSON.stringify(action.payload.orders)
       ) {
         state.orders = action.payload.orders;
+      }
+      if (
+        action.payload.privateOrders &&
+        JSON.stringify(state.privateOrders) !== JSON.stringify(action.payload.privateOrders)
+      ) {
+        state.privateOrders = action.payload.privateOrders;
       }
       if (
         action.payload.menu &&
@@ -64,6 +79,8 @@ const cookSlice = createSlice({
     orderReplaced(state, action: PayloadAction<Order>) {
       const index = state.orders.findIndex((order) => order.id === action.payload.id);
       if (index >= 0) state.orders[index] = action.payload;
+      const privateIndex = state.privateOrders.findIndex((order) => order.id === action.payload.id);
+      if (privateIndex >= 0) state.privateOrders[privateIndex] = action.payload;
     },
     loadFailed(state) {
       state.list =

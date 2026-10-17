@@ -3,8 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import { formatOrderCode } from '../../../shared/orderCode';
+import { setOrderStatus } from '../../api/client';
+import { currentSellerSlug } from '../../api/device/sellerContext';
+import { PrivateTag } from '../../components/PrivateTag';
 import { Button } from '../../ui';
 import { DeliveryAddressBlock } from './DeliveryAddressBlock';
+import { PrivateDeliveryAddress } from './PrivateToday';
+import { usePrivateToday } from './usePrivateToday';
 import { SELLER_NS } from './i18n/register';
 import { itemsSummary, useLang } from './orderText';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
@@ -75,18 +80,36 @@ function DeliveriesContent({ onBack }: Readonly<{ onBack: () => void }>) {
       dispatch(pollingStopped());
     };
   }, [dispatch]);
-  const deliveries = orders
+  // Plan 081: today's private deliveries join the list (sorted by event time, after nothing special).
+  const { orders: privateToday, reload } = usePrivateToday();
+  const deliveries = [...orders, ...privateToday]
     .filter((order) => order.fulfilment === 'delivery' && order.status !== 'cancelled')
     .sort(
       (a, b) =>
         Number(a.status === 'delivered') - Number(b.status === 'delivered') ||
+        (a.private?.eventTime ?? '').localeCompare(b.private?.eventTime ?? '') ||
         a.createdAt.localeCompare(b.createdAt),
     );
   const open = deliveries.filter((order) => order.status !== 'delivered').length;
   const done = useCallback(
-    (code: string, from: (typeof orders)[number]['status']) =>
-      dispatch(statusChangeRequested({ code, to: 'delivered', from, force: true })),
-    [dispatch],
+    (order: (typeof orders)[number]) => {
+      if (order.private) {
+        // A private order is not in the menu's list: move it directly, then reload today's.
+        void setOrderStatus(order.code, 'delivered', undefined, currentSellerSlug(), true).then(
+          reload,
+        );
+        return;
+      }
+      dispatch(
+        statusChangeRequested({
+          code: order.code,
+          to: 'delivered',
+          from: order.status,
+          force: true,
+        }),
+      );
+    },
+    [dispatch, reload],
   );
   return (
     <Page>
@@ -105,16 +128,24 @@ function DeliveriesContent({ onBack }: Readonly<{ onBack: () => void }>) {
             <header>
               <b>{order.firstName}</b>
               <code>{formatOrderCode(order.code)}</code>
+              {order.private ? <PrivateTag label={t('private.tag')} /> : null}
+              {order.private?.eventTime ? <code>{order.private.eventTime}</code> : null}
             </header>
             <p>{itemsSummary(order, lang)}</p>
-            <DeliveryAddressBlock order={order} showEmpty />
+            {order.private ? (
+              order.address && 'address' in order.address ? (
+                <PrivateDeliveryAddress address={order.address.address} />
+              ) : (
+                <p>{t('address.none')}</p>
+              )
+            ) : (
+              <DeliveryAddressBlock order={order} showEmpty />
+            )}
             {order.status === 'delivered' ? (
               <p>{t('address.deliveredDone')}</p>
             ) : (
               <div>
-                <Button onClick={() => done(order.code, order.status)}>
-                  {t('address.delivered')} ✓
-                </Button>
+                <Button onClick={() => done(order)}>{t('address.delivered')} ✓</Button>
               </div>
             )}
           </Item>

@@ -3,6 +3,7 @@ import i18n from 'i18next';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Me } from '../../shared/authContract';
+import { registerPrivateI18n } from '../features/seller-private';
 import { HelpScreen, registerSellerHelpI18n } from '../features/seller-help';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
@@ -32,6 +33,7 @@ beforeAll(async () => {
     }) as unknown as MediaQueryList;
   await initI18n();
   registerSellerHelpI18n();
+  registerPrivateI18n();
 });
 
 afterEach(async () => {
@@ -88,6 +90,7 @@ describe('seller shell, tablet', () => {
     expect(linkNames(nav).map((text) => text?.replace('Not published', ''))).toEqual([
       'Home',
       'Orders',
+      'Private',
       'Kitchen',
       'Pickup & delivery',
       'Sell',
@@ -147,6 +150,7 @@ describe('seller shell, tablet', () => {
     const nav = screen.getByRole('navigation', { name: 'Seller' });
     expect(linkNames(nav)).toEqual([
       'Orders',
+      'Private',
       'Kitchen',
       'Pickup & delivery',
       'Menu',
@@ -159,7 +163,14 @@ describe('seller shell, tablet', () => {
     me = { role: 'helper', stage: 'full', sellerName: 'Delave', displayName: 'Dewi' };
     renderAt('/seller/orders');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
-    expect(linkNames(nav)).toEqual(['Orders', 'Pickup & delivery', 'Sell', 'Help', 'About']);
+    expect(linkNames(nav)).toEqual([
+      'Orders',
+      'Private',
+      'Pickup & delivery',
+      'Sell',
+      'Help',
+      'About',
+    ]);
   });
 
   it('marks Menu "Not published" with a word while the week is a draft', async () => {
@@ -176,6 +187,7 @@ describe('seller shell, tablet', () => {
     expect(linkNames(nav).map((text) => text?.replace('Belum terbit', ''))).toEqual([
       'Beranda',
       'Pesanan',
+      'Khusus',
       'Dapur',
       'Serah terima',
       'Jual',
