@@ -43,7 +43,7 @@ The customer scans the QR on their container. If it's in their "My orders", they
 
 - **Bilingual EN / ID throughout** (screens, statuses, notifications, the WhatsApp text, labels) via i18n (react-i18next) from day one. Use the phone's language by default, with an EN/ID switch on every screen that is remembered. If one language is missing for an item, show the other. Dates follow the language (Saturday / Sabtu), and prices stay in AUD.
 - **Order codes:** 6 characters, uppercase letters and digits, no look-alikes (O/0, I/1), shown as `K7F-2QX`. Input is forgiving (lowercase, spaces, missing dash) and the order opens on the 6th character. The private order link uses a **separate long random token**. Code lookups are rate-limited.
-- **No phone numbers in the cloud. No account needed.** The phone remembers the customer's orders; an optional **Remember me** passkey (no email, no password, D-107) brings them, the first name and a sealed saved address to a new phone.
+- **No phone numbers in the cloud. No account needed.** The phone remembers the customer's orders; an optional **Remember me** passkey (no email, no password, D-107) brings them, the first name and a locked saved address to a new phone.
 - **A web app from a normal link** that feels native on phones and can be added to the iPhone Home Screen (needed for push on iOS 16.4+). No App Store.
 - **Web Push (VAPID):** ask for permission only after the customer taps "Turn on updates". Address notifications to the order or device, never to a phone number. Send in batches (50 subrequests per request on the Cloudflare free plan) and drop expired subscriptions.
 - **Destructive actions** (cancel, delete) need a second tap.

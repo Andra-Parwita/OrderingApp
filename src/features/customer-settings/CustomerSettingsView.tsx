@@ -15,7 +15,9 @@ import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import type { ThemePreference } from '../../theme/themePreference';
 import { KitchenBanner } from '../../components/KitchenBanner';
 import { PrivacyModal, RememberMeCard } from '../../components/remember-me';
-import { Icon, Segmented, type SegmentedOption } from '../../ui';
+import { Icon } from '../../ui';
+import { ChoiceSheet, type Choice } from './ChoiceSheet';
+import { ValueRow } from './ValueRow';
 import { screenHeightMinus } from '../../theme/screen';
 
 // The customer's Settings tab (spec §4.6): Language, Appearance, Order updates, and the "put it on
@@ -201,10 +203,7 @@ const Fallback = styled.p`
   }
 `;
 
-const LANGUAGES: ReadonlyArray<SegmentedOption<Language>> = [
-  { value: 'en', label: 'EN' },
-  { value: 'id', label: 'ID' },
-];
+type Picker = 'language' | 'theme' | 'size' | null;
 
 export type CustomerSettingsViewProps = Readonly<{
   lang: Language;
@@ -250,16 +249,28 @@ export function CustomerSettingsView({
   const install = useSavedOrdersInstall(installOverride);
   const browserOffersInstall = useCanInstall();
   const canInstall = canInstallOverride ?? browserOffersInstall;
-  const themes = useMemo<Array<SegmentedOption<ThemePreference>>>(
+  const [picker, setPicker] = useState<Picker>(null);
+  const languages = useMemo<Array<Choice<Language>>>(
     () => [
-      { value: 'auto', label: t('customerSettings.themeAuto') },
+      { value: 'en', label: t('customerSettings.langEn') },
+      { value: 'id', label: t('customerSettings.langId') },
+    ],
+    [t],
+  );
+  const themes = useMemo<Array<Choice<ThemePreference>>>(
+    () => [
+      {
+        value: 'auto',
+        label: t('customerSettings.themeAuto'),
+        hint: t('customerSettings.themeFollows'),
+      },
       { value: 'light', label: t('theme.light') },
       { value: 'dark', label: t('theme.dark') },
     ],
     [t],
   );
   const textSize = useTextSize();
-  const textSizes = useMemo<Array<SegmentedOption<TextSize>>>(
+  const textSizes = useMemo<Array<Choice<TextSize>>>(
     () => [
       { value: 'smaller', label: t('customerSettings.textSmaller') },
       { value: 'normal', label: t('customerSettings.textNormal') },
@@ -294,43 +305,28 @@ export function CustomerSettingsView({
       <Title>{t('customerSettings.title')}</Title>
       <Rows>
         {showLanguage ? (
-          <Row>
-            <Label>
-              <Name>{t('customerSettings.language')}</Name>
-            </Label>
-            <Segmented
-              options={LANGUAGES}
-              value={lang}
-              onChange={onLang}
-              label={t('language.label')}
-            />
-          </Row>
+          <ValueRow
+            label={t('customerSettings.language')}
+            value={languages.find((choice) => choice.value === lang)?.label ?? lang}
+            onOpen={() => {
+              setPicker('language');
+            }}
+          />
         ) : null}
-        <Row>
-          <Label>
-            <Name>{t('customerSettings.theme')}</Name>
-            <Hint>
-              {theme === 'auto' ? t('customerSettings.themeAutoHint') : t(`theme.${theme}`)}
-            </Hint>
-          </Label>
-          <Segmented
-            options={themes}
-            value={theme}
-            onChange={onTheme}
-            label={t('customerSettings.theme')}
-          />
-        </Row>
-        <Row>
-          <Label>
-            <Name>{t('customerSettings.textSize')}</Name>
-          </Label>
-          <Segmented
-            options={textSizes}
-            value={textSize}
-            onChange={setTextSize}
-            label={t('customerSettings.textSize')}
-          />
-        </Row>
+        <ValueRow
+          label={t('customerSettings.theme')}
+          value={themes.find((choice) => choice.value === theme)?.label ?? theme}
+          onOpen={() => {
+            setPicker('theme');
+          }}
+        />
+        <ValueRow
+          label={t('customerSettings.textSize')}
+          value={textSizes.find((choice) => choice.value === textSize)?.label ?? textSize}
+          onOpen={() => {
+            setPicker('size');
+          }}
+        />
         <Row>
           <Label>
             <Name id="settings-updates">{t('customerSettings.updatesTitle')}</Name>
@@ -365,6 +361,39 @@ export function CustomerSettingsView({
           </AboutButton>
         </Row>
       </Rows>
+      {picker === 'language' ? (
+        <ChoiceSheet
+          title={t('customerSettings.language')}
+          choices={languages}
+          value={lang}
+          onPick={onLang}
+          onClose={() => {
+            setPicker(null);
+          }}
+        />
+      ) : null}
+      {picker === 'theme' ? (
+        <ChoiceSheet
+          title={t('customerSettings.theme')}
+          choices={themes}
+          value={theme}
+          onPick={onTheme}
+          onClose={() => {
+            setPicker(null);
+          }}
+        />
+      ) : null}
+      {picker === 'size' ? (
+        <ChoiceSheet
+          title={t('customerSettings.textSize')}
+          choices={textSizes}
+          value={textSize}
+          onPick={setTextSize}
+          onClose={() => {
+            setPicker(null);
+          }}
+        />
+      ) : null}
       {aboutOpen ? (
         <PrivacyModal
           onClose={() => {

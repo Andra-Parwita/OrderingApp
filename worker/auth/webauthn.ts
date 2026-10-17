@@ -16,9 +16,8 @@ import {
   type RegistrationResponseJSON,
 } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
-import { APP_NAME } from '../../shared/appName';
+import { customerLabel, passkeyLabel } from '../../shared/passkeyLabels';
 import { passkeysAvailable, RP_NAME, type Me } from '../../shared/authContract';
-import { REMEMBER_ME_LABEL } from '../../shared/customerContract';
 import { fromHex, sha256Hex } from '../db/crypto';
 import type {
   AuthRepository,
@@ -60,9 +59,9 @@ async function userHandle(accountId: string): Promise<Uint8Array<ArrayBuffer>> {
 }
 
 function labelOf(me: Me): string {
-  if (me.role === 'admin') return `${APP_NAME} admin`;
-  // One passkey per person across kitchens (plan 033): the name, not the kitchen.
-  return me.displayName ?? me.sellerName ?? APP_NAME;
+  // One passkey per person across kitchens (plan 033): the name, not the kitchen (plan 092).
+  if (me.role === 'admin') return passkeyLabel('admin', me.displayName);
+  return passkeyLabel('seller', me.displayName ?? me.sellerName);
 }
 
 // ---- Registration ----
@@ -212,11 +211,6 @@ export function signInWithPasskey(
 /** Opaque per account, not the account id itself. */
 async function customerHandle(accountId: string): Promise<Uint8Array<ArrayBuffer>> {
   return fromHex(await sha256Hex(`customer-handle:${accountId}`)) as Uint8Array<ArrayBuffer>;
-}
-
-/** "<first name> · Remember me": what the phone's passkey list shows (never "account"). */
-function customerLabel(firstName: string): string {
-  return firstName === '' ? REMEMBER_ME_LABEL : `${firstName} · ${REMEMBER_ME_LABEL}`;
 }
 
 /** Options to make the customer's first passkey. The new account id rides in the challenge row. */

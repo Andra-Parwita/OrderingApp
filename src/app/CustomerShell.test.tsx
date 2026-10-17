@@ -222,19 +222,23 @@ describe('customer Settings', () => {
   it('switches the language and remembers it', async () => {
     renderAt('/settings');
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Language/ }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Bahasa Indonesia' }));
     expect(await screen.findByRole('heading', { name: 'Pengaturan' })).toBeInTheDocument();
     expect(localStorage.getItem('lang')).toBe('id');
     expect(within(tabBar()).getByRole('link', { name: 'Pesanan saya' })).toBeInTheDocument();
   });
 
-  it('switches the theme and remembers it', () => {
+  it('switches the theme and remembers it', async () => {
     renderAt('/settings');
-    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Appearance/ }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Dark/ }));
     expect(localStorage.getItem('theme')).toBe('dark');
-    fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Appearance/ }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Light/ }));
     expect(localStorage.getItem('theme')).toBe('light');
-    fireEvent.click(screen.getByRole('radio', { name: 'Auto' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Appearance/ }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Auto/ }));
     expect(localStorage.getItem('theme')).toBe('auto');
   });
 

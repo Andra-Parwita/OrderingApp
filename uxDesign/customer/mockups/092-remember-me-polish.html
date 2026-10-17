@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Remember me polish (mock-up)</title>
+<style>
+/* Tokens: same customer "ondeonde" theme as 087-keep-my-orders.html */
+:root{
+  --beige:#EADBC2; --ink:#2B1D12; --bobo:#d9772b; --stage:#d9d4c6; --pill-bg:#fff6ea; --pill-border:#ead8bf;
+  --text:#1C1F1A; --muted:#5D6358; --edge:#7F857A; --ok:#1F6B5C; --danger:#A93724; --onfill:#FFFFFF; --warnbg:#FBF1D9; --warn:#8A5A00;
+  --fill:#2F6B36; --acc:#2A5F30; --tint:#E5EFE2; --bg:#F6F2E8; --surface:#FFFDF8; --line:#E4DED0;
+}
+:root[data-theme=dark]{
+  --text:#F1EEE6; --muted:#A9AFA3; --edge:#6B7266; --ok:#7EC4B0; --danger:#E58573; --onfill:#0F1E10; --warnbg:rgba(233,185,73,.10); --warn:#E9B949; --bobo:#E8954F;
+  --fill:#8CC08A; --acc:#93C590; --tint:color-mix(in srgb,#8CC08A 15%,#121411); --bg:#121411; --surface:#181A16; --line:#2A2E27;
+  --pill-bg:#2A2117; --pill-border:#3D3022; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--stage);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:root[data-theme=dark] body{background:#0B0C0A}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:6px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* mock-up chrome */
+.top{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;padding:14px 16px}
+.rs{display:inline-flex;border:1px solid #6B6B66;border-radius:8px;overflow:hidden;font-size:.8125rem;font-weight:600;flex:none}
+.rs span{padding:7px 10px}
+.rs span.on{background:#8DC48F;color:#132015}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:6px 14px;font-size:.8125rem;font-weight:600;min-height:36px;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+:root[data-theme=dark] .seg{border-color:#6B5A44}
+:root[data-theme=dark] .seg button{color:#EADBC2}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:#EADBC2;color:#2B1D12}
+.lead{max-width:760px;margin:0 auto;padding:0 16px 14px;text-align:center;font-size:.875rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:28px 24px;justify-content:center;padding:0 16px 24px}
+figure{margin:0;width:390px}
+figcaption{margin-top:10px;font-size:.8125rem;color:var(--muted)}
+figcaption b{display:block;color:var(--text);font-size:.875rem}
+.frame{position:relative;background:var(--bg);color:var(--text);border-radius:18px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;flex-direction:column;width:390px;height:800px}
+
+/* app look */
+svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.scroll{flex:1;min-height:0;overflow-y:auto}
+.title{margin:0;padding:10px 16px 8px;font-size:1.75rem;line-height:1.2;font-weight:700}
+.lst{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.li{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:48px;padding:6px 16px;border-top:1px solid var(--line);font-size:.9375rem}
+.li:first-child{border-top:0}
+.li .v{color:var(--muted);font-size:.875rem;text-align:right}
+.tg{width:44px;height:26px;border-radius:999px;background:var(--fill);position:relative;flex:none}
+.tg::after{content:"";position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:var(--onfill)}
+.mini{display:inline-flex;border:1px solid var(--edge);border-radius:8px;overflow:hidden;font-size:.8125rem}
+.mini span{padding:4px 9px}.mini .s{background:var(--tint);color:var(--acc);font-weight:700}
+.tabbar{display:flex;flex:none;border-top:1px solid var(--line);background:var(--bg)}
+.tabbar div{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:56px;font-size:.75rem;color:var(--muted)}
+.tabbar .on{color:var(--acc);font-weight:700}
+.tabbar .on::before{content:"";position:absolute;top:0;width:2rem;height:3px;border-radius:0 0 3px 3px;background:var(--acc)}
+.tabbar svg{width:22px;height:22px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:16px;padding:16px}
+.card h3{margin:0 0 4px;font-size:1.0625rem;display:flex;align-items:center;gap:8px}
+.card p{margin:6px 0 0;font-size:.875rem;color:var(--muted)}
+.on-pill{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:700;color:var(--ok);background:var(--tint);border-radius:999px;padding:2px 10px}
+.on-pill svg{width:13px;height:13px;stroke-width:2.5}
+.main{display:flex;width:100%;align-items:center;justify-content:center;min-height:3.25rem;margin-top:14px;padding:0 16px;border:0;border-radius:999px;background:var(--fill);color:var(--onfill);font-weight:700;font-size:1rem;white-space:nowrap}
+.ghost{display:flex;width:100%;align-items:center;justify-content:center;min-height:44px;margin-top:8px;padding:0 16px;border:1px solid var(--edge);border-radius:999px;background:transparent;font-weight:700;font-size:.9375rem;white-space:nowrap}
+.lnks{display:flex;flex-direction:column;align-items:flex-start;margin-top:6px}
+.lnk{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:none;color:var(--acc);font-weight:600;font-size:.9375rem;white-space:nowrap;text-decoration:underline;text-underline-offset:3px}
+.fine{font-size:.8125rem;color:var(--muted);margin:0 0 2px}
+.code{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.code .l{font-size:.875rem;color:var(--muted)}
+.code .n{display:block;font-size:1.375rem;font-weight:700;letter-spacing:.06em;margin:2px 0}
+.note{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:.875rem}
+.note svg{width:18px;height:18px;margin-top:2px;color:var(--ok)}
+.note.warn svg{color:var(--warn)}
+.hintbox{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--warnbg);font-size:.8125rem;color:var(--muted)}
+.acts{margin-top:10px;border-top:1px solid var(--line)}
+.act{display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0;border:0;border-bottom:1px solid var(--line);background:transparent;font-size:.9375rem;font-weight:600;text-align:left}
+.act svg{color:var(--muted)}
+.act.del{color:var(--danger);font-weight:500;border-bottom:0}
+.act.del svg{color:var(--danger)}
+
+.scrim{position:absolute;inset:0;z-index:30;background:rgb(10 10 8/58%);display:flex;align-items:flex-end}
+.sheet{background:var(--surface);width:100%;max-height:94%;overflow-y:auto;border-radius:18px 18px 0 0;position:relative;padding:20px 18px 20px}
+.sheet h3{margin:0 0 6px;font-size:1.1875rem;line-height:1.25;padding-right:40px}
+.sheet p{margin:6px 0;font-size:.9375rem}
+.sheet .x{position:absolute;right:6px;top:6px;width:44px;height:44px;border-radius:50%;border:0;background:transparent;display:grid;place-items:center}
+.sheet h4{margin:18px 0 4px;padding-top:14px;border-top:1px solid var(--line);font-size:.9375rem;color:var(--acc)}
+.sheet h4.first{border-top:0;margin-top:10px;padding-top:0}
+.sheet ul{margin:0;padding-left:20px;font-size:.9375rem}
+.sheet li{margin:5px 0}
+.lbl{display:block;margin-top:14px;font-size:.875rem;font-weight:700}
+.in{margin-top:6px;min-height:48px;border:2px solid var(--acc);border-radius:12px;background:var(--bg);padding:11px 12px}
+.in i{font-style:normal;border-right:2px solid var(--text);margin-left:1px}
+.pk{margin-top:10px;padding:8px 12px;border-radius:10px;background:var(--tint);font-size:.8125rem;color:var(--muted)}
+.pk b{color:var(--text)}
+.sheet .btns{margin-top:6px}
+.cap{margin-top:18px;font-size:.8125rem;color:var(--muted)}
+.cap b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="seg" role="group" aria-label="Theme"><button type="button" data-th="light" aria-pressed="false">Light</button><button type="button" data-th="dark" aria-pressed="true">Dark</button></div>
+  <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="id" aria-pressed="false">ID</button></div>
+</div>
+<p class="lead" id="lead"></p>
+<div class="row" id="row"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const IC={
+ x:'<path d="M6 6l12 12M18 6 6 18"/>', next:'<path d="m9 18 6-6-6-6"/>', check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+ lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+ phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>',
+ out:'<path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"/>',
+ trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+ menu:'<path d="M4 9 5.5 4h13L20 9M4 9h16M4 9v11h16V9M9 20v-6h6v6"/>',
+ bag:'<path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+ info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'
+};
+const ic=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
+
+const T={
+en:{
+ lead:'Plan 092 · Remember me polish. Customer app at 390 px, sample data only (Indra, Dapur DellaVee, Adelaide, AUD). Use the switches for light/dark and EN/ID.',
+ tabs:['Menu','My orders','Settings'], setH:'Settings',
+ rows:[['Language','English'],['Appearance','Auto'],['Text size',''],['Order updates',''],['About and privacy','Read']],
+ offT:'Remember me', offP:'Optional. We remember your orders, name and address on this phone and on any other phone you use. No email, no password.',
+ turnOn:'Turn on', already:'I already use Remember me', alreadyHint:'Use this if you turned it on in another kitchen’s app.', code6:'Use a 6-digit code instead', learn:'Learn more',
+ on:'On', codeAt:'Your customer code at Dapur DellaVee', codeHint:'Each kitchen sees a different code. It is not linked to your name or phone.',
+ locked:'Your saved address is locked with your passkey.',
+ unlocked:'This phone can’t lock your address with your passkey, so it stays on this phone only. Your orders and name still follow you.',
+ keeperHint:'When your phone asks where to save it, choose Passwords (iPhone) or Google Password Manager (Android). Other password apps can\'t lock your address.',
+ addPh:'Add another phone', signOut:'Sign out on this phone', delAll:'Delete my saved data',
+ delNote:'Deletes your orders list, name and locked address from our servers. Orders already placed stay with the kitchen until it clears them.',
+ shT:'Turn on Remember me', shP:'We remember your orders, name and address on this phone and on any other phone you use. Ordering without it works just the same.',
+ nameL:'Your first name', nameV:'Indra',
+ named:'Your passkey will be named <b>Indra · customer (Remember me)</b>, so you can tell it apart in your passwords.',
+ addrLine:'We keep your address so it’s filled in for you next time.',
+ cont:'Continue', contNote:'Face ID or fingerprint comes next.', skip:'Skip', skipNote:'Skip and the passkey is named “Remember me · ShaggyBobo Order”.', close:'Close',
+ pT:'How we keep your data private',
+ sec:[
+  ['What we keep',['Your first name, your order (dishes, pickup or delivery, note) and your language, with the kitchen you ordered from.','Your phone number is never kept in the cloud.','No sign-ups, no ads and no payments in the app.']],
+  ['On this phone',['Your orders list, your first name for the next order, the last kitchen you used, and your language and theme.','In this browser only. Clearing the site data removes them.','If you turn on Remember me (optional), see its part below.']],
+  ['Your address',['If you give a delivery address, it is kept encrypted.','Only the kitchen’s team can see it.','It is deleted automatically one day after the menu ends (or when the order is cancelled).','Want it removed sooner? Ask the kitchen on WhatsApp.']],
+  ['Notifications',['Only if you allow them, and only for the orders saved on this phone.','If you allow them, we keep your browser’s notification address for that order.','They are removed when an order is cancelled or when the kitchen finishes its week.']],
+  ['How long',['Order details are deleted 4 weeks after the cooking day.','Only an empty marker stays, so an old link says it is archived.']],
+  ['Find my order',['Wrong tries keep a scrambled form of your internet address for about an hour at most, to stop guessing.']],
+  ['Remember me (optional)',['If you turn it on, we keep a random ID, your passkey’s public key, your first name and the list of your order links (which kitchen each belongs to). No email, no password, no phone number.','Your saved delivery address is locked with your passkey, so only your phones can read it (not even us). It is deleted when you haven’t ordered for 30 days.','Each kitchen sees a different customer code for you. It is not linked to your name or phone, and kitchens never see your ID.','A Remember me that has not been used for 12 months is deleted automatically.','Turn it off any time: Settings > Remember me > Delete my saved data removes everything on our side at once. Your phone keeps its own My orders.','To remove the passkey from your phone by hand: iPhone: Settings > Passwords. Android: Google Password Manager. A leftover passkey is useless once our data is deleted.']]
+ ],
+ pFoot:'Run by ShaggyBobo Order.',
+ cap:[['Settings, Remember me off','Items 4 and 6. One primary button, three quiet links, none wraps. The hint under “I already use Remember me” replaces “(e.g. in another kitchen’s app)”.'],
+  ['Settings, Remember me on, address locked','Items 2, 4 and 6. Code row with its hint, the lock line, then a tidy action list; delete is last and muted red.'],
+  ['Settings, on, no address lock (passkey in Keeper)','Items 3, 6 and 7. Plain reason, and what to do to get the lock.'],
+  ['Turn-on sheet with first name','Items 1, 2, 7 and 8. Name field names the passkey; Skip gives the generic name.'],
+  ['Privacy sheet','Items 5 and 6. Same facts, short headings, bullets, spacing.']]
+},
+id:{
+ lead:'Rencana 092 · Penyempurnaan Ingat aku. Aplikasi pelanggan 390 px, hanya data contoh (Indra, Dapur DellaVee, Adelaide, AUD). Pakai tombol untuk terang/gelap dan EN/ID.',
+ tabs:['Menu','Pesananku','Pengaturan'], setH:'Pengaturan',
+ rows:[['Bahasa','Indonesia'],['Tampilan','Otomatis'],['Ukuran teks',''],['Kabar pesanan',''],['Tentang dan privasi','Baca']],
+ offT:'Ingat aku', offP:'Opsional. Kami ingat pesanan, nama, dan alamatmu di HP ini dan di HP lain yang kamu pakai. Tanpa email, tanpa kata sandi.',
+ turnOn:'Nyalakan', already:'Aku sudah pakai Ingat aku', alreadyHint:'Pilih ini kalau kamu menyalakannya di aplikasi dapur lain.', code6:'Pakai kode 6 angka saja', learn:'Selengkapnya',
+ on:'Aktif', codeAt:'Kode pelangganmu di Dapur DellaVee', codeHint:'Tiap dapur melihat kode yang berbeda. Tidak terhubung ke nama atau nomor HP-mu.',
+ locked:'Alamat tersimpanmu terkunci dengan passkey-mu.',
+ unlocked:'HP ini belum bisa mengunci alamatmu dengan passkey, jadi alamat hanya tersimpan di HP ini. Pesanan dan namamu tetap ikut.',
+ keeperHint:'Saat HP-mu bertanya di mana menyimpannya, pilih Passwords (iPhone) atau Google Password Manager (Android). Aplikasi kata sandi lain tidak bisa mengunci alamatmu.',
+ addPh:'Tambah HP lain', signOut:'Keluar di HP ini', delAll:'Hapus data tersimpanku',
+ delNote:'Menghapus daftar pesanan, nama, dan alamat terkunci milikmu dari server kami. Pesanan yang sudah dikirim tetap ada di dapur sampai dibersihkan.',
+ shT:'Nyalakan Ingat aku', shP:'Kami ingat pesanan, nama, dan alamatmu di HP ini dan di HP lain yang kamu pakai. Pesan tanpa ini tetap bisa seperti biasa.',
+ nameL:'Nama depanmu', nameV:'Indra',
+ named:'Passkey-mu akan bernama <b>Indra · customer (Remember me)</b>, supaya mudah dibedakan di daftar kata sandimu.',
+ addrLine:'Kami menyimpan alamatmu supaya terisi otomatis lain kali.',
+ cont:'Lanjut', contNote:'Berikutnya Face ID atau sidik jari.', skip:'Lewati', skipNote:'Kalau dilewati, passkey bernama “Remember me · ShaggyBobo Order”.', close:'Tutup',
+ pT:'Cara kami menjaga datamu',
+ sec:[
+  ['Yang kami simpan',['Nama depan Anda, pesanan Anda (hidangan, ambil sendiri atau diantar, catatan) dan bahasa Anda, bersama dapur tempat Anda memesan.','Nomor telepon Anda tidak pernah disimpan di cloud.','Tanpa perlu daftar, tanpa iklan, dan tanpa pembayaran di aplikasi.']],
+  ['Di ponsel ini',['Daftar pesanan Anda, nama depan untuk pesanan berikutnya, dapur yang terakhir Anda pakai, serta bahasa dan tampilan Anda.','Hanya di browser ini. Menghapus data situs akan menghapusnya.','Kalau Anda menyalakan Ingat aku (opsional), lihat bagiannya di bawah.']],
+  ['Alamat Anda',['Jika Anda mengisi alamat pengantaran, alamat itu disimpan terenkripsi.','Hanya tim dapur yang bisa melihatnya.','Dihapus otomatis satu hari setelah menu selesai (atau saat pesanan dibatalkan).','Ingin dihapus lebih cepat? Hubungi dapur lewat WhatsApp.']],
+  ['Notifikasi',['Hanya jika Anda mengizinkan, dan hanya untuk pesanan yang tersimpan di ponsel ini.','Jika diizinkan, kami menyimpan alamat notifikasi browser Anda untuk pesanan itu.','Dihapus saat pesanan dibatalkan atau saat dapur menutup minggunya.']],
+  ['Berapa lama',['Rincian pesanan dihapus 4 minggu setelah hari memasak.','Yang tersisa hanya penanda kosong, jadi tautan lama menyatakan pesanan sudah diarsipkan.']],
+  ['Cari pesanan saya',['Percobaan yang salah menyimpan bentuk acak dari alamat internet Anda paling lama sekitar satu jam, untuk mencegah tebak-tebakan.']],
+  ['Ingat aku (opsional)',['Kalau kamu menyalakannya, kami menyimpan ID acak, kunci publik passkey-mu, nama depanmu, dan daftar tautan pesananmu (tiap pesanan milik dapur mana). Tanpa email, tanpa kata sandi, tanpa nomor HP.','Alamat antar tersimpanmu dikunci dengan passkey-mu, jadi hanya HP-mu yang bisa membacanya (kami pun tidak). Alamat dihapus kalau kamu tidak pesan selama 30 hari.','Tiap dapur melihat kode pelanggan yang berbeda untukmu. Tidak terhubung ke nama atau nomor HP-mu, dan dapur tidak pernah melihat ID-mu.','Ingat aku yang tidak dipakai selama 12 bulan dihapus otomatis.','Matikan kapan saja: Pengaturan > Ingat aku > Hapus data tersimpanku menghapus semuanya di sisi kami sekaligus. HP-mu tetap menyimpan Pesananku sendiri.','Untuk menghapus passkey dari HP-mu sendiri: iPhone: Pengaturan > Kata Sandi. Android: Google Password Manager. Passkey yang tersisa tidak berguna setelah data kami dihapus.']]
+ ],
+ pFoot:'Dijalankan oleh ShaggyBobo Order.',
+ cap:[['Pengaturan, Ingat aku mati','Butir 4 dan 6. Satu tombol utama, tiga tautan tenang, tidak ada yang terpotong. Petunjuk di bawah “Aku sudah pakai Ingat aku” menggantikan “(mis. di aplikasi dapur lain)”.'],
+  ['Pengaturan, Ingat aku aktif, alamat terkunci','Butir 2, 4, dan 6. Baris kode dengan petunjuknya, baris kunci, lalu daftar aksi yang rapi; hapus paling akhir dan merah redup.'],
+  ['Pengaturan, aktif, tanpa kunci alamat (passkey di Keeper)','Butir 3, 6, dan 7. Alasan yang jelas, dan cara mendapatkan kuncinya.'],
+  ['Sheet nyalakan dengan nama depan','Butir 1, 2, 7, dan 8. Kolom nama menamai passkey; Lewati memberi nama umum.'],
+  ['Sheet privasi','Butir 5 dan 6. Fakta sama, judul pendek, poin-poin, jarak lega.']]
+}};
+const S={th:'dark',lang:'en'};
+const t=()=>T[S.lang];
+
+const tabbar=()=>`<nav class="tabbar" aria-label="Main">${t().tabs.map((x,i)=>`<div class="${i==2?'on':''}">${ic(['menu','bag','gear'][i])}${x}</div>`).join('')}</nav>`;
+const list=()=>{const r=t().rows;
+ const id=S.lang==='id';
+ const rs=(opts,on)=>`<span class="rs">${opts.map((o,k)=>`<span class="${k===on?'on':''}">${o}</span>`).join('')}</span>`;
+ const v=i=>i===0?rs(['EN','ID'],id?1:0):i===1?rs(id?['Otomatis','Terang','Gelap']:['Auto','Light','Dark'],0):i===2?rs(id?['Kecil','Normal','Besar']:['Smaller','Normal','Larger'],1):i===3?'<span class="tg"></span>':`<span class="v">${r[i][1]}</span>`;
+ return `<div class="lst">${r.map((x,i)=>`<div class="li"><span>${x[0]}</span>${v(i)}</div>`).join('')}</div>`};
+const settings=inner=>`<div class="scroll"><h1 class="title">${t().setH}</h1>${list()}${inner}<div style="height:12px"></div></div>${tabbar()}`;
+
+const offCard=()=>{const L=t();return `<div class="card"><h3>${L.offT}</h3><p>${L.offP}</p>
+ <button class="main" type="button">${L.turnOn}</button>
+ <div class="lnks"><button class="lnk" type="button">${L.already}</button><p class="fine" style="margin:-4px 0 4px">${L.alreadyHint}</p>
+ <button class="lnk" type="button">${L.code6}</button><button class="lnk" type="button">${L.learn}</button></div></div>`};
+
+const onCard=locked=>{const L=t();return `<div class="card"><h3>${L.offT} · <span class="on-pill">${ic('check')}${L.on}</span></h3>
+ <div class="code"><span class="l">${L.codeAt}</span><span class="n">C-4821</span><p class="fine" style="margin:0">${L.codeHint}</p></div>
+ <div class="note ${locked?'':'warn'}">${ic(locked?'lock':'info')}<span>${locked?L.locked:L.unlocked}</span></div>
+ ${locked?'':`<div class="hintbox">${L.keeperHint}</div>`}
+ <div class="acts"><button class="act" type="button"><span>${L.addPh}</span>${ic('next')}</button><button class="act" type="button"><span>${L.signOut}</span>${ic('out')}</button><button class="act del" type="button"><span>${L.delAll}</span>${ic('trash')}</button></div>
+ <p class="fine" style="margin-top:8px">${L.delNote}</p></div>`};
+
+const sheet=(h,body)=>`<div class="scrim"><div class="sheet" role="dialog" aria-label="${h}"><button class="x" type="button" aria-label="${t().close}">${ic('x')}</button><h3>${h}</h3>${body}</div></div>`;
+
+const turnOnSheet=()=>{const L=t();return sheet(L.shT,`<p>${L.shP}</p>
+ <label class="lbl" for="fn">${L.nameL}</label><div class="in" id="fn" role="textbox" aria-label="${L.nameL}">${L.nameV}<i></i></div>
+ <div class="pk">${L.named}</div>
+ <div class="hintbox">${L.keeperHint}</div>
+ <div class="note">${ic('check')}<span>${L.addrLine}</span></div>
+ <button class="main" type="button">${L.cont}</button><p class="fine" style="text-align:center;margin-top:6px">${L.contNote}</p>
+ <button class="ghost" type="button">${L.skip}</button><p class="fine" style="text-align:center;margin-top:6px">${L.skipNote}</p>`)};
+
+const privacySheet=()=>{const L=t();return sheet(L.pT,L.sec.map((s,i)=>`<h4 class="${i?'':'first'}">${s[0]}</h4><ul>${s[1].map(x=>`<li>${x}</li>`).join('')}</ul>`).join('')+`<p class="fine" style="margin-top:16px">${L.pFoot}</p>`)};
+
+function render(){
+ const L=t();
+ const frames=[settings(offCard()),settings(onCard(true)),settings(onCard(false)),settings(offCard())+turnOnSheet(),settings(offCard())+privacySheet()];
+ $('#row').innerHTML=frames.map((f,i)=>`<figure><div class="frame">${f}</div><figcaption><b>${i+1} · ${L.cap[i][0]}</b>${L.cap[i][1]}</figcaption></figure>`).join('');
+ $('#lead').textContent=L.lead;
+ document.documentElement.dataset.theme=S.th; document.documentElement.lang=S.lang;
+ document.querySelectorAll('[data-th]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.th===S.th));
+ document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===S.lang));
+}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-th],[data-lang]'); if(!b)return;
+ if(b.dataset.th)S.th=b.dataset.th; else S.lang=b.dataset.lang;
+ render();
+});
+render();
+</script>
+</body>
+</html>

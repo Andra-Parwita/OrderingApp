@@ -307,10 +307,10 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
       l: 'No email, no password and no phone number. Only a passkey: their face, fingerprint or phone PIN.',
       steps: [
         {
-          text: 'It keeps their orders, first name and saved address, so they come back on a new phone.',
+          text: 'It keeps their orders, first name and saved address, so they come back on any phone they use.',
         },
         {
-          text: 'The saved address is sealed so only their own phones can read it. It is deleted after 30 days without an order.',
+          text: 'The saved address is locked so only their own phones can read it. It is deleted after 30 days without an order.',
         },
         {
           text: 'On their orders you see **✓ Passkey-confirmed · C-xxxx**. It tells you the order comes from the same customer as before.',
@@ -330,10 +330,10 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
       l: 'Tanpa email, tanpa kata sandi, dan tanpa nomor telepon. Hanya passkey: wajah, sidik jari, atau PIN ponsel mereka.',
       steps: [
         {
-          text: 'Passkey menyimpan pesanan, nama depan, dan alamat tersimpan mereka, jadi semuanya kembali di ponsel baru.',
+          text: 'Passkey menyimpan pesanan, nama depan, dan alamat tersimpan mereka, jadi semuanya kembali di ponsel mana pun yang mereka pakai.',
         },
         {
-          text: 'Alamat tersimpan disegel agar hanya ponsel mereka sendiri yang bisa membacanya. Alamat dihapus setelah 30 hari tanpa pesanan.',
+          text: 'Alamat tersimpan dikunci agar hanya ponsel mereka sendiri yang bisa membacanya. Alamat dihapus setelah 30 hari tanpa pesanan.',
         },
         {
           text: 'Di pesanan mereka Anda melihat **✓ Dikonfirmasi passkey · C-xxxx**. Itu menandakan pesanan datang dari pelanggan yang sama seperti sebelumnya.',

@@ -100,7 +100,8 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
 
   // Indonesian
   await page.goto('/settings');
-  await page.getByRole('radio', { name: 'ID' }).click();
+  await page.getByRole('button', { name: /^Language/ }).click();
+  await page.getByRole('radio', { name: 'Bahasa Indonesia' }).click();
   await page.goto(`/o/${token}`);
   await expect(page.getByText('Kabar dari penjual')).toBeVisible();
   await expect(

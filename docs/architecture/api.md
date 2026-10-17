@@ -69,7 +69,7 @@ Optional customer passkey under `/api/customer/*`. Its own cookie `__Host-custom
 
 | method | path | who | purpose |
 |---|---|---|---|
-| POST | `/api/customer/register/options` | public | WebAuthn options to turn Remember me on (first name, plan 071 codes to adopt) |
+| POST | `/api/customer/register/options` | public | WebAuthn options to turn Remember me on (first name, asked before the passkey prompt with Skip; it names the passkey by role, no-name fallback uses APP_NAME; plan 071 codes to adopt) |
 | POST | `/api/customer/register` | public | verify the passkey, create the account and a session; adopts device codes only with proof |
 | POST | `/api/customer/passkey/options` | public | options to sign in with an existing passkey (restore) |
 | POST | `/api/customer/passkey` | public | verify the passkey, start a session |
@@ -79,7 +79,7 @@ Optional customer passkey under `/api/customer/*`. Its own cookie `__Host-custom
 | POST | `/api/customer/sign-out` | public | end this phone's session, clear the cookie |
 | GET, PATCH, DELETE | `/api/customer/me` | session | GET: first name, passkey/prf state and (`?slug=`) the customer code for that kitchen; PATCH: first name; DELETE: **delete my saved data**, one cascade delete of the account and everything on our side |
 | GET, POST | `/api/customer/orders` | session | My orders for the account (links up to 200); POST merges the phone's order tokens |
-| GET, PUT, DELETE | `/api/customer/address` | session | the sealed address blob (`{ sealed: {v, iv, ct} or null }`); PUT is refused without a confirmed order in the last 30 days and over 2 KB |
+| GET, PUT, DELETE | `/api/customer/address` | session | the locked (sealed on the phone) address blob (`{ sealed: {v, iv, ct} or null }`); PUT is refused without a confirmed order in the last 30 days and over 2 KB |
 
 Limits: 5 wrong 6-digit codes lock a phone (and its network key) for 15 minutes; more than 50 wrong codes anywhere in 5 minutes cancel every live code. The PRF output never leaves the phone (stripped before any request, tested). Sweeps: see Retention in [data-model.md](data-model.md).
 

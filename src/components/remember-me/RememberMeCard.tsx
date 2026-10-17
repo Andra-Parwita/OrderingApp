@@ -9,14 +9,24 @@ import {
   rememberMeSupported,
   restoreWithPasskey,
   signOutHere,
-  turnOnRememberMe,
 } from '../../api/customer/rememberMe';
 import { Button, Icon, WarningDialog } from '../../ui';
 import { useRememberAction, useRememberMeLocal } from './hooks';
 import { REMEMBER_NS } from './i18n/register';
+import {
+  ActionList,
+  ActionRow,
+  CodeBlock,
+  HintBox,
+  LinkButton,
+  LinkHint,
+  Links,
+  NoteLine,
+} from './cardParts';
 import { Actions, ErrorLine, Text } from './parts';
 import { AddPhoneSheet, JoinSheet } from './PhoneSheets';
 import { RememberMeSheet } from './RememberMeSheet';
+import { TurnOnSheet } from './TurnOnSheet';
 
 const Card = styled.section`
   display: flex;
@@ -31,8 +41,8 @@ const Card = styled.section`
 const Head = styled.h2`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm};
+  justify-content: flex-start;
+  gap: ${({ theme }) => theme.spacing.xs};
   margin: 0;
   font-size: ${({ theme }) => theme.type.size.base};
   font-weight: 700;
@@ -41,25 +51,8 @@ const OnTag = styled.span`
   color: ${({ theme }) => theme.c.atext};
   font-size: ${({ theme }) => theme.type.size.md};
 `;
-const Fact = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  padding: ${({ theme }) => theme.spacing.sm} 0;
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-
-  b {
-    font-size: ${({ theme }) => theme.type.size.md};
-    font-weight: 600;
-  }
-  output {
-    font-size: ${({ theme }) => theme.type.size.base};
-    font-variant-numeric: tabular-nums;
-  }
-`;
-
 type Ask = 'signOut' | 'delete' | null;
-type Sheet = 'explain' | 'addPhone' | 'join' | null;
+type Sheet = 'explain' | 'turnOn' | 'addPhone' | 'join' | null;
 
 /**
  * The Settings card (plan 087). Off: what it is, with Turn on / I already use it. On: this phone, the
@@ -91,7 +84,7 @@ export function RememberMeCard({ kitchenName }: Readonly<{ kitchenName?: string 
     <Card aria-labelledby="remember-me-title">
       <Head id="remember-me-title">
         <span>{t('chip')}</span>
-        {on ? <OnTag>{t('on')}</OnTag> : null}
+        {on ? <OnTag>· {t('on')}</OnTag> : null}
       </Head>
       {local === null ? (
         <>
@@ -107,40 +100,40 @@ export function RememberMeCard({ kitchenName }: Readonly<{ kitchenName?: string 
               fullWidth
               disabled={busy}
               onClick={() => {
-                void run(turnOnRememberMe);
+                setSheet('turnOn');
               }}
             >
-              {busy ? t('working') : t('turnOn')}
+              {t('turnOn')}
             </Button>
-            <Button
-              fullWidth
-              variant="secondary"
+          </Actions>
+          <Links>
+            <LinkButton
+              type="button"
               disabled={busy}
               onClick={() => {
                 void run(restoreWithPasskey);
               }}
             >
-              {t('already')}
-            </Button>
-            <Button
-              fullWidth
-              variant="quiet"
-              onClick={() => {
-                setSheet('explain');
-              }}
-            >
-              {t('learn')}
-            </Button>
-            <Button
-              fullWidth
-              variant="quiet"
+              {busy ? t('working') : t('already')}
+            </LinkButton>
+            <LinkHint>{t('alreadyHint')}</LinkHint>
+            <LinkButton
+              type="button"
               onClick={() => {
                 setSheet('join');
               }}
             >
               {t('useCode')}
-            </Button>
-          </Actions>
+            </LinkButton>
+            <LinkButton
+              type="button"
+              onClick={() => {
+                setSheet('explain');
+              }}
+            >
+              {t('learn')}
+            </LinkButton>
+          </Links>
         </>
       ) : local.setup ? (
         <>
@@ -160,54 +153,60 @@ export function RememberMeCard({ kitchenName }: Readonly<{ kitchenName?: string 
         </>
       ) : (
         <>
-          <Fact>
-            <b>{t('thisPhone')}</b>
-            <span>{t('thisPhoneV')}</span>
-          </Fact>
           {code ? (
-            <Fact>
+            <CodeBlock>
               <b>{kitchenName ? t('codeAt', { kitchen: kitchenName }) : t('codeHere')}</b>
               <output>{code}</output>
               <Text>{t('codeHint')}</Text>
-            </Fact>
+            </CodeBlock>
           ) : null}
-          <Text role="note">{local.sealing ? t('sealedOn') : t('noPrf')}</Text>
-          <Actions>
-            <Button
-              fullWidth
-              variant="secondary"
+          <NoteLine role="note">
+            <Icon name={local.sealing ? 'lock' : 'info'} />
+            <span>{local.sealing ? t('locked') : t('noPrf')}</span>
+          </NoteLine>
+          {local.sealing ? null : <HintBox>{t('keeperHint')}</HintBox>}
+          <ActionList>
+            <ActionRow
+              type="button"
               onClick={() => {
                 setSheet('addPhone');
               }}
             >
+              <span>{t('addPhone')}</span>
               <Icon name="plus" />
-              {t('addPhone')}
-            </Button>
-            <Button
-              fullWidth
-              variant="secondary"
+            </ActionRow>
+            <ActionRow
+              type="button"
               onClick={() => {
                 setAsk('signOut');
               }}
             >
+              <span>{t('signOut')}</span>
               <Icon name="signout" />
-              {t('signOut')}
-            </Button>
-            <Button
-              fullWidth
-              variant="quiet"
+            </ActionRow>
+            <ActionRow
+              type="button"
+              $danger
               onClick={() => {
                 setAsk('delete');
               }}
             >
-              {t('delAll')}
-            </Button>
-            <Text>{t('delNote')}</Text>
-          </Actions>
+              <span>{t('delAll')}</span>
+              <Icon name="x" />
+            </ActionRow>
+          </ActionList>
+          <Text>{t('delNote')}</Text>
         </>
       )}
       {sheet === 'explain' ? (
         <RememberMeSheet
+          onClose={() => {
+            setSheet(null);
+          }}
+        />
+      ) : null}
+      {sheet === 'turnOn' ? (
+        <TurnOnSheet
           onClose={() => {
             setSheet(null);
           }}

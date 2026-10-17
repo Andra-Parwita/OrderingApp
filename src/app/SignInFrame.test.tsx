@@ -109,7 +109,7 @@ describe('SignInFrame (D-051)', () => {
       else expect(screen.queryByText('Seller setup')).toBeNull();
       expect(screen.getAllByRole('img', { name: 'ShaggyBobo' }).length).toBeGreaterThan(0);
       expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
-      expect(screen.getByText('v1.0.38')).toBeInTheDocument();
+      expect(screen.getByText('v1.0.39')).toBeInTheDocument();
     },
   );
 
@@ -139,7 +139,7 @@ describe('SignInFrame (D-051)', () => {
     renderFrame('admin');
     expect(screen.queryByRole('banner')).toBeNull();
     expect(screen.getAllByRole('img', { name: 'ShaggyBobo' })).toHaveLength(1);
-    expect(screen.getByText('v1.0.38')).toBeInTheDocument();
+    expect(screen.getByText('v1.0.39')).toBeInTheDocument();
     expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
   });
 });

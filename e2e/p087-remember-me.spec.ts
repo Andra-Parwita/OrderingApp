@@ -46,14 +46,34 @@ async function newPhone(browser: Browser, hasPrf: boolean): Promise<Phone> {
   return { context, page, cdp, id: authenticatorId };
 }
 
-async function turnOnFromChip(page: Page): Promise<void> {
+/** Chip -> explanation -> Turn on -> the first-name step (a name + Continue, or Skip) -> passkey. */
+async function turnOnFromChip(page: Page, firstName: string | null): Promise<void> {
   await page.goto('/onde-onde');
   await page.getByRole('button', { name: 'Remember me on all my phones' }).click();
   const sheet = page.getByRole('dialog');
   await expect(sheet.getByText("What's a passkey?")).toBeVisible();
   await sheet.getByRole('button', { name: 'Turn on', exact: true }).click();
+  const nameStep = page.getByRole('dialog', { name: 'Turn on Remember me' });
+  await expect(nameStep.getByText(/choose Passwords \(iPhone\)/)).toBeVisible();
+  await expect(
+    nameStep.getByText("We keep your address so it's filled in for you next time."),
+  ).toBeVisible();
+  if (firstName === null) {
+    await nameStep.getByRole('button', { name: 'Skip' }).click();
+  } else {
+    await nameStep.getByLabel('Your first name').fill(firstName);
+    await nameStep.getByRole('button', { name: 'Continue' }).click();
+  }
   await page.goto('/settings');
   await expect(page.getByRole('heading', { name: /Remember me/ })).toContainText('On');
+}
+
+/** The name the phone's passkey list shows (plan 092). */
+async function passkeyName(phone: Phone): Promise<string> {
+  const { credentials } = await phone.cdp.send('WebAuthn.getCredentials', {
+    authenticatorId: phone.id,
+  });
+  return (credentials[0] as { userName?: string } | undefined)?.userName ?? '';
 }
 
 async function placeDelivery(page: Page, firstName: string): Promise<void> {
@@ -83,7 +103,8 @@ test('Remember me end to end', async ({ browser, page: seller }, testInfo) => {
   const opened: Array<Phone> = [a];
   try {
     // a. Phone A: chip -> explanation -> Turn on -> code; a delivery order is marked for the seller.
-    await turnOnFromChip(a.page);
+    await turnOnFromChip(a.page, firstName);
+    expect(await passkeyName(a)).toBe(`${firstName} · customer (Remember me)`);
     const code = (await a.page.locator('output').first().textContent())?.trim() ?? '';
     expect(code).toMatch(/^C-[A-Z0-9]{4}$/);
     await placeDelivery(a.page, firstName);
@@ -129,8 +150,9 @@ test('Remember me end to end', async ({ browser, page: seller }, testInfo) => {
     // c. Phone C without PRF: no sealed address on the server, the note shows.
     const c = await newPhone(browser, false);
     opened.push(c);
-    await turnOnFromChip(c.page);
-    await expect(c.page.getByText(/can't seal your address/)).toBeVisible();
+    await turnOnFromChip(c.page, null); // Skip: the generic name
+    expect(await passkeyName(c)).toMatch(/^Remember me · /);
+    await expect(c.page.getByText(/This phone can't lock your address/)).toBeVisible();
     await placeDelivery(c.page, `${firstName}c`);
     expect((await savedAddress(c)).sealed).toBeNull();
 
@@ -145,8 +167,8 @@ test('Remember me end to end', async ({ browser, page: seller }, testInfo) => {
     const d = await newPhone(browser, true);
     opened.push(d);
     await d.page.goto('/settings');
-    await d.page.getByRole('button', { name: 'Use a 6 digit code instead' }).click();
-    await d.page.getByLabel('Type the 6 digit code').fill(digits.trim());
+    await d.page.getByRole('button', { name: 'Use a 6-digit code instead' }).click();
+    await d.page.getByLabel('Type the 6-digit code').fill(digits.trim());
     await d.page.getByRole('button', { name: 'Add this phone' }).click();
     await expect(d.page.getByRole('button', { name: 'Add another phone' })).toBeVisible();
     const own = await d.cdp.send('WebAuthn.getCredentials', { authenticatorId: d.id });

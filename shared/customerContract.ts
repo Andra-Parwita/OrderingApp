@@ -29,7 +29,7 @@ export const ACCOUNT_IDLE_DAYS = 365;
 export const SEALED_CT_MAX = 2048;
 export const SEALED_IV_MAX = 64;
 
-/** The passkey's display name is "<first name> · Remember me". */
+/** The words in the passkey's display name (see customerLabel in worker/auth/webauthn.ts). */
 export const REMEMBER_ME_LABEL = 'Remember me';
 
 /** An order link token: base64url, as the order link carries it. */

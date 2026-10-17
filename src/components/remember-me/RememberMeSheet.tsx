@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { restoreWithPasskey, turnOnRememberMe } from '../../api/customer/rememberMe';
+import { useState } from 'react';
+import { restoreWithPasskey } from '../../api/customer/rememberMe';
 import { BottomSheet, Button, Icon } from '../../ui';
 import { usePrfSupport, useRememberAction } from './hooks';
 import { REMEMBER_NS } from './i18n/register';
 import { Actions, ErrorLine, Heading, Text, Ticks } from './parts';
+import { TurnOnSheet } from './TurnOnSheet';
 
 const ADVANTAGES = ['adv1', 'adv2', 'adv3'] as const;
 const REASONS = ['why1', 'why2', 'why3', 'why4'] as const;
@@ -16,11 +18,13 @@ export function RememberMeSheet({ onClose }: Readonly<{ onClose: () => void }>) 
   const { t } = useTranslation(REMEMBER_NS);
   const { busy, error, run } = useRememberAction();
   const prf = usePrfSupport();
-  const go = (action: typeof turnOnRememberMe) => {
+  const [turning, setTurning] = useState(false);
+  const go = (action: typeof restoreWithPasskey) => {
     void run(action).then((outcome) => {
       if (outcome.ok) onClose();
     });
   };
+  if (turning) return <TurnOnSheet onClose={onClose} />;
   return (
     <BottomSheet title={t('title')} onClose={onClose}>
       <Text>{t('intro')}</Text>
@@ -51,10 +55,10 @@ export function RememberMeSheet({ onClose }: Readonly<{ onClose: () => void }>) 
           fullWidth
           disabled={busy}
           onClick={() => {
-            go(turnOnRememberMe);
+            setTurning(true);
           }}
         >
-          {busy ? t('working') : t('turnOn')}
+          {t('turnOn')}
         </Button>
         <Button
           fullWidth

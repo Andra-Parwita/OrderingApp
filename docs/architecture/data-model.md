@@ -111,7 +111,7 @@ An optional customer passkey. Separate from the sellers' accounts, sessions and 
 | `customer_phone_codes` | the 6-digit "add another phone" code, stored as a hash, 5 minutes, single use | by `expires_at` (hourly sweep) |
 | `customer_order_links` | `(account_id, token, seller_id)`: My orders for the account (up to 200). No foreign key to `orders` | dropped when the order details are gone (weekly cron) |
 | `customer_kitchen_codes` | only plan 071 device codes adopted with proof (an order with that token, kitchen and code); UNIQUE `(seller_id, code)`. Every other kitchen's code is derived | cascade from the account |
-| `customer_sealed_addresses` | the saved delivery address **sealed on the phone** (WebAuthn PRF, HKDF, AES-GCM): `v`, `iv`, `ct` (at most 2 KB), one per passkey; the server cannot read it | **30 days** after the last confirmed order (hourly sweep); cascade |
+| `customer_sealed_addresses` | the saved delivery address **locked (sealed) on the phone** (WebAuthn PRF, HKDF, AES-GCM): `v`, `iv`, `ct` (at most 2 KB), one per passkey; the server cannot read it | **30 days** after the last confirmed order (hourly sweep); cascade |
 
 `orders.customer_confirmed` (0/1) is set only when the order request carried a valid customer session (a flag in the body is ignored); sellers see "✓ Passkey-confirmed · C-xxxx" and never get the account id.
 
@@ -152,7 +152,7 @@ An optional customer passkey. Separate from the sellers' accounts, sessions and 
 | Past menu pictures | the newest **10** keep theirs; the rest go back to NULL and their R2 file is deleted unless still used | hourly finish job (`finishDueMenus`, `deleteUnusedPictures`) |
 | Day sales log | **10 weeks** per kitchen | weekly cron |
 | Client error log | newest **500** | each insert |
-| Remember me (D-107) | sealed address 30 days after the last confirmed order; the whole account after 12 idle months; sessions, challenges and phone codes by expiry; order links when their order details are gone | hourly `sweepCustomerHourly`, weekly `sweepCustomerWeekly` (in `scheduled.ts`) |
+| Remember me (D-107) | locked address 30 days after the last confirmed order; the whole account after 12 idle months; sessions, challenges and phone codes by expiry; order links when their order details are gone | hourly `sweepCustomerHourly`, weekly `sweepCustomerWeekly` (in `scheduled.ts`) |
 | Delivery address (`orders.address_enc`) | **one day after the menu finishes**, on cancel, or on "Delete address now" | hourly cron (`runAddressSweep`), `changeStatements`, the delete-address route |
 | "Find my order" tries | wrong-try rows that are older than the lock time and not locked | hourly cron (`runAttemptSweep`) |
 | Message log, made counts | belong to one menu; rows of any other menu are dropped when a new one is written | repository |

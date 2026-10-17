@@ -82,12 +82,15 @@ test('the customer app: menu, basket, order, then Settings and the Indonesian me
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await page.screenshot({ path: `captures/native-settings-${project}.png`, fullPage: true });
   await page.screenshot({ path: `captures/native-light-${project}.png` });
-  await page.getByRole('radio', { name: 'Dark' }).click();
+  await page.getByRole('button', { name: /^Appearance/ }).click();
+  await page.getByRole('radio', { name: /Dark/ }).click();
   await expect(page.locator('html')).toHaveCSS('color-scheme', /dark/);
   await page.screenshot({ path: `captures/native-dark-${project}.png` });
-  await page.getByRole('radio', { name: 'Auto' }).click();
+  await page.getByRole('button', { name: /^Appearance/ }).click();
+  await page.getByRole('radio', { name: /Auto/ }).click();
 
-  await page.getByRole('radio', { name: 'ID' }).click();
+  await page.getByRole('button', { name: /^Language/ }).click();
+  await page.getByRole('radio', { name: 'Bahasa Indonesia' }).click();
   await expect(page.getByRole('heading', { name: 'Pengaturan' })).toBeVisible();
   await page.getByRole('link', { name: 'Menu' }).click();
   await expect(page.getByText('Masakan rumahan Indonesia')).toBeVisible();

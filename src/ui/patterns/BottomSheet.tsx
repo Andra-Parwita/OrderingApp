@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { styled } from 'styled-components';
+import { keyframes, styled } from 'styled-components';
 import { Button } from '../Button';
 import { useModalFocus } from './modal';
 
@@ -11,6 +11,10 @@ export type BottomSheetProps = Readonly<{
   children: ReactNode;
 }>;
 
+// Plan 092: the sheet slides up and the backdrop fades in (~250 ms); none with Reduce Motion.
+const fadeIn = keyframes`from { opacity: 0; }`;
+const slideUp = keyframes`from { transform: translateY(100%); }`;
+
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -18,6 +22,11 @@ const Overlay = styled.div`
   display: flex;
   align-items: flex-end;
   background: ${({ theme }) => theme.colour.scrim};
+  animation: ${fadeIn} 250ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 `;
 const Sheet = styled.div`
   width: 100%;
@@ -29,7 +38,11 @@ const Sheet = styled.div`
     ${({ theme }) => theme.size.radiusSheet}px 0 0;
   background: ${({ theme }) => theme.c.surf};
   color: ${({ theme }) => theme.c.text};
+  animation: ${slideUp} 250ms ease-out;
 
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
   &:focus {
     outline: none;
   }

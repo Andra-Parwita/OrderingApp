@@ -12,6 +12,15 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // Picked by the owner (17 Oct, "B"); the date is set on deploy day
+  {
+    version: '1.0.39',
+    date: '2026-10-17',
+    lines: {
+      en: ['Small fixes and polish.'],
+      id: ['Perbaikan kecil dan penyempurnaan.'],
+    },
+  },
   // Lines picked by the owner (17 Oct, "B", then "A" for the passkey wording); the date is set on deploy day
   {
     version: '1.0.38',

@@ -52,3 +52,13 @@ export const Code = styled.output`
   text-align: center;
   font-variant-numeric: tabular-nums;
 `;
+export const Bullets = styled.ul`
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.c.text};
+  font-size: ${({ theme }) => theme.type.size.md};
+  line-height: 1.5;
+`;

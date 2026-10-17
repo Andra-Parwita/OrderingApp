@@ -48,19 +48,45 @@ function show(extra: Partial<CustomerSettingsViewProps> = {}, onLang = vi.fn(), 
 }
 
 describe('CustomerSettingsView', () => {
-  it('changes the language and the appearance', () => {
-    const { onLang, onTheme } = show();
-    fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
-    expect(onLang).toHaveBeenCalledWith('id');
-    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
-    expect(onTheme).toHaveBeenCalledWith('dark');
-    expect(screen.getByText('Auto · follows phone')).toBeVisible();
+  it('shows Language, Appearance and Text size as value rows with the value in their name', () => {
+    show();
+    expect(screen.getByRole('button', { name: 'Language English' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Appearance Auto' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Text size Normal' })).toBeVisible();
   });
 
-  it('hides the language switch when the kitchen offers one language (plan 056)', () => {
+  it('changes the language from the picker sheet and closes it', () => {
+    const { onLang } = show();
+    fireEvent.click(screen.getByRole('button', { name: 'Language English' }));
+    expect(screen.getByRole('dialog', { name: 'Language' })).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'English' })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: 'Bahasa Indonesia' }));
+    expect(onLang).toHaveBeenCalledWith('id');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('changes the appearance from the picker; Auto says it follows the phone', () => {
+    const { onTheme } = show();
+    fireEvent.click(screen.getByRole('button', { name: 'Appearance Auto' }));
+    expect(screen.getByRole('radio', { name: /Auto/ })).toBeChecked();
+    expect(screen.getByText('Follows phone')).toBeVisible();
+    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+    expect(onTheme).toHaveBeenCalledWith('dark');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('closing the picker with Close changes nothing', () => {
+    const { onLang } = show();
+    fireEvent.click(screen.getByRole('button', { name: 'Language English' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(onLang).not.toHaveBeenCalled();
+  });
+
+  it('hides the language row when the kitchen offers one language (plan 056)', () => {
     show({ showLanguage: false });
-    expect(screen.queryByRole('radio', { name: 'ID' })).toBeNull();
-    expect(screen.getByRole('radio', { name: 'Dark' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Language/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Appearance Auto' })).toBeInTheDocument();
   });
 
   it('shows the kitchen banner on top when a kitchen is loaded, nothing without', () => {
@@ -90,9 +116,11 @@ describe('CustomerSettingsView', () => {
 
   it('picks a text size and applies it to the page', () => {
     show();
+    fireEvent.click(screen.getByRole('button', { name: 'Text size Normal' }));
     expect(screen.getByRole('radio', { name: 'Normal' })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'Larger' }));
     expect(document.documentElement.style.fontSize).toBe('112.5%');
+    fireEvent.click(screen.getByRole('button', { name: 'Text size Larger' }));
     expect(screen.getByRole('radio', { name: 'Larger' })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'Normal' }));
   });
@@ -139,16 +167,18 @@ describe('CustomerSettingsView', () => {
     show();
     fireEvent.click(screen.getByRole('button', { name: /Read/ }));
     expect(screen.getByRole('dialog', { name: 'How we keep your data private' })).toBeVisible();
-    expect(screen.getByText(/only the kitchen.s team can see it/)).toBeVisible();
-    expect(screen.getByText(/sealed with your passkey/)).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Your address' })).toBeVisible();
+    expect(screen.getByText(/only the kitchen.s team can see it/i)).toBeVisible();
+    expect(screen.getByText(/locked with your passkey/)).toBeVisible();
     expect(screen.getByText(/4 weeks after the cooking day/)).toBeVisible();
-    expect(screen.getByText('Version 1.0.38')).toBeVisible();
+    expect(screen.getByText('Version 1.0.39')).toBeVisible();
     await i18n.changeLanguage('id');
-    expect(screen.getByText(/hanya tim dapur yang bisa melihatnya/)).toBeVisible();
-    expect(screen.getByText('Versi 1.0.38')).toBeVisible();
+    expect(screen.getByText(/hanya tim dapur yang bisa melihatnya/i)).toBeVisible();
+    expect(screen.getByText('Versi 1.0.39')).toBeVisible();
     expect(screen.getByRole('dialog', { name: 'Cara kami menjaga datamu' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Alamat Anda' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /Tutup/ }));
-    expect(screen.queryByText(/hanya tim dapur yang bisa melihatnya/)).toBeNull();
+    expect(screen.queryByText(/hanya tim dapur yang bisa melihatnya/i)).toBeNull();
     await i18n.changeLanguage('en');
   });
 

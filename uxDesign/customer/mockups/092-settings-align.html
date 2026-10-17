@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-size="normal">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Settings alignment (mock-up)</title>
+<style>
+/* Tokens: same customer theme as 092-remember-me-polish.html */
+:root{
+  --beige:#EADBC2; --ink:#2B1D12; --stage:#d9d4c6; --pill-bg:#fff6ea;
+  --text:#1C1F1A; --muted:#5D6358; --edge:#7F857A; --ok:#1F6B5C; --onfill:#FFFFFF;
+  --fill:#2F6B36; --acc:#2A5F30; --tint:#E5EFE2; --bg:#F6F2E8; --surface:#FFFDF8; --line:#E4DED0;
+}
+:root[data-theme=dark]{
+  --text:#F1EEE6; --muted:#A9AFA3; --edge:#6B7266; --ok:#7EC4B0; --onfill:#0F1E10;
+  --fill:#8CC08A; --acc:#93C590; --tint:color-mix(in srgb,#8CC08A 15%,#121411); --bg:#121411; --surface:#181A16; --line:#2A2E27;
+  --pill-bg:#2A2117; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--stage);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:root[data-theme=dark] body{background:#0B0C0A}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px;border-radius:6px}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* mock-up chrome */
+.top{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;padding:14px 16px}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--pill-bg)}
+.seg button{border:0;background:transparent;padding:6px 14px;font-size:.8125rem;font-weight:600;min-height:36px;color:var(--ink)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--beige)}
+:root[data-theme=dark] .seg{border-color:#6B5A44}
+:root[data-theme=dark] .seg button{color:#EADBC2}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:#EADBC2;color:#2B1D12}
+.lead{max-width:760px;margin:0 auto;padding:0 16px 12px;text-align:center;font-size:.875rem;color:var(--muted)}
+.reco{max-width:760px;margin:0 auto 20px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:.875rem}
+.reco b{display:block;font-size:1rem;margin-bottom:4px}
+.reco p{margin:4px 0}
+.row{display:flex;flex-wrap:wrap;gap:28px 24px;justify-content:center;padding:0 16px 24px}
+figure{margin:0;width:390px}
+figcaption{margin-top:10px;font-size:.8125rem;color:var(--muted)}
+figcaption b{display:block;color:var(--text);font-size:.875rem}
+figcaption .m{display:block;margin-top:4px;color:var(--text);font-variant-numeric:tabular-nums}
+.frame{position:relative;background:var(--bg);color:var(--text);border-radius:18px;box-shadow:0 2px 6px rgb(40 30 15/12%),0 12px 36px rgb(40 30 15/14%);overflow:hidden;display:flex;flex-direction:column;width:390px;height:800px;font-size:16px;line-height:1.4}
+:root[data-size=larger] .frame{font-size:18px}
+
+/* app look (em units: the frame's font-size is the app's text size) */
+svg.i{width:1.25em;height:1.25em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.scroll{flex:1;min-height:0;overflow:hidden}
+.title{margin:0;padding:.625em 1em .5em;font-size:1.75em;line-height:1.2;font-weight:700}
+.lst{border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.li{display:flex;justify-content:space-between;align-items:center;gap:.75em;min-height:4.5em;padding:.75em 1em;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.lbl{display:flex;flex-direction:column;gap:.125em;min-width:0;flex:1 1 auto}
+.hint{font-size:.875em;color:var(--muted)}
+.hint.on{color:var(--ok);font-weight:700}
+.read{display:inline-flex;align-items:center;min-height:2.75em;padding:0 .75em;border:0;background:none;color:var(--acc);font-weight:700;flex:none}
+.tg{position:relative;flex:none;width:3.25em;height:2.25em;border-radius:999px;border:1px solid var(--edge);background:var(--fill)}
+.tg::after{content:"";position:absolute;right:.1875em;top:.1875em;width:1.75em;height:1.75em;border-radius:50%;background:var(--onfill)}
+
+/* the real Segmented: hairline, 8px radius, 44px options, muted green active */
+.rs{display:inline-flex;flex:none;border:1px solid #6B6B66;border-radius:.5em;overflow:hidden;font-weight:600}
+.rs button{min-height:2.75em;min-width:2.75em;padding:0 1em;border:0;background:transparent;white-space:nowrap}
+.rs button[aria-checked=true]{background:#8DC48F;color:#132015}
+.rs button:focus-visible{outline-offset:-3px;border-radius:0}
+/* A: one fixed width, equal segments */
+.rs.fx{width:15.5em}
+.rs.fx button,.rs.fill button{flex:1 1 0;min-width:0;padding:0 .375em}
+/* B, C: full width under the label */
+.rs.fill{display:flex;width:100%}
+.li.stk{flex-direction:column;align-items:stretch;gap:.375em;padding:.625em 1em}
+/* C: label and hint on one line, tighter rhythm */
+.li.cmp{gap:.25em;padding:.5em 1em;line-height:1.25}
+.li.cmp .lbl{flex-direction:row;justify-content:space-between;align-items:baseline;gap:.75em}
+/* D: value rows + picker sheet */
+.li.val{min-height:3.5em;padding:.5em 1em}
+.vv{display:inline-flex;align-items:center;gap:.125em;color:var(--muted);flex:none;white-space:nowrap}
+.vv.acc{color:var(--acc);font-weight:700}
+.scrim{position:absolute;inset:0;z-index:3;background:rgb(10 10 8/30%);display:flex;align-items:flex-end}
+.sheet{width:100%;padding:1.125em 1.125em 1.25em;border-radius:18px 18px 0 0;background:var(--surface);box-shadow:0 -6px 24px rgb(0 0 0/25%)}
+.sheet h3{margin:0 0 .25em;font-size:1.1875em}
+.opt{display:flex;align-items:center;gap:.75em;min-height:3em;border-top:1px solid var(--line)}
+.opt:nth-of-type(2){border-top:0}
+.rd{width:1.25em;height:1.25em;border-radius:50%;border:2px solid var(--edge);flex:none}
+.opt.on .rd{border-color:var(--acc);background:radial-gradient(circle,var(--acc) 40%,transparent 46%)}
+.opt small{display:block;color:var(--muted);font-size:.875em}
+
+/* E: icon + label segments */
+.rs button svg.i{width:1.125em;height:1.125em;stroke-width:1.5;margin-right:.375em;color:var(--muted);vertical-align:-.2em}
+.rs button[aria-checked=true] svg.i{color:#132015;opacity:.8}
+/* F: quiet native select, value right-aligned like Read */
+.sel{position:relative;flex:none;display:inline-flex;align-items:center}
+.sel select{appearance:none;-webkit-appearance:none;min-height:2.75em;padding:0 1.5em 0 .5em;border:0;background:none;color:var(--text);font:inherit;font-weight:600;text-align:right;text-align-last:right;cursor:pointer}
+.sel svg.i{position:absolute;right:.25em;width:1.1em;height:1.1em;color:var(--muted);pointer-events:none}
+/* G: value rows are buttons; a sub-page slides in from the right */
+button.li{width:100%;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.sub{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;background:var(--bg);transform:translateX(100%);transition:transform .25s ease}
+.sub.in{transform:none}
+@media (prefers-reduced-motion:reduce){.sub{transition:none}}
+.sh{display:flex;align-items:center;min-height:3.25em;padding:0 .5em;border-bottom:1px solid var(--line)}
+.back{display:inline-flex;align-items:center;min-height:2.75em;padding:0 .5em 0 .25em;border:0;background:none;color:var(--acc);font-weight:600}
+.sh h2{flex:1;margin:0;padding-right:6em;text-align:center;font-size:1.0625em}
+.ch{display:flex;align-items:center;gap:.75em;width:100%;min-height:3.5em;padding:.5em 1em;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.ch:first-child{border-top:0}
+.ch .ico{display:grid;place-items:center;flex:none;width:2.25em;height:2.25em;border-radius:.5em;background:var(--tint);color:var(--acc);font-size:.8125em;font-weight:700}
+.ch .ico svg.i{stroke-width:1.5;width:1.4em;height:1.4em}
+.ch .tx{flex:1;min-width:0}
+.ch small{display:block;color:var(--muted);font-size:.875em}
+.ch .ck{visibility:hidden;color:var(--acc);display:inline-flex}
+.ch[aria-checked=true] .ck{visibility:visible}
+
+.tabbar{display:flex;flex:none;border-top:1px solid var(--line);background:var(--bg)}
+.tabbar div{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:3.5em;font-size:.75em;color:var(--muted)}
+.tabbar .on{color:var(--acc);font-weight:700}
+.tabbar .on::before{content:"";position:absolute;top:0;width:2rem;height:3px;border-radius:0 0 3px 3px;background:var(--acc)}
+.tabbar svg{width:1.8em;height:1.8em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:1em;padding:1em}
+.card h3{margin:0 0 .25em;font-size:1.0625em}
+.card p{margin:.375em 0 0;font-size:.875em;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="seg" role="group" aria-label="Theme"><button type="button" data-th="light" aria-pressed="false">Light</button><button type="button" data-th="dark" aria-pressed="true">Dark</button></div>
+  <div class="seg" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="id" aria-pressed="false">ID</button></div>
+  <div class="seg" role="group" aria-label="Text size"><button type="button" data-size="normal" aria-pressed="true">Normal</button><button type="button" data-size="larger" aria-pressed="false">Larger</button></div>
+</div>
+<p class="lead" id="lead"></p>
+<div class="reco" id="reco"></div>
+<div class="row" id="row"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const IC={
+ next:'<path d="m9 18 6-6-6-6"/>', back:'<path d="m15 18-6-6 6-6"/>', down:'<path d="m6 9 6 6 6-6"/>', check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+ auto:'<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/>',
+ moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>',
+ menu:'<path d="M4 9 5.5 4h13L20 9M4 9h16M4 9v11h16V9M9 20v-6h6v6"/>',
+ bag:'<path d="M6 8h12l1 12H5L6 8Z"/><path d="M9 8a3 3 0 0 1 6 0"/>',
+ gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'
+};
+const ic=n=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${IC[n]}</svg>`;
+
+const T={
+en:{
+ lead:'Plan 092 · Settings: lining up the choice controls. Customer app at 390 px, dark mode as on the owner’s phone. The switches change light/dark, EN/ID and the app text size (Normal/Larger) in all seven frames. In G, tap a row and the sub-page slides in.',
+ reco:['Recommendation: E, the compact stacked rows (C) with icons on Appearance.',
+  'Every option stays visible and one tap away, both edges line up in EN and ID at Normal and Larger with no wrapping, and the sun and moon give Appearance the icon touch; about +45 px over today, so the Remember me card still starts above the fold.',
+  'If the iPhone feel matters more than the extra tap, G is its strongest form (dense value rows, sub-pages with icons, a hint per choice and a tick), but it is a new navigation pattern and the biggest build. F is the cheapest, with the platform choosing the picker’s look.',
+  'Cost of E: a fill prop on Segmented, a stacked Row variant and an optional icon per option (about 30 lines, no new dependency).'],
+ langs:['English','Indonesia'],
+ subs:[{t:'Language',on:0,c:[['EN','English','Menu and order updates in English'],['ID','Bahasa Indonesia','Menu dan kabar pesanan dalam bahasa Indonesia']]},
+  {t:'Appearance',on:0,c:[[ic('auto'),'Auto','Follows your phone'],[ic('sun'),'Light','Always light'],[ic('moon'),'Dark','Always dark']]},
+  {t:'Text size',on:1,c:[['A','Smaller','Fits more on the screen'],['A','Normal','The app’s default'],['A','Larger','Easier to read']]}],
+ tabs:['Menu','My orders','Settings'], setH:'Settings',
+ names:['Language','Appearance','Text size','Order updates','About and privacy'],
+ theme:['Auto','Light','Dark'], size:['Smaller','Normal','Larger'], autoHint:'Auto · follows phone', on:'On', read:'Read',
+ vals:['English','Auto','Normal'], pick:'Appearance', pickSub:'Follows phone',
+ cardT:'Remember me', cardP:'Optional. Your orders, name and saved address follow you to a new phone. No email, no password.',
+ m:['Rows block','today'],
+ cap:[['A · Same fixed width (15.5 em), right column','Pro: one CSS rule on the group; a straight left edge, and the toggle and Read keep today’s layout. Con: the EN | ID segments are oversized; the width is set by the longest word (Otomatis), so the label column is about 100 px and the hint under Appearance wraps even at Normal; at Larger the column is 67 px, Language touches the group and Text size wraps (in the real app the row would drop the group under the label instead, mixing A and B). Fit: Otomatis keeps about 7 px of padding at Normal.'],
+  ['B · Below the label, full width','Pro: both edges line up, 119 px segments leave room for any word at Larger, CSS only. Con: the three choice rows grow to 94–117 px each (about +90 px in total), so the Remember me card starts lower; the hint under Appearance costs a line of its own.'],
+  ['C · Stacked, compact','Pro: the alignment of B, with the hint on the label line and 8 px row padding, so the rows block grows by about 45 px; Order updates and About keep today’s layout; 44 px segments. Con: a slightly denser look, and a right-aligned hint is a new pattern (one place). Cost: a fill prop on Segmented plus a Row variant.'],
+  ['D · Value rows with a picker sheet','Pro: dense and iOS-like; perfect alignment, any text length fits, one pattern for all five rows. Con: one extra tap per change and the options are hidden, which hurts the Language row for someone who landed in the wrong language; needs a new radio sheet.'],
+  ['E · C with icons on Appearance (recommended)','Pro: sun and moon read without words and the half circle marks Auto; three inline SVGs (1.5 px, muted), otherwise C. Fit: icon + Otomatis needs about 105 px of the 118 px segment at Larger, so it stays on one line. Icon-only would pass WCAG with an aria-label per button (the row label names the group) and shrinks the group from 358 px to 3 × 44 = 132 px, but a half circle alone does not say Auto to a first-time user, so keep the words.'],
+  ['F · Native dropdowns','Pro: the cheapest build (three selects, no component), one tap, values right-aligned like Read, today’s 72 px rows. On iPhone a select opens the native picker: a wheel on older iOS, a menu on iOS 16 and later, so it feels native. Con: the options are hidden until tapped, the open list is styled by the platform (no hints, no icons), and only the chevron says the value is tappable.'],
+  ['G · iPhone-style sub-pages (tap a row)','Pro: the real Settings-app feel: dense value rows, a sub-page with an icon, a one-line hint per choice and a tick; perfect alignment, any text fits, room to explain Auto. Con: one extra tap, a new in-app navigation pattern (route or panel plus the slide) and the biggest build; the Language row hides the other language behind English ›. Clickable here: 250 ms slide, none with reduced motion.']]
+},
+id:{
+ lead:'Rencana 092 · Pengaturan: menyejajarkan kontrol pilihan. Aplikasi pelanggan 390 px, mode gelap seperti di HP pemilik. Tombol di atas mengganti terang/gelap, EN/ID, dan ukuran teks aplikasi (Normal/Besar) di ketujuh bingkai. Di G, ketuk baris dan sub-halaman meluncur masuk.',
+ reco:['Rekomendasi: E, baris bertumpuk rapat (C) dengan ikon di Tampilan.',
+  'Semua pilihan tetap terlihat dan satu ketukan saja, kedua tepi sejajar di EN dan ID pada Normal dan Besar tanpa terpotong, dan matahari serta bulan memberi sentuhan ikon pada Tampilan; sekitar +45 px dibanding sekarang, jadi kartu Ingat aku tetap mulai di atas lipatan.',
+  'Kalau rasa iPhone lebih penting daripada ketukan tambahan, G adalah bentuk terkuatnya (baris nilai padat, sub-halaman dengan ikon, keterangan per pilihan, dan centang), tapi itu pola navigasi baru dan pembangunan terbesar. F paling murah, dengan tampilan pemilih ditentukan platform.',
+  'Biaya E: prop fill di Segmented, varian Row bertumpuk, dan ikon opsional per pilihan (sekitar 30 baris, tanpa dependensi baru).'],
+ langs:['English','Indonesia'],
+ subs:[{t:'Bahasa',on:1,c:[['EN','English','Menu and order updates in English'],['ID','Bahasa Indonesia','Menu dan kabar pesanan dalam bahasa Indonesia']]},
+  {t:'Tampilan',on:0,c:[[ic('auto'),'Otomatis','Ikut HP-mu'],[ic('sun'),'Terang','Selalu terang'],[ic('moon'),'Gelap','Selalu gelap']]},
+  {t:'Ukuran teks',on:1,c:[['A','Kecil','Lebih banyak muat di layar'],['A','Normal','Bawaan aplikasi'],['A','Besar','Lebih mudah dibaca']]}],
+ tabs:['Menu','Pesananku','Pengaturan'], setH:'Pengaturan',
+ names:['Bahasa','Tampilan','Ukuran teks','Kabar pesanan','Tentang dan privasi'],
+ theme:['Otomatis','Terang','Gelap'], size:['Kecil','Normal','Besar'], autoHint:'Otomatis · ikut HP', on:'Aktif', read:'Baca',
+ vals:['Indonesia','Otomatis','Normal'], pick:'Tampilan', pickSub:'Ikut HP',
+ cardT:'Ingat aku', cardP:'Opsional. Pesanan, nama, dan alamat tersimpanmu ikut ke HP baru. Tanpa email, tanpa kata sandi.',
+ m:['Blok baris','sekarang'],
+ cap:[['A · Lebar tetap sama (15,5 em), kolom kanan','Pro: satu aturan CSS pada grup; tepi kiri lurus, sakelar dan Baca tetap seperti sekarang. Kontra: segmen EN | ID terlalu besar; lebarnya ditentukan kata terpanjang (Otomatis), jadi kolom label sekitar 100 px dan keterangan di bawah Tampilan terpotong bahkan pada Normal; pada teks Besar kolomnya 67 px, Bahasa menempel ke grup dan Ukuran teks jatuh ke dua baris (di aplikasi asli grup akan turun ke bawah label, campuran A dan B). Muat: Otomatis menyisakan sekitar 7 px padding pada Normal.'],
+  ['B · Di bawah label, lebar penuh','Pro: kedua tepi sejajar, segmen 119 px cukup untuk kata apa pun pada teks Besar, CSS saja. Kontra: tiga baris pilihan menjadi 94–117 px (total sekitar +90 px), jadi kartu Ingat aku turun; keterangan di bawah Tampilan memakan satu baris sendiri.'],
+  ['C · Bertumpuk, rapat','Pro: sejajar seperti B, keterangan di baris label dan padding baris 8 px, jadi blok baris hanya bertambah sekitar 45 px; Kabar pesanan dan Tentang tetap seperti sekarang; segmen 44 px. Kontra: tampak sedikit lebih padat, dan keterangan rata kanan adalah pola baru (satu tempat). Biaya: prop fill di Segmented plus varian Row.'],
+  ['D · Baris nilai dengan sheet pemilih','Pro: padat dan mirip iOS; sejajar sempurna, teks sepanjang apa pun muat, satu pola untuk kelima baris. Kontra: satu ketukan tambahan dan pilihan tersembunyi, menyulitkan baris Bahasa bagi yang tersasar ke bahasa yang salah; perlu sheet radio baru.'],
+  ['E · C dengan ikon di Tampilan (disarankan)','Pro: matahari dan bulan terbaca tanpa kata dan setengah lingkaran menandai Otomatis; tiga SVG inline (1,5 px, redup), selebihnya C. Muat: ikon + Otomatis perlu sekitar 105 px dari segmen 118 px pada teks Besar, jadi tetap satu baris. Ikon saja lolos WCAG dengan aria-label per tombol (label baris menamai grup) dan mengecilkan grup dari 358 px ke 3 × 44 = 132 px, tapi setengah lingkaran saja tidak berarti Otomatis bagi pengguna baru, jadi pertahankan katanya.'],
+  ['F · Dropdown bawaan','Pro: pembangunan termurah (tiga select, tanpa komponen), satu ketukan, nilai rata kanan seperti Baca, baris 72 px seperti sekarang. Di iPhone select membuka pemilih bawaan: roda di iOS lama, menu di iOS 16 ke atas, jadi terasa native. Kontra: pilihan tersembunyi sampai diketuk, daftar yang terbuka ditata platform (tanpa keterangan, tanpa ikon), dan hanya chevron yang menandakan nilainya bisa diketuk.'],
+  ['G · Sub-halaman gaya iPhone (ketuk baris)','Pro: rasa aplikasi Pengaturan sungguhan: baris nilai padat, sub-halaman dengan ikon, keterangan satu baris per pilihan, dan centang; sejajar sempurna, teks apa pun muat, ada ruang menjelaskan Otomatis. Kontra: satu ketukan tambahan, pola navigasi baru (rute atau panel plus animasi) dan pembangunan terbesar; baris Bahasa menyembunyikan bahasa lain di balik Indonesia ›. Bisa diklik di sini: geser 250 ms, tanpa animasi bila reduced motion.']]
+}};
+const S={th:'dark',lang:'en',size:'normal'};
+const t=()=>T[S.lang];
+
+const seg=(opts,on,cls)=>`<div class="rs ${cls}" role="radiogroup">${opts.map((o,k)=>`<button type="button" role="radio" aria-checked="${k===on}" tabindex="${k===on?0:-1}">${o}</button>`).join('')}</div>`;
+const tabbar=()=>`<nav class="tabbar" aria-label="Main">${t().tabs.map((x,i)=>`<div class="${i==2?'on':''}">${ic(['menu','bag','gear'][i])}${x}</div>`).join('')}</nav>`;
+const card=()=>`<div class="card"><h3>${t().cardT}</h3><p>${t().cardP}</p></div>`;
+
+function rows(opt){
+ const L=t(), id=S.lang==='id';
+ const groups=[[['EN','ID'],id?1:0],[L.theme,0],[L.size,1]];
+ const hint=i=>i===1?`<span class="hint">${L.autoHint}</span>`:'';
+ const choice=i=>{const [o,on]=groups[i], n=L.names[i];
+  if(opt==='A')return `<div class="li"><div class="lbl"><span>${n}</span>${hint(i)}</div>${seg(o,on,'fx')}</div>`;
+  if(opt==='B')return `<div class="li stk"><div class="lbl"><span>${n}</span>${hint(i)}</div>${seg(o,on,'fill')}</div>`;
+  if(opt==='C'||opt==='E'){const lab=opt==='E'&&i===1?o.map((x,k)=>ic(['auto','sun','moon'][k])+x):o;
+   return `<div class="li stk cmp"><div class="lbl"><span>${n}</span>${hint(i)}</div>${seg(lab,on,'fill')}</div>`}
+  if(opt==='F'){const so=i===0?L.langs:o;
+   return `<div class="li"><div class="lbl"><span>${n}</span>${hint(i)}</div><span class="sel">${ic('down')}<select aria-label="${n}">${so.map((x,k)=>`<option${k===on?' selected':''}>${x}</option>`).join('')}</select></span></div>`}
+  if(opt==='G')return `<button class="li val" type="button" data-sub="${i}"><div class="lbl"><span>${n}</span></div><span class="vv"><span class="cur">${L.vals[i]}</span>${ic('next')}</span></button>`;
+  return `<div class="li val"><div class="lbl"><span>${n}</span></div><span class="vv">${L.vals[i]}${ic('next')}</span></div>`};
+ const dv=opt==='D'||opt==='G', v=dv?' val':'';
+ const tail=`<div class="li${v}"><div class="lbl"><span id="${opt}-upd">${L.names[3]}</span><span class="hint on">${L.on}</span></div><span class="tg" role="switch" aria-checked="true" aria-labelledby="${opt}-upd" tabindex="0"></span></div>
+  <div class="li${v}"><div class="lbl"><span>${L.names[4]}</span></div>${dv?`<span class="vv acc">${L.read}${ic('next')}</span>`:`<button class="read" type="button">${L.read}</button>`}</div>`;
+ return `<div class="lst">${[0,1,2].map(choice).join('')}${tail}</div>`;
+}
+// G: one hidden sub-page per choice row; slides in on tap
+const subs=()=>t().subs.map((s,i)=>`<div class="sub" data-sub="${i}" inert><div class="sh"><button class="back" type="button">${ic('back')}${t().setH}</button><h2>${s.t}</h2></div>
+ <div class="lst" role="radiogroup" aria-label="${s.t}">${s.c.map((c,k)=>`<button class="ch" type="button" role="radio" aria-checked="${k===s.on}"><span class="ico">${c[0]}</span><span class="tx">${c[1]}<small>${c[2]}</small></span><span class="ck">${ic('check')}</span></button>`).join('')}</div></div>`).join('');
+const picker=()=>{const L=t();return `<div class="scrim"><div class="sheet" role="dialog" aria-label="${L.pick}"><h3>${L.pick}</h3>${L.theme.map((o,k)=>`<div class="opt ${k?'':'on'}"><span class="rd"></span><span>${o}${k?'':`<small>${L.pickSub}</small>`}</span></div>`).join('')}</div></div>`};
+const frame=opt=>`<div class="frame"><div class="scroll"><h1 class="title">${t().setH}</h1>${rows(opt)}${card()}</div>${tabbar()}${opt==='D'?picker():opt==='G'?subs():''}</div>`;
+
+function render(){
+ const L=t();
+ $('#lead').textContent=L.lead;
+ $('#reco').innerHTML=`<b>${L.reco[0]}</b>${L.reco.slice(1).map(x=>`<p>${x}</p>`).join('')}`;
+ $('#row').innerHTML=['A','B','C','D','E','F','G'].map((o,i)=>`<figure>${frame(o)}<figcaption><b>${L.cap[i][0]}</b>${L.cap[i][1]}<span class="m"></span></figcaption></figure>`).join('');
+ document.documentElement.dataset.theme=S.th; document.documentElement.dataset.size=S.size; document.documentElement.lang=S.lang;
+ for(const k of ['th','lang','size'])document.querySelectorAll(`[data-${k}]`).forEach(b=>b.setAttribute('aria-pressed',b.dataset[k]===S[k]));
+ // measured density: the five rows today are 5 × 4.5 em
+ document.querySelectorAll('figure').forEach(f=>{
+  const fs=parseFloat(getComputedStyle(f.querySelector('.frame')).fontSize), h=f.querySelector('.lst').offsetHeight, today=Math.round(22.5*fs+2), d=h-today;
+  f.querySelector('.m').textContent=`${L.m[0]}: ${h} px · ${L.m[1]} ${today} px (${d>=0?'+':''}${d} px)`;
+ });
+}
+document.addEventListener('click',e=>{
+ const row=e.target.closest('button.li[data-sub]'), back=e.target.closest('.back'), ch=e.target.closest('.ch');
+ if(row){const sub=row.closest('.frame').querySelector(`.sub[data-sub="${row.dataset.sub}"]`); sub.classList.add('in'); sub.inert=false; sub.querySelector('.back').focus(); return;}
+ if(back){const sub=back.closest('.sub'); sub.classList.remove('in'); sub.inert=true; sub.closest('.frame').querySelector(`button.li[data-sub="${sub.dataset.sub}"]`).focus(); return;}
+ if(ch){const sub=ch.closest('.sub'); sub.querySelectorAll('.ch').forEach(x=>x.setAttribute('aria-checked',x===ch));
+  sub.closest('.frame').querySelector(`button.li[data-sub="${sub.dataset.sub}"] .cur`).textContent=ch.querySelector('.tx').firstChild.textContent; return;}
+ const b=e.target.closest('[data-th],[data-lang],[data-size]'); if(!b)return;
+ if(b.dataset.th)S.th=b.dataset.th; else if(b.dataset.lang)S.lang=b.dataset.lang; else S.size=b.dataset.size;
+ render();
+});
+render();
+</script>
+</body>
+</html>

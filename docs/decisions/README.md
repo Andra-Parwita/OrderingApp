@@ -680,3 +680,12 @@ Format for each entry:
 **Data:** migration 0029 (add-only): eight `customer_*` tables and `orders.customer_confirmed`; routes `/api/customer/*`, cookie `__Host-customer`; separate from the sellers' tables and cookie, a customer session gets 401 on every seller, admin and live route. No new secret.
 **Trade-off:** the server (not any kitchen) can see one opaque account that ordered at two kitchens (it holds the order links and the first name); sellers never see the account id and each sees a different code. In return a customer keeps their orders across phones with no email, password or phone number. Chrome's virtual authenticator cannot copy a passkey's PRF secret, so the sealed-address restore is tested on a phone with cleared site data, not on a copied credential.
 **Revisit when:** Square needs a receipt email, customers ask for Apple / Google sign-in, or cross-kitchen linking on the server becomes a concern (then encrypt the order list with the PRF key too).
+
+## D-108 · Remember me polish (2026-10-17; owner)
+**Ruling:** plan 092, after the owner's first real-phone use (iPhone, home-screen app, passkey saved in Keeper, so no PRF). Amends D-107.
+- **No app lock** ("A"): the app opens without Face ID; Face ID only where the saved address needs it.
+- **First name before Face ID, with Skip** ("A"); no address step. The address is still saved with the first delivery order, and the text says why: owner, "need to be clear that we just keep your address so easy to fill up later".
+- **Passkey names by role, no kitchen** ("A"): "Indra · customer (Remember me)", "Indra · seller", "Indra · admin"; with no name, owner: "remember me - ShaggyBobo Order or something like that" → "Remember me · ShaggyBobo Order" (and "Seller · …", "Admin · …"). No kitchen name because one passkey serves every kitchen.
+- **"Lock", not "seal"** in the wording; a hint to save the passkey in Apple Passwords / Google Password Manager so the address can be locked. Owner: "we need to offer to use standard apple and google and not other password manager" (the web app can only recommend; the phone still lists the others).
+**Trade-off:** no app lock means someone holding an unlocked phone sees My orders; in return ordering stays one tap for family and friends. Only new passkeys get the new names.
+**Revisit when:** customers ask for a lock, or password managers like Keeper start supporting PRF.

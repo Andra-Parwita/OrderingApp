@@ -77,7 +77,8 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   // Indonesian: the language switch lives in Settings (a tab, so the order stays in My orders).
   const placedPath = new URL(page.url()).pathname;
   await page.goto('/settings');
-  await page.getByRole('radio', { name: 'ID' }).click();
+  await page.getByRole('button', { name: /^Language/ }).click();
+  await page.getByRole('radio', { name: 'Bahasa Indonesia' }).click();
   await page.goto(placedPath);
   await expect(page.getByText('Pesanan terkirim')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Kirim ke .* lewat WhatsApp$/ })).toBeVisible();
@@ -92,7 +93,8 @@ test('customer menu in Indonesian shows Indonesian item names and dates', async 
 }) => {
   await markHowItWorksSeen(context);
   await page.goto('/settings');
-  await page.getByRole('radio', { name: 'ID' }).click();
+  await page.getByRole('button', { name: /^Language/ }).click();
+  await page.getByRole('radio', { name: 'Bahasa Indonesia' }).click();
   await page.goto('/onde-onde/dishes');
   await expect(page.getByText('Pesmol ikan nila')).toBeVisible();
   await expect(page.getByText(sampleDayId()).first()).toBeVisible();

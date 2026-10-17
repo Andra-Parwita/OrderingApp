@@ -4,6 +4,21 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Plan 092 Remember me polish
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+Correction (22:56, first real clock reading): the start/end times below were the coordinator's guesses, not clock readings; durations come from the agents' own run times.
+
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 0 · plan + D-108 | coordinator | ~22:25 | — | ~22:30 | ~5 min | — | 3 docs | ✅ |
+| 1 · mock-ups (5 frames, EN/ID) | general-purpose · sonnet | ~22:30 | 45 min | ~22:32 | 106 s | −43 min | +1 file, 245 lines | ✅ |
+| 1b · item 10 alignment options mock-up + analysis | general-purpose · fable (owner asked) | ~22:35 | 20 min | ~22:44 | 9.3 min | −11 min | +1 file, 198 lines | ✅ |
+| 1c · options E icons, F dropdowns, G iPhone slide-in | same agent · fable | ~22:44 | 15 min | ~22:46 | ~15 min total run | ≈ 0 | +53 lines | ✅ owner picked D |
+| 2 · build items 1–10 | general-purpose · sonnet | ~22:48 | 1.5–2 h | 22:56 | 7.8 min | −80 to −110 min | 20 files, +493 / −236 | ✅ typecheck clean |
+| 2b · fix 5 tests that drove the old Settings radios | general-purpose · sonnet | 22:56 | 10 min | ~22:58 | 77 s | −9 min | 4 files, ~+11 | ✅ unit 31/31 |
+| 3 · scoped gate (typecheck, lint, format, unit; then 4 e2e specs) | coordinator | ~22:58 | 8 min | 23:06 | ~8 min (incl. a fix round: 6 unit + 2 lint, then 1 e2e selector) | ≈ 0 | — | ✅ typecheck, lint, format; unit 105/105; e2e 8 specs 14/14 (p087 after selector fix); captures 390 px checked |
+
 ## Release 1.0.38: estimate vs actual (owner, 17 Oct: "make sure it has comparisons estimated and actual")
 ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 

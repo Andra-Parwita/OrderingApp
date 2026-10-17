@@ -1011,7 +1011,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       steps: [
         { part: 'What it is' },
         {
-          text: 'A customer can turn on **Remember me**. It is a passkey on their phone (face, fingerprint or phone PIN): no email, no password, no phone number. Their orders, first name and saved delivery address then follow them to a new phone.',
+          text: 'A customer can turn on **Remember me**. It is a passkey on their phone (face, fingerprint or phone PIN): no email, no password, no phone number. Their orders, first name and saved delivery address then follow them to any phone they use.',
         },
         {
           text: 'It is optional. Customers who do not use it order exactly as before.',
@@ -1025,7 +1025,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
         },
         { part: 'What you cannot see' },
         {
-          text: 'No email, no phone number and no account id. You never see their saved address except inside an order, as today. It is sealed with their passkey, so not even we can read it.',
+          text: 'No email, no phone number and no account ID. You never see their saved address except inside an order, as today. It is locked with their passkey, so not even we can read it.',
         },
         { part: 'How customers turn it off' },
         {
@@ -1044,7 +1044,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
       steps: [
         { part: 'Apa itu' },
         {
-          text: 'Pelanggan bisa menyalakan **Ingat aku**. Ini passkey di HP mereka (wajah, sidik jari, atau PIN HP): tanpa email, tanpa kata sandi, tanpa nomor HP. Pesanan, nama depan, dan alamat antar tersimpan mereka lalu ikut ke HP baru.',
+          text: 'Pelanggan bisa menyalakan **Ingat aku**. Ini passkey di HP mereka (wajah, sidik jari, atau PIN HP): tanpa email, tanpa kata sandi, tanpa nomor HP. Pesanan, nama depan, dan alamat antar tersimpan mereka lalu ikut ke HP mana pun yang mereka pakai.',
         },
         {
           text: 'Sifatnya opsional. Pelanggan yang tidak memakainya memesan persis seperti sebelumnya.',
@@ -1058,7 +1058,7 @@ export const TOPICS: ReadonlyArray<HelpTopic> = [
         },
         { part: 'Yang tidak bisa Anda lihat' },
         {
-          text: 'Tidak ada email, nomor HP, atau id akun. Alamat tersimpan mereka hanya terlihat di dalam pesanan, seperti biasa. Alamat itu disegel dengan passkey mereka, jadi kami pun tidak bisa membacanya.',
+          text: 'Tidak ada email, nomor HP, atau ID akun. Alamat tersimpan mereka hanya terlihat di dalam pesanan, seperti biasa. Alamat itu dikunci dengan passkey mereka, jadi kami pun tidak bisa membacanya.',
         },
         { part: 'Cara pelanggan mematikannya' },
         {
