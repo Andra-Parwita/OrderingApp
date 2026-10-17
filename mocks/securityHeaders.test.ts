@@ -17,10 +17,31 @@ describe('security headers', () => {
     expect(headers.get('X-Frame-Options')).toBe('DENY');
     expect(headers.get('Permissions-Policy')).toContain('camera=(self)');
     const csp = headers.get('Content-Security-Policy') ?? '';
-    expect(csp).toContain("script-src 'self';");
+    expect(csp).toMatch(
+      /script-src 'self'( 'nonce-[A-Za-z0-9+/=]{22,}')? https:\/\/static\.cloudflareinsights\.com;/,
+    );
+    expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("connect-src 'self' wss://order.shaggybobo.app");
+    expect(csp).toContain('connect-src');
+    expect(csp).toContain('https://cloudflareinsights.com');
+  });
+
+  it('gives each HTML response its own script nonce, and other responses none', () => {
+    const html = () =>
+      withSecurityHeaders(
+        request,
+        new Response('<html></html>', { headers: { 'Content-Type': 'text/html; charset=utf-8' } }),
+        false,
+      ).headers.get('Content-Security-Policy') ?? '';
+    const nonce = (csp: string) => /script-src[^;]*'nonce-([^']+)'/.exec(csp)?.[1];
+    expect(nonce(html())).toBeTruthy();
+    expect(nonce(html())).not.toBe(nonce(html()));
+    const json = withSecurityHeaders(request, Response.json({}), false).headers.get(
+      'Content-Security-Policy',
+    );
+    expect(json).not.toContain('nonce-');
   });
 
   it('loosens only the script rule for local dev', () => {
