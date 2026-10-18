@@ -152,5 +152,10 @@
     "name": "ShaggyBobo Seller",
     "title": "Install the app",
     "sub": "Add the seller app to your home screen"
+  },
+  "homePill": {
+    "text": "Add to your home screen",
+    "how": "How",
+    "hide": "Hide this for now"
   }
 }

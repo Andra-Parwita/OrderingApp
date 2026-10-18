@@ -79,12 +79,11 @@ describe('MaintenanceHost', () => {
       /Maintenance on .*–.*\. The app pauses briefly\. Database upgrade/,
     );
     expect(screen.queryByRole('alert')).toBeNull();
-    // Bobo on the left, the message in a bubble (plan 080).
+    // Bobo on the left, then one line of text in an amber pill (plan 095).
     const bar = screen.getByRole('status');
     const icon = bar.querySelector('img');
     expect(icon).toHaveAttribute('src', '/brand/logo-icon.webp');
     expect(icon).toHaveAttribute('alt', '');
-    expect(bar.firstElementChild).toBe(icon);
     expect(bar.querySelector('img + span')).toHaveTextContent(/Maintenance on/);
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(screen.queryByRole('status')).toBeNull();

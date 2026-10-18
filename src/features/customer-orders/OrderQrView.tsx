@@ -97,12 +97,7 @@ export function OrderQrView({
   return (
     <Screen>
       <Top>
-        <PageTopBar
-          kitchenName={info.kitchenName}
-          logoSrc={info.logoSrc}
-          backLabel={t('order.titleShort')}
-          onBack={onBack}
-        />
+        <PageTopBar backLabel={t('order.titleShort')} onBack={onBack} />
       </Top>
       <Title>{t('order.qrTitle')}</Title>
       <Lead>{t('order.qrBody', { cook: info.cook })}</Lead>

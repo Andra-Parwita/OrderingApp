@@ -91,7 +91,7 @@ export function FixturesPage({ tabBar, tabBarHeight }: FixturesPageProps) {
         {Screen ? (
           <Screen data={fixtures} state={stateFor(screenId)} />
         ) : (
-          <CustomerPage title={title} kitchenName={fixtures.kitchen.name} />
+          <CustomerPage title={title} />
         )}
         {tab !== undefined
           ? // The design shows the unseen-update dot on the My orders tab of the filled list only.

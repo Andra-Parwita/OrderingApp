@@ -12,6 +12,15 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // Picked by the owner (18 Oct, "B"); plans 094, 095, 096 + root page
+  {
+    version: '1.0.41',
+    date: '2026-10-18',
+    lines: {
+      en: ['A fresher look for customers and clearer messages.'],
+      id: ['Tampilan pelanggan lebih segar dan pesan lebih jelas.'],
+    },
+  },
   // Plan 093 (banner no longer flashes); same lines as 1.0.39, owner 17 Oct
   {
     version: '1.0.40',

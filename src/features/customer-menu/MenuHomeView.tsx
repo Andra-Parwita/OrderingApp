@@ -8,7 +8,6 @@ import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
 import { PickupMapLine, pickupMapInfo } from '../../components/pickup-map';
 import { KitchenBanner } from '../../components/KitchenBanner';
-import { RememberMeChip } from '../../components/remember-me';
 import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
@@ -55,6 +54,27 @@ const PictureTap = styled.button`
   border: 0;
   background: none;
   cursor: pointer;
+`;
+// Closed menu: the menu picture, small, under the name; a tap opens it whole.
+const ClosedPicture = styled.button`
+  display: block;
+  width: calc(100% - 2 * ${({ theme }) => theme.spacing.lg});
+  height: 9rem;
+  margin: 0 ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.md};
+  padding: 0;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radius.md};
+  overflow: hidden;
+  background: ${({ theme }) => theme.c.surf2};
+  cursor: pointer;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
 `;
 const FullPictureButton = styled.button`
   position: relative;
@@ -278,19 +298,20 @@ export function MenuHomeView({
     const paused = ordering.reason !== 'cutoff_passed';
     return (
       <Screen>
-        {pictureUrl ? (
-          <BannerBox>
-            <Hero style={{ flex: 'none', minHeight: '16rem', paddingTop: 'var(--sat)' }}>
-              <HeroImage src={pictureUrl} alt={t('home.menuFor', { date })} />
-            </Hero>
-          </BannerBox>
-        ) : (
-          <Banner kitchen={kitchen} lang={lang} />
-        )}
+        <Banner kitchen={kitchen} lang={lang} />
         <Heading>
           <Name>{kitchen.name}</Name>
           <Sub>{t('home.menuFor', { date })}</Sub>
         </Heading>
+        {pictureUrl ? (
+          <ClosedPicture
+            type="button"
+            aria-label={t('home.seeFullPicture')}
+            onClick={() => setViewing(true)}
+          >
+            <img src={pictureUrl} alt={t('home.menuFor', { date })} />
+          </ClosedPicture>
+        ) : null}
         <StatusCard role="status">
           <CardHead $tone="warn">
             <MenuIcon name={paused ? 'pause' : 'clock'} size="1.5rem" />
@@ -320,6 +341,7 @@ export function MenuHomeView({
             {t('states.seeAnyway')}
           </TextLink>
         ) : null}
+        {viewer}
       </Screen>
     );
   }
@@ -389,7 +411,6 @@ export function MenuHomeView({
           <RowText>{t('home.deliveryOnly')}</RowText>
         </Row>
       ) : null}
-      <RememberMeChip />
       {onHowItWorks ? (
         <RowButton type="button" onClick={onHowItWorks}>
           <MenuIcon name="help" />

@@ -244,7 +244,6 @@ function Archived(props: FixtureProps) {
       order={order}
       code={source.code}
       kitchenName={menu.kitchen.name}
-      logoSrc={menu.kitchen.images?.railImage ?? undefined}
       lang={lang}
       onBack={noop}
       onOpenMenu={noop}

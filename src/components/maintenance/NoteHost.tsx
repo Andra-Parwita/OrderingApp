@@ -12,7 +12,7 @@ import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchNotes } from '../../api/notes';
 import { useTopBar } from '../../theme/topBars';
 import { MAINTENANCE_NS } from './i18n/register';
-import { Bobo, Bubble } from './noteParts';
+import { NoticeSlot, Pill, PillBody, PillClose, PillRow } from '../notice/NoticePill';
 
 export const SEEN_KEY = 'seenNotes';
 export const FADE_MS = 600;
@@ -25,18 +25,7 @@ const drain = keyframes`
   from { transform: scaleX(1); }
   to { transform: scaleX(0); }
 `;
-const Bar = styled.div<{ $fading: boolean }>`
-  position: fixed;
-  top: calc(var(--update-bar-height, 0rem) + var(--notice-bar-height, 0rem));
-  left: 0;
-  right: 0;
-  z-index: 997;
-  background: ${({ theme }) => theme.c.surf2};
-  color: ${({ theme }) => theme.c.text};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  box-shadow: 0 0.25rem 0.75rem ${({ theme }) => theme.c.line};
-  font-family: ${({ theme }) => theme.font.ui};
-  font-size: ${({ theme }) => theme.type.size.sm};
+const Slot = styled(NoticeSlot)<{ $fading: boolean }>`
   opacity: ${({ $fading }) => ($fading ? 0 : 1)};
   transition: opacity ${FADE_MS}ms ease;
   @media (prefers-reduced-motion: no-preference) {
@@ -46,37 +35,6 @@ const Bar = styled.div<{ $fading: boolean }>`
     transition: none;
   }
 `;
-/** The row itself: centred and no wider than the app's content, so it never spans a wide window. */
-const Row = styled.div`
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.xs}
-    ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-`;
-const Close = styled.button`
-  flex: none;
-  min-height: ${({ theme }) => theme.minTapTarget};
-  min-width: ${({ theme }) => theme.minTapTarget};
-  padding: 0;
-  border: 0;
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: transparent;
-  color: ${({ theme }) => theme.c.muted};
-  font: inherit;
-  cursor: pointer;
-  &:hover {
-    background: ${({ theme }) => theme.c.line};
-    color: ${({ theme }) => theme.c.text};
-  }
-  &:focus-visible {
-    outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.fill};
-    outline-offset: ${({ theme }) => theme.border.focus};
-  }
-`;
 const drainStyle = css`
   animation: ${drain} ${MESSAGE_SHOW_MS}ms linear forwards;
 `;
@@ -84,7 +42,7 @@ const Line = styled.span`
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -${({ theme }) => theme.border.hairline};
+  bottom: 0;
   height: ${({ theme }) => theme.border.focus};
   background: ${({ theme }) => theme.c.fill};
   transform-origin: left;
@@ -199,15 +157,27 @@ export function NoteHost({
 
   if (isAdmin || !note) return null;
   return (
-    <Bar ref={bar} role="status" $fading={fading}>
-      <Row>
-        <Bobo src="/brand/logo-icon.webp" alt="" />
-        <Bubble>{lang === 'id' ? note.textId : note.textEn}</Bubble>
-        <Close type="button" aria-label={t('dismiss')} onClick={() => setNote(null)}>
+    <Slot
+      ref={bar}
+      role="status"
+      $fading={fading}
+      $top="calc(var(--update-bar-height, 0rem) + var(--notice-bar-height, 0rem))"
+      $z={997}
+    >
+      <Pill $kind="announce">
+        <PillRow>
+          <PillBody text={lang === 'id' ? note.textId : note.textEn} />
+        </PillRow>
+        <PillClose
+          type="button"
+          $kind="announce"
+          aria-label={t('dismiss')}
+          onClick={() => setNote(null)}
+        >
           ✕
-        </Close>
-      </Row>
-      <Line aria-hidden="true" />
-    </Bar>
+        </PillClose>
+        <Line aria-hidden="true" />
+      </Pill>
+    </Slot>
   );
 }

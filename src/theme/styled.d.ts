@@ -8,6 +8,10 @@ declare module 'styled-components' {
     mode: 'light' | 'dark';
     /** Every colour, from `makeColors(brand, mode)` (the seller design tokens). */
     c: ThemeColors;
+    /** Drop shadow colour of the notice pills. */
+    noticeShadow: string;
+    /** Notice pills (plan 095): background, text (also the link) and cross colour per kind. */
+    notice: Record<'update' | 'announce' | 'maint' | 'tip', { bg: string; fg: string; xc: string }>;
     /** Background and border of a speech bubble (Bobo's notes). */
     bubble: { bg: string; line: string };
     font: typeof font;

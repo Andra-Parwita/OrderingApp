@@ -46,13 +46,13 @@ async function newPhone(browser: Browser, hasPrf: boolean): Promise<Phone> {
   return { context, page, cdp, id: authenticatorId };
 }
 
-/** Chip -> explanation -> Turn on -> the first-name step (a name + Continue, or Skip) -> passkey. */
+/** Settings card -> Turn on -> the first-name step (a name + Continue, or Skip) -> passkey (plan 096: the menu chip is gone). */
 async function turnOnFromChip(page: Page, firstName: string | null): Promise<void> {
-  await page.goto('/onde-onde');
-  await page.getByRole('button', { name: 'Remember me on all my phones' }).click();
-  const sheet = page.getByRole('dialog');
-  await expect(sheet.getByText("What's a passkey?")).toBeVisible();
-  await sheet.getByRole('button', { name: 'Turn on', exact: true }).click();
+  // The Settings card shows this kitchen's customer code: let the menu load so the kitchen is remembered.
+  await page.goto('/onde-onde/dishes');
+  await expect(page.getByRole('button', { name: 'Add one Tilapia pesmol' })).toBeVisible();
+  await page.goto('/settings');
+  await page.getByRole('button', { name: 'Turn on', exact: true }).click();
   const nameStep = page.getByRole('dialog', { name: 'Turn on Remember me' });
   await expect(nameStep.getByText(/choose Passwords \(iPhone\)/)).toBeVisible();
   await expect(
@@ -102,7 +102,7 @@ test('Remember me end to end', async ({ browser, page: seller }, testInfo) => {
   const a = await newPhone(browser, true);
   const opened: Array<Phone> = [a];
   try {
-    // a. Phone A: chip -> explanation -> Turn on -> code; a delivery order is marked for the seller.
+    // a. Phone A: Settings -> Turn on -> code; a delivery order is marked for the seller.
     await turnOnFromChip(a.page, firstName);
     expect(await passkeyName(a)).toBe(`${firstName} · customer (Remember me)`);
     const code = (await a.page.locator('output').first().textContent())?.trim() ?? '';
@@ -126,7 +126,7 @@ test('Remember me end to end', async ({ browser, page: seller }, testInfo) => {
       for (const db of await indexedDB.databases()) if (db.name) indexedDB.deleteDatabase(db.name);
     });
     await a.page.goto('/my-orders');
-    await a.page.getByRole('button', { name: 'Restore them' }).click();
+    await a.page.getByRole('button', { name: 'Restore your orders' }).click();
     await expect(a.page.getByText(/1 order restored/)).toBeVisible();
     await a.page.goto('/onde-onde/dishes');
     await a.page.getByRole('button', { name: 'Add one Tilapia pesmol' }).click();
@@ -145,7 +145,7 @@ test('Remember me end to end', async ({ browser, page: seller }, testInfo) => {
       await b.cdp.send('WebAuthn.addCredential', { authenticatorId: b.id, credential });
     }
     await b.page.goto('/my-orders');
-    await b.page.getByRole('button', { name: 'Restore them' }).click();
+    await b.page.getByRole('button', { name: 'Restore your orders' }).click();
     await expect(b.page.getByText(/1 order restored/)).toBeVisible();
     // c. Phone C without PRF: no sealed address on the server, the note shows.
     const c = await newPhone(browser, false);

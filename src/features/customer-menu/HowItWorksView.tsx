@@ -89,13 +89,7 @@ export function HowItWorksView({ data, onBack, onSeeDishes }: Props) {
     },
   ];
   return (
-    <CustomerPage
-      title={t('how.title')}
-      kitchenName={kitchen.name}
-      logoSrc={kitchen.images?.railImage}
-      backLabel={t('dishes.backMenu')}
-      onBack={onBack}
-    >
+    <CustomerPage title={t('how.title')} backLabel={t('dishes.backMenu')} onBack={onBack}>
       <Steps>
         {steps.map((step) => (
           <Step key={step.icon}>

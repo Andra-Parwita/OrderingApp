@@ -328,7 +328,7 @@ function BasketContent({
   }
   if (placedToken !== null) return null;
   const { data } = menu;
-  if (lines.length === 0) return <EmptyBasketView data={data} onBack={onBack} />;
+  if (lines.length === 0) return <EmptyBasketView onBack={onBack} />;
 
   if (step === 'pickup') {
     return (

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import i18n from 'i18next';
 import { useEffect, useState } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
@@ -219,5 +219,57 @@ describe('SellerLayout', () => {
     stubKitchen();
     renderLayout();
     expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+describe('SellerLayout banner (plan 094)', () => {
+  function Go() {
+    const go = useNavigate();
+    return (
+      <>
+        {['/seller', '/seller/menu', '/seller/orders', '/seller/orders/42'].map((to) => (
+          <button key={to} onClick={() => void go(to)}>{`go ${to}`}</button>
+        ))}
+      </>
+    );
+  }
+  function renderRoutes() {
+    return render(
+      <AppThemeProvider>
+        <MemoryRouter initialEntries={['/seller']}>
+          <Routes>
+            <Route path="/seller" element={<SellerLayout />}>
+              <Route index element={<Go />} />
+              <Route path="*" element={<Go />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AppThemeProvider>,
+    );
+  }
+  const banner = () => screen.getByRole('img', { name: 'Onde Onde banner', hidden: true });
+  const visit = (to: string) => fireEvent.click(screen.getByText(`go ${to}`));
+
+  it('keeps the same tablet banner element from Home to a task screen and back', async () => {
+    stubKitchen();
+    wide = true;
+    renderRoutes();
+    await screen.findByRole('img', { name: 'Onde Onde banner' });
+    const first = banner();
+    visit('/seller/menu');
+    expect(banner()).toBe(first);
+    visit('/seller');
+    expect(banner()).toBe(first);
+  });
+
+  it('keeps the same phone banner element from the Orders list to an order and back', async () => {
+    stubKitchen();
+    renderRoutes();
+    await screen.findByRole('img', { name: 'Onde Onde banner' });
+    const first = banner();
+    visit('/seller/orders/42');
+    expect(banner()).toBe(first);
+    visit('/seller/orders');
+    expect(banner()).toBe(first);
   });
 });

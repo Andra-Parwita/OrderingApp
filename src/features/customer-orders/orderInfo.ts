@@ -9,7 +9,6 @@ export type OrderInfo = Readonly<{
   kitchenName: string;
   /** The cook, as in "pay {cook}" and "Message {cook} on WhatsApp". */
   cook: string;
-  logoSrc: string | undefined;
   whatsappNumber: string | undefined;
   /** "Sat 17 Oct": the closed week's date, else the current menu's. */
   dateText: string | null;
@@ -57,7 +56,6 @@ export function orderInfo(
   return {
     kitchenName: menu?.kitchen.name ?? order.seller.name,
     cook: menu?.seller.name ?? order.seller.name,
-    logoSrc: menu?.kitchen.images?.railImage ?? undefined,
     whatsappNumber: menu?.kitchen.whatsappNumber,
     dateText,
     windowText,

@@ -40,6 +40,10 @@ flowchart TD
     D --> K["Delete my saved data<br/>(asks first)"]
 ```
 
+- One shell banner (the kitchen's picture) sits on every customer page of a kitchen, with no small logo bar, so it no longer flashes when moving between pages. Bottom sheets lock the page behind them and close with a swipe down (or Close).
+- Notice pills (one at a time, 40 px, ShaggyBobo icon): new version is green and the whole pill refreshes on tap; announcements and maintenance are amber. Home-screen and Remember me nudges use the same pill in a neutral colour.
+- First visit: no nudges, only the menu. The name step has a quiet "Remember me on all my phones (?)" tick (the ? opens the explanation sheet; ticked, the turn-on runs after the order). After the first order a home-screen pill shows (browser only); the Remember me pill shows on the order-placed page only when it is off, 30 days after a dismiss, at most 3 times, then only the Settings card.
+- The root page `/` is a standalone welcome page (About hero, logo, "Welcome to ShaggyBobo", a neutral hint to open the link you were sent): no tab bar, no jump in a browser; inside an installed app it jumps to the last kitchen. `noindex` and a neutral link preview.
 - Everything is optional; ordering, links and My orders on one phone work without it. Offered by the chip (dismissable for good), the Settings card, one line after the second order and an empty My orders.
 - A phone without the passkey PRF feature keeps the address on the phone only (a note says so). The passkey is named by role (customer, seller, admin); with no first name it falls back to "Remember me · ShaggyBobo's Order" (APP_NAME). Customer Settings shows Language, Appearance and Text size as value rows that open a choice sheet; bottom sheets slide up (not with Reduce Motion).
 - "Delete my saved data" removes everything on our side at once; the phone keeps its own My orders; orders already placed are untouched.

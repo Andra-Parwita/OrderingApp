@@ -69,12 +69,7 @@ export function EarlierOrderView({
   const done = order.status === 'collected' || order.status === 'delivered';
   return (
     <Page>
-      <PageTopBar
-        kitchenName={info.kitchenName}
-        logoSrc={info.logoSrc}
-        backLabel={t('common.myOrders')}
-        onBack={onBack}
-      />
+      <PageTopBar backLabel={t('common.myOrders')} onBack={onBack} />
       <VisuallyHidden as="h1">{t('order.title')}</VisuallyHidden>
       <OrderHead eyebrow={eyebrow} code={order.code} />
       <ChipRow>
@@ -147,7 +142,6 @@ export function ArchivedOrderView({
   order,
   code,
   kitchenName,
-  logoSrc,
   lang,
   onBack,
   onOpenMenu,
@@ -156,7 +150,6 @@ export function ArchivedOrderView({
   /** The code saved on this phone, when there is one (the server no longer has it). */
   code?: string;
   kitchenName: string;
-  logoSrc?: string;
   lang: Language;
   onBack: () => void;
   onOpenMenu: () => void;
@@ -164,12 +157,7 @@ export function ArchivedOrderView({
   const { t } = useTranslation(ORDERS_NS);
   return (
     <Page>
-      <PageTopBar
-        kitchenName={kitchenName}
-        logoSrc={logoSrc}
-        backLabel={t('common.myOrders')}
-        onBack={onBack}
-      />
+      <PageTopBar backLabel={t('common.myOrders')} onBack={onBack} />
       <Center>
         <Disc>
           <OrderIcon name="archive" size="2.25rem" />

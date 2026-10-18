@@ -90,7 +90,7 @@ describe('SettingsPanes', () => {
     renderPane('pickup');
     const nav = screen.getByRole('navigation', { name: 'Settings sections' });
     expect(nav.querySelectorAll('a')).toHaveLength(10);
-    expect(screen.getByText('Version 1.0.40')).toBeInTheDocument();
+    expect(screen.getByText('Version 1.0.41')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Pickup locations/ })).toHaveAttribute(
       'aria-current',
       'page',

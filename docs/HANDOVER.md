@@ -2,7 +2,7 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-17 evening (~22:15–23:20), the owner's PC (Adelaide), Claude as coordinator. Built and shipped **1.0.39** (plan **092 Remember me polish**) and **1.0.40** (plan **093** banner no flash), both hotfixes on top of 1.0.38.
+**Last session:** 2026-10-17 evening → 18 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.39** (plan 092) and **1.0.40** (plan 093); built **1.0.41** (plans 094, 095, 096 + root page), committed and waiting for the owner's deploy (see below).
 **Live:** Release **1.0.40** (17 Oct ~23:33; Worker `ff9f06f1-5788-4dd3-b6fb-4dc9968065cc`; health OK, devTools false, site reports `1.0.102 · ec41e17` (build number = commit count)); tag `v1.0.40` on `ec41e17`; `main` = the hand-over commit after it. Previous: 1.0.39 (Worker `904ef961…`, tag `v1.0.39` on `b63e899`), 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`).
 
 ## House rules (binding)
@@ -34,15 +34,25 @@ Release notes: "Small fixes and polish." / "Perbaikan kecil dan penyempurnaan." 
 ## 1.0.40 (plan 093): banner doesn't flash
 Owner, 17 Oct: "changing page make the image banner on top flashing and kept reloading" (older bug, since `key={pathname}` on the page slide, 10 Oct). Fix: the banner is drawn once in `CustomerShell` (`src/app/ShellBanner.tsx`) above the sliding page; pages' own `KitchenBanner` renders nothing inside the shell (context `ShellOwnsBanner`), still renders in seller preview; the last loaded banner stays while the same kitchen reloads; the skeleton is now banner-sized (3:1). Release note reuses "Small fixes and polish." **Gate (scoped, 23:31):** typecheck, lint, format ✅; unit 370 + 99; e2e customer-batch1/2, native-customer, p087, pickup-map 12/12; capture: banner stays across My orders ↔ Settings. **Deploy impact:** client only, no migration, no secret. Live check: switch Menu ↔ My orders ↔ Settings on the iPhone; the banner must not flash.
 
+## 1.0.41: banner everywhere, sheets, notice pills, nudges, root page
+Release note (owner "B"): "A fresher look for customers and clearer messages." / "Tampilan pelanggan lebih segar dan pesan lebih jelas."
+- **094** one big kitchen banner on every customer page (shell, never remounted; small logo bar gone; closed-menu picture below the banner); seller tablet/phone banners stay mounted; bottom sheets lock the page behind (iOS-safe) and **swipe down to close**; stale `AppRoutes.test` from 092 fixed.
+- **095** notice pills (option E2, `uxDesign/seller/mockups/095-notice-bars.html`): floating 40 px pills with the ShaggyBobo icon; new version = green, tap anywhere to refresh, ✕ only hides; announcement/maintenance = amber (`src/components/notice/NoticePill.tsx`, tokens `notice.*`). Admin's short-message *preview* still shows the old bubble (follow-up).
+- **096** nudges (`uxDesign/customer/mockups/096-install-nudge.html`): first visit no nudge (menu chip removed); name step "☐ Remember me on all my phones (?)" with an info sheet (tick → turn-on sheet after placing, one tap "Continue"); after the first order "Add to your home screen · How" (stone N1 pill, browser only, ✕ 14 days); Remember me pill after first/delivery order (30 days, max 3, one nudge at a time); empty My orders "Turned on Remember me before? Restore your orders".
+- **Root page "/"** (option B of `uxDesign/customer/mockups/097-main-page.html`): standalone page, About hero animation, logo, "Welcome to ShaggyBobo", "Looking for something here? Open the link from the person or group who invited you."; no tab bar, no jump in a browser; inside an installed app it jumps to the last kitchen; `noindex`; neutral link preview "ShaggyBobo · By invitation"; kitchen-not-found clears the saved kitchen (no loop).
+**Gate (scoped, 18 Oct):** typecheck, lint, format ✅; **all** unit tests 1905/1905; e2e customer 11 specs ✅ (p087 fixed: spec opened Settings before any kitchen was remembered), seller 5 specs 7/7, short-message + maintenance 2/2. Captures checked: closed menu, dishes, My orders, order page, root page.
+**Deploy impact 1.0.41:** client + one head-tag/meta change; no migration, no secret. Installed home-screen apps still start at their kitchen (manifest start_url unchanged). Live check on the iPhone: banner on every page incl. dishes/order, swipe a sheet down, privacy sheet doesn't scroll the page, the green "new version" pill appears after deploy (tap it), send one short message (amber pill), a first test order shows the home-screen pill, the name-step tick, "/" in Safari shows the welcome page.
+
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. Ask the owner whether setup is needed (same PC: usually not; other PC: `git pull`; `pnpm install`; `pnpm db:migrate:local`, never reseed).
-3. Ask the owner about the 1.0.39/1.0.40 live checks on the iPhone (Settings rows + sheets, Remember me turn-on with first name, privacy note, banner stays still across Menu ↔ My orders ↔ Settings).
+3. If 1.0.41 isn't live yet: owner deploys (`pnpm build` → `pnpm exec wrangler deploy`), then live check, merge `main`, tag `v1.0.41` (ask first). Then the iPhone checks listed under 1.0.41 (and 1.0.39/1.0.40's).
+4. **Next release 1.0.42** (owner, 18 Oct): small follow-ups (admin preview pill, unused chip/nudge helpers in `src/api/customer/state.ts`, `CheckoutViews.tsx` 905 lines, real-iPhone check of swipe/scroll-lock) + plan **088** + plan **090**, as ordered in **plan 098** stages 0–3 (owner answers Q1–Q5 first, one at a time; phone page https://claude.ai/artifact/5yCfxuCZJokAxZ2wnZ9iVi).
 4. Owner checks still open: 1.0.38 pickup map + QR scan (CSP), send one short message, About animation (seller app: More → About), the seller ✓ on a Remember-me order; 1.0.36/1.0.37 phone checks; a real label print from the Samsung tablet.
 
 ## Later (owner rulings recorded)
 - **Overnight work:** plan **090** clean-up and plan **088** split large files; plan **091** faster tooling (measure first).
-- **Much later:** plan **082** store mode.
+- **v1.1.0 (analysis only, own feature branch later):** plan **082** small store ("Sandra's Store"), plan **098** kinds (kitchen/shop/events/community, menu = event, order = ticket), shared seller frame + per-kind UI, plan **099** bigger grocery store / separate deployments. Owner: "we don't have to implement yet … for now it is analysis, maybe for v1.1.0"; "we will then do a feature branch later". Store must keep the no-flash rule (lesson 31).
 - Code health report: `docs/reports/2026-10-17-code-health.html`.
 - Older open items: Help screenshots from the live app; customer app Lottie round; 077 leftover (Settings "default cut-off time" in the kitchen's clock); Dellavee feedback; the owner's wife's iPad.
 
@@ -53,4 +63,4 @@ Owner, 17 Oct: "changing page make the image banner on top flashing and kept rel
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.40 (tag v1.0.40): Remember me polish (092, in 1.0.39) and banner no flash (093). Ask the owner before any git write. Ask me whether setup is needed, then the open phone checks, then which plan is next, one question at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. 1.0.41 (banner everywhere, sheets, notice pills, nudges, root page) is committed; check whether it's live and tagged. Ask the owner before any git write. Ask me whether setup is needed, then the 1.0.41 phone checks, then plan 098's questions Q1–Q5 for 1.0.42, one at a time.

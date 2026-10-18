@@ -142,9 +142,10 @@
     "home": "Ke menu"
   },
   "home": {
-    "title": "{{app}} · Pesanan masakan rumahan mingguan",
-    "body": "Juru masak rumahan menerbitkan menu setiap minggu. Anda memesan lewat tautan juru masaknya, lalu memantau pesanan di sini.",
-    "hint": "Buka tautan penjual Anda dari WhatsApp."
+    "welcome": "Selamat datang di ShaggyBobo",
+    "hint": "Mencari sesuatu di sini? Buka tautan dari orang atau grup yang mengundangmu.",
+    "sellerPrompt": "Menjalankan sesuatu di ShaggyBobo?",
+    "signIn": "Masuk"
   },
   "kitchenNotFound": {
     "title": "Kami tidak menemukan dapur ini",

@@ -67,7 +67,7 @@ describe('link preview (plan 047)', () => {
       'https://o.x/brand/og-shaggybobo.png',
     );
     const html = linkPreviewHtml(defaultPreview(), 'https://o.x', '/seller/setup');
-    expect(html).toContain('content="ShaggyBobo&#39;s Order"');
+    expect(html).toContain('content="By invitation · Dengan undangan"');
     expect(html).toContain('/brand/og-shaggybobo.png');
   });
 });

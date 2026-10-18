@@ -74,12 +74,13 @@ const Who = styled.p`
 `;
 // The strip fills the full content width with the wide banner (plan 040): no side bands. The
 // seller's colour and background picture stay only as the loading fallback behind the image.
-const BannerStrip = styled.div<{ $background?: string; $image?: string }>`
+const BannerStrip = styled.div<{ $background?: string; $image?: string; $task?: boolean }>`
   background-color: ${({ theme, $background }) => $background ?? theme.c.surf2};
   ${({ $image }) =>
     $image
       ? `background-image: ${cssUrl($image)}; background-size: cover; background-position: center;`
       : ''}
+  ${({ $task }) => ($task ? `height: ${BANNER_STRIP_HEIGHT}; overflow: hidden;` : '')}
 `;
 // The banner at full size: as tall as the left menu's top, or shorter when the content is too
 // narrow for the middle 1896 x 328 to show uncut (height = min(menu top, width x 328 / 1896)).
@@ -91,8 +92,13 @@ const BannerFull = styled.div`
 // Plan 014 / 040: the banner area slides up to a strip while the image keeps its size, so only its
 // top shows (the sheet slides over it). Expanded, the max-height is the tallest the banner gets;
 // reduced motion is switched off globally.
-const BannerClip = styled.div<{ $collapsed: boolean; $open: string; $closed: string }>`
-  display: flex;
+const BannerClip = styled.div<{
+  $collapsed: boolean;
+  $open: string;
+  $closed: string;
+  $hidden?: boolean;
+}>`
+  display: ${({ $hidden }) => ($hidden ? 'none' : 'flex')};
   align-items: flex-start;
   max-height: ${({ $collapsed, $open, $closed }) => ($collapsed ? $closed : $open)};
   overflow: hidden;
@@ -102,10 +108,6 @@ const BannerClip = styled.div<{ $collapsed: boolean; $open: string; $closed: str
     flex: none;
     width: 100%;
   }
-`;
-// Task screens: the banner shrinks to a thin strip of the background; the sheet rises over it.
-const TaskStrip = styled(BannerStrip)`
-  height: ${BANNER_STRIP_HEIGHT};
 `;
 // The content sheet: 16 px top corners that overlap the banner above.
 const Sheet = styled.div<{ $tablet: boolean; $fixed: boolean }>`
@@ -178,6 +180,8 @@ export function SellerLayout() {
     !tablet && isTabletOnly(pathname, me?.role === 'chef' ? 'chef' : undefined);
   // Phone: the 3:1 banner belongs to the Orders list only; other phone screens have none.
   const phoneBanner = !tablet && isPhoneOrdersList(pathname);
+  // Task screens: the banner shrinks to a thin strip (same element, image hidden, never remounted).
+  const task = isTaskScreen(pathname);
   const homeTablet = tablet && pathname === '/seller';
   const fixed = fixesPage(pathname, tablet) || homeTablet;
   // The banner slides under the sheet by the button (Orders, remembered) or by scrolling the sheet
@@ -214,12 +218,10 @@ export function SellerLayout() {
           {who && !nameShownElsewhere ? (
             <Who>{t('sellerNav.signedInAs', { name: who })}</Who>
           ) : null}
-          {tablet && isTaskScreen(pathname) ? (
-            <TaskStrip $background={background} $image={backgroundImage} aria-hidden="true" />
-          ) : null}
-          {tablet && !isTaskScreen(pathname) ? (
-            <BannerStrip $background={background} $image={backgroundImage}>
+          {tablet ? (
+            <BannerStrip $background={background} $image={backgroundImage} $task={task}>
               <BannerClip
+                $hidden={task}
                 $collapsed={bannerCollapsed}
                 $open={`${RAIL_TOP_PX}px`}
                 $closed={`${RAIL_TOP_COLLAPSED_PX}px`}
@@ -233,22 +235,28 @@ export function SellerLayout() {
                     src={kitchen?.images?.desktopBanner}
                     alt={bannerText}
                     placeholder={placeholder}
+                    eager
                   />
                 </BannerFull>
               </BannerClip>
             </BannerStrip>
-          ) : null}
-          {phoneBanner ? (
-            <BannerClip $collapsed={bannerCollapsed} $open="24rem" $closed="50px">
+          ) : (
+            <BannerClip
+              $hidden={!phoneBanner}
+              $collapsed={bannerCollapsed}
+              $open="24rem"
+              $closed="50px"
+            >
               <ImageSlot
                 aspectRatio="3 / 1"
                 background={background}
                 src={phoneBannerSrc(kitchen?.images)}
                 alt={bannerText}
                 placeholder={placeholder}
+                eager
               />
             </BannerClip>
-          ) : null}
+          )}
         </Top>
         <Sheet $tablet={tablet} $fixed={fixed} onScrollCapture={onSheetScroll}>
           <IncomeAccessProvider role={me?.role} chefId={me?.chefId}>

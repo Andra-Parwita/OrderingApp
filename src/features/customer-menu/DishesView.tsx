@@ -314,13 +314,7 @@ export function DishesView({
   const { t } = useTranslation(CUSTOMER_NS);
   const { kitchen, week } = data;
   return (
-    <CustomerPage
-      title={t('dishes.title')}
-      kitchenName={kitchen.name}
-      logoSrc={kitchen.images?.railImage ?? undefined}
-      backLabel={t('dishes.backMenu')}
-      onBack={onBack}
-    >
+    <CustomerPage title={t('dishes.title')} backLabel={t('dishes.backMenu')} onBack={onBack}>
       <Sub>
         {t('dishes.line', {
           date: formatCookingDate(week.cookingDate, lang),

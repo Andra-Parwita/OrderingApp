@@ -200,7 +200,6 @@ function ExpiredContent({
       order={order}
       code={code}
       kitchenName={menu?.kitchen.name ?? order.seller.name}
-      logoSrc={menu?.kitchen.images?.railImage ?? undefined}
       lang={lang}
       onBack={onBack}
       onOpenMenu={() => onOpenMenu(order.seller.slug)}

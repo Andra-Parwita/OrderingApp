@@ -30,7 +30,7 @@ describe('the admin page frame (plan 038)', () => {
     expect(screen.getByRole('img', { name: 'ShaggyBobo' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Admin' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
-    expect(screen.getByText('v1.0.40')).toBeInTheDocument();
+    expect(screen.getByText('v1.0.41')).toBeInTheDocument();
   });
 
   it('shows the unselected language option in the brand ink on the beige bar', () => {

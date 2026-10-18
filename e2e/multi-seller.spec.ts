@@ -64,10 +64,12 @@ test('two sellers: orders at each link, My orders across both, the seller side p
   await expect(page.getByRole('navigation', { name: 'Customer' })).toBeVisible();
   // The home page: no list of sellers.
   await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Welcome to ShaggyBobo' })).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: "ShaggyBobo's Order · Weekly home-cooked orders" }),
+    page.getByText(
+      'Looking for something here? Open the link from the person or group who invited you.',
+    ),
   ).toBeVisible();
-  await expect(page.getByText("Open your seller's link from WhatsApp.")).toBeVisible();
   await expect(page.getByText('Dapur Demo')).toHaveCount(0);
 
   // Seller side (a desktop device): Onde Onde by default, then Dapur Demo through the picker.

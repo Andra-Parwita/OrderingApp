@@ -9,6 +9,7 @@ import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { CustomerPage } from '../../components/CustomerPage';
+import { RememberMeTick } from '../../components/remember-me';
 import { Group, Qty, Round } from './DishesView';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
@@ -341,7 +342,7 @@ export function BasketView({
   addressBlocked = false,
 }: BasketProps) {
   const { t } = useTranslation(CUSTOMER_NS);
-  const { kitchen, week, seller } = data;
+  const { week, seller } = data;
   const cook = seller.name || t('states.theSeller');
   const total = formatMoney(totalCents, lang);
   const points = week.pickupPoints;
@@ -351,8 +352,6 @@ export function BasketView({
   return (
     <CustomerPage
       title={editing ? t('basket.editTitle') : t('basket.title')}
-      kitchenName={kitchen.name}
-      logoSrc={kitchen.images?.railImage ?? undefined}
       backLabel={editing ? t('checkout.backOrder') : t('checkout.backDishes')}
       onBack={onBack}
     >
@@ -453,20 +452,10 @@ export function BasketView({
 }
 
 /** "Your basket is empty" with a way back (never a blank page). */
-export function EmptyBasketView({
-  data,
-  onBack,
-}: Readonly<{ data: MenuResponse; onBack: () => void }>) {
+export function EmptyBasketView({ onBack }: Readonly<{ onBack: () => void }>) {
   const { t } = useTranslation(CUSTOMER_NS);
-  const { kitchen } = data;
   return (
-    <CustomerPage
-      title={t('basket.title')}
-      kitchenName={kitchen.name}
-      logoSrc={kitchen.images?.railImage ?? undefined}
-      backLabel={t('checkout.backDishes')}
-      onBack={onBack}
-    >
+    <CustomerPage title={t('basket.title')} backLabel={t('checkout.backDishes')} onBack={onBack}>
       <Quiet role="status">{t('basket.empty')}</Quiet>
       <Footer>
         <MainButton type="button" onClick={onBack}>
@@ -575,13 +564,11 @@ type PickupProps = Readonly<{
 
 export function PickupPlaceView({ data, lang, selectedId, onSelect, onDone, onBack }: PickupProps) {
   const { t } = useTranslation(CUSTOMER_NS);
-  const { kitchen, week } = data;
+  const { week } = data;
   const groupName = useId();
   return (
     <CustomerPage
       title={t('checkout.pickupTitle')}
-      kitchenName={kitchen.name}
-      logoSrc={kitchen.images?.railImage ?? undefined}
       backLabel={t('checkout.backBasket')}
       onBack={onBack}
     >
@@ -816,7 +803,7 @@ export function YourNameView({
   onBack,
 }: NameProps) {
   const { t } = useTranslation(CUSTOMER_NS);
-  const { kitchen, week } = data;
+  const { week } = data;
   const nameId = useId();
   const noteId = useId();
   const pickup = week.pickupPoints.find((point) => point.id === pickupId) ?? week.pickupPoints[0];
@@ -839,8 +826,6 @@ export function YourNameView({
   return (
     <CustomerPage
       title={editing ? t('basket.editTitle') : t('checkout.nameTitle')}
-      kitchenName={kitchen.name}
-      logoSrc={kitchen.images?.railImage ?? undefined}
       backLabel={t('checkout.backBasket')}
       onBack={onBack}
     >
@@ -865,6 +850,7 @@ export function YourNameView({
               aria-invalid={nameError ? true : undefined}
             />
           </Field>
+          {editing ? null : <RememberMeTick />}
           <Field
             label={t('checkout.note')}
             optional={t('checkout.optional')}

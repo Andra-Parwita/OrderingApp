@@ -73,9 +73,8 @@ export const themeColourHtml = (theme: ThemeName): string =>
 
 /** The ShaggyBobo link-preview picture (plan 047): a small square, so WhatsApp shows a thumbnail. */
 export const DEFAULT_OG_IMAGE = { path: '/brand/og-shaggybobo.png', width: 512, height: 512 };
-export const DEFAULT_OG_TITLE = "ShaggyBobo's Order";
-const DEFAULT_OG_DESCRIPTION =
-  'Weekly home-cooked menu, order by link · Menu masakan rumahan mingguan, pesan lewat tautan';
+export const DEFAULT_OG_TITLE = 'ShaggyBobo';
+const DEFAULT_OG_DESCRIPTION = 'By invitation · Dengan undangan';
 
 export type LinkPreview = {
   title: string;

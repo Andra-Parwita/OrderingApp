@@ -142,9 +142,10 @@
     "home": "Go to the menu"
   },
   "home": {
-    "title": "{{app}} · Weekly home-cooked orders",
-    "body": "Home cooks publish a menu each week. You order from the cook's own link, then follow your order here.",
-    "hint": "Open your seller's link from WhatsApp."
+    "welcome": "Welcome to ShaggyBobo",
+    "hint": "Looking for something here? Open the link from the person or group who invited you.",
+    "sellerPrompt": "Run something on ShaggyBobo?",
+    "signIn": "Sign in"
   },
   "kitchenNotFound": {
     "title": "We couldn't find this kitchen",

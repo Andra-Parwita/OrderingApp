@@ -23,6 +23,8 @@ export type ImageSlotProps = Readonly<{
   round?: boolean;
   /** Fill the parent's box (its height decides the shape); the ratio then only labels the slot. */
   fill?: boolean;
+  /** Load at once instead of when it nears the screen: for a picture at the top of every page. */
+  eager?: boolean;
 }>;
 
 // The box keeps its shape before the image loads, so nothing jumps.
@@ -73,6 +75,7 @@ export const ImageSlot = memo(function ImageSlot({
   width,
   round = false,
   fill = false,
+  eager = false,
 }: ImageSlotProps) {
   return (
     <Box
@@ -85,7 +88,7 @@ export const ImageSlot = memo(function ImageSlot({
       $fill={fill}
     >
       {src ? (
-        <Img src={src} alt={alt} loading="lazy" decoding="async" $fit={fit} />
+        <Img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" $fit={fit} />
       ) : (
         <Label role="img" aria-label={alt}>
           <span aria-hidden="true">{placeholder}</span>

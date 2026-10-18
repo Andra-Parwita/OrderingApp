@@ -25,12 +25,13 @@ const answer = (version: string) =>
 
 async function mount(
   fetchImpl: typeof fetch,
-  extra: { now?: () => number; enabled?: boolean } = {},
+  extra: { now?: () => number; enabled?: boolean; reload?: () => void } = {},
 ) {
-  const watch = { current: '1.0.1', enabled: true, fetchImpl, ...extra };
+  const { reload, ...rest } = extra;
+  const watch = { current: '1.0.1', enabled: true, fetchImpl, ...rest };
   render(
     <AppThemeProvider>
-      <UpdateBar watch={watch} />
+      <UpdateBar watch={watch} reload={reload} />
     </AppThemeProvider>,
   );
   await act(async () => {
@@ -43,7 +44,28 @@ describe('UpdateBar', () => {
   it('shows the bar when the deployed version differs', async () => {
     await mount(answer('1.0.2'));
     expect(screen.getByText(/A new version is ready/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'A new version is ready. Refresh' }),
+    ).toBeInTheDocument();
+  });
+
+  it('is one pill: icon, text and a Refresh link; the whole bar refreshes, the cross only hides', async () => {
+    const reload = vi.fn();
+    await mount(answer('1.0.2'), { reload });
+    const bar = screen.getByRole('button', { name: 'A new version is ready. Refresh' });
+    expect(bar.querySelector('img')).toHaveAttribute('src', '/brand/logo-icon.webp');
+    expect(bar).toHaveTextContent('A new version is ready');
+    expect(bar).toHaveTextContent('Refresh');
+    fireEvent.click(screen.getByRole('button', { name: 'Hide' }));
+    expect(reload).not.toHaveBeenCalled();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('refreshes when the bar is tapped', async () => {
+    const reload = vi.fn();
+    await mount(answer('1.0.2'), { reload });
+    fireEvent.click(screen.getByText('A new version is ready'));
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it('publishes its height so the offline banner sits below it, and clears it when hidden', async () => {

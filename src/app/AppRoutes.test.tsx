@@ -108,16 +108,18 @@ describe('AppRoutes', () => {
     expect(screen.getByRole('link', { name: 'Go to the menu' })).toHaveAttribute('href', '/');
   });
 
-  it('shows the theme switch in the customer Settings, and remembers the choice', () => {
+  it('shows the theme switch in the customer Settings, and remembers the choice', async () => {
     renderAt('/settings');
     expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('radio', { name: 'Dark' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Appearance/ }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Dark/ }));
     expect(localStorage.getItem('theme')).toBe('dark');
     expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute(
       'content',
       '#121411',
     );
-    fireEvent.click(screen.getByRole('radio', { name: 'Auto' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Appearance/ }));
+    fireEvent.click(await screen.findByRole('radio', { name: /Auto/ }));
     expect(localStorage.getItem('theme')).toBe('auto');
   });
 

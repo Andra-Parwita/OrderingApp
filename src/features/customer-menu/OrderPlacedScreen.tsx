@@ -24,7 +24,7 @@ import { menuRequested, orderRequested } from './customerSlice';
 import { CUSTOMER_NS } from './i18n/register';
 import { Page, StateMessage, useLang } from './layout';
 import { MenuIcon } from './menuIcons';
-import { RememberMeNudge } from '../../components/remember-me';
+import { PlacedNudge } from './PlacedNudge';
 import { MainButton } from './menuParts';
 import { ScreenBoundary } from './ScreenBoundary';
 import { selectMenu, selectMenuSlug, selectOrder } from './selectors';
@@ -173,9 +173,11 @@ export function OrderPlacedView({
   );
   return (
     <>
-      <PageTopBar
+      <PageTopBar />
+      <PlacedNudge
+        delivery={order.fulfilment === 'delivery'}
         kitchenName={menu?.kitchen.name ?? order.seller.name}
-        logoSrc={menu?.kitchen.images?.railImage ?? undefined}
+        install={installOverride}
       />
       <Body>
         <Heading>
@@ -215,7 +217,6 @@ export function OrderPlacedView({
           </LinkButton>
         </Links>
         <Help>{t('placed.saved')}</Help>
-        <RememberMeNudge />
       </Body>
       <InstallOverlay
         controller={install}

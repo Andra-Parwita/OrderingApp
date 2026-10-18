@@ -26,8 +26,8 @@ describe('release notes', () => {
     expect(currentRelease()).toBe(RELEASES[0]);
   });
 
-  it('starts at the newest release, 1.0.40, with the same number of lines in English and Indonesian', () => {
-    expect(RELEASES[0]?.version).toBe('1.0.40');
+  it('starts at the newest release, 1.0.41, with the same number of lines in English and Indonesian', () => {
+    expect(RELEASES[0]?.version).toBe('1.0.41');
     for (const release of RELEASES) {
       expect(release.lines.en.length).toBeGreaterThan(0);
       expect(release.lines.id).toHaveLength(release.lines.en.length);

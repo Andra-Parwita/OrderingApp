@@ -341,12 +341,7 @@ export function OrderPageView(props: OrderPageViewProps) {
 
   return (
     <Page>
-      <PageTopBar
-        kitchenName={info.kitchenName}
-        logoSrc={info.logoSrc}
-        backLabel={t('common.myOrders')}
-        onBack={props.onBack}
-      />
+      <PageTopBar backLabel={t('common.myOrders')} onBack={props.onBack} />
       <VisuallyHidden as="h1">{t('order.title')}</VisuallyHidden>
       <OrderHead eyebrow={eyebrow} code={order.code} onShowQr={props.onShowQr} />
       {order.private ? (

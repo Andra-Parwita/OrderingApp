@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Home-screen nudge (plan 096 mock-up)</title>
+    <style>
+      :root {
+        --ink: #2b1d12;
+        --stage: #d9d4c6;
+        --pill: #fff6ea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--stage);
+        color: #1c1f1a;
+        font:
+          16px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 3px solid #1f6b5c;
+        outline-offset: 2px;
+      }
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        justify-content: center;
+        padding: 12px 16px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--pill);
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+        padding: 4px 14px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        min-height: 36px;
+        color: var(--ink);
+      }
+      .seg button[aria-pressed='true'] {
+        background: var(--ink);
+        color: #eadbc2;
+      }
+      .notes {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 16px;
+        font-size: 0.875rem;
+      }
+      .rec {
+        background: var(--pill);
+        border: 1px solid #ead8bf;
+        border-radius: 10px;
+        padding: 8px 14px;
+      }
+      h2 {
+        font-size: 1rem;
+        margin: 22px 0 2px;
+      }
+      .opt {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 16px 20px;
+      }
+      .row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .frame {
+        --bg: #f6f2e8;
+        --surf: #fffdf8;
+        --line: #e4ded0;
+        --text: #1c1f1a;
+        --muted: #5d6358;
+        --brand: #1f6b5c;
+        background: var(--bg);
+        color: var(--text);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgb(40 30 15/14%);
+        overflow: hidden;
+        flex: none;
+        max-width: 100%;
+        width: 390px;
+      }
+      .frame[data-theme='dark'] {
+        --bg: #121411;
+        --surf: #181a16;
+        --line: #2e332b;
+        --text: #f1eee6;
+        --muted: #a9afa3;
+        --brand: #93c590;
+      }
+      .mode,
+      .ratio {
+        font-size: 0.6875rem;
+        color: var(--muted);
+        padding: 6px 12px 2px;
+        font-variant-numeric: tabular-nums;
+      }
+      .mode {
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .ratio.fail {
+        color: #c00;
+        font-weight: 700;
+      }
+      .slot {
+        padding: 6px 10px;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        padding: 0 4px 0 12px;
+        font-size: 0.8125rem;
+        line-height: 1.2;
+        border-radius: 20px;
+        background: var(--b);
+        color: var(--f);
+        box-shadow:
+          inset 0 0 0 1px var(--ln, var(--line)),
+          0 4px 14px rgb(40 30 15/22%);
+      }
+      .bar img {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+        flex: none;
+      }
+      .msg {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .act {
+        flex: none;
+        margin-right: 16px;
+        padding: 0 4px;
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+        font-weight: 700;
+        color: var(--a);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        background: none;
+        border: 0;
+      }
+      .act.btn {
+        text-decoration: none;
+        padding: 0 12px;
+        border-radius: 8px;
+        background: var(--ab);
+      }
+      .x {
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: transparent;
+        color: var(--x);
+        font-size: 1rem;
+      }
+      .bar button:focus-visible {
+        outline: 3px solid currentColor;
+        outline-offset: -3px;
+      }
+      .page {
+        padding: 0 16px 16px;
+      }
+      .ban {
+        height: 96px;
+        margin: 0 -16px 10px;
+        background: linear-gradient(135deg, #c9a46b, #8d6a3a);
+        display: flex;
+        align-items: flex-end;
+        padding: 8px 16px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.8125rem;
+      }
+      .kit {
+        font-weight: 700;
+        font-size: 1.125rem;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.8125rem;
+      }
+      .dish {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+        font-size: 0.875rem;
+      }
+      .card {
+        background: var(--surf);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-top: 10px;
+        font-size: 0.875rem;
+      }
+      .code {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        color: var(--brand);
+      }
+      .sheet {
+        background: var(--surf);
+        border-radius: 18px 18px 0 0;
+        padding: 10px 20px 20px;
+        margin-top: 60px;
+        box-shadow: 0 -6px 20px rgb(0 0 0/20%);
+      }
+      .grab {
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--line);
+        margin: 0 auto 12px;
+      }
+      .go {
+        width: 100%;
+        min-height: 44px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--brand);
+        color: var(--bg);
+        font-weight: 700;
+        margin-top: 12px;
+      }
+      .cap {
+        font-size: 0.8125rem;
+        margin: 4px 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <span class="seg" role="group" aria-label="Language"
+        ><button data-l="en" aria-pressed="true">EN</button
+        ><button data-l="id" aria-pressed="false">ID</button></span
+      >
+      <span class="seg" role="group" aria-label="Nudge colour" id="cand"></span>
+    </div>
+    <div class="notes">
+      <div class="rec" id="rec"></div>
+      <p id="intro"></p>
+    </div>
+    <div id="root"></div>
+    <script>
+      const LOGO = '/public/brand/logo-icon.webp'; // same path as 095-notice-bars.html
+      const T = {
+        en: {
+          rec: 'Recommendation: N1 (soft stone). It is neither green (update) nor amber (notice) nor the page colour, so it reads as an optional tip.\nN2 is the clearest alternative; N3 sits too close to amber.',
+          intro:
+            'Same 40 px floating pill as plan 095 E2: 24 px icon, 16 px gap before the cross, 40×40 cross. Tap the link to open the install steps; the cross hides it for 14 days. Pick the colour above to restyle sections 1, 2 and 4. Contrast (text / link / cross, WCAG 4.5 or more) is printed under each pill.',
+          s1: '1 · Menu home, first visit: menu only, no nudge',
+          s2: '2 · Order placed, first order: home-screen pill (updates on iPhone need the home-screen app)',
+          s3: '3 · Next to the 095 pills, and three neutral candidates',
+          s4: '4 · What "How" opens (existing install steps sheet, first step only)',
+          s5: '5 · Order placed: "Remember me" nudge (N1; first order, and delivery)',
+          s6: '6 · Empty My orders: honest restore line, not a nudge',
+          s7: '7 · One nudge at a time',
+          rm1: 'Keep this order',
+          rm2: 'Keep your address',
+          cap1: 'First visit: menu only',
+          s8: '8 · Ordering, name step: quiet Remember me line (off by default)',
+          s9: '9 · What "?" opens (bottom sheet, existing explanation)',
+          nm: 'Your first name',
+          nmv: 'Sari',
+          chk: 'Remember me on any phone you use',
+          help: 'What is Remember me?',
+          ttl: 'Remember me on all my phones (optional)',
+          intro2: 'We remember your orders, name and address on this phone and on any other phone you use.',
+          adv: ['Your orders are still there on any phone you use, or after clearing your browser', 'Your name and saved address are filled in for you', "Sellers see the same customer code every time (and know it's really you)"],
+          whyH: "Why it's safe",
+          why: ['No email, no password, no phone number', 'It unlocks with your face or fingerprint', 'Your saved address is locked so only your phones can read it (not even us)', "It is deleted if you don't order for 30 days, and you can delete it any time"],
+          pkH: "What's a passkey?",
+          pkP: "A safer way to sign in, built into your phone. Instead of a password, you unlock with your face, fingerprint or phone PIN, the same way you unlock your phone. It's stored safely on your phone (and your phone's backup), and it only works for this app.",
+          pkN: 'Ordering without it works just the same.',
+          close: 'Close',
+          next2: 'Next',
+          rmL: 'Remember me',
+          v1: 'First order on this phone',
+          v2: 'Delivery order',
+          rmT: 'Turn on Remember me',
+          rmN: 'Your first name',
+          rmC: 'Continue',
+          rmNote: 'Face ID or fingerprint comes next.',
+          rmOpen: 'Tapping "Remember me" opens the existing turn-on sheet (first name, then passkey):',
+          myT: 'My orders',
+          rest: 'Turned on Remember me before?',
+          restL: 'Restore your orders',
+          codeQ: 'Have an order code? e.g. K7F-2QX',
+          codeOpen: 'Open',
+          noteH: 'Order of nudges',
+          note1: '1 · Update or notice pill (095), if any',
+          note2: '2 · Home screen pill, if not installed',
+          note3: '3 · Remember me pill, order-placed page only, if off',
+          note4: 'Cross: ask again after 30 days, at most 3 times, then only the Settings card. Saved per phone.',
+          light: 'Light',
+          dark: 'Dark',
+          msg: 'Put Onde Onde on your home screen',
+          how: 'How',
+          hide: 'Hide',
+          upd: 'A new version is ready',
+          refresh: 'Refresh',
+          amb: 'Closed next Saturday, back the week after.',
+          dishes: ['Onde Onde (6)', 'Nasi Uduk box', 'Es Cendol'],
+          menu: 'Menu for Saturday 24 Oct · pickup or delivery',
+          banner: 'Closed next Saturday',
+          ordered: 'Order placed',
+          code: 'Your order number',
+          send: 'Send this number to Onde Onde on WhatsApp.',
+          step: 'Step 1 of 4',
+          st1: 'Tap the ••• button',
+          st1b: "It's at the bottom right of the screen.",
+          next: 'Done, next step',
+          sheetT: 'Get a message when your order is ready',
+          green: 'Green · update (095)',
+          amber: 'Amber · notice (095)',
+          pc: [
+            'Pro: calm and clearly not an alert; no clash with green or amber.\nCon: grey can look disabled if too pale; keep text at full ink.',
+            'Pro: a cool tone separates it from both warm notices.\nCon: adds a third hue family (blue) to the app.',
+            'Pro: on-brand warm cream.\nCon: very close to the amber notice, so the two can be confused.',
+          ],
+        },
+        id: {
+          rec: 'Rekomendasi: N1 (abu batu lembut). Bukan hijau (versi baru), bukan kuning (pengumuman), bukan warna halaman, jadi terbaca sebagai saran yang boleh diabaikan.\nN2 alternatif terjelas; N3 terlalu dekat dengan kuning.',
+          intro:
+            'Pil melayang 40 px yang sama dengan rencana 095 E2: ikon 24 px, jarak 16 px sebelum silang, silang 40×40. Ketuk tautan untuk membuka langkah pemasangan; silang menyembunyikannya 14 hari. Pilih warna di atas untuk bagian 1, 2 dan 4. Kontras (teks / tautan / silang, WCAG minimal 4,5) tertulis di bawah tiap pil.',
+          s1: '1 · Beranda menu, kunjungan pertama: hanya menu, tanpa ajakan',
+          s2: '2 · Pesanan terkirim (kabar di iPhone butuh aplikasi di layar utama)',
+          s3: '3 · Di samping pil 095, dan tiga kandidat netral',
+          s4: '4 · Yang dibuka "Caranya" (lembar langkah pemasangan yang ada, langkah 1 saja)',
+          s5: '5 · Pesanan terkirim: ajakan "Ingat aku" (N1; pesanan pertama, dan antar)',
+          s6: '6 · Pesanan saya kosong: baris pemulihan yang jujur, bukan ajakan',
+          s7: '7 · Satu ajakan sekali tampil',
+          rm1: 'Simpan pesanan ini',
+          rm2: 'Simpan alamatmu',
+          cap1: 'Kunjungan pertama: hanya menu',
+          s8: '8 · Memesan, langkah nama: baris Ingat aku yang tenang (mati secara bawaan)',
+          s9: '9 · Yang dibuka "?" (lembar bawah, penjelasan yang sudah ada)',
+          nm: 'Nama depanmu',
+          nmv: 'Sari',
+          chk: 'Ingat aku di HP mana pun yang kamu pakai',
+          help: 'Apa itu Ingat aku?',
+          ttl: 'Ingat aku di semua HP-ku (opsional)',
+          intro2: 'Kami ingat pesanan, nama, dan alamatmu di HP ini dan di HP lain yang kamu pakai.',
+          adv: ['Pesananmu tetap ada di HP mana pun yang kamu pakai, atau setelah hapus data browser', 'Nama dan alamat tersimpanmu terisi otomatis', 'Penjual melihat kode pelanggan yang sama setiap kali (dan tahu itu benar-benar kamu)'],
+          whyH: 'Kenapa aman',
+          why: ['Tanpa email, tanpa kata sandi, tanpa nomor HP', 'Dibuka dengan wajah atau sidik jarimu', 'Alamat tersimpanmu dikunci sehingga hanya HP-mu yang bisa membacanya (kami pun tidak)', 'Dihapus kalau kamu tidak pesan selama 30 hari, dan bisa kamu hapus kapan saja'],
+          pkH: 'Apa itu passkey?',
+          pkP: 'Cara masuk yang lebih aman, sudah ada di HP-mu. Tanpa kata sandi: kamu cukup buka dengan wajah, sidik jari, atau PIN HP, sama seperti membuka HP. Disimpan aman di HP-mu (dan cadangan HP-mu), dan hanya berlaku untuk aplikasi ini.',
+          pkN: 'Pesan tanpa ini tetap bisa seperti biasa.',
+          close: 'Tutup',
+          next2: 'Lanjut',
+          rmL: 'Ingat aku',
+          v1: 'Pesanan pertama di ponsel ini',
+          v2: 'Pesanan antar',
+          rmT: 'Nyalakan Ingat aku',
+          rmN: 'Nama depanmu',
+          rmC: 'Lanjut',
+          rmNote: 'Berikutnya Face ID atau sidik jari.',
+          rmOpen: 'Mengetuk "Ingat aku" membuka lembar yang sudah ada (nama depan, lalu passkey):',
+          myT: 'Pesanan saya',
+          rest: 'Pernah menyalakan Ingat aku?',
+          restL: 'Pulihkan pesananmu',
+          codeQ: 'Punya kode pesanan? mis. K7F-2QX',
+          codeOpen: 'Buka',
+          noteH: 'Urutan ajakan',
+          note1: '1 · Pil versi baru atau pengumuman (095), jika ada',
+          note2: '2 · Pil layar utama, jika belum dipasang',
+          note3: '3 · Pil Ingat aku, hanya di halaman pesanan terkirim, jika mati',
+          note4: 'Silang: tanya lagi setelah 30 hari, paling banyak 3 kali, lalu hanya kartu di Pengaturan. Disimpan per ponsel.',
+          light: 'Terang',
+          dark: 'Gelap',
+          msg: 'Taruh Onde Onde di layar utama',
+          how: 'Caranya',
+          hide: 'Sembunyikan',
+          upd: 'Versi baru sudah siap',
+          refresh: 'Muat ulang',
+          amb: 'Libur Sabtu depan, buka lagi minggu berikutnya.',
+          dishes: ['Onde Onde (6)', 'Kotak Nasi Uduk', 'Es Cendol'],
+          menu: 'Menu Sabtu 24 Okt · ambil atau antar',
+          banner: 'Libur Sabtu depan',
+          ordered: 'Pesanan terkirim',
+          code: 'Nomor pesanan Anda',
+          send: 'Kirim nomor ini ke Onde Onde lewat WhatsApp.',
+          step: 'Langkah 1 dari 4',
+          st1: 'Ketuk tombol •••',
+          st1b: 'Ada di kanan bawah layar.',
+          next: 'Sudah, langkah berikutnya',
+          sheetT: 'Dapat pesan saat pesanan siap',
+          green: 'Hijau · versi baru (095)',
+          amber: 'Kuning · pengumuman (095)',
+          pc: [
+            'Pro: tenang dan jelas bukan peringatan; tidak bentrok dengan hijau atau kuning.\nKontra: abu bisa tampak nonaktif jika terlalu pucat; teks tetap penuh.',
+            'Pro: nada dingin berbeda dari dua pemberitahuan hangat.\nKontra: menambah keluarga warna ketiga (biru).',
+            'Pro: krem hangat sesuai merek.\nKontra: sangat dekat dengan kuning, bisa tertukar.',
+          ],
+        },
+      };
+      const N = {
+        N1: {
+          name: 'N1 · Soft stone',
+          light: { b: '#ECE8DF', f: '#1C1F1A', a: '#1F6B5C', x: '#5D6358', ln: '#D6D0C2' },
+          dark: { b: '#2A2C27', f: '#F1EEE6', a: '#93C590', x: '#A9AFA3', ln: '#3A3D36' },
+        },
+        N2: {
+          name: 'N2 · Soft blue-grey',
+          light: { b: '#E4EAF0', f: '#1B2530', a: '#2F5A85', x: '#52606E', ln: '#CBD5DF' },
+          dark: { b: '#232B35', f: '#E6ECF2', a: '#9CC2EA', x: '#A3AEBA', ln: '#323D4A' },
+        },
+        N3: {
+          name: 'N3 · Brand-tinted cream',
+          light: { b: '#FFF6EA', f: '#2B1D12', a: '#7A4A12', x: '#6B5A45', ln: '#E5D2B5' },
+          dark: { b: '#33291E', f: '#F4E8D8', a: '#E3C08A', x: '#CDBBA0', ln: '#4A3B29' },
+        },
+      };
+      const G = {
+        light: { b: '#1F6B5C', f: '#FFFFFF', a: '#1F6B5C', ab: '#FFFDF8', x: '#E3EFEA', ln: '#1F6B5C' },
+        dark: { b: '#93C590', f: '#10200F', a: '#F1EEE6', ab: '#10200F', x: '#10200F', ln: '#93C590' },
+      };
+      const A = {
+        light: { b: '#FBF1D9', f: '#3A2A00', a: '#7A4F00', x: '#6B5A33', ln: '#EBDCB4' },
+        dark: { b: '#3A3220', f: '#F3E6C4', a: '#E9B949', x: '#CDBF98', ln: '#52472C' },
+      };
+      const lum = (h) => {
+        const c = [1, 3, 5]
+          .map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+          .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      };
+      const cr = (a, b) => {
+        const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+        return (x + 0.05) / (y + 0.05);
+      };
+      const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      let lang = 'en',
+        cand = 'N1';
+      function pill(c, msg, act, hide, btn) {
+        const st = `--b:${c.b};--f:${c.f};--a:${c.a};--x:${c.x};--ln:${c.ln};${c.ab ? `--ab:${c.ab};` : ''}`;
+        const r = [['text', cr(c.f, c.b)]];
+        if (act) r.push([btn ? 'button' : 'link', cr(c.a, c.ab || c.b)]);
+        r.push(['✕', cr(c.x, c.b)]);
+        const fail = r.some((x) => x[1] < 4.5);
+        const lab = r.map((x) => `${x[0]} ${x[1].toFixed(1)}`).join(' · ');
+        const actEl = act ? `<button class="act${btn ? ' btn' : ''}">${esc(act)}</button>` : '';
+        return `<div class="slot"><div class="bar" style="${st}"><img src="${LOGO}" alt=""><span class="msg">${esc(msg)}</span>${actEl}<button class="x" aria-label="${esc(hide)}">✕</button></div></div><div class="ratio ${fail ? 'fail' : ''}">${fail ? 'FAIL · ' : ''}${lab}</div>`;
+      }
+      const nudge = (m, t) => pill(N[cand][m], t.msg, t.how, t.hide);
+      const fr = (m, t, inner) =>
+        `<div class="frame" data-theme="${m}"><div class="mode">${esc(m === 'light' ? t.light : t.dark)}</div>${inner}</div>`;
+      const both = (t, f) =>
+        `<div class="row">${['light', 'dark'].map((m) => fr(m, t, f(m))).join('')}</div>`;
+      const sec = (h, body) =>
+        `<section class="opt"><div class="notes"><h2>${esc(h)}</h2></div>${body}</section>`;
+      const lbl = (s) => `<div class="muted" style="padding:6px 12px 0"><b>${s}</b></div>`;
+      const rmPill = (m, t, i) => pill(N.N1[m], `${i ? t.rm2 : t.rm1}`, t.rmL, t.hide);
+      const rmPage = (m, t, i, v) =>
+        `<div class="muted" style="padding:2px 12px"><b>${esc(t[v])}</b></div>${rmPill(m, t, i)}<div class="page"><div class="kit" style="margin-top:6px">${esc(t.ordered)}</div><div class="card"><div class="muted">${esc(t.code)}</div><div class="code">OO-2417</div></div><div class="muted" style="margin-top:10px">${esc(t.rmOpen)}</div><div class="sheet" style="margin:6px -16px -16px"><div class="grab"></div><div class="kit">${esc(t.rmT)}</div><div class="card" style="color:var(--muted)">${esc(t.rmN)}</div><div class="muted" style="margin-top:6px">${esc(t.rmNote)}</div><button class="go">${esc(t.rmC)}</button></div></div>`;
+      const empty = (m) => {
+        const t = T[lang];
+        return `<div class="page"><div class="kit" style="margin-top:12px">${esc(t.myT)}</div><div class="muted" style="margin-top:10px">${esc(t.rest)} <a href="#" style="color:var(--brand);font-weight:700">${esc(t.restL)}</a></div><div class="card" style="display:flex;justify-content:space-between;color:var(--muted)"><span>${esc(t.codeQ)}</span><b style="color:var(--brand)">${esc(t.codeOpen)}</b></div></div>`;
+      };
+      const noteBox = (t) =>
+        `<div class="page" style="padding-top:12px"><div class="kit">${esc(t.noteH)}</div>${[t.note1, t.note2, t.note3].map((n) => `<div class="dish">${esc(n)}</div>`).join('')}<div class="muted">${esc(t.note4)}</div></div>`;
+      const nameStep = (m, t) =>
+        `<div class="page"><div class="kit" style="margin-top:12px">${esc(t.nm)}</div><div class="card" style="display:flex;align-items:center;min-height:44px">${esc(t.nmv)}</div><div style="display:flex;align-items:center;gap:4px;min-height:44px;margin-top:4px;font-size:0.875rem"><span style="width:24px;height:24px;border:2px solid var(--muted);border-radius:6px;flex:none"></span><span style="flex:1;padding-left:8px">${esc(t.chk)}</span><button aria-label="${esc(t.help)}" style="width:40px;height:40px;flex:none;border:0;background:none;color:var(--brand)"><span style="display:inline-flex;width:24px;height:24px;border:2px solid currentColor;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:0.8125rem">?</span></button></div><button class="go">${esc(t.next2)}</button></div>`;
+      const help = (m, t) =>
+        `<div class="page" style="opacity:.4;height:90px"><div class="kit" style="margin-top:12px">${esc(t.nm)}</div></div><div class="sheet" style="margin-top:0;font-size:0.875rem"><div class="grab"></div><div class="kit">${esc(t.ttl)}</div><p style="margin:6px 0">${esc(t.intro2)}</p><ul style="margin:0;padding-left:20px">${t.adv.map((a) => `<li>${esc(a)}</li>`).join('')}</ul><div class="kit" style="font-size:0.9375rem;margin-top:10px">${esc(t.whyH)}</div><ul style="margin:0;padding-left:20px">${t.why.map((a) => `<li>${esc(a)}</li>`).join('')}</ul><div class="kit" style="font-size:0.9375rem;margin-top:10px">${esc(t.pkH)}</div><p class="muted" style="margin:4px 0">${esc(t.pkP)}</p><p style="margin:6px 0"><b>${esc(t.pkN)}</b></p><button class="go">${esc(t.close)}</button></div>`;
+      function render() {
+        const t = T[lang];
+        document.documentElement.lang = lang;
+        document.getElementById('rec').innerHTML = esc(t.rec).replace('\n', '<br>');
+        document.getElementById('intro').textContent = t.intro;
+        document.getElementById('cand').innerHTML = Object.keys(N)
+          .map((k) => `<button data-n="${k}" aria-pressed="${k === cand}">${k}</button>`)
+          .join('');
+        document.querySelectorAll('#cand button').forEach((b) =>
+          b.addEventListener('click', () => {
+            cand = b.dataset.n;
+            render();
+          }),
+        );
+        const home = (m) =>
+          `<div class="muted" style="padding:2px 12px"><b>${esc(t.cap1)}</b></div><div class="page"><div class="ban">${esc(t.banner)}</div><div class="kit">Onde Onde</div><div class="muted">${esc(t.menu)}</div>${t.dishes.map((d, i) => `<div class="dish"><span>${esc(d)}</span><b>A$${[12, 14, 6][i]}.00</b></div>`).join('')}</div>`;
+        const placed = (m) =>
+          `${nudge(m, t)}<div class="page"><div class="kit" style="margin-top:6px">${esc(t.ordered)}</div><div class="card"><div class="muted">${esc(t.code)}</div><div class="code">OO-2417</div><div>${esc(t.send)}</div></div><div class="card"><div class="dish" style="border:0;padding:0"><span>Onde Onde (6)</span><b>A$12.00</b></div><div class="muted">Adelaide · Sat 24 Oct, 11:00</div></div></div>`;
+        const strip = (m) =>
+          lbl(esc(t.green)) +
+          pill(G[m], t.upd, t.refresh, t.hide, true) +
+          lbl(esc(t.amber)) +
+          pill(A[m], t.amb, '', t.hide) +
+          Object.keys(N)
+            .map(
+              (k, i) =>
+                lbl(esc(N[k].name)) +
+                `<div class="muted" style="padding:0 12px;white-space:pre-line">${esc(t.pc[i])}</div>` +
+                pill(N[k][m], t.msg, t.how, t.hide),
+            )
+            .join('') +
+          '<div style="height:10px"></div>';
+        const sheet = (m) =>
+          `${nudge(m, t)}<div class="page" style="opacity:.45"><div class="ban">${esc(t.banner)}</div><div class="kit">Onde Onde</div></div><div class="sheet"><div class="grab"></div><div class="muted">${esc(t.step)}</div><div class="kit">${esc(t.st1)}</div><div class="muted">${esc(t.st1b)}</div><div class="card" style="text-align:center">${esc(t.sheetT)}</div><button class="go">${esc(t.next)}</button></div>`;
+        document.getElementById('root').innerHTML =
+          sec(t.s1, both(t, home)) +
+          sec(t.s2, both(t, placed)) +
+          sec(t.s3, both(t, strip)) +
+          sec(t.s4, both(t, sheet)) +
+          sec(t.s5, `<div class="row">${['v1', 'v2'].map((v, i) => ['light', 'dark'].map((m) => fr(m, t, rmPage(m, t, i, v))).join('')).join('')}</div>`) +
+          sec(t.s6, both(t, empty)) +
+          sec(t.s8, both(t, (m) => nameStep(m, t))) +
+          sec(t.s9, both(t, (m) => help(m, t))) +
+          sec(t.s7, `<div class="row">${fr('light', t, noteBox(t))}${fr('dark', t, noteBox(t))}</div>`);
+      }
+      document.querySelectorAll('.top .seg button[data-l]').forEach((b) =>
+        b.addEventListener('click', () => {
+          lang = b.dataset.l;
+          document
+            .querySelectorAll('.top .seg button[data-l]')
+            .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          render();
+        }),
+      );
+      render();
+    </script>
+  </body>
+</html>

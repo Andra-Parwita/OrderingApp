@@ -152,5 +152,10 @@
     "name": "ShaggyBobo Penjual",
     "title": "Pasang aplikasi",
     "sub": "Tambahkan aplikasi penjual ke layar utama"
+  },
+  "homePill": {
+    "text": "Tambahkan ke layar utama",
+    "how": "Caranya",
+    "hide": "Sembunyikan dulu"
   }
 }

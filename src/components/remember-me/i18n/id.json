@@ -1,6 +1,5 @@
 {
   "chip": "Ingat aku",
-  "chipOpen": "Ingat aku di semua HP-ku",
   "hide": "Sembunyikan",
   "title": "Ingat aku di semua HP-ku (opsional)",
   "intro": "Kami ingat pesanan, nama, dan alamatmu di HP ini dan di HP lain yang kamu pakai.",
@@ -64,13 +63,12 @@
   "joinDo": "Tambahkan HP ini",
   "usePasskey": "Pakai passkey saja",
   "useCode": "Pakai kode 6 angka saja",
-  "restoreQ": "Pernah pesan dari HP atau aplikasi lain?",
-  "restoreDo": "Pulihkan",
+  "restoreQ": "Pernah menyalakan Ingat aku?",
+  "restoreDo": "Pulihkan pesananmu",
   "restored_other": "{{count}} pesanan dipulihkan. Namamu dan kode pelanggan juga kembali.",
   "restoredNone": "Sudah masuk. Namamu dan kode pelanggan kembali.",
   "pushAgain": "Nyalakan kabar pesanan di HP ini juga",
   "pushDone": "Kabar pesanan aktif.",
-  "nudge": "Ingat aku di semua HP-mu?",
   "privacyOpen": "Cara kami menjaga datamu",
   "privacyTitle": "Cara kami menjaga datamu",
   "privacyRmH": "Ingat aku (opsional)",
@@ -114,5 +112,12 @@
   "privacyFindH": "Cari pesanan saya",
   "privacyFind1": "Percobaan yang salah menyimpan bentuk acak dari alamat internet Anda paling lama sekitar satu jam, untuk mencegah tebak-tebakan.",
   "privacyWho": "Dijalankan oleh {{app}}.",
-  "privacyVersion": "Versi {{version}}"
+  "privacyVersion": "Versi {{version}}",
+  "tick": "Ingat aku di semua HP-ku",
+  "tickHelp": "Apa itu Ingat aku?",
+  "pill": {
+    "order": "Simpan pesanan ini",
+    "address": "Simpan alamatmu",
+    "link": "Ingat aku"
+  }
 }

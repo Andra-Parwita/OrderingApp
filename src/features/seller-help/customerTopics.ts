@@ -62,7 +62,7 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
         { text: 'In **Orders**, open the order and tap **Send link on WhatsApp**.' },
         { part: 'Way 4 · Remember me, on a new phone' },
         {
-          text: 'If they turned on **Remember me**, they open **My orders** on the new phone, tap **Restore them** and unlock with their face or fingerprint. Their orders, first name and saved address come back.',
+          text: 'If they turned on **Remember me**, they open **My orders** on the new phone, tap **Restore your orders** (shown under "Turned on Remember me before?") and unlock with their face or fingerprint. Their orders, first name and saved address come back.',
         },
       ],
       note: 'Find my order searches the last kitchen they used on that phone.',
@@ -87,7 +87,7 @@ export const CUSTOMER_TOPICS: ReadonlyArray<HelpTopic> = [
         { text: 'Di **Pesanan**, buka pesanannya dan ketuk **Kirim tautan lewat WhatsApp**.' },
         { part: 'Cara 4 · Ingat aku, di ponsel baru' },
         {
-          text: 'Kalau mereka menyalakan **Ingat aku**, mereka membuka **Pesanan saya** di ponsel baru, mengetuk **Pulihkan** lalu membuka kunci dengan wajah atau sidik jari. Pesanan, nama depan, dan alamat tersimpan mereka kembali.',
+          text: 'Kalau mereka menyalakan **Ingat aku**, mereka membuka **Pesanan saya** di ponsel baru, mengetuk **Pulihkan pesananmu** (di bawah "Pernah menyalakan Ingat aku?") lalu membuka kunci dengan wajah atau sidik jari. Pesanan, nama depan, dan alamat tersimpan mereka kembali.',
         },
       ],
       note: 'Cari pesanan saya mencari di dapur terakhir yang mereka pakai di ponsel itu.',

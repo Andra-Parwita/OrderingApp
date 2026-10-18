@@ -39,6 +39,8 @@ Reuse dishes as products (one editor, one picture pipeline, one order path), add
 | 5 | customer store UI: store home, chips, search, grid, product sheet, copy | M–L |
 | 6 | Help EN/ID, docs, e2e `p082-store`, a demo store kitchen | M |
 
+**Must hold in every stage (owner, 18 Oct: "this is important to be taken into consideration in customer store app .. make sure it's tested"):** pictures that stay on screen across pages never flash. The store banner, category tiles on the home and the product grid images are drawn by a persistent parent (the shell), never inside the keyed page `Slide` (`key={pathname}` remounts everything; an iPhone paints a fresh `<img>` blank first). Above-the-fold images load eagerly; images are served immutable with content-hash URLs (already the case). Same banner on every store page (no small logo bar), as plans 093/094 did for the kitchen app. **Test:** a unit test per navigation path (home → category → product sheet → basket → back) asserts the banner `<img>` is the same element, and the stage 5/6 e2e checks the banner stays visible during the page slide. Lesson 31.
+
 **Risks:** code that assumes one finishing menu (past weeks, past-menu pictures, chef summaries, backup restore); stock vs portion limit; menu/dish wording in customer strings; WhatsApp post length with 100 items; store orders list query budget.
 **Deploy impact (expected):** one add-only migration; existing kitchens unchanged; invisible until the admin switches a kitchen.
 **Not to build:** payments, variants, shipping rates, customer accounts, coupons, reviews, galleries, category pictures, timed open windows, a second catalogue table.

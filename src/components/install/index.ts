@@ -13,6 +13,7 @@ export {
   type InstallOverride,
 } from './useInstallFlow';
 export { HomeScreenCard } from './HomeScreenCard';
+export { HomeScreenPill, useHomePillOffered } from './HomeScreenPill';
 export { useSellerInstall, type SellerInstall } from './useSellerInstall';
 export { promptInstall, useCanInstall } from './installPrompt';
 export {

@@ -1,6 +1,5 @@
 {
   "chip": "Remember me",
-  "chipOpen": "Remember me on all my phones",
   "hide": "Hide this",
   "title": "Remember me on all my phones (optional)",
   "intro": "We remember your orders, name and address on this phone and on any other phone you use.",
@@ -64,14 +63,13 @@
   "joinDo": "Add this phone",
   "usePasskey": "Use a passkey instead",
   "useCode": "Use a 6-digit code instead",
-  "restoreQ": "Had orders on another phone or app?",
-  "restoreDo": "Restore them",
+  "restoreQ": "Turned on Remember me before?",
+  "restoreDo": "Restore your orders",
   "restored_one": "{{count}} order restored. Your name and customer codes are back too.",
   "restored_other": "{{count}} orders restored. Your name and customer codes are back too.",
   "restoredNone": "Signed in. Your name and customer codes are back.",
   "pushAgain": "Turn on order updates on this phone too",
   "pushDone": "Order updates are on.",
-  "nudge": "Remember me on all your phones?",
   "privacyOpen": "How we keep your data private",
   "privacyTitle": "How we keep your data private",
   "privacyRmH": "Remember me (optional)",
@@ -115,5 +113,12 @@
   "privacyFindH": "Find my order",
   "privacyFind1": "Wrong tries keep a scrambled form of your internet address for about an hour at most, to stop guessing.",
   "privacyWho": "Run by {{app}}.",
-  "privacyVersion": "Version {{version}}"
+  "privacyVersion": "Version {{version}}",
+  "tick": "Remember me on all my phones",
+  "tickHelp": "What is Remember me?",
+  "pill": {
+    "order": "Keep this order",
+    "address": "Keep your address",
+    "link": "Remember me"
+  }
 }

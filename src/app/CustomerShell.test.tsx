@@ -8,7 +8,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { server } from '../../mocks/server';
 import type { CustomerOrder } from '../../shared/domain';
 import indexHtml from '../../index.html?raw';
-import { placeOrder } from '../api/client';
+import { fetchMenu, placeOrder } from '../api/client';
 import { saveMyOrder } from '../api/device/myOrders';
 import { placeRequested, quantitySet, registerCustomerI18n } from '../features/customer-menu';
 import { registerInstallI18n } from '../components/install';
@@ -183,11 +183,11 @@ describe('customer tab bar', () => {
 });
 
 describe('customer pushed pages', () => {
-  it('names the previous page on the Back button and shows the kitchen name without a logo', () => {
+  it('names the previous page on the Back button, with no kitchen logo', () => {
     const onBack = vi.fn();
     render(
       <AppThemeProvider>
-        <CustomerPage title="Dishes" kitchenName="Onde Onde" backLabel="Menu" onBack={onBack} />
+        <CustomerPage title="Dishes" backLabel="Menu" onBack={onBack} />
       </AppThemeProvider>,
     );
     const back = screen.getByRole('button', { name: 'Back to Menu' });
@@ -195,17 +195,18 @@ describe('customer pushed pages', () => {
     fireEvent.click(back);
     expect(onBack).toHaveBeenCalledOnce();
     expect(screen.getByRole('heading', { name: 'Dishes' })).toBeVisible();
-    expect(screen.getByText('Onde Onde')).toBeVisible();
+    expect(screen.queryByText('Onde Onde')).toBeNull();
   });
 
-  it('shows the wide logo when there is one', () => {
+  it('has no bar at all on a page without Back', () => {
     render(
       <AppThemeProvider>
-        <CustomerPage title="Basket" kitchenName="Onde Onde" logoSrc="/logo.png" />
+        <CustomerPage title="Basket" />
       </AppThemeProvider>,
     );
-    expect(screen.getByRole('img', { name: 'Onde Onde' })).toHaveAttribute('src', '/logo.png');
+    expect(screen.queryByRole('img')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('banner')).toBeNull();
   });
 
   it('slides pages in from the right, and drops every animation for reduced motion', async () => {
@@ -292,6 +293,94 @@ describe('kitchen banner across the tab pages (plan 093)', () => {
     await screen.findByRole('heading', { name: 'Settings' });
     expect(screen.getByRole('img', { name: /Onde Onde/ })).toBe(banner);
     expect(banner.isConnected).toBe(true);
+  });
+});
+
+describe('one banner on every kitchen page (plan 094)', () => {
+  const banner = () => screen.getByRole('img', { name: /Onde Onde/ });
+
+  it('stays the same <img> from Menu to Dishes to Basket and back', async () => {
+    localStorage.setItem('howItWorksSeen', '1');
+    renderAt('/onde-onde');
+    await screen.findByRole('heading', { name: 'Onde Onde' });
+    const first = banner();
+    expect(first).toHaveAttribute('loading', 'eager');
+    for (const path of [
+      '/onde-onde/dishes',
+      '/onde-onde/basket',
+      '/onde-onde/dishes',
+      '/onde-onde',
+    ]) {
+      act(() => void navigateTo(path));
+      await waitFor(() => expect(screen.getByTestId('where')).toHaveTextContent(`${path}`));
+      await screen.findAllByRole('heading');
+      expect(screen.getAllByRole('img', { name: /Onde Onde/ })).toHaveLength(1);
+      expect(banner()).toBe(first);
+    }
+  });
+
+  it('stays the same <img> from Menu to an order page of the same kitchen', async () => {
+    localStorage.setItem('howItWorksSeen', '1');
+    const created = await placeOrder(DEFAULT_SELLER_SLUG, {
+      firstName: 'Rina',
+      language: 'en',
+      fulfilment: 'pickup',
+      lines: [{ itemId: 'tempe-mendoan', qty: 1 }],
+    });
+    if (!created.ok) throw new Error('could not place the sample order');
+    saveMyOrder(created.data.order);
+    renderAt('/onde-onde');
+    await screen.findByRole('heading', { name: 'Onde Onde' });
+    const first = banner();
+    act(() => void navigateTo(`/o/${created.data.order.token}`));
+    await screen.findByRole('button', { name: 'Back to My orders' });
+    expect(banner()).toBe(first);
+    expect(screen.getAllByRole('img', { name: /Onde Onde/ })).toHaveLength(1);
+  });
+
+  describe('an order of another kitchen (menu not loaded)', () => {
+    async function otherKitchenOrder(): Promise<CustomerOrder> {
+      const menu = await fetchMenu('dapur-demo');
+      if (!menu.ok) throw new Error('no Dapur Demo menu');
+      const created = await placeOrder('dapur-demo', {
+        firstName: 'Rina',
+        language: 'en',
+        fulfilment: 'pickup',
+        lines: [{ itemId: menu.data.items[0]?.id ?? '', qty: 1 }],
+      });
+      if (!created.ok) throw new Error(`could not place the Dapur Demo order: ${created.error}`);
+      saveMyOrder(created.data.order);
+      return created.data.order;
+    }
+
+    it('shows that kitchen banner, never the one shown before', async () => {
+      localStorage.setItem('howItWorksSeen', '1');
+      const order = await otherKitchenOrder();
+      renderAt('/onde-onde');
+      await screen.findByRole('heading', { name: 'Onde Onde' });
+      expect(banner()).toBeInTheDocument();
+      act(() => void navigateTo(`/o/${order.token}`));
+      await screen.findByRole('button', { name: 'Back to My orders' });
+      expect(screen.queryByRole('img', { name: /Onde Onde/ })).toBeNull();
+    });
+
+    it('also for a closed-week (archived) order, whose menu is never loaded', async () => {
+      localStorage.setItem('howItWorksSeen', '1');
+      const order = await otherKitchenOrder();
+      server.use(
+        http.get('/api/orders/:token', () =>
+          HttpResponse.json({ order: { ...order, archived: true, cookingDate: '2026-01-03' } }),
+        ),
+      );
+      renderAt('/onde-onde');
+      await screen.findByRole('heading', { name: 'Onde Onde' });
+      act(() => void navigateTo('/my-orders'));
+      await screen.findByRole('heading', { name: 'My orders' });
+      act(() => void navigateTo(`/o/${order.token}`));
+      await screen.findByRole('button', { name: 'Back to My orders' });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(screen.queryByRole('img', { name: /Onde Onde/ })).toBeNull();
+    });
   });
 });
 
@@ -425,15 +514,13 @@ describe('Menu tab in a home-screen app (plan 068)', () => {
 });
 
 describe('customer routes per seller (D-037)', () => {
-  it('shows a simple home page at / with no list of sellers', () => {
+  it('shows only the logo at / with no list of sellers', () => {
     renderAt('/');
-    expect(
-      screen.getByRole('heading', { name: "ShaggyBobo's Order · Weekly home-cooked orders" }),
-    ).toBeVisible();
-    expect(screen.getByText("Open your seller's link from WhatsApp.")).toBeVisible();
+    expect(screen.getByRole('img', { name: 'ShaggyBobo' })).toBeVisible();
+    expect(screen.queryByText("Open your seller's link from WhatsApp.")).toBeNull();
     expect(screen.queryByText('Onde Onde')).toBeNull();
     expect(screen.queryByText('Dapur Demo')).toBeNull();
-    expect(within(tabBar()).getAllByRole('link')).toHaveLength(3);
+    expect(screen.queryByRole('navigation', { name: /^(Customer|Pelanggan)$/ })).toBeNull();
   });
 
   it('loads the menu of the seller in the route, and the basket for the same seller', async () => {

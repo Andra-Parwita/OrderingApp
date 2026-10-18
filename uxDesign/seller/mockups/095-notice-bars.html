@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Notice bars (plan 095 mock-up)</title>
+    <style>
+      :root {
+        --ink: #2b1d12;
+        --stage: #d9d4c6;
+        --pill: #fff6ea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--stage);
+        color: #1c1f1a;
+        font:
+          16px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 3px solid #1f6b5c;
+        outline-offset: 2px;
+      }
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        justify-content: center;
+        align-items: center;
+        padding: 12px 16px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--pill);
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+        padding: 4px 14px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        min-height: 36px;
+        color: var(--ink);
+      }
+      .seg button[aria-pressed='true'] {
+        background: var(--ink);
+        color: #eadbc2;
+      }
+      .notes {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 16px;
+        font-size: 0.875rem;
+      }
+      .notes h2 {
+        font-size: 1rem;
+        margin: 20px 0 4px;
+      }
+      .rec {
+        background: var(--pill);
+        border: 1px solid #ead8bf;
+        border-radius: 10px;
+        padding: 8px 14px;
+      }
+      .opt {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 16px 24px;
+      }
+      .row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .cap {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        margin: 10px 0 4px;
+      }
+      /* each frame carries its own tokens so light and dark sit side by side */
+      .frame {
+        --bg: #f6f2e8;
+        --surf: #fffdf8;
+        --surf2: #f1ede1;
+        --line: #e4ded0;
+        --text: #1c1f1a;
+        --muted: #5d6358;
+        background: var(--bg);
+        color: var(--text);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgb(40 30 15/14%);
+        overflow: hidden;
+        flex: none;
+        max-width: 100%;
+      }
+      .frame[data-theme='dark'] {
+        --bg: #121411;
+        --surf: #181a16;
+        --surf2: #20231e;
+        --line: #2e332b;
+        --text: #f1eee6;
+        --muted: #a9afa3;
+      }
+      .phone {
+        width: 390px;
+      }
+      .tab {
+        width: 1024px;
+      }
+      .mode {
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        padding: 6px 12px 2px;
+      }
+      .item {
+        margin-bottom: 8px;
+      }
+      .ban {
+        height: 130px;
+        margin: 0;
+        background: linear-gradient(135deg, #c9a46b, #8d6a3a);
+        display: flex;
+        align-items: flex-end;
+        padding: 8px 12px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.8125rem;
+      }
+      .hdr {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: var(--surf);
+        border-bottom: 1px solid var(--line);
+        font-size: 0.8125rem;
+        color: var(--muted);
+      }
+      .hdr b {
+        color: var(--text);
+      }
+      .ratio {
+        font-size: 0.6875rem;
+        padding: 2px 12px 0;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .ratio.fail {
+        color: #c00;
+        font-weight: 700;
+      }
+      /* the bar: 40 px tall, whole bar tappable */
+      .bar {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        padding: 0 4px 0 12px;
+        font-size: 0.8125rem;
+        line-height: 1.2;
+        cursor: default;
+        background: var(--bg-);
+        color: var(--fg);
+      }
+      .bar[data-kind='update'] {
+        cursor: pointer;
+      }
+      .bar img {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+        flex: none;
+      }
+      .bar .msg {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar .act {
+        flex: none;
+        margin-right: 16px;
+        min-height: 32px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        color: var(--act);
+        background: var(--actbg, transparent);
+      }
+      .bar .x {
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: transparent;
+        color: var(--xc);
+        font-size: 1rem;
+      }
+      .bar[data-kind='update']:hover .act {
+        text-decoration: underline;
+      }
+      .bar:focus-visible,
+      .bar .x:focus-visible {
+        outline: 3px solid currentColor;
+        outline-offset: -3px;
+      }
+      .o-a .bar {
+        border-bottom: 1px solid var(--line);
+      }
+      .o-b .bar {
+        border-bottom: 2px solid var(--stripe);
+      }
+      .o-d .slot {
+        padding: 6px 10px;
+        background: var(--bg);
+      }
+      .o-d .bar {
+        border-radius: 20px;
+        border: 0;
+        box-shadow:
+          inset 0 0 0 1px var(--line),
+          0 4px 14px rgb(40 30 15/22%);
+      }
+      .bar .act.link {
+        padding: 0 4px;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <span class="seg" role="group" aria-label="Language"
+        ><button data-l="en" aria-pressed="true">EN</button
+        ><button data-l="id" aria-pressed="false">ID</button></span
+      >
+    </div>
+    <div class="notes">
+      <div class="rec" id="rec"></div>
+      <p id="intro"></p>
+    </div>
+    <div id="root"></div>
+    <script>
+      const LOGO = '/public/brand/logo-icon.webp'; // served from the repo root; same file as 086-short-message.html
+      const T = {
+        en: {
+          rec: 'Recommendation: C or E. Green for "new version" reads as the one thing to tap, and soft amber keeps announcements and maintenance clearly different, in both modes.\nE is C in a softer floating shape (costs 12 px more height); C if height matters, A for one calm look.',
+          intro:
+            'All bars are 40 px tall with the 24 px ShaggyBobo icon; "new version" is tappable as a whole bar, the cross hides it. Printed under each bar: contrast of text / action / cross against the bar (WCAG, must be 4.5 or more). Today: UpdateBar.tsx uses surf2, about 30 px tall, plain text link.',
+          light: 'Light',
+          dark: 'Dark',
+          phone: 'Customer app, 390 px (bar above the kitchen banner)',
+          tab: 'Seller app, 1024 px',
+          update: 'A new version is ready',
+          refresh: 'Refresh',
+          dismiss: 'Hide',
+          announce: 'Closed next Saturday, back the week after.',
+          maint: 'Maintenance Sat 02:00–02:30. App pauses briefly.',
+          btn: 'new version, Refresh as button',
+          lnk: 'new version, Refresh as link',
+          ok: 'ok',
+          kinds: ['New version (tap to refresh)', 'Announcement', 'Maintenance'],
+          text: 'text',
+          action: 'action',
+        },
+        id: {
+          rec: 'Rekomendasi: C atau E. Hijau untuk "versi baru" jelas satu hal yang diketuk, dan kuning lembut membedakan pengumuman dan pemeliharaan, di mode terang dan gelap.\nE adalah C dalam bentuk melayang yang lebih lembut (tinggi +12 px); pilih C jika tinggi penting, A untuk satu tampilan tenang.',
+          intro:
+            'Semua bar setinggi 40 px dengan ikon ShaggyBobo 24 px; "versi baru" bisa diketuk di seluruh bar, tanda silang menyembunyikannya. Di bawah tiap bar: kontras teks / aksi / silang terhadap bar (WCAG, minimal 4,5). Sekarang: UpdateBar.tsx memakai surf2, tinggi sekitar 30 px, tautan teks biasa.',
+          light: 'Terang',
+          dark: 'Gelap',
+          phone: 'Aplikasi pelanggan, 390 px (bar di atas banner dapur)',
+          tab: 'Aplikasi penjual, 1024 px',
+          update: 'Versi baru sudah siap',
+          refresh: 'Muat ulang',
+          dismiss: 'Sembunyikan',
+          announce: 'Libur Sabtu depan, buka lagi minggu berikutnya.',
+          maint: 'Pemeliharaan Sab 02.00–02.30. Aplikasi berhenti sebentar.',
+          btn: 'versi baru, Muat ulang sebagai tombol',
+          lnk: 'versi baru, Muat ulang sebagai tautan',
+          ok: 'ok',
+          kinds: ['Versi baru (ketuk untuk memuat ulang)', 'Pengumuman', 'Pemeliharaan'],
+          text: 'teks',
+          action: 'aksi',
+        },
+      };
+      // Colours per option, mode and kind: bg, fg (text), act (action colour), actbg (action pill, optional), xc (cross), stripe
+      const O = {
+        A: {
+          name: 'A · Muted brand tint',
+          pro: 'Pro: calm, same family as the app; green tint marks "update", warm tint marks maintenance.\nCon: the quietest option; on a busy page it may still be overlooked.',
+          cls: 'o-a',
+          light: {
+            update: { bg: '#E3EFEA', fg: '#1C1F1A', act: '#1F6B5C', xc: '#5D6358' },
+            announce: { bg: '#F1EDE1', fg: '#1C1F1A', act: '#1F6B5C', xc: '#5D6358' },
+            maint: { bg: '#FBF1D9', fg: '#3A2A00', act: '#7A4F00', xc: '#6B5A33' },
+          },
+          dark: {
+            update: { bg: '#23332E', fg: '#F1EEE6', act: '#93C590', xc: '#A9AFA3' },
+            announce: { bg: '#2E332B', fg: '#F1EEE6', act: '#93C590', xc: '#A9AFA3' },
+            maint: { bg: '#33301F', fg: '#F3E6C4', act: '#E9B949', xc: '#CDBF98' },
+          },
+        },
+        B: {
+          name: 'B · Solid warm dark bar',
+          pro: 'Pro: highest contrast and the same look in both modes; the amber pill is an obvious tap target.\nCon: heaviest on the eye; a dark bar on the light page feels strong for a calm app.',
+          cls: 'o-b',
+          light: {
+            update: {
+              bg: '#2B1D12',
+              fg: '#F6EBD7',
+              act: '#2B1D12',
+              actbg: '#EBC27A',
+              xc: '#D9C9AC',
+              stripe: '#EBC27A',
+            },
+            announce: {
+              bg: '#3A2A1C',
+              fg: '#F6EBD7',
+              act: '#2B1D12',
+              actbg: '#EBC27A',
+              xc: '#D9C9AC',
+              stripe: '#6B5236',
+            },
+            maint: {
+              bg: '#4B3411',
+              fg: '#F6EBD7',
+              act: '#2B1D12',
+              actbg: '#EBC27A',
+              xc: '#E3D2A8',
+              stripe: '#E9B949',
+            },
+          },
+          dark: {
+            update: {
+              bg: '#3A2D1C',
+              fg: '#F6EBD7',
+              act: '#1C1500',
+              actbg: '#E9B949',
+              xc: '#D9C9AC',
+              stripe: '#E9B949',
+            },
+            announce: {
+              bg: '#343027',
+              fg: '#F1EEE6',
+              act: '#1C1500',
+              actbg: '#E9B949',
+              xc: '#CFCBBE',
+              stripe: '#575246',
+            },
+            maint: {
+              bg: '#4A3817',
+              fg: '#F6EBD7',
+              act: '#1C1500',
+              actbg: '#E9B949',
+              xc: '#E3D2A8',
+              stripe: '#E9B949',
+            },
+          },
+        },
+        C: {
+          name: 'C · Green update, soft amber notices',
+          pro: 'Pro: "update" is a solid green bar you cannot miss; amber says "read this" without alarm.\nCon: two colour families to maintain; the solid green is the strongest block on a page.',
+          cls: 'o-c',
+          light: {
+            update: {
+              bg: '#1F6B5C',
+              fg: '#FFFFFF',
+              act: '#1F6B5C',
+              actbg: '#FFFDF8',
+              xc: '#E3EFEA',
+            },
+            announce: { bg: '#FBF1D9', fg: '#3A2A00', act: '#7A4F00', xc: '#6B5A33' },
+            maint: { bg: '#F7E3B0', fg: '#3A2A00', act: '#6B4300', xc: '#5E4A1F' },
+          },
+          dark: {
+            update: {
+              bg: '#93C590',
+              fg: '#10200F',
+              act: '#F1EEE6',
+              actbg: '#10200F',
+              xc: '#10200F',
+            },
+            announce: { bg: '#3A3220', fg: '#F3E6C4', act: '#E9B949', xc: '#CDBF98' },
+            maint: { bg: '#4A3C1C', fg: '#F6EBD7', act: '#F0C55C', xc: '#DCCCA0' },
+          },
+        },
+        D: {
+          name: 'D · Floating pill',
+          pro: 'Pro: modern and light; the shadow lifts it off the page and the green pill button is easy to hit.\nCon: floats 6 px from the edges, so it costs 52 px of height, not 40; shadow is weak in dark mode.',
+          cls: 'o-d',
+          light: {
+            update: {
+              bg: '#FFFDF8',
+              fg: '#1C1F1A',
+              act: '#FFFFFF',
+              actbg: '#1F6B5C',
+              xc: '#5D6358',
+            },
+            announce: { bg: '#FFFDF8', fg: '#1C1F1A', act: '#1F6B5C', xc: '#5D6358' },
+            maint: { bg: '#FBF1D9', fg: '#3A2A00', act: '#7A4F00', xc: '#6B5A33' },
+          },
+          dark: {
+            update: {
+              bg: '#2E332B',
+              fg: '#F1EEE6',
+              act: '#10200F',
+              actbg: '#93C590',
+              xc: '#A9AFA3',
+            },
+            announce: { bg: '#2E332B', fg: '#F1EEE6', act: '#93C590', xc: '#A9AFA3' },
+            maint: { bg: '#3F3820', fg: '#F3E6C4', act: '#E9B949', xc: '#CDBF98' },
+          },
+        },
+        E: {
+          name: 'E · Floating pill in C colours',
+          pro: 'Pro: the clear colours of C in the lighter floating shape; the green bar with its white pill is the easiest tap.\nCon: floats 6 px from the edges, so it costs 52 px of height, not 40; the shadow barely shows in dark mode.',
+          cls: 'o-d o-e',
+          light: {
+            update: {
+              bg: '#1F6B5C',
+              fg: '#FFFFFF',
+              act: '#1F6B5C',
+              actbg: '#FFFDF8',
+              xc: '#E3EFEA',
+            },
+            announce: { bg: '#FBF1D9', fg: '#3A2A00', act: '#7A4F00', xc: '#6B5A33' },
+            maint: { bg: '#F7E3B0', fg: '#3A2A00', act: '#6B4300', xc: '#5E4A1F' },
+          },
+          dark: {
+            update: {
+              bg: '#93C590',
+              fg: '#10200F',
+              act: '#F1EEE6',
+              actbg: '#10200F',
+              xc: '#10200F',
+            },
+            announce: { bg: '#3A3220', fg: '#F3E6C4', act: '#E9B949', xc: '#CDBF98' },
+            maint: { bg: '#4A3C1C', fg: '#F6EBD7', act: '#F0C55C', xc: '#DCCCA0' },
+          },
+        },
+      };
+      const lum = (h) => {
+        const c = [1, 3, 5]
+          .map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+          .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+      };
+      const cr = (a, b) => {
+        const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+        return (x + 0.05) / (y + 0.05);
+      };
+      let lang = 'en';
+      const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      function bar(k, c, t, kind) {
+        const up = kind.startsWith('update'),
+          link = kind === 'update2';
+        if (link) c = { ...c, act: c.fg, actbg: undefined };
+        const msg = up ? t.update : kind === 'announce' ? t.announce : t.maint;
+        const showAct = up;
+        const st = `--bg-:${c.bg};--fg:${c.fg};--act:${c.act};--xc:${c.xc};${c.actbg ? `--actbg:${c.actbg};` : ''}${c.stripe ? `--stripe:${c.stripe};` : ''}`;
+        const r = [[t.text, cr(c.fg, c.bg)]];
+        if (showAct) r.push([t.action, cr(c.act, c.actbg || c.bg)]);
+        r.push(['✕', cr(c.xc, c.bg)]);
+        const fail = r.some((x) => x[1] < 4.5);
+        const label = r.map((x) => `${x[0]} ${x[1].toFixed(1)}`).join(' · ');
+        const el = `<div class="bar" data-kind="${up ? 'update' : kind}" ${up ? 'role="button" tabindex="0"' : 'role="status"'} style="${st}"><img src="${LOGO}" alt=""><span class="msg">${esc(msg)}</span>${showAct ? `<span class="act${link ? ' link' : ''}">${esc(t.refresh)}</span>` : ''}<button class="x" aria-label="${esc(t.dismiss)}">✕</button></div>`;
+        return { el: k === 'D' || k === 'E' ? `<div class="slot">${el}</div>` : el, label, fail };
+      }
+      function frame(k, mode, kind, t, size) {
+        const c = O[k][mode];
+        const two = k === 'C' || k === 'E';
+        const kinds = two
+          ? ['update', 'update2', 'announce', 'maint']
+          : ['update', 'announce', 'maint'];
+        const labels = two
+          ? [`${k}1 · ${t.btn}`, `${k}2 · ${t.lnk}`, t.kinds[1], t.kinds[2]]
+          : t.kinds;
+        const body = kinds
+          .map((kd, i) => {
+            const b = bar(k, c[kd === 'update2' ? 'update' : kd], t, kd);
+            const below =
+              size === 'phone'
+                ? '<div class="ban">Dapur Bu Sari</div>'
+                : '<div class="hdr"><b>ShaggyBobo</b><span>Menu</span><span>Orders</span><span>Settings</span></div>';
+            return `<div class="item"><div class="mode">${esc(labels[i])}</div>${b.el}${below}<div class="ratio ${b.fail ? 'fail' : ''}">${b.fail ? 'FAIL · ' : ''}${esc(b.label)}</div></div>`;
+          })
+          .join('');
+        return `<div class="frame ${size}" data-theme="${mode}"><div class="mode">${esc(mode === 'light' ? t.light : t.dark)}</div>${body}</div>`;
+      }
+      function render() {
+        const t = T[lang];
+        document.documentElement.lang = lang;
+        document.getElementById('rec').innerHTML = esc(t.rec).replace('\n', '<br>');
+        document.getElementById('intro').textContent = t.intro;
+        document.getElementById('root').innerHTML = Object.keys(O)
+          .map((k) => {
+            const o = O[k];
+            return `<section class="opt ${o.cls}"><div class="notes"><h2>${esc(o.name)}</h2><div>${esc(o.pro).replace('\n', '<br>')}</div></div>
+                                          <div class="cap">${esc(t.phone)}</div><div class="row">${frame(k, 'light', 0, t, 'phone')}${frame(k, 'dark', 0, t, 'phone')}</div>
+                                          <div class="cap">${esc(t.tab)}</div><div class="row">${frame(k, 'light', 0, t, 'tab')}${frame(k, 'dark', 0, t, 'tab')}</div></section>`;
+          })
+          .join('');
+      }
+      document.querySelectorAll('.seg button').forEach((b) =>
+        b.addEventListener('click', () => {
+          lang = b.dataset.l;
+          document
+            .querySelectorAll('.seg button')
+            .forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+          render();
+        }),
+      );
+      render();
+    </script>
+  </body>
+</html>

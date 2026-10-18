@@ -31,6 +31,7 @@ export function KitchenBanner({
         src={phoneBannerSrc(kitchen.images) ?? kitchen.bannerImageUrl}
         alt={bannerAlt(kitchen, lang)}
         placeholder={placeholder}
+        eager
       />
     </BannerTop>
   );

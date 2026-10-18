@@ -5,7 +5,7 @@
 // maintenance off).
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { formatDay, formatTime } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
 import { noticeVisible, type MaintenanceState } from '../../../shared/maintenance';
@@ -17,87 +17,12 @@ import {
 } from '../../api/maintenanceState';
 import { fetchStatus } from '../../api/status';
 import { useTopBar } from '../../theme/topBars';
+import { NoticeSlot, Pill, PillBody, PillClose, PillRow } from '../notice/NoticePill';
 import { MAINTENANCE_NS } from './i18n/register';
 
 export const SCREEN_POLL_MS = 30_000;
 export const QUIET_POLL_MS = 5 * 60 * 1000;
 export const NOTICE_BAR_HEIGHT_VAR = '--notice-bar-height';
-
-const Bar = styled.div`
-  position: fixed;
-  top: var(--update-bar-height, 0rem);
-  left: 0;
-  right: 0;
-  z-index: 998;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: calc(${({ theme }) => theme.spacing.xs} + env(safe-area-inset-top))
-    ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xs};
-  background: ${({ theme }) => theme.c.surf2};
-  color: ${({ theme }) => theme.c.text};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  font-family: ${({ theme }) => theme.font.ui};
-  font-size: ${({ theme }) => theme.type.size.sm};
-`;
-
-// Bobo says it (plan 080): the icon on the left, the message in a soft speech bubble whose tail
-// points at Bobo.
-const boboFloat = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-0.1875rem); }
-`;
-const Bobo = styled.img`
-  flex: none;
-  width: 1.625rem;
-  height: 1.625rem;
-  object-fit: contain;
-  animation: ${boboFloat} 3.2s ease-in-out infinite;
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-`;
-const Bubble = styled.span`
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  margin-left: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.bubble.bg};
-  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.bubble.line};
-  border-radius: ${({ theme }) => theme.radius.md};
-  line-height: ${({ theme }) => theme.type.lineHeight.tight};
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: -0.3125rem;
-    width: 0.5rem;
-    height: 0.5rem;
-    margin-top: -0.25rem;
-    background: ${({ theme }) => theme.bubble.bg};
-    border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.bubble.line};
-    border-left: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.bubble.line};
-    transform: rotate(45deg);
-  }
-`;
-
-const Close = styled.button`
-  min-height: ${({ theme }) => theme.spacing.xxl};
-  min-width: ${({ theme }) => theme.spacing.xxl};
-  padding: 0;
-  border: 0;
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: transparent;
-  color: ${({ theme }) => theme.c.muted};
-  font: inherit;
-  cursor: pointer;
-  &:focus-visible {
-    outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.fill};
-    outline-offset: ${({ theme }) => theme.border.focus};
-  }
-`;
 
 const Screen = styled.div`
   position: fixed;
@@ -196,20 +121,27 @@ export function MaintenanceHost({
   if (!showBar || !state?.notice) return null;
   const { from, until, noteEn, noteId } = state.notice;
   const note = lang === 'id' ? noteId : noteEn;
+  const text =
+    t('notice', {
+      day: formatDay(from, lang),
+      start: formatTime(from, lang),
+      end: formatTime(until, lang),
+    }) + (note ? ` ${note}` : '');
   return (
-    <Bar ref={barRoot} role="status">
-      <Bobo src="/brand/logo-icon.webp" alt="" />
-      <Bubble>
-        {t('notice', {
-          day: formatDay(from, lang),
-          start: formatTime(from, lang),
-          end: formatTime(until, lang),
-        })}
-        {note ? ` ${note}` : ''}
-      </Bubble>
-      <Close type="button" aria-label={t('dismiss')} onClick={() => setDismissed(true)}>
-        ✕
-      </Close>
-    </Bar>
+    <NoticeSlot ref={barRoot} role="status" $top="var(--update-bar-height, 0rem)" $z={998}>
+      <Pill $kind="maint">
+        <PillRow>
+          <PillBody text={text} />
+        </PillRow>
+        <PillClose
+          type="button"
+          $kind="maint"
+          aria-label={t('dismiss')}
+          onClick={() => setDismissed(true)}
+        >
+          ✕
+        </PillClose>
+      </Pill>
+    </NoticeSlot>
   );
 }

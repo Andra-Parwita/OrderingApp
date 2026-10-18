@@ -4,16 +4,14 @@ import { styled } from 'styled-components';
 import { Icon } from '../ui';
 
 // A customer page pushed on top of a root page (spec §3): a top bar with ‹ Back (named after the
-// page before), the kitchen's wide logo centred, nothing on the right, then a large title.
+// page before) and then a large title. The kitchen's banner above it comes from the shell (plan 094).
 // Later stages build their screens from CustomerPage; today's screens are not moved onto it yet.
 
 const Bar = styled.header`
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
   min-height: ${({ theme }) => theme.size.tap}px;
-  padding: calc(var(--sat) + ${({ theme }) => theme.spacing.sm}) ${({ theme }) => theme.spacing.md}
-    ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
 `;
 const BackButton = styled.button`
   justify-self: start;
@@ -30,17 +28,6 @@ const BackButton = styled.button`
   font-weight: ${({ theme }) => theme.type.weight.strong};
   cursor: pointer;
 `;
-const Logo = styled.img`
-  grid-column: 2;
-  max-width: 9rem;
-  max-height: 2rem;
-  object-fit: contain;
-`;
-const KitchenName = styled.span`
-  grid-column: 2;
-  font-weight: ${({ theme }) => theme.type.weight.strong};
-  color: ${({ theme }) => theme.c.text};
-`;
 const Title = styled.h1`
   margin: 0;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.lg}
@@ -55,36 +42,27 @@ const Page = styled.div`
 `;
 
 type TopBarProps = Readonly<{
-  /** The kitchen's name: shown when there is no wide logo, and the logo's alt text. */
-  kitchenName: string;
-  /** The kitchen's wide logo; falls back to the name. */
-  logoSrc?: string;
   /** The previous page's name ("Menu", "Dishes", "Basket"); omit it on a root page. */
   backLabel?: string;
   onBack?: () => void;
 }>;
 
-export function PageTopBar({ kitchenName, logoSrc, backLabel, onBack }: TopBarProps) {
+export function PageTopBar({ backLabel, onBack }: TopBarProps) {
   const { t } = useTranslation();
+  // Nothing to show on a page with no Back: no empty bar.
+  if (!onBack) return null;
   return (
     <Bar>
-      {onBack ? (
-        <BackButton
-          type="button"
-          onClick={onBack}
-          aria-label={
-            backLabel ? t('customerNav.backTo', { page: backLabel }) : t('customerNav.back')
-          }
-        >
-          <Icon name="back" />
-          <span>{backLabel ?? t('customerNav.back')}</span>
-        </BackButton>
-      ) : null}
-      {logoSrc ? (
-        <Logo src={logoSrc} alt={kitchenName} />
-      ) : (
-        <KitchenName>{kitchenName}</KitchenName>
-      )}
+      <BackButton
+        type="button"
+        onClick={onBack}
+        aria-label={
+          backLabel ? t('customerNav.backTo', { page: backLabel }) : t('customerNav.back')
+        }
+      >
+        <Icon name="back" />
+        <span>{backLabel ?? t('customerNav.back')}</span>
+      </BackButton>
     </Bar>
   );
 }

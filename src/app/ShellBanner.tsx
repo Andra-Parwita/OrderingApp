@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Kitchen } from '../../shared/domain';
 import { isValidSlug } from '../../shared/seller';
+import { readMyOrders } from '../api/device/myOrders';
 import { lastKitchen } from '../api/device/lastKitchen';
 import { KitchenBanner } from '../components/KitchenBanner';
 import { ownKitchen } from '../components/install';
@@ -13,9 +14,9 @@ import {
   useLang,
   type CustomerRootState,
 } from '../features/customer-menu';
-import { selectMenus } from '../features/customer-orders';
+import { selectMenus, selectOrderPage } from '../features/customer-orders';
 
-// The kitchen banner of Menu home, My orders and Settings (plan 093). It lives in the shell,
+// The kitchen banner of every customer page that belongs to a kitchen (plans 093, 094). It lives in the shell,
 // outside the sliding page, so a page change never remounts it (an iPhone paints a fresh <img>
 // blank first). Once a kitchen's banner has shown, it stays until another kitchen's is ready.
 
@@ -40,13 +41,27 @@ const BannerSkeleton = styled.div`
   background: ${({ theme }) => theme.c.surf2};
 `;
 
+/** The kitchen's slug for the order page at `/o/:token…`: the loaded order's, else the saved one's. */
+function orderSlug(orderPage: ReturnType<typeof selectOrderPage>, token: string): string | null {
+  if (
+    (orderPage.status === 'ready' || orderPage.status === 'expired') &&
+    orderPage.order.token === token
+  ) {
+    return orderPage.order.seller.slug;
+  }
+  return readMyOrders().find((saved) => saved.token === token)?.sellerSlug ?? null;
+}
+
 /** Which banner the page at this address wants, from what the store already holds. */
 function useWanted(pathname: string): Wanted {
   const menu = useSelector(selectMenu);
   const menuSlug = useSelector(selectMenuSlug);
   const menus = useSelector(selectMenus);
-  const homeSlug = /^\/([^/]+)\/?$/.exec(pathname)?.[1] ?? '';
-  const missing = useSelector((state: CustomerRootState) => selectKitchenMissing(state, homeSlug));
+  const orderPage = useSelector(selectOrderPage);
+  const first = /^\/([^/]+)/.exec(pathname)?.[1] ?? '';
+  const orderToken = first === 'o' ? /^\/o\/([^/]+)/.exec(pathname)?.[1] : undefined;
+  const pageSlug = orderToken === undefined ? first : (orderSlug(orderPage, orderToken) ?? '');
+  const missing = useSelector((state: CustomerRootState) => selectKitchenMissing(state, pageSlug));
 
   if (pathname === '/settings') {
     return menu.status === 'ready' && menuSlug !== null
@@ -58,14 +73,20 @@ function useWanted(pathname: string): Wanted {
     const kitchen = slug === null ? undefined : menus[slug]?.kitchen;
     return slug !== null && kitchen ? { kind: 'ready', slug, kitchen } : { kind: 'pending', slug };
   }
-  if (!isValidSlug(homeSlug) || missing) return NONE;
-  if (menuSlug !== homeSlug) return { kind: 'pending', slug: homeSlug };
+  // Every other page of a kitchen: the path's slug, or the order's seller (plan 094).
+  if (!isValidSlug(pageSlug) || missing) return NONE;
+  if (orderToken !== undefined) {
+    const kitchen =
+      menus[pageSlug]?.kitchen ??
+      (menuSlug === pageSlug && menu.status === 'ready' ? menu.data.kitchen : undefined);
+    return kitchen
+      ? { kind: 'ready', slug: pageSlug, kitchen }
+      : { kind: 'pending', slug: pageSlug };
+  }
+  if (menuSlug !== pageSlug) return { kind: 'pending', slug: pageSlug };
   if (menu.status === 'error' && menu.code === 'week_not_published') return NONE;
-  if (menu.status !== 'ready') return { kind: 'pending', slug: homeSlug };
-  const { ordering, pictureUrl, kitchen } = menu.data;
-  // A closed menu with a picture shows the picture in place of the banner.
-  if (ordering.reason !== 'not_published' && !ordering.open && pictureUrl) return NONE;
-  return { kind: 'ready', slug: homeSlug, kitchen };
+  if (menu.status !== 'ready') return { kind: 'pending', slug: pageSlug };
+  return { kind: 'ready', slug: pageSlug, kitchen: menu.data.kitchen };
 }
 
 export function useShellBanner(pathname: string): ShellBannerState {

@@ -4,6 +4,13 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Plan 094 one banner everywhere (release 1.0.41)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 0 · cause search | Explore · sonnet | 18 Oct | 5 min | | 41 s | | — | ✅ |
+| 1 · build items 1–5 | general-purpose · sonnet | 18 Oct | 30–45 min | | | | | ⏳ |
+| 1b · seller app banner check (owner) | Explore · sonnet | 18 Oct | 5 min | | | | — | ⏳ |
+
 ## Plan 093 banner no flash (release 1.0.40)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|

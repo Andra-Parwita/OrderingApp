@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { ThemeProvider } from 'styled-components';
@@ -29,7 +29,7 @@ import en from '../../i18n/en.json';
 import id from '../../i18n/id.json';
 import { setRememberMeLocal } from '../../api/customer/state';
 import { lightTheme } from '../../theme/themes';
-import { PrivacyModal, RememberMeCard, RememberMeChip, RememberMeNudge, RestoreOrders } from '.';
+import { PrivacyModal, RememberMeCard, RememberMeTick, RestoreOrders, wantsRememberMe } from '.';
 import { registerRememberMeI18n } from './i18n/register';
 
 beforeAll(async () => {
@@ -50,53 +50,45 @@ beforeEach(() => {
 });
 
 const wrap = (node: React.ReactNode) => <ThemeProvider theme={lightTheme}>{node}</ThemeProvider>;
-const orders = (n: number) =>
-  localStorage.setItem(
-    'myOrders',
-    JSON.stringify(
-      Array.from({ length: n }, (_, i) => ({
-        code: `A-${String(i)}`,
-        token: `tok${String(i)}`.padEnd(20, 'x'),
-        placedAt: '2026-10-10T00:00:00Z',
-      })),
-    ),
-  );
 
-describe('the chip', () => {
-  it('shows the first time, opens the explanation, and the cross hides it for good', () => {
-    const first = render(wrap(<RememberMeChip />));
-    fireEvent.click(screen.getByRole('button', { name: 'Remember me on all my phones' }));
+describe('the name-step row (plan 096)', () => {
+  it('is off by default and the ? opens the explanation as headings and bullets', () => {
+    render(wrap(<RememberMeTick />));
+    expect(
+      screen.getByRole('checkbox', { name: 'Remember me on all my phones' }),
+    ).not.toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: 'What is Remember me?' }));
     const sheet = screen.getByRole('dialog');
     expect(sheet).toHaveTextContent("What's a passkey?");
     expect(sheet).toHaveTextContent("Why it's safe");
-    expect(screen.getByRole('button', { name: 'Turn on' })).toBeVisible();
-    expect(screen.getByRole('button', { name: /I already use Remember me/ })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    expect(sheet).toHaveTextContent('Ordering without it works just the same.');
+    expect(within(sheet).getAllByRole('list')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Hide this' }));
-    expect(screen.queryByRole('button', { name: 'Remember me on all my phones' })).toBeNull();
+  });
+
+  it('ticking remembers the wish until the order is placed', () => {
+    const first = render(wrap(<RememberMeTick />));
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(wantsRememberMe()).toBe(true);
     first.unmount();
-    render(wrap(<RememberMeChip />));
-    expect(screen.queryByRole('button', { name: 'Remember me on all my phones' })).toBeNull();
+    render(wrap(<RememberMeTick />));
+    expect(screen.getByRole('checkbox')).toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(wantsRememberMe()).toBe(false);
+  });
+
+  it('is in Indonesian too', async () => {
+    await act(() => i18n.changeLanguage('id'));
+    render(wrap(<RememberMeTick />));
+    expect(screen.getByRole('checkbox', { name: 'Ingat aku di semua HP-ku' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Apa itu Ingat aku?' })).toBeVisible();
   });
 
   it('is not shown when Remember me is already on', () => {
     setRememberMeLocal({ credentialId: 'c', sealing: true, setup: false });
-    render(wrap(<RememberMeChip />));
-    expect(screen.queryByRole('button', { name: 'Remember me on all my phones' })).toBeNull();
-  });
-
-  it('Turn on asks for the first name first, then runs the flow and closes the sheet', async () => {
-    render(wrap(<RememberMeChip />));
-    fireEvent.click(screen.getByRole('button', { name: 'Remember me on all my phones' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Turn on' }));
-    expect(api.turnOnRememberMe).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog', { name: 'Turn on Remember me' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(api.turnOnRememberMe).toHaveBeenCalledTimes(1);
+    render(wrap(<RememberMeTick />));
+    expect(screen.queryByRole('checkbox')).toBeNull();
   });
 });
 
@@ -221,22 +213,10 @@ describe('the Settings card', () => {
 });
 
 describe('the other offers', () => {
-  it('shows one line after the 2nd order, and the cross dismisses it', () => {
-    orders(1);
-    const one = render(wrap(<RememberMeNudge />));
-    expect(screen.queryByText('Remember me on all your phones?')).toBeNull();
-    one.unmount();
-    orders(2);
-    render(wrap(<RememberMeNudge />));
-    expect(screen.getByText(/Remember me on all your phones\?/)).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Hide this' }));
-    expect(screen.queryByText(/Remember me on all your phones\?/)).toBeNull();
-  });
-
   it('empty My orders offers Restore and confirms how many came back', async () => {
     render(wrap(<RestoreOrders />));
-    expect(screen.getByText('Had orders on another phone or app?')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Restore them' }));
+    expect(screen.getByText('Turned on Remember me before?')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Restore your orders' }));
     expect(await screen.findByText(/3 orders restored/)).toBeVisible();
   });
 });

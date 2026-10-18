@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  chipHiddenSnapshot,
-  nudgeHiddenSnapshot,
   parseLocal,
   rememberMeSnapshot,
   watchRememberMe,
@@ -15,10 +13,6 @@ import { REMEMBER_NS } from './i18n/register';
 export function useRememberMeLocal(): RememberMeLocal | null {
   return parseLocal(useSyncExternalStore(watchRememberMe, rememberMeSnapshot));
 }
-export const useChipHidden = (): boolean =>
-  useSyncExternalStore(watchRememberMe, chipHiddenSnapshot);
-export const useNudgeHidden = (): boolean =>
-  useSyncExternalStore(watchRememberMe, nudgeHiddenSnapshot);
 
 type Failure = Extract<RememberOutcome, { ok: false }>;
 
