@@ -1,4 +1,4 @@
-import { all, call, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, call, put, select, takeEvery, takeLeading } from 'redux-saga/effects';
 import { fetchChefs, fetchCurrentMenu, fetchPastWeeks, updateItem } from '../../api/client';
 import { noteCurrentMenu } from '../../api/cachedReads';
 import { currentSellerSlug } from '../../api/device/sellerContext';
@@ -30,7 +30,8 @@ import {
 } from '../../api/menus';
 import { MAX_MENU_ITEMS } from '../../../shared/limits';
 import type { ApiWarning } from '../../../shared/apiError';
-import type { ChefsResponse } from '../../../shared/setupContract';
+import type { SellerMenuItemView } from '../../../shared/domain';
+import type { ChefsResponse, ItemResponse } from '../../../shared/setupContract';
 import type {
   DishesResponse,
   DishResponse,
@@ -187,6 +188,18 @@ function viewOutcome(
   return { ...outcome, patch: { view: result.data.menu }, reload };
 }
 
+/** The menu view with one item replaced by the server's answer (its library link stays). */
+function replaceItem(view: MenuView, item: SellerMenuItemView): MenuView {
+  return {
+    ...view,
+    dishes: view.dishes.map((d) =>
+      d.id === item.id ? { ...item, ...(d.dishId ? { dishId: d.dishId } : {}) } : d,
+    ),
+  };
+}
+
+const noAnswer = () => Promise.resolve(null);
+
 function* currentData() {
   return (yield select(
     (state: MenuRootState) => state.sellerMenu.data,
@@ -255,37 +268,28 @@ function* execute(op: MenuOp) {
         (yield call(removeMenuPicture, undefined, slug)) as ApiResult<MenuViewResponse>,
       );
     case 'updateMenuDish': {
-      const result = (yield call(
-        updateItem,
-        op.id,
-        op.request,
-        undefined,
-        slug,
-      )) as ApiResult<unknown>;
-      if (!result.ok) return toOutcome(result);
-      // The answer is the item, not the menu: the menu is read again (1 GET).
-      if (op.alsoDishId === undefined)
-        return { ok: true, done: {}, reload: ['view'] } satisfies Outcome;
+      // Plan 103: the item and its library dish are saved together (one round trip), and the
+      // answer (the item) replaces its copy in the menu view, so nothing is read again.
       const dishPatch = { ...op.request };
       delete dishPatch.soldOut;
-      const also = (yield call(
-        updateDish,
-        op.alsoDishId,
-        dishPatch,
-        undefined,
-        slug,
-      )) as ApiResult<DishResponse>;
+      const alsoDish = op.alsoDishId !== undefined && Object.keys(dishPatch).length > 0;
+      const [result, also] = (yield all([
+        call(updateItem, op.id, op.request, undefined, slug),
+        alsoDish && op.alsoDishId !== undefined
+          ? call(updateDish, op.alsoDishId, dishPatch, undefined, slug)
+          : call(noAnswer),
+      ])) as [ApiResult<ItemResponse>, ApiResult<DishResponse> | null];
+      if (!result.ok) return toOutcome(result);
       const data = yield* currentData();
-      if (also.ok && data) {
+      const patch: Partial<MenuData> = {};
+      let reload: Array<Part> = [];
+      if (data) patch.view = replaceItem(data.view, result.data.item);
+      else reload = ['view'];
+      if (also?.ok && data) {
         const dish = also.data.dish;
-        return {
-          ok: true,
-          done: {},
-          reload: ['view'],
-          patch: { dishes: data.dishes.map((d) => (d.id === dish.id ? dish : d)) },
-        } satisfies Outcome;
-      }
-      return { ok: true, done: {}, reload: ['view', 'dishes'] } satisfies Outcome;
+        patch.dishes = data.dishes.map((d) => (d.id === dish.id ? dish : d));
+      } else if (also) reload = [...reload, 'dishes'];
+      return { ok: true, done: {}, reload, patch } satisfies Outcome;
     }
     case 'createDish': {
       const created = (yield call(createDish, op.request, undefined, slug)) as Awaited<
@@ -323,28 +327,31 @@ function* execute(op: MenuOp) {
       // The menu holds a copy: its name, description and size follow (price and limit stay per menu).
       const data = yield* currentData();
       const copy = data?.view.dishes.find((dish) => dish.dishId === op.id);
-      const { name, description, size } = op.request;
-      const follows = Boolean(copy && (name || description || size));
+      // Plan 103: the chef follows too (it was missing, so a chef change from the wizard's pencil
+      // never reached the live menu).
+      const { name, description, size, chefId } = op.request;
+      const follows = Boolean(copy && (name || description || size || chefId !== undefined));
+      const patch: Partial<MenuData> = {};
+      let reload: Array<Part> = [];
       if (copy && follows) {
-        yield call(
+        const followed = (yield call(
           updateItem,
           copy.id,
           {
             ...(name ? { name } : {}),
             ...(description ? { description } : {}),
             ...(size ? { size } : {}),
+            ...(chefId !== undefined ? { chefId } : {}),
           },
           undefined,
           slug,
-        );
+        )) as ApiResult<ItemResponse>;
+        if (followed.ok && data) patch.view = replaceItem(data.view, followed.data.item);
+        else reload = ['view'];
       }
       const dish = result.data.dish;
-      return {
-        ok: true,
-        done: {},
-        reload: follows ? ['view'] : [],
-        patch: data ? { dishes: data.dishes.map((d) => (d.id === dish.id ? dish : d)) } : {},
-      } satisfies Outcome;
+      if (data) patch.dishes = data.dishes.map((d) => (d.id === dish.id ? dish : d));
+      return { ok: true, done: {}, reload, patch } satisfies Outcome;
     }
     case 'addDishToMenu': {
       const data = yield* currentData();
@@ -486,6 +493,7 @@ export function* runOp(action: ReturnType<typeof opRequested>) {
 }
 
 export function* menuSaga() {
-  yield takeLatest(loadRequested.type, fetchAll, false);
+  // Plan 103: a load already running is not started twice (two screens opening together).
+  yield takeLeading(loadRequested.type, fetchAll, false);
   yield takeEvery(opRequested.type, runOp);
 }

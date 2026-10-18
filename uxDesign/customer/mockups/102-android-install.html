@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Android install (plan 102 mock-up)</title>
+    <style>
+      :root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      button { font: inherit; color: inherit; cursor: pointer; }
+      :focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+      .top { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center; padding: 12px 16px; }
+      .seg { display: inline-flex; border: 1px solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--pill); }
+      .seg button { border: 0; background: transparent; padding: 4px 14px; font-size: 0.8125rem; font-weight: 600; min-height: 36px; color: var(--ink); }
+      .seg button[aria-pressed='true'] { background: var(--ink); color: #eadbc2; }
+      .notes { max-width: 1000px; margin: 0 auto; padding: 0 16px; font-size: 0.875rem; }
+      .rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; }
+      h2 { font-size: 1rem; margin: 22px 0 2px; }
+      .opt { max-width: 1100px; margin: 0 auto; padding: 0 16px 20px; }
+      .row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+      .frame { --bg: #f6f2e8; --surf: #fffdf8; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --brand: #2f6b36; background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; flex: none; max-width: 100%; width: 360px; }
+      .frame.home { background: #2d3a44; color: #fff; --line: #ffffff33; --muted: #d5dde3; }
+      .cap { font-size: 0.75rem; font-weight: 700; padding: 8px 14px 0; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+      .body { padding: 10px 14px 16px; min-height: 300px; }
+      .banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--brand); color: #fff; font-weight: 700; }
+      .banner i, .ico { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; font-style: normal; font-weight: 700; color: #fff; }
+      .oo { background: #2f6b36; } .dv { background: #1d5c73; }
+      .card { background: var(--surf); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 12px; }
+      .card h3 { margin: 0 0 2px; font-size: 1rem; }
+      .card p { margin: 0 0 10px; color: var(--muted); font-size: 0.875rem; }
+      .go { width: 100%; min-height: 44px; border: 0; border-radius: 10px; background: var(--brand); color: #fff; font-weight: 700; }
+      .alt { width: 100%; min-height: 44px; margin-top: 6px; border: 0; background: transparent; color: var(--muted); font-weight: 600; }
+      ol { margin: 0 0 10px; padding-left: 20px; font-size: 0.875rem; }
+      .sheet { margin-top: 40px; background: #fff; color: #1c1f1a; border-radius: 18px 18px 0 0; padding: 16px; box-shadow: 0 -4px 16px rgb(0 0 0/25%); }
+      .sheet .t { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; font-weight: 700; }
+      .sheet small { display: block; color: #5d6358; font-weight: 400; }
+      .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 6px; padding: 14px; text-align: center; font-size: 0.75rem; }
+      .grid .ico { margin: 0 auto 4px; width: 52px; height: 52px; border-radius: 16px; background: #5b6b76; }
+      .grid .oo { background: #2f6b36; } .grid .dv { background: #1d5c73; }
+      .url { display: none; }
+      .tag { margin: 8px 14px 0; font-size: 0.75rem; color: var(--muted); }
+      .tab { display: flex; justify-content: space-around; border-top: 1px solid var(--line); padding: 8px 0; font-size: 0.75rem; color: var(--muted); }
+      .tab b { color: var(--brand); }
+      .ord { display: flex; justify-content: space-between; margin-top: 12px; font-size: 0.875rem; }
+      [lang='id'] .en, [lang='en'] .id { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <span class="seg" role="group" aria-label="Language">
+        <button type="button" aria-pressed="true" data-lang="en">EN</button>
+        <button type="button" aria-pressed="false" data-lang="id">ID</button>
+      </span>
+    </div>
+    <div class="notes">
+      <div class="rec">
+        <b>Plan 102 (analysis, not approved).</b>
+        <span class="en">One "Install app" button; one icon and name per kitchen; the order page opens inside the kitchen's app (<code>/onde-onde/o/&lt;token&gt;</code>).</span>
+        <span class="id">Satu tombol "Pasang aplikasi"; satu ikon dan nama per dapur; halaman pesanan terbuka di dalam aplikasi dapur.</span>
+      </div>
+    </div>
+    <div class="opt">
+      <h2>Android (Chrome)</h2>
+      <div class="row">
+        <div class="frame">
+          <div class="cap">1 · <span class="en">Menu: one button</span><span class="id">Menu: satu tombol</span></div>
+          <div class="banner"><i class="oo">OO</i> Onde Onde</div>
+          <div class="body">
+            <div class="card">
+              <h3><span class="en">Put Onde Onde on your home screen</span><span class="id">Taruh Onde Onde di layar utama</span></h3>
+              <p><span class="en">Order again with one tap and get a message when your order is ready.</span><span class="id">Pesan lagi dengan satu ketukan dan dapat pesan saat pesanan siap.</span></p>
+              <button class="go" type="button"><span class="en">Install app</span><span class="id">Pasang aplikasi</span></button>
+              <button class="alt" type="button"><span class="en">Not now</span><span class="id">Nanti saja</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="frame home">
+          <div class="cap" style="color:#d5dde3">2 · <span class="en">Chrome's own dialog</span><span class="id">Dialog Chrome</span></div>
+          <div class="body" style="display:flex;align-items:flex-end;min-height:300px">
+            <div class="sheet" style="width:100%">
+              <div class="t"><i class="ico oo">OO</i><span>Onde Onde<small>order.shaggybobo.app</small></span></div>
+              <button class="go" type="button" style="background:#2f6b36"><span class="en">Install</span><span class="id">Pasang</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="frame">
+          <div class="cap">3 · <span class="en">No prompt: one path</span><span class="id">Tanpa dialog: satu cara</span></div>
+          <div class="banner"><i class="oo">OO</i> Onde Onde</div>
+          <div class="body">
+            <div class="card">
+              <h3><span class="en">Install from your browser</span><span class="id">Pasang dari browser</span></h3>
+              <ol class="en"><li>Tap <b>⋮</b> (Chrome) or <b>≡</b> (Samsung Internet)</li><li>Chrome: <b>Install app</b> · Samsung: <b>Add page to → Home screen</b></li><li>Check the icon says <b>Onde Onde</b></li></ol>
+              <ol class="id"><li>Ketuk <b>⋮</b> (Chrome) atau <b>≡</b> (Samsung Internet)</li><li>Chrome: <b>Instal aplikasi</b> · Samsung: <b>Tambah halaman ke → Layar utama</b></li><li>Pastikan ikon bertuliskan <b>Onde Onde</b></li></ol>
+              <button class="go" type="button"><span class="en">Got it</span><span class="id">Mengerti</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2><span class="en">Home screen: one icon and name per kitchen</span><span class="id">Layar utama: satu ikon dan nama per dapur</span></h2>
+      <div class="row">
+        <div class="frame home">
+          <div class="grid">
+            <div><div class="ico"></div>Phone</div>
+            <div><div class="ico"></div>Camera</div>
+            <div><div class="ico"></div>Chrome</div>
+            <div><div class="ico"></div>Maps</div>
+            <div><div class="ico dv">DV</div>Dellavee</div>
+            <div><div class="ico oo">OO</div>Onde Onde</div>
+            <div><div class="ico"></div>Gallery</div>
+            <div><div class="ico"></div>Settings</div>
+          </div>
+          <p class="tag" style="color:#d5dde3"><span class="en">Each kitchen app has its own manifest id, scope <code>/&lt;slug&gt;/</code>, name and icon.</span><span class="id">Tiap aplikasi dapur punya id, cakupan <code>/&lt;slug&gt;/</code>, nama dan ikon sendiri.</span></p>
+        </div>
+        <div class="frame">
+          <div class="cap">4 · <span class="en">Order page inside the Onde Onde app</span><span class="id">Halaman pesanan di aplikasi Onde Onde</span></div>
+          <div class="banner"><i class="oo">OO</i> Onde Onde</div>
+          <div class="body">
+            <b>Order OO-4821</b>
+            <div class="ord"><span><span class="en">Status</span><span class="id">Status</span></span><b><span class="en">Ready</span><span class="id">Siap</span></b></div>
+            <div class="ord"><span>2 × Onde-onde box</span><span>A$ 24</span></div>
+            <p class="tag" style="margin:12px 0 0"><code>/onde-onde/o/&lt;token&gt;</code> <span class="en">(old <code>/o/&lt;token&gt;</code> links redirect here)</span><span class="id">(tautan lama <code>/o/&lt;token&gt;</code> dialihkan ke sini)</span></p>
+          </div>
+          <div class="tab"><span>Menu</span><b><span class="en">Orders</span><span class="id">Pesanan</span></b><span><span class="en">Settings</span><span class="id">Pengaturan</span></span></div>
+        </div>
+        <div class="frame">
+          <div class="cap">5 · <span class="en">Settings → Start fresh (beta)</span><span class="id">Pengaturan → Mulai dari awal (beta)</span></div>
+          <div class="body">
+            <div class="card">
+              <h3><span class="en">Start fresh</span><span class="id">Mulai dari awal</span></h3>
+              <ol class="en"><li>Remove the old icon (hold it, Uninstall)</li><li><b>Reset this phone</b> (button below)</li><li>Remove the passkey in your password app</li><li>Install the right kitchen again</li></ol>
+              <ol class="id"><li>Hapus ikon lama (tekan lama, Copot)</li><li><b>Atur ulang HP ini</b> (tombol di bawah)</li><li>Hapus passkey di aplikasi kata sandi</li><li>Pasang dapur yang benar lagi</li></ol>
+              <button class="go" type="button"><span class="en">Reset this phone</span><span class="id">Atur ulang HP ini</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.querySelectorAll('[data-lang]').forEach((b) =>
+        b.addEventListener('click', () => {
+          document.documentElement.lang = b.dataset.lang;
+          document.querySelectorAll('[data-lang]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+        }),
+      );
+    </script>
+  </body>
+</html>

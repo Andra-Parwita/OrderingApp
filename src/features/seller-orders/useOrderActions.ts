@@ -10,7 +10,7 @@ import { SELLER_NS } from './i18n/register';
 import { customerKind, latestDiff } from './customerKind';
 import { useReadOnlyOrders } from './orderAccess';
 import { useLang } from './orderText';
-import { selectChange } from './sellerOrdersSelectors';
+import { selectChange, selectPending } from './sellerOrdersSelectors';
 import {
   collectedRequested,
   lockChangeRequested,
@@ -54,7 +54,9 @@ export function useOrderActions(order: Order) {
   const lang = useLang();
   const dispatch = useDispatch();
   const change = useSelector(selectChange);
-  const saving = change.status === 'saving';
+  const pending = useSelector(selectPending);
+  // Confirm / Paid show at once (plan 103): only this order's own request counts as saving.
+  const saving = change.status === 'saving' || order.code in pending;
   const failed: FailedChange | null =
     change.status === 'error' && change.failed.code === order.code ? change.failed : null;
 

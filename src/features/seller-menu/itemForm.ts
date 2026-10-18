@@ -183,3 +183,17 @@ export function updateDishRequestOf(draft: ItemDraft): UpdateDishRequest | null 
   delete rest.soldOut;
   return rest;
 }
+
+/**
+ * Plan 103: only what differs from the request the editor started with (so a chef-only edit is one
+ * small change). With no base, or nothing different, `null` means "send all" / "nothing to send":
+ * the caller tells them apart by passing a base.
+ */
+export function changedOnly<T extends object>(next: T, base: T | null): Partial<T> | null {
+  if (!base) return next;
+  const out: Partial<T> = {};
+  for (const key of Object.keys(next) as Array<keyof T>) {
+    if (JSON.stringify(next[key]) !== JSON.stringify(base[key])) out[key] = next[key];
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}

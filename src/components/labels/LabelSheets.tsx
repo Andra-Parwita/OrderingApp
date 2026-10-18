@@ -64,6 +64,7 @@ const Sheet = styled.div<{ $paper: LabelPaper }>`
 
 const LabelBox = styled.article<{ $paper: LabelPaper }>`
   box-sizing: border-box;
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
@@ -163,14 +164,24 @@ const Where = styled.div`
 `;
 const NoteLine = styled.div`
   grid-area: note;
+  margin-top: ${({ theme }) => theme.spacing.xs};
   padding: 0 ${({ theme }) => theme.spacing.xs};
   background: ${({ theme }) => theme.colour.surfaceAlt};
   font-size: ${({ theme }) => theme.type.size.sm};
 
   @media print {
+    /* Plan 104: 8 pt, space above the rule, at most two lines then an ellipsis (see noteSlots). */
+    margin-top: 0.8mm;
+    padding: 0.4mm 0 0;
     background: transparent;
     border-top: 0.2mm solid black;
-    font-size: 7pt;
+    font-size: 8pt;
+    line-height: 1.1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
   }
 `;
 

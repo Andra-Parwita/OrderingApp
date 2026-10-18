@@ -141,8 +141,11 @@ export function useMenuData(): { data: MenuData | null; status: ReactNode } {
   const { t } = useTranslation(MENU_NS);
   const dispatch = useDispatch();
   const { load, data } = useSelector(selectMenu);
+  // Plan 103: the bundle is read once; a screen that opens with data already in the store shows it.
+  // Explicit refreshes (retry, after Edit chefs, CSV import) dispatch loadRequested themselves.
+  const hadData = useRef(data !== null);
   useEffect(() => {
-    dispatch(loadRequested());
+    if (!hadData.current) dispatch(loadRequested());
   }, [dispatch]);
   if (data) return { data, status: null };
   if (load === 'error') {

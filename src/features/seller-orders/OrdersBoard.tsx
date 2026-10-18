@@ -8,6 +8,7 @@ import { SELLER_NS } from './i18n/register';
 import { LiveOrderRow } from './LiveOrderRow';
 import { OrderPanelActions, OrderPanelBody } from './OrderPanelBody';
 import {
+  ChipGroup,
   Divider,
   Filters,
   IconButton,
@@ -124,10 +125,10 @@ export function OrdersBoard({
             </Tab>
           ))}
           {readOnly ? null : (
-            <>
+            <ChipGroup>
               <Divider aria-hidden="true" />
               <Toggles tab toggles={toggles} onToggle={onToggle} />
-            </>
+            </ChipGroup>
           )}
         </Tabs>
       )}

@@ -56,11 +56,27 @@ const Wrap = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
 `;
+const PhoneWrap = styled(Wrap)`
+  flex: 1;
+  min-width: 0;
+`;
 const Label = styled.label`
   color: ${({ theme }) => theme.c.muted};
 `;
 const Muted = styled.span`
   color: ${({ theme }) => theme.c.muted};
+`;
+const PhonePick = styled.select`
+  flex: 1;
+  min-width: 0;
+  min-height: ${({ theme }) => theme.size.tap}px;
+  padding: 0 ${({ theme }) => theme.spacing.sm};
+  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: ${({ theme }) => theme.c.surf};
+  color: ${({ theme }) => theme.c.text};
+  font: inherit;
+  font-weight: 600;
 `;
 const Pick = styled.select`
   min-height: ${({ theme }) => theme.size.tap}px;
@@ -72,18 +88,33 @@ const Pick = styled.select`
   font: inherit;
 `;
 
-/** Hidden when the kitchen has no chefs (only "All" is left). */
+/** Hidden when the kitchen has no chefs (only "All" is left). On a phone (plan 100) it is always a select. */
 export function ChefFilterControl({
   filter,
   setFilter,
   choices,
-}: Readonly<ReturnType<typeof useChefFilter>>) {
+  phone = false,
+}: Readonly<ReturnType<typeof useChefFilter> & { phone?: boolean }>) {
   const { t } = useTranslation(COOK_NS);
   const onSelect = useCallback(
     (event: ChangeEvent<HTMLSelectElement>) => setFilter(event.target.value),
     [setFilter],
   );
   if (choices.length < 2) return null;
+  if (phone) {
+    return (
+      <PhoneWrap>
+        <Muted>{t('chefFilter.label')}</Muted>
+        <PhonePick aria-label={t('chefFilter.label')} value={filter} onChange={onSelect}>
+          {choices.map((choice) => (
+            <option key={choice.value} value={choice.value}>
+              {choice.label}
+            </option>
+          ))}
+        </PhonePick>
+      </PhoneWrap>
+    );
+  }
   if (choices.length <= SEGMENTED_MAX) {
     const options: ReadonlyArray<SegmentedOption<ChefFilter>> = choices;
     return (

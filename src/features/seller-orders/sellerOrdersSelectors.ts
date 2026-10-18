@@ -8,6 +8,7 @@ export type StatusCounts = Readonly<Record<StatusFilter, number>>;
 
 export const selectOrders = (state: SellerOrdersRootState) => state.sellerOrders.orders;
 export const selectList = (state: SellerOrdersRootState) => state.sellerOrders.list;
+export const selectPending = (state: SellerOrdersRootState) => state.sellerOrders.pending;
 export const selectChange = (state: SellerOrdersRootState) => state.sellerOrders.change;
 export const selectCookingDate = (state: SellerOrdersRootState) => state.sellerOrders.cookingDate;
 
@@ -126,9 +127,10 @@ export function newCustomerOrders(before: ReadonlyArray<Order>, after: ReadonlyA
 }
 
 /** How many orders (not cancelled) the live menu has, for the nav; null until the first load. */
-export const selectOrdersCount = (state: SellerOrdersRootState): number | null =>
-  state.sellerOrders.list.status === 'ready'
-    ? state.sellerOrders.orders.filter((o) => o.status !== 'cancelled').length
-    : null;
+export const selectOrdersCount = createSelector(
+  [selectList, selectOrders],
+  (list, orders): number | null =>
+    list.status === 'ready' ? orders.filter((o) => o.status !== 'cancelled').length : null,
+);
 
 export const selectLinkPrompt = (state: SellerOrdersRootState) => state.sellerOrders.linkPrompt;

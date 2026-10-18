@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Menu edit session with Save (mock-up 103)</title>
+    <style>
+      :root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+      button { font: inherit; color: inherit; cursor: pointer; }
+      :focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+      .notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+      .notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+      .rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+      .rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+      .rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+      .wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+      .phones { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+      figure { margin: 0; max-width: 100%; }
+      figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+      figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+      .phones figcaption { width: 384px; }
+      .badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+      .muted { color: #5d6358; }
+      .fn { font-size: 0.75rem; color: #5d6358; }
+      .scrollx { overflow-x: auto; max-width: 100%; }
+
+      .frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70; --warn: #8a2232;
+        background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+      .frame.tab { width: 1138px; height: 640px; }
+      .frame.ph { width: 384px; height: 800px; flex-direction: column; }
+      .rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 2px; }
+      .rail span { width: 56px; min-height: 52px; display: grid; place-items: center; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.15; border-radius: 8px; }
+      .rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+      .rail .k { font-weight: 800; color: var(--ink); min-height: 40px; font-size: 12px; }
+      .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      .hdr { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+      .tabbar { height: 56px; flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line); margin-top: auto; }
+      .tabbar span { flex: 1; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+      .tabbar span.on { color: var(--fill); font-weight: 700; }
+      .btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+      .btn.icon { width: 44px; padding: 0; }
+      .btn.pri { background: var(--fill); border-color: var(--fill); color: #fff; }
+      .btn.flat { border-color: transparent; text-decoration: underline; }
+      .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .steps { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--line); overflow: hidden; background: var(--surf); }
+      .steps .t { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; font-weight: 600; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+      .steps .t.on { color: var(--text); border-color: var(--fill); }
+      .intro { padding: 8px 16px; color: var(--muted); font-size: 13.5px; }
+      ul { list-style: none; margin: 0; padding: 0; }
+      .dr { display: flex; align-items: center; gap: 4px; padding: 0 8px 0 4px; min-height: 56px; border-bottom: 1px solid var(--line); }
+      .dr label { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; min-height: 52px; cursor: pointer; }
+      .dr .cb { width: 44px; height: 44px; display: grid; place-items: center; flex: none; }
+      .dr .cb i { width: 22px; height: 22px; border: 2px solid var(--edge); border-radius: 5px; display: grid; place-items: center; background: var(--surf); }
+      .dr .cb i.on { background: var(--fill); border-color: var(--fill); color: #fff; }
+      .dr .cb i .ico { width: 15px; height: 15px; stroke-width: 3; }
+      .dr .tx { flex: 1; min-width: 0; }
+      .dr .tx b { font-weight: 600; display: block; }
+      .dr .tx small { color: var(--muted); font-size: 13px; display: block; }
+      .dr .pr { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; flex: none; }
+      .dr.chg { background: #fff6e0; }
+      .dr.rm .tx b { text-decoration: line-through; }
+      .dr select { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); font: inherit; font-size: 14px; padding: 0 8px; max-width: 140px; color: var(--text); }
+      .mk { display: inline-block; border: 1px solid #b5651d; color: #7a4210; border-radius: 999px; font-size: 11.5px; font-weight: 700; padding: 0 7px; margin-left: 6px; vertical-align: 1px; }
+      .fld { padding: 8px 16px; display: grid; gap: 2px; }
+      .fld span { font-size: 13px; color: var(--muted); }
+      .fld div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; }
+
+      .scrim { position: absolute; inset: 0; background: rgb(28 22 12/42%); z-index: 8; }
+      .scrim.two { z-index: 10; }
+      .dlg { position: absolute; z-index: 11; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(400px, calc(100% - 32px)); background: var(--surf); border-radius: 14px; padding: 18px; box-shadow: 0 10px 30px rgb(40 30 15/35%); }
+      .dlg h3 { margin: 0 0 6px; font-size: 18px; }
+      .dlg p { margin: 0 0 14px; color: var(--muted); font-size: 14.5px; }
+      .dlg .bt { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+      .dlg .bt .btn { min-height: 48px; }
+      .dlg.stack .bt { flex-direction: column; }
+      .dlg.stack .bt .btn { width: 100%; }
+
+      .sheet { position: absolute; z-index: 9; background: var(--surf); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgb(40 30 15/30%); }
+      .sheet.tab { left: 50%; top: 16px; bottom: 16px; width: 760px; transform: translateX(-50%); border-radius: 14px; }
+      .sheet.ph { inset: 0; border-radius: 0; }
+      .band { margin: 0; padding: 8px 16px; background: #fde7b8; color: #4a2c05; border-bottom: 1px solid #e3c27c; font-size: 13.5px; font-weight: 600; }
+      .errband { margin: 0; padding: 6px 16px; background: #fbeaec; color: #8a2232; font-size: 13px; font-weight: 600; }
+      .foot { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+      .foot .cnt { flex: 1; font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 14.5px; min-width: 0; white-space: nowrap; }
+      .foot .cnt::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #b5651d; flex: none; }
+      .foot.err .cnt { color: #8a2232; }
+      .foot.err .cnt::before { background: #8a2232; }
+      .foot.saved .cnt::before { background: var(--fill); }
+      .foot .btn { min-height: 48px; }
+      .spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgb(255 255 255/40%); border-top-color: #fff; animation: sp 0.9s linear infinite; }
+      @keyframes sp { to { transform: rotate(360deg); } }
+      .tapw { position: relative; display: inline-flex; }
+      .btn.ring { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #b5651d; }
+      .tapdot { position: absolute; right: -8px; bottom: -14px; width: 28px; height: 28px; border-radius: 50%; background: rgb(181 101 29/55%); border: 2px solid #7a4210; }
+      /* new in this round */
+      .pill { position: absolute; z-index: 6; right: 16px; bottom: 16px; min-height: 44px; max-width: calc(100% - 24px); border: 0; border-radius: 999px; background: var(--ink); color: #f6e9d2; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; white-space: nowrap; box-shadow: 0 4px 14px rgb(40 30 15/35%); }
+      .pill::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #f0a64a; flex: none; }
+      .pill.err { background: #8a2232; color: #fff; }
+      .pill.err::before { background: #fff; }
+      .ph .pill { bottom: 68px; right: 12px; }
+      .pill.up { bottom: 76px; }
+      .ph .pill.up { bottom: 132px; }
+      .ph .toast { bottom: 132px; left: 12px; transform: none; }
+      .ph .dr select { max-width: 104px; }
+      .ph .pop { bottom: 124px; }
+      .pop { position: absolute; z-index: 7; right: 16px; bottom: 68px; width: 360px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgb(40 30 15/30%); overflow: hidden; }
+      .ph .pop { left: 12px; right: 12px; width: auto; bottom: 120px; }
+      .pop h4 { margin: 0; padding: 10px 14px; font-size: 14.5px; border-bottom: 1px solid var(--line); }
+      .pop li { padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+      .pop .bt { display: flex; gap: 8px; padding: 8px 12px; justify-content: flex-end; }
+      .pop .bt .btn { min-height: 44px; }
+      .note { margin: 0; padding: 8px 16px; font-size: 13.5px; color: #4a4f44; background: var(--surf2); }
+      .toast { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 6px; background: var(--surf); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 700; color: var(--fill); bottom: 76px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 8px rgb(40 30 15/18%); }
+      .dr.errrow { background: #fbeaec; }
+      .errmsg { color: var(--warn); font-size: 13px; font-weight: 600; }
+      .sw { min-height: 44px; min-width: 80px; border: 1px solid var(--edge); border-radius: 999px; background: transparent; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px 0 8px; font-size: 13.5px; font-weight: 600; }
+      .sw i { width: 28px; height: 16px; border-radius: 8px; background: var(--surf2); border: 1px solid var(--edge); position: relative; }
+      .sw i::after { content: ''; position: absolute; top: 1px; left: 1px; width: 12px; height: 12px; border-radius: 50%; background: var(--edge); }
+      .sw.on { border-color: var(--warn); color: var(--warn); }
+      .sw.on i::after { left: 13px; background: var(--warn); }
+      .lv { display: grid; align-items: center; gap: 8px; min-height: 56px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--line); }
+      .lv.t { grid-template-columns: minmax(0, 1fr) 5rem 4rem 4rem 7.5rem; }
+      .lv.h { min-height: 36px; font-size: 13px; font-weight: 700; color: var(--muted); }
+      .lv .n { text-align: right; font-variant-numeric: tabular-nums; }
+      .lv.gone { color: var(--muted); }
+      .lv small { color: var(--muted); font-size: 13px; margin-left: 6px; }
+      .lv.p { grid-template-columns: minmax(0, 1fr) auto; padding: 8px 12px 8px 16px; }
+      .lv.p .sub { color: var(--muted); font-size: 13px; display: block; }
+      .top { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-end; padding: 12px 16px; }
+      .top h2 { margin: 0; font-size: 26px; line-height: 1.15; }
+      .kick { color: #2f6b36; font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+      .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+      .meter { height: 4px; border-radius: 2px; background: var(--line); display: block; }
+      .meter i { display: block; height: 100%; border-radius: 2px; background: var(--fill); }
+      .st { display: grid; grid-template-columns: minmax(0, 1fr) 9rem 6.5rem; gap: 16px; align-items: center; min-height: 52px; padding: 0 16px; border-top: 1px solid var(--line); font-weight: 600; }
+      .st.gone { color: var(--muted); }
+      .ph .st { grid-template-columns: minmax(0, 1fr) 4rem 5.5rem; gap: 10px; }
+      .st .am { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+      .sc { overflow: hidden; flex: 1; min-height: 0; position: relative; }
+      .ftr { flex: none; display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+      .tiles { display: flex; gap: 12px; padding: 12px 16px; }
+      .tiles div { flex: 1; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 13px; color: var(--muted); }
+      .tiles b { display: block; font-size: 22px; color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>Menu edit session with Save (plan 103 fix 8 mock-up, round 2)</h1>
+      <p>Target = the "Fix 8 ruling" in plan 103 (owner "A", 18 Oct): one way of editing for draft and published menus. Quick row actions on a live menu (Sold out) stay instant; adding/removing dishes, chef, name, size need <b>Edit menu</b> first, which opens the edit session as a full-height sheet over the menu (full screen on phone) with an amber "Edit mode" band and a sticky footer "N changes not saved · Discard · Save" (the floating pill is kept only for the draft wizard). Light theme only. Tablet 1138 × 640 with rail, phone 384 × 800, one ID frame. Samples AUD / Adelaide: Onde Onde, menu for Sat 24 Oct; Pastel $3.00 (12 left), Lalampa $3.00 (sold out), Nasi Ayam Bali $12.00, Sambal Matah. Touch targets 44 px or more. Button labels stay on one line and shorten (pill: "Not saved · 3 changes" → "Not saved · 3" → "3" with dot).</p>
+
+      <h2 style="font-size:1.0625rem;margin:14px 0 4px">Today (from code)</h2>
+      <p class="muted" style="margin:0 0 4px">Menu published and active ("live" in code). Read from the working tree (the files listed are unchanged by the uncommitted diff except where marked).</p>
+      <div class="rec">
+        <table>
+          <tr><th>Where</th><th>Row shows</th><th>Row allows (saves?)</th><th>Menu-level buttons</th></tr>
+          <tr><td><b>Menu screen</b>, live (tablet and phone: same grid; no phone layout found)<sup>1</sup></td>
+            <td>Table columns: Dish (name + size in small text), Price, Limit (number or "–"), Sold (qty from live orders, cancelled left out). Sold-out rows are greyed. <b>No chef, no "left" count.</b></td>
+            <td><b>Sold out</b> switch (On/Off): instant, optimistic, disabled while another op runs<sup>2</sup>. <b>Pencil</b>: opens the dish editor (name, size, picture, limit, price...), saves on its own. No include tick, no portion-limit control in the row (limit is plain text; edited in the Prices tab or the dish editor).</td>
+            <td>Header: Dishes N, Sets N links, Past menus N. Body: <b>Edit details</b> (opens edit tab Details), <b>Share again</b>, <b>Unpublish</b> (asks), <b>Add dish N of 10</b> (opens edit tab Dishes), <b>Finish menu now</b> (asks).<sup>3</sup></td></tr>
+          <tr><td><b>Edit tabs of a live menu</b> (modal over Menu)<sup>4</sup></td>
+            <td>Tabs Dishes · Details · Prices (no Publish step). Dishes: picker with ticks, pencil, "On this menu" list with remove; Prices: price, limit, chef dropdown, sold-out switch per dish.</td>
+            <td>Tick: shown at once, saved ~1 s after the last tick. Price/limit: saved ~1 s after last edit. Chef dropdown and sold-out: saved at once (chef rolls back with an error on refusal). Note on screen: "Changes go to customers as you make them."</td>
+            <td>Close; no Save button today.</td></tr>
+          <tr><td><b>Home</b>, taking orders<sup>5</sup></td>
+            <td>"Dishes" section: name, thin meter bar, and "N left" (warning icon when low), "Sold out", or "N sold · no limit". <b>No price, no chef.</b></td>
+            <td><b>Nothing</b>: read-only. One link "Go to Menu to change limits". Also phase strip, number tiles, orders per place, chef income button.</td>
+            <td>Go to Orders / Kitchen etc. (no menu edit button).</td></tr>
+          <tr><td><b>Draft</b> (not published)<sup>6</sup></td>
+            <td>Menu screen: "Draft" kicker, title with date, "N dishes saved", step tabs (Dishes · Details · Check · Publish &amp; share) with where you stopped, and "Delete draft". Home: phases strip + list of the steps as links.</td>
+            <td>Wizard (tablet): autosaves on every change; plain Close. Same tick/pencil/chef behaviours as above.</td>
+            <td>Continue (opens the step), Delete draft (asks).</td></tr>
+        </table>
+        <p class="fn" style="margin:6px 0 2px">1 src/features/seller-menu/MenuScreen.tsx:128-250 (LiveMenu, DishRow grid 92). 2 MenuScreen.tsx:212-231. 3 MenuScreen.tsx:168-180, 244-251; Pencil 232-240. 4 src/features/seller-menu/MakeMenuScreen.tsx:164-200, steps.ts:5, PricesTable.tsx:14-20, DishesStep.tsx:132 (tick save), menu i18n "make.instant". 5 src/features/seller-home/Live.tsx:211-240 (DishStock), 303-317 (Taking). 6 MenuScreen.tsx:289-328 (NotPublished), seller-home/Draft.tsx:37-97, MakeMenuScreen.tsx:20-23.</p>
+        <p class="fn" style="margin:2px 0 2px"><b>Not confirmed:</b> (a) phone look of the Menu screen live table (code has a fixed 6-column grid and no media query; not run on a device); (b) what the DishesStep picker rows show on the left (not read line by line); (c) whether the unlisted MenuHomeView in the brief exists on the seller side (it is customer-menu only); (d) Home's "Taking" state is the only one drawn here (paused/closed look the same for dish rows).</p>
+      </div>
+
+      <p><b>Frames below.</b> Changes in the edit frames: <b>+ Sambal Matah</b> ticked, <b>− Sayur Urab</b> unticked, <b>Lalampa</b> chef Chandra → Sari. Changed rows get an amber tint and a mark (Added / Removed / Edited). Assumptions: on a live menu the row pencil and the "Edit details" and "Add dish" buttons fold into the one <b>Edit menu</b> button; the Sold out switch stays; Home stays as it is (read-only, no new button).</p>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+        x: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+        pen: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg>',
+        share: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 9l5-5 5 5M5 14v6h14v-6"/></svg>',
+      };
+      const L = {
+        en: { rail: ['Home', 'Orders', 'Menu', 'More'], tabs: ['Home', 'Orders', 'Menu', 'More'], page: 'Menu', edit: 'Menu for Sat 24 Oct', kick: 'Live menu',
+          sub: '12 orders · orders close Fri 23 Oct, 8:00 pm · Rundle Mall · delivery on', cols: ['Dish', 'Price', 'Limit', 'Sold', 'Sold out'], on: 'On', off: 'Off',
+          editMenu: 'Edit menu', share: 'Share again', unpub: 'Unpublish', finish: 'Finish menu now', done: 'Done', close: 'Close',
+          homeTitle: 'Dishes', homeGo: 'Go to Menu to change limits', left: (n) => `${n} left`, gone: 'Sold out', nolim: (n) => `${n} sold · no limit`, taking: 'Taking orders',
+          tiles: ['orders', 'total', 'to confirm'], steps: ['Dishes', 'Details', 'Check', 'Publish & share'], yours: 'Your dishes', picked: (n) => `${n} dishes picked`,
+          liveNote: 'Customers see the current menu until you save.', draftNote: 'Draft: customers cannot see this menu yet.',
+          pill: (n) => `Not saved · ${n} changes`, pillS: (n) => `Not saved · ${n}`, pillXS: (n) => `${n}`, dpill: (n) => `Draft · ${n} changes not saved`, dpillS: (n) => `Draft · ${n} unsaved`,
+          epill: 'Not saved — try again', epillS: 'Try again', listH: (n) => `${n} changes`, ch: ['Added Sambal Matah', 'Removed Sayur Urab', 'Lalampa: chef Chandra → Sari'],
+          save: 'Save', discard: 'Discard', saved: 'Saved', next: 'Next: Details', back: 'Back', added: 'Added', removed: 'Removed', edited: 'Edited',
+          q: (n) => `Save ${n} changes?`, qb: 'Your menu changes are not saved yet. Customers see the old menu until you save.', dont: "Don't save", keep: 'Keep editing',
+          fail: 'Could not save. Your 3 changes are kept on this device.', chef: (a) => `Chef: ${a}` },
+        id: { rail: ['Beranda', 'Pesanan', 'Menu', 'Lainnya'], tabs: ['Beranda', 'Pesanan', 'Menu', 'Lainnya'], page: 'Menu', edit: 'Menu untuk Sab 24 Okt', kick: 'Menu aktif',
+          sub: '12 pesanan · pesanan ditutup Jum 23 Okt, 20.00 · Rundle Mall · antar tersedia', cols: ['Hidangan', 'Harga', 'Batas', 'Terjual', 'Habis'], on: 'Ya', off: 'Tidak',
+          editMenu: 'Ubah menu', share: 'Bagikan lagi', unpub: 'Batalkan publikasi', finish: 'Akhiri menu', done: 'Selesai', close: 'Tutup',
+          homeTitle: 'Hidangan', homeGo: 'Ke Menu untuk ubah batas', left: (n) => `sisa ${n}`, gone: 'Habis', nolim: (n) => `${n} terjual · tanpa batas`, taking: 'Menerima pesanan',
+          tiles: ['pesanan', 'total', 'perlu konfirmasi'], steps: ['Hidangan', 'Rincian', 'Periksa', 'Publikasi & bagikan'], yours: 'Hidangan Anda', picked: (n) => `${n} hidangan dipilih`,
+          liveNote: 'Pelanggan melihat menu saat ini sampai Anda menyimpan.', draftNote: 'Draf: pelanggan belum bisa melihat menu ini.',
+          pill: (n) => `Belum disimpan · ${n} perubahan`, pillS: (n) => `Belum disimpan · ${n}`, pillXS: (n) => `${n}`, dpill: (n) => `Draf · ${n} perubahan belum disimpan`, dpillS: (n) => `Draf · ${n} belum`,
+          epill: 'Belum disimpan — coba lagi', epillS: 'Coba lagi', listH: (n) => `${n} perubahan`, ch: ['Ditambah Sambal Matah', 'Dihapus Sayur Urab', 'Lalampa: koki Chandra → Sari'],
+          save: 'Simpan', discard: 'Buang', saved: 'Tersimpan', next: 'Lanjut: Rincian', back: 'Kembali', added: 'Ditambah', removed: 'Dihapus', edited: 'Diubah',
+          q: (n) => `Simpan ${n} perubahan?`, qb: 'Perubahan menu belum disimpan. Pelanggan melihat menu lama sampai Anda menyimpan.', dont: 'Jangan simpan', keep: 'Lanjut mengubah',
+          fail: 'Gagal menyimpan. 3 perubahan Anda tetap ada di perangkat ini.', chef: (a) => `Koki: ${a}` },
+      };
+      const rail = (s, on) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const tabbar = (s, on) => `<div class="tabbar">${s.tabs.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</div>`;
+
+      // saved menu rows (live)
+      const LIVE = [['Pastel', '$3.00', '20', 8, 0], ['Lalampa', '$3.00', '15', 15, 1], ['Nasi Ayam Bali', '$12.00', '–', 9, 0], ['Sayur Urab', '$5.00', '10', 4, 0]];
+      const liveTable = (s, ph) => ph
+        ? `<ul>${LIVE.map((d) => `<li class="lv p ${d[4] ? 'gone' : ''}"><span><b>${d[0]}</b><span class="sub">${d[1]} · ${d[2] === '–' ? '–' : s.cols[2] + ' ' + d[2]} · ${s.cols[3]} ${d[3]}</span></span><button class="sw ${d[4] ? 'on' : ''}" aria-label="${s.cols[4]}: ${d[0]}"><i></i>${d[4] ? s.on : s.off}</button></li>`).join('')}</ul>`
+        : `<div class="lv t h"><span>${s.cols[0]}</span><span class="n">${s.cols[1]}</span><span class="n">${s.cols[2]}</span><span class="n">${s.cols[3]}</span><span>${s.cols[4]}</span></div><ul>${LIVE.map((d) => `<li class="lv t ${d[4] ? 'gone' : ''}"><b>${d[0]}</b><span class="n">${d[1]}</span><span class="n">${d[2]}</span><span class="n">${d[3]}</span><button class="sw ${d[4] ? 'on' : ''}" aria-label="${s.cols[4]}: ${d[0]}"><i></i>${d[4] ? s.on : s.off}</button></li>`).join('')}</ul>`;
+      const menuLive = (s, ph) => `<div class="hdr"><span>${s.page}</span></div><div class="top"><div><div class="kick">${s.kick}</div><h2>Sat 24 Oct</h2><span class="muted" style="font-size:13.5px">${s.sub}</span></div>
+        <div class="acts"><button class="btn pri">${I.pen}${s.editMenu}</button><button class="btn ${ph ? 'icon' : ''}" aria-label="${s.share}">${I.share}${ph ? '' : s.share}</button><button class="btn flat">${s.unpub}</button></div></div>${liveTable(s, ph)}<div style="padding:12px 16px"><button class="btn flat" style="padding:0">${s.finish}</button></div>`;
+
+      // Home, taking orders (as today)
+      const STOCK = (s) => [['Pastel', 0.4, s.left(12), 0], ['Lalampa', 1, s.gone, 1], ['Nasi Ayam Bali', 0.25, s.nolim(9), 0], ['Sayur Urab', 0.4, s.left(6), 0]];
+      const home = (s, ph) => `<div class="hdr"><span>${s.taking}</span></div><div class="tiles"><div><b>12</b>${s.tiles[0]}</div><div><b>$186.00</b>${s.tiles[1]}</div>${ph ? '' : `<div><b>3</b>${s.tiles[2]}</div>`}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 16px"><b style="font-size:17px">${s.homeTitle}</b><span style="color:#1f5a2a;text-decoration:underline;font-size:${ph ? 12.5 : 14}px">${s.homeGo}</span></div>
+        <div>${STOCK(s).map((d) => `<div class="st ${d[3] ? 'gone' : ''}"><span>${d[0]}</span><span class="meter"><i style="width:${d[1] * 100}%${d[3] ? ';background:#9a9f94' : ''}"></i></span><span class="am">${d[2]}</span></div>`).join('')}</div>`;
+
+      // edit session rows: [name, price, was, now, chef, chefBefore]
+      const D = [['Pastel', '$3.00', 1, 1, 'Chandra'], ['Lalampa', '$3.00', 1, 1, 'Sari', 'Chandra'], ['Nasi Ayam Bali', '$12.00', 1, 1, 'Chandra'], ['Sambal Matah', '$1.50', 0, 1, 'Chandra'], ['Sayur Urab', '$5.00', 1, 0, 'Sari']];
+      const row = (d, s, o = {}) => {
+        const mark = !d[2] && d[3] ? s.added : d[2] && !d[3] ? s.removed : d[5] ? s.edited : '';
+        const bad = o.err && mark;
+        return `<li class="dr ${mark ? 'chg' : ''} ${!d[3] && d[2] ? 'rm' : ''}"><label><span class="cb"><i class="${d[3] ? 'on' : ''}">${d[3] ? I.check : ''}</i></span><span class="tx"><b>${d[0]}${mark ? `<span class="mk">${mark}</span>` : ''}</b><small>${o.ph ? d[1] : ''}</small></span></label>
+          ${o.ph ? '' : `<span class="pr">${d[1]}</span>`}<select aria-label="${s.chef('')} ${d[0]}"><option>${d[4]}</option></select><button class="btn icon" aria-label="Edit ${d[0]}">${I.pen}</button></li>`;
+      };
+      const stepsBar = (s, on) => `<div class="steps">${s.steps.map((t, i) => `<span class="t ${i === on ? 'on' : ''}">${t}</span>`).join('')}</div>`;
+      const pill = (s, kind, ph, n = 3) => {
+        const full = kind === 'draft' ? s.dpill(n) : kind === 'err' ? s.epill : s.pill(n);
+        const mid = kind === 'draft' ? s.dpillS(n) : kind === 'err' ? s.epillS : s.pillS(n);
+        const lbl = ph ? mid : full;
+        return `<button class="pill ${kind === 'err' ? 'err' : ''} ${kind === 'draft' ? 'up' : ''}" aria-label="${full}">${lbl}</button>`;
+      };
+      const pop = (s) => `<div class="pop" role="dialog" aria-label="${s.listH(3)}"><h4>${s.listH(3)}</h4><ul>${s.ch.map((c) => `<li>${c}</li>`).join('')}</ul><div class="bt"><button class="btn">${s.discard}</button><button class="btn pri">${s.save}</button></div></div>`;
+      const dlg = (s, stack) => `<div class="scrim two"></div><div class="dlg ${stack ? 'stack' : ''}" role="alertdialog" aria-label="${s.q(3)}"><h3>${s.q(3)}</h3><p>${s.qb}</p><div class="bt">${stack ? `<button class="btn pri">${s.save}</button><button class="btn">${s.dont}</button><button class="btn flat">${s.keep}</button>` : `<button class="btn flat">${s.keep}</button><button class="btn">${s.dont}</button><button class="btn pri">${s.save}</button>`}</div></div>`;
+
+      const editBody = (s, ph, o = {}) => `<div class="hdr"><span>${s.edit}</span><button class="btn icon flat" aria-label="${s.close}">${I.x}</button></div>${o.draft ? stepsBar(s, 0) : ''}<p class="note">${o.draft ? s.draftNote : s.liveNote}</p><div class="intro" style="padding-top:4px">${s.yours} · ${s.picked(5)}</div><ul style="overflow:hidden;flex:1">${D.map((d) => row(d, s, { ph, err: o.err })).join('')}</ul>${o.draft ? `<div class="ftr"><button class="btn">${s.back}</button><button class="btn pri">${s.next}</button></div>` : ''}`;
+
+      const tabFrame = (inner, on) => (s) => `${rail(s, on)}<div class="main">${inner(s)}</div>`;
+      const T = (fn, on = 2) => (s) => `${rail(s, on)}<div class="main">${fn(s, false)}</div>`;
+      const P = (fn, on = 2) => (s) => `${fn(s, true)}${tabbar(s, on)}`;
+      // overlays are placed inside the frame, after the main content
+      const withPill = (kind, o = {}) => (s, ph) => `${editBody(s, ph, o)}${o.open ? pop(s) : ''}${o.toast ? `<span class="toast">${I.check}${s.saved}</span>` : ''}${pill(s, kind, ph)}${o.leave ? dlg(s, ph) : ''}${o.leave ? '' : ''}`;
+      const tabEdit = (kind, o) => (s) => `${rail(s, 2)}<div class="main">${withPill(kind, o)(s, false)}</div>${o && o.leave ? '' : ''}`;
+      const phEdit = (kind, o) => (s) => `${withPill(kind, o)(s, true)}${tabbar(s, 2)}`;
+
+      L.en.x = { editing: 'Editing menu · Sat 24 Oct', band: 'Edit mode — customers see the current menu until you save.', tabs: ['Dishes', 'Details', 'Prices'], cnt: (n) => `${n} changes not saved`, cntS: (n) => `${n} not saved`, saving: 'Saving…', savedOk: 'Saved ✓', retry: 'Try again', cntErr: 'Not saved — try again', cntErrS: 'Not saved', cntSaving: (n) => `Saving ${n} changes…`, cntSaved: 'All changes saved', errNote: 'Could not save. Your 3 changes are kept on this device.' };
+      L.id.x = { editing: 'Mengubah menu · Sab 24 Okt', band: 'Mode ubah — pelanggan melihat menu saat ini sampai Anda menyimpan.', tabs: ['Hidangan', 'Rincian', 'Harga'], cnt: (n) => `${n} perubahan belum disimpan`, cntS: (n) => `${n} belum`, saving: 'Menyimpan…', savedOk: 'Tersimpan ✓', retry: 'Coba lagi', cntErr: 'Belum disimpan — coba lagi', cntErrS: 'Belum disimpan', cntSaving: (n) => `Menyimpan ${n} perubahan…`, cntSaved: 'Semua perubahan tersimpan', errNote: 'Gagal menyimpan. 3 perubahan Anda tetap ada di perangkat ini.' };
+      const tapMark = (b) => `<span class="tapw">${b}<span class="tapdot" aria-hidden="true"></span></span>`;
+      const menuBefore = (s, ph) => menuLive(s, ph).replace(`<button class="btn pri">${I.pen}${s.editMenu}</button>`, tapMark(`<button class="btn pri ring">${I.pen}${s.editMenu}</button>`));
+      const sheetUI = (s, ph, o = {}) => {
+        const x = s.x, st = o.state || 'edit';
+        const cnt = st === 'saving' ? x.cntSaving(3) : st === 'saved' ? x.cntSaved : st === 'err' ? (ph ? x.cntErrS : x.cntErr) : ph ? x.cntS(3) : x.cnt(3);
+        const btns = st === 'saving' ? `<button class="btn" disabled style="opacity:.5">${s.discard}</button><button class="btn pri" disabled><span class="spin" aria-hidden="true"></span>${x.saving}</button>`
+          : st === 'saved' ? `<button class="btn" disabled style="opacity:.5">${s.discard}</button><button class="btn pri" disabled>${x.savedOk}</button>`
+          : st === 'err' ? `<button class="btn">${s.discard}</button><button class="btn pri" style="background:#8a2232;border-color:#8a2232">${x.retry}</button>`
+          : `<button class="btn">${s.discard}</button><button class="btn pri">${s.save}</button>`;
+        const rows = `<ul style="flex:1;overflow:hidden">${D.map((d) => row(d, s, { ph })).join('')}</ul>`;
+        return `${ph ? '' : '<div class="scrim"></div>'}<div class="sheet ${ph ? 'ph' : 'tab'}" role="dialog" aria-label="${x.editing}"><div class="hdr"><span>${x.editing}</span><button class="btn icon flat" aria-label="${s.close}">${I.x}</button></div>
+          <div class="steps">${x.tabs.map((t, i) => `<span class="t ${i === 0 ? 'on' : ''}">${t}</span>`).join('')}</div><p class="band">${x.band}</p>
+          ${st === 'err' ? `<p class="errband">${x.errNote}</p>` : ''}${rows}
+          <div class="foot ${st}"><span class="cnt">${cnt}</span>${btns}</div></div>${o.leave ? dlg(s, ph) : ''}`;
+      };
+      const sheetT = (o) => (s) => `${rail(s, 2)}<div class="main">${menuLive(s, false)}</div>${sheetUI(s, false, o)}`;
+      const sheetP = (o) => (s) => `${sheetUI(s, true, o)}`;
+
+      const tablets = [
+        { id: 't1', badge: '1', title: 'Published and active: Menu screen', html: T(menuLive),
+          cap: 'Dish rows keep what they have today: price, limit, sold, and the Sold out switch (instant, rolls back on failure). No include tick, no pencil (dish edits move into the session). The new <b>Edit menu</b> (filled) replaces "Edit details" and "Add dish"; Share again and Unpublish stay.', trade: 'Chef is not shown on this table today and stays out.' },
+        { id: 't2', badge: '2', title: 'Published and active: Home', html: T(home, 0),
+          cap: 'As today, read-only: name, meter, "12 left" / "Sold out" / "9 sold · no limit". The only link is "Go to Menu to change limits". Nothing new on Home.', trade: 'Row actions that exist on Home today: none.' },
+        { id: 'ta', badge: '3 · before', title: 'Tap "Edit menu"', html: (s) => `${rail(s, 2)}<div class="main">${menuBefore(s, false)}</div>`,
+          cap: 'Before: the published Menu screen; the tap marker is on <b>Edit menu</b>.', trade: '' },
+        { id: 'tb', badge: '3 · after', title: 'Edit mode: a sheet over the menu', html: sheetT({}),
+          cap: 'After: a full-height sheet opens over the dimmed menu. Header "Editing menu · Sat 24 Oct" with ✕, tabs Dishes / Details / Prices inside the sheet, an amber band "Edit mode — customers see the current menu until you save.", rows with include ticks, chef dropdown and pencil (changed rows tinted Added / Removed / Edited). The sticky footer shows "3 changes not saved", Discard and Save.', trade: 'Chosen: the footer replaces the floating pill inside the sheet. The pill is kept only for the draft wizard (frame 6), which is a full page with no sheet footer.' },
+        { id: 'ts', badge: '4', title: 'Saving', html: sheetT({ state: 'saving' }),
+          cap: 'Save turns into a spinner with "Saving…", disabled; Discard is disabled; the count reads "Saving 3 changes…". After success the footer says "All changes saved" and Save shows "Saved ✓" for about two seconds, then the sheet closes back to the Menu screen.', trade: '' },
+        { id: 'tl', badge: '5', title: 'Close with changes', html: sheetT({ leave: true }),
+          cap: 'Close (✕), Esc or back asks "Save 3 changes?": Keep editing (link), Don\'t save, Save (filled). With 0 changes it just closes.', trade: '' },
+        { id: 'td', badge: '6', title: 'Draft: wizard Dishes step, Next saves', html: tabEdit('draft', { draft: true, toast: true }),
+          cap: 'Not published: the wizard is already a full page, so the floating pill stays here: "Draft · 3 changes not saved". <b>Next: Details</b> saves automatically and a small "Saved ✓" confirmation shows for about two seconds.', trade: '' },
+        { id: 'te', badge: '7', title: 'Save failed', html: sheetT({ state: 'err' }),
+          cap: 'The footer turns to the error state: "Not saved — try again" with a red <b>Try again</b> button, and a red note under the band. Changes and tints are kept; nothing is lost.', trade: '' },
+      ];
+      const phones = [
+        { id: 'p1', badge: '1 · phone', title: 'Published: Menu screen', html: P(menuLive), cap: 'Rows are two lines; Sold out switch on the right (44 px). Edit menu is first.', trade: 'Phone layout of this table is not confirmed in code today.' },
+        { id: 'p2', badge: '2 · phone', title: 'Published: Home', html: P(home, 0), cap: 'Same read-only dish list as today.', trade: '' },
+        { id: 'pa', badge: '3 · before', title: 'Tap "Edit menu"', html: P(menuBefore), cap: 'Tap marker on Edit menu.', trade: '' },
+        { id: 'pb', badge: '3 · after', title: 'Edit mode: full-screen sheet', html: sheetP({}), cap: 'Full screen, no tab bar. Header "Editing menu · Sat 24 Oct" and ✕, tabs inside, amber band, rows, sticky footer "3 not saved" with Discard and Save.', trade: '' },
+        { id: 'ps', badge: '4 · phone', title: 'Saving', html: sheetP({ state: 'saving' }), cap: 'Spinner "Saving…"; Discard disabled.', trade: '' },
+        { id: 'pl', badge: '5 · phone', title: '"Save 3 changes?"', html: sheetP({ leave: true }), cap: 'Buttons stack full width, 48 px, Save first.', trade: '' },
+        { id: 'pd', badge: '6 · phone', title: 'Draft: Next saves', html: phEdit('draft', { draft: true, toast: true }), cap: 'Pill "Draft · 3 unsaved" (shortened). "Saved ✓" after tapping Next: Details.', trade: '' },
+        { id: 'pe', badge: '7 · phone', title: 'Save failed', html: sheetP({ state: 'err' }), cap: 'Footer "Not saved" and a red Try again.', trade: '' },
+        { id: 'pi', badge: 'ID', title: 'Indonesian: edit mode', lang: 'id', html: sheetP({}), cap: 'Header "Mengubah menu · Sab 24 Okt", tabs "Hidangan / Rincian / Harga", footer "3 belum" + "Buang" + "Simpan". The band is text and may wrap to two lines; buttons stay on one line.', trade: '' },
+        { id: 'pis', badge: 'ID', title: 'Indonesian: saving', lang: 'id', html: sheetP({ state: 'saving' }), cap: '"Menyimpan…" on the button.', trade: '' },
+        { id: 'pil', badge: 'ID', title: 'Indonesian: close', lang: 'id', html: sheetP({ leave: true }), cap: 'Longest button: "Lanjut mengubah".', trade: '' },
+      ];
+      const fig = (f, kind) => `<figure><div class="scrollx"><div class="frame ${kind}" role="group" aria-label="${f.title}">${f.html(L[f.lang || 'en'])}</div></div>
+        <figcaption><b><span class="badge">${f.badge}</span> ${f.title}</b>${f.cap}${f.trade ? `<br /><span class="muted">${f.trade}</span>` : ''}</figcaption></figure>`;
+      document.getElementById('wrap').innerHTML = tablets.map((f) => fig(f, 'tab')).join('') + `<div class="phones">${phones.map((f) => fig(f, 'ph')).join('')}</div>`;
+    </script>
+  </body>
+</html>

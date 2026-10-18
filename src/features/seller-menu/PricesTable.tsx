@@ -11,7 +11,7 @@ import { LIMIT_MAX, parsePriceInput, priceInputOf } from './itemForm';
 import { AutoSaveStatus } from './AutoSaveStatus';
 import { useAutoSave, type SaveResult } from './autoSave';
 import { MENU_NS } from './i18n/register';
-import { SwitchButton, saveResultOf, useRunOp, useSendOp } from './menuShared';
+import { ErrorText, SwitchButton, saveResultOf, useRunOp, useSendOp } from './menuShared';
 import type { MenuData } from './menuSlice';
 
 // Prices & limits for this menu only: price, limit, chef and sold out per dish. Used by step 3 and
@@ -73,6 +73,10 @@ function PriceRow({
 }>) {
   const { t } = useTranslation(MENU_NS);
   const { run, busy } = useRunOp();
+  const sendOp = useSendOp();
+  // Plan 103: the chef shows at once; a refusal puts the old one back and says so.
+  const [pickedChef, setPickedChef] = useState<string | null>(null);
+  const [chefFailed, setChefFailed] = useState(false);
   const shownPrice = edit?.priceCents ?? dish.priceCents;
   const shownLimit = edit?.limit === undefined ? (dish.limit ?? null) : edit.limit;
   const [price, setPrice] = useState(priceInputOf(shownPrice));
@@ -123,14 +127,20 @@ function PriceRow({
         <Select
           $invalid={false}
           aria-label={t('prices.chefFor', { name })}
-          value={dish.chefId ?? ''}
-          onChange={(event) =>
-            run({
+          value={pickedChef ?? dish.chefId ?? ''}
+          onChange={(event) => {
+            const chosen = event.target.value;
+            setPickedChef(chosen);
+            setChefFailed(false);
+            void sendOp({
               kind: 'updateMenuDish',
               id: dish.id,
-              request: { chefId: event.target.value === '' ? null : event.target.value },
-            })
-          }
+              request: { chefId: chosen === '' ? null : chosen },
+            }).then((answer) => {
+              setChefFailed(!answer.ok);
+              setPickedChef(null);
+            });
+          }}
         >
           <option value="">{kitchen}</option>
           {chefs.map((chef) => (
@@ -139,6 +149,7 @@ function PriceRow({
             </option>
           ))}
         </Select>
+        {chefFailed ? <ErrorText role="alert">{t('genericError')}</ErrorText> : null}
       </span>
       <span role="cell">
         <SwitchButton

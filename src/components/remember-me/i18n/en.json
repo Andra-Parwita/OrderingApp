@@ -22,7 +22,7 @@
   "errCancelled": "Nothing was changed. You can try again any time.",
   "errFailed": "That did not work. Please try again.",
   "errNetwork": "No connection. Please try again.",
-  "errOtherKind": "That's a seller passkey. Choose your Remember me passkey.",
+  "errOtherKind": "That's your seller passkey. Pick the one named \"customer (Remember me)\".",
   "errExists": "This phone already has a Remember me passkey. Choose “I already use Remember me”.",
   "errBadCode": "That code is not right or has expired.",
   "errBadCodeTries": "That code is not right or has expired. {{count}} tries left.",

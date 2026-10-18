@@ -34,6 +34,7 @@ import {
   setOrderWaReceived,
 } from '../../api/client';
 import { sellerBackupMs } from '../../api/backupMinutes';
+import { soldRequested } from '../../api/soldOrders';
 import { liveRefreshLoop, type Changed, type LiveMessage } from '../../api/live';
 import { playChime } from '../../components/chime';
 import type { Order } from '../../../shared/domain';
@@ -147,6 +148,16 @@ export function* loadOrders() {
       yield call(announceNew, newCustomerOrders(before.sellerOrders.orders, result.data.orders));
     }
   } else yield put(ordersFailed());
+}
+
+/** Plan 103: the menu screens' sold counts read the same list, quietly (no new-order toast). */
+export function* loadOrdersQuiet() {
+  const result = (yield call(
+    fetchSellerOrders,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrdersResponse>;
+  if (result.ok) yield put(ordersLoaded({ orders: result.data.orders }));
 }
 
 export function* loadCurrent() {
@@ -507,6 +518,7 @@ export function* sellerOrdersSaga(
   channel?: () => EventChannel<LiveMessage>,
 ) {
   yield takeLatest(refreshRequested.type, loadOrders);
+  yield takeLeading(soldRequested.type, loadOrdersQuiet);
   yield takeEvery(statusChangeRequested.type, changeStatus);
   yield takeEvery(paidChangeRequested.type, changePaid);
   yield takeEvery(lockChangeRequested.type, changeLock);

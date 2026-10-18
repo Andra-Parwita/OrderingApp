@@ -16,6 +16,7 @@ import {
 } from '../../shared/liveContract';
 import { NOTE_NUDGE_EVENT } from '../../shared/shortMessage';
 import { currentSellerSlug } from './device/sellerContext';
+import { sellerDeviceId } from './deviceId';
 import {
   MAX_REFUSALS,
   POLL_GAP_MAX_MS,
@@ -452,6 +453,8 @@ export function* liveRefreshLoop({ load, fallbackMs, channel = liveChannel }: Li
             everything = true;
           }
         } else {
+          // Plan 103: this device's own change is already applied here; only others reload.
+          if (entry.event.from !== undefined && entry.event.from === sellerDeviceId()) continue;
           reload = true;
           types.add(entry.event.type);
         }

@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useInRouterContext, useNavigate } from 'react-router';
-import { styled } from 'styled-components';
+import { css, styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import { formatDay } from '../../../shared/dates';
 import { LiveDot } from '../../components/LiveDot';
 import { Button, Icon } from '../../ui';
 import { COOK_NS } from './i18n/register';
+import { usePhone } from './CookPhone';
 import { CookTab } from './CookTab';
 import { PackTab } from './PackTab';
 import { selectBags, selectCookList, selectCookMenu, selectCounted } from './cookSelectors';
@@ -71,7 +72,7 @@ const Tabs = styled.div`
     padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg} 0;
   }
 `;
-const TabButton = styled.button<{ $active: boolean }>`
+const TabButton = styled.button<{ $active: boolean; $phone: boolean }>`
   display: inline-flex;
   align-items: baseline;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -90,6 +91,12 @@ const TabButton = styled.button<{ $active: boolean }>`
     flex: 1;
     justify-content: center;
   }
+  ${({ $phone }) =>
+    $phone &&
+    css`
+      flex: none;
+      padding: 0 ${({ theme }) => theme.spacing.md};
+    `}
 `;
 const TabHint = styled.span`
   font-size: 0.875rem;
@@ -110,10 +117,22 @@ function tabFromUrl(): Tab {
   return new URLSearchParams(window.location.search).get('tab') === 'pack' ? 'pack' : 'cook';
 }
 
-function LabelsButton() {
+const TabsSpacer = styled.span`
+  flex: 1;
+`;
+
+/** Print labels; on a phone (plan 100) an icon button that sits in the Cook | Pack row. */
+function LabelsButton({ iconOnly = false }: Readonly<{ iconOnly?: boolean }>) {
   const { t } = useTranslation(COOK_NS);
   const navigate = useNavigate();
   const go = useCallback(() => void navigate(LABELS_PATH), [navigate]);
+  if (iconOnly) {
+    return (
+      <Button aria-label={t('printLabels')} title={t('printLabels')} onClick={go}>
+        <Icon name="print" />
+      </Button>
+    );
+  }
   return (
     <Button onClick={go}>
       <Icon name="print" />
@@ -128,6 +147,7 @@ export function CookScreen() {
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const dispatch = useDispatch();
   const inRouter = useInRouterContext();
+  const phone = usePhone();
   const [tab, setTab] = useState<Tab>(tabFromUrl);
 
   useEffect(() => {
@@ -166,13 +186,13 @@ export function CookScreen() {
             {menu ? t('title', { date }) : t('titleBare')}
             {list.status === 'ready' ? <LiveDot fetchFailed={list.live === 'error'} /> : null}
           </Title>
-          {tab === 'cook' ? <Sub>{t('subtitle', { count: counted.length })}</Sub> : null}
+          {tab === 'cook' && !phone ? <Sub>{t('subtitle', { count: counted.length })}</Sub> : null}
         </div>
         <Side>
           {tab === 'pack' ? (
             <span>{t('pack.packedCount', { packed, total: bags.length })}</span>
           ) : null}
-          {inRouter ? <LabelsButton /> : null}
+          {inRouter && !phone ? <LabelsButton /> : null}
         </Side>
       </Head>
 
@@ -182,6 +202,7 @@ export function CookScreen() {
           role="tab"
           aria-selected={tab === 'cook'}
           $active={tab === 'cook'}
+          $phone={phone}
           onClick={() => choose('cook')}
         >
           {t('tabs.cook')} <TabHint>{t('tabs.cookSub')}</TabHint>
@@ -191,10 +212,17 @@ export function CookScreen() {
           role="tab"
           aria-selected={tab === 'pack'}
           $active={tab === 'pack'}
+          $phone={phone}
           onClick={() => choose('pack')}
         >
           {t('tabs.pack')} <TabHint>{t('tabs.packSub')}</TabHint>
         </TabButton>
+        {phone && inRouter ? (
+          <>
+            <TabsSpacer />
+            <LabelsButton iconOnly />
+          </>
+        ) : null}
       </Tabs>
 
       <Body role="tabpanel">

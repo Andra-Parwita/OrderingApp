@@ -20,6 +20,7 @@ import {
   registerCustomerI18n,
 } from '../features/customer-menu';
 import { NewMenuDialog } from '../features/seller-home';
+import { sellerOrdersReducer, sellerOrdersSaga } from '../features/seller-orders';
 import {
   ShareComposer,
   registerShareI18n,
@@ -47,11 +48,16 @@ const slots: MenuSlots = {
 function createHarnessStore() {
   const sagaMiddleware = createSagaMiddleware();
   const store = configureStore({
-    reducer: { sellerMenu: menuReducer, sellerShare: shareReducer },
+    reducer: {
+      sellerMenu: menuReducer,
+      sellerShare: shareReducer,
+      sellerOrders: sellerOrdersReducer,
+    },
     middleware: (getDefault) => getDefault({ thunk: false }).concat(sagaMiddleware),
   });
   sagaMiddleware.run(menuSaga);
   sagaMiddleware.run(shareSaga);
+  sagaMiddleware.run(sellerOrdersSaga);
   return store;
 }
 

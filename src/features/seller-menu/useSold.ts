@@ -1,21 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
-import { fetchSellerOrders } from '../../api/client';
-import { currentSellerSlug } from '../../api/device/sellerContext';
+import { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import type { SellerOrder } from '../../../shared/domain';
+import { soldRequested, type SoldOrdersState } from '../../api/soldOrders';
 
-/** Order count and the quantity sold per menu dish, from the live orders (cancelled ones left out). */
+const NONE: ReadonlyArray<SellerOrder> = [];
+
+/**
+ * Order count and the quantity sold per menu dish, from the live orders (cancelled ones left out).
+ * Plan 103: reads the orders slice (one read when the screen opens) instead of its own GET.
+ */
 export function useSold(enabled: boolean): { orders: number; sold: Map<string, number> } {
-  const [orders, setOrders] = useState<Array<SellerOrder>>([]);
+  const dispatch = useDispatch();
+  const orders = useSelector((state: SoldOrdersState) => state.sellerOrders?.orders ?? NONE);
   useEffect(() => {
-    if (!enabled) return undefined;
-    let live = true;
-    void fetchSellerOrders(undefined, currentSellerSlug()).then((result) => {
-      if (live && result.ok) setOrders(result.data.orders);
-    });
-    return () => {
-      live = false;
-    };
-  }, [enabled]);
+    if (enabled) dispatch(soldRequested());
+  }, [enabled, dispatch]);
   return useMemo(() => {
     const sold = new Map<string, number>();
     let count = 0;

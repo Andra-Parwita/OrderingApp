@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Paid confirm sheet (mock-up 103)</title>
+    <style>
+      :root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+      button { font: inherit; color: inherit; cursor: pointer; }
+      :focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+      .notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+      .notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+      .rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+      .rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+      .rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+      .wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+      .phones { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+      figure { margin: 0; max-width: 100%; }
+      figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+      figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+      .phones figcaption { width: 384px; }
+      .badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+      .muted { color: #5d6358; }
+      .scrollx { overflow-x: auto; max-width: 100%; }
+
+      .frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70;
+        background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+      .frame.tab { width: 1138px; height: 640px; }
+      .frame.ph { width: 384px; height: 800px; flex-direction: column; }
+      .rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 2px; }
+      .rail span { width: 56px; min-height: 52px; display: grid; place-items: center; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.15; border-radius: 8px; }
+      .rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+      .rail .k { font-weight: 800; color: var(--ink); min-height: 40px; font-size: 12px; }
+      .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      .split { flex: 1; display: flex; min-height: 0; }
+      .list { width: 420px; flex: none; border-right: 1px solid var(--line); overflow: hidden; }
+      .panel { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--surf); }
+      .hdr { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+      .scroll { flex: 1; overflow: hidden; min-height: 0; }
+      .btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+      .btn.icon { width: 44px; padding: 0; }
+      .btn.pri { background: var(--fill); border-color: var(--fill); color: #fff; }
+      .btn.flat { border-color: transparent; }
+      .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .mono { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.06em; font-size: 13px; color: var(--muted); }
+      .ord { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 8px 16px; border-bottom: 1px solid var(--line); min-height: 52px; align-items: center; }
+      .ord b { font-weight: 600; }
+      .ord small { color: var(--muted); font-size: 13px; }
+      .ord.sel { background: var(--surf2); }
+      .chip { display: inline-block; border: 1px solid var(--edge); border-radius: 999px; padding: 0 8px; font-size: 12px; color: var(--muted); }
+      .chip.ok { border-color: var(--fill); color: var(--fill); font-weight: 700; }
+      .chip.no { border-color: #8a2232; color: #8a2232; font-weight: 700; }
+      .pb { padding: 12px 16px; flex: 1; overflow: hidden; }
+      .pb h2 { font-size: 18px; margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+      .pb .ln { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+      .pb .ln.tot { font-weight: 700; border-bottom: 0; }
+      .foot { flex: none; display: flex; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); align-items: center; }
+      .foot .btn.pri { flex: 1; }
+      .hl { outline: 3px solid #b5651d; outline-offset: 2px; position: relative; }
+      .hl::after { content: 'tap'; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #b5651d; }
+
+      .scrim { position: absolute; inset: 0; background: rgb(28 22 12/42%); z-index: 8; }
+      .sheet { position: absolute; z-index: 9; background: var(--surf); box-shadow: 0 -4px 20px rgb(40 30 15/22%); padding: 8px 20px 20px; }
+      .sheet.bottom { left: 0; right: 0; bottom: 0; border-radius: 16px 16px 0 0; }
+      .sheet.bottom.wide { left: 50%; right: auto; width: 520px; transform: translateX(-50%); }
+      .sheet.center { left: 50%; top: 50%; transform: translate(-50%, -50%); width: 400px; border-radius: 14px; padding: 20px; box-shadow: 0 10px 30px rgb(40 30 15/30%); }
+      .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--edge); margin: 0 auto 10px; }
+      .sheet h3 { margin: 0 0 6px; font-size: 18px; }
+      .sheet .who { color: var(--muted); font-size: 14.5px; }
+      .sheet .amt { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 8px 0 14px; }
+      .sheet .amt small { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+      .sheet .bt { display: flex; gap: 8px; }
+      .sheet .bt .btn { flex: 1; min-height: 48px; }
+      .sheet.center .bt { justify-content: flex-end; }
+      .sheet.center .bt .btn { flex: none; min-width: 120px; }
+      .toast { position: absolute; left: 16px; right: 16px; bottom: 76px; z-index: 7; background: var(--ink); color: #f3e8d4; border-radius: 10px; padding: 0 14px; min-height: 44px; display: flex; align-items: center; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>"Mark as paid?" confirm sheet (plan 103 fix 7 mock-up)</h1>
+      <p>Owner, 18 Oct: "When click paid should open modal to confirm if paid, also allow ability to make it unpaid." Today the coin icon in the order panel footer flips Paid at once (aria-label "Mark paid" / "Mark not paid"); unpaid is already supported by the server. New: tapping the coin opens a small sheet. Light theme (dark not drawn); Samsung tablet 1138 × 640 with the side rail, phone 384 × 800. Sample: Onde Onde, order RL2-2A9, Maria Santos, $18.00 AUD. All buttons are 44 px or more.</p>
+      <div class="rec">
+        <table>
+          <tr><th>Option</th><th>Where the sheet appears</th><th>Trade-off</th></tr>
+          <tr><td>A: bottom sheet</td><td>Slides up from the bottom (on the tablet: 520 px wide, centred)</td><td>Same pattern as the other sheets in the app; buttons are in thumb reach. On a wide tablet it sits far from the coin icon.</td></tr>
+          <tr><td>B: centred dialog (tablet only)</td><td>Small 400 px dialog in the middle, over a dimmed screen</td><td>Closer to the eye on a large screen; one more pattern to maintain (the app already has WarningDialog for cancel). Phone keeps the bottom sheet.</td></tr>
+        </table>
+        <p style="margin:6px 0 2px"><b>After "Mark paid":</b> the sheet closes and the order shows Paid at once (optimistic, fix 4). If the server refuses, it flips back and a notice appears. Cancel, the scrim or Esc closes it with no change. "Mark not paid" asks the same way, so an accidental tap cannot unpay.</p>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        coin: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1.100 2-2.500 2c-1 0-2-.5-2.500-1.500M12 6.500v1.500M12 16v1.500"/></svg>',
+        chat: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+        more: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>',
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+        back: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+      };
+      const L = {
+        en: { name: 'Maria', full: 'Maria Santos', rail: ['Orders', 'Pickup & delivery', 'Menu', 'More'], title: 'Orders', tabs: ['Orders', 'Pickup & delivery', 'More'],
+          confirm: 'Confirm', markPaid: 'Mark paid', markUnpaid: 'Mark not paid', send: 'Send link', more: 'More', cancel: 'Cancel',
+          qPaid: 'Mark as paid?', qUnpaid: 'Mark not paid?', paidYes: 'Paid', paidNo: 'Not paid', total: 'Total', yourNote: '(your private note)',
+          sub: (c, n) => `${c} · ${n}`, wasPaid: 'currently marked paid', toast: 'Marked as paid ✓', pickup: 'Pickup Sat 11:00', items: [['2 × Pastel', '$7.00'], ['1 × Nasi Ayam Bali', '$9.50'], ['1 × Sambal Matah', '$1.50']] },
+        id: { name: 'Maria', full: 'Maria Santos', rail: ['Pesanan', 'Ambil & antar', 'Menu', 'Lainnya'], title: 'Pesanan', tabs: ['Pesanan', 'Ambil & antar', 'Lainnya'],
+          confirm: 'Konfirmasi', markPaid: 'Tandai lunas', markUnpaid: 'Tandai belum lunas', send: 'Kirim tautan', more: 'Lainnya', cancel: 'Batal',
+          qPaid: 'Tandai sebagai lunas?', qUnpaid: 'Tandai belum lunas?', paidYes: 'Lunas', paidNo: 'Belum lunas', total: 'Total', yourNote: '(catatan pribadimu)',
+          sub: (c, n) => `${c} · ${n}`, wasPaid: 'saat ini ditandai lunas', toast: 'Ditandai lunas ✓', pickup: 'Ambil Sab 11:00', items: [['2 × Pastel', '$7.00'], ['1 × Nasi Ayam Bali', '$9.50'], ['1 × Sambal Matah', '$1.50']] },
+      };
+      const orders = [['RL2-2A9', 'Maria Santos', '$18.00', 0], ['YNA-5MH', 'Anin Wijaya', '$24.50', 1], ['K7P-3QD', 'Sandra Kusuma', '$9.50', 0], ['B4X-9TR', 'Dewi Lestari', '$21.00', 1], ['M2C-8LV', 'Tom Nguyen', '$25.00', 0]];
+      const chip = (s, p) => `<span class="chip ${p ? 'ok' : 'no'}">${p ? s.paidYes : s.paidNo}</span>`;
+      const rail = (s) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === 0 ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const list = (s) => `<div class="list">${orders.map((o, i) => `<div class="ord ${i === 0 ? 'sel' : ''}"><b>${o[1]}</b><span>${o[2]}</span><small class="mono">${o[0]}</small>${chip(s, i === 0 ? 0 : o[3])}</div>`).join('')}</div>`;
+      const body = (s, paid) => `<div class="pb"><h2>${s.full} <span class="mono">RL2-2A9</span> ${chip(s, paid)}</h2><div class="muted" style="font-size:13.5px;margin:2px 0 8px">${s.pickup}</div>
+        ${s.items.map((r) => `<div class="ln"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}<div class="ln tot"><span>${s.total}</span><span>$18.00</span></div></div>`;
+      const foot = (s, paid, hl) => `<div class="foot"><button class="btn pri">${I.check}${s.confirm}</button><button class="btn icon" aria-label="${s.send}">${I.chat}</button>
+        <button class="btn icon ${hl ? 'hl' : ''}" aria-label="${paid ? s.markUnpaid : s.markPaid}" title="${paid ? s.markUnpaid : s.markPaid}">${I.coin}</button><button class="btn icon" aria-label="${s.more}">${I.more}</button></div>`;
+      const sheet = (s, paid, kind) => `<div class="scrim"></div><div class="sheet ${kind}" role="dialog" aria-label="${paid ? s.qUnpaid : s.qPaid}">${kind.startsWith('bottom') ? '<div class="grab"></div>' : ''}
+        <h3>${paid ? s.qUnpaid : s.qPaid}</h3><div class="who">${s.sub('RL2-2A9', s.full)}${paid ? ' · ' + s.wasPaid : ''}</div><div class="amt">$18.00<small>AUD</small></div>
+        <div class="bt"><button class="btn ${paid ? '' : 'pri'}" ${paid ? 'style="border-color:#8a2232;color:#8a2232"' : ''}>${paid ? s.markUnpaid : s.markPaid}</button><button class="btn">${s.cancel}</button></div></div>`;
+
+      const tablet = (s, paid, kind, hl) => `${rail(s)}<div class="main"><div class="hdr"><span>${s.title}</span></div><div class="split">${list(s)}<div class="panel">${body(s, paid)}${foot(s, paid, hl)}</div></div></div>${kind ? sheet(s, paid, kind) : ''}`;
+      const phone = (s, paid, kind, hl, toast) => `<div class="hdr"><span style="display:flex;align-items:center;gap:6px">${I.back}${s.full}</span></div>${body(s, paid)}${toast ? `<div class="toast">${s.toast}</div>` : ''}${foot(s, paid, hl)}${kind ? sheet(s, paid, kind) : ''}`;
+
+      const tablets = [
+        { id: 'ta', badge: 'A', title: 'A, tablet: bottom sheet, unpaid order', html: () => tablet(L.en, false, 'bottom wide'),
+          cap: 'Tapping the coin in the panel footer opens "Mark as paid?" with the code and name, the total ($18.00 AUD) in large type, then "Mark paid" (filled) and "Cancel". Sheet is 520 px wide, anchored to the bottom, with a drag handle.',
+          trade: 'Trade-off: same pattern as the other sheets; the thumb reaches the buttons, but it is far from the coin on a 1138 px screen.' },
+        { id: 'tb', badge: 'B', title: 'B, tablet: centred dialog, unpaid order', html: () => tablet(L.en, false, 'center'),
+          cap: 'The same content in a 400 px dialog in the middle of the dimmed screen; buttons right-aligned, "Mark paid" filled.',
+          trade: 'Trade-off: easier to see on a tablet, but a second pattern next to the bottom sheets.' },
+        { id: 'tbp', badge: 'B', title: 'B, tablet: centred dialog, paid order', html: () => tablet(L.en, true, 'center'),
+          cap: 'On a paid order the same place offers "Mark not paid?" with "currently marked paid" under the name. The action button is outlined in the warning colour, not filled, so unpaying reads as the unusual choice. Option A looks the same, as a bottom sheet.',
+          trade: 'Trade-off: one extra tap to unpay is the point; a mis-tap cannot change the books.' },
+      ];
+      const phones = [
+        { id: 'pu', badge: 'Phone', title: 'Unpaid → "Mark as paid?"', html: () => phone(L.en, false, 'bottom'), cap: 'Bottom sheet, buttons 48 px side by side.', trade: 'Cancel is a full button, not a text link.' },
+        { id: 'pp', badge: 'Phone', title: 'Paid → "Mark not paid?"', html: () => phone(L.en, true, 'bottom'), cap: 'Same layout; the main button is outlined in red (#8a2232, 7:1 on the sheet).', trade: 'Order of buttons never changes.' },
+        { id: 'pa', badge: 'Phone', title: 'After "Mark paid" (optimistic)', html: () => phone(L.en, true, null, false, true), cap: 'The chip already says Paid and a short notice confirms it; the server answer arrives afterwards. On failure the chip returns to Not paid with a notice.', trade: 'No spinner on the happy path.' },
+        { id: 'pi', badge: 'Phone · ID', title: 'Indonesian: "Tandai sebagai lunas?"', html: () => phone(L.id, false, 'bottom'), cap: 'Real strings from the orders i18n ("Tandai lunas", "Tandai belum lunas"). The longer title and buttons still fit on one line at 384 px.', trade: '"Tandai belum lunas" is the longest button; it fits with Batal beside it.' },
+      ];
+      const fig = (f, kind) => `<figure><div class="scrollx"><div class="frame ${kind}" role="group" aria-label="${f.title}">${f.html()}</div></div>
+        <figcaption><b><span class="badge">${f.badge}</span> ${f.title}</b>${f.cap}<br /><span class="muted">${f.trade}</span></figcaption></figure>`;
+      document.getElementById('wrap').innerHTML = tablets.map((f) => fig(f, 'tab')).join('') + `<div class="phones">${phones.map((f) => fig(f, 'ph')).join('')}</div>`;
+    </script>
+  </body>
+</html>

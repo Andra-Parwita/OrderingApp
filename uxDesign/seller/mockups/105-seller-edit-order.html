@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Seller edits an order (mock-up 105)</title>
+    <style>
+      :root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+      button { font: inherit; color: inherit; cursor: pointer; }
+      :focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+      .notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+      .notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+      .rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+      .rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+      .rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+      .wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+      .phones { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+      figure { margin: 0; max-width: 100%; }
+      figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+      figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+      .phones figcaption { width: 384px; }
+      .badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+      .muted { color: #5d6358; }
+      .scrollx { overflow-x: auto; max-width: 100%; }
+
+      .frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70; --warn: #8a4b0f; --warnbg: #fbefd9; --danger: #8a2232;
+        background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+      .frame.tab { width: 1138px; height: 640px; }
+      .frame.ph { width: 384px; height: 800px; flex-direction: column; }
+      .rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 2px; }
+      .rail span { width: 56px; min-height: 52px; display: grid; place-items: center; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.15; border-radius: 8px; }
+      .rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+      .rail .k { font-weight: 800; color: var(--ink); min-height: 40px; font-size: 12px; }
+      .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      .split { flex: 1; display: flex; min-height: 0; }
+      .list { width: 420px; flex: none; border-right: 1px solid var(--line); overflow: hidden; }
+      .panel { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--surf); }
+      .hdr { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+      .btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+      .btn.icon { width: 44px; padding: 0; }
+      .btn.pri { background: var(--fill); border-color: var(--fill); color: #fff; }
+      .btn.flat { border-color: transparent; color: var(--fill); }
+      .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .mono { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.06em; font-size: 13px; color: var(--muted); }
+      .ord { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 8px 16px; border-bottom: 1px solid var(--line); min-height: 52px; align-items: center; }
+      .ord b { font-weight: 600; }
+      .ord small { color: var(--muted); font-size: 13px; }
+      .ord.sel { background: var(--surf2); }
+      .chip { display: inline-block; border: 1px solid var(--edge); border-radius: 999px; padding: 0 8px; font-size: 12px; color: var(--muted); }
+      .chip.ok { border-color: var(--fill); color: var(--fill); font-weight: 700; }
+      .chip.ed { border-color: var(--warn); color: var(--warn); font-weight: 700; }
+      .pb { padding: 12px 16px; flex: 1; overflow: hidden; }
+      .pb h2 { font-size: 18px; margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+      .pb .sub { font-size: 13.5px; color: var(--muted); margin: 2px 0 8px; }
+      .pb .ln { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+      .pb .ln.tot { font-weight: 700; border-bottom: 0; }
+      .pb .edrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 4px; }
+      .note { background: var(--warnbg); border: 1px solid #ead8bf; border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 13.5px; }
+      .note b { font-weight: 700; }
+      .foot { flex: none; display: flex; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); align-items: center; }
+      .foot .btn.pri { flex: 1; }
+      .hl { outline: 3px solid #b5651d; outline-offset: 2px; position: relative; }
+
+      .scrim { position: absolute; inset: 0; background: rgb(28 22 12/42%); z-index: 8; }
+      .sheet { position: absolute; z-index: 9; background: var(--surf); box-shadow: 0 -4px 20px rgb(40 30 15/22%); display: flex; flex-direction: column; }
+      .sheet.side { top: 0; right: 0; bottom: 0; width: 520px; box-shadow: -4px 0 20px rgb(40 30 15/22%); }
+      .sheet.full { left: 0; right: 0; bottom: 0; top: 40px; border-radius: 16px 16px 0 0; }
+      .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--edge); margin: 8px auto 0; }
+      .sh { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--line); font-weight: 700; font-size: 17px; }
+      .sh small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+      .sb { flex: 1; overflow: hidden; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; }
+      .lbl { font-size: 13px; font-weight: 700; margin-bottom: 4px; display: block; }
+      .field { border: 1px solid var(--edge); border-radius: 8px; min-height: 44px; padding: 10px 12px; background: #fff; font-size: 15px; }
+      .dish { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; border-bottom: 1px solid var(--line); }
+      .dish small { display: block; color: var(--muted); font-size: 13px; }
+      .dish small.w { color: var(--warn); font-weight: 600; }
+      .step { display: inline-flex; align-items: center; gap: 4px; }
+      .step .btn { width: 44px; padding: 0; font-size: 20px; }
+      .step output { min-width: 28px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .tot2 { display: flex; justify-content: space-between; font-weight: 700; padding-top: 6px; font-variant-numeric: tabular-nums; }
+      .tot2 small { font-weight: 400; color: var(--muted); }
+      .tick { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; padding: 6px 0; }
+      .box { width: 22px; height: 22px; border: 2px solid var(--fill); border-radius: 5px; background: var(--fill); color: #fff; display: grid; place-items: center; flex: none; margin-top: 1px; }
+      .box.off { background: #fff; border-color: var(--edge); }
+      .tick small { display: block; color: var(--muted); font-size: 13px; }
+      .toast { position: absolute; left: 16px; right: 16px; bottom: 76px; z-index: 7; background: var(--ink); color: #f3e8d4; border-radius: 10px; padding: 6px 6px 6px 14px; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+      .toast .btn { color: #f3e8d4; border-color: #8c7a60; min-height: 36px; }
+
+      /* the customer's order page */
+      .cust { --bg: #faf6ee; background: var(--bg); }
+      .cust .top { height: 64px; flex: none; background: linear-gradient(90deg, #e9c98e, #d9a85c); display: flex; align-items: center; padding: 0 16px; font-weight: 800; color: var(--ink); }
+      .cust .cb { padding: 12px 16px; flex: 1; overflow: hidden; }
+      .cust h2 { font-size: 18px; margin: 0 0 2px; }
+      .cust .ln { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+      .cust .ln.tot { font-weight: 700; border-bottom: 0; }
+      .cust .chg { border-left: 3px solid var(--warn); background: var(--warnbg); border-radius: 0 8px 8px 0; padding: 8px 12px; margin: 10px 0; font-size: 14px; }
+      .cust .chg b { display: block; }
+      .cust .chg span { color: var(--muted); font-size: 13px; }
+      .cust .upd { font-size: 14px; border-top: 1px solid var(--line); padding-top: 8px; margin-top: 10px; }
+      .cust .upd div { padding: 4px 0; }
+      .cust .upd small { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>The seller edits an order (plan 105 mock-up)</h1>
+      <p>Owner, 18 Oct: "seller add order but they can not edit, but have to cancel and change. I think we need to allow seller to change order, and even if it's from customer (which then we can identify or send notification to customer if needed that order changed)." New: an <b>Edit order</b> button in the order panel opens a sheet with the same fields as New order (dishes with − / +, name, note) plus the pickup / delivery row that already exists (plan 083). Footer: <b>Save changes</b> and a <b>Tell the customer</b> tick. Light theme; Samsung tablet 1138 × 640 with the side rail, phone 384 × 800. Sample: Onde Onde (Adelaide, AUD), order 59X-MAP, Lenny, delivery to Wattle St, Fullarton 5063. All buttons 44 px or more.</p>
+      <div class="rec">
+        <table>
+          <tr><th>Choice</th><th>Drawn here</th><th>Alternative</th></tr>
+          <tr><td>Where the editor opens</td><td>Tablet: 520 px slide-over from the right (like New order). Phone: full-height sheet with a grab handle.</td><td>A centred dialog; not drawn, the form is too tall for one.</td></tr>
+          <tr><td>Tell the customer</td><td>Tick in the footer, shown for orders the customer can open; <b>on</b> for a customer's own order, <b>off</b> for one the seller typed in (the seller is already on WhatsApp with them).</td><td>Always tell (no tick) or never tell.</td></tr>
+          <tr><td>After saving</td><td>Panel shows "Edited by Chandra · 5:12 pm", what changed, and for a paid order "Paid $22.00, total now $26.00". A toast offers "Copy message" for WhatsApp.</td><td>Toast only.</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        edit: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+        chat: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+        coin: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6.500v11M9.500 9.500c.5-.8 1.400-1.200 2.500-1.200 1.500 0 2.500.7 2.500 1.800s-1 1.500-2.500 1.900-2.500.8-2.500 1.900 1 1.800 2.500 1.800c1.100 0 2-.4 2.500-1.200"/></svg>',
+        more: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>',
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+        back: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+        x: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+      };
+      const L = {
+        en: { full: 'Lenny Hart', rail: ['Orders', 'Pickup & delivery', 'Menu', 'More'], title: 'Orders', confirm: 'Confirm', send: 'Send link', more: 'More', pay: 'Mark not paid',
+          edit: 'Edit order', editTitle: 'Edit order', save: 'Save changes', cancel: 'Cancel', name: 'First name', dishes: 'Dishes', note: 'Note', noteV: 'Leave at the front door, please',
+          total: 'Total', was: 'was', tell: 'Tell the customer', tellHelp: 'Sends "Your order 59X-MAP was changed by Onde Onde" and shows what changed on their order page.', tellSeller: 'Only if they have the order link.',
+          delivery: 'Delivery', addr: 'Wattle St, Fullarton 5063', change: 'Change', limit: 'Only 2 left of Es cendol; saving will go over the limit.', paid: 'Paid', delivered: 'Delivered Sat 4:00 pm',
+          editedBy: 'Edited by Chandra · 5:12 pm', diff: '+1 Pastel · −1 Lalampa · +1 Es cendol', paidNote: 'Paid $22.00, total now $26.00. $4.00 to collect.', toast: 'Saved. Customer told.', copy: 'Copy message',
+          items: [['Pastel', 3.0], ['Lalampa', 3.0], ['Es cendol', 4.0]], before: [4, 2, 1], after: [5, 1, 2], left: ['', '', 'Only 2 left'],
+          cTitle: 'Your order', cChg: 'Changed by the kitchen · Sat 5:12 pm', cDiff: '+1 Pastel · −1 Lalampa · +1 Es cendol', cLine: 'Onde Onde changed your order. Total is now $26.00.', cUpd: 'Updates', cStatus: 'Confirmed', cDel: 'Delivery to Wattle St, Fullarton 5063' },
+        id: { full: 'Lenny Hart', rail: ['Pesanan', 'Ambil & antar', 'Menu', 'Lainnya'], title: 'Pesanan', confirm: 'Konfirmasi', send: 'Kirim tautan', more: 'Lainnya', pay: 'Tandai belum lunas',
+          edit: 'Ubah pesanan', editTitle: 'Ubah pesanan', save: 'Simpan perubahan', cancel: 'Batal', name: 'Nama depan', dishes: 'Hidangan', note: 'Catatan', noteV: 'Taruh di depan pintu ya',
+          total: 'Total', was: 'sebelumnya', tell: 'Beri tahu pelanggan', tellHelp: 'Mengirim "Pesanan 59X-MAP Anda diubah oleh Onde Onde" dan menampilkan perubahannya di halaman pesanan.', tellSeller: 'Hanya jika mereka punya tautan pesanan.',
+          delivery: 'Antar', addr: 'Wattle St, Fullarton 5063', change: 'Ubah', limit: 'Hanya sisa 2 Es cendol; menyimpan akan melewati batas.', paid: 'Lunas', delivered: '',
+          editedBy: 'Diubah oleh Chandra · 17.12', diff: '+1 Pastel · −1 Lalampa · +1 Es cendol', paidNote: 'Lunas $22.00, total kini $26.00. $4.00 lagi.', toast: 'Tersimpan. Pelanggan diberi tahu.', copy: 'Salin pesan',
+          items: [['Pastel', 3.0], ['Lalampa', 3.0], ['Es cendol', 4.0]], before: [4, 2, 1], after: [5, 1, 2], left: ['', '', 'Sisa 2'],
+          cTitle: 'Pesanan Anda', cChg: 'Diubah oleh dapur · Sab 17.12', cDiff: '+1 Pastel · −1 Lalampa · +1 Es cendol', cLine: 'Onde Onde mengubah pesanan Anda. Total kini $26.00.', cUpd: 'Kabar', cStatus: 'Dikonfirmasi', cDel: 'Antar ke Wattle St, Fullarton 5063' },
+      };
+      const $ = (n) => '$' + n.toFixed(2);
+      const sum = (s, q) => s.items.reduce((a, it, i) => a + it[1] * q[i], 0);
+      const orders = [['59X-MAP', 'Lenny Hart', 26], ['RL2-2A9', 'Maria Santos', 18], ['YNA-5MH', 'Anin Wijaya', 24.5], ['K7P-3QD', 'Sandra Kusuma', 9.5], ['B4X-9TR', 'Dewi Lestari', 21]];
+      const rail = (s) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === 0 ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const list = (s, edited) => `<div class="list">${orders.map((o, i) => `<div class="ord ${i === 0 ? 'sel' : ''}"><b>${o[1]}</b><span>${$(i === 0 && !edited ? 22 : o[2])}</span><small class="mono">${o[0]}</small>${i === 0 && edited ? '<span class="chip ed">Edited</span>' : '<span class="chip">Confirmed</span>'}</div>`).join('')}</div>`;
+      const lines = (s, q) => s.items.map((it, i) => `<div class="ln"><span>${q[i]} × ${it[0]}</span><span>${$(it[1] * q[i])}</span></div>`).join('') + `<div class="ln tot"><span>${s.total}</span><span>${$(sum(s, q))}</span></div>`;
+      const body = (s, edited, hlEdit) => `<div class="pb"><h2>${s.full} <span class="mono">59X-MAP</span> <span class="chip ok">${s.paid}</span></h2><div class="sub">${s.byCust} · ${s.delivery} · ${s.addr}</div>
+        ${edited ? `<div class="note"><b>${s.editedBy}</b><br />${s.diff}<br />${s.paidNote}</div>` : ''}
+        <div class="edrow"><span class="mono">${s.dishes.toUpperCase()}</span><button class="btn flat ${hlEdit ? 'hl' : ''}">${I.edit}${s.edit}</button></div>
+        ${lines(s, edited ? s.after : s.before)}</div>`;
+      const foot = (s) => `<div class="foot"><button class="btn pri">${I.check}${s.confirm}</button><button class="btn icon" aria-label="${s.send}">${I.chat}</button><button class="btn icon" aria-label="${s.pay}">${I.coin}</button><button class="btn icon" aria-label="${s.more}">${I.more}</button></div>`;
+      Object.assign(L.en, { add: 'Add dish', addTitle: 'Add a dish', remove: 'Remove', undo: 'Undo', done: 'Done', hint: 'An order needs at least one dish. Use Cancel order to remove everything.', summ: 'Removed: 2 × Lalampa · Added: 1 × Nasi Ayam Bali', removedL: 'Removed', menu: [['Pastel', 3, '8 left'], ['Lalampa', 3, '5 left'], ['Es cendol', 4, '2 left'], ['Nasi Ayam Bali', 9.5, '4 left'], ['Lemper ayam', 3.5, '12 left']] });
+      Object.assign(L.id, { add: 'Tambah hidangan', addTitle: 'Tambah hidangan', remove: 'Hapus', undo: 'Batal hapus', done: 'Selesai', hint: 'Pesanan butuh minimal satu hidangan. Pakai Batalkan pesanan untuk menghapus semuanya.', summ: 'Dihapus: 2 × Lalampa · Ditambah: 1 × Nasi Ayam Bali', removedL: 'Dihapus', menu: [['Pastel', 3, 'sisa 8'], ['Lalampa', 3, 'sisa 5'], ['Es cendol', 4, 'sisa 2'], ['Nasi Ayam Bali', 9.5, 'sisa 4'], ['Lemper ayam', 3.5, 'sisa 12']] });
+      Object.assign(L.en, { byCust: 'Ordered by the customer', byKitchen: 'Added by the kitchen', delivered2: 'Delivered', warnDel: 'This order is already delivered. You can still edit it; the customer is not told unless you tick below.' });
+      Object.assign(L.id, { byCust: 'Dipesan oleh pelanggan', byKitchen: 'Ditambah oleh dapur', delivered2: 'Sudah diantar', warnDel: 'Pesanan ini sudah diantar. Tetap bisa diubah; pelanggan tidak diberi tahu kecuali Anda mencentang di bawah.' });
+      I.trash = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"/></svg>';
+      I.plus = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+      // rows: [name, price, qty, flag] flag: '' | 'warn' | 'new' | 'gone'
+      const rowsOf = (s, mode) => mode === 'removed' ? [['Pastel', 3, 5, ''], ['Lalampa', 3, 0, 'gone'], ['Es cendol', 4, 2, 'warn'], ['Nasi Ayam Bali', 9.5, 1, 'new']]
+        : mode === 'empty' ? [['Pastel', 3, 0, 'gone'], ['Lalampa', 3, 0, 'gone'], ['Es cendol', 4, 0, 'gone']]
+        : [['Pastel', 3, 5, ''], ['Lalampa', 3, 1, ''], ['Es cendol', 4, 2, 'warn']];
+      const dishRow = (s, r) => r[3] === 'gone'
+        ? `<div class="dish"><span style="text-decoration:line-through;color:var(--muted)">${r[0]} <small>${s.removedL}</small></span><button class="btn flat">${s.undo}</button></div>`
+        : `<div class="dish"><span>${r[0]}${r[3] === 'new' ? ' <span class="chip ok">+</span>' : ''} <small>${$(r[1])}</small>${r[3] === 'warn' ? `<small class="w">${s.limit}</small>` : ''}</span>
+        <span class="step"><button class="btn" aria-label="−">−</button><output>${r[2]}</output><button class="btn" aria-label="+">+</button><button class="btn flat" style="color:var(--danger)" aria-label="${s.remove}" title="${s.remove}">${I.trash}</button></span></div>`;
+      const editBody = (s, who, mode) => { const rows = rowsOf(s, mode); const tot = rows.reduce((a, r) => a + r[1] * r[2], 0); const empty = tot === 0;
+        const kit = who.startsWith('seller'); const dw = who.endsWith('delivered'); return `<div class="sb"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="chip ${kit ? '' : 'ed'}">${kit ? s.byKitchen : s.byCust}</span>${dw ? `<span class="chip no" style="border-color:var(--danger);color:var(--danger)">${s.delivered2}</span>` : ''}</div>${dw ? `<div class="note">${s.warnDel}</div>` : ''}<div><span class="lbl">${s.name}</span><div class="field">Lenny</div></div>
+        <div><span class="lbl">${s.dishes}</span>${rows.map((r) => dishRow(s, r)).join('')}<button class="btn flat ${mode === 'default' ? 'hl' : ''}" style="width:100%;justify-content:flex-start">${I.plus}${s.add}</button>
+        ${mode === 'removed' ? `<div class="note" style="margin:6px 0 0"><b>${s.summ}</b></div>` : ''}${empty ? `<div class="note" role="alert" style="border-color:var(--danger)">${s.hint}</div>` : ''}
+        <div class="tot2"><span>${s.total}</span><span>${$(tot)} <small>(${s.was} ${$(22)})</small></span></div></div>
+        <div><span class="lbl">${s.note}</span><div class="field">${s.noteV}</div></div>
+        <div class="dish"><span>${s.delivery} <small>${s.addr}</small></span><button class="btn flat">${s.change}</button></div></div>
+        <div class="foot" style="flex-direction:column;align-items:stretch;gap:4px"><div class="tick"><span class="box ${who === 'seller' ? 'off' : ''}">${who === 'seller' ? '' : I.check}</span><span><b>${s.tell}</b><small>${who === 'seller' ? s.tellSeller : s.tellHelp}</small></span></div>
+        <div style="display:flex;gap:8px"><button class="btn pri" ${empty ? 'disabled style="opacity:.45"' : ''}>${s.save}</button><button class="btn">${s.cancel}</button></div></div>`; };
+      const addList = (s) => `<div class="sb" style="gap:0"><span class="lbl">${s.menu.length} · ${s.addTitle}</span>${s.menu.map((m, i) => { const have = i < 3; return `<div class="dish"><span>${m[0]} <small>${$(m[1])} · ${m[2]}</small></span>${have ? `<span class="chip">✓ 1</span>` : `<button class="btn ${i === 3 ? 'pri' : ''}">${I.plus}${s.add}</button>`}</div>`; }).join('')}</div>
+        <div class="foot"><button class="btn pri">${s.done}</button></div>`;
+      const sheet = (s, kind, who, mode) => `<div class="scrim"></div><div class="sheet ${kind}" role="dialog" aria-label="${mode === 'add' ? s.addTitle : s.editTitle}">${kind === 'full' ? '<div class="grab"></div>' : ''}
+        <div class="sh"><span>${mode === 'add' ? s.addTitle : s.editTitle}<small class="mono">59X-MAP · ${s.full}</small></span><button class="btn icon flat" aria-label="${s.cancel}">${I.x}</button></div>${mode === 'add' ? addList(s) : editBody(s, who, mode || 'default')}</div>`;
+      const tablet = (s, o) => `${rail(s)}<div class="main"><div class="hdr"><span>${s.title}</span></div><div class="split">${list(s, o.edited)}<div class="panel">${body(s, o.edited, o.hl)}${foot(s)}</div></div></div>${o.sheet ? sheet(s, 'side', o.who, o.mode) : ''}${o.toast ? `<div class="toast">${s.toast}<button class="btn">${s.copy}</button></div>` : ''}`;
+      const phone = (s, o) => `<div class="hdr"><span style="display:flex;align-items:center;gap:6px">${I.back}${s.full}</span></div>${body(s, o.edited, o.hl)}${o.toast ? `<div class="toast">${s.toast}<button class="btn">${s.copy}</button></div>` : ''}${foot(s)}${o.sheet ? sheet(s, 'full', o.who, o.mode) : ''}`;
+      const cust = (s) => `<div class="top">Onde Onde</div><div class="cb"><h2>${s.cTitle} <span class="mono">59X-MAP</span></h2><div class="muted" style="font-size:13.5px">${s.cStatus} · ${s.cDel}</div>
+        <div class="chg"><b>${s.cChg}</b>${s.cDiff}<br /><span>${s.cLine}</span></div>${lines(s, s.after).replace(/class="ln/g, 'class="ln')}
+        <div class="upd"><b>${s.cUpd}</b><div>${s.cChg.split(' · ')[0]} <small>${s.cDiff}</small></div><div>${s.cStatus} <small>Sat 3:40 pm</small></div></div></div>`;
+
+      const tablets = [
+{ badge: 'Tablet', title: 'Edit a Delivered order: warning only, never refused', html: () => tablet(L.en, { sheet: true, who: 'customer-delivered', mode: 'removed' }), cap: 'Edit order works in any status (Ready, Out for delivery, Collected, Delivered, and Cancelled too, open point). Warnings are information only: "already delivered", paid, over the portion limit. Every sheet starts with a mark: "Ordered by the customer" (amber) or "Added by the kitchen".', trade: 'Cancelled being editable is an open point for the owner (E1b).' },
+{ badge: 'Tablet', title: 'Add dish: the menu list is open', html: () => tablet(L.en, { sheet: true, who: 'customer', mode: 'add' }), cap: 'Each line in the edit sheet has − n + and a 44 px trash button; "Add dish" (under the lines) opens the current menu with remaining portions ("Nasi Ayam Bali · 4 left"). Dishes already on the order show a tick and their count; others have an Add button. Any dish of the live menu can be added; sold-out ones warn like New order.', trade: 'Trade-off: a second step (list, then Done) keeps the main sheet short.' },        { badge: 'Tablet', title: 'A dish removed and one added, before saving', html: () => tablet(L.en, { sheet: true, who: 'customer', mode: 'removed' }), cap: 'Lalampa is struck through with Undo; Nasi Ayam Bali is new (+). The summary reads "Removed: 2 × Lalampa · Added: 1 × Nasi Ayam Bali"; the same text goes into the audit and the customer message.', trade: 'Trade-off: removal is reversible until Save.' },
+        { badge: 'Tablet', title: 'The order panel gets an "Edit order" button', html: () => tablet(L.en, { hl: true }),
+          cap: 'In the panel, a quiet "Edit order" button sits on the dishes header (owner and chef; a helper does not see it). It works on a customer order and on one the seller typed, in any status, also when the order is locked or past the cut-off (owner: warnings only, never refused).',
+          trade: 'Trade-off: next to the dishes it is easy to find; the footer keeps its one main action.' },
+        { badge: 'Tablet', title: 'Edit sheet, customer order: "Tell the customer" is on', html: () => tablet(L.en, { sheet: true, who: 'customer' }),
+          cap: 'Same fields as New order: name, dishes with − / +, note. The total shows "was $22.00" so the change is visible. An amber line under a dish warns when saving goes over the portion limit (D-062: warn, never block). The pickup / delivery row reuses the plan 083 "Change" action. Footer: Save changes, Cancel, and the Tell the customer tick (on for a customer order).',
+          trade: 'Trade-off: one tick, default on, fewer surprises for the customer; the seller can still stay silent.' },
+        { badge: 'Tablet', title: 'After saving: who edited, what changed, what is owed', html: () => tablet(L.en, { edited: true, toast: true }),
+          cap: 'The list row gets an "Edited" chip. The panel shows "Edited by Chandra · 5:12 pm", the diff, and, because the order was already paid, "Paid $22.00, total now $26.00. $4.00 to collect." Paid is never cleared by an edit. The toast offers "Copy message" for WhatsApp.',
+          trade: 'Trade-off: the paid flag stays honest about money taken; the gap is spelled out instead of silently unpaying.' },
+        { badge: 'Tablet', title: 'Seller-typed order: the tick is off', html: () => tablet(L.en, { sheet: true, who: 'seller' }),
+          cap: 'For a WhatsApp or phone order the tick starts off ("Only if they have the order link"): the seller is already talking to this person.',
+          trade: 'Alternative: always on; costs a push the customer may not expect.' },
+      ];
+      const phones = [
+{ badge: 'Phone · ID', title: 'Delivered order, Indonesian', html: () => phone(L.id, { sheet: true, who: 'customer-delivered' }), cap: '"Dipesan oleh pelanggan" and the delivered warning in ID.', trade: '' },
+{ badge: 'Phone', title: 'Add dish list', html: () => phone(L.en, { sheet: true, who: 'customer', mode: 'add' }), cap: 'Menu dishes with remaining portions; Done returns to the edit sheet.', trade: '' },        { badge: 'Phone', title: 'Removed and added', html: () => phone(L.en, { sheet: true, who: 'customer', mode: 'removed' }), cap: 'Struck line with Undo, new line marked +, summary above the total.', trade: '' },        { badge: 'Phone', title: 'Last dish removed: Save disabled', html: () => phone(L.en, { sheet: true, who: 'customer', mode: 'empty' }), cap: 'Zero dishes: Save changes is disabled and a hint says an order needs at least one dish (use Cancel order to remove everything).', trade: '' },
+        { badge: 'Phone', title: 'Panel with "Edit order"', html: () => phone(L.en, { hl: true }), cap: 'Same button on the dishes header.', trade: '' },
+        { badge: 'Phone', title: 'Edit sheet', html: () => phone(L.en, { sheet: true, who: 'customer' }), cap: 'Full-height sheet, footer pinned: tick, Save changes, Cancel.', trade: 'Cancel is a full button, not a link.' },
+        { badge: 'Phone', title: 'After saving', html: () => phone(L.en, { edited: true, toast: true }), cap: 'Edited line, diff, paid gap and the Copy message toast.', trade: '' },
+        { badge: 'Customer', title: 'The customer\'s order page', html: () => cust(L.en), cap: 'A "Changed by the kitchen · Sat 5:12 pm" band under the status with what changed and the new total, and the same line in Updates. The push says "Your order 59X-MAP was changed by Onde Onde" (title "Order changed").', trade: 'Shown only when the seller ticked Tell the customer; otherwise the items and total simply update.' },
+        { badge: 'Phone · ID', title: 'Indonesian: edit sheet', html: () => phone(L.id, { sheet: true, who: 'customer' }), cap: 'With the trash button and "Tambah hidangan". Draft strings: "Ubah pesanan", "Simpan perubahan", "Beri tahu pelanggan". They fit at 384 px.', trade: '' },
+      ];
+      const fig = (f, kind) => `<figure><div class="scrollx"><div class="frame ${kind}${f.badge === 'Customer' ? ' cust' : ''}" role="group" aria-label="${f.title}">${f.html()}</div></div>
+        <figcaption><b><span class="badge">${f.badge}</span> ${f.title}</b>${f.cap}<br /><span class="muted">${f.trade}</span></figcaption></figure>`;
+      document.getElementById('wrap').innerHTML = tablets.map((f) => fig(f, 'tab')).join('') + `<div class="phones">${phones.map((f) => fig(f, 'ph')).join('')}</div>`;
+    </script>
+  </body>
+</html>

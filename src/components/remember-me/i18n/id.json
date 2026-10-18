@@ -22,7 +22,7 @@
   "errCancelled": "Tidak ada yang berubah. Kamu bisa coba lagi kapan saja.",
   "errFailed": "Belum berhasil. Coba lagi ya.",
   "errNetwork": "Tidak ada koneksi. Coba lagi ya.",
-  "errOtherKind": "Itu passkey penjual. Pilih passkey Ingat aku-mu.",
+  "errOtherKind": "Itu passkey penjual Anda. Pilih yang bernama \"customer (Remember me)\".",
   "errExists": "HP ini sudah punya passkey Ingat aku. Pilih “Aku sudah pakai Ingat aku”.",
   "errBadCode": "Kodenya salah atau sudah kedaluwarsa.",
   "errBadCodeTries": "Kodenya salah atau sudah kedaluwarsa. Sisa {{count}} kali coba.",

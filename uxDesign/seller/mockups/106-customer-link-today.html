@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Customer link: how it works today</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#23211e;--muted:#6a655d;--line:#e4e1da;--accent:#2f5d50;--warn:#8a5a00;--warnbg:#fbf3df;--bluebg:#e9eff7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.5rem;margin:0 0 4px}h2{font-size:1.15rem;margin:0}h3{font-size:.95rem;margin:14px 0 6px}
+.sub{color:var(--muted);margin:0 0 20px}
+.box,.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:0 0 18px}
+.box{background:var(--bluebg);border-color:#cdd9ea}
+.panel>header{display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:12px}
+.num{background:var(--accent);color:#fff;border-radius:50%;min-width:24px;height:24px;display:inline-grid;place-items:center;font-size:.8rem;font-weight:700}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.id{color:var(--muted);font-size:.8rem;display:block}
+.muted{color:var(--muted)}
+.row{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fff;margin:6px 0}
+.row b{font-weight:600}.row small{color:var(--muted);display:block}
+.badge{font-size:.78rem;padding:2px 8px;border-radius:99px;background:var(--warnbg);color:var(--warn);white-space:nowrap}
+.badge.ret{background:#e6f1ec;color:#1f5a45}
+.btn{display:inline-block;padding:6px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:.85rem}
+.btn.sec{background:#fff;color:var(--accent)}
+.sheet{border:1px solid #b9b4a8;border-radius:12px;padding:14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.sheet h4{margin:0 0 6px;font-size:1rem}.sheet p{margin:0 0 8px;font-size:.88rem}
+.match{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line);padding:8px 0}
+.match span.s{display:block;color:var(--muted);font-size:.8rem}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.x{float:right;color:var(--muted);font-size:.8rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{border-top:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{background:#faf9f6;border-top:0}
+.nc{background:var(--warnbg);color:var(--warn);padding:1px 6px;border-radius:4px;font-size:.78rem}
+ul{margin:6px 0 6px 18px;padding:0}li{margin:3px 0}
+.dev{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:760px){.dev{grid-template-columns:1fr}}
+.dev>div{border:1px dashed #b9b4a8;border-radius:8px;padding:8px;font-size:.85rem}
+code{background:#f0eee8;padding:0 4px;border-radius:4px;font-size:.85em}
+.tw{overflow-x:auto}
+</style></head><body><main>
+<h1>Link to a saved customer: how it works today</h1>
+<p class="sub">Read-only explainer of the app as committed (HEAD), plan 071 / D-099. Kitchen: Onde Onde, Adelaide, AUD. EN text, with the ID wording in grey under it. No design proposal here.</p>
+
+<section class="box">
+<h2>What this is for</h2>
+<ul>
+<li><b>The server never stores phone numbers.</b> Onde Onde's cloud cannot look up "Anin's WhatsApp".</li>
+<li>Each seller <b>device</b> (tablet, phone, computer browser) keeps its <b>own private list</b> of customers: first name, WhatsApp number, address. It lives in that browser (IndexedDB, one database per kitchen). The tablet and the phone do <b>not</b> share it.</li>
+<li>A <b>customer code</b> is a random 24-character code that the customer's phone makes for this kitchen only. It holds no name or number. It travels with each order, so the seller's device can tell "the same phone as last time". Another kitchen gets another code. A new or cleared customer phone gets a new code (a customer signed in with Remember me gets the code from their account instead; not confirmed end to end).</li>
+<li>"Link" means: on this device, write that code into a saved customer, so the next order with that code shows the saved WhatsApp number.</li>
+<li>Three things are easy to confuse, and they are <b>separate</b>: the order-row badge <span class="badge">★ New customer</span> / <span class="badge ret">↩ Returning</span> (set by the customer's phone), the window "Link to a saved customer?" (set by this device's list), and the "New customer" button inside that window.</li>
+</ul>
+</section>
+
+<section class="panel"><header><span class="num">0</span><h2>When does the window open, and what do the badges mean?</h2></header>
+<p>Only when the seller presses <b>Confirm</b> on an order and the server accepted it, <i>and</i> the order has a customer code, <i>and</i> no saved customer on <b>this device</b> has that code. It does not open for orders without a code (old customer apps, orders the seller types with "+ New order"). It ignores the badge: a "↩ Returning" order opens it too if this device never linked that code. <span class="nc">Derived from code, not tested: Undo of a cancel back to Confirmed takes the same path and may open it.</span></p>
+<div class="row"><div><b>Anin</b> <small>Order K7Q2MD · 2 items · A$34.00</small></div><span class="badge">★ New customer</span></div>
+<span class="id">★ Pelanggan baru</span>
+<div class="row"><div><b>Larissa</b> <small>Order P4N8XT · 3 items · A$51.50</small></div><span class="badge ret">↩ Returning</span></div>
+<span class="id">↩ Langganan</span>
+<ul>
+<li><b>New customer</b>: shown on an order waiting for confirmation, placed by the customer, where the customer's phone did <i>not</i> say it holds a collected/delivered order, and "WhatsApp received" is not ticked. Order page banner: "Wait for their WhatsApp message so you have their number, then confirm." <span class="id">Tunggu pesan WhatsApp mereka agar Anda punya nomornya, lalu konfirmasi.</span></li>
+<li><b>Returning</b>: the customer's own phone has a collected/delivered order for this kitchen in its My orders and sent <code>returning: true</code> (D-027). Banner: "You can confirm without waiting." <span class="id">Anda bisa langsung konfirmasi tanpa menunggu.</span> It has <b>nothing to do</b> with the seller's saved list.</li>
+<li>Elsewhere the same idea is worded "New customer" / "Returning customer" (ID "Pelanggan baru" / "Pelanggan lama"). So ID has "Langganan", "Pelanggan lama" and (in the window) "pelanggan tetap" for one idea.</li>
+</ul></section>
+
+<section class="panel"><header><span class="num">1</span><h2>First order from a new person, no similar saved name</h2></header>
+<p class="muted">Anin orders from Onde Onde for the first time. This device's list has no Anin, Ani, Anina. The seller waits for her WhatsApp message, then taps Confirm.</p>
+<div class="cols"><div>
+<h3>Row before Confirm</h3>
+<div class="row"><div><b>Anin</b> <small>Order K7Q2MD · Sat pickup · A$34.00</small></div><span class="badge">★ New customer</span></div>
+<span class="id">★ Pelanggan baru</span>
+<h3>Next order from Anin's phone</h3>
+<p>The row shows <span class="badge ret">↩ Returning</span> once Anin has collected one order (her phone sets it). No window: the code is now linked on this device.</p>
+</div><div>
+<div class="sheet"><span class="x">✕ Close · Tutup</span>
+<h4>Link to a saved customer?</h4><span class="id">Hubungkan ke pelanggan tersimpan?</span>
+<p>Anin ordered from a phone this device hasn't met. If Anin is a regular, link them so their phone number shows here next time.</p>
+<span class="id">Anin memesan dari ponsel yang belum dikenal perangkat ini. Jika Anin pelanggan tetap, hubungkan agar nomor teleponnya muncul di sini lain kali.</span>
+<p class="muted">No saved customer with a similar name.</p><span class="id">Tidak ada pelanggan tersimpan dengan nama mirip.</span>
+<div class="acts"><span class="btn">New customer</span><span class="btn sec">Skip</span></div>
+<span class="id">Pelanggan baru · Lewati</span></div>
+</div></div>
+<h3>Buttons here</h3>
+<ul>
+<li><b>New customer</b>: saves a new entry on this device: name "Anin", her code, no phone, no address. Window closes. Nothing goes to the server. To get the number, the seller opens the order, types it under "Contact on this phone" (e.g. 0412 345 678) and taps Save; that fills the same entry (found by code). After that the WhatsApp button opens Anin's chat directly.</li>
+<li><b>Skip</b> / <b>✕ Close</b>: see scenario 4.</li>
+</ul></section>
+
+<section class="panel"><header><span class="num">2</span><h2>New phone, a saved customer with a similar name exists</h2></header>
+<p class="muted">Lenny is saved on this device (0412 345 678, last order 2026-10-04). An order arrives from "Lenni" with a code this device has not seen (Lenny's new phone, or a different person). The seller taps Confirm.</p>
+<div class="cols"><div>
+<div class="row"><div><b>Lenni</b> <small>Order T9B3HV · delivery · A$42.00</small></div><span class="badge">★ New customer</span></div>
+<span class="id">★ Pelanggan baru</span>
+<p><b>What counts as similar:</b> same name ignoring case and accents; or one letter different (both names at least 4 letters); or one name starts with the other (at least 3 letters). Best match first, then most recent order. Saved customers with no name never match.</p>
+</div><div>
+<div class="sheet"><span class="x">✕ Close</span>
+<h4>Link to a saved customer?</h4>
+<p>Lenni ordered from a phone this device hasn't met. If Lenni is a regular, link them so their phone number shows here next time.</p>
+<div class="match"><div><b>Lenny</b><span class="s">0412 345 678 · 12 Jetty Rd, Glenelg, 5045 · Last order 2026-10-04</span></div><span class="btn">Link</span></div>
+<div class="match"><div><b>Lenora</b><span class="s">Last order 2026-09-20</span></div><span class="btn">Link</span></div>
+<div class="acts"><span class="btn">New customer</span><span class="btn sec">Skip</span></div>
+<span class="id">Pesanan terakhir 2026-10-04 · Hubungkan · Pelanggan baru · Lewati</span></div>
+</div></div>
+<h3>Buttons here</h3>
+<ul>
+<li><b>Link</b> (on a match): adds this order's code to Lenny's entry (he now holds two codes) and raises his "last order" date to this order's date if newer. His name stays "Lenny" (it does not become "Lenni"); phone and address are kept. Next order from this new phone: no window, the saved number is used for WhatsApp / Call.</li>
+<li><b>New customer</b>: makes a separate "Lenni" entry (no phone). Lenny's entry is untouched, so there are now two.</li>
+</ul></section>
+
+<section class="panel"><header><span class="num">3</span><h2>Returning customer on a known phone</h2></header>
+<p class="muted">Larissa is saved on this device with her code (linked in an earlier week). She orders again.</p>
+<div class="row"><div><b>Larissa</b> <small>Order P4N8XT · pickup · A$51.50</small></div><span class="badge ret">↩ Returning</span></div>
+<span class="id">↩ Langganan</span>
+<ul>
+<li>The seller taps Confirm: <b>no window</b>, because the code is already on a saved customer on this device.</li>
+<li>The order's WhatsApp / Call use her saved number; the Contact block shows her saved number and address.</li>
+<li>"↩ Returning" and "no window" agree here, but they come from two sources (customer's phone vs this device's list).</li>
+<li><span class="nc">not confirmed</span> whether her saved name appears on the row; the row shows the name typed on the order.</li>
+</ul></section>
+
+<section class="panel"><header><span class="num">4</span><h2>Skip (and Close)</h2></header>
+<div class="cols"><div>
+<div class="sheet"><span class="x">✕ Close · Tutup</span><h4>Link to a saved customer?</h4>
+<div class="acts"><span class="btn">New customer</span><span class="btn sec">Skip</span></div>
+<span class="id">Lewati · Tutup</span></div>
+</div><div>
+<ul>
+<li><b>Skip</b> and <b>✕ Close</b> do the same: close the window. Nothing is saved and the choice is not remembered.</li>
+<li>The order is already confirmed (the window came after).</li>
+<li>The next Confirm of any order with the same code (next week, or a second order this menu) asks again. Meanwhile no number: WhatsApp opens the chat picker.</li>
+<li>If the seller types a number on the order and taps Save, an entry is made and the order's code is stored with it, so the window stops after that.</li>
+</ul></div></div></section>
+
+<section class="panel"><header><span class="num">5</span><h2>The same customer later, on another seller device</h2></header>
+<p class="muted">Sandra at Onde Onde uses a tablet at home and a phone in the car. Anin was linked, with her number, on the <b>tablet</b>.</p>
+<div class="dev">
+<div><b>Tablet</b> (list: Anin 0412 345 678, Larissa, Lenny)<br>Anin orders again: <span class="badge ret">↩ Returning</span>, Confirm, no window, WhatsApp opens her chat.</div>
+<div><b>Phone</b> (list: empty, or other names)<br>Same order: <span class="badge ret">↩ Returning</span>, Confirm, <b>the window opens</b> ("Anin ordered from a phone this device hasn't met") with "No saved customer with a similar name." WhatsApp opens the chat picker, no number.</div>
+</div>
+<ul>
+<li>The tablet never tells the phone, and the cloud cannot, because it holds no numbers. The only bridge is the CSV file: Download backup on the tablet, Upload CSV on the phone (scenario 7).</li>
+<li>The badge says "↩ Returning" on both devices, yet only one "knows" her. Same words, different meaning (see scenario 3).</li>
+<li>New customer on the phone makes a second Anin there (no number) with the same code. A later upload merges by phone, else by code.</li>
+<li>The window never says which device it is or that other devices keep their own lists.</li>
+</ul></section>
+
+<section class="panel"><header><span class="num">6</span><h2>The menu finishes: "Back up your customer details?"</h2></header>
+<div class="cols"><div>
+<p><b>When:</b> the app is open on a seller screen; the latest menu is in state finished (a deleted, never-published menu does not count); this device's list has at least one customer new or changed since the last backup; and the seller has not pressed Later/Close since the app was opened. Each device decides from its own list.</p>
+<p>"New" = created since the last backup (or never backed up). "Changed" = edited since. A customer made by "New customer" counts as new even with no phone.</p>
+</div><div>
+<div class="sheet"><span class="x">✕ Close · Tutup</span>
+<h4>Back up your customer details?</h4><span class="id">Cadangkan data pelanggan Anda?</span>
+<p>This menu is finished. 3 new customers and 1 changed customer since your last backup.</p>
+<span class="id">Menu ini sudah selesai. 3 pelanggan baru dan 1 pelanggan berubah sejak cadangan terakhir.</span>
+<p class="muted">Keep this file private. It has your customers' phone numbers and addresses.</p>
+<span class="id">Simpan file ini secara pribadi. Isinya nomor telepon dan alamat pelanggan Anda.</span>
+<div class="acts"><span class="btn">Download backup</span><span class="btn sec">Later</span></div>
+<span class="id">Unduh cadangan · Nanti</span></div>
+</div></div>
+<ul>
+<li><b>Download backup</b>: the browser saves <code>customers-onde-onde-2026-10-17.csv</code> (columns: first name, phone, street, suburb, postcode, notes, customer codes, last order date; the whole list, not only the changes). The device records "last backup: now". Counts drop to zero, so the window closes by itself, and Settings shows "Up to date · last backup 17 Oct 2026" <span class="id">Sudah terbaru · cadangan terakhir 17 Okt 2026</span>. The file stays in Downloads; the app does not upload it.</li>
+<li><b>Later</b> / <b>✕ Close</b>: closes it for this page load only; nothing saved. It returns the next time the app is opened, while unsaved changes remain and the finished menu is still the latest. Not "next menu".</li>
+<li>The same actions sit under Settings (tablet) / More (phone), "Customer details": "Download backup (CSV)", "Upload CSV", the count and the last-backup line.</li>
+</ul></section>
+
+<section class="panel"><header><span class="num">7</span><h2>Restoring a backup on a new device</h2></header>
+<div class="cols"><div>
+<ol style="margin:0 0 0 18px;padding:0">
+<li>Open the app on the new device: Settings, Customer details (phone: More).</li>
+<li>Tap <b>Upload CSV</b> (ID "Unggah CSV") and pick the file.</li>
+<li>A preview shows. Nothing is changed yet.</li>
+<li>Tap <b>Add to my customers</b> or <b>Cancel</b>.</li>
+</ol></div><div>
+<div class="sheet"><h4>Customer details</h4><p class="muted">Names, phone numbers and addresses of your regulars. They stay on this device and are never sent to the server.</p>
+<p>0 customers saved on this device</p>
+<div class="acts"><span class="btn">Download backup (CSV)</span><span class="btn sec">Upload CSV</span></div>
+<p style="margin-top:10px">In this file: 3 to add, 0 to update, 0 already the same.</p>
+<span class="id">Di file ini: 3 akan ditambah, 0 akan diperbarui, 0 sudah sama.</span>
+<div class="acts"><span class="btn">Add to my customers</span><span class="btn sec">Cancel</span></div>
+<span class="id">Tambahkan ke pelanggan saya · Batal</span>
+<p style="margin-top:8px">Done. 3 added, 0 updated.</p><span class="id">Selesai. 3 ditambah, 0 diperbarui.</span></div>
+</div></div>
+<ul>
+<li>A row finds its entry by phone first, then by customer code; no match adds one. It never deletes or wipes. The newer "last order date" wins each field; an empty cell never clears a value; codes are always added together.</li>
+<li>The codes come back in the file, so Anin's next order on this device finds her: no window, number shown. A row with no code is only found by phone.</li>
+<li>A file without a "first name" column: "That file isn't a customer backup." <span class="id">File itu bukan cadangan data pelanggan.</span></li>
+<li><span class="nc">derived, not run</span> Restored rows look "new/changed" to this device, so the backup window may offer to back up what was just restored.</li>
+</ul></section>
+
+<section class="panel"><header><span class="num">8</span><h2>The browser clears storage</h2></header>
+<ul>
+<li><b>What happens:</b> the list is gone on that device. The app asks the browser to keep it (<code>storage.persist()</code>), but clearing site data, a private window, or eviction still removes it. The backup counters go too. The next Confirm of every previously linked customer opens "Link to a saved customer?" again, usually with "No saved customer with a similar name.". Numbers are gone until a CSV is uploaded.</li>
+<li><b>A warning that exists in the language files but that I found no code showing:</b>
+<div class="sheet" style="margin:6px 0"><p style="margin:0">This browser may not keep customer details after you close it.</p><span class="id">Browser ini mungkin tidak menyimpan data pelanggan setelah ditutup.</span></div>
+Key <code>customers.notKept</code>. <span class="nc">not confirmed</span> in the working tree (I read HEAD only).</li>
+<li><b>What the seller does see:</b> only when saving a number or address on an order and the device cannot store it (storage blocked or no IndexedDB, so the list lives in memory): "This phone won't keep it after you close the app." <span class="id">Ponsel ini tidak akan menyimpannya setelah aplikasi ditutup.</span> under the Contact block. Not in the Link or Backup windows.</li>
+<li>Numbers kept by the older version in localStorage (<code>sellerContacts.v1</code>) are moved into the list when the app opens, as nameless entries.</li>
+</ul></section>
+
+<section class="panel"><h2 style="margin-bottom:10px">Summary: button, what is saved, where, what the seller sees next time</h2>
+<div class="tw"><table><thead><tr><th>Button</th><th>What is saved</th><th>Where</th><th>Next time</th></tr></thead><tbody>
+<tr><td>Link <span class="id">Hubungkan</span></td><td>This order's code added to the chosen saved customer; last-order date raised</td><td>This device's list only</td><td>No window for that code here; saved number on the order. Other device: window again.</td></tr>
+<tr><td>New customer <span class="id">Pelanggan baru</span></td><td>New entry: name from the order and the code. No phone, no address</td><td>This device's list only</td><td>No window for that code here. No number until typed on the order. Counts as "1 new customer" in the backup text.</td></tr>
+<tr><td>Skip <span class="id">Lewati</span></td><td>Nothing</td><td>-</td><td>Window again at the next Confirm with that code.</td></tr>
+<tr><td>✕ Close <span class="id">Tutup</span></td><td>Nothing</td><td>-</td><td>Same as Skip.</td></tr>
+<tr><td>Download backup <span class="id">Unduh cadangan</span></td><td>CSV of the whole list; "last backup" time</td><td>File in the browser's Downloads; time in this device's storage</td><td>No reminder until something new or changed. Settings: "Up to date · last backup 17 Oct 2026".</td></tr>
+<tr><td>Later <span class="id">Nanti</span> / ✕ Close</td><td>Nothing (a flag in memory)</td><td>This page load only</td><td>Reminder again when the app is reopened, if changes remain.</td></tr>
+<tr><td>Upload CSV, then Add to my customers <span class="id">Tambahkan ke pelanggan saya</span></td><td>New and updated entries merged (phone, then code); never deletes</td><td>This device's list only</td><td>Linked codes work here: no window, numbers shown. Reminder may count them as new.</td></tr>
+<tr><td>Save on this phone (on an order)</td><td>Phone and address; the order's name and code join the entry</td><td>This device's list only</td><td>WhatsApp opens the chat. Later orders from that code are found.</td></tr>
+</tbody></table></div></section>
+
+<section class="panel"><h2 style="margin-bottom:10px">Unclear points I noticed</h2>
+<ol style="margin:0 0 0 18px;padding:0">
+<li><b>Two meanings of "New customer"</b>: the order badge (the customer's phone has no past order) and the window button (create a saved entry), same ID "Pelanggan baru"; a third use in "3 new customers" in the backup text.</li>
+<li><b>"Returning" and "saved" are unrelated</b>: the badge comes from the customer's phone, the window from this device's list; a "Returning" order can still open the window.</li>
+<li><b>The title and intro don't say what linking does</b> or why it matters (showing the number next time); "link" is jargon and the customer code is never named or shown there.</li>
+<li><b>"a phone this device hasn't met"</b> mixes the customer's phone and the seller's device; ID says "pelanggan tetap" where the badge says "Langganan".</li>
+<li><b>"Same person, new phone" vs "different person"</b> cannot be told from the matches list (name, number, address, last order only).</li>
+<li><b>New customer saves no number</b>, and the window doesn't say the seller must type it on the order; the entry can stay empty yet still counts in backups.</li>
+<li><b>Link keeps the saved name</b> (Lenny, not Lenni) with no feedback.</li>
+<li><b>Skip and Close are identical and silent</b>; the question returns with no hint why.</li>
+<li><b>The window opens after Confirm</b> (next to the Undo toast); it is not said that the order is already confirmed.</li>
+<li><b>Per-device lists are never explained</b>; a seller on a second device just sees the question again.</li>
+<li><b>Backup reminder</b> says "This menu is finished." but only appears when the app is next opened; Later lasts until reload, not next menu; Later and Close are the same.</li>
+<li><b>Several names for one list</b>: "Customer details", "Customer contacts on this phone", older "Export/Import contacts" strings.</li>
+<li><b>Contradiction</b>: the Contact block says "Saved on this phone only. Never sent to the server, and not in your backup.", but the CSV backup does include phone numbers and addresses.</li>
+<li><b>The "browser may not keep" warning appears unused</b> (scenario 8); the only visible storage warning is on the order's Contact block.</li>
+<li><b>"Add to my customers"</b> doesn't say it merges, never deletes, and brings back the codes that stop the window.</li>
+</ol></section>
+
+<section class="panel"><h2 style="margin-bottom:10px">Not confirmed</h2>
+<ul>
+<li>Whether the notKept string is shown anywhere in the current working tree (HEAD only was read).</li>
+<li>Whether Undo of a cancel re-opens the window (no <code>undo</code> check on the prompt in the saga).</li>
+<li>Whether the saved name or number shows on the order row itself (only the WhatsApp/Call target and the Contact block use it in what I read).</li>
+<li>Restore counting as "new" for the next backup reminder (from timestamps in code, not run).</li>
+<li>Remember me giving one customer code across a customer's phones (read from <code>customerAuth.ts</code>, not run end to end).</li>
+<li>Nothing here was run in a browser. The spec <code>e2e/p071-customers.spec.ts</code> only covers: Confirm, window, New customer, finished menu, backup window, Later.</li>
+</ul></section>
+<p class="sub">Sources (HEAD): <code>src/features/seller-orders/contacts/</code> (CustomerDetailsHost, addressBook, bookBackend, customersCsv, backupFile, ContactsBackup), <code>sellerOrdersSaga.ts</code> (changeStatus), <code>customerKind.ts</code>, <code>shared/customerCode.ts</code>, <code>src/features/customer-menu/saga.ts</code>, <code>docs/plans/071-customer-details-on-devices.md</code>.</p>
+</main></body></html>

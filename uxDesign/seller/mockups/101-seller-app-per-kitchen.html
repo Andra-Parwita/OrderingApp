@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Seller app per kitchen (plan 101 mock-up)</title>
+    <style>
+      :root {
+        --ink: #2b1d12;
+        --stage: #d9d4c6;
+        --pill: #fff6ea;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--stage);
+        color: #1c1f1a;
+        font:
+          16px/1.5 system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 3px solid #1f6b5c;
+        outline-offset: 2px;
+      }
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 16px;
+        justify-content: center;
+        align-items: center;
+        padding: 12px 16px;
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--ink);
+        border-radius: 999px;
+        overflow: hidden;
+        background: var(--pill);
+      }
+      .seg button {
+        border: 0;
+        background: transparent;
+        padding: 4px 14px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        min-height: 36px;
+        color: var(--ink);
+      }
+      .seg button[aria-pressed='true'] {
+        background: var(--ink);
+        color: #eadbc2;
+      }
+      .notes {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 16px;
+        font-size: 0.875rem;
+      }
+      .notes h2 {
+        font-size: 1rem;
+        margin: 24px 0 4px;
+      }
+      .rec {
+        background: var(--pill);
+        border: 1px solid #ead8bf;
+        border-radius: 10px;
+        padding: 8px 14px;
+        white-space: pre-line;
+      }
+      .opt {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 16px 16px;
+      }
+      .row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+      }
+      .cap {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        margin: 10px 0 2px;
+        max-width: 384px;
+      }
+      .sub {
+        font-size: 0.75rem;
+        color: #4a4337;
+        margin: 0 0 6px;
+        max-width: 384px;
+        white-space: pre-line;
+      }
+      .col {
+        width: 384px;
+        max-width: 100%;
+      }
+      /* phone frames, 384 px wide */
+      .phone {
+        width: 384px;
+        max-width: 100%;
+        height: 470px;
+        border-radius: 28px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 2px 10px rgb(40 30 15/22%);
+      }
+      .phone.app {
+        height: auto;
+        min-height: 300px;
+        background: #f6f2e8;
+        --surf: #fffdf8;
+        --line: #e4ded0;
+        --text: #1c1f1a;
+        --muted: #5d6358;
+        color: var(--text);
+        border-radius: 14px;
+      }
+      .wall-a {
+        background: linear-gradient(160deg, #3b5a73, #8a6d8f 55%, #d9a77a);
+      }
+      .wall-i {
+        background: linear-gradient(170deg, #2d4a3e, #6d8f6a 50%, #e1c37d);
+      }
+      .status {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 22px 0;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 22px 0;
+        padding: 40px 10px 0;
+      }
+      .ic {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+      }
+      .ic .tile {
+        position: relative;
+        width: 58px;
+        height: 58px;
+      }
+      .ic svg.base {
+        width: 58px;
+        height: 58px;
+        display: block;
+      }
+      .android .ic svg.base,
+      .android .ic .tile {
+        border-radius: 50%;
+      }
+      .android .ic svg.base {
+        overflow: hidden;
+      }
+      .ios .ic svg.base {
+        border-radius: 14px;
+      }
+      .lab {
+        color: #fff;
+        font-size: 0.6875rem;
+        line-height: 1.2;
+        max-width: 78px;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-shadow: 0 1px 3px rgb(0 0 0/60%);
+      }
+      .ios .lab {
+        font-size: 0.6875rem;
+        max-width: 72px;
+      }
+      .badge {
+        position: absolute;
+        right: -4px;
+        bottom: -4px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--ink);
+        border: 2px solid #fff6ea;
+        display: grid;
+        place-items: center;
+      }
+      .badge svg {
+        width: 14px;
+        height: 14px;
+      }
+      .dock {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 14px;
+        height: 76px;
+        border-radius: 26px;
+        background: rgb(255 255 255/22%);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+      }
+      .dock i {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgb(255 255 255/35%);
+      }
+      .android .dock i {
+        border-radius: 50%;
+      }
+      .tag {
+        position: absolute;
+        left: 12px;
+        bottom: 100px;
+        right: 12px;
+        font-size: 0.6875rem;
+        color: #fff;
+        text-shadow: 0 1px 3px rgb(0 0 0/60%);
+        text-align: center;
+      }
+      /* the seller app frames */
+      .hdr {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 16px;
+        background: var(--surf);
+        border-bottom: 1px solid var(--line);
+        font-size: 0.8125rem;
+        color: var(--muted);
+      }
+      .hdr b {
+        color: var(--text);
+      }
+      .lst {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .lst li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 56px;
+        padding: 6px 16px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surf);
+      }
+      .lst li .t {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.9375rem;
+        font-weight: 600;
+      }
+      .lst li .t small {
+        display: block;
+        font-weight: 400;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .lst li .chev {
+        color: var(--muted);
+      }
+      .lst li.hi {
+        background: #eaf3ee;
+        outline: 2px solid #1f6b5c;
+        outline-offset: -2px;
+      }
+      .mini {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        flex: none;
+      }
+      .bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        padding: 0 4px 0 12px;
+        font-size: 0.8125rem;
+        background: #fbf1d9;
+        color: #3a2a00;
+        border-bottom: 1px solid #e4ded0;
+      }
+      .bar .msg {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar .act {
+        flex: none;
+        font-weight: 700;
+        color: #7a4f00;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      .bar .x {
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        background: transparent;
+        color: #6b5a33;
+        font-size: 1rem;
+      }
+      .msgbox {
+        padding: 22px 18px;
+        text-align: center;
+      }
+      .msgbox h3 {
+        margin: 6px 0 4px;
+        font-size: 1rem;
+      }
+      .msgbox p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        font-size: 0.8125rem;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        border-radius: 10px;
+        border: 0;
+        background: #1f6b5c;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.875rem;
+      }
+      .btn.ghost {
+        background: transparent;
+        color: #1f6b5c;
+        text-decoration: underline;
+      }
+      .spin {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 3px solid #cfe3da;
+        border-top-color: #1f6b5c;
+        margin: 10px auto;
+      }
+      .rest {
+        padding: 16px;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+      .sheet {
+        background: var(--surf);
+        border-top: 1px solid var(--line);
+        padding: 14px 18px;
+        font-size: 0.8125rem;
+      }
+      .sheet ol {
+        margin: 6px 0 0 18px;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <span class="seg" role="group" aria-label="Language"
+        ><button data-l="en" aria-pressed="true">EN</button
+        ><button data-l="id" aria-pressed="false">ID</button></span
+      >
+    </div>
+    <div class="notes">
+      <div class="rec" id="rec"></div>
+      <p id="intro"></p>
+    </div>
+    <div class="opt" id="root"></div>
+    <script>
+      // Kitchen colours = the theme `fill` (shared/kitchenManifest.ts); icon = initials like defaultIconSvg.
+      const K = [
+        { key: 'del', name: 'Dellavee', init: 'D', fill: '#1D5C73', short: 'Della', first: 'Dellavee' },
+        { key: 'ond', name: 'Onde Onde', init: 'OO', fill: '#2F6B36', short: 'Onde', first: 'Onde Onde' },
+      ];
+      const T = {
+        en: {
+          rec: 'Recommendation: B for 1.0.42, then C when a badge is possible.\nB is a label-only change: the seller app is named "Seller · <kitchen>" with the kitchen\'s own icon, so it needs no image processing and no new dependency. A and C add a small badge on the icon; the Worker cannot draw on images today (needs Cloudflare Images or a second icon uploaded from the phone), so they are a follow-up.',
+          intro:
+            'AUD / Adelaide kitchens. Each home screen shows four icons: both customer apps and both seller apps. Labels are cut the way a real launcher cuts them (about 12 characters), so what you see is the worst case. Below: the install row in More, the one-time move notice for people who installed the old "Seller", and what opening a kitchen\'s seller app does.',
+          s1: '1 · Android home screen',
+          s2: '2 · iPhone home screen',
+          s3: '3 · In the seller app',
+          cust: 'customer',
+          seller: 'Seller',
+          optA: 'A · Kitchen name + corner badge',
+          optAs: 'Label is the kitchen name, same as the customer app; only the badge tells them apart.\nPro: shortest label. Con: needs a badge image; the label alone is ambiguous.',
+          optB: 'B · "Seller · Kitchen", no badge',
+          optBs: 'Label starts with the role so the cut-off end is the kitchen. Same icon as the customer app.\nPro: no image work, ships in 1.0.42. Con: two identical icons side by side; only the label differs.',
+          optC: 'C · Both: badge + "Seller · Kitchen"',
+          optCs: 'Most readable. Pro: icon and label both say it. Con: needs the badge image (follow-up).',
+          moreCap: 'More tab in Onde Onde\'s seller app (Android Chrome, not yet installed)',
+          moreCapIos: 'Same row on iPhone: opens the Share, Add to Home Screen steps',
+          rowT: 'Install Onde Onde\'s seller app',
+          rowS: 'Its own icon on your home screen',
+          rowTi: 'Install Onde Onde\'s seller app',
+          rowSi: 'Share, then Add to Home Screen',
+          iosSteps: ['Tap Share at the bottom of Safari.', 'Choose "Add to Home Screen".', 'The name will be "Seller · Onde Onde". Tap Add.'],
+          iosTitle: 'Add Onde Onde\'s seller app',
+          moveCap: 'One-time notice for the old "Seller" app (id /seller, ShaggyBobo logo)',
+          moveMsg: 'Onde Onde now has its own seller app.',
+          moveAct: 'Install',
+          hide: 'Hide',
+          moveNote: 'Shown once per kitchen, only inside the old standalone "Seller" app, only if the person is in 2 or more kitchens; hidden for 30 days after Hide. The old app keeps working.',
+          launchCap: 'Opening a kitchen\'s seller app',
+          l1: 'Signed in, other kitchen active',
+          l1t: 'Opening Onde Onde…',
+          l1p: 'Switching kitchen. One moment.',
+          l2: 'Signed out',
+          l2t: 'Sign in to Onde Onde',
+          l2p: 'Use your passkey. You will land in Onde Onde\'s Orders.',
+          l2b: 'Sign in',
+          l3: 'No longer on the team',
+          l3t: 'You are not on Onde Onde\'s team any more',
+          l3p: 'Ask the owner to add you again, or open your other kitchen.',
+          l3b: 'Open Dellavee',
+          l3g: 'Remove this icon from your home screen',
+          l4: 'Kitchen paused',
+          l4t: 'Onde Onde is paused',
+          l4p: 'The kitchen is switched off for now. Contact ShaggyBobo.',
+          l4b: 'Open Dellavee',
+          orders: 'Orders',
+          kitchen: 'Kitchen',
+          more: 'More',
+          settings: 'Settings',
+          help: 'Help',
+          switcher: 'Kitchen',
+          tabs: 'Cook',
+        },
+        id: {
+          rec: 'Rekomendasi: B untuk 1.0.42, lalu C setelah lencana bisa dibuat.\nB hanya mengubah nama: aplikasi penjual bernama "Penjual · <dapur>" dengan ikon dapur sendiri, jadi tanpa pengolahan gambar dan tanpa dependensi baru. A dan C menambah lencana kecil di ikon; Worker belum bisa menggambar di gambar (perlu Cloudflare Images atau ikon kedua yang diunggah dari ponsel), jadi itu menyusul.',
+          intro:
+            'Dapur AUD / Adelaide. Tiap layar utama menampilkan empat ikon: dua aplikasi pelanggan dan dua aplikasi penjual. Label dipotong seperti peluncur sungguhan (sekitar 12 karakter), jadi ini kasus terburuk. Di bawah: baris pasang di Lainnya, pemberitahuan sekali untuk yang memasang "Seller" lama, dan apa yang terjadi saat aplikasi penjual sebuah dapur dibuka.',
+          s1: '1 · Layar utama Android',
+          s2: '2 · Layar utama iPhone',
+          s3: '3 · Di aplikasi penjual',
+          cust: 'pelanggan',
+          seller: 'Penjual',
+          optA: 'A · Nama dapur + lencana di sudut',
+          optAs: 'Label adalah nama dapur, sama dengan aplikasi pelanggan; hanya lencana yang membedakan.\nPlus: label terpendek. Minus: perlu gambar lencana; label saja membingungkan.',
+          optB: 'B · "Penjual · Dapur", tanpa lencana',
+          optBs: 'Label diawali peran, jadi bagian yang terpotong adalah nama dapur. Ikon sama dengan aplikasi pelanggan.\nPlus: tanpa pengolahan gambar, bisa di 1.0.42. Minus: dua ikon kembar berdampingan; hanya label yang beda.',
+          optC: 'C · Keduanya: lencana + "Penjual · Dapur"',
+          optCs: 'Paling mudah dibaca. Plus: ikon dan label sama-sama jelas. Minus: perlu gambar lencana (menyusul).',
+          moreCap: 'Tab Lainnya di aplikasi penjual Onde Onde (Android Chrome, belum terpasang)',
+          moreCapIos: 'Baris yang sama di iPhone: membuka langkah Bagikan, Tambah ke Layar Utama',
+          rowT: 'Pasang aplikasi penjual Onde Onde',
+          rowS: 'Ikon sendiri di layar utama',
+          rowTi: 'Pasang aplikasi penjual Onde Onde',
+          rowSi: 'Bagikan, lalu Tambah ke Layar Utama',
+          iosSteps: ['Ketuk Bagikan di bawah Safari.', 'Pilih "Tambah ke Layar Utama".', 'Namanya akan "Penjual · Onde Onde". Ketuk Tambah.'],
+          iosTitle: 'Tambah aplikasi penjual Onde Onde',
+          moveCap: 'Pemberitahuan sekali untuk aplikasi "Seller" lama (id /seller, logo ShaggyBobo)',
+          moveMsg: 'Onde Onde kini punya aplikasi penjual sendiri.',
+          moveAct: 'Pasang',
+          hide: 'Sembunyikan',
+          moveNote: 'Tampil sekali per dapur, hanya di dalam aplikasi "Seller" lama (mode mandiri), hanya jika orang itu ada di 2 dapur atau lebih; disembunyikan 30 hari setelah Sembunyikan. Aplikasi lama tetap berfungsi.',
+          launchCap: 'Saat aplikasi penjual sebuah dapur dibuka',
+          l1: 'Sudah masuk, dapur lain aktif',
+          l1t: 'Membuka Onde Onde…',
+          l1p: 'Berpindah dapur. Sebentar.',
+          l2: 'Belum masuk',
+          l2t: 'Masuk ke Onde Onde',
+          l2p: 'Pakai passkey. Anda akan tiba di Pesanan Onde Onde.',
+          l2b: 'Masuk',
+          l3: 'Bukan anggota tim lagi',
+          l3t: 'Anda bukan lagi anggota tim Onde Onde',
+          l3p: 'Minta pemilik menambahkan lagi, atau buka dapur Anda yang lain.',
+          l3b: 'Buka Dellavee',
+          l3g: 'Hapus ikon ini dari layar utama',
+          l4: 'Dapur dijeda',
+          l4t: 'Onde Onde sedang dijeda',
+          l4p: 'Dapur dimatikan untuk sementara. Hubungi ShaggyBobo.',
+          l4b: 'Buka Dellavee',
+          orders: 'Pesanan',
+          kitchen: 'Dapur',
+          more: 'Lainnya',
+          settings: 'Pengaturan',
+          help: 'Bantuan',
+          switcher: 'Dapur',
+          tabs: 'Masak',
+        },
+      };
+      let lang = 'en';
+      const t = () => T[lang];
+      const glyph = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff6ea" stroke-width="2.4" stroke-linecap="round"><path d="M6 4h12v16l-3-2-3 2-3-2-3 2z"/><path d="M9 9h6M9 13h6"/></svg>`;
+      const baseSvg = (k) =>
+        `<svg class="base" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" fill="${k.fill}"/><text x="256" y="256" fill="#fff" font-size="${k.init.length > 1 ? 200 : 260}" font-weight="700" text-anchor="middle" dominant-baseline="central" font-family="system-ui,sans-serif">${k.init}</text></svg>`;
+      const tile = (k, badge) =>
+        `<span class="tile">${baseSvg(k)}${badge ? `<span class="badge">${glyph}</span>` : ''}</span>`;
+      const sellerWord = () => t().seller;
+      // Label as the phone cuts it: 12 characters, ellipsis.
+      const cut = (s) => (s.length > 12 ? s.slice(0, 11) + '…' : s);
+      function label(opt, k) {
+        if (opt === 'A') return k.name;
+        return `${sellerWord()} · ${k.name}`;
+      }
+      function home(kind, opt) {
+        const showBadge = opt === 'A' || opt === 'C';
+        const items = [
+          [K[0], false, k => k.name],
+          [K[1], false, k => k.name],
+          [K[0], showBadge, k => label(opt, k)],
+          [K[1], showBadge, k => label(opt, k)],
+        ];
+        const cells = items
+          .map(([k, b, f]) => `<div class="ic">${tile(k, b)}<span class="lab" title="${f(k)}">${cut(f(k))}</span></div>`)
+          .join('');
+        return `<div class="phone ${kind} ${kind === 'android' ? 'wall-a' : 'wall-i'}"><div class="status"><span>9:41</span><span>${kind === 'android' ? '5G ▮▮▮' : '5G ▮▮▮ 80%'}</span></div><div class="grid">${cells}</div><div class="tag">${t().cust}: 1-2 · ${sellerWord()}: 3-4</div><div class="dock"><i></i><i></i><i></i><i></i></div></div>`;
+      }
+      function optBlock(kind) {
+        return ['A', 'B', 'C']
+          .map(
+            (o) =>
+              `<div class="col"><div class="cap">${t()['opt' + o]}</div><p class="sub">${t()['opt' + o + 's']}</p>${home(kind, o)}</div>`,
+          )
+          .join('');
+      }
+      const mini = (k) => `<svg class="mini" viewBox="0 0 512 512"><rect width="512" height="512" fill="${k.fill}"/><text x="256" y="256" fill="#fff" font-size="200" font-weight="700" text-anchor="middle" dominant-baseline="central" font-family="system-ui,sans-serif">${k.init}</text></svg>`;
+      function moreFrame(ios) {
+        const x = t();
+        return `<div class="col"><div class="cap">${ios ? x.moreCapIos : x.moreCap}</div><div class="phone app"><div class="hdr"><b>Onde Onde</b> · ${x.more}</div>
+          <ul class="lst">
+            <li><span class="t">${x.switcher}<small>Onde Onde · Owner</small></span><span class="chev">▾</span></li>
+            <li class="hi">${mini(K[1])}<span class="t">${ios ? x.rowTi : x.rowT}<small>${ios ? x.rowSi : x.rowS}</small></span><span class="chev">›</span></li>
+            <li><span class="t">${x.settings}</span><span class="chev">›</span></li>
+            <li><span class="t">${x.help}</span><span class="chev">›</span></li>
+          </ul>
+          ${ios ? `<div class="sheet"><b>${x.iosTitle}</b><ol>${x.iosSteps.map((s) => `<li style="border:0;min-height:0;padding:2px 0;background:transparent;display:list-item">${s}</li>`).join('')}</ol></div>` : ''}
+          <div class="rest">AUD · Adelaide · Sat 24 Oct</div></div></div>`;
+      }
+      function moveFrame() {
+        const x = t();
+        return `<div class="col"><div class="cap">${x.moveCap}</div><p class="sub">${x.moveNote}</p><div class="phone app"><div class="bar"><span class="msg">${x.moveMsg}</span><span class="act">${x.moveAct}</span><button class="x" aria-label="${x.hide}">✕</button></div><div class="hdr"><b>Onde Onde</b> · ${x.orders}</div><ul class="lst"><li><span class="t">#0142 · Sari<small>A$ 38.00 · Sat pickup</small></span></li><li><span class="t">#0141 · Made<small>A$ 52.50 · Sat delivery</small></span></li></ul></div></div>`;
+      }
+      function launchFrames() {
+        const x = t();
+        const f = (cap, body) =>
+          `<div class="col"><div class="cap">${cap}</div><div class="phone app" style="min-height:230px"><div class="hdr"><b>${sellerWord()} · Onde Onde</b></div>${body}</div></div>`;
+        return [
+          f(x.l1, `<div class="msgbox"><div class="spin"></div><h3>${x.l1t}</h3><p>${x.l1p}</p></div>`),
+          f(x.l2, `<div class="msgbox"><h3>${x.l2t}</h3><p>${x.l2p}</p><button class="btn">${x.l2b}</button></div>`),
+          f(x.l3, `<div class="msgbox"><h3>${x.l3t}</h3><p>${x.l3p}</p><button class="btn">${x.l3b}</button><br /><button class="btn ghost">${x.l3g}</button></div>`),
+          f(x.l4, `<div class="msgbox"><h3>${x.l4t}</h3><p>${x.l4p}</p><button class="btn">${x.l4b}</button></div>`),
+        ].join('');
+      }
+      function render() {
+        const x = t();
+        document.documentElement.lang = lang;
+        document.getElementById('rec').textContent = x.rec;
+        document.getElementById('intro').textContent = x.intro;
+        document.getElementById('root').innerHTML =
+          `<div class="notes"><h2>${x.s1}</h2></div><div class="row">${optBlock('android')}</div>` +
+          `<div class="notes"><h2>${x.s2}</h2></div><div class="row">${optBlock('ios')}</div>` +
+          `<div class="notes"><h2>${x.s3}</h2></div><div class="row">${moreFrame(false)}${moreFrame(true)}${moveFrame()}</div>` +
+          `<div class="notes"><h2>${x.launchCap}</h2></div><div class="row">${launchFrames()}</div>`;
+        document.querySelectorAll('.seg button').forEach((b) =>
+          b.setAttribute('aria-pressed', String(b.dataset.l === lang)),
+        );
+      }
+      document.querySelectorAll('.seg button').forEach((b) =>
+        b.addEventListener('click', () => {
+          lang = b.dataset.l;
+          render();
+        }),
+      );
+      render();
+    </script>
+  </body>
+</html>

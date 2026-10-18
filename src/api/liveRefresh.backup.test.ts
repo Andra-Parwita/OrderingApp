@@ -3,6 +3,7 @@ import { call } from 'redux-saga/effects';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { liveRefreshLoop, type Changed } from './live';
 import { createFakeLive } from './liveTestSupport';
+import { sellerDeviceId } from './deviceId';
 import { recordOutcome, resetNetState } from './netState';
 
 // Plan 074: Orders and Cook run through liveRefreshLoop. The backup check uses the admin's
@@ -44,6 +45,26 @@ function start(fallbackMs: number | (() => number)) {
   });
   return { task, live, calls };
 }
+
+describe('liveRefreshLoop (plan 103)', () => {
+  it('the own-device event does not reload; another device does', async () => {
+    const { task, live, calls } = start(() => 5 * MIN);
+    await vi.advanceTimersByTimeAsync(0);
+    live.status('live');
+    await vi.advanceTimersByTimeAsync(0);
+    const before = calls.length;
+    live.event('order.changed', 'ABC123', sellerDeviceId());
+    await vi.advanceTimersByTimeAsync(100);
+    expect(calls.length).toBe(before);
+    live.event('order.changed', 'ABC123', 'another-device');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(calls.length).toBe(before + 1);
+    live.event('order.changed', 'ABC123');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(calls.length).toBe(before + 2);
+    task.cancel();
+  });
+});
 
 describe('liveRefreshLoop (plan 074)', () => {
   it('connected: no backup request however long it stays open', async () => {

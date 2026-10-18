@@ -24,6 +24,7 @@ import {
   draftOf,
   draftOfDish,
   updateDishRequestOf,
+  changedOnly,
   updateRequestOf,
   validateDraft,
   unifyDraft,
@@ -167,6 +168,7 @@ export function DishEditor({
   const languages = useSellerLanguages();
   const oneLanguage = languages === 'en' || languages === 'id' ? languages : null;
   const shown = oneLanguage ? unifyDraft(draft, oneLanguage) : draft;
+  const baseDraft = oneLanguage ? unifyDraft(start, oneLanguage) : start;
   const { errors } = validateDraft(shown);
   const setBoth =
     (a: keyof ItemDraft, b: keyof ItemDraft) =>
@@ -242,8 +244,12 @@ export function DishEditor({
       if (request)
         run({ kind: 'createDish', request, addToMenu: addToMenu && menuOpen && !menuFull });
     } else if (item) {
-      const request = updateRequestOf(draft);
-      if (request) {
+      const full = updateRequestOf(draft);
+      const request = full && changedOnly(full, updateRequestOf(baseDraft));
+      if (full && !request) {
+        saved.clear();
+        onClose();
+      } else if (request) {
         run({
           kind: 'updateMenuDish',
           id: item.id,
@@ -252,8 +258,12 @@ export function DishEditor({
         });
       }
     } else if (dish) {
-      const request = updateDishRequestOf(draft);
-      if (request) run({ kind: 'updateDish', id: dish.id, request });
+      const full = updateDishRequestOf(draft);
+      const request = full && changedOnly(full, updateDishRequestOf(baseDraft));
+      if (full && !request) {
+        saved.clear();
+        onClose();
+      } else if (request) run({ kind: 'updateDish', id: dish.id, request });
     }
   };
 

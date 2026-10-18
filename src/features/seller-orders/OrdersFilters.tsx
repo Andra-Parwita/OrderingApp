@@ -153,15 +153,18 @@ export const IconButton = styled.button`
 export const Tabs = styled.div`
   display: flex;
   flex: none;
-  gap: ${({ theme }) => theme.spacing.lg};
-  overflow-x: auto;
+  flex-wrap: wrap;
+  gap: 0 ${({ theme }) => theme.spacing.lg};
   padding: 0 ${({ theme }) => theme.size.pagePadTablet}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+`;
+// Plan 104: the divider and the chips travel together, so a narrow list wraps them to a line of
+// their own instead of clipping "Not paid".
+export const ChipGroup = styled.div`
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.lg};
 `;
 export const Tab = styled.button<{ $on: boolean }>`
   display: inline-flex;

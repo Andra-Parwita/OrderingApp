@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Cook tab, compact (mock-up 100)</title>
+    <style>
+      :root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      button, select { font: inherit; color: inherit; cursor: pointer; }
+      :focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+      .notes { max-width: 1100px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+      .notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+      .rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+      .rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+      .rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+      .wrap { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; padding: 0 16px 32px; }
+      figure { margin: 0; width: 384px; max-width: 100%; }
+      figcaption { font-size: 0.8125rem; margin-top: 8px; }
+      figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+      .badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+      .badge.warn { background: #8a2232; color: #fff; }
+
+      .frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70;
+        width: 384px; height: 800px; background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%);
+        overflow: hidden; display: flex; flex-direction: column; position: relative; font-size: 15px; line-height: 1.3; }
+      .hdr { height: 48px; flex: none; display: flex; align-items: center; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+      .scroll { flex: 1; overflow-y: auto; min-height: 0; }
+      .tabbar { height: 56px; flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line); position: relative; z-index: 3; }
+      .tabbar span { flex: 1; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+      .tabbar span.on { color: var(--fill); font-weight: 700; }
+      .intro { margin: 0; padding: 8px 16px; color: var(--muted); font-size: 14px; }
+      .btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+      .btn.icon { width: 44px; padding: 0; justify-content: center; }
+      .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .pad { padding: 4px 16px; }
+      .flex { display: flex; align-items: center; gap: 8px; }
+      .tabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--line); align-items: center; }
+      .tabs .t { min-height: 44px; display: inline-flex; align-items: center; padding: 0 14px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; }
+      .tabs .t.on { color: var(--text); border-color: var(--fill); }
+      .tabs .sp { flex: 1; }
+      .seg { display: inline-flex; border: 1px solid var(--ink); border-radius: 999px; overflow: hidden; background: var(--pill); flex: none; }
+      .seg button { border: 0; background: transparent; min-height: 44px; padding: 0 14px; font-weight: 600; color: var(--ink); font-size: 14px; }
+      .seg button[aria-pressed='true'] { background: var(--ink); color: #eadbc2; }
+      .sel { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+      .sel small { color: var(--muted); font-weight: 400; font-size: 14px; }
+      .muted { color: var(--muted); }
+      .sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; }
+      .sw i { width: 40px; height: 24px; border-radius: 12px; background: var(--fill); position: relative; flex: none; }
+      .sw i::after { content: ''; position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+      .tot { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+      .saved { color: var(--muted); font-size: 13px; }
+      h3.gh { margin: 0; padding: 8px 16px 2px; font-size: 15px; }
+      ul { list-style: none; margin: 0; padding: 0; }
+      .mono { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.06em; }
+
+      .t-row { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--line); min-height: 48px; }
+      .t-big { font-size: 24px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+      .t-name { display: flex; flex-direction: column; font-size: 17px; font-weight: 600; }
+      .t-name small { font-size: 14px; font-weight: 400; color: var(--muted); }
+      .t-aside { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; color: var(--muted); }
+      .t-made { grid-column: 1 / 3; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-variant-numeric: tabular-nums; }
+      .t-made .tb { display: inline-block; width: 104px; height: 6px; border-radius: 3px; background: var(--surf2); overflow: hidden; }
+      .t-made .tb i { display: block; height: 100%; background: var(--fill); }
+      .t-steps { gap: 8px !important; }
+      .t-notes li { padding: 8px 16px; border-bottom: 1px solid var(--line); }
+
+      .row { position: relative; display: flex; align-items: center; gap: 8px; padding: 6px 12px 8px 16px; border-bottom: 1px solid var(--line); min-height: 58px; }
+      .row .big { width: 32px; text-align: right; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+      .row .nm { flex: 1; min-width: 0; }
+      .row .nm b { font-size: 15px; font-weight: 600; display: block; line-height: 1.2; overflow-wrap: anywhere; }
+      .row .nm b em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 13px; }
+      .row .nm span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.25; }
+      .row.done .nm b { text-decoration: line-through; }
+      .row.done .big, .row.done .nm { opacity: 0.65; }
+      .bar { position: absolute; left: 16px; right: 12px; bottom: 0; height: 3px; background: var(--surf2); border-radius: 2px; overflow: hidden; }
+      .bar i { display: block; height: 100%; background: var(--fill); }
+      .who { min-width: 44px; min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; font-weight: 600; padding: 0 6px; flex: none; }
+      .step { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+      .step button { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--edge); background: transparent; font-size: 20px; line-height: 1; display: grid; place-items: center; padding: 0; }
+      .step button.p { background: var(--fill); border-color: var(--fill); color: #fff; }
+      .step button:disabled { opacity: 0.4; cursor: default; }
+      .step output { min-width: 22px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .t-row .step button { width: 44px; height: 44px; }
+
+      .row2 { display: block; padding: 6px 12px 10px 16px; min-height: 0; }
+      .row2 .l1 { display: flex; gap: 10px; align-items: baseline; }
+      .row2 .l1 .big { width: 32px; }
+      .row2 .l1 b { font-size: 16px; font-weight: 600; flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
+      .row2 .l1 em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 13px; }
+      .row2 .l2 { display: flex; align-items: center; gap: 8px; padding-left: 42px; }
+      .row2 .l2 .who { padding: 0 10px; gap: 6px; }
+      .row2 .l2 .st { flex: 1; min-width: 0; font-size: 12.5px; color: var(--muted); }
+      .row2 .step button { width: 44px; height: 44px; }
+      .row2.done .l1 { opacity: 0.65; }
+      .row2.done .l1 b { text-decoration: line-through; }
+      .row2 .bar { left: 58px; }
+
+      .nbox { position: absolute; left: 0; right: 0; bottom: 56px; z-index: 2; background: var(--surf); border-top: 1px solid var(--line); box-shadow: 0 -2px 8px rgb(40 30 15/10%); }
+      .nbox summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-weight: 700; cursor: pointer; list-style: none; }
+      .nbox summary::-webkit-details-marker { display: none; }
+      .nbox summary .ico { transition: transform 0.15s; }
+      .nbox[open] summary .ico { transform: rotate(180deg); }
+      .nbox li { padding: 6px 16px; border-top: 1px solid var(--line); font-size: 14px; }
+      @media (prefers-reduced-motion: reduce) { .nbox summary .ico { transition: none; } }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>Cook tab, compact (plan 100 mock-up)</h1>
+      <p>Chef's Samsung phone, CSS width 384 px, light theme (dark not drawn). Sample: Chandra's dishes for Sat 24 Oct, Adelaide pickup and delivery, no prices. Frames are 384 × 800 and scroll inside; the Notes row opens on tap. Count mode is on in every frame.</p>
+      <div class="rec">
+        <table>
+          <tr><th>Frame</th><th>What changes</th><th>Dishes fully on screen at the top of the list</th></tr>
+          <tr><td>Today</td><td>Copy of the current tab (4 dishes)</td><td id="v-today">-</td></tr>
+          <tr><td>B1</td><td>One row per dish, controls as today</td><td id="v-b1">-</td></tr>
+          <tr><td>B2</td><td>B1 rows + folded controls</td><td id="v-b2">-</td></tr>
+          <tr><td>B3</td><td>Two-line rows + folded controls</td><td id="v-b3">-</td></tr>
+        </table>
+      </div>
+      <p><b>EN / ID check.</b> Indonesian labels are longer ("Masak | Kemas", "Kelompokkan", "Mode hitung", "Tersimpan ✓"). The two ID frames at the end use the real strings from <code>seller-cook/i18n/id.json</code>. In B2 and B3 the word "Group by / Kelompokkan" is dropped from the screen and kept as the accessible name of the Dish | Chef control, so it does not need to fit.</p>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        person: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>',
+        print: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>',
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+        chev: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
+        down: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><path d="M6 9l6 6 6-6"/></svg>',
+      };
+      const L = {
+        en: { u: 0, title: 'Kitchen · Sat 24 Oct', intro: "From 24 orders. Cancelled orders aren't counted. Updates as orders change.", print: 'Print labels', cook: 'Cook', pack: 'Pack',
+          groupLabel: 'Group by', dish: 'Dish', chef: 'Chef', chefLabel: 'Chef', count: 'Count mode', hint: 'tick off as you cook',
+          cooked: (m, t) => `${m} of ${t} cooked`, saved: 'Saved ✓', pu: (n) => `${n} pickup`, de: (n) => `${n} delivery`, notes: (n) => `Notes (${n})`,
+          less: 'One less', more: 'One more', who: 'Who ordered', tabs: ['Orders', 'Pickup & delivery', 'More'], note1: "Testing. Please don't process order.", note2: 'titip dulu' },
+        id: { u: 1, title: 'Dapur · Sab 24 Okt', intro: 'Dari 24 pesanan. Pesanan yang dibatalkan tidak dihitung. Diperbarui saat pesanan berubah.', print: 'Cetak label', cook: 'Masak', pack: 'Kemas',
+          groupLabel: 'Kelompokkan', dish: 'Menu', chef: 'Koki', chefLabel: 'Koki', count: 'Mode hitung', hint: 'centang saat memasak',
+          cooked: (m, t) => `${m} dari ${t} dimasak`, saved: 'Tersimpan ✓', pu: (n) => `${n} ambil`, de: (n) => `${n} antar`, notes: (n) => `Catatan (${n})`,
+          less: 'Kurangi satu', more: 'Tambah satu', who: 'Siapa yang pesan', tabs: ['Pesanan', 'Ambil & antar', 'Lainnya'], note1: "Testing. Please don't process order.", note2: 'titip dulu' },
+      };
+      const D = [
+        { n: 'Lalampa', u: ['each', 'buah'], q: 7, p: 7, d: 0, w: 3, m: 3 },
+        { n: 'Nasi Ayam Bali', u: ['box', 'kotak'], q: 12, p: 8, d: 4, w: 6, m: 0 },
+        { n: 'Pastel', u: ['each', 'buah'], q: 10, p: 6, d: 4, w: 5, m: 10 },
+        { n: 'Sambal Matah', u: ['tub', 'cup'], q: 9, p: 5, d: 4, w: 5, m: 0 },
+        { n: 'Sayur Urab', u: ['serve', 'porsi'], q: 8, p: 8, d: 0, w: 4, m: 0 },
+      ];
+      const sum = (a, k) => a.reduce((s, x) => s + x[k], 0);
+      const cookedOf = (a) => a.reduce((s, d) => s + Math.min(d.m, d.q), 0);
+      const split = (s, d) => [d.p ? s.pu(d.p) : '', d.d ? s.de(d.d) : ''].filter(Boolean).join(' · ');
+      const pct = (d) => Math.min(100, (d.m / d.q) * 100);
+      const done = (d) => d.m >= d.q;
+      const stepper = (d, s, cls) => `<span class="step ${cls || ''}"><button aria-label="${s.less} ${d.n}" ${d.m <= 0 ? 'disabled' : ''}>−</button><output>${d.m}</output><button class="p" aria-label="${s.more} ${d.n}" ${done(d) ? 'disabled' : ''}>${done(d) ? I.check : '+'}</button></span>`;
+      const notesList = (s) => `<li><span class="mono">RL2-2A9</span> <b>Anin</b><div>“${s.note1}”</div></li><li><span class="mono">YNA-5MH</span> <b>sandra</b><div>“${s.note2}”</div></li>`;
+      const tabbar = (s) => `<nav class="tabbar" aria-label="App">${s.tabs.map((t, i) => `<span class="${i === 0 ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const seg = (s) => `<span class="seg" role="group" aria-label="${s.groupLabel}"><button aria-pressed="true">${s.dish}</button><button aria-pressed="false">${s.chef}</button></span>`;
+
+      // The controls block of today's tab (also used by B1)
+      const oldControls = (s, a) => `<p class="intro">${s.intro}</p>
+          <div class="pad"><button class="btn">${I.print}${s.print}</button></div>
+          <div class="tabs"><span class="t on">${s.cook}</span><span class="t">${s.pack}</span></div>
+          <div class="pad flex"><span class="muted">${s.groupLabel}</span>${seg(s)}</div>
+          <div class="pad flex"><span class="muted">${s.chefLabel}</span><span class="sel">Chandra ${I.down}</span></div>
+          <div class="pad"><span class="sw"><i></i>${s.count} <span class="muted" style="font-weight:400">${s.hint}</span></span></div>
+          <div class="pad flex" style="justify-content:space-between"><span class="tot">${s.cooked(cookedOf(a), sum(a, 'q'))}</span><span class="saved">${s.saved}</span></div>`;
+
+      function today(s, a) {
+        return `<div class="hdr">${s.title}</div><div class="scroll">${oldControls(s, a)}
+          <h3 class="gh">Chandra</h3>
+          <ul>${a.map((d) => `<li class="t-row" style="${done(d) ? 'opacity:.65' : ''}">
+            <span class="t-big">${d.q}</span>
+            <span class="t-name" style="${done(d) ? 'text-decoration:line-through' : ''}"><span>${d.n}</span><small>${d.u[s.u]}</small></span>
+            <span class="t-aside"><span>${split(s, d)}</span><button class="who" aria-label="${s.who} ${d.n}">${I.person}${d.w}</button></span>
+            <span class="t-made">${d.m}/${d.q}<span class="tb"><i style="width:${pct(d)}%"></i></span></span>
+            ${stepper(d, s, 't-steps')}</li>`).join('')}</ul>
+          <h3 class="gh">${s.notes(2)}</h3><ul class="t-notes">${notesList(s)}</ul>
+        </div>${tabbar(s)}`;
+      }
+
+      const row1 = (d, s) => `<li class="row ${done(d) ? 'done' : ''}">
+        <span class="big">${d.q}</span>
+        <span class="nm"><b>${d.n} <em>· ${d.u[s.u]}</em></b><span>${split(s, d)}</span></span>
+        <button class="who" aria-label="${s.who} ${d.n}">${I.person}${d.w}</button>${stepper(d, s)}
+        <span class="bar" aria-hidden="true"><i style="width:${pct(d)}%"></i></span></li>`;
+      const row3 = (d, s) => `<li class="row row2 ${done(d) ? 'done' : ''}">
+        <div class="l1"><span class="big">${d.q}</span><b>${d.n} <em>· ${d.u[s.u]}</em></b></div>
+        <div class="l2"><button class="who" aria-label="${s.who} ${d.n}">${I.person}${d.w}</button><span class="st">${split(s, d)}</span>${stepper(d, s)}</div>
+        <span class="bar" aria-hidden="true"><i style="width:${pct(d)}%"></i></span></li>`;
+      const notesBox = (s, open) => `<details class="nbox" ${open ? 'open' : ''}><summary>${s.notes(2)}${I.chev}</summary><ul>${notesList(s)}</ul></details>`;
+      const spacer = '<div style="height:48px"></div>';
+
+      const b1 = (s, open) => `<div class="hdr">${s.title}</div><div class="scroll">${oldControls(s, D)}
+          <h3 class="gh">Chandra</h3><ul>${D.map((d) => row1(d, s)).join('')}</ul>${spacer}
+        </div>${notesBox(s, open)}${tabbar(s)}`;
+
+      const b2 = (s, rowFn, open) => `<div class="hdr">${s.title}</div><div class="scroll">
+          <div class="tabs"><span class="t on">${s.cook}</span><span class="t">${s.pack}</span><span class="sp"></span><button class="btn icon" aria-label="${s.print}" title="${s.print}">${I.print}</button></div>
+          <div class="pad flex" style="justify-content:space-between">${seg(s)}<span class="sel" style="flex:1;min-width:0;justify-content:space-between"><span><small>${s.chefLabel}:</small> Chandra</span>${I.down}</span></div>
+          <div class="pad flex" style="justify-content:space-between;gap:6px;border-bottom:1px solid var(--line)"><span class="sw" title="${s.hint}"><i></i>${s.count}</span><span class="tot">${s.cooked(cookedOf(D), sum(D, 'q'))} <span class="saved">· ${s.saved}</span></span></div>
+          <h3 class="gh">Chandra</h3><ul>${D.map((d) => rowFn(d, s)).join('')}</ul>${spacer}
+        </div>${notesBox(s, open)}${tabbar(s)}`;
+
+      const frames = [
+        { id: 'today', badge: 'Today', badgeCls: 'warn', title: 'Today: as built', html: () => today(L.en, D.slice(0, 4)),
+          cap: 'Faithful copy with 4 dishes: intro, Print labels, tabs, Group by, Chef, Count mode and the totals line stack up before the first dish. Each dish is a three-line card. Notes sit below the last dish.', trade: 'Trade-off: nothing lost, but the controls and a single dish card use most of the screen.' },
+        { id: 'b1', badge: 'B1', title: 'B1: one row per dish', html: () => b1(L.en, false),
+          cap: 'Count · name and unit · pickup/delivery · people button · − n + in one row. Progress is a 3 px bar along the row bottom; done is struck through with a check on +. Notes are one "Notes (2)" row pinned above the tab bar; tap to expand. The controls above the list are untouched.', trade: 'Trade-off: the list gets much denser, but the controls still take half the screen. − n + buttons are 40 px with 4 px gaps.' },
+        { id: 'b2', badge: 'B2', title: 'B2: B1 rows + folded controls', html: () => b2(L.en, row1, false),
+          cap: 'Intro line removed. Print labels is an icon in the tab row. Group by is the Dish | Chef control with no visible label; Chef is a select with its label inside; Count mode and "13 of 46 cooked · Saved ✓" share one row. The hint "tick off as you cook" moves to the switch tooltip. Notes collapsed and pinned (tap to open).', trade: 'Trade-off: the intro and the "Group by" word are gone; the seller reads Dish | Chef from the control itself. Recommended.' },
+        { id: 'b3', badge: 'B3', title: 'B3: two-line rows + folded controls', html: () => b2(L.en, row3, false),
+          cap: 'Same folded controls as B2. Line 1: count and the full dish name (wraps freely, never clips). Line 2: people button, "8 pickup · 4 delivery" and a 44 px − n +.', trade: 'Trade-off: fewer dishes visible than B2, but all targets are 44 px and long dish names wrap safely. Pick it if names clip in B2.' },
+        { id: 'b2id', badge: 'B2 · ID', title: 'B2 in Indonesian', html: () => b2(L.id, row1, false),
+          cap: '"Masak | Kemas", "Menu | Koki", "Koki: Chandra", "Mode hitung", "13 dari 46 dimasak · Tersimpan ✓" and "8 ambil · 4 antar" in the real strings. "Kelompokkan" is only the accessible name.', trade: 'Tightest line: the Count mode row. At 360 px the totals text may wrap; check on the phone.' },
+        { id: 'b3id', badge: 'B3 · ID', title: 'B3 in Indonesian', html: () => b2(L.id, row3, false),
+          cap: 'B3 with the Indonesian strings: dish name and unit ("kotak", "cup", "porsi") on line 1, "8 ambil · 4 antar" on line 2.', trade: 'No clipping: line 1 may wrap, line 2 keeps the split text on one line.' },
+      ];
+      document.getElementById('wrap').innerHTML = frames.map((f) => `<figure>
+        <div class="frame" id="f-${f.id}" role="group" aria-label="${f.title}">${f.html()}</div>
+        <figcaption><b><span class="badge ${f.badgeCls || ''}">${f.badge}</span> ${f.title}</b>${f.cap}<br /><span class="muted">${f.trade}</span></figcaption></figure>`).join('');
+
+      // count dishes fully on screen (also fills the table at the top)
+      function visible(id) {
+        const fr = document.getElementById('f-' + id), sc = fr.querySelector('.scroll'), box = fr.querySelector('.nbox');
+        const bottom = Math.min(sc.getBoundingClientRect().bottom, box ? box.querySelector('summary').getBoundingClientRect().top : 1e9);
+        return [...fr.querySelectorAll('.t-row, .row')].filter((r) => r.getBoundingClientRect().bottom <= bottom + 1).length;
+      }
+      for (const k of ['today', 'b1', 'b2', 'b3']) document.getElementById('v-' + k).textContent = visible(k) + (k === 'today' ? ' (of 4)' : ' (of 5)');
+    </script>
+  </body>
+</html>

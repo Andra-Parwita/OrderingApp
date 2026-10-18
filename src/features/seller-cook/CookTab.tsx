@@ -14,6 +14,7 @@ import { selectCookGroups, selectCookNotes } from './cookSelectors';
 import type { CookRootState } from './cookSlice';
 import { AutoSaveStatus } from '../../components/autoSave/AutoSaveStatus';
 import { useCountMode, useMadeCounts } from './madeCounts';
+import { PhoneControls, PhoneNotes, PhoneRow, usePhone } from './CookPhone';
 
 const GROUPS: ReadonlyArray<GroupBy> = ['item', 'chef'];
 
@@ -248,6 +249,8 @@ export function CookTab({
 }: Readonly<{ status: 'loading' | 'ready' | 'error'; onRetry: () => void }>) {
   const { t, i18n } = useTranslation(COOK_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
+  // Plan 100: below the tablet breakpoint the tab is the compact phone layout (CookPhone.tsx).
+  const phone = usePhone();
   const [groupBy, setGroupBy] = useState<GroupBy>('item');
   const [counting, setCounting] = useCountMode();
   const { made, change, saver } = useMadeCounts();
@@ -279,28 +282,53 @@ export function CookTab({
     [setCounting],
   );
 
+  const noteList = (
+    <List>
+      {notes.map((note) => (
+        <NoteRow key={note.code}>
+          <Mono>{note.code}</Mono> <b>{note.firstName}</b>
+          <div>“{note.note}”</div>
+        </NoteRow>
+      ))}
+    </List>
+  );
+  const RowView = phone ? PhoneRow : Row;
+
   return (
     <>
-      <Tools>
-        <Inline>
-          <Label>{t('group.label')}</Label>
-          <Segmented
-            options={groupOptions}
-            value={groupBy}
-            onChange={setGroupBy}
-            label={t('group.label')}
-          />
-        </Inline>
-        <ChefFilterControl {...chef} />
-        <Switch>
-          <input type="checkbox" role="switch" checked={counting} onChange={onCounting} />
-          {t('countMode')} <Hint>{t('countHint')}</Hint>
-        </Switch>
-        {counting ? <Total>{t('cooked', { made: cooked, total })}</Total> : null}
-        {counting ? (
-          <AutoSaveStatus state={saver.state} onRetry={saver.retry} ns={COOK_NS} />
-        ) : null}
-      </Tools>
+      {phone ? (
+        <PhoneControls
+          groupBy={groupBy}
+          onGroupBy={setGroupBy}
+          chef={chef}
+          counting={counting}
+          onCounting={onCounting}
+          cooked={cooked}
+          total={total}
+          saver={saver}
+        />
+      ) : (
+        <Tools>
+          <Inline>
+            <Label>{t('group.label')}</Label>
+            <Segmented
+              options={groupOptions}
+              value={groupBy}
+              onChange={setGroupBy}
+              label={t('group.label')}
+            />
+          </Inline>
+          <ChefFilterControl {...chef} />
+          <Switch>
+            <input type="checkbox" role="switch" checked={counting} onChange={onCounting} />
+            {t('countMode')} <Hint>{t('countHint')}</Hint>
+          </Switch>
+          {counting ? <Total>{t('cooked', { made: cooked, total })}</Total> : null}
+          {counting ? (
+            <AutoSaveStatus state={saver.state} onRetry={saver.retry} ns={COOK_NS} />
+          ) : null}
+        </Tools>
+      )}
 
       {status === 'loading' ? <Centered role="status">{t('loading')}</Centered> : null}
       {status === 'error' ? (
@@ -318,7 +346,7 @@ export function CookTab({
           {group.title !== null ? <GroupHead>{group.title}</GroupHead> : null}
           <List>
             {group.rows.map((row) => (
-              <Row
+              <RowView
                 key={row.itemId}
                 row={row}
                 lang={lang}
@@ -337,17 +365,14 @@ export function CookTab({
       ) : null}
 
       {notes.length > 0 ? (
-        <section aria-label={t('notes', { count: notes.length })}>
-          <GroupHead>{t('notes', { count: notes.length })}</GroupHead>
-          <List>
-            {notes.map((note) => (
-              <NoteRow key={note.code}>
-                <Mono>{note.code}</Mono> <b>{note.firstName}</b>
-                <div>“{note.note}”</div>
-              </NoteRow>
-            ))}
-          </List>
-        </section>
+        phone ? (
+          <PhoneNotes count={notes.length}>{noteList}</PhoneNotes>
+        ) : (
+          <section aria-label={t('notes', { count: notes.length })}>
+            <GroupHead>{t('notes', { count: notes.length })}</GroupHead>
+            {noteList}
+          </section>
+        )
       ) : null}
     </>
   );

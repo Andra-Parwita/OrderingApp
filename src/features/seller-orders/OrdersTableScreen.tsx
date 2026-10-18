@@ -50,8 +50,9 @@ const Scroll = styled.div`
 const Head = styled.header`
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px
     ${({ theme }) => theme.spacing.sm};
   container-type: inline-size;
@@ -87,7 +88,8 @@ const Tools = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 const Filler = styled.div`
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
 `;
 const NoLive = styled.span`
   display: inline-flex;

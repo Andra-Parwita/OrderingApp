@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { pickText } from '../../../shared/text';
 import {
   EMPTY_DRAFT,
+  changedOnly,
   createRequestOf,
   parsePriceInput,
   priceInputOf,
@@ -104,5 +105,22 @@ describe('requests', () => {
       chefId: null,
       soldOut: true,
     });
+  });
+});
+
+describe('changedOnly (plan 103)', () => {
+  const start = { ...EMPTY_DRAFT, nameEn: 'Soto', nameId: 'Soto', price: '10', preorder: true };
+  const base = updateRequestOf(start);
+
+  it('a chef-only edit sends only the chef', () => {
+    const next = updateRequestOf({ ...start, chefId: 'c2' });
+    expect(next && changedOnly(next, base)).toEqual({ chefId: 'c2' });
+  });
+
+  it('clearing the chef is sent as null; no change is null', () => {
+    const had = { ...start, chefId: 'c1' };
+    const cleared = updateRequestOf({ ...had, chefId: '' });
+    expect(cleared && changedOnly(cleared, updateRequestOf(had))).toEqual({ chefId: null });
+    expect(base && changedOnly(base, base)).toBeNull();
   });
 });

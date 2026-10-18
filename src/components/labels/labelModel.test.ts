@@ -8,6 +8,7 @@ import {
   LINES_PER_LABEL,
   pickOrders,
   splitOrder,
+  noteSlots,
   truncateNote,
 } from './labelModel';
 
@@ -43,6 +44,16 @@ describe('truncateNote', () => {
     const cut = truncateNote('y'.repeat(100));
     expect(cut).toHaveLength(LABEL_NOTE_MAX);
     expect(cut.endsWith('…')).toBe(true);
+  });
+});
+
+describe('noteSlots', () => {
+  it('a long note costs two item lines on the last label, a short one costs one', () => {
+    expect(noteSlots('No chilli')).toBe(1);
+    expect(noteSlots('n'.repeat(60))).toBe(2);
+    const parts = splitOrder(order('a', 'confirmed', lines(4), 'n'.repeat(60)), 'a4');
+    expect(parts.map((p) => p.lines.length)).toEqual([2, 2]);
+    expect(parts.map((p) => p.showNote)).toEqual([false, true]);
   });
 });
 

@@ -7,7 +7,7 @@ export type FakeLive = {
   /** Pass to the saga as its `channel` option. */
   channel: () => EventChannel<LiveMessage>;
   status: (status: LiveStatus) => void;
-  event: (type: LiveEventType, code?: string) => void;
+  event: (type: LiveEventType, code?: string, from?: string) => void;
   /** How many times a saga opened the channel, and how many of those are still open. */
   opened: () => number;
   open: () => number;
@@ -28,10 +28,15 @@ export function createFakeLive(): FakeLive {
       }, buffers.expanding(16));
     },
     status: (status) => send({ kind: 'status', status }),
-    event: (type, code) =>
+    event: (type, code, from) =>
       send({
         kind: 'event',
-        event: { type, ...(code ? { code } : {}), at: '2026-10-10T08:00:00.000Z' },
+        event: {
+          type,
+          ...(code ? { code } : {}),
+          ...(from ? { from } : {}),
+          at: '2026-10-10T08:00:00.000Z',
+        },
       }),
     opened: () => opened,
     open: () => emitters.size,

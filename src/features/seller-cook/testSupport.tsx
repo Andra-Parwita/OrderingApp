@@ -145,10 +145,17 @@ export function createTestStore() {
 }
 export type TestStore = ReturnType<typeof createTestStore>;
 
+let phoneViewport = false;
+/** Plan 100: the tests run the tablet layout unless a test asks for the phone one. */
+export function setPhoneViewport(on: boolean): void {
+  phoneViewport = on;
+}
+
 export async function setupI18n(): Promise<void> {
+  phoneViewport = false;
   window.matchMedia = (query: string) =>
     ({
-      matches: false,
+      matches: query.includes('min-width') ? !phoneViewport : false,
       media: query,
       addEventListener: () => undefined,
       removeEventListener: () => undefined,

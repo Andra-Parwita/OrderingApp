@@ -21,6 +21,7 @@ Not written yet. Holds the UI design once planning starts:
    - Contrast of 4.5:1 for text and 3:1 for large text and non-text UI (icons, input outlines, focus ring). Check it in the build.
    - Every control works by keyboard with a visible focus ring, and every input has a label.
    - Support light and dark mode with the same rules, and respect `prefers-reduced-motion`.
+   - **Button labels never wrap to two lines** (owner, 18 Oct: Samsung phones with larger zoom/text make buttons big; "button text if possible need to be adaptable instead of becoming 2 lines"). A label stays on one line; when space runs out it switches to a shorter label, then to icon-only (with the full label as the accessible name and tooltip). Toolbars wrap as a row, never inside a button. Check every toolbar at 360 px and with Android font size one step up.
 
 All colours, spacing and type come from design tokens, with no literal values in components (see [the planning skill](../../.claude/skills/react-ts-app-plan/SKILL.md), "Styling principles").
 

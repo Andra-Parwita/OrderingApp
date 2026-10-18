@@ -128,6 +128,14 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 096 | ✅ | [Home-screen and Remember me nudges, root page](096-install-nudge.md) | live 18 Oct in 1.0.41 |
 | 098 | ⬜ | [Extensible core: one model for kitchen, shop, events](098-extensible-core.md) | analysis (Fable, 18 Oct); clean-up stages = 1.0.42 candidates; kinds/store = v1.1.0 |
 | 099 | ⬜ | [Bigger grocery store analysis](099-bigger-store-analysis.md) | analysis only (Fable, 18 Oct), v1.1.0 or later |
+| 100 | 🔨 | [Cook tab compact on phones](100-cook-compact-phone.md) | option B2 approved (owner "A", 18 Oct), building for 1.0.42 |
+| 101 | ⬜ | [Seller app per kitchen](101-seller-app-per-kitchen.md) | owner "A" 18 Oct: own name + icon per kitchen; analysis + mock-up in progress |
+| 102 | ⬜ | [Android customer app per kitchen](102-android-customer-app.md) | owner 18 Oct: one install choice, own icon per kitchen on Android, order pages inside the kitchen; analysis in progress |
+| 103 | ⬜ | [Seller app speed](103-seller-speed.md) | Fable analysis 18 Oct: echo reloads, chef edit 3 calls, menu bundle per mount; 8 fixes, owner to pick |
+| 104 | ⬜ | [Seller small fixes (18 Oct checks)](104-seller-small-fixes.md) | labels: printer settings on top, preview clipped, note size; header chips; Pickup & delivery rows |
+| 105 | 🔨 | [Seller edits an order](105-seller-edit-order.md) | approved for 1.0.42 (owner 18 Oct); all questions answered |
+| 106 | ⬜ | [Customer list: clearer link window](106-customer-link-redesign.md) | owner 18 Oct: window/text unclear; explainer done; show duplicate names |
+| 107 | ⬜ | [On-the-day selling as part of the menu](107-on-the-day-selling.md) | owner idea 18 Oct: rename/move "Sell" into the menu view; on-the-day-only dishes |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

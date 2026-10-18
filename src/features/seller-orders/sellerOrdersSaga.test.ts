@@ -5,6 +5,7 @@ import { server } from '../../../mocks/server';
 import { createFakeLive } from '../../api/liveTestSupport';
 import { staffSignedOut } from '../../api/staffSignedOut';
 import {
+  ordersLoaded,
   refreshRequested,
   paidChangeRequested,
   pollingStarted,
@@ -94,7 +95,7 @@ describe('sellerOrdersSaga', () => {
     const created = await newOrder('Rina');
     const store = createTestStore({ saga: true });
     store.dispatch(statusChangeRequested({ code: created.code, to: 'confirmed' }));
-    await waitFor(() => store.getState().sellerOrders.change.status === 'idle');
+    await waitFor(() => store.getState().sellerOrders.orders[0]?.audit[0]?.what === 'status');
     const [saved] = store.getState().sellerOrders.orders;
     expect(saved?.status).toBe('confirmed');
     expect(saved?.audit[0]).toMatchObject({ what: 'status', detail: 'confirmed' });
@@ -130,8 +131,38 @@ describe('sellerOrdersSaga', () => {
     const created = await newOrder('Rina');
     const store = createTestStore({ saga: true });
     store.dispatch(paidChangeRequested({ code: created.code, paid: true }));
-    await waitFor(() => store.getState().sellerOrders.change.status === 'idle');
+    await waitFor(() => store.getState().sellerOrders.orders[0]?.audit[0]?.what === 'paid');
     expect(store.getState().sellerOrders.orders[0]?.paid).toBe(true);
+  });
+
+  it('Paid shows at once (plan 103), and goes back when the server refuses', async () => {
+    const created = await newOrder('Rina');
+    server.use(
+      http.post('*/api/seller/orders/:code/paid', () => new HttpResponse(null, { status: 500 })),
+    );
+    const store = createTestStore({ saga: true });
+    store.dispatch(ordersLoaded({ orders: [created] }));
+    store.dispatch(paidChangeRequested({ code: created.code, paid: true }));
+    // Before any answer: the order already reads paid, and only it is "saving".
+    expect(store.getState().sellerOrders.orders[0]?.paid).toBe(true);
+    expect(store.getState().sellerOrders.change.status).toBe('idle');
+    expect(Object.keys(store.getState().sellerOrders.pending)).toEqual([created.code]);
+    await waitFor(() => store.getState().sellerOrders.change.status === 'error');
+    expect(store.getState().sellerOrders.orders[0]?.paid).toBe(false);
+    expect(store.getState().sellerOrders.pending).toEqual({});
+  });
+
+  it('Confirm shows at once and a refused change puts the status back', async () => {
+    const created = await newOrder('Rina');
+    server.use(
+      http.post('*/api/seller/orders/:code/status', () => new HttpResponse(null, { status: 500 })),
+    );
+    const store = createTestStore({ saga: true });
+    store.dispatch(ordersLoaded({ orders: [created] }));
+    store.dispatch(statusChangeRequested({ code: created.code, to: 'confirmed' }));
+    expect(store.getState().sellerOrders.orders[0]?.status).toBe('confirmed');
+    await waitFor(() => store.getState().sellerOrders.change.status === 'error');
+    expect(store.getState().sellerOrders.orders[0]?.status).toBe('ordered');
   });
 
   it('sample orders: a double tap sends one request, the button state follows it, a toast answers', async () => {

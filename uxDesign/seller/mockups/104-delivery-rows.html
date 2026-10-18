@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Pickup &amp; delivery rows (mock-up 104)</title>
+    <style>
+      :root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+      button { font: inherit; color: inherit; cursor: pointer; }
+      :focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+      .notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+      .notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+      .rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+      .rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+      .rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+      .wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+      .phones { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+      figure { margin: 0; max-width: 100%; }
+      figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+      figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+      .badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+      .badge.warn { background: #8a2232; color: #fff; }
+      .muted { color: #5d6358; }
+      .scrollx { overflow-x: auto; max-width: 100%; }
+
+      .frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70;
+        background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+      .frame.tab { width: 1138px; height: 640px; }
+      .frame.ph { width: 384px; height: 800px; flex-direction: column; }
+      .rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 2px; }
+      .rail span { width: 56px; min-height: 52px; display: grid; place-items: center; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.15; border-radius: 8px; }
+      .rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+      .rail .k { font-weight: 800; color: var(--ink); min-height: 40px; font-size: 12px; }
+      .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      .hdr { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+      .scroll { flex: 1; overflow-y: auto; min-height: 0; }
+      .tabbar { height: 56px; flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line); }
+      .tabbar span { flex: 1; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+      .tabbar span.on { color: var(--fill); font-weight: 700; }
+      .btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 14px; white-space: nowrap; flex: none; }
+      .btn.icon { width: 44px; padding: 0; }
+      .btn.go { background: var(--fill); border-color: var(--fill); color: #fff; }
+      .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .sh { margin: 0; padding: 10px 16px 4px; font-size: 14px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
+      .sh small { font-weight: 400; color: var(--muted); font-size: 13px; }
+      ul { list-style: none; margin: 0; padding: 0; }
+      .mono { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.06em; font-size: 13px; color: var(--muted); }
+      .nm { font-weight: 700; }
+      .tr { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+      .nt { color: var(--muted); font-style: italic; }
+      .pill { display: inline-block; border: 1px solid var(--edge); border-radius: 999px; padding: 0 8px; font-size: 12px; color: var(--muted); }
+
+      /* Today: tall card */
+      .today { width: 360px; padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
+      .card { background: var(--surf); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+      .card .acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+      .card .lnk { min-height: 44px; display: inline-flex; align-items: center; color: #1f6b5c; font-weight: 600; text-decoration: underline; }
+      .blank { flex: 1; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+
+      /* Option A: one line */
+      .ra { display: grid; grid-template-columns: 124px 84px 1fr 1.1fr 0.8fr auto; gap: 10px; align-items: center; padding: 4px 16px; min-height: 52px; border-bottom: 1px solid var(--line); }
+      .acts { display: flex; gap: 6px; align-items: center; flex: none; position: relative; }
+
+      /* Option B: two lines */
+      .rb { padding: 4px 16px 6px; border-bottom: 1px solid var(--line); min-height: 64px; display: flex; flex-direction: column; justify-content: center; }
+      .rb .l1 { display: grid; grid-template-columns: 150px 86px 1fr auto; gap: 10px; align-items: center; min-height: 44px; }
+      .rb .l2 { padding-left: 0; font-size: 13.5px; color: var(--muted); margin-top: -4px; }
+      .rb .l2 .nt { margin-left: 8px; }
+
+      .menu { position: absolute; right: 0; top: 46px; z-index: 5; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 18px rgb(40 30 15/20%); padding: 4px; min-width: 210px; }
+      .menu button { width: 100%; min-height: 44px; border: 0; background: transparent; text-align: left; padding: 0 12px; border-radius: 6px; font-weight: 600; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+      .menu button.bad { color: #8a2232; }
+
+      /* Phone card row */
+      .pr { padding: 8px 16px 6px; border-bottom: 1px solid var(--line); }
+      .pr .t1 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+      .pr .t2, .pr .t3, .pr .t4 { font-size: 14px; }
+      .pr .t3 { color: var(--muted); }
+      .pr .t4 { color: var(--muted); font-style: italic; }
+      .pr .acts { margin-top: 4px; width: 100%; }
+      .pr .acts .btn { padding: 0 8px; font-size: 13.5px; }
+      .pr .acts .btn.icon { padding: 0; }
+      .pr .acts .btn.go { flex: 1; min-width: 0; }
+      .pr .acts .menu { top: auto; bottom: 48px; }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>Pickup &amp; delivery rows (plan 104 item 5 mock-up)</h1>
+      <p>Samsung tablet landscape (1138 × 640 CSS px, with the seller side rail) and a 384 px phone. Light theme (dark not drawn). Sample: Onde Onde, Sat 24 Oct, Adelaide addresses, AUD prices not needed here. Owner: "This also a waste of space (row)" and T1 = A (mock-up the rows). Every target is 44 px or taller. Delete address now moves behind a "…" menu with its existing confirm ("Delete this address now? It can't be brought back.").</p>
+      <div class="rec">
+        <table>
+          <tr><th>Frame</th><th>What changes</th><th>Deliveries fully visible without scrolling</th><th>Row height</th></tr>
+          <tr><td>Today</td><td>Tall card in the left third</td><td id="v-today">-</td><td>~230 px</td></tr>
+          <tr><td>Option A</td><td>One line per delivery</td><td id="v-a">-</td><td>52 px</td></tr>
+          <tr><td>Option B</td><td>Two lines per delivery (recommended)</td><td id="v-b">-</td><td>64 px</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        dir: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 9-9 9-9-9z"/><path d="M8 12h7M12 9l3 3-3 3"/></svg>',
+        map: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+        more: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>',
+        trash: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+      };
+      const L = {
+        en: { title: 'Pickup & delivery', seg: ['Deliveries', 'Pickups'], open: (n) => `${n} to deliver`, dir: 'Directions', map: 'Map', mapFull: 'View on map', done: 'Delivered ✓', del: 'Delete address now',
+          more: 'More', pu: 'Pickups', de: 'Deliveries', picked: 'Picked up ✓', rail: ['Orders', 'Pickup & delivery', 'Menu', 'More'], tabs: ['Orders', 'Pickup & delivery', 'More'], delOpen: (n) => `${n} to deliver`, puOpen: (n) => `${n} to collect` },
+        id: { title: 'Ambil & antar', seg: ['Pengantaran', 'Ambil'], open: (n) => `${n} belum diantar`, dir: 'Petunjuk arah', map: 'Peta', mapFull: 'Lihat di peta', done: 'Sudah diantar ✓', del: 'Hapus alamat sekarang',
+          more: 'Lainnya', pu: 'Ambil', de: 'Pengantaran', picked: 'Sudah diambil ✓', rail: ['Pesanan', 'Ambil & antar', 'Menu', 'Lainnya'], tabs: ['Pesanan', 'Ambil & antar', 'Lainnya'], delOpen: (n) => `${n} belum diantar`, puOpen: (n) => `${n} belum diambil` },
+      };
+      const D = [
+        { n: 'Maria Santos', c: 'RL2-2A9', i: '2 Pastel · 1 Nasi Ayam Bali', a: '14 Wattle St, Fullarton 5063', t: 'Gate code 4821, leave with neighbour' },
+        { n: 'Anin Wijaya', c: 'YNA-5MH', i: '3 Lalampa · 1 Sambal Matah', a: '27 Kenilworth Rd, Parkside 5063', t: 'Ring bell twice' },
+        { n: 'Sandra Kusuma', c: 'K7P-3QD', i: '1 Nasi Ayam Bali', a: '8 Fisher St, Malvern 5061', t: '' },
+        { n: 'Dewi Lestari', c: 'B4X-9TR', i: '6 Pastel', a: '52 Unley Rd, Unley 5061', t: 'Call on arrival' },
+        { n: 'Tom Nguyen', c: 'M2C-8LV', i: '2 Nasi Ayam Bali · 2 Sambal Matah', a: '3/19 Greenhill Rd, Wayville 5034', t: '' },
+        { n: 'Putu Ari', c: 'H9F-1ZE', i: '4 Lalampa · 1 Pastel', a: '41 Goodwood Rd, Goodwood 5034', t: 'Leave at front door' },
+      ];
+      const P = [
+        { n: 'Lina Hartono', c: 'T5R-6WA', i: '2 Nasi Ayam Bali · 1 Sambal Matah', a: 'Pickup 11:00–12:00' },
+        { n: 'Budi Tan', c: 'Q8N-2DK', i: '5 Pastel · 3 Lalampa', a: 'Pickup 11:00–12:00' },
+        { n: 'Kate Miller', c: 'V3L-7PB', i: '1 Nasi Ayam Bali', a: 'Pickup 12:00–13:00' },
+      ];
+      const dirB = (s, lab) => `<button class="btn" aria-label="${s.dir}">${I.dir}${lab ? s.dir : ''}</button>`;
+      const mapB = (s, lab) => `<button class="btn ${lab ? '' : 'icon'}" aria-label="${s.mapFull}">${I.map}${lab ? s.map : ''}</button>`;
+      const doneB = (s, txt) => `<button class="btn go">${txt || s.done}</button>`;
+      const moreB = (s) => `<button class="btn icon" aria-label="${s.more}" aria-haspopup="menu">${I.more}</button>`;
+      const menu = (s) => `<div class="menu" role="menu"><button role="menuitem" class="bad">${I.trash}${s.del}</button></div>`;
+      const rail = (s) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === 1 ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const hdr = (s, n) => `<div class="hdr"><span>${s.title}</span><span class="pill">${s.seg[0]} · ${s.open(n)}</span></div>`;
+
+      const todayCard = (d, s) => `<div class="card"><span class="nm">${d.n}</span><span class="mono">${d.c}</span><span>${d.i}</span><span>${d.a}</span><span class="nt">${d.t || '—'}</span>
+        <div class="acts"><a class="lnk">${s.dir}</a><a class="lnk">${s.mapFull}</a></div><a class="lnk" style="color:#8a2232">${s.del}</a><button class="btn go" style="width:100%">${s.done}</button></div>`;
+      const tabToday = (s) => `${rail(s)}<div class="main">${hdr(s, 6)}<div class="scroll" style="display:flex"><div class="today" id="t-list">${D.map((d) => todayCard(d, s)).join('')}</div><div class="blank">(empty: two thirds of the screen unused)</div></div></div>`;
+
+      const rowA = (d, s, open) => `<li class="ra"><span class="nm tr" title="${d.n}">${d.n}</span><span class="mono">${d.c}</span><span class="tr" title="${d.i}">${d.i}</span><span class="tr" title="${d.a}">${d.a}</span><span class="tr nt" title="${d.t}">${d.t}</span>
+        <span class="acts">${dirB(s, true)}${mapB(s, false)}${doneB(s)}${moreB(s)}${open ? menu(s) : ''}</span></li>`;
+      const rowB = (d, s) => `<li class="rb"><div class="l1"><span class="nm tr">${d.n}</span><span class="mono">${d.c}</span><span class="tr">${d.i}</span><span class="acts">${dirB(s, true)}${mapB(s, true)}${doneB(s)}${moreB(s)}</span></div>
+        <div class="l2 tr">${d.a}${d.t ? `<span class="nt">· ${d.t}</span>` : ''}</div></li>`;
+      const puA = (d, s) => `<li class="ra"><span class="nm tr">${d.n}</span><span class="mono">${d.c}</span><span class="tr">${d.i}</span><span class="tr">${d.a}</span><span></span><span class="acts">${doneB(s, s.picked)}</span></li>`;
+      const puB = (d, s) => `<li class="rb"><div class="l1"><span class="nm tr">${d.n}</span><span class="mono">${d.c}</span><span class="tr">${d.i}</span><span class="acts">${doneB(s, s.picked)}</span></div><div class="l2 tr">${d.a}</div></li>`;
+      const tabRows = (s, fa, fp, sub, pickups, open) => `${rail(s)}<div class="main">${hdr(s, 6)}<div class="scroll">
+        <h3 class="sh">${s.de} <small>${s.open(6)}</small></h3><ul id="d-list">${D.map((d, i) => fa(d, s, open && i === 1)).join('')}</ul>
+        <h3 class="sh">${s.pu} <small>${s.puOpen(3)}</small></h3><ul>${P.map((d) => fp(d, s)).join('')}</ul></div></div>`;
+
+      const phTabs = (s) => `<nav class="tabbar" aria-label="App">${s.tabs.map((t, i) => `<span class="${i === 1 ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const phRow = (d, s, open) => `<li class="pr"><div class="t1"><span class="nm">${d.n}</span><span class="mono">${d.c}</span></div><div class="t2">${d.i}</div><div class="t3">${d.a}</div>${d.t ? `<div class="t4">${d.t}</div>` : ''}
+        <div class="acts">${dirB(s, true)}${mapB(s, false)}${doneB(s)}${moreB(s)}${open ? menu(s) : ''}</div></li>`;
+      const phPu = (d, s) => `<li class="pr"><div class="t1"><span class="nm">${d.n}</span><span class="mono">${d.c}</span></div><div class="t2">${d.i}</div><div class="t3">${d.a}</div><div class="acts">${doneB(s, s.picked)}</div></li>`;
+      const phone = (s, open) => `<div class="hdr"><span>${s.title}</span><span class="pill">${s.open(6)}</span></div><div class="scroll"><h3 class="sh">${s.de} <small>${s.open(6)}</small></h3><ul id="p-list">${D.map((d, i) => phRow(d, s, open && i === 0)).join('')}</ul><h3 class="sh">${s.pu} <small>${s.puOpen(3)}</small></h3><ul>${P.map((d) => phPu(d, s)).join('')}</ul></div>${phTabs(s)}`;
+
+      const tablets = [
+        { id: 'today', badge: 'Today', cls: 'warn', title: 'Today: tall card, left third', html: () => tabToday(L.en),
+          cap: 'Each delivery is a 7-line card in a 360 px column: name, code, items, address, driver note, Directions / View on map, Delete address now, then Delivered ✓. The other two thirds are empty.',
+          trade: 'Trade-off: nothing is hidden, but about two deliveries show and the seller scrolls a long way on 6 to 20 deliveries.' },
+        { id: 'a', badge: 'A', title: 'Option A: one line per delivery', html: () => tabRows(L.en, rowA, puA, 0, true, true),
+          cap: 'name · code · items · address · note, then Directions, a Map icon button (name: "View on map"), Delivered ✓ and "…". Long text is cut with an ellipsis (full text on hover/long-press). Delete address now is in the "…" menu (drawn open on row 2). Pickups use the same row with Picked up ✓.',
+          trade: 'Trade-off: the densest list, but the driver note and long addresses are truncated, and Map has no word.' },
+        { id: 'b', badge: 'B', title: 'Option B: two lines per delivery (recommended)', html: () => tabRows(L.en, rowB, puB, 0, true, false),
+          cap: 'Line 1: name · code · items · Directions · Map · Delivered ✓ · "…". Line 2 (muted): address, then the driver note in italics. Nothing is cut at this width except very long items. Delete address now sits in "…" (same menu as A). Pickups: line 2 holds the time slot.',
+          trade: 'Trade-off: 64 px rows show fewer than A, still about 3x the card layout; all words readable, buttons keep their labels.' },
+      ];
+      const phones = [
+        { id: 'pe', badge: 'Phone', title: 'Chosen row stacked (B), 384 px', html: () => phone(L.en, true),
+          cap: 'The B row stacks: name and code, items, address, italic note, then a 44 px action row: Directions, Map icon, Delivered ✓ (fills the space), "…". The menu is drawn open on row 1: Delete address now.',
+          trade: 'Trade-off: still one tap fewer than today (Delete moved out), about 5 lines per delivery vs 7.' },
+        { id: 'pi', badge: 'Phone · ID', title: 'Same, Indonesian', html: () => phone(L.id, false),
+          cap: '"Petunjuk arah", "Sudah diantar ✓", "Sudah diambil ✓", "Ambil & antar" from the real strings. The longer Delivered label shares the row with Directions; no clipping at 384 px.',
+          trade: 'At 360 px "Petunjuk arah" may need the icon only; check on the phone.' },
+      ];
+      const fig = (f, kind) => `<figure><div class="scrollx"><div class="frame ${kind}" id="f-${f.id}" role="group" aria-label="${f.title}">${f.html()}</div></div>
+        <figcaption><b><span class="badge ${f.cls || ''}">${f.badge}</span> ${f.title}</b>${f.cap}<br /><span class="muted">${f.trade} Rows visible: <b style="display:inline" data-v="${f.id}">-</b></span></figcaption></figure>`;
+      document.getElementById('wrap').innerHTML = tablets.map((f) => fig(f, 'tab')).join('') + `<div class="phones">${phones.map((f) => fig(f, 'ph')).join('')}</div>`;
+
+      // count deliveries fully visible in the scroll area of each frame
+      function vis(id, sel) {
+        const fr = document.getElementById('f-' + id), sc = fr.querySelector('.scroll'), b = sc.getBoundingClientRect();
+        const items = [...fr.querySelectorAll(sel)];
+        const n = items.filter((r) => { const q = r.getBoundingClientRect(); return q.top >= b.top - 1 && q.bottom <= b.bottom + 1; }).length;
+        return Math.min(n, 6);
+      }
+      const res = { today: vis('today', '.card'), a: vis('a', '#f-a #d-list > li'), b: vis('b', '#f-b #d-list > li'), pe: vis('pe', '#p-list > li'), pi: vis('pi', '#p-list > li') };
+      for (const k in res) { const e = document.querySelector(`[data-v="${k}"]`); if (e) e.textContent = res[k] + (k === 'today' || k === 'a' || k === 'b' ? ' of 6 deliveries' + (k === 'today' ? '' : ' plus the Pickups heading') : ' of 6'); }
+      for (const k of ['today', 'a', 'b']) document.getElementById('v-' + k).textContent = res[k] + ' of 6';
+    </script>
+  </body>
+</html>

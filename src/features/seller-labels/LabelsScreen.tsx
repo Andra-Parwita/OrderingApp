@@ -26,6 +26,9 @@ const Page = styled.main`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   max-width: 64rem;
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.lg};
@@ -89,6 +92,14 @@ const Settings = styled.fieldset`
   padding: 0;
   border: 0;
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.colour.hairline};
+`;
+/** The on-screen preview shrinks with its column (never clipped); print sizes are in LabelSheets. */
+const PreviewArea = styled.div`
+  min-width: 0;
+  max-width: 100%;
+  @media screen {
+    overflow-x: auto;
+  }
 `;
 const PreviewTitle = styled.h2`
   margin: 0;
@@ -261,6 +272,15 @@ export function LabelsScreen({ orderCode }: Readonly<{ orderCode?: string }>) {
             </Picker>
           ) : null}
 
+          <Settings data-no-print>
+            <PickerLegend>{t('printer.title')}</PickerLegend>
+            <PickRow>
+              <input type="checkbox" checked={hasRoll} onChange={setHasPrinter} />
+              <span>{t('printer.hasRoll')}</span>
+            </PickRow>
+            <Muted>{t('printer.help')}</Muted>
+          </Settings>
+
           <PreviewTitle data-no-print>
             {t('previewTitle', { paper: t(`paper.${paper}`) })}
           </PreviewTitle>
@@ -273,21 +293,12 @@ export function LabelsScreen({ orderCode }: Readonly<{ orderCode?: string }>) {
               })}
             </Muted>
           ) : null}
-          <div data-print-area data-paper={paper} data-testid="label-sheets">
+          <PreviewArea data-print-area data-paper={paper} data-testid="label-sheets">
             <LabelSheets parts={parts} paper={paper} text={text} />
-          </div>
+          </PreviewArea>
           {chosen.length > 0 ? (
             <Muted data-no-print>{t('hint', { size: t(`hintSize.${paper}`) })}</Muted>
           ) : null}
-
-          <Settings data-no-print>
-            <PickerLegend>{t('printer.title')}</PickerLegend>
-            <PickRow>
-              <input type="checkbox" checked={hasRoll} onChange={setHasPrinter} />
-              <span>{t('printer.hasRoll')}</span>
-            </PickRow>
-            <Muted>{t('printer.help')}</Muted>
-          </Settings>
         </>
       ) : null}
     </Page>

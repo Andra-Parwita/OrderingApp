@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuditEntry } from '../../../shared/domain';
@@ -179,7 +179,10 @@ describe('seller screens', () => {
 
       fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel order' }));
       expect(await screen.findByText('Cancelled')).toBeInTheDocument();
-      expect((await mockStore.getByCode(created.value.code))?.status).toBe('cancelled');
+      // The row shows it at once (plan 103); the server follows.
+      await waitFor(async () =>
+        expect((await mockStore.getByCode(created.value.code))?.status).toBe('cancelled'),
+      );
     });
   });
 });

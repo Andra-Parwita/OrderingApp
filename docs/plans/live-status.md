@@ -18,6 +18,18 @@ The plan work in progress, one row per stage or check, kept current by the coord
 | 2f · C7 + E4 checkout move to customer-checkout | general-purpose · sonnet | 13:12 | 45–60 min | 13:13 | 0.5 min | — | stopped: one shared customer slice; move needs owner A/C | ⏸ |
 | 2g · C7 CheckoutViews split in place | general-purpose · sonnet | 13:13 | 20–30 min | 14:25 | 72 min | +42 min | 882 → 445 + 456; kit kept | ✅ |
 | 2h · debug p089 order-limit hang (4.5 s → 30 s timeout) | general-purpose · sonnet | 15:36 | 20–40 min | 15:39 | 2.8 min | −25 min | stale spec since 1.0.39 (Language is a sheet now); spec fixed | ✅ |
+| 2i · tablet overflow repro (Samsung, Chrome) | general-purpose · sonnet | 16:42 | 15 min | 16:46 | 3.4 min | −12 min | not reproduced; likely Chrome Desktop site; Not paid chip + 712 px header spill found | ✅ |
+| 2j · mock-up 100 compact Cook (phone) | general-purpose · sonnet | 16:56 | 25–35 min | 16:59 | 3.5 min | −28 min | 6 frames: today, B1, B2 (rec.), B3, B2·ID, B3·ID | ✅ |
+| 2k · seller menu tick + dish chef edit + Confirm/Paid slow (owner asked Fable) | general-purpose · fable | 16:57 | 30–45 min | 17:11 | 14 min | −20 min | own-device echo refetch, 3 sequential calls on chef edit, 7-GET bundle per mount; chef copy bug; 7 ranked fixes | ✅ |
+| 2l · plan 101 seller app per kitchen: analysis + mock-up | general-purpose · sonnet | 16:59 | 30–45 min | 17:03 | 4 min | −30 min | plan + mock-up; size M–L; 6 owner questions; stage 0 phone spike | ✅ |
+| 2m · plan 100 build B2 compact Cook (phone) | general-purpose · sonnet | 17:00 | 45–60 min | 17:12 | 12 min | −40 min | CookPhone.tsx new; 62 unit ✅; e2e 2 ✅; notes inline, not pinned | ✅ |
+| 2n · plan 102 Android customer app: analysis | general-purpose · sonnet | 17:04 | 30–45 min | 17:08 | 4 min | −30 min | plan + mock-up; cause: every kitchen scope "/"; route option A (M–L); 7 owner questions | ✅ |
+| 2o · plan 103 speed fixes 1–6 + memo selectors | general-purpose · sonnet | 17:54 | 60–90 min | 18:36 | 42 min | −30 min | all 6 done; chef dropdown made optimistic; Confirm/Paid 1 POST; 601 unit + 93 e2e ✅ | ✅ |
+| 2p · plan 104 small fixes (labels, header chips, seller-passkey message) | general-purpose · sonnet | 17:54 | 45–60 min | 18:13 | 19 min | −30 min | 4 of 5 done; tablet label clip not reproduced (defensive fix); 55 unit ✅ | ✅ |
+| 2q · mock-ups 104 delivery rows, 103 Paid sheet, 103 menu Save sheet | general-purpose · sonnet | 17:54 | 30–45 min | 17:58 | 4 min | −30 min | 3 files; rec. delivery B (2 lines), Paid A/B, menu Save A/B | ✅ |
+| 2r · plan 105 seller edits an order: analysis + mock-up | general-purpose · sonnet | 18:10 | 30–45 min | 18:14 | 4 min | −30 min | plan + mock-up; no migration; 5 owner questions E1–E5 | ✅ |
+| 2s · explainer: today's "Link to a saved customer?" flow (scenarios + buttons) | general-purpose · sonnet | 18:13 | 20–30 min | 18:17 | | | 8 scenarios, 15 unclear points | ✅ |
+| 2t · mock-up fix 8 menu edit session + today's published rows inventory | general-purpose · sonnet | 18:38 | 30–45 min | 18:41 | | | today table + 16 frames | ✅ |
 
 ## Plan 094 one banner everywhere (release 1.0.41)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |

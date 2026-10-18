@@ -11,8 +11,8 @@ export const LABELS_PER_SHEET = 14;
 /**
  * Item lines that fit one printed label (D-091). Worked out from the print CSS: content height
  * (38 mm A4 / 40 mm roll, less 2 × 2 mm padding) minus the 16 mm code/name/QR block and the
- * 8 pt where line leaves 13.75 mm; at 8 pt × 1.15 each line is 3.25 mm, so 4 lines. The 7 pt
- * note row costs one line, so the last part of an order with a note holds one fewer.
+ * 8 pt where line leaves 13.75 mm; at 8 pt × 1.15 each line is 3.25 mm, so 4 lines. The 8 pt
+ * note costs one line (two for a long note, plan 104), so the last part of an order with a note holds fewer.
  */
 export const LINES_PER_LABEL: Readonly<Record<LabelPaper, number>> = { a4: 4, roll: 4 };
 
@@ -26,15 +26,23 @@ export type LabelPart = Readonly<{
   showNote: boolean;
 }>;
 
+/** A note up to this long fits one printed line (8 pt, 93 mm wide); longer ones take two (plan 104). */
+export const NOTE_ONE_LINE = 45;
+
+/** Item-line slots the note row costs on the last label: 1 for a short note, 2 for a long one. */
+export function noteSlots(note: string): number {
+  return truncateNote(note).length > NOTE_ONE_LINE ? 2 : 1;
+}
+
 /** An order as one or more labels, split by whole item lines, never mid-line. */
 export function splitOrder(order: SellerOrder, paper: LabelPaper): Array<LabelPart> {
   const size = LINES_PER_LABEL[paper];
   const chunks = chunk(order.lines, size);
   const hasNote = truncateNote(order.note ?? '') !== '';
   const last = chunks.at(-1);
-  // The last part needs room for the note row: move its final line to a part of its own.
-  const moved = hasNote && last && last.length >= size ? last.pop() : undefined;
-  if (moved) chunks.push([moved]);
+  // The last part needs room for the note: move the lines that don't fit to a part of their own.
+  const moved = hasNote && last ? last.splice(size - noteSlots(order.note ?? '')) : [];
+  if (moved.length > 0) chunks.push(moved);
   if (chunks.length === 0) chunks.push([]);
   return chunks.map((lines, i) => ({
     order,

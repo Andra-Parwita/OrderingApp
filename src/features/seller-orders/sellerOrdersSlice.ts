@@ -113,6 +113,8 @@ export type SellerOrdersState = {
   unseenNew: number;
   /** Plan 071: an order just confirmed whose customer code this device has not linked yet. */
   linkPrompt: { code: string } | null;
+  /** Plan 103: orders showing an optimistic Confirm / Paid, by code, with how they were before. */
+  pending: Record<string, Order>;
 };
 export type SellerOrdersRootState = { sellerOrders: SellerOrdersState };
 
@@ -132,9 +134,27 @@ const initialState: SellerOrdersState = {
   fresh: [],
   unseenNew: 0,
   linkPrompt: null,
+  pending: {},
 };
 
 let toastId = 0;
+
+/** Plan 103: shows the change at once, remembering how the order was so a failure can put it back. */
+function applyOptimistic(state: SellerOrdersState, code: string, change: Partial<Order>) {
+  const order = state.orders.find((candidate) => candidate.code === code);
+  if (!order) return;
+  state.pending[code] ??= { ...order };
+  Object.assign(order, change);
+}
+
+/** The change failed or was warned about: the order goes back to how it was. */
+function rollBack(state: SellerOrdersState, code: string) {
+  const before = state.pending[code];
+  if (!before) return;
+  const index = state.orders.findIndex((candidate) => candidate.code === code);
+  if (index >= 0) state.orders[index] = before;
+  delete state.pending[code];
+}
 
 const sellerOrdersSlice = createSlice({
   name: 'sellerOrders',
@@ -182,8 +202,9 @@ const sellerOrdersSlice = createSlice({
       state.cookingDate = action.payload.cookingDate;
     },
     statusChangeRequested: {
-      reducer(state) {
-        state.change = { status: 'saving' };
+      reducer(state, action: PayloadAction<{ code: string; to: OrderStatus }>) {
+        state.change = { status: 'idle' };
+        applyOptimistic(state, action.payload.code, { status: action.payload.to });
       },
       prepare: (payload: {
         code: string;
@@ -196,8 +217,9 @@ const sellerOrdersSlice = createSlice({
       }) => ({ payload }),
     },
     paidChangeRequested: {
-      reducer(state) {
-        state.change = { status: 'saving' };
+      reducer(state, action: PayloadAction<{ code: string; paid: boolean }>) {
+        state.change = { status: 'idle' };
+        applyOptimistic(state, action.payload.code, { paid: action.payload.paid });
       },
       prepare: (payload: { code: string; paid: boolean; undo?: boolean }) => ({ payload }),
     },
@@ -235,6 +257,7 @@ const sellerOrdersSlice = createSlice({
     warningRaised(state, action: PayloadAction<Warned>) {
       state.warned = action.payload;
       state.change = { status: 'idle' };
+      if (action.payload.call.kind !== 'create') rollBack(state, action.payload.call.code);
       if (action.payload.call.kind === 'create') state.create = { status: 'idle' };
     },
     /** "Continue anyway": the saga sends the same call again with force. */
@@ -317,6 +340,7 @@ const sellerOrdersSlice = createSlice({
       const index = state.orders.findIndex((candidate) => candidate.id === order.id);
       if (index >= 0) state.orders[index] = order;
       else state.orders.unshift(order);
+      delete state.pending[order.code];
       state.change = { status: 'idle' };
     },
     /** One order changed on another screen (Pack ticks): replace it if the list holds it. */
@@ -325,6 +349,7 @@ const sellerOrdersSlice = createSlice({
       if (index >= 0) state.orders[index] = action.payload;
     },
     changeFailed(state, action: PayloadAction<{ failed: FailedChange }>) {
+      rollBack(state, action.payload.failed.code);
       state.change = { status: 'error', failed: action.payload.failed };
     },
   },

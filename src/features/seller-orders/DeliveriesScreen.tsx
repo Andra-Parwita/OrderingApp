@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
@@ -82,14 +82,18 @@ function DeliveriesContent({ onBack }: Readonly<{ onBack: () => void }>) {
   }, [dispatch]);
   // Plan 081: today's private deliveries join the list (sorted by event time, after nothing special).
   const { orders: privateToday, reload } = usePrivateToday();
-  const deliveries = [...orders, ...privateToday]
-    .filter((order) => order.fulfilment === 'delivery' && order.status !== 'cancelled')
-    .sort(
-      (a, b) =>
-        Number(a.status === 'delivered') - Number(b.status === 'delivered') ||
-        (a.private?.eventTime ?? '').localeCompare(b.private?.eventTime ?? '') ||
-        a.createdAt.localeCompare(b.createdAt),
-    );
+  const deliveries = useMemo(
+    () =>
+      [...orders, ...privateToday]
+        .filter((order) => order.fulfilment === 'delivery' && order.status !== 'cancelled')
+        .sort(
+          (a, b) =>
+            Number(a.status === 'delivered') - Number(b.status === 'delivered') ||
+            (a.private?.eventTime ?? '').localeCompare(b.private?.eventTime ?? '') ||
+            a.createdAt.localeCompare(b.createdAt),
+        ),
+    [orders, privateToday],
+  );
   const open = deliveries.filter((order) => order.status !== 'delivered').length;
   const done = useCallback(
     (order: (typeof orders)[number]) => {
