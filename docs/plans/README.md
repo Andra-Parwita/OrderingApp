@@ -123,9 +123,9 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 091 | ⬜ | [Faster lint, Prettier and tests](091-faster-tooling.md) | analysis 17 Oct; measure after the 1.0.38 gate |
 | 092 | ✅ | [Remember me polish](092-remember-me-polish.md) | live 17 Oct in 1.0.39 (tag v1.0.39) (D-108) |
 | 093 | ✅ | [Customer banner doesn't flash on page change](093-banner-no-flash.md) | live 17 Oct in 1.0.40 (tag v1.0.40) |
-| 094 | ⬜ | [One big banner on every customer page](094-one-banner-everywhere.md) | built 18 Oct, release 1.0.41 (+ seller banners, sheet scroll lock, swipe to close) |
-| 095 | ⬜ | [Clearer notice bars (pills)](095-notice-bars.md) | built 18 Oct, release 1.0.41 (option E2) |
-| 096 | ⬜ | [Home-screen and Remember me nudges, root page](096-install-nudge.md) | built 18 Oct, release 1.0.41 |
+| 094 | ✅ | [One big banner on every customer page](094-one-banner-everywhere.md) | live 18 Oct in 1.0.41 (+ seller banners, sheet scroll lock, swipe to close) |
+| 095 | ✅ | [Clearer notice bars (pills)](095-notice-bars.md) | live 18 Oct in 1.0.41 (option E2) |
+| 096 | ✅ | [Home-screen and Remember me nudges, root page](096-install-nudge.md) | live 18 Oct in 1.0.41 |
 | 098 | ⬜ | [Extensible core: one model for kitchen, shop, events](098-extensible-core.md) | analysis (Fable, 18 Oct); clean-up stages = 1.0.42 candidates; kinds/store = v1.1.0 |
 | 099 | ⬜ | [Bigger grocery store analysis](099-bigger-store-analysis.md) | analysis only (Fable, 18 Oct), v1.1.0 or later |
 

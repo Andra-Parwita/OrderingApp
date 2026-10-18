@@ -2,8 +2,8 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-17 evening → 18 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.39** (plan 092) and **1.0.40** (plan 093); built **1.0.41** (plans 094, 095, 096 + root page), committed and waiting for the owner's deploy (see below).
-**Live:** Release **1.0.40** (17 Oct ~23:33; Worker `ff9f06f1-5788-4dd3-b6fb-4dc9968065cc`; health OK, devTools false, site reports `1.0.102 · ec41e17` (build number = commit count)); tag `v1.0.40` on `ec41e17`; `main` = the hand-over commit after it. Previous: 1.0.39 (Worker `904ef961…`, tag `v1.0.39` on `b63e899`), 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`).
+**Last session:** 2026-10-17 evening → 18 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.39** (plan 092), **1.0.40** (plan 093) and **1.0.41** (plans 094, 095, 096 + root page).
+**Live:** Release **1.0.41** (18 Oct ~11:10; Worker `847e8574-2e33-4695-a63b-30743c3490af`; health OK, devTools false, site reports `1.0.104 · d3a3e1b`; "/" serves `noindex`, title "ShaggyBobo", preview "By invitation · Dengan undangan"); tag `v1.0.41` on `d3a3e1b`; `main` = the hand-over commit after it. Previous: 1.0.40 (Worker `ff9f06f1…`, tag `v1.0.40`), 1.0.39 (Worker `904ef961…`, tag `v1.0.39`), 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`).
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -46,7 +46,7 @@ Release note (owner "B"): "A fresher look for customers and clearer messages." /
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. Ask the owner whether setup is needed (same PC: usually not; other PC: `git pull`; `pnpm install`; `pnpm db:migrate:local`, never reseed).
-3. If 1.0.41 isn't live yet: owner deploys (`pnpm build` → `pnpm exec wrangler deploy`), then live check, merge `main`, tag `v1.0.41` (ask first). Then the iPhone checks listed under 1.0.41 (and 1.0.39/1.0.40's).
+3. Ask the owner about the iPhone checks listed under 1.0.41 (and 1.0.39/1.0.40's).
 4. **Next release 1.0.42** (owner, 18 Oct): small follow-ups (admin preview pill, unused chip/nudge helpers in `src/api/customer/state.ts`, `CheckoutViews.tsx` 905 lines, real-iPhone check of swipe/scroll-lock) + plan **088** + plan **090**, as ordered in **plan 098** stages 0–3 (owner answers Q1–Q5 first, one at a time; phone page https://claude.ai/artifact/5yCfxuCZJokAxZ2wnZ9iVi).
 4. Owner checks still open: 1.0.38 pickup map + QR scan (CSP), send one short message, About animation (seller app: More → About), the seller ✓ on a Remember-me order; 1.0.36/1.0.37 phone checks; a real label print from the Samsung tablet.
 
@@ -63,4 +63,4 @@ Release note (owner "B"): "A fresher look for customers and clearer messages." /
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. 1.0.41 (banner everywhere, sheets, notice pills, nudges, root page) is committed; check whether it's live and tagged. Ask the owner before any git write. Ask me whether setup is needed, then the 1.0.41 phone checks, then plan 098's questions Q1–Q5 for 1.0.42, one at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.41 (tag v1.0.41): banner everywhere, sheets, notice pills, nudges, root page. Ask the owner before any git write. Ask me whether setup is needed, then the 1.0.41 phone checks, then plan 098's questions Q1–Q5 for 1.0.42, one at a time.
