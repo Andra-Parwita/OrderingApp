@@ -68,6 +68,7 @@ import type {
 } from '../../shared/menusContract';
 import type {
   ChangeFulfilmentRequest,
+  EditSellerOrderRequest,
   CreateOrderRequest,
   CreateSellerOrderRequest,
   UpdateOrderRequest,
@@ -317,6 +318,12 @@ export type SellerRepository = {
   changeFulfilment(
     code: string,
     input: ChangeFulfilmentRequest,
+    actor: StaffActor,
+  ): Promise<StoreResult<SellerOrder>>;
+  /** Plan 105: owner or chef edits dishes, note or name of any menu order, in any status. */
+  editOrder(
+    code: string,
+    input: EditSellerOrderRequest,
     actor: StaffActor,
   ): Promise<StoreResult<SellerOrder>>;
   nudge(code: string, force?: boolean): Promise<StoreResult<SellerOrder>>;

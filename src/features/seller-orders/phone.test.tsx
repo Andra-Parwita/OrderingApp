@@ -58,7 +58,7 @@ describe('Phone orders', () => {
     renderList();
     expect(screen.getByRole('heading', { name: 'Orders' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /New order/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /All orders/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Active orders/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /1 changed/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Search orders' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /order link on WhatsApp/ })).toHaveLength(2);
@@ -78,7 +78,7 @@ describe('Phone orders', () => {
   it('opens a bottom sheet with the statuses plus Changed and Not paid', () => {
     const toggle = vi.fn();
     renderList(toggle);
-    fireEvent.click(screen.getByRole('button', { name: /All orders/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Active orders/ }));
     const sheet = screen.getByRole('dialog');
     for (const name of [
       'Ordered',

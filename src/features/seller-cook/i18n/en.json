@@ -80,5 +80,22 @@
     "other": "The change was not accepted, so it was undone."
   },
   "privateTag": "Private",
-  "menuPrivate": "Menu {{menu}} · Private {{private}}"
+  "menuPrivate": "Menu {{menu}} · Private {{private}}",
+  "printKitchen": "Print kitchen list",
+  "printPage": {
+    "print": "Print",
+    "back": "Back",
+    "allChefs": "All chefs",
+    "notes": "Include customer notes",
+    "private": "Include private orders",
+    "pagePerChef": "New page per chef",
+    "empty": "Nothing to print.",
+    "paperHint": "If the print looks different, set the printer paper to A4 and scale 100%.",
+    "menuFor": "Menu for {{day}}",
+    "printedAt": "Printed {{time}}",
+    "chefLine": "Chef: {{name}}",
+    "privateCount": "({{count}} private)",
+    "forPeople_one": "for {{count}} person",
+    "forPeople_other": "for {{count}} people"
+  }
 }

@@ -291,7 +291,7 @@ describe('AppRoutes', () => {
     expect(screen.getByTestId('where')).toHaveTextContent('/seller/orders?status=done&q=tom');
     fireEvent.click(screen.getAllByRole('button', { name: 'Close search' })[0] as HTMLElement);
     expect(screen.getByTestId('where')).toHaveTextContent('/seller/orders?status=done');
-    fireEvent.click(screen.getByRole('button', { name: /^All/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Active/ }));
     expect(screen.getByTestId('where')).toHaveTextContent(/^\/seller\/orders$/);
   });
 

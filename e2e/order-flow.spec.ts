@@ -70,9 +70,9 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
     await expect(sellerPage.getByText(/Thin battered tempeh · 4 pieces/)).toBeVisible();
 
     await sellerPage.getByRole('button', { name: 'Confirm order', exact: true }).click();
-    // A first-time phone asks whether to link a saved customer (plan 071): skip it.
-    await sellerPage.getByRole('button', { name: 'Skip', exact: true }).click();
-    const ready = sellerPage.getByRole('button', { name: 'Mark ready for pickup', exact: true });
+    // A first-time phone asks whether to link a saved customer (plans 071, 106): close the window.
+    await sellerPage.getByRole('button', { name: 'Ask me next time', exact: true }).click();
+    const ready = sellerPage.getByRole('button', { name: 'Ready for pickup', exact: true });
     await expect(ready).toBeVisible();
     await ready.click();
     await expect(

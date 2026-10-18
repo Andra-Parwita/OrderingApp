@@ -13,14 +13,18 @@ const Body = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-  padding: 0 ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.xl};
+  padding: 0 ${({ theme }) => theme.spacing.xl}
+    calc(${({ theme }) => theme.spacing.xl} + env(safe-area-inset-bottom, 0rem));
   h2,
   p {
     margin: 0;
   }
   iframe {
     width: 100%;
-    height: 50vh;
+    height: min(45vh, 22rem);
+    height: min(45dvh, 22rem);
+    /* The embed must not swallow finger drags that scroll the panel. */
+    pointer-events: none;
     border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
     border-radius: 0.75rem;
   }

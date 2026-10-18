@@ -35,7 +35,7 @@ test('seller handles a new customer, then adds a WhatsApp order', async ({
   await page.screenshot({ path: `captures/seller2-orders-${project}.png`, fullPage: true });
 
   await row.click();
-  await expect(page.getByText('★ New customer')).toBeVisible();
+  await expect(page.getByText('First order', { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/Wait for their WhatsApp message/)).toBeVisible();
   await page.screenshot({ path: `captures/seller2-detail-${project}.png`, fullPage: true });
 
@@ -74,9 +74,7 @@ test('seller handles a new customer, then adds a WhatsApp order', async ({
   await page
     .getByRole('button', { name: desktop ? 'Confirm order' : 'Confirm only', exact: true })
     .click();
-  await expect(
-    page.getByRole('button', { name: 'Mark ready for pickup', exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ready for pickup', exact: true })).toBeVisible();
 
   // "New order" for a WhatsApp customer: a slide-over on a tablet or desktop, a screen on a phone.
   if (desktop) {

@@ -28,14 +28,24 @@ export const EXTRA_TOPICS: ReadonlyArray<HelpTopic> = [
           text: "Phone numbers are never kept in the cloud. If you type a customer's number on an order, it is saved in a list on **this device only**, so **Call** and **WhatsApp** show next time.",
         },
         {
-          text: 'When you **Confirm** an order from a phone this device has not seen, the app asks **Link to a saved customer?** Tap **Link** next to the right person, **New customer** for someone new, or **Skip**. After linking, their next orders show their saved number automatically.',
+          text: "When you **Confirm** an order from a phone this device has not seen, a window says **Order K7Q2MD is confirmed.** and asks if the customer is already in your list. If it found people with that name, tap **This is them** next to the right one (check the last digits and last order date). For someone new, type the name and, if you have it, the WhatsApp number, then tap **Add to my list**. **Ask me next time** changes nothing; **Don't ask for this order** stops the question for that order.",
+        },
+        {
+          text: 'After you pick **This is them**, their next orders show their saved number and address automatically.',
+        },
+        { part: 'See and edit your customers' },
+        {
+          text: 'Open **Customer details** (Settings, or **More** on a phone). The list is A to Z with the last 3 digits of the number, a short address and the last order date. Two customers with the same name show as **2 × Anin**. Type in **Search** to find one.',
+        },
+        {
+          text: 'Tap a customer to **edit** the first name, WhatsApp number and address, then **Save**. Tap **Add customer** to type a new one yourself; they are linked the first time they order from a phone. **Delete customer** removes them from this device only: their past orders stay, and they come back if you upload a backup file that has them.',
         },
         { part: 'Back up and restore' },
         {
           text: 'When a menu finishes and there is new customer data, the app asks **Back up your customer details?** Tap **Download backup** to save a file named like customers-yourkitchen-2026-10-13.csv. **Later** asks again next time you open the app.',
         },
         {
-          text: 'New phone, or cleared data? Open **Customer details** (Settings, or **More** on a phone), tap **Upload CSV**, check the preview, then **Add to my customers**. It adds and updates, and never deletes anything.',
+          text: 'New phone, or cleared data? Open **Customer details** (Settings, or **More** on a phone), tap **Upload**, check the preview, then **Add to my customers**. It adds and updates, and never deletes anything.',
         },
         { part: "If an address says 'not available'" },
         { text: 'It can happen now and then. The order itself is fine.' },
@@ -74,14 +84,24 @@ export const EXTRA_TOPICS: ReadonlyArray<HelpTopic> = [
           text: 'Nomor telepon tidak pernah disimpan di cloud. Jika Anda mengetik nomor pelanggan di pesanan, nomor itu disimpan di daftar **hanya di perangkat ini**, sehingga **Telepon** dan **WhatsApp** muncul lain kali.',
         },
         {
-          text: 'Saat Anda **Konfirmasi** pesanan dari ponsel yang belum dikenal perangkat ini, aplikasi bertanya **Hubungkan ke pelanggan tersimpan?** Ketuk **Hubungkan** di samping orang yang benar, **Pelanggan baru** untuk orang baru, atau **Lewati**. Setelah terhubung, pesanan berikutnya otomatis menampilkan nomor tersimpannya.',
+          text: 'Saat Anda **Konfirmasi** pesanan dari ponsel yang belum dikenal perangkat ini, muncul jendela **Pesanan K7Q2MD sudah dikonfirmasi.** yang bertanya apakah pelanggan sudah ada di daftar Anda. Jika ada orang dengan nama itu, ketuk **Ini dia** di samping yang benar (periksa digit terakhir dan tanggal pesanan terakhir). Untuk orang baru, ketik nama dan, jika ada, nomor WhatsApp, lalu ketuk **Tambah ke daftar saya**. **Tanya lagi nanti** tidak mengubah apa pun; **Jangan tanya untuk pesanan ini** menghentikan pertanyaan untuk pesanan itu.',
+        },
+        {
+          text: 'Setelah Anda memilih **Ini dia**, pesanan berikutnya otomatis menampilkan nomor dan alamat tersimpannya.',
+        },
+        { part: 'Lihat dan ubah pelanggan Anda' },
+        {
+          text: 'Buka **Data pelanggan** (Pengaturan, atau **Lainnya** di ponsel). Daftar urut A sampai Z dengan 3 digit terakhir nomor, alamat singkat, dan tanggal pesanan terakhir. Dua pelanggan dengan nama sama tampil sebagai **2 × Anin**. Ketik di **Cari** untuk menemukan seseorang.',
+        },
+        {
+          text: 'Ketuk pelanggan untuk **mengubah** nama depan, nomor WhatsApp, dan alamat, lalu **Simpan**. Ketuk **Tambah pelanggan** untuk mengetik pelanggan baru sendiri; mereka terhubung saat pertama kali memesan dari ponsel. **Hapus pelanggan** hanya menghapus dari perangkat ini: pesanan lamanya tetap ada, dan datanya kembali jika Anda mengunggah file cadangan yang memuatnya.',
         },
         { part: 'Cadangkan dan pulihkan' },
         {
           text: 'Saat menu selesai dan ada data pelanggan baru, aplikasi bertanya **Cadangkan data pelanggan Anda?** Ketuk **Unduh cadangan** untuk menyimpan file bernama seperti customers-dapuranda-2026-10-13.csv. **Nanti** akan bertanya lagi saat aplikasi dibuka berikutnya.',
         },
         {
-          text: 'Ponsel baru, atau data terhapus? Buka **Data pelanggan** (Pengaturan, atau **Lainnya** di ponsel), ketuk **Unggah CSV**, periksa pratinjau, lalu **Tambahkan ke pelanggan saya**. Ini menambah dan memperbarui, dan tidak pernah menghapus.',
+          text: 'Ponsel baru, atau data terhapus? Buka **Data pelanggan** (Pengaturan, atau **Lainnya** di ponsel), ketuk **Unggah**, periksa pratinjau, lalu **Tambahkan ke pelanggan saya**. Ini menambah dan memperbarui, dan tidak pernah menghapus.',
         },
         { part: "Jika alamat tertulis 'tidak tersedia'" },
         { text: 'Ini kadang terjadi. Pesanannya sendiri tidak apa-apa.' },

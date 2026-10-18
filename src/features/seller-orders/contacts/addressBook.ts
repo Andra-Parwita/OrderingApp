@@ -310,18 +310,20 @@ export function linkCode(
   });
 }
 
-/** A new customer for an order's code (no phone yet; the seller can add it on the order). */
+/** A new customer for an order's code, with the number when the seller typed one (digits, 61...). */
 export function createForCode(
   slug: string,
   firstName: string,
   customerCode: string,
   orderDate: string,
   now: Date = new Date(),
+  phone?: string,
 ): Customer {
   const at = now.toISOString();
   const customer: Customer = {
     id: newId(),
     firstName: firstName.trim(),
+    ...(phone ? { phone } : {}),
     customerCodes: [customerCode],
     orderCodes: [],
     lastOrderDate: orderDate,

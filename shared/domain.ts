@@ -41,6 +41,10 @@ export type AuditDiff = {
   items: Array<{ itemId: string; name: LocalText; delta: number }>;
   note?: true;
   fulfilment?: { from: Fulfilment; to: Fulfilment };
+  /** Plan 105: the seller fixed the first name. */
+  name?: { from: string; to: string };
+  /** Plan 105: the order total before and after a seller edit, in cents. */
+  total?: { from: number; to: number };
 };
 
 /**

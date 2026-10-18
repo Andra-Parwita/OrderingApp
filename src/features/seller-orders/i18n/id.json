@@ -22,8 +22,8 @@
     "share": "Bagikan menu",
     "changed": "↻ Berubah",
     "addressChanged": "↻ Alamat diubah",
-    "newCustomer": "★ Pelanggan baru",
-    "returning": "↩ Langganan",
+    "newCustomer": "Pesanan pertama",
+    "returning": "Pernah memesan",
     "waReceived": "✓ WhatsApp diterima",
     "locked": "🔒 Dikunci",
     "newOrder": "+ Pesanan baru",
@@ -37,10 +37,11 @@
     "colAttention": "Perlu perhatian",
     "emptyTitle": "Belum ada pesanan",
     "emptyHint": "Bagikan menu Anda untuk mulai menerima pesanan.",
-    "shareOnWhatsApp": "Bagikan menu lewat WhatsApp"
+    "shareOnWhatsApp": "Bagikan menu lewat WhatsApp",
+    "savedHere": "Tersimpan di {{device}}"
   },
   "filter": {
-    "all": "Semua",
+    "all": "Aktif",
     "ordered": "Dipesan",
     "confirmed": "Dikonfirmasi",
     "ready": "Siap",
@@ -93,10 +94,10 @@
     "noteVisible": "Pelanggan bisa melihat catatan ini.",
     "action": {
       "confirmed": "Konfirmasi pesanan",
-      "ready_for_pickup": "Tandai siap diambil",
-      "out_for_delivery": "Tandai sedang diantar",
-      "collected": "Tandai sudah diambil",
-      "delivered": "Tandai sudah diantar"
+      "ready_for_pickup": "Siap diambil",
+      "out_for_delivery": "Sedang diantar",
+      "collected": "Tandai diambil",
+      "delivered": "Tandai diantar"
     },
     "next": "Pesanan berikutnya ›",
     "previous": "‹ Sebelumnya",
@@ -119,7 +120,8 @@
     "editedDiff": "Diubah: {{diff}}"
   },
   "whatsapp": {
-    "message": "Halo {{name}}, ini tautan pesananmu {{code}}: {{link}}"
+    "message": "Halo {{name}}, ini tautan pesananmu {{code}}: {{link}}",
+    "edited": "Halo {{name}}, pesanan {{code}} Anda diubah: {{diff}}. Total baru {{total}}. {{link}}"
   },
   "error": {
     "load": "Pesanan tidak bisa dimuat.",
@@ -216,9 +218,9 @@
     "more": "Lainnya",
     "paid": "Lunas",
     "wa": "Nomor pesanan sudah diterima lewat WhatsApp",
-    "returning": "Pelanggan lama",
+    "returning": "Pernah memesan",
     "staff": "Dimasukkan oleh staf",
-    "newCustomer": "Pelanggan baru",
+    "newCustomer": "Pesanan pertama",
     "note": "Ada catatan",
     "locked": "Dikunci",
     "list": "Pesanan",
@@ -243,8 +245,8 @@
     "enteredBy": "Dimasukkan oleh",
     "enteredByCustomer": "{{name}}, lewat tautan pesanan",
     "customer": "Pelanggan",
-    "custNew": "Pelanggan baru",
-    "custReturning": "Pelanggan lama",
+    "custNew": "Pesanan pertama",
+    "custReturning": "Pernah memesan",
     "canChange": "Bisa diubah",
     "canYes": "Ya, sampai Anda kunci",
     "canNo": "Tidak, terkunci",
@@ -307,7 +309,11 @@
     "newOrder": "Pesanan baru · {{name}}",
     "newOrders": "{{name}} pesanan baru",
     "open": "Buka",
-    "show": "Lihat"
+    "show": "Lihat",
+    "edited": "Pesanan {{name}} tersimpan",
+    "editedTold": "Pesanan {{name}} tersimpan. Pelanggan diberi tahu.",
+    "copy": "Salin pesan",
+    "copied": "Pesan disalin"
   },
   "dishes": {
     "title": "Hidangan",
@@ -337,7 +343,7 @@
     "noPlaces": "Belum ada tempat ambil untuk menu ini."
   },
   "phone": {
-    "allOrders": "Semua pesanan",
+    "allOrders": "Pesanan aktif",
     "filterTitle": "Tampilkan",
     "moreFilters": "Tampilkan hanya",
     "changedN": "{{count}} berubah",
@@ -346,6 +352,9 @@
     "sendOn": "Kirim tautan pesanan {{name}} lewat WhatsApp",
     "confirmSend": "Konfirmasi & kirim lewat WhatsApp",
     "confirmOnly": "Konfirmasi saja",
+    "sendShort": "Kirim tautan",
+    "newOrderShort": "Baru",
+    "markUnpaidShort": "Belum lunas",
     "lockHint": "Hentikan perubahan",
     "unlockHint": "Boleh diubah lagi",
     "nudgeHint": "Pengingat",
@@ -391,10 +400,19 @@
     "hint_other": "{{count}} halaman A4. Cetak, lalu pilih \"Simpan sebagai PDF\" di jendela cetak bila ingin berkas.",
     "which": {
       "label": "Pesanan mana",
-      "all": "Semua",
-      "notCollected": "Belum diambil",
-      "notPaid": "Belum dibayar"
+      "active": "Aktif ({{count}})",
+      "confirmed": "Dikonfirmasi ({{count}})",
+      "selected": "Dipilih ({{count}})",
+      "everything": "Semua termasuk batal ({{count}})"
     },
+    "heading": {
+      "active": "Pesanan aktif · {{count}}",
+      "confirmed": "Pesanan dikonfirmasi · {{count}}",
+      "selected": "Pesanan dipilih · {{count}}",
+      "everything": "Semua pesanan termasuk batal · {{count}}"
+    },
+    "pick": "Pilih pesanan untuk dicetak",
+    "pickNone": "Belum ada pesanan.",
     "sort": {
       "label": "Urutkan",
       "place": "Tempat",
@@ -432,6 +450,7 @@
     "delivered": "Sudah diantar",
     "nothing": "Belum ada pengantaran di menu ini.",
     "back": "Pesanan",
+    "more": "Lainnya",
     "deliveredDone": "Sudah diantar"
   },
   "customers": {
@@ -447,8 +466,8 @@
     "changedCount_one": "{{count}} pelanggan berubah",
     "changedCount_other": "{{count}} pelanggan berubah",
     "and": " dan ",
-    "download": "Unduh cadangan (CSV)",
-    "upload": "Unggah CSV",
+    "download": "Unduh cadangan",
+    "upload": "Unggah",
     "private": "Simpan file ini secara pribadi. Isinya nomor telepon dan alamat pelanggan Anda.",
     "downloaded": "Cadangan disimpan sebagai {{name}}.",
     "preview": "Di file ini: {{added}} akan ditambah, {{updated}} akan diperbarui, {{unchanged}} sudah sama.",
@@ -458,13 +477,21 @@
     "badFile": "File itu bukan cadangan data pelanggan.",
     "notKept": "Browser ini mungkin tidak menyimpan data pelanggan setelah ditutup.",
     "link": {
-      "title": "Hubungkan ke pelanggan tersimpan?",
-      "intro": "{{name}} memesan dari ponsel yang belum dikenal perangkat ini. Jika {{name}} pelanggan tetap, hubungkan agar nomor teleponnya muncul di sini lain kali.",
-      "none": "Tidak ada pelanggan tersimpan dengan nama mirip.",
-      "last": "Pesanan terakhir {{date}}",
-      "link": "Hubungkan",
-      "newCustomer": "Pelanggan baru",
-      "skip": "Lewati",
+      "confirmed": "Pesanan {{code}} sudah dikonfirmasi.",
+      "ask": "Apakah {{name}} sudah ada di daftar pelanggan Anda? Daftar Anda hanya tersimpan di {{device}} ini.",
+      "found_one": "Kami menemukan {{count}} pelanggan bernama {{name}}:",
+      "found_other": "Kami menemukan {{count}} pelanggan bernama {{name}}:",
+      "foundSimilar": "Kami menemukan pelanggan dengan nama mirip:",
+      "none": "{{name}} belum ada di daftar Anda.",
+      "last": "pesanan terakhir {{date}}",
+      "link": "Ini dia",
+      "hint": "Jika memilih mereka, pesanan berikutnya menampilkan nomor dan alamat yang tersimpan.",
+      "newH": "Atau: pelanggan baru",
+      "name": "Nama depan",
+      "number": "Nomor WhatsApp (boleh kosong)",
+      "save": "Tambah ke daftar saya",
+      "skipNow": "Tanya lagi nanti",
+      "skipOrder": "Jangan tanya untuk pesanan ini",
       "close": "Tutup"
     },
     "reminder": {
@@ -472,12 +499,103 @@
       "body": "Menu ini sudah selesai. {{parts}}",
       "download": "Unduh cadangan",
       "later": "Nanti",
-      "close": "Tutup"
+      "close": "Tutup",
+      "laterHelp": "Nanti = ditanya lagi saat aplikasi dibuka berikutnya."
+    },
+    "device": {
+      "tablet": "tablet ini",
+      "phone": "ponsel ini"
+    },
+    "downloadShort": "Cadangan",
+    "list": {
+      "search": "Cari pelanggan",
+      "add": "Tambah pelanggan",
+      "addShort": "Tambah",
+      "note": "Hanya tersimpan di {{device}} ini.",
+      "empty": "Belum ada pelanggan tersimpan.",
+      "noMatch": "Tidak ada pelanggan yang cocok.",
+      "dup": "{{count}} × {{name}}",
+      "last": "pesanan terakhir {{date}}",
+      "addTitle": "Tambah pelanggan",
+      "editTitle": "Ubah pelanggan",
+      "name": "Nama depan",
+      "nameRequired": "Isi nama depan.",
+      "phone": "Nomor WhatsApp (boleh kosong)",
+      "phoneHelper": "Nomor HP Australia, mis. 0412 345 678.",
+      "street": "Jalan",
+      "suburb": "Wilayah (suburb)",
+      "postcode": "Kode pos",
+      "notes": "Catatan untuk pengantar",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "close": "Tutup",
+      "delete": "Hapus pelanggan",
+      "deleteAsk": "Hapus {{name}} dari {{device}} ini? Nama, nomor, dan alamatnya dihapus dari {{device}} ini saja. Pesanan lamanya tetap ada. Jika Anda punya file cadangan, datanya kembali saat Anda mengunggahnya.",
+      "deleteYes": "Ya, hapus",
+      "deleteNo": "Simpan"
     }
   },
   "private": {
     "today": "Khusus hari ini",
     "tag": "Khusus",
     "viewOnMap": "Lihat di peta"
+  },
+  "edit": {
+    "button": "Ubah pesanan",
+    "title": "Ubah pesanan",
+    "fromCustomer": "Dipesan oleh pelanggan",
+    "fromKitchen": "Ditambah oleh dapur",
+    "dishes": "Hidangan",
+    "note": "Catatan",
+    "add": "Tambah hidangan",
+    "addTitle": "Tambah hidangan",
+    "done": "Selesai",
+    "remove": "Hapus {{name}}",
+    "undo": "Batal hapus",
+    "removed": "Dihapus",
+    "newDish": "Baru",
+    "left": "Sisa {{count}}",
+    "soldOut": "Habis",
+    "limit": "Hanya sisa {{left}} {{name}}; menyimpan akan melewati batas.",
+    "total": "Total",
+    "was": "sebelumnya {{amount}}",
+    "summary": "Dihapus: {{removed}}",
+    "summaryBoth": "Dihapus: {{removed}} · Ditambah: {{added}}",
+    "summaryAdded": "Ditambah: {{added}}",
+    "hint": "Pesanan butuh minimal satu hidangan. Pakai Batalkan pesanan untuk menghapus semuanya.",
+    "tell": "Beri tahu pelanggan",
+    "tellHelp": "Memberi tahu pesanan {{code}} diubah (notifikasi, jika mereka mengaktifkannya) dan menampilkan perubahannya di halaman pesanan.",
+    "tellSeller": "Hanya jika mereka punya tautan pesanan.",
+    "save": "Simpan perubahan",
+    "saving": "Menyimpan…",
+    "saveAnyway": "Tetap simpan",
+    "cancel": "Batal",
+    "overTitle": "Melewati batas porsi",
+    "overBody": "Menyimpan mengambil porsi lebih dari yang tersisa. Tetap simpan?",
+    "error": "Gagal menyimpan. Coba lagi.",
+    "discardTitle": "Buang perubahan?",
+    "discardBody": "Pesanan tetap seperti semula.",
+    "discardKeep": "Lanjut mengubah",
+    "discardGo": "Buang",
+    "cancelledTitle": "Pesanan ini dibatalkan",
+    "cancelledBody": "Tetap dibatalkan, atau kembalikan ke Dipesan agar dihitung lagi di masakan, total, label, dan cetak?",
+    "keepCancelled": "Simpan, tetap dibatalkan",
+    "reactivate": "Simpan dan aktifkan lagi",
+    "warnDone": "Pesanan ini sudah {{status}}. Tetap bisa diubah; pelanggan hanya diberi tahu jika Anda mencentang di bawah.",
+    "warnHandled": "Pesanan ini sudah {{status}}. Mungkin sudah dikemas.",
+    "warnCancelled": "Pesanan ini dibatalkan. Tetap bisa diubah.",
+    "warnPaid": "Lunas {{amount}}. Tetap Lunas; panel pesanan menunjukkan sisa yang perlu ditagih atau dikembalikan.",
+    "editedBy": "Diubah oleh {{name}} · {{when}}",
+    "gap": "Lunas {{paid}} · total kini {{total}} · {{amount}} lagi",
+    "gapRefund": "Lunas {{paid}} · total kini {{total}} · {{amount}} dikembalikan"
+  },
+  "paidSheet": {
+    "titlePaid": "Tandai lunas?",
+    "titleUnpaid": "Tandai belum lunas?",
+    "markPaid": "Tandai lunas",
+    "markNotPaid": "Tandai belum lunas",
+    "cancel": "Batal",
+    "saving": "Menyimpan…",
+    "total": "Total"
   }
 }

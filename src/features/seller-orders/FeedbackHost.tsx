@@ -39,6 +39,12 @@ export function FeedbackHost() {
       void navigate(toast.open.code ? `/seller/orders/${toast.open.code}` : '/seller/orders');
       return;
     }
+    // Plan 105: "Copy message" puts the WhatsApp text for the customer on the clipboard.
+    if (toast?.copy !== undefined) {
+      dispatch(toastCleared());
+      void navigator.clipboard?.writeText(toast.copy).catch(() => undefined);
+      return;
+    }
     const action = toast?.undo;
     if (!action) return;
     dispatch(toastCleared());
@@ -54,7 +60,7 @@ export function FeedbackHost() {
   const goAhead = useCallback(() => dispatch(warningConfirmed()), [dispatch]);
 
   const toastText = toast ? t(`toast.${toast.kind}`, { name: toast.name }) : null;
-  const hasButton = Boolean(toast?.undo ?? toast?.open);
+  const hasButton = Boolean(toast?.undo ?? toast?.open ?? toast?.copy);
   const plain = toast && !hasButton ? toastText : notice === 'nudged' ? t('detail.nudged') : null;
   const code = warned?.warning.code;
   return (
@@ -62,7 +68,13 @@ export function FeedbackHost() {
       <UndoToast
         key={toast?.id ?? 0}
         message={hasButton ? toastText : null}
-        actionLabel={toast?.open ? t(toast.open.code ? 'toast.open' : 'toast.show') : undefined}
+        actionLabel={
+          toast?.open
+            ? t(toast.open.code ? 'toast.open' : 'toast.show')
+            : toast?.copy !== undefined
+              ? t('toast.copy')
+              : undefined
+        }
         onUndo={undo}
         onDismiss={clear}
       />

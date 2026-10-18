@@ -82,8 +82,9 @@ test('a helper on the phone: Orders, Pickup & delivery and Sell only', async ({
   // More holds Sell; Pickup & delivery opens.
   await page.getByRole('link', { name: 'More' }).click();
   await expect(page.getByRole('button', { name: /^Sell( |$)/ })).toBeVisible();
+  // Rows read "Sell ›"; the device's own Customer details (Backup · Upload · Add) stay for helpers too.
   for (const hidden of ['Kitchen', 'Labels', 'Settings', 'Backup']) {
-    await expect(page.getByRole('button', { name: hidden, exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: `${hidden} ›`, exact: true })).toHaveCount(0);
   }
   await page.getByRole('link', { name: 'Pickup & delivery' }).click();
   await expect(page).toHaveURL(/\/seller\/hand-over$/);

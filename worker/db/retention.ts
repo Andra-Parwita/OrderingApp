@@ -88,3 +88,37 @@ export async function dropStaleFindAttempts(db: Db, now: Date): Promise<number> 
   );
   return rows.length;
 }
+
+const AUTH_EXPIRED_KEEP_DAYS = 7;
+const AUTH_SWEEP_BATCH = 500;
+const AUTH_SWEEP_ROUNDS = 20;
+
+/**
+ * Plan 098 C10: deletes invite/recovery keys (with their redemptions) and add-device codes that
+ * expired more than 7 days ago, in batches of 500 (at most 20 rounds per run; the next run
+ * continues). Live and recently expired rows stay. Returns counts only.
+ */
+export async function dropExpiredAuthRows(
+  db: Db,
+  now: Date,
+): Promise<{ keys: number; codes: number }> {
+  const cutoff = new Date(now.getTime() - AUTH_EXPIRED_KEEP_DAYS * 86_400_000).toISOString();
+  let keys = 0;
+  let codes = 0;
+  for (let round = 0; round < AUTH_SWEEP_ROUNDS; round += 1) {
+    const oldKeys = await db.all<{ key_hash: string }>(
+      'DELETE FROM auth_keys WHERE key_hash IN (SELECT key_hash FROM auth_keys WHERE expires_at < ? LIMIT ?) RETURNING key_hash',
+      cutoff,
+      AUTH_SWEEP_BATCH,
+    );
+    const oldCodes = await db.all<{ id: number }>(
+      'DELETE FROM auth_codes WHERE id IN (SELECT id FROM auth_codes WHERE expires_at < ? LIMIT ?) RETURNING id',
+      cutoff,
+      AUTH_SWEEP_BATCH,
+    );
+    keys += oldKeys.length;
+    codes += oldCodes.length;
+    if (oldKeys.length < AUTH_SWEEP_BATCH && oldCodes.length < AUTH_SWEEP_BATCH) break;
+  }
+  return { keys, codes };
+}

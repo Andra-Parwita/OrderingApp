@@ -1,10 +1,25 @@
 import type { AuditDiff, Fulfilment, Language, OrderLine } from './domain';
 import { pickText } from './text';
 
-type Editable = { lines: ReadonlyArray<OrderLine>; fulfilment: Fulfilment; note?: string };
+type Editable = {
+  lines: ReadonlyArray<OrderLine>;
+  fulfilment: Fulfilment;
+  note?: string;
+  firstName?: string;
+};
 
-/** What changed between two versions of an order, or null if nothing did. */
-export function diffOrder(before: Editable, after: Editable): AuditDiff | null {
+const totalOf = (order: Editable): number =>
+  order.lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0);
+
+/**
+ * What changed between two versions of an order, or null if nothing did. With `staff` (plan 105,
+ * a seller edit) a changed first name and the total before / after are recorded too.
+ */
+export function diffOrder(
+  before: Editable,
+  after: Editable,
+  options: { staff?: boolean } = {},
+): AuditDiff | null {
   const items: AuditDiff['items'] = [];
   for (const line of after.lines) {
     const was = before.lines.find((candidate) => candidate.itemId === line.itemId)?.qty ?? 0;
@@ -21,12 +36,20 @@ export function diffOrder(before: Editable, after: Editable): AuditDiff | null {
   if (before.fulfilment !== after.fulfilment) {
     diff.fulfilment = { from: before.fulfilment, to: after.fulfilment };
   }
-  return items.length > 0 || diff.note || diff.fulfilment ? diff : null;
+  if (options.staff) {
+    const from = before.firstName ?? '';
+    const to = after.firstName ?? '';
+    if (from !== to) diff.name = { from, to };
+    const was = totalOf(before);
+    const now = totalOf(after);
+    if (was !== now) diff.total = { from: was, to: now };
+  }
+  return items.length > 0 || diff.note || diff.fulfilment || diff.name ? diff : null;
 }
 
-const WORDS: Record<Language, { note: string; pickup: string; delivery: string }> = {
-  en: { note: 'note changed', pickup: 'pickup', delivery: 'delivery' },
-  id: { note: 'catatan diubah', pickup: 'ambil', delivery: 'antar' },
+const WORDS: Record<Language, { note: string; pickup: string; delivery: string; name: string }> = {
+  en: { note: 'note changed', pickup: 'pickup', delivery: 'delivery', name: 'name' },
+  id: { note: 'catatan diubah', pickup: 'ambil', delivery: 'antar', name: 'nama' },
 };
 
 /** e.g. `+1 Lemper ayam · −1 Tempe mendoan · note changed · pickup → delivery`. */
@@ -38,5 +61,6 @@ export function formatAuditDiff(diff: AuditDiff, lang: Language): string {
   );
   if (diff.note) parts.push(words.note);
   if (diff.fulfilment) parts.push(`${words[diff.fulfilment.from]} → ${words[diff.fulfilment.to]}`);
+  if (diff.name) parts.push(`${words.name}: ${diff.name.from} → ${diff.name.to}`);
   return parts.join(' · ');
 }

@@ -136,7 +136,7 @@ export function wizardBackground(state: unknown): Location | undefined {
 }
 
 /** Closes the wizard: back to the screen it was opened over; opened directly, to the Menu screen. */
-export function useCloseWizard(): () => void {
+export function useCloseWizardNow(): () => void {
   const navigate = useNavigate();
   const state: unknown = useLocation().state;
   const background = wizardBackground(state);
@@ -146,4 +146,17 @@ export function useCloseWizard(): () => void {
       void navigate(background, { replace: true, state: behind });
     } else void navigate('/seller/menu', { replace: true });
   }, [navigate, background]);
+}
+
+// Plan 103 fix 8: the open session asks "Save N changes?" before the layer closes, also when the
+// layer's own Close (in the app, outside this feature) is pressed.
+let closeGuard: (() => void) | null = null;
+export function setCloseGuard(guard: (() => void) | null): void {
+  closeGuard = guard;
+}
+
+/** Closes the wizard; an open session may ask first. */
+export function useCloseWizard(): () => void {
+  const closeNow = useCloseWizardNow();
+  return useCallback(() => (closeGuard ? closeGuard() : closeNow()), [closeNow]);
 }

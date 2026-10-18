@@ -12,6 +12,8 @@ export type ListWithPanelProps = Readonly<{
   panel?: ReactNode;
   /** Accessible name of the panel. */
   panelLabel: string;
+  /** Plan 108: the panel's own header bar (code, name, close, chips), pinned above the body. */
+  panelHeader?: ReactNode;
   /** The one main action, pinned at the bottom of the panel. */
   panelAction?: ReactNode;
   /** Phone: the panel replaces the list (full screen with Back). The list stays mounted. */
@@ -48,9 +50,17 @@ const Panel = styled.aside<{ $stacked: boolean }>`
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  border-left: ${({ $stacked, theme }) =>
-    $stacked ? '0' : `${theme.border.hairline} solid ${theme.c.line}`};
   background: ${({ theme }) => theme.c.surf};
+  /* Plan 108: raised like a card (owner: small rounded corners, shadow), so the panel does not read as
+     part of the toolbar or the list. */
+  ${({ $stacked, theme }) =>
+    $stacked
+      ? ''
+      : `margin: ${theme.spacing.xs};
+  border: ${theme.border.hairline} solid ${theme.c.line};
+  border-radius: ${theme.radius.sm};
+  overflow: hidden;
+  box-shadow: 0 0.125rem 0.875rem ${theme.noticeShadow};`}
 `;
 const PanelBody = styled.div`
   flex: 1;
@@ -74,6 +84,7 @@ export function ListWithPanel({
   list,
   panel,
   panelLabel,
+  panelHeader,
   panelAction,
   stacked = false,
   onBack,
@@ -96,6 +107,7 @@ export function ListWithPanel({
               </Button>
             </BackBar>
           ) : null}
+          {panelHeader}
           <PanelBody>{panel}</PanelBody>
           {panelAction ? <PanelFoot>{panelAction}</PanelFoot> : null}
         </Panel>

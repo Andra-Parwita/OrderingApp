@@ -1,15 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Fulfilment, Language } from '../../../shared/domain';
-import { FIRST_NAME_MAX, LOW_STOCK, MAX_QTY, NOTE_MAX } from '../../../shared/limits';
+import { LOW_STOCK, MAX_QTY } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { DRAFT_NS, DraftNotice } from '../../components/draft';
-import { Segmented, SlideOverEditor, Stepper, TextArea, TextField, Button } from '../../ui';
+import { Segmented, SlideOverEditor, Stepper, Button } from '../../ui';
 import type { SegmentedOption } from '../../ui';
 import { SELLER_NS } from './i18n/register';
+import {
+  ErrorText,
+  Field,
+  Label,
+  Muted,
+  NameField,
+  NoteField,
+  Names,
+  Row,
+  Select,
+} from './orderFormParts';
 import { useLang } from './orderText';
 import { useOrderDraft, type YesNo } from './useOrderDraft';
 import { openOrderLink } from './whatsappLink';
@@ -24,53 +35,9 @@ const Form = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xl};
 `;
-const Field = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-const Label = styled.span`
-  font-size: 0.8125rem;
-  font-weight: 700;
-`;
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  min-height: ${({ theme }) => theme.size.rowCompact}px;
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-`;
-const Names = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-
-  small {
-    color: ${({ theme }) => theme.c.muted};
-    font-size: 0.8125rem;
-  }
-`;
 const Total = styled(Row)`
   border-bottom: 0;
   font-weight: 700;
-`;
-const Select = styled.select`
-  min-height: ${({ theme }) => theme.size.tap}px;
-  padding: 0 ${({ theme }) => theme.spacing.md};
-  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.ctrl};
-  border-radius: ${({ theme }) => theme.size.radiusControl}px;
-  background: ${({ theme }) => theme.c.surf};
-  color: ${({ theme }) => theme.c.text};
-  font: inherit;
-`;
-const ErrorText = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.c.danger};
-`;
-const Muted = styled.span`
-  color: ${({ theme }) => theme.c.muted};
-  font-size: 0.875rem;
 `;
 
 function errorKey(error: string): string {
@@ -203,12 +170,9 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
       <Form>
         <DraftNotice draft={form.draft} />
         {form.dropped ? <Muted role="status">{tDraft('droppedDishes')}</Muted> : null}
-        <TextField
-          label={t('new.name')}
+        <NameField
           value={firstName}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => setFirstName(event.target.value)}
-          maxLength={FIRST_NAME_MAX}
-          autoComplete="off"
+          onChange={setFirstName}
           {...(submitted && nameMissing ? { error: t('new.nameRequired') } : {})}
         />
         <Row>
@@ -282,14 +246,7 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
             {deliveryOn ? <option value="delivery">{t('fulfilment.delivery')}</option> : null}
           </Select>
         </Field>
-        <TextArea
-          label={t('new.note')}
-          helper={t('new.noteHelper')}
-          value={note}
-          onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setNote(event.target.value)}
-          maxLength={NOTE_MAX}
-          showCounter
-        />
+        <NoteField value={note} onChange={setNote} />
         <Field>
           <Row>
             <Label>{t('newPanel.confirmNow')}</Label>

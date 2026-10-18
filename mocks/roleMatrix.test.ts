@@ -69,6 +69,7 @@ function probes(): Array<Probe> {
     p('GET', `${S}/orders`),
     p('POST', `${S}/orders`, {}),
     p('GET', `${S}/orders/{code}`),
+    p('PATCH', `${S}/orders/{code}`, {}),
     p('POST', `${S}/orders/{code}/status`, { to: 'confirmed' }),
     p('POST', `${S}/orders/{code}/status`, { to: 'cancelled' }),
     p('PATCH', `${S}/orders/{code}/fulfilment`, {}),
@@ -378,6 +379,7 @@ describe('role matrix (plan 098 C2)', () => {
       GET /api/seller/orders | none 401 | customer 401 | helper 200 | chef 200 | owner 200 | admin 403 | dev 200
       POST /api/seller/orders {} | none 401 | customer 401 | helper 403 | chef 400 | owner 400 | admin 403 | dev 400
       GET /api/seller/orders/{code} | none 401 | customer 401 | helper 200 | chef 200 | owner 200 | admin 403 | dev 200
+      PATCH /api/seller/orders/{code} {} | none 401 | customer 401 | helper 403 | chef 400 | owner 400 | admin 403 | dev 400
       POST /api/seller/orders/{code}/status {"to":"confirmed"} | none 401 | customer 401 | helper 200 | chef 200 | owner 200 | admin 403 | dev 200
       POST /api/seller/orders/{code}/status {"to":"cancelled"} | none 401 | customer 401 | helper 200 | chef 200 | owner 200 | admin 403 | dev 200
       PATCH /api/seller/orders/{code}/fulfilment {} | none 401 | customer 401 | helper 403 | chef 400 | owner 400 | admin 403 | dev 400

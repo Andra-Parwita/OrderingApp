@@ -10,6 +10,7 @@
 // while hidden, backs off after failures, stops after repeated refusals until Try again). An instant
 // check when the app comes back after a while and when the connection returns. Nothing runs when no
 // order is active.
+import { customerLiveProtocols } from '../../../shared/liveContract';
 import { TOKENS_MAX } from '../../../shared/limits';
 import { activeOrders, MY_ORDERS_CHANGED, type SavedOrder } from '../../api/device/myOrders';
 import { connectLive, type LiveConnection, type SocketLike } from '../../api/live';
@@ -22,7 +23,7 @@ export const REFRESH_WINDOW_MS = 1000;
 export const AWAY_CHECK_MS = 10_000;
 
 export type CustomerLiveDeps = {
-  createSocket: (url: string) => SocketLike;
+  createSocket: (url: string, protocols?: Array<string>) => SocketLike;
   /** The backup gap in minutes (the server's setting); 5 when it cannot be read. */
   backupMinutes: () => Promise<number>;
   /** Reload one order (and patch it into the list). */
@@ -43,10 +44,9 @@ type Room = {
   connection: LiveConnection | null;
 };
 
-function liveUrl(slug: string, tokens: ReadonlyArray<string>): string {
+function liveUrl(slug: string): string {
   const url = new URL(`/api/s/${encodeURIComponent(slug)}/live`, window.location.href);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  url.searchParams.set('tokens', tokens.join(','));
   return url.toString();
 }
 
@@ -144,7 +144,8 @@ export function startCustomerLive(deps: CustomerLiveDeps): () => void {
     rooms.set(slug, room);
     const codeToken = new Map(orders.map((order) => [order.code, order.token]));
     room.connection = connectLive({
-      url: () => liveUrl(slug, tokens),
+      url: () => liveUrl(slug),
+      protocols: () => customerLiveProtocols(tokens),
       createSocket: deps.createSocket,
       onEvent: (event) => {
         const token = event.code === undefined ? undefined : codeToken.get(event.code);

@@ -85,6 +85,7 @@
   "dishes": {
     "title": "Menu",
     "backMenu": "Menu",
+    "dayOnly": "Hanya di hari-H · di lapak",
     "line": "{{date}} · pesan sebelum {{dateTime}}",
     "viewBasket": "Lihat keranjang",
     "empty": "Belum ada hidangan di menu ini."

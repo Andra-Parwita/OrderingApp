@@ -410,8 +410,9 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     return again.ok ? fail('sold_out', 'Sold out') : fail(again.error, again.message);
   }
 
-  async function commit(d: Draft): Promise<SellerOrder> {
-    const guard = d.linesChanged ? portionGuard(d.order) : null;
+  /** `force` (D-062, a seller edit that goes over a limit) skips the portion guard, as `place` does. */
+  async function commit(d: Draft, force = false): Promise<SellerOrder> {
+    const guard = d.linesChanged && !force ? portionGuard(d.order) : null;
     await db.batch([...(guard ? [guard] : []), ...changeStatements(db, d)]);
     return d.order;
   }

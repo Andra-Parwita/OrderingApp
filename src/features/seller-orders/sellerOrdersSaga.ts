@@ -11,6 +11,7 @@ import {
   takeLatest,
   takeLeading,
 } from 'redux-saga/effects';
+import { editCopyMessage } from './editMessage';
 import { devResetRequested, devSampleOrdersRequested } from './devActions';
 import { demoSamplesClearRequested, demoSamplesRequested } from './demoActions';
 import { addDemoSamples, clearDemoSamples } from '../../api/demo';
@@ -18,6 +19,7 @@ import type { ApiFailure, ApiResult } from '../../api/http';
 import {
   addSampleOrders,
   createSellerOrder,
+  editSellerOrder,
   fetchCurrentMenu,
   fetchPastWeeks,
   fetchSellerMenu,
@@ -73,6 +75,10 @@ import {
   type Warned,
   type WarnedCall,
   createOrderRequested,
+  editFailed,
+  editOrderRequested,
+  editSaved,
+  editWarned,
   lockChangeRequested,
   menuFailed,
   menuLoaded,
@@ -399,6 +405,35 @@ export function* createOrder(action: ReturnType<typeof createOrderRequested>) {
   } else yield put(createFailed({ error: result.error }));
 }
 
+/**
+ * Plan 105: the Edit order sheet saves. A 409 over a portion limit makes the sheet ask (it sends
+ * again with `force`); a saved edit closes the sheet and shows a toast with "Copy message".
+ */
+export function* editOrder(action: ReturnType<typeof editOrderRequested>) {
+  const { code, request } = action.payload;
+  const result = (yield call(
+    editSellerOrder,
+    code,
+    request,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
+  if (result.ok) {
+    const { order } = result.data;
+    yield put(editSaved({ order }));
+    const copy = editCopyMessage(order);
+    yield put(
+      toastShown({
+        kind: request.notify ? 'editedTold' : 'edited',
+        name: order.firstName,
+        undo: null,
+        ...(copy !== undefined ? { copy } : {}),
+      }),
+    );
+  } else if (result.status === 409 && result.warning) yield put(editWarned({ code }));
+  else yield put(editFailed({ code, error: result.error }));
+}
+
 /** Continue anyway: the call that warned goes again with force. */
 export function* sendForced() {
   const state = (yield select()) as SellerOrdersRootState;
@@ -533,6 +568,7 @@ export function* sellerOrdersSaga(
   yield takeLatest(pastRequested.type, loadPast);
   yield takeLatest(menuRequested.type, loadSellerMenu);
   yield takeLeading(createOrderRequested.type, createOrder);
+  yield takeLeading(editOrderRequested.type, editOrder);
   // Only the dev buttons dispatch these, and they show only when the server has DEV_TOOLS on.
   yield takeLeading(devSampleOrdersRequested.type, devSampleOrders);
   yield takeLatest(devResetRequested.type, devReset);

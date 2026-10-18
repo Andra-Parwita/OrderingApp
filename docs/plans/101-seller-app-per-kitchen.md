@@ -102,3 +102,5 @@ Owner: "since we have a beta trial, it's important to also let them know how to 
 - **Q3 (badge): none now**, follows from Q2 = B.
 - **Q4 = A:** keep the old "Seller" app; a one-time notice pill only for people in 2+ kitchens.
 - **Q5 (release): owner decides later**, once all questions are answered.
+- **Release (owner, 18 Oct): 1.0.43, right after 1.0.42** ("all the icon/app things can be 1.0.43"). Fable's risk report (`docs/reports/2026-10-18-1042-scope-risk.md`): 101 + 102 stages 1–3 together (same files, one builder); 102 scope + routes (stages 4–6) on its own after the phone proofs (1.0.44) unless the owner says otherwise.
+- **Owner, 18 Oct ~21:20: 101 and 102 ship together in one deploy, 1.0.43** (Fable advised 102 routes separately; owner chose one deploy).

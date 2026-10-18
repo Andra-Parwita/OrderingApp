@@ -70,10 +70,21 @@ const Plain = styled.button`
   cursor: pointer;
 `;
 
-export function DeliveryAddressBlock({
-  order,
-  showEmpty = false,
-}: Readonly<{ order: Order; showEmpty?: boolean }>) {
+/** WhatsApp and Call, when this phone has the customer's number saved. */
+export function ContactLinks({ digits }: Readonly<{ digits: string }>) {
+  const { t } = useTranslation(SELLER_NS);
+  return (
+    <>
+      <Link href={whatsAppUrl(undefined, digits)} target="_blank" rel="noopener noreferrer">
+        {t('address.whatsapp')}
+      </Link>
+      <Link href={`tel:+${digits}`}>{t('address.call')}</Link>
+    </>
+  );
+}
+
+/** The actions on a delivery address, shared by the address block and the Deliveries rows. */
+export function useAddressActions(order: Order) {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
   const readOnly = useReadOnlyOrders();
@@ -88,19 +99,21 @@ export function DeliveryAddressBlock({
       dispatch(refreshRequested()),
     );
   }, [dispatch, order.code]);
+  return { readOnly, digits, remove, gotIt };
+}
+
+export function DeliveryAddressBlock({
+  order,
+  showEmpty = false,
+}: Readonly<{ order: Order; showEmpty?: boolean }>) {
+  const { t } = useTranslation(SELLER_NS);
+  const { readOnly, digits, remove, gotIt } = useAddressActions(order);
 
   if (order.fulfilment !== 'delivery') return null;
   const { address } = order;
   if (!address && !showEmpty) return null;
 
-  const contact = digits ? (
-    <>
-      <Link href={whatsAppUrl(undefined, digits)} target="_blank" rel="noopener noreferrer">
-        {t('address.whatsapp')}
-      </Link>
-      <Link href={`tel:+${digits}`}>{t('address.call')}</Link>
-    </>
-  ) : null;
+  const contact = digits ? <ContactLinks digits={digits} /> : null;
 
   if (!address) {
     return (

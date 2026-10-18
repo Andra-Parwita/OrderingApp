@@ -28,11 +28,12 @@ type Load = { status: 'loading' } | { status: 'error' } | ({ status: 'ready' } &
 type Undo = Readonly<{ entryId: string; text: string }>;
 type Tab = 'sell' | 'summary';
 
-const Page = styled.main`
+const Page = styled.main<{ $embedded: boolean }>`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadPhone}px;
+  padding: ${({ $embedded, theme }) =>
+    $embedded ? '0' : `${theme.spacing.lg} ${String(theme.size.pagePadPhone)}px`};
   max-width: 40rem;
 `;
 const Title = styled.h1`
@@ -246,7 +247,13 @@ const clock = (at: string, lang: Language) =>
   });
 
 /** The Sell screen (plan 029 stages 4-5): record sales at the stall; the Summary tab ends the day. */
-export function SellScreen({ canCorrect = false }: Readonly<{ canCorrect?: boolean }>) {
+export function SellScreen({
+  canCorrect = false,
+  embedded = false,
+}: Readonly<{
+  canCorrect?: boolean;
+  /** Inside the Menu's On the day tab (plan 107): no title, no page padding. */ embedded?: boolean;
+}>) {
   const { t } = useTranslation(SATURDAY_NS);
   const lang = useLang();
   const slug = currentSellerSlug();
@@ -335,8 +342,8 @@ export function SellScreen({ canCorrect = false }: Readonly<{ canCorrect?: boole
   };
 
   return (
-    <Page>
-      <Title>{t('sell.title')}</Title>
+    <Page $embedded={embedded} {...(embedded ? { as: 'div' as const } : {})}>
+      {embedded ? null : <Title>{t('sell.title')}</Title>}
       <Segmented options={options} value={tab} onChange={setTab} label={t('sell.tabsLabel')} />
       {undo ? (
         <UndoBar role="status">

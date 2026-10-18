@@ -50,7 +50,7 @@ test('nudge and lock: seller on a desktop, customer on an iPhone', async ({
     const row = orderRow(sellerPage, new RegExp(firstName));
     await row.click();
     await expect(sellerPage).toHaveURL(/\/seller\/orders\/[A-Z0-9]+\?q=/);
-    await expect(sellerPage.getByText('★ New customer')).toBeVisible();
+    await expect(sellerPage.getByText('First order', { exact: true }).first()).toBeVisible();
     await expect(sellerPage.getByText(/Wait for their WhatsApp message/)).toBeVisible();
     await sellerPage.screenshot({ path: 'captures/b2flow-2-seller-detail.png', fullPage: true });
 

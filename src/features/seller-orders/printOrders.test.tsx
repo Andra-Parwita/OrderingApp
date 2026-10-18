@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { ReadOnlyOrdersProvider } from './orderAccess';
 import { OrdersTableScreen } from './OrdersTableScreen';
@@ -43,6 +43,28 @@ describe('print orders screen', () => {
     expect(screen.queryByText('Budi')).not.toBeInTheDocument();
     expect(screen.getByText('Glenelg')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Print' })).toBeEnabled();
+  });
+
+  it('asks which orders: Active by default with its count and header, All incl. cancelled adds one', async () => {
+    localStorage.removeItem('print-orders-which');
+    renderWithStore(<PrintOrdersScreen />, store());
+    expect(await screen.findByText('Dapur Demo')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Active (1)' })).toBeChecked();
+    expect(screen.getByTestId('print-set')).toHaveTextContent('Active orders · 1');
+    fireEvent.click(screen.getByRole('radio', { name: 'All incl. cancelled (2)' }));
+    expect(screen.getByTestId('print-set')).toHaveTextContent('All orders incl. cancelled · 2');
+    expect(screen.getByText('Budi')).toBeInTheDocument();
+    expect(localStorage.getItem('print-orders-which')).toBe('everything');
+  });
+
+  it('Selected prints only the ticked orders', async () => {
+    localStorage.setItem('print-orders-which', 'selected');
+    renderWithStore(<PrintOrdersScreen />, store());
+    expect(await screen.findByRole('radio', { name: 'Selected (0)' })).toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: /Rina/ }));
+    expect(screen.getByRole('radio', { name: 'Selected (1)' })).toBeInTheDocument();
+    expect(screen.getAllByTestId('print-order')).toHaveLength(1);
+    localStorage.removeItem('print-orders-which');
   });
 
   it('a helper gets no print screen', () => {

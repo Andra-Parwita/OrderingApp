@@ -2,16 +2,12 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import { formatOrderCode } from '../../../shared/orderCode';
 import { setOrderStatus } from '../../api/client';
 import { currentSellerSlug } from '../../api/device/sellerContext';
-import { PrivateTag } from '../../components/PrivateTag';
 import { Button } from '../../ui';
-import { DeliveryAddressBlock } from './DeliveryAddressBlock';
-import { PrivateDeliveryAddress } from './PrivateToday';
+import { DeliveryRow } from './DeliveryRow';
 import { usePrivateToday } from './usePrivateToday';
 import { SELLER_NS } from './i18n/register';
-import { itemsSummary, useLang } from './orderText';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import { selectOrders } from './sellerOrdersSelectors';
 import { pollingStarted, pollingStopped, statusChangeRequested } from './sellerOrdersSlice';
@@ -44,34 +40,12 @@ const List = styled.ul`
   padding: 0;
   list-style: none;
 `;
-const Item = styled.li<{ $done: boolean }>`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.md} 0;
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  opacity: ${({ $done }) => ($done ? 0.6 : 1)};
-  header {
-    display: flex;
-    gap: ${({ theme }) => theme.spacing.sm};
-    align-items: baseline;
-  }
-  code {
-    font-family: ${({ theme }) => theme.font.mono};
-    color: ${({ theme }) => theme.c.muted};
-  }
-  p {
-    margin: 0;
-    color: ${({ theme }) => theme.c.muted};
-  }
-`;
 const Empty = styled.p`
   color: ${({ theme }) => theme.c.muted};
 `;
 
 function DeliveriesContent({ onBack }: Readonly<{ onBack: () => void }>) {
   const { t } = useTranslation(SELLER_NS);
-  const lang = useLang();
   const dispatch = useDispatch();
   const orders = useSelector(selectOrders);
   useEffect(() => {
@@ -128,31 +102,7 @@ function DeliveriesContent({ onBack }: Readonly<{ onBack: () => void }>) {
       {deliveries.length === 0 ? <Empty>{t('address.nothing')}</Empty> : null}
       <List>
         {deliveries.map((order) => (
-          <Item key={order.code} $done={order.status === 'delivered'}>
-            <header>
-              <b>{order.firstName}</b>
-              <code>{formatOrderCode(order.code)}</code>
-              {order.private ? <PrivateTag label={t('private.tag')} /> : null}
-              {order.private?.eventTime ? <code>{order.private.eventTime}</code> : null}
-            </header>
-            <p>{itemsSummary(order, lang)}</p>
-            {order.private ? (
-              order.address && 'address' in order.address ? (
-                <PrivateDeliveryAddress address={order.address.address} />
-              ) : (
-                <p>{t('address.none')}</p>
-              )
-            ) : (
-              <DeliveryAddressBlock order={order} showEmpty />
-            )}
-            {order.status === 'delivered' ? (
-              <p>{t('address.deliveredDone')}</p>
-            ) : (
-              <div>
-                <Button onClick={() => done(order)}>{t('address.delivered')} ✓</Button>
-              </div>
-            )}
-          </Item>
+          <DeliveryRow key={order.code} order={order} onDone={done} />
         ))}
       </List>
     </Page>

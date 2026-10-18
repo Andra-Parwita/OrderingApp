@@ -13,6 +13,9 @@ import { Button, Icon, Menu, WarningDialog, type IconName, type MenuItem } from 
 import { ConfirmedNote } from './ConfirmedMark';
 import { DeliveryAddressBlock } from './DeliveryAddressBlock';
 import { SELLER_NS } from './i18n/register';
+import { EditedNote } from './EditedNote';
+import { EditOrderButton } from './EditOrderButton';
+import { PaidSheet } from './PaidSheet';
 import { StatusMark } from './StatusMark';
 import { actorLabel, orderTotalCents } from './orderText';
 import { selectCookingDate, selectCurrent } from './sellerOrdersSelectors';
@@ -27,6 +30,21 @@ const Head = styled.header`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xs};
   margin-bottom: ${({ theme }) => theme.spacing.lg};
+`;
+// Plan 108: in the tablet panel the head is its own bar above the scrolling body.
+const HeadBar = styled.header`
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadTablet}px
+    ${({ theme }) => theme.spacing.md};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  background: ${({ theme }) => theme.c.surf2};
+
+  h2 {
+    font-size: 1.125rem;
+  }
 `;
 const HeadTop = styled.div`
   display: flex;
@@ -115,6 +133,12 @@ const Group = styled.h3`
   letter-spacing: 0.06em;
   text-transform: uppercase;
 `;
+const ItemsHead = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
 const ItemRow = styled.div<{ $total?: boolean }>`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -177,10 +201,58 @@ const ErrorLine = styled.div`
   color: ${({ theme }) => theme.c.danger};
 `;
 
+/** The code, name, close button and chips. */
+function OrderHeadContent({
+  order,
+  onClose,
+}: Readonly<{ order: Order; onClose?: (() => void) | undefined }>) {
+  const { t } = useTranslation(SELLER_NS);
+  const metaIcon: IconName = order.fulfilment === 'delivery' ? 'truck' : 'bag';
+  return (
+    <>
+      <HeadTop>
+        <Title>
+          <code>{formatOrderCode(order.code)}</code>
+          <span>{order.firstName}</span>
+        </Title>
+        {onClose ? (
+          <CloseButton type="button" aria-label={t('detail.close')} onClick={onClose}>
+            <Icon name="x" />
+          </CloseButton>
+        ) : null}
+      </HeadTop>
+      <Meta>
+        <StatusMark status={order.status} />
+        <MetaItem>
+          <Icon name={metaIcon} />
+          {t(`fulfilment.${order.fulfilment}`)}
+        </MetaItem>
+        <MetaItem $warn={!order.paid}>
+          {order.paid ? <Icon name="check" /> : null}
+          {order.paid ? t('live.paid') : t('live.notPaid')}
+        </MetaItem>
+      </Meta>
+    </>
+  );
+}
+
+/** The tablet panel's own header bar (plan 108). */
+export function OrderPanelHeader({
+  order,
+  onClose,
+}: Readonly<{ order: Order; onClose: () => void }>) {
+  return (
+    <HeadBar>
+      <OrderHeadContent order={order} onClose={onClose} />
+    </HeadBar>
+  );
+}
+
 export function OrderPanelBody({
   order,
   onClose,
-}: Readonly<{ order: Order; onClose?: () => void }>) {
+  withHeader = true,
+}: Readonly<{ order: Order; onClose?: () => void; withHeader?: boolean }>) {
   const { t } = useTranslation(SELLER_NS);
   const current = useSelector(selectCurrent);
   const cookingDate = useSelector(selectCookingDate);
@@ -198,36 +270,21 @@ export function OrderPanelBody({
   ]
     .filter((part) => part !== '')
     .join('');
-  const metaIcon: IconName = order.fulfilment === 'delivery' ? 'truck' : 'bag';
 
   return (
     <>
-      <Head>
-        <HeadTop>
-          <Title>
-            <code>{formatOrderCode(order.code)}</code>
-            <span>{order.firstName}</span>
-          </Title>
-          {onClose ? (
-            <CloseButton type="button" aria-label={t('detail.close')} onClick={onClose}>
-              <Icon name="x" />
-            </CloseButton>
-          ) : null}
-        </HeadTop>
-        <Meta>
-          <StatusMark status={order.status} />
-          <MetaItem>
-            <Icon name={metaIcon} />
-            {t(`fulfilment.${order.fulfilment}`)}
-          </MetaItem>
-          <MetaItem $warn={!order.paid}>
-            {order.paid ? <Icon name="check" /> : null}
-            {order.paid ? t('live.paid') : t('live.notPaid')}
-          </MetaItem>
-        </Meta>
-        <ConfirmedNote order={order} />
-      </Head>
+      {withHeader ? (
+        <Head>
+          <OrderHeadContent order={order} onClose={onClose} />
+          <ConfirmedNote order={order} />
+        </Head>
+      ) : (
+        <div>
+          <ConfirmedNote order={order} />
+        </div>
+      )}
 
+      <EditedNote order={order} />
       {order.changed ? (
         <Notice>
           <Icon name="pencil" />
@@ -263,7 +320,10 @@ export function OrderPanelBody({
         </Notice>
       ) : null}
 
-      <Group>{t('panel.items')}</Group>
+      <ItemsHead>
+        <Group>{t('panel.items')}</Group>
+        {a.readOnly || order.private ? null : <EditOrderButton order={order} />}
+      </ItemsHead>
       <div>
         {order.lines.map((line) => (
           <ItemRow key={line.itemId}>
@@ -367,12 +427,14 @@ const Foot = styled.div`
 `;
 const Main = styled(Button)`
   flex: 1;
+  min-width: 0;
   min-height: ${({ theme }) => theme.size.mainAction}px;
-  font-size: 1rem;
+  font-size: 0.9375rem;
+  white-space: nowrap;
 `;
 const IconAction = styled(Button)`
   flex: none;
-  width: ${({ theme }) => theme.size.mainAction}px;
+  width: ${({ theme }) => theme.size.tap}px;
   height: ${({ theme }) => theme.size.mainAction}px;
   padding: 0;
   color: ${({ theme }) => theme.c.text};
@@ -388,6 +450,8 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
   const { t } = useTranslation(SELLER_NS);
   const a = useOrderActions(order);
   const [asking, setAsking] = useState(false);
+  // Plan 103 fix 7: the target of the Paid / Not paid sheet (null = closed).
+  const [askPaid, setAskPaid] = useState<boolean | null>(null);
   // Collected is not the main step while another step is open (D-069 Q4); it waits in the menu.
   const next = a.readOnly ? undefined : a.forward.find((status) => status !== 'collected');
   const canCollect = order.fulfilment === 'pickup' && !a.final;
@@ -445,13 +509,16 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
             aria-label={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
             title={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
             disabled={a.saving}
-            onClick={() => a.setPaid(!order.paid)}
+            onClick={() => setAskPaid(!order.paid)}
           >
             <Icon name="coin" />
           </IconAction>
           <Menu label={t('live.more')} items={items} side="up" />
         </>
       )}
+      {askPaid !== null ? (
+        <PaidSheet order={order} paid={askPaid} onClose={() => setAskPaid(null)} />
+      ) : null}
       {asking ? (
         <WarningDialog
           title={t('panel.cancelTitle', { name: order.firstName })}

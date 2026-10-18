@@ -192,7 +192,12 @@ export function SellerLayout() {
   const scrolled = scrolledOn === pathname;
   const onSheetScroll = (event: UIEvent<HTMLElement>) => {
     if (slides && event.target instanceof HTMLElement) {
-      setScrolledOn(event.target.scrollTop > BANNER_SCROLL_PX ? pathname : null);
+      // The banner's collapse makes the scroll area taller. Collapse only when the content overflows
+      // by more than that, or the area shrinks back to no overflow and the last rows can't be reached.
+      const { scrollTop, scrollHeight, clientHeight } = event.target;
+      const room = scrollHeight - clientHeight;
+      const fits = scrolled || room > RAIL_TOP_PX - RAIL_TOP_COLLAPSED_PX + BANNER_SCROLL_PX;
+      setScrolledOn(scrollTop > BANNER_SCROLL_PX && fits ? pathname : null);
     }
   };
   const stored = useBannerCollapsed();

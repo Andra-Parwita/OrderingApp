@@ -14,7 +14,7 @@ export const selectCookingDate = (state: SellerOrdersRootState) => state.sellerO
 
 export const selectCounts = createSelector([selectOrders], (orders): StatusCounts => {
   const counts: Record<StatusFilter, number> = {
-    all: orders.length,
+    all: orders.filter((order) => order.status !== 'cancelled').length,
     ordered: 0,
     changed: 0,
     confirmed: 0,
@@ -39,7 +39,8 @@ export function matchesQuery(order: Order, query: string): boolean {
 }
 
 function matchesFilter(order: Order, filter: StatusFilter): boolean {
-  if (filter === 'all') return true;
+  // "All" is the Active tab (plan 104): every order but the cancelled ones.
+  if (filter === 'all') return order.status !== 'cancelled';
   if (filter === 'changed') return order.changed;
   return filterOf(order.status) === filter;
 }
@@ -95,6 +96,7 @@ export function selectOrderByCode(state: SellerOrdersRootState, code: string): O
 }
 
 export const selectMenu = (state: SellerOrdersRootState) => state.sellerOrders.menu;
+export const selectEdit = (state: SellerOrdersRootState) => state.sellerOrders.edit;
 export const selectCreate = (state: SellerOrdersRootState) => state.sellerOrders.create;
 export const selectNotice = (state: SellerOrdersRootState) => state.sellerOrders.notice;
 

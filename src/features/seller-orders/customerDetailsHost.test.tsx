@@ -34,36 +34,92 @@ beforeEach(() => {
   useBookBackend(() => memoryBackend());
 });
 
-describe('Link to a saved customer?', () => {
-  it('asks once, links, and later orders from that code show the saved phone', async () => {
-    saveContact(SLUG, 'AAA222', { phone: '0412 345 678', address: '', firstName: 'Rina' });
+describe('Order confirmed: link window (plan 106, option A)', () => {
+  const open = async (name: string, code = 'BBB333') => {
     await loadBook(SLUG);
     const s = store();
-    const order = makeOrder({ code: 'BBB333', firstName: 'Rina', customerCode: CODE });
-    seed(s, [order]);
+    seed(s, [makeOrder({ code, firstName: name, customerCode: CODE })]);
     renderWithStore(<CustomerDetailsHost />, s);
     expect(screen.queryByRole('dialog')).toBeNull();
-    s.dispatch(linkPromptShown({ code: 'BBB333' }));
-    expect(await screen.findByText('Link to a saved customer?')).toBeInTheDocument();
-    expect(screen.getByText(/\+61 412 345 678/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Link' }));
-    expect(screen.queryByText('Link to a saved customer?')).toBeNull();
-    // the next order with that code shows Call / WhatsApp by itself
+    s.dispatch(linkPromptShown({ code }));
+    return s;
+  };
+
+  it('Link: asks once, links, and later orders from that code show the saved phone', async () => {
+    saveContact(SLUG, 'AAA222', { phone: '0412 345 678', address: '', firstName: 'Rina' });
+    await open('Rina');
+    expect(
+      await screen.findByText(/Order BBB-333 is confirmed|Order BBB333 is confirmed/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('We found 1 customer called Rina:')).toBeInTheDocument();
+    expect(screen.getByText(/^Rina · …678/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'This is them' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(getContactDigits(SLUG, 'CCC444', CODE)).toBe('61412345678');
   });
 
-  it('New customer saves the name and code; Skip changes nothing', async () => {
-    await loadBook(SLUG);
-    const s = store();
-    seed(s, [makeOrder({ code: 'BBB333', firstName: 'Dewi', customerCode: CODE })]);
-    renderWithStore(<CustomerDetailsHost />, s);
-    s.dispatch(linkPromptShown({ code: 'BBB333' }));
-    expect(await screen.findByText('No saved customer with a similar name.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+  it('Someone new saves the name, the code and the typed number', async () => {
+    await open('Dewi');
+    expect(await screen.findByText("Dewi isn't in your list yet.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('WhatsApp number (optional)'), {
+      target: { value: '0412 345 678' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add to my list' }));
+    expect(listCustomers(SLUG)[0]).toMatchObject({
+      firstName: 'Dewi',
+      phone: '61412345678',
+      customerCodes: [CODE],
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('Someone new with no number saves the name and code; a bad number saves nothing', async () => {
+    await open('Dewi');
+    fireEvent.change(await screen.findByLabelText('WhatsApp number (optional)'), {
+      target: { value: '123' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add to my list' }));
+    expect(screen.getByText('Not a valid mobile number.')).toBeInTheDocument();
     expect(listCustomers(SLUG)).toHaveLength(0);
-    s.dispatch(linkPromptShown({ code: 'BBB333' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'New customer' }));
+    fireEvent.change(screen.getByLabelText('WhatsApp number (optional)'), {
+      target: { value: '' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Add to my list' }));
     expect(listCustomers(SLUG)[0]).toMatchObject({ firstName: 'Dewi', customerCodes: [CODE] });
+    expect(listCustomers(SLUG)[0]?.phone).toBeUndefined();
+  });
+
+  it('two saved customers with the same name show the count and the last digits', async () => {
+    saveContact(SLUG, 'AAA222', { phone: '0412 345 678', address: '', firstName: 'Anin' });
+    saveContact(SLUG, 'AAA333', { phone: '0498 765 123', address: '', firstName: 'Anin' });
+    await open('Anin');
+    expect(await screen.findByText('We found 2 customers called Anin:')).toBeInTheDocument();
+    expect(screen.getByText(/^Anin · …678/)).toBeInTheDocument();
+    expect(screen.getByText(/^Anin · …123/)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'This is them' })).toHaveLength(2);
+  });
+
+  it("Ask me next time changes nothing; Don't ask for this order is remembered", async () => {
+    const s = await open('Dewi');
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask me next time' }));
+    expect(listCustomers(SLUG)).toHaveLength(0);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    act(() => {
+      s.dispatch(linkPromptShown({ code: 'BBB333' }));
+    });
+    fireEvent.click(await screen.findByRole('button', { name: "Don't ask for this order" }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(listCustomers(SLUG)).toHaveLength(0);
+    act(() => {
+      s.dispatch(linkPromptShown({ code: 'BBB333' }));
+    });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // another order still asks
+    seed(s, [makeOrder({ code: 'CCC444', firstName: 'Dewi', customerCode: CODE })]);
+    act(() => {
+      s.dispatch(linkPromptShown({ code: 'CCC444' }));
+    });
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   it('the Call and WhatsApp buttons appear for a linked code', () => {
@@ -99,6 +155,9 @@ describe('Back up your customer details?', () => {
     saveContact(SLUG, 'AAA222', { phone: '0412345678', address: '', firstName: 'Rina' });
     expect(await screen.findByText('Back up your customer details?')).toBeInTheDocument();
     expect(screen.getByText(/1 new customer since your last backup/)).toBeInTheDocument();
+    expect(
+      screen.getByText('Later asks again the next time you open the app.'),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Later' }));
     expect(screen.queryByText('Back up your customer details?')).toBeNull();
   });
@@ -147,7 +206,7 @@ describe('Settings, Customer details', () => {
       saveContact(SLUG, 'BBB333', { phone: '0411222333', address: '' });
     });
     expect(screen.getByText(/1 new customer since your last backup/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Upload CSV')).toBeInTheDocument();
+    expect(screen.getByLabelText('Upload')).toBeInTheDocument();
     expect(screen.getByText(/Keep this file private/)).toBeInTheDocument();
   });
 });

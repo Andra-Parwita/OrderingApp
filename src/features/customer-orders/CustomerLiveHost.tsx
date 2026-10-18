@@ -13,8 +13,8 @@ async function backupMinutes(): Promise<number> {
   return status?.backupMinutes.customer ?? DEFAULT_BACKUP_MINUTES;
 }
 
-function defaultSocket(url: string): SocketLike {
-  return new WebSocket(url);
+function defaultSocket(url: string, protocols?: Array<string>): SocketLike {
+  return new WebSocket(url, protocols);
 }
 
 /**

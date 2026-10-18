@@ -28,6 +28,7 @@ const LABEL_KEY: Readonly<Record<NavId, string>> = {
   kitchen: 'sellerNav.navKitchen',
   handover: 'sellerNav.navHandover',
   sell: 'sellerNav.navSell',
+  dishes: 'sellerNav.navDishes',
   menu: 'sellerNav.navMenu',
   settings: 'sellerNav.navSettings',
   help: 'nav',

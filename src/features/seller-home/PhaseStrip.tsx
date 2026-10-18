@@ -7,22 +7,26 @@ import { styled } from 'styled-components';
 const Strip = styled.ol`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   margin: 0;
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadTablet}px;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadTablet}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   list-style: none;
+
+  @media (max-width: 40rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 `;
 const Phase = styled.li<{ $done: boolean; $current: boolean }>`
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: ${({ theme }) => theme.spacing.xs};
   color: ${({ $current, theme }) => ($current ? theme.c.text : theme.c.muted)};
   font-weight: ${({ $current }) => ($current ? 700 : 500)};
 
   .bar {
-    height: 0.25rem;
-    margin-bottom: ${({ theme }) => theme.spacing.sm};
+    height: 0.1875rem;
     border-radius: 0.125rem;
     background: ${({ $done, $current, theme }) => ($done || $current ? theme.c.fill : theme.c.line)};
   }
@@ -30,17 +34,22 @@ const Phase = styled.li<{ $done: boolean; $current: boolean }>`
     display: flex;
     align-items: center;
     gap: ${({ theme }) => theme.spacing.sm};
+    min-width: 0;
+    font-size: 0.875rem;
+    white-space: nowrap;
   }
-  small {
-    padding-left: 1.75rem;
+  .label small {
+    min-width: 0;
+    overflow: hidden;
     color: ${({ theme }) => theme.c.muted};
     font-size: 0.8125rem;
     font-weight: 400;
+    text-overflow: ellipsis;
   }
 `;
 const Svg = styled.svg`
-  width: 1.125rem;
-  height: 1.125rem;
+  width: 1rem;
+  height: 1rem;
   flex: none;
   fill: none;
   stroke: currentColor;
@@ -85,8 +94,8 @@ export function PhaseStrip({
           <span className="label">
             <StateIcon state={phase.state} />
             {phase.label}
+            {phase.note ? <small title={phase.note}>{phase.note}</small> : null}
           </span>
-          {phase.note ? <small>{phase.note}</small> : null}
         </Phase>
       ))}
     </Strip>

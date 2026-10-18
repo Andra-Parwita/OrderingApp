@@ -157,7 +157,8 @@
       "collected": "Collected",
       "delivered": "Delivered",
       "cancelled": "Order cancelled"
-    }
+    },
+    "orderEdited": "Changed by the kitchen"
   },
   "wa": {
     "message": "Hi, my order is {{code}}: {{items}}. Total {{total}}. {{how}}. Name: {{name}}.",

@@ -75,6 +75,7 @@ const ListScroll = styled.div`
   overflow-y: auto;
 `;
 const Head = styled.header`
+  container-type: inline-size;
   display: flex;
   flex: none;
   flex-direction: column;
@@ -98,17 +99,26 @@ const TitleGroup = styled.div`
   display: flex;
   align-items: baseline;
   gap: ${({ theme }) => theme.spacing.md};
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
 `;
 const Actions = styled.div`
   display: flex;
   flex: none;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
+
+  /* Button labels never wrap: the short label, then the icon alone on a very narrow phone. */
+  @container (max-width: 21rem) {
+    button b {
+      display: none;
+    }
+  }
 `;
 const Title = styled.h1`
   margin: 0;
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
 `;
@@ -320,7 +330,7 @@ function PhoneOrdersContent({
     ? homeKindOf(view, past.status === 'ready' ? past.weeks : readOnly ? [] : null, orders)
     : 'checking';
   const live = kind === 'live';
-  const noOrdersAtAll = list.status === 'ready' && counts.all === 0;
+  const noOrdersAtAll = list.status === 'ready' && counts.all + counts.cancelled === 0;
 
   const filterLabel = filter === 'all' ? t('phone.allOrders') : t(`filter.${filter}`);
   const board = (
@@ -406,7 +416,7 @@ function PhoneOrdersContent({
             }
           />
         ) : null}
-        {list.status === 'ready' && counts.all > 0 && visible.length === 0 ? (
+        {list.status === 'ready' && counts.all + counts.cancelled > 0 && visible.length === 0 ? (
           <Message>{t('orders.empty')}</Message>
         ) : null}
         {list.status === 'ready' ? (
@@ -472,9 +482,9 @@ function PhoneOrdersContent({
               />
             ) : null}
             {live && onNewOrder ? (
-              <Button variant="primary" onClick={onNewOrder}>
+              <Button variant="primary" aria-label={t('live.newOrder')} onClick={onNewOrder}>
                 <Icon name="plus" />
-                {t('live.newOrder')}
+                <b>{t('phone.newOrderShort')}</b>
               </Button>
             ) : null}
             <BannerToggle />

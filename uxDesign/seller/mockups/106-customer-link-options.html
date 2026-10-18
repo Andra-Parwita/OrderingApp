@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Customer link options (mock-up 106)</title>
+    <style>
+:root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+.notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+.notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+.rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+.rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+.rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+.wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+.phones { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+figure { margin: 0; max-width: 100%; }
+figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+.phones figcaption { width: 384px; }
+.badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+.muted { color: #5d6358; }
+.fn { font-size: 0.75rem; color: #5d6358; }
+.scrollx { overflow-x: auto; max-width: 100%; }
+
+.frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70; --warn: #8a2232;
+  background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+.frame.tab { width: 1138px; height: 640px; }
+.frame.ph { width: 384px; height: 800px; flex-direction: column; }
+.rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 2px; }
+.rail span { width: 56px; min-height: 52px; display: grid; place-items: center; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.15; border-radius: 8px; }
+.rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+.rail .k { font-weight: 800; color: var(--ink); min-height: 40px; font-size: 12px; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hdr { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+.tabbar { height: 56px; flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line); margin-top: auto; }
+.tabbar span { flex: 1; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+.tabbar span.on { color: var(--fill); font-weight: 700; }
+.btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.btn.icon { width: 44px; padding: 0; }
+.btn.pri { background: var(--fill); border-color: var(--fill); color: #fff; }
+.btn.flat { border-color: transparent; text-decoration: underline; }
+.ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.steps { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--line); overflow: hidden; background: var(--surf); }
+.steps .t { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; font-weight: 600; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+.steps .t.on { color: var(--text); border-color: var(--fill); }
+.intro { padding: 8px 16px; color: var(--muted); font-size: 13.5px; }
+ul { list-style: none; margin: 0; padding: 0; }
+.dr { display: flex; align-items: center; gap: 4px; padding: 0 8px 0 4px; min-height: 56px; border-bottom: 1px solid var(--line); }
+.dr label { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; min-height: 52px; cursor: pointer; }
+.dr .cb { width: 44px; height: 44px; display: grid; place-items: center; flex: none; }
+.dr .cb i { width: 22px; height: 22px; border: 2px solid var(--edge); border-radius: 5px; display: grid; place-items: center; background: var(--surf); }
+.dr .cb i.on { background: var(--fill); border-color: var(--fill); color: #fff; }
+.dr .cb i .ico { width: 15px; height: 15px; stroke-width: 3; }
+.dr .tx { flex: 1; min-width: 0; }
+.dr .tx b { font-weight: 600; display: block; }
+.dr .tx small { color: var(--muted); font-size: 13px; display: block; }
+.dr .pr { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; flex: none; }
+.dr.chg { background: #fff6e0; }
+.dr.rm .tx b { text-decoration: line-through; }
+.dr select { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); font: inherit; font-size: 14px; padding: 0 8px; max-width: 140px; color: var(--text); }
+.mk { display: inline-block; border: 1px solid #b5651d; color: #7a4210; border-radius: 999px; font-size: 11.5px; font-weight: 700; padding: 0 7px; margin-left: 6px; vertical-align: 1px; }
+.fld { padding: 8px 16px; display: grid; gap: 2px; }
+.fld span { font-size: 13px; color: var(--muted); }
+.fld div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; }
+
+.scrim { position: absolute; inset: 0; background: rgb(28 22 12/42%); z-index: 8; }
+.scrim.two { z-index: 10; }
+.dlg { position: absolute; z-index: 11; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(400px, calc(100% - 32px)); background: var(--surf); border-radius: 14px; padding: 18px; box-shadow: 0 10px 30px rgb(40 30 15/35%); }
+.dlg h3 { margin: 0 0 6px; font-size: 18px; }
+.dlg p { margin: 0 0 14px; color: var(--muted); font-size: 14.5px; }
+.dlg .bt { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.dlg .bt .btn { min-height: 48px; }
+.dlg.stack .bt { flex-direction: column; }
+.dlg.stack .bt .btn { width: 100%; }
+
+.sheet { position: absolute; z-index: 9; background: var(--surf); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgb(40 30 15/30%); }
+.sheet.tab { left: 50%; top: 16px; bottom: 16px; width: 760px; transform: translateX(-50%); border-radius: 14px; }
+.sheet.ph { inset: 0; border-radius: 0; }
+.band { margin: 0; padding: 8px 16px; background: #fde7b8; color: #4a2c05; border-bottom: 1px solid #e3c27c; font-size: 13.5px; font-weight: 600; }
+.errband { margin: 0; padding: 6px 16px; background: #fbeaec; color: #8a2232; font-size: 13px; font-weight: 600; }
+.foot { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+.foot .cnt { flex: 1; font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 14.5px; min-width: 0; white-space: nowrap; }
+.foot .cnt::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #b5651d; flex: none; }
+.foot.err .cnt { color: #8a2232; }
+.foot.err .cnt::before { background: #8a2232; }
+.foot.saved .cnt::before { background: var(--fill); }
+.foot .btn { min-height: 48px; }
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgb(255 255 255/40%); border-top-color: #fff; animation: sp 0.9s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.tapw { position: relative; display: inline-flex; }
+.btn.ring { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #b5651d; }
+.tapdot { position: absolute; right: -8px; bottom: -14px; width: 28px; height: 28px; border-radius: 50%; background: rgb(181 101 29/55%); border: 2px solid #7a4210; }
+/* new in this round */
+.pill { position: absolute; z-index: 6; right: 16px; bottom: 16px; min-height: 44px; max-width: calc(100% - 24px); border: 0; border-radius: 999px; background: var(--ink); color: #f6e9d2; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; white-space: nowrap; box-shadow: 0 4px 14px rgb(40 30 15/35%); }
+.pill::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #f0a64a; flex: none; }
+.pill.err { background: #8a2232; color: #fff; }
+.pill.err::before { background: #fff; }
+.ph .pill { bottom: 68px; right: 12px; }
+.pill.up { bottom: 76px; }
+.ph .pill.up { bottom: 132px; }
+.ph .toast { bottom: 132px; left: 12px; transform: none; }
+.ph .dr select { max-width: 104px; }
+.ph .pop { bottom: 124px; }
+.pop { position: absolute; z-index: 7; right: 16px; bottom: 68px; width: 360px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgb(40 30 15/30%); overflow: hidden; }
+.ph .pop { left: 12px; right: 12px; width: auto; bottom: 120px; }
+.pop h4 { margin: 0; padding: 10px 14px; font-size: 14.5px; border-bottom: 1px solid var(--line); }
+.pop li { padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.pop .bt { display: flex; gap: 8px; padding: 8px 12px; justify-content: flex-end; }
+.pop .bt .btn { min-height: 44px; }
+.note { margin: 0; padding: 8px 16px; font-size: 13.5px; color: #4a4f44; background: var(--surf2); }
+.toast { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 6px; background: var(--surf); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 700; color: var(--fill); bottom: 76px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 8px rgb(40 30 15/18%); }
+.dr.errrow { background: #fbeaec; }
+.errmsg { color: var(--warn); font-size: 13px; font-weight: 600; }
+.sw { min-height: 44px; min-width: 80px; border: 1px solid var(--edge); border-radius: 999px; background: transparent; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px 0 8px; font-size: 13.5px; font-weight: 600; }
+.sw i { width: 28px; height: 16px; border-radius: 8px; background: var(--surf2); border: 1px solid var(--edge); position: relative; }
+.sw i::after { content: ''; position: absolute; top: 1px; left: 1px; width: 12px; height: 12px; border-radius: 50%; background: var(--edge); }
+.sw.on { border-color: var(--warn); color: var(--warn); }
+.sw.on i::after { left: 13px; background: var(--warn); }
+.lv { display: grid; align-items: center; gap: 8px; min-height: 56px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--line); }
+.lv.t { grid-template-columns: minmax(0, 1fr) 5rem 4rem 4rem 7.5rem; }
+.lv.h { min-height: 36px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.lv .n { text-align: right; font-variant-numeric: tabular-nums; }
+.lv.gone { color: var(--muted); }
+.lv small { color: var(--muted); font-size: 13px; margin-left: 6px; }
+.lv.p { grid-template-columns: minmax(0, 1fr) auto; padding: 8px 12px 8px 16px; }
+.lv.p .sub { color: var(--muted); font-size: 13px; display: block; }
+.top { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-end; padding: 12px 16px; }
+.top h2 { margin: 0; font-size: 26px; line-height: 1.15; }
+.kick { color: #2f6b36; font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.meter { height: 4px; border-radius: 2px; background: var(--line); display: block; }
+.meter i { display: block; height: 100%; border-radius: 2px; background: var(--fill); }
+.st { display: grid; grid-template-columns: minmax(0, 1fr) 9rem 6.5rem; gap: 16px; align-items: center; min-height: 52px; padding: 0 16px; border-top: 1px solid var(--line); font-weight: 600; }
+.st.gone { color: var(--muted); }
+.ph .st { grid-template-columns: minmax(0, 1fr) 4rem 5.5rem; gap: 10px; }
+.st .am { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+.sc { overflow: hidden; flex: 1; min-height: 0; position: relative; }
+.ftr { flex: none; display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+.tiles { display: flex; gap: 12px; padding: 12px 16px; }
+.tiles div { flex: 1; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 13px; color: var(--muted); }
+.tiles b { display: block; font-size: 22px; color: var(--text); }
+.bsheet { position: absolute; z-index: 11; left: 0; right: 0; bottom: 0; max-height: 94%; overflow: hidden; background: var(--surf); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgb(40 30 15/30%); }
+.win { padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 10px; }
+.dlg.win { width: min(580px, calc(100% - 32px)); }
+.win h3 { margin: 0; font-size: 19px; line-height: 1.2; }
+.win .sub { margin: 0; color: var(--muted); font-size: 14px; }
+.win .sec { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.win .sec h4 { margin: 0; font-size: 15px; }
+.win .help { margin: 0; color: var(--muted); font-size: 13.5px; }
+.win .dup { margin: 0; font-size: 13.5px; font-weight: 700; color: #7a4210; background: #fff6e0; border-radius: 8px; padding: 6px 10px; }
+.mrow { display: flex; align-items: center; gap: 8px; min-height: 52px; border-bottom: 1px solid var(--line); }
+.mrow .tx { flex: 1; min-width: 0; }
+.mrow .tx b { display: block; font-weight: 600; }
+.mrow .tx small { color: var(--muted); font-size: 13px; display: block; }
+.win .field { display: grid; gap: 2px; }
+.win .field span { font-size: 13px; color: var(--muted); }
+.win .field div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; color: var(--muted); }
+.win .field div.fill { color: var(--text); }
+.win .foot2 { border-top: 1px solid var(--line); padding-top: 8px; display: flex; gap: 4px 12px; flex-wrap: wrap; justify-content: flex-end; }
+.win .foot2.col { flex-direction: column; align-items: stretch; }
+.win .foot2.col .btn { width: 100%; }
+.win .bts { display: flex; flex-direction: column; gap: 8px; }
+.win .bts .btn { width: 100%; justify-content: flex-start; padding: 0 14px; min-height: 52px; }
+.win .bts .btn small { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.win .x { position: absolute; top: 4px; right: 4px; }
+.rw { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.rw .tx { flex: 1; min-width: 0; }
+.rw .tx b { font-weight: 700; }
+.rw .tx small { color: var(--muted); font-size: 13px; display: block; }
+.ph .rw { padding: 0 12px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { display: inline-block; border: 1px solid var(--edge); border-radius: 999px; font-size: 12px; font-weight: 600; padding: 0 8px; color: var(--muted); white-space: nowrap; }
+.chip.first { border-color: #b5651d; color: #7a4210; background: #fff6e0; }
+.chip.old { border-color: var(--fill); color: var(--fill); }
+.chip.saved { background: var(--surf2); border-color: var(--line); color: #4a4f44; }
+table.w { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+table.w th, table.w td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+.opt { max-width: 1138px; width: 100%; border-top: 3px solid var(--ink); padding-top: 6px; }
+.opt h2 { margin: 0; font-size: 1.125rem; }
+
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>Customer link: redesign options (plan 106 mock-up)</h1>
+      <p>Redesign of the seller's "Link to a saved customer?" window and its badges. Problem list: <code>106-customer-link-today.html</code> (8 scenarios, 15 unclear points). Light theme only. Tablet 1138 × 640 with rail, phone 384 × 800, one ID frame. Samples: Onde Onde, Adelaide, AUD; Anin, Lenny, Larissa, sandra; 0412 345 678. Buttons stay on one line (stacked full width on the phone instead of wrapping).</p>
+      <p><b>Strict rule (owner, 18 Oct):</b> nothing is drawn that the app or the owner's rulings do not have. What is drawn comes from today's app (match list, Link, New customer, number kept only on this device, CSV backup) or from the owner's asks (duplicates with date and last digits, number field in the same step, Skip explained, when it opens). Everything else is a <b>question in a caption</b>, marked "Q".</p>
+
+      <div class="rec">
+        <b>Words, one meaning each (used in both options)</b>
+        <table class="w">
+          <tr><th>Word on screen (EN / ID)</th><th>Means</th><th>Comes from</th><th>Today's word</th></tr>
+          <tr><td><span class="chip first">First order</span> / Pesanan pertama</td><td>This customer's phone has no collected or delivered order from this kitchen</td><td>The customer's phone</td><td>★ New customer / Pelanggan baru</td></tr>
+          <tr><td><span class="chip old">Ordered before</span> / Pernah memesan</td><td>This customer's phone has a collected or delivered order from this kitchen</td><td>The customer's phone</td><td>↩ Returning / Langganan (also "Pelanggan lama", "pelanggan tetap")</td></tr>
+          <tr><td><span class="chip saved">Saved on this tablet</span> / Tersimpan di tablet ini</td><td>This device's own list holds the customer (name, number); says "phone" on a phone</td><td>The seller's device list</td><td>"saved customer", "regular" (no badge)</td></tr>
+          <tr><td>Someone new / Orang baru</td><td>Add as a new entry (with a number, in the same step)</td><td>Seller's choice</td><td>"New customer" (3 meanings)</td></tr>
+          <tr><td>Same person on a new phone / Orang yang sama, ponsel baru</td><td>Link: this device remembers the phone behind this order as that saved customer</td><td>Seller's choice</td><td>"Link"</td></tr>
+        </table>
+        <p class="fn" style="margin:4px 0 0">"First order" / "Ordered before" are the customer-phone words; they say nothing about the list on this device. Both can show on one row, for example "Ordered before" + no "Saved on this tablet" on another device (frame A4).</p>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        x: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+        down: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>',
+      };
+      const L = {
+        en: {
+          rail: ['Home', 'Orders', 'Menu', 'Dishes', 'More'], tabs: ['Home', 'Orders', 'Menu', 'More'], page: 'Orders', orders: 'Orders · Sat 24 Oct',
+          first: 'First order', old: 'Ordered before', saved: (d) => `Saved on this ${d}`, dev: { tab: 'tablet', ph: 'phone' }, items: (n) => `${n} items`,
+          confirmed: (c) => `Order ${c} is confirmed`, ask: (n, d) => `Is ${n} someone you saved on this ${d}?`,
+          what: (n, d) => `Linking tells this ${d} that the customer's phone behind this order is ${n}'s, so their number shows next time. Your customer list lives on this ${d} only; other tablets and phones keep their own.`,
+          sameH: 'Same person on a new phone', newH: 'Someone new', none: (n, d) => `No saved customer called ${n} on this ${d}.`,
+          dup: (k, n) => `${k} saved customers called ${n}`, dupHelp: 'Check the last digits before you link.', last: 'last order',
+          link: 'Link', newHelp: (n) => `Save ${n} as a new customer, with the number if you have it.`, num: 'WhatsApp number (optional)', save: 'Save customer',
+          skip1: 'Ask me again next time', skip2: "Don't ask for this order", close: 'Close',
+          q1: (n) => `Have you saved ${n} on this tablet before?`, yes: 'Yes, same person on a new phone', no: 'No, someone new', yesS: (k) => `${k} saved called Anin`, noS: 'Save with a number',
+          back: 'Back', toast: (c) => `Order ${c} confirmed`, contact: 'Contact', wa: 'WhatsApp',
+          bkT: 'Back up your customer details?', bkB: 'This menu is finished. 3 new customers and 1 changed customer since your last backup.', bkP: 'Keep this file private. It has your customers\' phone numbers and addresses.',
+          bkDl: 'Download backup', later: 'Later', laterH: 'Later asks again the next time you open the app.',
+        },
+        id: {
+          rail: ['Beranda', 'Pesanan', 'Menu', 'Hidangan', 'Lainnya'], tabs: ['Beranda', 'Pesanan', 'Menu', 'Lainnya'], page: 'Pesanan', orders: 'Pesanan · Sab 24 Okt',
+          first: 'Pesanan pertama', old: 'Pernah memesan', saved: (d) => `Tersimpan di ${d}`, dev: { tab: 'tablet ini', ph: 'ponsel ini' }, items: (n) => `${n} item`,
+          confirmed: (c) => `Pesanan ${c} sudah dikonfirmasi`, ask: (n, d) => `Apakah ${n} sudah Anda simpan di ${d}?`,
+          what: (n, d) => `Menghubungkan memberi tahu ${d} bahwa ponsel pelanggan di pesanan ini milik ${n}, jadi nomornya muncul lain kali. Daftar pelanggan hanya ada di ${d}; tablet dan ponsel lain punya daftar sendiri.`,
+          sameH: 'Orang yang sama, ponsel baru', newH: 'Orang baru', none: (n, d) => `Tidak ada pelanggan tersimpan bernama ${n} di ${d}.`,
+          dup: (k, n) => `${k} pelanggan tersimpan bernama ${n}`, dupHelp: 'Periksa digit terakhir sebelum menghubungkan.', last: 'pesanan terakhir',
+          link: 'Hubungkan', newHelp: (n) => `Simpan ${n} sebagai pelanggan baru, dengan nomornya jika ada.`, num: 'Nomor WhatsApp (boleh kosong)', save: 'Simpan pelanggan',
+          skip1: 'Tanya lagi nanti', skip2: 'Jangan tanya untuk pesanan ini', close: 'Tutup',
+          q1: (n) => `Apakah ${n} pernah Anda simpan di tablet ini?`, yes: 'Ya, orang yang sama, ponsel baru', no: 'Bukan, orang baru', yesS: (k) => `${k} tersimpan bernama Anin`, noS: 'Simpan dengan nomor',
+          back: 'Kembali', toast: (c) => `Pesanan ${c} dikonfirmasi`, contact: 'Kontak', wa: 'WhatsApp',
+          bkT: 'Cadangkan data pelanggan Anda?', bkB: 'Menu ini sudah selesai. 3 pelanggan baru dan 1 berubah sejak cadangan terakhir.', bkP: 'Simpan file ini secara pribadi. Isinya nomor telepon dan alamat pelanggan Anda.',
+          bkDl: 'Unduh cadangan', later: 'Nanti', laterH: 'Nanti = ditanya lagi saat aplikasi dibuka berikutnya.',
+        },
+      };
+      const rail = (s, on) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const tabbar = (s, on) => `<div class="tabbar">${s.tabs.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</div>`;
+
+      // background: the Orders list (rows: name, code, items, total, chips)
+      const rows = (s, d, o = {}) => {
+        const R = [['Anin', 'K7Q2MD', 2, '$34.00', 'first', o.anin], ['Larissa', 'P4N8XT', 3, '$51.50', 'old', 'saved'], ['Lenny', 'T9B3HV', 1, '$12.00', 'old', 'saved'], ['sandra', 'M2C6WQ', 2, '$24.00', 'first', '']];
+        return R.map((r) => `<div class="rw"><div class="tx"><b>${r[0]}</b><small>${r[1]} · ${s.items(r[2])} · ${r[3]}</small></div><span class="chips"><span class="chip ${r[4]}">${r[4] === 'first' ? s.first : s.old}</span>${r[5] === 'saved' ? `<span class="chip saved">${s.saved(s.dev[d])}</span>` : ''}</span></div>`).join('');
+      };
+      const orders = (s, d, o) => `<div class="hdr"><span>${s.orders}</span></div>${rows(s, d, o)}`;
+      const T = (fn) => (s) => `${rail(s, 1)}<div class="main">${fn(s, 'tab')}</div>`;
+      const P = (fn) => (s) => `${fn(s, 'ph')}${tabbar(s, 1)}`;
+      const shell = (inner, d) => (d === 'tab' ? `<div class="scrim"></div><div class="dlg win" role="dialog">${inner}</div>` : `<div class="scrim"></div><div class="bsheet win" role="dialog">${inner}</div>`);
+      const xbtn = (s) => `<button class="btn icon flat x" aria-label="${s.close}">${I.x}</button>`;
+      const skips = (s, d) => `<div class="foot2 ${d === 'ph' ? 'col' : ''}"><button class="btn">${s.skip1}</button><button class="btn flat">${s.skip2}</button></div>`;
+      const head = (s, d, step2) => `<h3>${s.confirmed('K7Q2MD')}</h3>${step2 ? '' : `<p class="sub">${s.ask('Anin', s.dev[d])}</p>`}`;
+      const dupRows = (s, k) => [['Anin', '…678', '4 Oct'], ['Anin', '…123', '20 Sep']].slice(0, k).map((r) => `<div class="mrow"><div class="tx"><b>${r[0]} ${r[1]}</b><small>${s.last} ${r[2]}</small></div><button class="btn">${s.link}</button></div>`).join('');
+      const sameSec = (s, d, k) => `<div class="sec"><h4>${s.sameH}</h4>${k === 0 ? `<p class="help">${s.none('Anin', s.dev[d])}</p>` : `${k > 1 ? `<p class="dup">${s.dup(k, 'Anin')}</p><p class="help">${s.dupHelp}</p>` : ''}${dupRows(s, k)}`}</div>`;
+      const newSec = (s) => `<div class="sec"><h4>${s.newH}</h4><p class="help">${s.newHelp('Anin')}</p><label class="field"><span>${s.num}</span><div>e.g. 0412 345 678</div></label><div class="foot2" style="border:0;padding:0"><button class="btn pri">${s.save}</button></div></div>`;
+      const what = (s, d) => `<p class="help">${s.what('Anin', s.dev[d])}</p>`;
+
+      // Option A: one window
+      const A = (k, d0) => (s, d) => { const dd = d0 || d; return orders(s, dd === 'tab' ? 'tab' : 'ph', {}) + shell(`${xbtn(s)}${head(s, d)}${what(s, d)}${sameSec(s, d, k)}${newSec(s)}${skips(s, d)}`, d); };
+      // Option B: step 1 and step 2
+      const B1 = (s, d) => orders(s, d, {}) + shell(`${xbtn(s)}${head(s, d)}${what(s, d)}<p class="dup">${s.dup(2, 'Anin')}</p><div class="bts"><button class="btn">${s.yes}</button><button class="btn">${s.no}</button></div>${skips(s, d)}`, d);
+      const B2y = (s, d) => orders(s, d, {}) + shell(`${xbtn(s)}${head(s, d, true)}${sameSec(s, d, 2)}<div class="foot2"><button class="btn flat">${I.x}${s.back}</button><button class="btn">${s.skip1}</button></div>`, d);
+      const B2n = (s, d) => orders(s, d, {}) + shell(`${xbtn(s)}${head(s, d, true)}${newSec(s)}<div class="foot2"><button class="btn flat">${s.back}</button><button class="btn">${s.skip1}</button></div>`, d);
+      // no window: returning on a known device
+      const noWin = (s, d) => `<div class="hdr"><span>${s.orders}</span></div>${rows(s, d)}<span class="toast" style="${d === 'ph' ? 'bottom:76px;left:12px;transform:none' : 'bottom:24px'}">${I.check}${s.toast('P4N8XT')}</span>`;
+      const detail = (s, d) => `<div class="hdr"><span>Larissa · P4N8XT</span></div><div class="rw"><div class="tx"><b>Larissa</b><small>P4N8XT · ${s.items(3)} · $51.50</small></div><span class="chips"><span class="chip old">${s.old}</span><span class="chip saved">${s.saved(s.dev[d])}</span></span></div><div class="rw"><div class="tx"><b>${s.contact}</b><small>0412 345 678 · 12 Jetty Rd, Glenelg</small></div><button class="btn">${s.wa}</button></div>`;
+      // backup reminder
+      const bk = (s, d) => orders(s, d, {}) + shell(`${xbtn(s)}<h3>${s.bkT}</h3><p class="sub">${s.bkB}</p><p class="help">${s.bkP}</p><div class="foot2 ${d === 'ph' ? 'col' : ''}"><button class="btn pri">${I.down}${s.bkDl}</button><button class="btn">${s.later}</button></div><p class="help" style="margin:0">${s.laterH}</p>`, d);
+      const badges = (s, d) => orders(s, d, { anin: '' }).replace(/$/, '');
+
+      const tablets = [
+        { b: 'W', t: 'Badges on the order rows', h: T(badges), cap: 'Row chips now have one meaning each: <b>First order / Ordered before</b> come from the customer\'s phone; <b>Saved on this tablet</b> comes from this device\'s list. Larissa and Lenny are both. sandra and Anin show only the phone chip.', tr: 'Q: should "Saved on this tablet" be on the row, or only in the order\'s Contact block (less crowded)? Today the row shows no saved chip.' },
+        { b: 'A1', t: 'Option A (recommended): new person, no match', h: T(A(0)), cap: 'After Confirm: the title says the order <b>is confirmed</b>, then asks about the person. "Same person on a new phone" says why it is empty. "Someone new" has the <b>number field in the same step</b> and one button, Save customer (number optional, as today\'s New customer saves none). Two Skip choices, each one line.', tr: 'Changed vs today: one meaning per button; number can be typed here instead of later under "Contact on this phone"; Skip split in two. Trade-off: a taller window, one more field to look at.' },
+        { b: 'A2', t: 'Option A: similar name, 2 saved Anins', h: T(A(2)), cap: 'The window names the problem: <b>"2 saved customers called Anin"</b>, then each row with the last 3 digits of the number and the last order date (…678 · 4 Oct, …123 · 20 Sep). Link on the row; Someone new stays below.', tr: 'Matching rule is today\'s (same name, one letter off, or prefix); only the display changes. Q: if a saved customer has no number yet, show only the date?' },
+        { b: 'A3', t: 'Option A: returning on a known device (no window)', h: T(noWin), cap: 'Larissa is saved on this tablet: Confirm opens <b>no window</b>, only a small "Order P4N8XT confirmed" confirmation (Q: the small confirmation is drawn only so the seller sees the order was confirmed; whether the app shows one today is not confirmed in code). Her chips read "Ordered before" + "Saved on this tablet" and mean different things.', tr: '' },
+        { b: 'A3b', t: 'Option A: the order after that (Contact block)', h: T(detail), cap: 'The Contact block shows the saved number and the WhatsApp button, as today; the chip says where the number comes from.', tr: '' },
+        { b: 'A4', t: 'Option A: skip choices explained', h: T(A(1)), cap: '<b>Ask me again next time</b> = today\'s Skip: nothing saved, the window comes back for this phone at the next Confirm. <b>Don\'t ask for this order</b>: no window again for this order. Close (✕) works like "Ask me again next time". Here with one match, to show the single-row case.', tr: 'Q: does "Don\'t ask for this order" mean only this order, or all orders from this phone? Today nothing remembers a Skip, so this is new behaviour the owner would have to rule on.' },
+        { b: 'A5', t: 'Option A: backup reminder, Later made clear', h: T(bk), cap: 'Same window and same trigger as today (a finished menu, at least one new or changed customer). The only change: the line under the buttons says what <b>Later</b> does: asks again when the app is opened next time (today it lasts one page load).', tr: 'Q: should Later last longer (for example until the next finished menu)? Not drawn: that would change behaviour.' },
+        { b: 'B1', t: 'Option B: two steps, step 1 is one question', h: T(B1), cap: 'Step 1 asks a single question: "Have you saved Anin on this tablet before?" with two big answers. Fewer things on screen at once.', tr: 'Trade-off vs A: one more tap for everybody, but a seller who never links can answer "No, someone new" and type the number immediately.' },
+        { b: 'B2', t: 'Option B: step 2 after "Yes" (2 Anins)', h: T(B2y), cap: 'The same duplicate list as A2, alone on screen. Back returns to step 1.', tr: '' },
+        { b: 'B3', t: 'Option B: step 2 after "No" (number)', h: T(B2n), cap: 'The number field and Save customer, alone on screen.', tr: 'Trade-off: in B the no-match case (A1) goes straight to step 2 "Someone new" and skips step 1; that rule is not drawn.' },
+      ];
+      const phones = [
+        { b: 'A1 · phone', t: 'Option A: new person, no match', h: P(A(0)), cap: 'Bottom sheet; Skip choices stack full width (no wrapping).', tr: '' },
+        { b: 'A2 · phone', t: 'Option A: 2 saved Anins', h: P(A(2)), cap: 'Same content; the sheet is full height. The label says "phone" where it names this device.', tr: '' },
+        { b: 'A4 · phone', t: 'Option A: another device (this phone has an empty list)', h: P(A(0)), cap: 'Anin is saved on the tablet but not on this phone, so this window opens with "No saved customer called Anin on this phone". The window says <b>"other tablets and phones keep their own"</b>, so the seller knows why. The cloud cannot say that Anin is saved elsewhere.', tr: 'Q: add a line pointing to More › Customer details › Upload CSV? That link exists in the app today (the CSV is the only bridge) but is not in today\'s window.' },
+        { b: 'A3 · phone', t: 'Option A: known device, no window', h: P(noWin), cap: 'Confirm, then only the small confirmation.', tr: '' },
+        { b: 'A5 · phone', t: 'Option A: backup reminder', h: P(bk), cap: 'Download backup and Later stacked; Later explained underneath.', tr: '' },
+        { b: 'B1 · phone', t: 'Option B: step 1', h: P(B1), cap: 'Two answers as full-width buttons.', tr: '' },
+        { b: 'B2 · phone', t: 'Option B: step 2 (2 Anins)', h: P(B2y), cap: 'List alone; Back and Ask me again next time on one row.', tr: '' },
+        { b: 'ID', t: 'Indonesian: 2 saved Anins', lang: 'id', h: P(A(2)), cap: 'The longest labels are "Jangan tanya untuk pesanan ini" and "Orang yang sama, ponsel baru"; both stay on one line at 384 px. ID wording is a first suggestion for the owner to check.', tr: '' },
+        { b: 'ID', t: 'Indonesian: backup reminder', lang: 'id', h: P(bk), cap: '"Nanti = ditanya lagi saat aplikasi dibuka berikutnya."', tr: '' },
+      ];
+      const fig = (f, kind) => `<figure><div class="scrollx"><div class="frame ${kind}" role="group" aria-label="${f.t}">${f.h(L[f.lang || 'en'], kind)}</div></div><figcaption><b><span class="badge">${f.b}</span> ${f.t}</b>${f.cap}${f.tr ? `<br /><span class="muted">${f.tr}</span>` : ''}</figcaption></figure>`;
+      const wrap = document.getElementById('wrap');
+      wrap.innerHTML = `<div class="opt"><h2>Tablet · Option A (recommended): one window, two sections</h2></div>` +
+        tablets.filter((f) => /^(W|A)/.test(f.b)).map((f) => fig(f, 'tab')).join('') +
+        `<div class="opt"><h2>Tablet · Option B: two steps</h2></div>` + tablets.filter((f) => /^B/.test(f.b)).map((f) => fig(f, 'tab')).join('') +
+        `<div class="opt"><h2>Phone and Indonesian</h2></div><div class="phones">${phones.map((f) => fig(f, 'ph')).join('')}</div>`;
+    </script>
+  </body>
+</html>

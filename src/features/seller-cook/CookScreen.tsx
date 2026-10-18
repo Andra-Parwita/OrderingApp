@@ -18,6 +18,7 @@ import { SCREEN_HEIGHT } from '../../theme/screen';
 type Tab = 'cook' | 'pack';
 
 const LABELS_PATH = '/seller/labels';
+const KITCHEN_PRINT_PATH = '/seller/cook/print';
 
 const Page = styled.main`
   display: flex;
@@ -141,6 +142,19 @@ function LabelsButton({ iconOnly = false }: Readonly<{ iconOnly?: boolean }>) {
   );
 }
 
+/** Plan 109: print the cook list; icon-only in the phone row, "Print" with the full name for readers. */
+function KitchenPrintButton({ iconOnly = false }: Readonly<{ iconOnly?: boolean }>) {
+  const { t } = useTranslation(COOK_NS);
+  const navigate = useNavigate();
+  const go = useCallback(() => void navigate(KITCHEN_PRINT_PATH), [navigate]);
+  return (
+    <Button aria-label={t('printKitchen')} title={t('printKitchen')} onClick={go}>
+      <Icon name="list" />
+      {iconOnly ? null : t('printPage.print')}
+    </Button>
+  );
+}
+
 /** Kitchen (plan 001, stage 8): Cook and Pack on today's cook route; `?tab=pack` opens Pack. */
 export function CookScreen() {
   const { t, i18n } = useTranslation(COOK_NS);
@@ -192,7 +206,12 @@ export function CookScreen() {
           {tab === 'pack' ? (
             <span>{t('pack.packedCount', { packed, total: bags.length })}</span>
           ) : null}
-          {inRouter && !phone ? <LabelsButton /> : null}
+          {inRouter && !phone ? (
+            <>
+              <KitchenPrintButton />
+              <LabelsButton />
+            </>
+          ) : null}
         </Side>
       </Head>
 
@@ -220,6 +239,7 @@ export function CookScreen() {
         {phone && inRouter ? (
           <>
             <TabsSpacer />
+            <KitchenPrintButton iconOnly />
             <LabelsButton iconOnly />
           </>
         ) : null}

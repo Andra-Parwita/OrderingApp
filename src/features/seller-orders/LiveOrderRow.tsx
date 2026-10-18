@@ -13,10 +13,12 @@ import { customerKind } from './customerKind';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
 
 // One order in the live list (handoff, Home): code, first name, Changed flag, small icons, total,
-// items, pickup or delivery, status, Paid. The whole row is one 56 px+ button.
+// items, pickup or delivery, status, Paid. The whole row is one button. Plan 108: on a wide list
+// (no order open) it is one line and shows the customer's note; otherwise two lines.
 
-const Row = styled.button<{ $selected: boolean; $fresh: boolean }>`
+const Row = styled.button<{ $selected: boolean; $fresh: boolean; $wide: boolean }>`
   display: grid;
+  grid-template-areas: 'line total' 'items right';
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.125rem ${({ theme }) => theme.spacing.lg};
   align-items: center;
@@ -40,14 +42,40 @@ const Row = styled.button<{ $selected: boolean; $fresh: boolean }>`
   &:hover {
     background: ${({ theme, $selected }) => ($selected ? theme.c.tint : theme.c.surf2)};
   }
+
+  ${({ $wide, theme }) =>
+    $wide
+      ? `@media (min-width: 70rem) {
+    grid-template-areas: 'line items note right total';
+    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) minmax(0, 1fr) 14rem 4.5rem;
+    gap: 0 ${theme.spacing.md};
+    min-height: ${theme.size.tap + 4}px;
+  }`
+      : ''}
 `;
 const Line = styled.div`
+  grid-area: line;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   min-width: 0;
 `;
+const NoteCell = styled.span`
+  display: none;
+  grid-area: note;
+  overflow: hidden;
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.8125rem;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (min-width: 70rem) {
+    display: block;
+  }
+`;
 const RightLine = styled(Line)`
+  grid-area: right;
   justify-content: flex-end;
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.875rem;
@@ -90,6 +118,7 @@ const Small = styled.span`
   }
 `;
 const Items = styled.span`
+  grid-area: items;
   overflow: hidden;
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.8125rem;
@@ -97,6 +126,7 @@ const Items = styled.span`
   white-space: nowrap;
 `;
 const Total = styled.span`
+  grid-area: total;
   font-size: 0.9375rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -140,6 +170,8 @@ export type LiveOrderRowProps = Readonly<{
   selected: boolean;
   /** Plan 021: a new customer order, highlighted for a few seconds. */
   isNew?: boolean;
+  /** An order is open beside the list: the row has no room for the note. */
+  panelOpen?: boolean;
   onOpen: (code: string) => void;
 }>;
 
@@ -147,6 +179,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
   order,
   selected,
   isNew = false,
+  panelOpen = false,
   onOpen,
 }: LiveOrderRowProps) {
   const { t } = useTranslation(SELLER_NS);
@@ -158,6 +191,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
       type="button"
       $selected={selected}
       $fresh={isNew}
+      $wide={!panelOpen}
       aria-current={selected ? 'true' : undefined}
       data-row-id={order.code}
       onClick={open}
@@ -183,6 +217,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
       </Line>
       <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
       <Items>{itemsSummary(order, lang)}</Items>
+      {!panelOpen && order.note ? <NoteCell title={order.note}>{order.note}</NoteCell> : null}
       <RightLine>
         <How>
           <Icon name={order.fulfilment === 'delivery' ? 'truck' : 'bag'} />

@@ -26,6 +26,7 @@ import {
   parseSellerOrderResponse,
   parseSellerOrdersResponse,
   type ChangeFulfilmentRequest,
+  type EditSellerOrderRequest,
   type CreateOrderRequest,
   type CreateSellerOrderRequest,
   type CustomerOrderResponse,
@@ -477,6 +478,20 @@ export function changeOrderFulfilment(
   seller?: string,
 ): Promise<ApiResult<SellerOrderResponse>> {
   return request(`/api/seller/orders/${enc(code)}/fulfilment`, parseSellerOrderResponse, {
+    method: 'PATCH',
+    body: input,
+    ...who(actor, seller),
+  });
+}
+
+/** Plan 105: the seller (owner or chef) edits dishes, note or name of an order. */
+export function editSellerOrder(
+  code: string,
+  input: EditSellerOrderRequest,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<SellerOrderResponse>> {
+  return request(`/api/seller/orders/${enc(code)}`, parseSellerOrderResponse, {
     method: 'PATCH',
     body: input,
     ...who(actor, seller),

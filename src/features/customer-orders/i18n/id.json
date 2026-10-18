@@ -156,7 +156,8 @@
       "collected": "Sudah diambil",
       "delivered": "Sudah diantar",
       "cancelled": "Pesanan dibatalkan"
-    }
+    },
+    "orderEdited": "Diubah oleh dapur"
   },
   "wa": {
     "message": "Halo, pesanan saya {{code}}: {{items}}. Total {{total}}. {{how}}. Nama: {{name}}.",

@@ -97,6 +97,21 @@ export type ChangeFulfilmentRequest = {
 };
 
 /**
+ * PATCH /api/seller/orders/:code (plan 105; owner and chef). Any order, any status: lines (the whole
+ * new list), note ('' clears it) and first name change; `notify` tells the customer (inbox entry +
+ * push); `force` goes ahead over a portion limit (D-062); `reactivate` puts a cancelled order back to
+ * Ordered. Pickup / delivery keeps its own route.
+ */
+export type EditSellerOrderRequest = {
+  lines?: Array<RequestedLine>;
+  note?: string;
+  firstName?: string;
+  notify: boolean;
+  force?: boolean;
+  reactivate?: boolean;
+};
+
+/**
  * A closed-week order whose details were dropped after 4 weeks (D-044 / D-027 row 6): only whose
  * and which week it was is left, enough to show "archived on <date> from <seller>".
  */
@@ -351,6 +366,33 @@ export function parseChangeFulfilmentRequest(input: unknown): ChangeFulfilmentRe
   return address ? { fulfilment, address, notify } : null;
 }
 
+export function parseEditSellerOrderRequest(input: unknown): EditSellerOrderRequest | null {
+  if (!isRecord(input) || hasPersonalData(input)) return null;
+  const { notify, force, reactivate } = input;
+  if (typeof notify !== 'boolean') return null;
+  if (force !== undefined && typeof force !== 'boolean') return null;
+  if (reactivate !== undefined && typeof reactivate !== 'boolean') return null;
+  const out: EditSellerOrderRequest = { notify };
+  if (input['lines'] !== undefined) {
+    const lines = parseRequestedLines(input['lines']);
+    if (!lines) return null;
+    out.lines = lines;
+  }
+  if (input['note'] !== undefined) {
+    const note = parseNote(input['note']);
+    if (note === null) return null;
+    out.note = note;
+  }
+  if (input['firstName'] !== undefined) {
+    const name = typeof input['firstName'] === 'string' ? input['firstName'].trim() : '';
+    if (name === '' || name.length > FIRST_NAME_MAX) return null;
+    out.firstName = name;
+  }
+  if (force !== undefined) out.force = force;
+  if (reactivate !== undefined) out.reactivate = reactivate;
+  return out;
+}
+
 function parseOrderLine(input: unknown): OrderLine | null {
   if (!isRecord(input)) return null;
   const name = parseLocalText(input['name']);
@@ -403,6 +445,19 @@ function parseAuditDiff(input: unknown): AuditDiff | null {
     const { from, to } = fulfilment;
     if (!isOneOf(FULFILMENTS, from) || !isOneOf(FULFILMENTS, to)) return null;
     diff.fulfilment = { from, to };
+  }
+  const { name, total } = input;
+  if (name !== undefined) {
+    if (!isRecord(name) || typeof name['from'] !== 'string' || typeof name['to'] !== 'string') {
+      return null;
+    }
+    diff.name = { from: name['from'], to: name['to'] };
+  }
+  if (total !== undefined) {
+    if (!isRecord(total)) return null;
+    const { from, to } = total;
+    if (!isInt(from, 0, 100_000_000) || !isInt(to, 0, 100_000_000)) return null;
+    diff.total = { from, to };
   }
   return diff;
 }

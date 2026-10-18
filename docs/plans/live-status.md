@@ -30,6 +30,28 @@ The plan work in progress, one row per stage or check, kept current by the coord
 | 2r · plan 105 seller edits an order: analysis + mock-up | general-purpose · sonnet | 18:10 | 30–45 min | 18:14 | 4 min | −30 min | plan + mock-up; no migration; 5 owner questions E1–E5 | ✅ |
 | 2s · explainer: today's "Link to a saved customer?" flow (scenarios + buttons) | general-purpose · sonnet | 18:13 | 20–30 min | 18:17 | | | 8 scenarios, 15 unclear points | ✅ |
 | 2t · mock-up fix 8 menu edit session + today's published rows inventory | general-purpose · sonnet | 18:38 | 30–45 min | 18:41 | | | today table + 16 frames | ✅ |
+| 3a · build 105 seller edits order + 103 Paid sheet | general-purpose · sonnet | 19:01 | 90–120 min | 19:49 | | | route + sheet + Paid sheet + customer band; 602 unit, 8 mocks, p105 4/4 ✅ | ✅ |
+| 3b · build 103 fix 8 menu edit session + Menu Sell button | general-purpose · sonnet | 19:01 | 90–120 min | 19:44 | | | session sheet + draft pill; 94 unit ✅; seller-menu e2e updated; pictures/places still instant | ✅ |
+| 3c · build 104 extras: Active tab, print choice, rail Dishes | general-purpose · sonnet | 19:01 | 45–60 min | 19:16 | | | Active, print Which orders, rail Home·Menu·Orders + Dishes; seller-batch1 e2e red (3a's Paid sheet) | ✅ |
+| 3d · mock-ups 106 customer list options + 107 on the day | general-purpose · sonnet | 19:05 | 30–45 min | 19:12 | | | 106: 19 frames A/B; 107: 17 frames; 10 owner Qs | ✅ |
+| 3e · Fable: risk/impact of 101, 102, 104 rows, button rule in 1.0.42 (owner asked) | general-purpose · fable | 19:02 | 30–45 min | 19:08 | | | rec: 1.0.42 + rows + 3 toolbars; 101+102 st.1–3 in 1.0.43; 102 routes 1.0.44 | ✅ |
+| 3f · build 104 delivery rows (2–3 lines, full width) + All/Deliveries/Pickups filter | general-purpose · sonnet | 19:17 | 45–60 min | 19:39 | | | DeliveryRow on /seller/deliveries; filter on hand-over; phone fix not captured | ✅ |
+| 3g · mock-up 108 compact seller Home (dark, tablet) | general-purpose · sonnet | 19:20 | 30–45 min | 19:28 | | | Home A/B, Menu A, Orders panel A/B; 6 Qs | ✅ |
+| 3h · mock-ups 106 customer list (new) + 107 update (Home line, no button) | general-purpose · sonnet | 19:26 | 30–45 min | 19:30 | | | 106 list 10 frames; 107 17 frames; 8 Qs | ✅ |
+| 3i · mock-up 109 kitchen print | general-purpose · sonnet | 19:49 | 30 min | 19:52 | | | screen + choice sheet + A4 pages + ID; 8 Qs | ✅ |
+| 3j · build 108 compact Home, Menu, Orders panel + rows + phone toolbar no-wrap | general-purpose · sonnet | 19:50 | 90–120 min | 20:28 | | | Home 12/12 dishes, Menu 10 rows, Orders 7 rows (4 with panel); 638 unit ✅ | ✅ |
+| 3k · build 109 kitchen print | general-purpose · sonnet | 20:28 | 60–90 min | 20:52 | | | /seller/cook/print, options + preview; 64 unit + p109 e2e ✅ | ✅ |
+| 3l · build admin short message preview (104) | general-purpose · sonnet | 20:28 | 30–45 min | 20:42 | | | real pill preview phone+tablet, counter, emoji; 47 unit ✅; e2e + capture blocked (shared server) → final gate | ✅ |
+| 3m · build 098 stage 3: C10 sweep + C12 socket token | general-purpose · sonnet | 20:28 | 60–90 min | 20:39 | | | C10 cron sweep; C12 token via Sec-WebSocket-Protocol (old ?tokens= kept); 44 mocks + 215 unit ✅ | ✅ |
+| 3n · fix Home scroll + check scroll on every main seller screen | general-purpose · sonnet | 20:36 | 45–60 min | 21:07 | | | banner-collapse snap fixed; orders print preview scroll fixed; sweep OK; phone partly | ✅ |
+| 3o · fix customer "Check your address" map hides the answer buttons (iPhone 15 Pro) | general-purpose · sonnet | 20:36 | 30–45 min | 20:44 | | | map min(45dvh,22rem), not draggable; card 2 lines; 135 unit + 6 e2e ✅ | ✅ |
+| 3p · build 106 link window option A | general-purpose · sonnet | 20:45 | 60–90 min | 21:04 | | | window A, Someone new saves number, 2 Skips, First order/Ordered before; 194 unit + p071 ✅; help text + docs pending | ✅ |
+| 3q · build 107 seller side: Menu tabs Pre-orders | On the day + Sell as | general-purpose · sonnet | 20:45 | 60–90 min | 21:08 | | | tabs + cooking-day default + Sell as; 137 unit ✅; e2e noisy | ✅ |
+| 4 · full gate 1.0.42 (typecheck, lint, format, all unit, full e2e; one at a time) | coordinator | 21:08 | 45–75 min | 21:57 | 49 min | ≈ 0 | tc/lint/fmt ✅; unit 2582/2584; e2e 68 ✅ 2 ✗ (iphone customer-live, order-flow), 46 not run | ⚠️ |
+| 4a · fix gate failures (iphone live/order-flow, SellerLayout test, handover) | general-purpose · sonnet | 21:59 | 30–60 min | 22:03 | | | all test-side: Skip → "Ask me next time", first_name in UPDATE, jsdom overflow | ✅ |
+| 4b · build 106 wording + Customers list + help | general-purpose · sonnet | 21:59 | 60–90 min | 22:07 | | | wording, list A–Z + Add/Edit/Delete, help; 31 + 414 unit ✅ | ✅ |
+| 4c · build 107 customer one list | general-purpose · sonnet | 21:59 | 30–60 min | 22:01 | | | DishesView group, no server change; 134 unit ✅ | ✅ |
+| 4d · release note + version 1.0.42 (owner A) | coordinator | 21:59 | 5 min | 21:59 | 5 min | 0 | releaseNotes.ts, release.ts, 6 tests | ✅ |
 
 ## Plan 094 one banner everywhere (release 1.0.41)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |

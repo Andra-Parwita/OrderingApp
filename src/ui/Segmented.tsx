@@ -29,6 +29,7 @@ const Option = styled.button<{ $selected: boolean; $compact: boolean }>`
   color: ${({ theme, $selected }) => ($selected ? theme.colour.onAccent : theme.colour.text)};
   font: inherit;
   font-weight: ${({ theme }) => theme.type.weight.strong};
+  white-space: nowrap;
   cursor: pointer;
 
   &:focus-visible {

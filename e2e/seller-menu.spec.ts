@@ -53,15 +53,16 @@ test('add a dish, edit its price, change it on the menu, then remove it', async 
   await expect(page.getByRole('heading', { level: 2, name: sampleDay() }).first()).toBeVisible();
   await expect(dishes.getByRole('row', { name: new RegExp(name) })).toContainText('$10.50');
 
-  // Edit the price of the menu's copy in Prices & limits (instant), the library keeps its own.
+  // Edit the price of the menu's copy in the edit sheet (plan 103: kept until Save), the library keeps its own.
   await page.goto('/seller/menu/edit/prices');
   const price = page.getByLabel(`Price of ${name}`);
   await price.fill('12');
-  // The price saves on blur: wait for that save before leaving, or the page change can cancel it.
+  await price.blur();
+  await expect(page.getByText('1 change not saved')).toBeVisible();
   const saved = page.waitForResponse(
     (response) => response.request().method() !== 'GET' && response.url().includes('/api/seller/'),
   );
-  await price.blur();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
   await saved;
   await page.goto('/seller/menu');
   await expect(dishes.getByRole('row', { name: new RegExp(name) })).toContainText('$12.00');
@@ -78,6 +79,11 @@ test('add a dish, edit its price, change it on the menu, then remove it', async 
   await page.goto('/seller/menu/edit/dishes');
   await page.getByRole('button', { name: `Remove ${name} from this menu` }).click();
   await expect(page.getByRole('button', { name: `Remove ${name} from this menu` })).toHaveCount(0);
+  const removed = page.waitForResponse(
+    (response) => response.request().method() !== 'GET' && response.url().includes('/api/seller/'),
+  );
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await removed;
   await page.goto('/seller/menu/dishes');
   await page.getByRole('button', { name: `Edit ${name}` }).click();
   await page.getByRole('button', { name: 'Delete dish' }).click();

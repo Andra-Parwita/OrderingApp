@@ -137,7 +137,7 @@ describe('Home with a live menu', () => {
     // The count sits in its own span, so the name reads "Changed1" or "Changed 1".
     expect(screen.getByRole('button', { name: /^Changed\s*1$/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Not paid\s*3$/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^All\s*4$/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Active\s*4$/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Confirmed\s*2$/ })).toBeInTheDocument();
   });
 

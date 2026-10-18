@@ -27,6 +27,8 @@ import {
 } from './menuShared';
 import type { MenuData } from './menuSlice';
 import { matchPastDishes } from './pastMenus';
+import { useMarks, useSession } from './sessionIntercept';
+import { ChangeMark } from './SessionMarks';
 import { useSold } from './useSold';
 
 // Step 1 and the Dishes tab: the reuse picker (Your dishes, Saved sets, Past menus), the list of
@@ -61,13 +63,14 @@ const Bar = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
   margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
-const OnMenu = styled.li`
+const OnMenu = styled.li<{ $changed?: boolean }>`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   min-height: ${({ theme }) => theme.size.rowCompact + 8}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  background: ${({ $changed, theme }) => ($changed ? theme.c.warnTint : 'transparent')};
   font-variant-numeric: tabular-nums;
 
   span:first-child {
@@ -124,6 +127,8 @@ export function DishesStep({
     sold: number;
   } | null>(null);
   const { sold } = useSold(live);
+  const session = useSession();
+  const marks = useMarks();
   const { view } = data;
   const serverIds = useMemo(
     () => view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : [])),
@@ -134,6 +139,7 @@ export function DishesStep({
   const saver = useAutoSave<Array<string>>(
     draftKey(currentSellerSlug(), 'menu-dishes', view.menu.id),
     async (dishIds) => saveResultOf(await sendOp({ kind: 'updateMenu', request: { dishIds } })),
+    session ? 0 : undefined,
   );
   const { pending } = saver.state;
   const onMenuIds = pending ?? serverIds;
@@ -286,9 +292,19 @@ export function DishesStep({
         <List>
           {onMenu.map((dish) => {
             const name = pickText(dish.name, lang);
+            const mark = !marks
+              ? null
+              : dish.dishId && marks.added.includes(dish.dishId)
+                ? 'added'
+                : marks.edited[dish.key]
+                  ? 'edited'
+                  : null;
             return (
-              <OnMenu key={dish.key}>
-                <span>{name}</span>
+              <OnMenu key={dish.key} $changed={mark !== null}>
+                <span>
+                  {name}
+                  {mark ? <ChangeMark kind={mark} /> : null}
+                </span>
                 <span>{formatMoney(dish.priceCents, lang)}</span>
                 <Pencil
                   type="button"
@@ -301,6 +317,16 @@ export function DishesStep({
               </OnMenu>
             );
           })}
+          {marks?.removed.map((dish) => (
+            <OnMenu key={dish.id} $changed>
+              <span>
+                <s>{pickText(dish.name, lang)}</s>
+                <ChangeMark kind="removed" />
+              </span>
+              <span>{formatMoney(dish.priceCents, lang)}</span>
+              <span />
+            </OnMenu>
+          ))}
         </List>
         <Foot>
           <Muted>{t('dishes.pricesLater')}</Muted>

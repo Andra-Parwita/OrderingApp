@@ -58,3 +58,18 @@ describe('formatAuditDiff', () => {
     );
   });
 });
+
+describe('diffOrder for a seller edit (plan 105)', () => {
+  const base = { lines: [lemper(2)], fulfilment: 'pickup' as const, firstName: 'Lenni' };
+  it('records the name and the total only for staff', () => {
+    const after = { ...base, lines: [lemper(3)], firstName: 'Lenny' };
+    expect(diffOrder(base, after)?.name).toBeUndefined();
+    const diff = diffOrder(base, after, { staff: true });
+    expect(diff?.name).toEqual({ from: 'Lenni', to: 'Lenny' });
+    expect(diff?.total).toEqual({ from: 2000, to: 3000 });
+    expect(diff && formatAuditDiff(diff, 'en')).toBe('+1 Chicken lemper · name: Lenni → Lenny');
+  });
+  it('a name fix alone is a change', () => {
+    expect(diffOrder(base, { ...base, firstName: 'Lenny' }, { staff: true })?.name).toBeDefined();
+  });
+});

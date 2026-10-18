@@ -232,10 +232,11 @@ export function changeStatements(db: Db, change: OrderChange): Array<D1Statement
     db.stmt(
       // `packed` and the ticks are not written here: only the pack call changes them (D-066), so a
       // status change read a moment earlier can never undo a tick.
-      `UPDATE orders SET status = ?, paid = ?, locked = ?, wa_received = ?, changed = ?, fulfilment = ?,
+      `UPDATE orders SET first_name = ?, status = ?, paid = ?, locked = ?, wa_received = ?, changed = ?, fulfilment = ?,
          note = ?, collected_at = ?, collected_by = ?, updated_at = ?,
          address_enc = CASE WHEN ? = 'cancelled' THEN NULL ELSE address_enc END
        WHERE seller_id = ? AND id = ?`,
+      order.firstName,
       order.status,
       order.paid,
       order.locked,

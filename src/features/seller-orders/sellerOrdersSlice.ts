@@ -4,7 +4,10 @@ import type { Order, OrderStatus, SellerMenuItemView } from '../../../shared/dom
 import type { MenuView } from '../../../shared/menusContract';
 import type { PastWeekSummary } from '../../../shared/pastWeeks';
 import type { UpdateItemRequest } from '../../../shared/setupContract';
-import type { CreateSellerOrderRequest } from '../../../shared/orderContract';
+import type {
+  CreateSellerOrderRequest,
+  EditSellerOrderRequest,
+} from '../../../shared/orderContract';
 
 /** What the last failed change was, so the screen can offer a retry. */
 export type FailedChange =
@@ -27,6 +30,17 @@ export type CreateState =
   | { status: 'saving' }
   | { status: 'error'; error: string }
   | { status: 'saved'; order: Order };
+
+/**
+ * Plan 105: the Edit order sheet's save. `warned` = the server said the edit goes over a portion
+ * limit (the sheet asks, then sends again with force); `saved` closes the sheet.
+ */
+export type EditState =
+  | { status: 'idle' }
+  | { status: 'saving'; code: string }
+  | { status: 'warned'; code: string }
+  | { status: 'error'; code: string; error: string }
+  | { status: 'saved'; code: string };
 
 /** The current menu: its state decides what Home shows. */
 export type CurrentMenuState =
@@ -66,7 +80,10 @@ export type ToastKind =
   | 'clearFailed'
   // Plan 021 new customer orders; `name` is "Tom · V34-P42" or the count.
   | 'newOrder'
-  | 'newOrders';
+  | 'newOrders'
+  // Plan 105: the seller edited an order; with `copy` the toast offers "Copy message" (WhatsApp).
+  | 'edited'
+  | 'editedTold';
 /**
  * What just happened, for the toast; undo is null where no Undo exists; id restarts the 6 s timer.
  * `open` (plan 021) gives the toast an Open/Show button: an order code, or null for the list.
@@ -77,6 +94,8 @@ export type ActionToast = {
   name: string;
   undo: UndoAction | null;
   open?: { code: string | null };
+  /** Plan 105: the message to copy, in the customer's language. */
+  copy?: string;
 };
 
 /** A new customer order, as much as the toast needs. */
@@ -100,6 +119,7 @@ export type SellerOrdersState = {
   change: ChangeState;
   menu: SellerMenuState;
   create: CreateState;
+  edit: EditState;
   notice: Notice | null;
   current: CurrentMenuState;
   past: PastMenusState;
@@ -125,6 +145,7 @@ const initialState: SellerOrdersState = {
   change: { status: 'idle' },
   menu: { status: 'loading' },
   create: { status: 'idle' },
+  edit: { status: 'idle' },
   notice: null,
   current: { status: 'loading' },
   past: { status: 'idle' },
@@ -335,6 +356,27 @@ const sellerOrdersSlice = createSlice({
     createReset(state) {
       state.create = { status: 'idle' };
     },
+    editOrderRequested: {
+      reducer(state, action: PayloadAction<{ code: string; request: EditSellerOrderRequest }>) {
+        state.edit = { status: 'saving', code: action.payload.code };
+      },
+      prepare: (payload: { code: string; request: EditSellerOrderRequest }) => ({ payload }),
+    },
+    editWarned(state, action: PayloadAction<{ code: string }>) {
+      state.edit = { status: 'warned', code: action.payload.code };
+    },
+    editFailed(state, action: PayloadAction<{ code: string; error: string }>) {
+      state.edit = { status: 'error', ...action.payload };
+    },
+    editSaved(state, action: PayloadAction<{ order: Order }>) {
+      const { order } = action.payload;
+      const index = state.orders.findIndex((candidate) => candidate.id === order.id);
+      if (index >= 0) state.orders[index] = order;
+      state.edit = { status: 'saved', code: order.code };
+    },
+    editReset(state) {
+      state.edit = { status: 'idle' };
+    },
     orderSaved(state, action: PayloadAction<{ order: Order }>) {
       const { order } = action.payload;
       const index = state.orders.findIndex((candidate) => candidate.id === order.id);
@@ -397,6 +439,11 @@ export const {
   orderCreated,
   createFailed,
   createReset,
+  editOrderRequested,
+  editWarned,
+  editFailed,
+  editSaved,
+  editReset,
   orderSaved,
   orderPatched,
   changeFailed,

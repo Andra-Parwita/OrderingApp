@@ -140,6 +140,33 @@ describe('delivery address on the seller side', () => {
   });
 });
 
+describe('delivery rows (plan 104)', () => {
+  it('keeps every action: Directions, View on map, Delivered, and Delete address now in the menu', () => {
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal('confirm', confirm);
+    const s = store();
+    seed(s, [
+      makeOrder({
+        id: '1',
+        code: 'AAA222',
+        firstName: 'Rina',
+        fulfilment: 'delivery',
+        address: { address: A },
+      }),
+    ]);
+    renderWithStore(<DeliveriesScreen onBack={() => undefined} />, s);
+    expect(screen.getByText('12 Jetty Road, Glenelg 5045')).toBeInTheDocument();
+    expect(screen.getByText(/Notes for the driver: blue gate/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Directions' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View on map' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Delivered/ })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Delete address now' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'More' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete address now' }));
+    expect(confirm).toHaveBeenCalledWith("Delete this address now? It can't be brought back.");
+  });
+});
+
 describe('private deliveries (plan 081)', () => {
   it("lists today's private deliveries with View on map and Directions", async () => {
     server.use(

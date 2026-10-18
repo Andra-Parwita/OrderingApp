@@ -114,4 +114,66 @@ describe('weekly retention cron', () => {
     await runRetention({ DB: world.db.d1 }, MONDAY_AFTER, () => undefined);
     expect(await count('orders')).toBe(1);
   });
+
+  it('C10: sweeps keys and codes expired for over 7 days, keeps live and recent ones', async () => {
+    const seller = await world.db.first<{ id: string }>('SELECT id FROM sellers LIMIT 1');
+    const sid = seller?.id ?? '';
+    const aid = 'person:sweep';
+    await world.db
+      .stmt(
+        "INSERT INTO accounts (id, role, display_name, created_at) VALUES (?, 'person', 'Sweep', ?)",
+        aid,
+        PLACED.toISOString(),
+      )
+      .run();
+    const day = (n: number) => new Date(MONDAY_AFTER.getTime() + n * 86_400_000).toISOString();
+    for (const [hash, at] of [
+      ['k-old', day(-8)],
+      ['k-recent', day(-3)],
+      ['k-live', day(2)],
+    ] as const) {
+      await world.db
+        .stmt(
+          "INSERT INTO auth_keys (key_hash, seller_id, role, chef_id, display_name, created_at, expires_at) VALUES (?, ?, 'owner', NULL, 'N', ?, ?)",
+          hash,
+          sid,
+          day(-20),
+          at,
+        )
+        .run();
+    }
+    await world.db
+      .stmt(
+        "INSERT INTO auth_key_redemptions (key_hash, client_device_id, redeemed_at) VALUES ('k-old', 'd', ?)",
+        day(-9),
+      )
+      .run();
+    for (const [hash, at] of [
+      ['c-old', day(-8)],
+      ['c-live', day(0.01)],
+    ] as const) {
+      await world.db
+        .stmt(
+          'INSERT INTO auth_codes (code_hash, account_id, seller_id, created_at, expires_at, used) VALUES (?, ?, ?, ?, ?, 0)',
+          hash,
+          aid,
+          sid,
+          day(-20),
+          at,
+        )
+        .run();
+    }
+    const lines: Array<string> = [];
+    await runRetention({ DB: world.db.d1 }, MONDAY_AFTER, (l) => lines.push(l));
+    const keys = await world.db.all<{ key_hash: string }>(
+      'SELECT key_hash FROM auth_keys ORDER BY 1',
+    );
+    const codes = await world.db.all<{ code_hash: string }>(
+      'SELECT code_hash FROM auth_codes ORDER BY 1',
+    );
+    expect(keys.map((k) => k.key_hash)).toEqual(['k-live', 'k-recent']);
+    expect(codes.map((c) => c.code_hash)).toEqual(['c-live']);
+    expect(await count('auth_key_redemptions')).toBe(0);
+    expect(lines).toContain('retention: 1 expired key(s), 1 expired code(s) dropped');
+  });
 });

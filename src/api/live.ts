@@ -51,7 +51,9 @@ export type SocketLike = {
 
 export type LiveConnectionOptions = {
   url: () => string;
-  createSocket: (url: string) => SocketLike;
+  createSocket: (url: string, protocols?: Array<string>) => SocketLike;
+  /** Sub-protocols to offer (the customer socket's tokens, kept out of the address). */
+  protocols?: () => Array<string>;
   random?: () => number;
   /** A ping goes out this often while open. */
   heartbeatMs?: number;
@@ -130,7 +132,7 @@ export function connectLive(options: LiveConnectionOptions): LiveConnection {
     if (closed) return;
     let current: SocketLike;
     try {
-      current = createSocket(options.url());
+      current = createSocket(options.url(), options.protocols?.());
     } catch {
       // No WebSocket here (or a bad URL): behave like a lost connection and keep polling.
       socket = null;
@@ -267,9 +269,9 @@ export function liveUrl(): string {
 }
 
 /** Under test there is no server to connect to; tests pass their own socket factory. */
-function defaultSocket(url: string): SocketLike {
+function defaultSocket(url: string, protocols?: Array<string>): SocketLike {
   if (import.meta.env.MODE === 'test') throw new Error('No live socket under test');
-  return new WebSocket(url);
+  return new WebSocket(url, protocols);
 }
 
 /**

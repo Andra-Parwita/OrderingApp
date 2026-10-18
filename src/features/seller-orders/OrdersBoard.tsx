@@ -6,7 +6,7 @@ import { parseOrderCode } from '../../../shared/orderCode';
 import { Button, EmptyState, Icon, ListWithPanel } from '../../ui';
 import { SELLER_NS } from './i18n/register';
 import { LiveOrderRow } from './LiveOrderRow';
-import { OrderPanelActions, OrderPanelBody } from './OrderPanelBody';
+import { OrderPanelActions, OrderPanelBody, OrderPanelHeader } from './OrderPanelBody';
 import {
   ChipGroup,
   Divider,
@@ -77,7 +77,7 @@ export function OrdersBoard({
     selectedCode ? selectOrderByCode(state, selectedCode) : undefined,
   );
   const retry = useCallback(() => dispatch(refreshRequested()), [dispatch]);
-  const noOrdersAtAll = list.status === 'ready' && counts.all === 0;
+  const noOrdersAtAll = list.status === 'ready' && counts.all + counts.cancelled === 0;
   const raw = selectedCode ? (parseOrderCode(selectedCode) ?? selectedCode) : undefined;
 
   // Bring the open order's row into view inside the list when the page opens on it (a link, a reload).
@@ -159,7 +159,7 @@ export function OrdersBoard({
           }
         />
       ) : null}
-      {list.status === 'ready' && counts.all > 0 && visible.length === 0 ? (
+      {list.status === 'ready' && counts.all + counts.cancelled > 0 && visible.length === 0 ? (
         <Message>{t('orders.empty')}</Message>
       ) : null}
       {list.status === 'ready'
@@ -169,6 +169,7 @@ export function OrdersBoard({
               order={order}
               selected={order.code === raw}
               isNew={fresh.has(order.id)}
+              panelOpen={Boolean(selectedCode)}
               onOpen={onOpenOrder}
             />
           ))
@@ -178,8 +179,7 @@ export function OrdersBoard({
 
   let panel = null;
   if (selectedCode) {
-    if (selected)
-      panel = <OrderPanelBody order={selected} onClose={onCloseOrder ?? (() => undefined)} />;
+    if (selected) panel = <OrderPanelBody order={selected} withHeader={false} />;
     else
       panel = (
         <Message role="status">
@@ -194,6 +194,11 @@ export function OrdersBoard({
         list={listNode}
         panel={panel}
         panelLabel={t('detail.panelLabel', { code: raw ?? '' })}
+        panelHeader={
+          selected ? (
+            <OrderPanelHeader order={selected} onClose={onCloseOrder ?? (() => undefined)} />
+          ) : undefined
+        }
         panelAction={selected ? <OrderPanelActions order={selected} /> : undefined}
       />
     </Board>

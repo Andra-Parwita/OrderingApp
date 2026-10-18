@@ -299,7 +299,10 @@ describe('orders, packing and messages', () => {
       let writes = 0;
       d1.batch = (statements) => {
         const sqls = statements.map((s) => (s as unknown as { sql?: string }).sql ?? '');
-        if (sqls.some((sql) => sql.startsWith('UPDATE orders SET status')) && ++writes === 2) {
+        if (
+          sqls.some((sql) => sql.startsWith('UPDATE orders SET first_name = ?, status')) &&
+          ++writes === 2
+        ) {
           return Promise.reject(new Error('batch failed'));
         }
         return realBatch(statements);

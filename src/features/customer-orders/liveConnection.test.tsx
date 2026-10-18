@@ -25,7 +25,10 @@ class FakeSocket implements SocketLike {
   onmessage: SocketLike['onmessage'] = null;
   onclose: SocketLike['onclose'] = null;
   onerror: SocketLike['onerror'] = null;
-  constructor(readonly url: string) {
+  constructor(
+    readonly url: string,
+    readonly protocols: Array<string> = [],
+  ) {
     FakeSocket.all.push(this);
   }
   send() {
@@ -48,7 +51,10 @@ class FakeSocket implements SocketLike {
     this.onclose?.(new CloseEvent('close'));
   }
   get tokens() {
-    return new URL(this.url).searchParams.get('tokens');
+    return this.protocols
+      .filter((part) => part.startsWith('tok.'))
+      .map((part) => part.slice(4))
+      .join(',');
   }
 }
 const open = () => FakeSocket.all.filter((socket) => !socket.closed);
@@ -81,7 +87,7 @@ function deps(over: Partial<CustomerLiveDeps> = {}) {
   return {
     ...spies,
     deps: {
-      createSocket: (url: string) => new FakeSocket(url),
+      createSocket: (url: string, protocols?: Array<string>) => new FakeSocket(url, protocols),
       ...spies,
       ...over,
     } satisfies CustomerLiveDeps,
@@ -350,7 +356,7 @@ describe('one connection for the whole app', () => {
       <Provider store={store}>
         <CustomerLiveHost
           deps={{
-            createSocket: (url) => new FakeSocket(url),
+            createSocket: (url, protocols) => new FakeSocket(url, protocols),
             backupMinutes: () => Promise.resolve(5),
           }}
         />
@@ -381,7 +387,9 @@ describe('one connection for the whole app', () => {
     store.dispatch(orderLoaded(order()));
     render(
       <Provider store={store}>
-        <CustomerLiveHost deps={{ createSocket: (url) => new FakeSocket(url) }} />
+        <CustomerLiveHost
+          deps={{ createSocket: (url, protocols) => new FakeSocket(url, protocols) }}
+        />
       </Provider>,
     );
     act(() => {

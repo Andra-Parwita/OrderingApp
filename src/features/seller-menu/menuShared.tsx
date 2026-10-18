@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector, useStore } from 'react-redux';
+import type { Store } from '@reduxjs/toolkit';
 import { styled } from 'styled-components';
 import type { Language } from '../../../shared/domain';
 import type { MenuDishView } from '../../../shared/menusContract';
@@ -19,6 +20,7 @@ import {
   type OpResult,
 } from './menuSlice';
 import { SCREEN_HEIGHT } from '../../theme/screen';
+import { interceptOp, useSession } from './sessionIntercept';
 
 // Pieces shared by the Menu screens: layout, the loader, and a way to run an op and hear back.
 
@@ -33,13 +35,13 @@ export const Head = styled.header`
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.size.pagePadTablet}px;
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadTablet}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 `;
 export const Title = styled.h1`
   margin: 0;
-  font-size: 1.375rem;
+  font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.25;
 `;
@@ -50,7 +52,7 @@ export const Tools = styled.div`
   gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
 `;
 export const Section = styled.section`
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadTablet}px;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px;
 `;
 export const Muted = styled.p`
   margin: 0;
@@ -162,11 +164,24 @@ export function useMenuData(): { data: MenuData | null; status: ReactNode } {
   return { data: null, status: <Message role="status">{t('loading')}</Message> };
 }
 
-/** Runs ops. `busy` is true while one is running. */
+/**
+ * Runs ops. `busy` is true while one is running. In an edit session the menu ops are kept in the
+ * session instead (plan 103 fix 8); the answer is the same, so the screens do not notice.
+ */
 export function useRunOp(): { run: (op: MenuOp) => void; busy: boolean } {
   const dispatch = useDispatch();
+  const store = useStore<MenuRootState>();
+  const session = useSession();
   const busy = useSelector((state: MenuRootState) => state.sellerMenu.busy);
-  return { run: (op) => dispatch(opRequested(op)), busy };
+  return {
+    run: (op) => {
+      const rest = session
+        ? interceptOp(session, store.getState().sellerMenu.data, dispatch, op)
+        : op;
+      if (rest) dispatch(opRequested(rest));
+    },
+    busy,
+  };
 }
 
 /** What an op answered, for a caller that waits for it (the auto-save, plan 072). */
@@ -181,33 +196,45 @@ export function saveResultOf(answer: OpAnswer): SaveResult {
 }
 
 let nextRef = 0;
+type SendableOp = Extract<MenuOp, { kind: 'updateMenu' | 'updateMenuDish' }>;
+
+/** Sends an op to the server and resolves with its answer, whatever session is open. */
+export function sendOpRaw(store: Store<MenuRootState>, op: MenuOp): Promise<OpAnswer> {
+  return new Promise<OpAnswer>((resolve) => {
+    nextRef += 1;
+    const ref = `auto-${String(nextRef)}`;
+    const stop = store.subscribe(() => {
+      const { result } = store.getState().sellerMenu;
+      if (result?.ref !== ref) return;
+      stop();
+      resolve(
+        result.status === 'done'
+          ? { ok: true, removedWithOrders: result.removedWithOrders ?? 0 }
+          : { ok: false, code: result.code, message: result.message },
+      );
+    });
+    store.dispatch(opRequested({ ...op, ref } as MenuOp));
+  });
+}
 
 /**
  * Runs an updateMenu / updateMenuDish op and resolves with its answer. Every answer is seen (the
- * store is watched on each dispatch), so several ops in flight at once each hear their own.
+ * store is watched on each dispatch), so several ops in flight at once each hear their own. In an
+ * edit session the change is kept there and the answer is "done".
  */
-export function useSendOp(): (
-  op: Extract<MenuOp, { kind: 'updateMenu' | 'updateMenuDish' }>,
-) => Promise<OpAnswer> {
+export function useSendOp(): (op: SendableOp) => Promise<OpAnswer> {
   const store = useStore<MenuRootState>();
+  const session = useSession();
   return useCallback(
-    (op) =>
-      new Promise<OpAnswer>((resolve) => {
-        nextRef += 1;
-        const ref = `auto-${String(nextRef)}`;
-        const stop = store.subscribe(() => {
-          const { result } = store.getState().sellerMenu;
-          if (result?.ref !== ref) return;
-          stop();
-          resolve(
-            result.status === 'done'
-              ? { ok: true, removedWithOrders: result.removedWithOrders ?? 0 }
-              : { ok: false, code: result.code, message: result.message },
-          );
-        });
-        store.dispatch(opRequested({ ...op, ref }));
-      }),
-    [store],
+    (op) => {
+      if (!session) return sendOpRaw(store, op);
+      const rest = interceptOp(session, store.getState().sellerMenu.data, store.dispatch, {
+        ...op,
+        ref: `kept-${String(++nextRef)}`,
+      });
+      return rest ? sendOpRaw(store, rest) : Promise.resolve({ ok: true, removedWithOrders: 0 });
+    },
+    [store, session],
   );
 }
 

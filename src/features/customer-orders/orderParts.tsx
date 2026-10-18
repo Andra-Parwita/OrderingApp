@@ -294,6 +294,18 @@ export function Updates({
           {inboxNewestFirst(inbox).map((entry) => {
             const text = inboxText(entry);
             const own = text.kind === 'own';
+            // Plan 105: "Changed by the kitchen · <time> · <what changed>".
+            if (entry.textKey === 'orderEdited') {
+              return (
+                <Item key={`${entry.at}-${entry.kind}-orderEdited`}>
+                  <b>{t('inbox.orderEdited')}</b>
+                  <small>
+                    {formatDayTime(entry.at, lang)}
+                    {entry.text ? ` · ${entry.text}` : ''}
+                  </small>
+                </Item>
+              );
+            }
             return (
               <Item key={`${entry.at}-${entry.kind}-${entry.textKey ?? entry.status ?? ''}`}>
                 <b>
@@ -315,5 +327,38 @@ export function Updates({
         </List>
       )}
     </Section>
+  );
+}
+
+const EditedBox = styled.div`
+  margin: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.size.radiusControl}px;
+  background: ${({ theme }) => theme.c.surf2};
+  font-size: ${({ theme }) => theme.type.size.sm};
+
+  b {
+    display: block;
+  }
+  span {
+    color: ${({ theme }) => theme.c.muted};
+  }
+`;
+
+/** Plan 105: the newest "Changed by the kitchen" line, as a band under the status. */
+export function EditedBand({
+  inbox,
+  lang,
+}: Readonly<{ inbox: ReadonlyArray<InboxEntry>; lang: Language }>) {
+  const { t } = useTranslation(ORDERS_NS);
+  const entry = inboxNewestFirst(inbox).find((candidate) => candidate.textKey === 'orderEdited');
+  if (!entry) return null;
+  return (
+    <EditedBox data-testid="edited-band">
+      <b>
+        {t('inbox.orderEdited')} · {formatDayTime(entry.at, lang)}
+      </b>
+      {entry.text ? <span>{entry.text}</span> : null}
+    </EditedBox>
   );
 }

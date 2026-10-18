@@ -13,7 +13,18 @@ import { SATURDAY_NS } from './i18n/register';
 import { matches, Muted, Notice, useHandoverData, useLang } from './parts';
 import { usePrivateHandover } from './usePrivateHandover';
 
-export type HandoverViewName = 'pickup' | 'delivery';
+export type HandoverViewName = 'all' | 'pickup' | 'delivery';
+
+const VIEW_KEY = 'handover.filter';
+/** The filter last chosen on this device (plan 104); storage can be blocked, so never trust it. */
+function storedView(): HandoverViewName | null {
+  try {
+    const v = localStorage.getItem(VIEW_KEY);
+    return v === 'all' || v === 'pickup' || v === 'delivery' ? v : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Menu orders first, then today's private ones by event time. */
 export function mergeOrders(
@@ -92,6 +103,19 @@ const Body = styled.div`
   flex-direction: column;
   min-height: 0;
 `;
+const Section = styled.section`
+  display: flex;
+  flex-direction: column;
+  h2 {
+    margin: 0;
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px 0;
+    font-size: 1rem;
+  }
+`;
+const DeliverySection = Section;
+const PickupSection = styled(Section)`
+  flex: 1;
+`;
 const Pad = styled.div`
   display: flex;
   flex-direction: column;
@@ -113,7 +137,7 @@ type Props = Readonly<{
 
 /** Pickup & delivery (plan 001 stage 9): tell customers, never collect for them (D-068). */
 export function HandOverScreen({
-  view: initial = 'pickup',
+  view: initial,
   phone = false,
   addressOf,
   onOpenOrder,
@@ -123,7 +147,15 @@ export function HandOverScreen({
   const { t: scan } = useTranslation(SCAN_NS);
   const lang = useLang();
   const { data, reload } = useHandoverData();
-  const [view, setView] = useState<HandoverViewName>(initial);
+  const [view, setView] = useState<HandoverViewName>(initial ?? storedView() ?? 'all');
+  const chooseView = useCallback((next: HandoverViewName) => {
+    setView(next);
+    try {
+      localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      /* the filter just is not remembered */
+    }
+  }, []);
   const [query, setQuery] = useState('');
   const [note, setNote] = useState<string | null>(null);
 
@@ -161,13 +193,14 @@ export function HandOverScreen({
   const collectedCount = pickup.filter((o) => o.status === 'collected').length;
   const deliveredCount = delivery.filter((o) => o.status === 'delivered').length;
   const options: ReadonlyArray<SegmentedOption<HandoverViewName>> = [
-    {
-      value: 'pickup',
-      label: t('view.pickup', { count: live(pickup).length }),
-    },
+    { value: 'all', label: t('view.all') },
     {
       value: 'delivery',
       label: t('view.delivery', { count: live(delivery).length }),
+    },
+    {
+      value: 'pickup',
+      label: t('view.pickup', { count: live(pickup).length }),
     },
   ];
 
@@ -226,11 +259,13 @@ export function HandOverScreen({
         <Muted>{scan('hint')}</Muted>
       </Top>
       <Bar $phone={phone}>
-        <Segmented options={options} value={view} onChange={setView} label={t('viewLabel')} />
+        <Segmented options={options} value={view} onChange={chooseView} label={t('viewLabel')} />
         <Muted>
-          {view === 'pickup'
-            ? t('summary.pickup', { collected: collectedCount })
-            : t('summary.delivery', { delivered: deliveredCount })}
+          {view === 'all'
+            ? `${t('summary.delivery', { delivered: deliveredCount })} · ${t('summary.pickup', { collected: collectedCount })}`
+            : view === 'pickup'
+              ? t('summary.pickup', { collected: collectedCount })
+              : t('summary.delivery', { delivered: deliveredCount })}
         </Muted>
       </Bar>
       <Body>
@@ -254,28 +289,36 @@ export function HandOverScreen({
             <Notice role="status">{note}</Notice>
           </Pad>
         ) : null}
-        {ready && view === 'pickup' ? (
-          <PickupView
-            places={ready.places}
-            orders={pickupShown}
-            messages={ready.messages}
-            lang={lang}
-            onSent={sent}
-            single={phone}
-            onOpenPrivate={onOpenPrivate}
-            onMarkPrivate={markPrivate}
-            busyCode={busyCode}
-          />
+        {ready && view !== 'pickup' ? (
+          <DeliverySection>
+            {view === 'all' ? (
+              <h2>{t('view.delivery', { count: live(delivery).length })}</h2>
+            ) : null}
+            <DeliveryView
+              orders={deliveryShown}
+              messages={ready.messages}
+              lang={lang}
+              onDone={stepped}
+              onOpenPrivate={onOpenPrivate}
+              addressOf={phone ? addressOf : undefined}
+            />
+          </DeliverySection>
         ) : null}
-        {ready && view === 'delivery' ? (
-          <DeliveryView
-            orders={deliveryShown}
-            messages={ready.messages}
-            lang={lang}
-            onDone={stepped}
-            onOpenPrivate={onOpenPrivate}
-            addressOf={phone ? addressOf : undefined}
-          />
+        {ready && view !== 'delivery' ? (
+          <PickupSection>
+            {view === 'all' ? <h2>{t('view.pickup', { count: live(pickup).length })}</h2> : null}
+            <PickupView
+              places={ready.places}
+              orders={pickupShown}
+              messages={ready.messages}
+              lang={lang}
+              onSent={sent}
+              single={phone}
+              onOpenPrivate={onOpenPrivate}
+              onMarkPrivate={markPrivate}
+              busyCode={busyCode}
+            />
+          </PickupSection>
         ) : null}
       </Body>
     </Page>

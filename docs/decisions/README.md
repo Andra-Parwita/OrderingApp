@@ -697,3 +697,13 @@ Format for each entry:
 - **1.0.42 clean-up, owner answers:** the checkout move (basket, checkout, order placed) from `customer-menu` to `customer-checkout` happens now, with no behaviour change; of the four menu copies only the double fetch (C5, Cook reads the Orders slice) is done now and C4 is deferred; dead code is deleted only after a grep confirms it is unused; shared parts (`Notice`, order-row cells, kit adoption) only in the files that are split anyway. Plans 088 and 090 are merged into 098.
 **Trade-off:** the kind layer is not built yet, so the store's first stage carries it; in return nothing is abstracted before a consumer exists and 1.0.42 stays a no-behaviour clean-up.
 **Revisit when:** the store branch starts (decide Q1 and Q2 there), or a payment or event ticketing plan needs a rule the kinds table cannot hold.
+
+## D-110 · The seller edits an order, in any status (2026-10-18; owner)
+- **Edit order** (plan 105): owner and chef (a helper does not see it) change dishes (count, remove, add from the current menu), the note and the first name of a menu order. Owner: "seller will be able to do what they want, so simply show warning or indication if this is created by customer": never refused, only told (delivered, ready, paid, over the portion limit). Private orders keep their own route.
+- **Cancelled orders are editable;** Save asks "Save, keep cancelled" or "Save and re-activate" (back to Ordered).
+- **Paid stays Paid:** the panel shows "Paid $18.00 · total now $24.00 · $6.00 to collect" (or to refund); the diff keeps the old and new total, no migration.
+- **Tell the customer:** a tick, on for customer-placed orders and off for seller-added ones; on = inbox "Changed by the kitchen" line + push; after Save a "Copy message" for WhatsApp. A seller edit clears the "Changed" flag.
+- **Paid / Not paid asks first** (plan 103 fix 7): a bottom sheet with code, name and total.
+**Trade-off:** one more route and sheet; in return a typo or a changed mind no longer means cancel and retype.
+**Revisit when:** the seller wants an exact paid amount (one column, `orders.paid_cents`, a migration) because the audit's last 4 entries drop an old payment.
+

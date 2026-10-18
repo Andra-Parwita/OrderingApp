@@ -7,10 +7,13 @@
 // token or a name.
 import type { InboxEntry, SellerOrder } from '../../shared/domain';
 import { iconPath } from '../../shared/kitchenManifest';
+import { formatOrderCode } from '../../shared/orderCode';
 import type { PushPayload } from '../../shared/pushContract';
 import {
   FULFILMENT_CHANGED_KEY,
   FULFILMENT_CHANGED_TITLE,
+  ORDER_EDITED_KEY,
+  orderEditedPushBody,
   pushBodyOf,
   pushEntryOf,
 } from '../../shared/pushText';
@@ -102,13 +105,21 @@ export function createPushDispatcher(options: {
         const entry = pushEntryOf(change.entries);
         const body = entry ? pushBodyOf(entry, change.order.language) : undefined;
         if (body === undefined) continue;
+        // Plan 105: a seller edit says what the push is about, not the diff (that is on the page).
+        const edited = entry?.textKey === ORDER_EDITED_KEY;
         const payload: PushPayload = {
-          // Plan 083: a pickup / delivery change says "Order changed" (the kitchen is in the icon and page).
+          // Plans 083 / 105: a change says "Order changed" (the kitchen is in the icon and page).
           title:
-            entry?.textKey === FULFILMENT_CHANGED_KEY
+            entry?.textKey === FULFILMENT_CHANGED_KEY || edited
               ? FULFILMENT_CHANGED_TITLE[change.order.language]
               : change.kitchenName,
-          body,
+          body: edited
+            ? orderEditedPushBody(
+                change.order.language,
+                formatOrderCode(change.order.code),
+                change.kitchenName,
+              )
+            : body,
           icon: iconPath(change.slug, 192),
           data: { url: `/o/${change.order.token}` },
         };

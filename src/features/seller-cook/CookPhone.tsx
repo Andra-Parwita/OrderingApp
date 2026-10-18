@@ -62,11 +62,12 @@ const Hidden = styled.span`
 `;
 const Status = styled.span`
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing.sm};
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;

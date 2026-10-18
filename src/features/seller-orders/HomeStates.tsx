@@ -1,10 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import { formatDay } from '../../../shared/dates';
-import type { Language } from '../../../shared/domain';
+import type { Language, Order } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { summariseOrders, type WeekTotals } from '../../../shared/pastWeeks';
@@ -13,10 +13,11 @@ import type { MenuView } from '../../../shared/menusContract';
 import { Button, Icon } from '../../ui';
 import { FeedbackHost } from './FeedbackHost';
 import { SELLER_NS } from './i18n/register';
+import { PaidSheet } from './PaidSheet';
 import { orderTotalCents, useLang } from './orderText';
 import { isUnpaid, selectOrders, selectPast } from './sellerOrdersSelectors';
 import { useReadOnlyOrders } from './orderAccess';
-import { paidChangeRequested, pastRequested } from './sellerOrdersSlice';
+import { pastRequested } from './sellerOrdersSlice';
 
 // Orders when no menu is live (plan 039): the last menu's summary, or a pointer to where menus are
 // started (Home on a tablet). The first-run checklist and the earlier menus live on Home.
@@ -217,7 +218,6 @@ export function FinishedHome({
 }: Readonly<{ view: MenuView; showAll: boolean; onToggleAll: () => void; phone: boolean }>) {
   const { t } = useTranslation(SELLER_NS);
   const lang = useLang();
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const readOnly = useReadOnlyOrders();
   const orders = useSelector(selectOrders);
@@ -274,23 +274,7 @@ export function FinishedHome({
           />
         ) : null}
         {loose.map((order) => (
-          <Loose key={order.id}>
-            <span>
-              <Icon name="coin" /> <code>{formatOrderCode(order.code)}</code>{' '}
-              {t('home.unpaidLine', {
-                name: order.firstName,
-                amount: formatMoney(orderTotalCents(order), lang),
-              })}
-            </span>
-            {readOnly ? null : (
-              <Button
-                onClick={() => dispatch(paidChangeRequested({ code: order.code, paid: true }))}
-              >
-                <Icon name="check" />
-                {t('home.markPaid')}
-              </Button>
-            )}
-          </Loose>
+          <LooseOrder key={order.id} order={order} lang={lang} readOnly={readOnly} />
         ))}
       </Section>
     </>
@@ -309,4 +293,32 @@ export function useEarlierMenus(): void {
 
 export function HomeMessage({ text }: Readonly<{ text: string }>) {
   return <Message role="status">{text}</Message>;
+}
+
+/** An unpaid order on Home: "Mark paid" asks first (plan 103 fix 7). */
+function LooseOrder({
+  order,
+  lang,
+  readOnly,
+}: Readonly<{ order: Order; lang: Language; readOnly: boolean }>) {
+  const { t } = useTranslation(SELLER_NS);
+  const [asking, setAsking] = useState(false);
+  return (
+    <Loose>
+      <span>
+        <Icon name="coin" /> <code>{formatOrderCode(order.code)}</code>{' '}
+        {t('home.unpaidLine', {
+          name: order.firstName,
+          amount: formatMoney(orderTotalCents(order), lang),
+        })}
+      </span>
+      {readOnly ? null : (
+        <Button onClick={() => setAsking(true)}>
+          <Icon name="check" />
+          {t('home.markPaid')}
+        </Button>
+      )}
+      {asking ? <PaidSheet order={order} paid onClose={() => setAsking(false)} /> : null}
+    </Loose>
+  );
 }

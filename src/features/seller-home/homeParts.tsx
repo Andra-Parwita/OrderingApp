@@ -12,12 +12,16 @@ export const Page = styled.main`
 `;
 const HeaderBox = styled.header`
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.size.pagePadTablet}px;
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+
+  @media (max-width: 52rem) {
+    flex-wrap: wrap;
+  }
 `;
 const Eyebrow = styled.p<{ $warn?: boolean; $muted?: boolean }>`
   display: flex;
@@ -26,7 +30,7 @@ const Eyebrow = styled.p<{ $warn?: boolean; $muted?: boolean }>`
   margin: 0;
   color: ${({ $warn, $muted, theme }) =>
     $warn ? theme.c.warn : $muted ? theme.c.muted : theme.c.atext};
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -39,13 +43,22 @@ const Dot = styled.i<{ $filled: boolean }>`
   background: ${({ $filled }) => ($filled ? 'currentColor' : 'transparent')};
 `;
 const Title = styled.h1`
-  margin: ${({ theme }) => theme.spacing.xs} 0;
-  font-size: 2rem;
+  margin: 0;
+  font-size: 1.25rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
+`;
+const Line = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  flex: 1 1 14rem;
+  min-width: 0;
 `;
 export const Sub = styled.p`
   margin: 0;
+  font-size: 0.875rem;
   color: ${({ theme }) => theme.c.muted};
 `;
 
@@ -66,14 +79,14 @@ export function Header({
 }>) {
   return (
     <HeaderBox>
-      <div>
+      <Line>
         <Eyebrow $warn={tone === 'warn'} $muted={tone === 'muted'}>
           <Dot $filled={filled} aria-hidden="true" />
           {eyebrow}
         </Eyebrow>
         <Title>{title}</Title>
         {sub ? <Sub>{sub}</Sub> : null}
-      </div>
+      </Line>
       {action}
     </HeaderBox>
   );

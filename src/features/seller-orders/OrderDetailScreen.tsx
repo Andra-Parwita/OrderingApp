@@ -10,6 +10,7 @@ import { ContactFields, getContact, getContactDigits, saveContact } from './cont
 import { FeedbackHost } from './FeedbackHost';
 import { SELLER_NS } from './i18n/register';
 import { OrderPanelBody } from './OrderPanelBody';
+import { PaidSheet } from './PaidSheet';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import { selectList, selectOrderByCode } from './sellerOrdersSelectors';
 import {
@@ -220,6 +221,8 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
   const { t, i18n } = useTranslation(SELLER_NS);
   const a = useOrderActions(order);
   const [asking, setAsking] = useState(false);
+  // Plan 103 fix 7: the target of the Paid / Not paid sheet (null = closed).
+  const [askPaid, setAskPaid] = useState<boolean | null>(null);
   const confirming = a.forward.includes('confirmed');
   // Collected is the quiet button below (D-069 Q4), so it is never the main step here.
   const main = a.readOnly ? undefined : a.forward.find((status) => status !== 'collected');
@@ -272,6 +275,9 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
           ) : null}
         </Rows>
       )}
+      {askPaid !== null ? (
+        <PaidSheet order={order} paid={askPaid} onClose={() => setAskPaid(null)} />
+      ) : null}
       {asking ? (
         <WarningDialog
           title={t('panel.cancelTitle', { name: order.firstName })}
@@ -306,14 +312,18 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
                 {t('phone.confirmOnly')}
               </Button>
             ) : (
-              <Button onClick={send}>
+              <Button aria-label={t('detail.sendLink')} onClick={send}>
                 <Icon name="chat" />
-                {t('detail.sendLink')}
+                {t('phone.sendShort')}
               </Button>
             )}
-            <Button disabled={a.saving} onClick={() => a.setPaid(!order.paid)}>
+            <Button
+              aria-label={order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
+              disabled={a.saving}
+              onClick={() => setAskPaid(!order.paid)}
+            >
               <Icon name="coin" />
-              {order.paid ? t('detail.markUnpaid') : t('detail.markPaid')}
+              {order.paid ? t('phone.markUnpaidShort') : t('detail.markPaid')}
             </Button>
           </Pair>
         )}

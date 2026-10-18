@@ -6,6 +6,30 @@ import { isIsoDate, isOneOf, isRecord } from './parse';
 /** The seller-side socket. The Worker upgrades it and hands it to that seller's Durable Object. */
 export const LIVE_PATH = '/api/seller/live';
 
+/**
+ * C12 (plan 098): a customer socket sends its order tokens in the `Sec-WebSocket-Protocol` header
+ * (never the address, so they cannot land in logs): the marker `delave.live` plus one
+ * `tok.<token>` value per order. The server answers with the marker only.
+ */
+export const LIVE_PROTOCOL = 'delave.live';
+export const LIVE_TOKEN_PREFIX = 'tok.';
+
+/** The protocol list a customer socket offers for these tokens. */
+export function customerLiveProtocols(tokens: ReadonlyArray<string>): Array<string> {
+  return [LIVE_PROTOCOL, ...tokens.map((token) => `${LIVE_TOKEN_PREFIX}${token}`)];
+}
+
+/** The tokens in a `Sec-WebSocket-Protocol` header value, or null when it is not our form. */
+export function tokensFromProtocolHeader(value: string | null): Array<string> | null {
+  if (value === null) return null;
+  const parts = value.split(',').map((part) => part.trim());
+  if (!parts.includes(LIVE_PROTOCOL)) return null;
+  return parts
+    .filter((part) => part.startsWith(LIVE_TOKEN_PREFIX))
+    .map((part) => part.slice(LIVE_TOKEN_PREFIX.length))
+    .filter((token) => token !== '');
+}
+
 /** The client sends this text now and then; the Durable Object answers `pong` without waking. */
 export const LIVE_PING = 'ping';
 export const LIVE_PONG = 'pong';

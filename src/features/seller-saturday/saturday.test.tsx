@@ -153,11 +153,36 @@ describe('Pickup & delivery · Delivery', () => {
   });
 });
 
+describe('Pickup & delivery · filter (plan 104)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('shows All by default, narrows to Deliveries or Pickups, and remembers the choice', async () => {
+    const ani = await make('Ani', 'delivery');
+    const budi = await make('Budi', 'pickup');
+    const first = renderThemed(<HandOverScreen />);
+    expect(await screen.findByRole('listitem', { name: `Order ${ani.label}, Ani` })).toBeVisible();
+    expect(screen.getByRole('listitem', { name: `Order ${budi.label}, Budi` })).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: /^Delivery · 1/ }));
+    expect(screen.queryByRole('listitem', { name: `Order ${budi.label}, Budi` })).toBeNull();
+    expect(screen.getByRole('listitem', { name: `Order ${ani.label}, Ani` })).toBeVisible();
+    first.unmount();
+    renderThemed(<HandOverScreen />);
+    expect(await screen.findByRole('radio', { name: /^Delivery · 1/ })).toBeChecked();
+    fireEvent.click(screen.getByRole('radio', { name: /^Pickup · 1/ }));
+    expect(
+      await screen.findByRole('listitem', { name: `Order ${budi.label}, Budi` }),
+    ).toBeVisible();
+    expect(screen.queryByRole('listitem', { name: `Order ${ani.label}, Ani` })).toBeNull();
+  });
+});
+
 describe('Pickup & delivery · Indonesian', () => {
   it('speaks Indonesian', async () => {
     await i18n.changeLanguage('id');
     renderThemed(<HandOverScreen />);
     expect(await screen.findByRole('searchbox', { name: 'Kode tas atau nama' })).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'Semua' })).toBeVisible();
     expect(screen.getByRole('radio', { name: /^Antar/ })).toBeVisible();
   });
 });

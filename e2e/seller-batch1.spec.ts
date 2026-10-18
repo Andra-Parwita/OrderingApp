@@ -52,12 +52,14 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
   await page
     .getByRole('button', { name: desktop ? 'Confirm order' : 'Confirm only', exact: true })
     .click();
-  const ready = page.getByRole('button', { name: 'Mark ready for pickup', exact: true });
+  const ready = page.getByRole('button', { name: 'Ready for pickup', exact: true });
   await expect(ready).toBeVisible();
   await ready.click();
   // Collected is the main step once the order is ready (pickup).
   await expect(page.getByRole('button', { name: 'Mark collected', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Mark paid', exact: true }).click();
+  // Plan 103 fix 7: Paid asks first, in a sheet.
+  await page.getByRole('dialog').getByRole('button', { name: 'Mark paid', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Mark not paid', exact: true })).toBeVisible();
 
   // The history is a list: pick it by what it says. Newest first.

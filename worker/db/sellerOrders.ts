@@ -1,12 +1,17 @@
 // Orders: the customer side and the seller and chef side (split out of seller.ts, plan 098 C3; the code is unchanged).
 import { isAddressReadable } from '../../shared/address';
-import { diffOrder } from '../../shared/auditDiff';
-import { FULFILMENT_CHANGED_KEY, fulfilmentChangedText } from '../../shared/pushText';
+import { diffOrder, formatAuditDiff } from '../../shared/auditDiff';
+import {
+  FULFILMENT_CHANGED_KEY,
+  ORDER_EDITED_KEY,
+  fulfilmentChangedText,
+} from '../../shared/pushText';
 import type { OrderStatus, SellerOrder, StaffActor } from '../../shared/domain';
 import type {
   ChangeFulfilmentRequest,
   CreateOrderRequest,
   CreateSellerOrderRequest,
+  EditSellerOrderRequest,
   UpdateOrderRequest,
 } from '../../shared/orderContract';
 import { parseOrderCode } from '../../shared/orderCode';
@@ -38,6 +43,7 @@ export function ordersPart(
   | 'setPaid'
   | 'setLocked'
   | 'changeFulfilment'
+  | 'editOrder'
   | 'setWaReceived'
   | 'nudge'
   | 'markAddressSeen'
@@ -274,6 +280,63 @@ export function ordersPart(
       ]);
       if (d.inboxes.length > 0) notify?.([{ order: d.order, entries: d.inboxes }]);
       return ok(d.order);
+    },
+
+    /**
+     * Plan 105: the owner or chef edits dishes, note or first name of a menu order in any status, also
+     * after the cut-off or on a locked order (D-024). Over a portion limit warns (D-062; `force`
+     * goes ahead). The seller has now seen the order, so the "Changed" flag clears. A cancelled order
+     * stays cancelled unless `reactivate`, which puts it back to Ordered. `notify` adds an inbox
+     * entry (so a push) with the diff in the order's language.
+     */
+    async editOrder(code: string, input: EditSellerOrderRequest, actor: StaffActor) {
+      const order = await readLiveOrder(db, sid, 'code', code);
+      if (!order) return fail('not_found', 'Order not found');
+      if (order.private) return fail('private_order', 'This is a private order');
+      const reactivate = order.status === 'cancelled' && input.reactivate === true;
+      let next: SellerOrder = order;
+      if (input.lines) {
+        const s = await loadState(order.id);
+        // A cancelled order that stays cancelled holds no portions, so nothing to warn about.
+        const over = input.force === true || (order.status === 'cancelled' && !reactivate);
+        const lines = c.buildLines(s, input.lines, order.lines, over ? 'allow' : 'warn');
+        if (!lines.ok) return lines;
+        next = { ...next, lines: lines.value };
+      }
+      if (input.firstName !== undefined) next = { ...next, firstName: input.firstName };
+      if (input.note !== undefined) {
+        next = { ...next };
+        if (input.note === '') delete next.note;
+        else next.note = input.note;
+      }
+      const diff = diffOrder(order, next, { staff: true });
+      if (!diff && !reactivate) return ok(order);
+      let d = withOrder(
+        { ...draft(next), linesChanged: (diff?.items.length ?? 0) > 0 || reactivate },
+        { changed: false },
+      );
+      if (reactivate) {
+        d = addInbox(withOrder(d, { status: 'ordered' }), { kind: 'status', status: 'ordered' });
+        d = addAudit(d, { by: actor, what: 'status', detail: 'ordered' });
+      }
+      if (diff) {
+        d = addAudit(d, { by: actor, what: 'edited', diff });
+        if (input.notify) {
+          d = addInbox(d, {
+            kind: 'message',
+            textKey: ORDER_EDITED_KEY,
+            text: formatAuditDiff(diff, order.language),
+          });
+        }
+      }
+      try {
+        const done = await commit(d, input.force === true);
+        if (d.inboxes.length > 0) notify?.([{ order: done, entries: d.inboxes }]);
+        return ok(done);
+      } catch (error) {
+        if (!isPortionRace(error) || !input.lines) throw error;
+        return lostRace(await loadState(order.id), input.lines, order.lines);
+      }
     },
 
     setWaReceived(code: string, received: boolean) {

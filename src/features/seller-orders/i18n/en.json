@@ -22,8 +22,8 @@
     "share": "Share menu",
     "changed": "↻ Changed",
     "addressChanged": "↻ Address changed",
-    "newCustomer": "★ New customer",
-    "returning": "↩ Returning",
+    "newCustomer": "First order",
+    "returning": "Ordered before",
     "waReceived": "✓ WhatsApp received",
     "locked": "🔒 Locked",
     "newOrder": "+ New order",
@@ -37,10 +37,11 @@
     "colAttention": "Needs attention",
     "emptyTitle": "No orders yet",
     "emptyHint": "Share your menu to start taking orders.",
-    "shareOnWhatsApp": "Share menu on WhatsApp"
+    "shareOnWhatsApp": "Share menu on WhatsApp",
+    "savedHere": "Saved on this {{device}}"
   },
   "filter": {
-    "all": "All",
+    "all": "Active",
     "ordered": "Ordered",
     "confirmed": "Confirmed",
     "ready": "Ready",
@@ -93,8 +94,8 @@
     "noteVisible": "The customer can see this note.",
     "action": {
       "confirmed": "Confirm order",
-      "ready_for_pickup": "Mark ready for pickup",
-      "out_for_delivery": "Mark out for delivery",
+      "ready_for_pickup": "Ready for pickup",
+      "out_for_delivery": "Out for delivery",
       "collected": "Mark collected",
       "delivered": "Mark delivered"
     },
@@ -119,7 +120,8 @@
     "editedDiff": "Edited: {{diff}}"
   },
   "whatsapp": {
-    "message": "Hi {{name}}, here is the link to your order {{code}}: {{link}}"
+    "message": "Hi {{name}}, here is the link to your order {{code}}: {{link}}",
+    "edited": "Hi {{name}}, your order {{code}} was changed: {{diff}}. New total {{total}}. {{link}}"
   },
   "error": {
     "load": "Could not load orders.",
@@ -216,9 +218,9 @@
     "more": "More",
     "paid": "Paid",
     "wa": "WhatsApp order number received",
-    "returning": "Returning customer",
+    "returning": "Ordered before",
     "staff": "Entered by staff",
-    "newCustomer": "New customer",
+    "newCustomer": "First order",
     "note": "Has a note",
     "locked": "Locked",
     "list": "Orders",
@@ -243,8 +245,8 @@
     "enteredBy": "Entered by",
     "enteredByCustomer": "{{name}}, using the order link",
     "customer": "Customer",
-    "custNew": "New customer",
-    "custReturning": "Returning",
+    "custNew": "First order",
+    "custReturning": "Ordered before",
     "canChange": "Can change",
     "canYes": "Yes, until you lock it",
     "canNo": "No, locked",
@@ -307,7 +309,11 @@
     "newOrder": "New order · {{name}}",
     "newOrders": "{{name}} new orders",
     "open": "Open",
-    "show": "Show"
+    "show": "Show",
+    "edited": "Order {{name}} saved",
+    "editedTold": "Order {{name}} saved. Customer told.",
+    "copy": "Copy message",
+    "copied": "Message copied"
   },
   "dishes": {
     "title": "Dishes",
@@ -337,7 +343,7 @@
     "noPlaces": "No pickup place set for this menu."
   },
   "phone": {
-    "allOrders": "All orders",
+    "allOrders": "Active orders",
     "filterTitle": "Show",
     "moreFilters": "Also show only",
     "changedN": "{{count}} changed",
@@ -346,6 +352,9 @@
     "sendOn": "Send {{name}}'s order link on WhatsApp",
     "confirmSend": "Confirm & send on WhatsApp",
     "confirmOnly": "Confirm only",
+    "sendShort": "Send link",
+    "newOrderShort": "New order",
+    "markUnpaidShort": "Not paid",
     "lockHint": "Stops changes",
     "unlockHint": "Lets them change it again",
     "nudgeHint": "Reminder",
@@ -391,10 +400,19 @@
     "hint_other": "{{count}} A4 pages. Print, then choose \"Save as PDF\" in the print window if you want a file.",
     "which": {
       "label": "Which orders",
-      "all": "All",
-      "notCollected": "Not collected",
-      "notPaid": "Not paid"
+      "active": "Active ({{count}})",
+      "confirmed": "Confirmed ({{count}})",
+      "selected": "Selected ({{count}})",
+      "everything": "All incl. cancelled ({{count}})"
     },
+    "heading": {
+      "active": "Active orders · {{count}}",
+      "confirmed": "Confirmed orders · {{count}}",
+      "selected": "Selected orders · {{count}}",
+      "everything": "All orders incl. cancelled · {{count}}"
+    },
+    "pick": "Choose orders to print",
+    "pickNone": "No orders yet.",
     "sort": {
       "label": "Sort by",
       "place": "Place",
@@ -432,6 +450,7 @@
     "delivered": "Delivered",
     "nothing": "No deliveries on this menu yet.",
     "back": "Orders",
+    "more": "More",
     "deliveredDone": "Delivered"
   },
   "customers": {
@@ -447,8 +466,8 @@
     "changedCount_one": "{{count}} changed customer",
     "changedCount_other": "{{count}} changed customers",
     "and": " and ",
-    "download": "Download backup (CSV)",
-    "upload": "Upload CSV",
+    "download": "Download backup",
+    "upload": "Upload",
     "private": "Keep this file private. It has your customers' phone numbers and addresses.",
     "downloaded": "Backup saved as {{name}}.",
     "preview": "In this file: {{added}} to add, {{updated}} to update, {{unchanged}} already the same.",
@@ -458,13 +477,21 @@
     "badFile": "That file isn't a customer backup.",
     "notKept": "This browser may not keep customer details after you close it.",
     "link": {
-      "title": "Link to a saved customer?",
-      "intro": "{{name}} ordered from a phone this device hasn't met. If {{name}} is a regular, link them so their phone number shows here next time.",
-      "none": "No saved customer with a similar name.",
-      "last": "Last order {{date}}",
-      "link": "Link",
-      "newCustomer": "New customer",
-      "skip": "Skip",
+      "confirmed": "Order {{code}} is confirmed.",
+      "ask": "Is {{name}} already in your customer list? Your list is saved on this {{device}} only.",
+      "found_one": "We found {{count}} customer called {{name}}:",
+      "found_other": "We found {{count}} customers called {{name}}:",
+      "foundSimilar": "We found customers with a similar name:",
+      "none": "{{name}} isn't in your list yet.",
+      "last": "last order {{date}}",
+      "link": "This is them",
+      "hint": "Choosing them means their next orders show their saved number and address.",
+      "newH": "Or: they're a new customer",
+      "name": "First name",
+      "number": "WhatsApp number (optional)",
+      "save": "Add to my list",
+      "skipNow": "Ask me next time",
+      "skipOrder": "Don't ask for this order",
       "close": "Close"
     },
     "reminder": {
@@ -472,12 +499,103 @@
       "body": "This menu is finished. {{parts}}",
       "download": "Download backup",
       "later": "Later",
-      "close": "Close"
+      "close": "Close",
+      "laterHelp": "Later asks again the next time you open the app."
+    },
+    "device": {
+      "tablet": "tablet",
+      "phone": "phone"
+    },
+    "downloadShort": "Backup",
+    "list": {
+      "search": "Search customers",
+      "add": "Add customer",
+      "addShort": "Add",
+      "note": "Saved on this {{device}} only.",
+      "empty": "No customers saved yet.",
+      "noMatch": "No customer matches your search.",
+      "dup": "{{count}} × {{name}}",
+      "last": "last order {{date}}",
+      "addTitle": "Add customer",
+      "editTitle": "Edit customer",
+      "name": "First name",
+      "nameRequired": "Enter a first name.",
+      "phone": "WhatsApp number (optional)",
+      "phoneHelper": "Australian mobile, e.g. 0412 345 678.",
+      "street": "Street",
+      "suburb": "Suburb",
+      "postcode": "Postcode",
+      "notes": "Notes for the driver",
+      "save": "Save",
+      "cancel": "Cancel",
+      "close": "Close",
+      "delete": "Delete customer",
+      "deleteAsk": "Remove {{name}} from this {{device}}? Their name, number and address are deleted from this {{device}} only. Their past orders stay as they are. If you have a backup file, they come back when you upload it.",
+      "deleteYes": "Yes, remove",
+      "deleteNo": "Keep"
     }
   },
   "private": {
     "today": "Private today",
     "tag": "Private",
     "viewOnMap": "View on map"
+  },
+  "edit": {
+    "button": "Edit order",
+    "title": "Edit order",
+    "fromCustomer": "Ordered by the customer",
+    "fromKitchen": "Added by the kitchen",
+    "dishes": "Dishes",
+    "note": "Note",
+    "add": "Add dish",
+    "addTitle": "Add a dish",
+    "done": "Done",
+    "remove": "Remove {{name}}",
+    "undo": "Undo",
+    "removed": "Removed",
+    "newDish": "New",
+    "left": "{{count}} left",
+    "soldOut": "Sold out",
+    "limit": "Only {{left}} left of {{name}}; saving will go over the limit.",
+    "total": "Total",
+    "was": "was {{amount}}",
+    "summary": "Removed: {{removed}}",
+    "summaryBoth": "Removed: {{removed}} · Added: {{added}}",
+    "summaryAdded": "Added: {{added}}",
+    "hint": "An order needs at least one dish. Use Cancel order to remove everything.",
+    "tell": "Tell the customer",
+    "tellHelp": "Tells them order {{code}} was changed (a notification, if they turned it on) and shows what changed on their order page.",
+    "tellSeller": "Only if they have the order link.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saveAnyway": "Save anyway",
+    "cancel": "Cancel",
+    "overTitle": "Over the portion limit",
+    "overBody": "Saving takes more portions than are left. Save anyway?",
+    "error": "Couldn't save. Try again.",
+    "discardTitle": "Discard your changes?",
+    "discardBody": "The order stays as it was.",
+    "discardKeep": "Keep editing",
+    "discardGo": "Discard",
+    "cancelledTitle": "This order is cancelled",
+    "cancelledBody": "Keep it cancelled, or put it back to Ordered so it counts again in cooking, totals, labels and print?",
+    "keepCancelled": "Save, keep cancelled",
+    "reactivate": "Save and re-activate",
+    "warnDone": "This order is already {{status}}. You can still edit it; the customer is only told if you tick below.",
+    "warnHandled": "This order is already {{status}}. It may already be packed.",
+    "warnCancelled": "This order is cancelled. You can still edit it.",
+    "warnPaid": "Paid {{amount}}. It stays Paid; the order panel shows what is left to collect or refund.",
+    "editedBy": "Edited by {{name}} · {{when}}",
+    "gap": "Paid {{paid}} · total now {{total}} · {{amount}} to collect",
+    "gapRefund": "Paid {{paid}} · total now {{total}} · {{amount}} to refund"
+  },
+  "paidSheet": {
+    "titlePaid": "Mark as paid?",
+    "titleUnpaid": "Mark as not paid?",
+    "markPaid": "Mark paid",
+    "markNotPaid": "Mark not paid",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "total": "Total"
   }
 }

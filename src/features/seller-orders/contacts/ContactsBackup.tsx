@@ -2,9 +2,20 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { currentSellerSlug } from '../../../api/device/sellerContext';
-import { Button } from '../../../ui';
+import { useMediaQuery } from '../../../components/useMediaQuery';
+import { Button, Icon, TextField } from '../../../ui';
 import { SELLER_NS } from '../i18n/register';
-import { backupStatus, listCustomers, putCustomers, useAddressBook } from './addressBook';
+import {
+  backupStatus,
+  deleteCustomer,
+  listCustomers,
+  putCustomer,
+  putCustomers,
+  useAddressBook,
+} from './addressBook';
+import type { Customer } from './bookTypes';
+import { CustomerEditSheet } from './CustomerEditSheet';
+import { CustomerList } from './CustomerList';
 import { changeSummary, downloadBackup } from './backupFile';
 import { parseCustomersCsv, planMerge, type MergePlan } from './customersCsv';
 
@@ -27,6 +38,16 @@ const Pair = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing.sm};
+`;
+const Toolbar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: ${({ theme }) => theme.spacing.sm};
+  .grow {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
 `;
 const Hidden = styled.input`
   display: none;
@@ -52,6 +73,12 @@ export function ContactsBackup() {
   const status = backupStatus(slug);
   const [message, setMessage] = useState<string | null>(null);
   const [plan, setPlan] = useState<MergePlan | null>(null);
+  const [query, setQuery] = useState('');
+  // undefined: sheet closed; null: adding; a customer: editing.
+  const [sheet, setSheet] = useState<Customer | null | undefined>(undefined);
+  const wide = useMediaQuery('(min-width: 600px)');
+  const device = t(wide ? 'customers.device.tablet' : 'customers.device.phone');
+  const customers = listCustomers(slug);
   const picker = useRef<HTMLInputElement>(null);
 
   const summary = changeSummary(slug, t);
@@ -90,12 +117,27 @@ export function ContactsBackup() {
     <Block aria-label={t('customers.title')}>
       <Title>{t('customers.title')}</Title>
       <Muted>{t('customers.help')}</Muted>
+      <Toolbar>
+        <div className="grow">
+          <TextField
+            label={t('customers.list.search')}
+            type="search"
+            value={query}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+            autoComplete="off"
+          />
+        </div>
+        <Button onClick={onDownload}>
+          {t(wide ? 'customers.download' : 'customers.downloadShort')}
+        </Button>
+        <Button onClick={() => picker.current?.click()}>{t('customers.upload')}</Button>
+        <Button onClick={() => setSheet(null)}>
+          <Icon name="plus" /> {t(wide ? 'customers.list.add' : 'customers.list.addShort')}
+        </Button>
+      </Toolbar>
+      <Muted>{t('customers.list.note', { device })}</Muted>
       <Muted>{t('customers.count', { count })}</Muted>
       {state ? <Muted role="status">{state}</Muted> : null}
-      <Pair>
-        <Button onClick={onDownload}>{t('customers.download')}</Button>
-        <Button onClick={() => picker.current?.click()}>{t('customers.upload')}</Button>
-      </Pair>
       <Muted>{t('customers.private')}</Muted>
       <Hidden
         ref={picker}
@@ -116,6 +158,23 @@ export function ContactsBackup() {
         </>
       ) : null}
       {message ? <Muted role="status">{message}</Muted> : null}
+      <CustomerList customers={customers} query={query} onOpen={setSheet} />
+      {sheet === undefined ? null : (
+        <CustomerEditSheet
+          key={sheet?.id ?? 'new'}
+          customer={sheet}
+          device={device}
+          onSave={(customer) => {
+            putCustomer(slug, customer);
+            setSheet(undefined);
+          }}
+          onDelete={(customer) => {
+            deleteCustomer(slug, customer.id);
+            setSheet(undefined);
+          }}
+          onClose={() => setSheet(undefined)}
+        />
+      )}
     </Block>
   );
 }

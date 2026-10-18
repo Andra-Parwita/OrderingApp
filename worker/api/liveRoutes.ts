@@ -1,13 +1,16 @@
 // The two live WebSocket doors (plan 074): a customer's socket under /api/s/:slug/live and the
 // seller's under LIVE_PATH. Split out of routes.ts (plan 098 C1).
 import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
-import { LIVE_PATH } from '../../shared/liveContract';
+import { LIVE_PATH, LIVE_PROTOCOL, tokensFromProtocolHeader } from '../../shared/liveContract';
 import { TOKENS_MAX } from '../../shared/limits';
 import { isFinalStatus } from '../../shared/status';
 import { sessionTokenOf } from '../auth/cookie';
 import type { Repository, SellerRepository } from '../repo/Repository';
 import { error } from './respond';
 import { noSeller, type ApiCall } from './routeKit';
+
+/** The Worker runtime's `webSocket` on a 101 reply (not in the DOM types used here). */
+const socketOf = (reply: Response) => ({ webSocket: (reply as { webSocket?: unknown }).webSocket });
 
 /**
  * Plan 074: a customer's live socket. The private order tokens are the only credential (never a
@@ -23,9 +26,11 @@ export async function customerSocket(
     return new Response('Expected a WebSocket', { status: 426 });
   }
   if (!context.live) return error('not_found', 'Live updates are not available here');
+  // New clients send the tokens in Sec-WebSocket-Protocol (C12); old open tabs still use ?tokens=.
+  const offered = tokensFromProtocolHeader(request.headers.get('Sec-WebSocket-Protocol'));
   const raw = searchParams.get('tokens');
-  if (raw === null) return bad();
-  const tokens = [...new Set(raw.split(',').filter((token) => token !== ''))];
+  if (offered === null && raw === null) return bad();
+  const tokens = [...new Set(offered ?? (raw ?? '').split(',').filter((token) => token !== ''))];
   if (tokens.length === 0 || tokens.length > TOKENS_MAX) return bad();
   const found = await store.lookupByTokens(tokens);
   const codes: Array<string> = [];
@@ -40,7 +45,14 @@ export async function customerSocket(
     }
   }
   if (codes.length === 0) return error('not_found', 'No active orders');
-  return context.live.connectCustomer(sellerStore.seller.id, codes);
+  const reply = await context.live.connectCustomer(sellerStore.seller.id, codes);
+  if (offered === null) return reply;
+  // The browser needs the server to pick one offered protocol; pick the marker, never a token.
+  const headers = new Headers(reply.headers);
+  headers.set('Sec-WebSocket-Protocol', LIVE_PROTOCOL);
+  return reply.status === 101
+    ? new Response(null, { status: 101, headers, ...socketOf(reply) } as ResponseInit)
+    : new Response(reply.body, { status: reply.status, headers });
 }
 
 /**

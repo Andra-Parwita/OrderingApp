@@ -38,6 +38,7 @@ import {
   Section,
   SectionLabel,
   TextLink,
+  EditedBand,
   Updates,
 } from './orderParts';
 
@@ -403,6 +404,7 @@ export function OrderPageView(props: OrderPageViewProps) {
         </Steps>
       ) : null}
 
+      {final ? null : <EditedBand inbox={order.inbox} lang={lang} />}
       {final ? null : <NotifyCard controller={install} code={formatOrderCode(order.code)} />}
       <Updates inbox={order.inbox} lang={lang} place={info.place} cook={info.cook} />
       {final ? null : <NotifyLine controller={install} />}

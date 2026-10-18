@@ -21,7 +21,7 @@ const orders = [
 
 describe('print plan (plan 042)', () => {
   it('leaves cancelled orders out and groups by place, then delivery', () => {
-    const plan = buildPrintPlan(orders, two, 'all', 'place', 'en');
+    const plan = buildPrintPlan(orders, two, 'active', 'place', 'en');
     expect(plan.groups.map((g) => [g.key, g.orders.map((o) => o.code)])).toEqual([
       ['p1', ['AAA222', 'EEE222']],
       ['p2', ['BBB222']],
@@ -32,28 +32,25 @@ describe('print plan (plan 042)', () => {
   });
 
   it('totals match the printed orders: dishes, money, paid and unpaid', () => {
-    const { totals } = buildPrintPlan(orders, two, 'all', 'place', 'en');
+    const { totals } = buildPrintPlan(orders, two, 'active', 'place', 'en');
     expect(totals.dishes).toEqual([{ itemId: 'lemper', name: 'Chicken lemper', qty: 8 }]);
     expect(totals.totalCents).toBe(8000);
     expect(totals.paidCents).toBe(2000);
     expect(totals.unpaidCents).toBe(6000);
   });
 
-  it('not collected and not paid narrow the list', () => {
-    expect(pickPrintOrders(orders, 'notCollected').map((o) => o.code)).toEqual([
-      'AAA222',
-      'BBB222',
-      'CCC222',
-    ]);
-    expect(pickPrintOrders(orders, 'notPaid').map((o) => o.code)).toEqual([
-      'AAA222',
-      'CCC222',
-      'EEE222',
-    ]);
+  it('Active leaves cancelled out; Confirmed, Selected and everything narrow or widen it', () => {
+    const codes = (which: Parameters<typeof pickPrintOrders>[1], sel = new Set<string>()) =>
+      pickPrintOrders(orders, which, sel).map((o) => o.code);
+    expect(codes('active')).not.toContain('DDD222');
+    expect(codes('active')).toContain('EEE222');
+    expect(codes('confirmed')).toEqual(['AAA222', 'BBB222', 'CCC222']);
+    expect(codes('selected', new Set(['2', '4']))).toEqual(['BBB222', 'DDD222']);
+    expect(codes('everything')).toHaveLength(5);
   });
 
   it('sort by code is one group in code order', () => {
-    const plan = buildPrintPlan(orders, two, 'all', 'code', 'en');
+    const plan = buildPrintPlan(orders, two, 'active', 'code', 'en');
     expect(plan.groups).toHaveLength(1);
     expect(plan.groups[0]?.orders.map((o) => o.code)).toEqual([
       'AAA222',
@@ -67,7 +64,7 @@ describe('print plan (plan 042)', () => {
     const many = Array.from({ length: 30 }, (_, i) =>
       makeOrder({ id: `x${i}`, code: `A${String(i).padStart(2, '0')}222` }),
     );
-    const pages = paginate(buildPrintPlan(many, view, 'all', 'place', 'en'), 'en');
+    const pages = paginate(buildPrintPlan(many, view, 'active', 'place', 'en'), 'en');
     expect(pages.length).toBeGreaterThanOrEqual(2);
     const blocks = pages.flat();
     expect(blocks.filter((b) => b.type === 'order')).toHaveLength(30);
@@ -86,7 +83,7 @@ describe('print plan (plan 042)', () => {
     const big = Array.from({ length: 12 }, (_, i) =>
       makeOrder({ id: `b${i}`, code: `B${String(i).padStart(2, '0')}222`, lines }),
     );
-    const plan = buildPrintPlan(big, view, 'all', 'place', 'en');
+    const plan = buildPrintPlan(big, view, 'active', 'place', 'en');
     expect(plan.totals.dishes).toHaveLength(50);
     expect(plan.totals.dishes.every((d) => d.qty === 24)).toBe(true);
     expect(plan.totals.totalCents).toBe(12 * 50 * 2 * 100);

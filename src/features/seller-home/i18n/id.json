@@ -74,6 +74,8 @@
     "tileUnpaid": "belum dibayar · {{amount}}",
     "dishes": "Hidangan",
     "goMenuLimits": "Ke Menu untuk mengubah batas",
+    "onTheDay_other": "Hari H: {{count}} hidangan",
+    "onTheDaySold": "{{count}} habis",
     "soldOut": "Habis",
     "noLimit": "{{sold}} · tanpa batas",
     "cookingDayToday": "Hari masak · hari ini",

@@ -31,7 +31,7 @@ describe('orders for a helper (read only)', () => {
     );
     expect(screen.getByRole('button', { name: 'Mark collected' })).toBeInTheDocument();
     for (const name of [
-      'Mark ready for pickup',
+      'Ready for pickup',
       'Cancel order',
       'Mark paid',
       'Lock',

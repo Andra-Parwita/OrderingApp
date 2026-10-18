@@ -13,7 +13,12 @@ import { Db, type D1Like } from '../db/d1';
 import { dropOldDaySales } from '../db/daySales';
 import { deleteUnusedPictures, finishDueMenus } from '../db/menus';
 import type { ImageBucket } from '../images/r2';
-import { dropExpiredDetails, dropStaleFindAttempts, type RetentionCounts } from '../db/retention';
+import {
+  dropExpiredAuthRows,
+  dropExpiredDetails,
+  dropStaleFindAttempts,
+  type RetentionCounts,
+} from '../db/retention';
 
 /** Hourly: forgets old wrong tries of "find my order" (D-075). Returns how many rows went. */
 export async function runAttemptSweep(env: { DB: D1Like }, now: Date): Promise<number> {
@@ -64,6 +69,13 @@ export async function runRetention(
   // Plan 029: the day-sales log is kept 10 weeks per kitchen.
   const sales = await dropOldDaySales(db, now);
   if (sales > 0) log(`retention: ${String(sales)} day-sales row(s) dropped`);
+  // Plan 098 C10: invite keys and device codes expired for more than 7 days.
+  const auth = await dropExpiredAuthRows(db, now);
+  if (auth.keys > 0 || auth.codes > 0) {
+    log(
+      `retention: ${String(auth.keys)} expired key(s), ${String(auth.codes)} expired code(s) dropped`,
+    );
+  }
   return counts;
 }
 

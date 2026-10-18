@@ -76,7 +76,7 @@ describe('seller screens', () => {
 
     it('filters to Ordered from the "not confirmed" shortcut and shows counts', () => {
       renderList();
-      expect(screen.getByRole('button', { name: 'All 3' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Active 3' })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /1 not confirmed/ }));
       expect(screen.getByRole('button', { name: 'Ordered 1' })).toHaveAttribute(
         'aria-pressed',
@@ -119,10 +119,10 @@ describe('seller screens', () => {
 
     it('offers one next step, plus cancel, for a confirmed pickup order', () => {
       renderDetail();
-      expect(screen.getByRole('button', { name: 'Mark ready for pickup' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Ready for pickup' })).toBeInTheDocument();
       // Mark collected is always there, quietly (D-069); the other later steps are not.
       expect(screen.getByRole('button', { name: 'Mark collected' })).toBeInTheDocument();
-      for (const later of ['Mark delivered', 'Confirm order', 'Mark out for delivery']) {
+      for (const later of ['Mark delivered', 'Confirm order', 'Out for delivery']) {
         expect(screen.queryByRole('button', { name: later })).not.toBeInTheDocument();
       }
       expect(screen.getByRole('button', { name: 'Cancel order' })).toBeInTheDocument();

@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
-import { formatCutoff, formatDay } from '../../../shared/dates';
+import { formatCutoff, formatDay, localDate } from '../../../shared/dates';
 import type { Language } from '../../../shared/domain';
-import { MAX_MENU_ITEMS } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
+import { viewedKitchenZone } from '../../../shared/zone';
 import type { MenuDishView } from '../../../shared/menusContract';
-import { Button, Icon, ListWithPanel, WarningDialog } from '../../ui';
+import { Button, Icon, ListWithPanel, Segmented, WarningDialog } from '../../ui';
 import { ChefMenu } from './ChefMenu';
-import { DishEditorHost, useDishEditor } from './DishEditorHost';
 import { MENU_NS } from './i18n/register';
 import {
   GroupLabel,
@@ -40,7 +39,7 @@ import { useSold } from './useSold';
 const HeaderLink = styled(Link)`
   display: inline-flex;
   align-items: center;
-  min-height: ${({ theme }) => theme.size.tap}px;
+  min-height: 2.25rem;
   padding: 0 ${({ theme }) => theme.spacing.sm};
   color: ${({ theme }) => theme.c.atext};
   font-weight: 600;
@@ -64,35 +63,43 @@ const Kicker = styled.p<{ $live?: boolean }>`
   gap: ${({ theme }) => theme.spacing.sm};
   margin: 0;
   color: ${({ $live, theme }) => ($live ? theme.c.conf : theme.c.atext)};
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 `;
 const Big = styled.h2`
-  margin: ${({ theme }) => theme.spacing.xs} 0;
-  font-size: 2rem;
+  margin: 0;
+  font-size: 1.125rem;
   font-weight: 700;
 `;
 const Top = styled.div`
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+`;
+const Title2 = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 ${({ theme }) => theme.spacing.md};
+  min-width: 0;
 `;
 const Actions = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 const DishRow = styled.div<{ $head?: boolean; $off?: boolean }>`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 5rem 4rem 4rem 7.5rem 3rem;
+  grid-template-columns: minmax(0, 1fr) 5rem 4rem 4rem 7.5rem;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  min-height: ${({ theme }) => theme.size.rowCompact + 8}px;
+  min-height: 2.5rem;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   color: ${({ $head, $off, theme }) => ($head || $off ? theme.c.muted : theme.c.text)};
   font-variant-numeric: tabular-nums;
@@ -101,6 +108,10 @@ const DishRow = styled.div<{ $head?: boolean; $off?: boolean }>`
 
   .num {
     text-align: right;
+  }
+  /* the switch keeps its 44 px hit area although the row is slimmer */
+  button {
+    margin: -0.125rem 0;
   }
   .name {
     font-size: 1rem;
@@ -113,28 +124,17 @@ const DishRow = styled.div<{ $head?: boolean; $off?: boolean }>`
     font-weight: 400;
   }
 `;
-const Pencil = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.size.tap}px;
-  height: ${({ theme }) => theme.size.tap}px;
-  border: 0;
-  background: transparent;
-  color: ${({ theme }) => theme.c.muted};
-  cursor: pointer;
-`;
-
 function LiveMenu({
   data,
   lang,
-  onEdit,
   onEditTab,
+  onTheDay,
 }: Readonly<{
   data: MenuData;
   lang: Language;
-  onEdit: (dish: MenuDishView) => void;
   onEditTab: (tab: Tab) => void;
+  /** The On the day tab's content (the Sell screen); absent on a phone. */
+  onTheDay: MenuSlots['onTheDay'] | undefined;
 }>) {
   const { t } = useTranslation(MENU_NS);
   const navigate = useNavigate();
@@ -144,16 +144,41 @@ function LiveMenu({
   const { orders, sold } = useSold(true);
   const [asking, setAsking] = useState<'unpublish' | 'finish' | null>(null);
   const places = view.pickupPoints.map((place) => place.place).join(', ');
-  const full = view.dishes.length >= 10;
+  // Plan 107: Menu opens on the On the day tab on its cooking day.
+  const [shown, setShown] = useState<'pre' | 'day'>(
+    onTheDay && localDate(new Date(), viewedKitchenZone()) >= menu.cookingDate ? 'day' : 'pre',
+  );
+  const tabs = onTheDay ? (
+    <Segmented
+      options={[
+        { value: 'pre', label: t('live.tabPre') },
+        { value: 'day', label: t('live.tabDay') },
+      ]}
+      value={shown}
+      onChange={setShown}
+      label={t('live.tabsLabel')}
+    />
+  ) : null;
+  if (onTheDay && shown === 'day') {
+    return (
+      <Section>
+        <Top style={{ marginBottom: '0.75rem' }}>{tabs}</Top>
+        {onTheDay()}
+      </Section>
+    );
+  }
   return (
     <Section>
+      {tabs ? <Top>{tabs}</Top> : null}
       <Top>
         <div>
-          <Kicker $live>
-            <Icon name="check" />
-            {t('live.kicker')}
-          </Kicker>
-          <Big>{formatDay(menu.cookingDate, lang)}</Big>
+          <Title2>
+            <Kicker $live>
+              <Icon name="check" />
+              {t('live.kicker')}
+            </Kicker>
+            <Big>{formatDay(menu.cookingDate, lang)}</Big>
+          </Title2>
           <Muted>
             {[
               t('live.orders', { count: orders }),
@@ -166,9 +191,9 @@ function LiveMenu({
           </Muted>
         </div>
         <Actions>
-          <Button onClick={() => onEditTab('details')}>
+          <Button variant="primary" onClick={() => onEditTab('dishes')}>
             <Icon name="pencil" />
-            {t('live.editDetails')}
+            {t('session.editMenu')}
           </Button>
           <Button onClick={() => void navigate('/seller/share')}>
             <Icon name="share" />
@@ -192,7 +217,6 @@ function LiveMenu({
             {t('live.sold')}
           </span>
           <span role="columnheader">{t('live.soldOut')}</span>
-          <span />
         </DishRow>
         {view.dishes.map((dish) => (
           <DishRow key={dish.id} role="row" $off={dish.soldOut}>
@@ -229,24 +253,10 @@ function LiveMenu({
                 <span>{dish.manualSoldOut === true ? t('live.yes') : t('live.no')}</span>
               </SwitchButton>
             </span>
-            <span role="cell">
-              <Pencil
-                type="button"
-                aria-label={t('live.edit', { name: dishName(dish, lang) })}
-                onClick={() => onEdit(dish)}
-              >
-                <Icon name="pencil" />
-              </Pencil>
-            </span>
           </DishRow>
         ))}
       </div>
-      <Actions style={{ marginTop: '1rem' }}>
-        <Button disabled={full} onClick={() => onEditTab('dishes')}>
-          <Icon name="plus" />
-          {t('live.addDish')}{' '}
-          <Muted as="span">{t('live.nOf', { n: view.dishes.length, max: MAX_MENU_ITEMS })}</Muted>
-        </Button>
+      <Actions style={{ marginTop: '0.5rem' }}>
         <LinkButton onClick={() => setAsking('finish')}>{t('live.finish')}</LinkButton>
       </Actions>
       {asking === 'unpublish' ? (
@@ -327,21 +337,20 @@ function NotPublished({
   );
 }
 
+export type ScreenSlots = Pick<MenuSlots, 'newMenu' | 'chefs'> &
+  Partial<Pick<MenuSlots, 'onTheDay'>>;
+
 /** The owner's Menu; a chef (plan 030, `chefId` is theirs) gets Your dishes only. */
-export function MenuScreen({
-  slots,
-  chefId,
-}: Readonly<{ slots: Pick<MenuSlots, 'newMenu' | 'chefs'>; chefId?: string }>) {
+export function MenuScreen({ slots, chefId }: Readonly<{ slots: ScreenSlots; chefId?: string }>) {
   return chefId ? <ChefMenu chefId={chefId} /> : <OwnerMenu slots={slots} />;
 }
 
-function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu' | 'chefs'> }>) {
+function OwnerMenu({ slots }: Readonly<{ slots: ScreenSlots }>) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
   const wizard = useMenuWizard();
   const { data, status } = useMenuData();
   const { run } = useRunOp();
-  const editor = useDishEditor();
   // The New menu dialog (Home's), opened with the dishes of an earlier menu when it came from one.
   const [asking, setAsking] = useState<{ source?: NewMenuSource } | null>(null);
   const [pastOpen, setPastOpen] = useState(false);
@@ -385,12 +394,7 @@ function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu' | 'che
 
   const main =
     state === 'live' ? (
-      <LiveMenu
-        data={data}
-        lang={lang}
-        onEdit={(dish) => editor.open({ itemId: dish.id })}
-        onEditTab={wizard.edit}
-      />
+      <LiveMenu data={data} lang={lang} onEditTab={wizard.edit} onTheDay={slots.onTheDay} />
     ) : state === 'not_published' ? (
       <NotPublished data={data} lang={lang} onOpen={wizard.open} />
     ) : (
@@ -467,12 +471,6 @@ function OwnerMenu({ slots }: Readonly<{ slots: Pick<MenuSlots, 'newMenu' | 'che
           })
         : null}
       {wizard.failed ? <Muted role="alert">{t('genericError')}</Muted> : null}
-      <DishEditorHost
-        data={data}
-        value={editor.value}
-        onClose={editor.close}
-        renderChefs={slots.chefs}
-      />
     </Page>
   );
 }

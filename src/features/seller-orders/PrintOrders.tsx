@@ -17,6 +17,7 @@ import {
   PRINT_SORT,
   PRINT_WHICH,
   buildPrintPlan,
+  pickPrintOrders,
   itemsLine,
   paginate,
   type PrintBlock,
@@ -77,6 +78,29 @@ const Field = styled.div`
 const Muted = styled.p`
   margin: 0;
   color: ${({ theme }) => theme.c.muted};
+`;
+const Picker = styled.fieldset`
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+
+  legend {
+    padding: ${({ theme }) => theme.spacing.sm} 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  label {
+    display: flex;
+    align-items: center;
+    gap: ${({ theme }) => theme.spacing.md};
+    min-height: ${({ theme }) => theme.size.tap}px;
+    cursor: pointer;
+  }
+  input {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 `;
 const Pages = styled.div`
   display: flex;
@@ -197,6 +221,29 @@ const Totals = styled.section`
   }
 `;
 
+const WHICH_KEY = 'print-orders-which';
+
+/** The last "Which orders" choice on this device (storage may be blocked: then Active). */
+function useRememberedWhich() {
+  const [which, set] = useState<PrintWhich>(() => {
+    try {
+      const saved = localStorage.getItem(WHICH_KEY);
+      return PRINT_WHICH.find((value) => value === saved) ?? 'active';
+    } catch {
+      return 'active';
+    }
+  });
+  const choose = useCallback((next: PrintWhich) => {
+    set(next);
+    try {
+      localStorage.setItem(WHICH_KEY, next);
+    } catch {
+      // Private window or blocked storage: the choice just is not remembered.
+    }
+  }, []);
+  return [which, choose] as const;
+}
+
 function useKitchenName(): string {
   const [name, setName] = useState('');
   useEffect(() => {
@@ -256,17 +303,27 @@ export function PrintOrdersScreen({ onBack }: Readonly<{ onBack?: () => void }>)
   const orders = useLiveOrders();
   const current = useSelector(selectCurrent);
   const kitchen = useKitchenName();
-  const [which, setWhich] = useState<PrintWhich>('all');
+  const [which, setWhich] = useRememberedWhich();
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [sort, setSort] = useState<PrintSort>('place');
   const [printedAt] = useState(() => new Date().toISOString());
   const print = useCallback(() => window.print(), []);
 
   const view = current.status === 'ready' ? current.view : null;
   const plan = useMemo(
-    () => buildPrintPlan(orders ?? [], view, which, sort, lang),
-    [orders, view, which, sort, lang],
+    () => buildPrintPlan(orders ?? [], view, which, sort, lang, selected),
+    [orders, view, which, sort, lang, selected],
   );
   const pages = useMemo(() => paginate(plan, lang), [plan, lang]);
+  const pickable = useMemo(() => (orders ?? []).filter((o) => o.status !== 'cancelled'), [orders]);
+  const toggle = useCallback((id: string) => {
+    setSelected((now) => {
+      const next = new Set(now);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   if (readOnly) {
     return (
@@ -278,7 +335,9 @@ export function PrintOrdersScreen({ onBack }: Readonly<{ onBack?: () => void }>)
 
   const whichOptions: ReadonlyArray<SegmentedOption<PrintWhich>> = PRINT_WHICH.map((value) => ({
     value,
-    label: t(`print.which.${value}`),
+    label: t(`print.which.${value}`, {
+      count: pickPrintOrders(orders ?? [], value, selected).length,
+    }),
   }));
   const sortOptions: ReadonlyArray<SegmentedOption<PrintSort>> = PRINT_SORT.map((value) => ({
     value,
@@ -387,6 +446,24 @@ export function PrintOrdersScreen({ onBack }: Readonly<{ onBack?: () => void }>)
           />
         </Field>
       </Controls>
+      {which === 'selected' ? (
+        <Picker data-no-print>
+          <legend>{t('print.pick')}</legend>
+          {pickable.length === 0 ? <Muted>{t('print.pickNone')}</Muted> : null}
+          {pickable.map((order) => (
+            <label key={order.id}>
+              <input
+                type="checkbox"
+                checked={selected.has(order.id)}
+                onChange={() => toggle(order.id)}
+              />
+              <span>
+                {formatOrderCode(order.code)} · {order.firstName}
+              </span>
+            </label>
+          ))}
+        </Picker>
+      ) : null}
       {ready ? <Muted data-no-print>{t('print.hint', { count: pages.length })}</Muted> : null}
       {ready && !empty ? <Muted data-no-print>{t('print.paperHint')}</Muted> : null}
       {!ready ? (
@@ -403,6 +480,9 @@ export function PrintOrdersScreen({ onBack }: Readonly<{ onBack?: () => void }>)
                 <div>
                   <h2>{kitchen}</h2>
                   <p>{t('print.menuFor', { day })}</p>
+                  <p data-testid="print-set">
+                    {t(`print.heading.${which}`, { count: totals.orders })}
+                  </p>
                 </div>
                 <div>
                   <p>{t('print.printedAt', { time: printed })}</p>

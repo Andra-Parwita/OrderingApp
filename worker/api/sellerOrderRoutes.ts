@@ -12,6 +12,7 @@ import {
 import {
   parseChangeFulfilmentRequest,
   parseCreateSellerOrderRequest,
+  parseEditSellerOrderRequest,
   type SellerOrderResponse,
   type SellerOrdersResponse,
 } from '../../shared/orderContract';
@@ -192,6 +193,22 @@ export const SELLER_ORDER_ROUTES: ReadonlyArray<SellerRoute> = [
       return order
         ? Response.json({ order } satisfies SellerOrderResponse)
         : error('not_found', 'Order not found');
+    },
+    { addresses: true },
+  ),
+  // Plan 105: the owner or chef edits dishes, note or name of any menu order (a helper may not).
+  // Private orders have their own route (`PATCH private/:code`); the store refuses them here.
+  route(
+    'PATCH',
+    'orders/:code',
+    OWNER_CHEF,
+    async (call) => {
+      const { store, request, bad, actor, changed } = call;
+      const input = parseEditSellerOrderRequest(await readJson(request));
+      if (!input) return bad();
+      const code = call.b ? parseOrderCode(call.b) : null;
+      if (!code) return notFound();
+      return sellerResult(await changed(await store.editOrder(code, input, actor)));
     },
     { addresses: true },
   ),

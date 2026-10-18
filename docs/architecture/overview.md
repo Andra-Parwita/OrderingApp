@@ -68,7 +68,7 @@ A customer turns notifications on from one order's page; the browser subscriptio
 | cron | does | code |
 |---|---|---|
 | hourly (`0 * * * *`) | finishes every live menu whose cooking day has ended (midnight in the kitchen's own time zone, `kitchens.time_zone`), archives its orders and prunes past-menu pictures beyond the newest 10; sweeps old "find my order" tries | [`worker/api/scheduled.ts`](../../worker/api/scheduled.ts) (`runAutoFinish`, `runAttemptSweep`) |
-| Mondays 03:00 UTC (`0 3 * * 1`) | also `runRetention`: drops order details 4 weeks past the cooking date, and day-sales rows older than 10 weeks | `runRetention` |
+| Mondays 03:00 UTC (`0 3 * * 1`) | also `runRetention`: drops order details 4 weeks past the cooking date, day-sales rows older than 10 weeks, and invite keys and device codes expired for over 7 days (plan 098 C10, 500 per batch) | `runRetention` |
 
 If the weekly entry changes, change `RETENTION_CRON` in `scheduled.ts` with it. Both are idempotent and log counts only, for example `retention: 2 week(s) archived, 14 order(s) dropped`. Rules in [data-model.md](data-model.md#retention). To try it on a scratch server: `curl -k https://localhost:<port>/cdn-cgi/handler/scheduled`.
 

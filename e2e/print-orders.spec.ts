@@ -41,7 +41,7 @@ test('print preview renders A4 pages with a header on each', async ({
     }
     await expect(sheets.last().getByTestId('print-totals')).toBeVisible();
 
-    await page.getByRole('radio', { name: 'Not paid' }).click();
+    await page.getByRole('radio', { name: /^Confirmed/ }).click();
     await page.getByRole('radio', { name: 'Code' }).click();
     await expect(sheets.first()).toBeVisible();
     await page.screenshot({ path: 'captures/p042/print-preview-1180x820.png' });

@@ -7,7 +7,7 @@ import { formatMoney } from '../../../shared/money';
 import { ChefIncomeButton } from '../../components/chef-income';
 import { pickText } from '../../../shared/text';
 import { Icon } from '../../ui';
-import { Aside, Columns, GoLink } from './homeParts';
+import { Aside, GoLink } from './homeParts';
 import type { LiveStage } from './homeState';
 import { HOME_NS } from './i18n/register';
 import {
@@ -73,11 +73,12 @@ const Tiles = styled.div`
 `;
 const Tile = styled.button<{ $warn?: boolean }>`
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing.xs};
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: center;
+  gap: 0 ${({ theme }) => theme.spacing.sm};
   min-height: ${({ theme }) => theme.size.tap}px;
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadTablet}px;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.lg};
   border: 0;
   border-left: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   background: transparent;
@@ -97,23 +98,32 @@ const Tile = styled.button<{ $warn?: boolean }>`
     align-items: center;
     gap: ${({ theme }) => theme.spacing.sm};
     color: ${({ $warn, theme }) => ($warn ? theme.c.warn : theme.c.text)};
-    font-size: 1.75rem;
+    font-size: 1.25rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
   span {
     color: ${({ theme }) => theme.c.muted};
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 `;
 
 const Tools = styled.div`
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  &:empty {
-    display: none;
-  }
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+const LiveBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px;
+`;
+const OnTheDay = styled.p`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadTablet}px 0;
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
 `;
 
 function NumberTiles({ orders, lang, onGo }: Pick<LiveProps, 'orders' | 'lang' | 'onGo'>) {
@@ -149,30 +159,42 @@ const Heading = styled.div`
   align-items: baseline;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
 
   h2 {
     margin: 0;
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 700;
+  }
+  > span {
+    color: ${({ theme }) => theme.c.muted};
+    font-size: 0.875rem;
   }
 `;
 const Stock = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  column-gap: ${({ theme }) => theme.spacing.xxl};
   margin: 0;
   padding: 0;
   list-style: none;
 `;
 const StockRow = styled.li`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 9rem 6.5rem;
+  grid-template-columns: minmax(0, 1fr) 4.5rem 5.5rem;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-  min-height: ${({ theme }) => theme.size.rowOrder}px;
+  gap: ${({ theme }) => theme.spacing.md};
+  min-height: 2rem;
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   font-weight: 600;
 
   .gone {
     color: ${({ theme }) => theme.c.muted};
+  }
+  > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 `;
 const Meter = styled.span`
@@ -210,7 +232,10 @@ function DishStock({
     <section aria-labelledby="home-stock">
       <Heading>
         <h2 id="home-stock">{t('live.dishes')}</h2>
-        <GoLink onClick={() => onGo('menu')}>{t('live.goMenuLimits')}</GoLink>
+        <Tools>
+          <ChefIncomeButton menuId="current" />
+          <GoLink onClick={() => onGo('menu')}>{t('live.goMenuLimits')}</GoLink>
+        </Tools>
       </Heading>
       <Stock>
         {dishStock(view, orders).map((dish) => {
@@ -243,6 +268,9 @@ function DishStock({
 }
 
 const Places = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  column-gap: ${({ theme }) => theme.spacing.xxl};
   margin: 0;
   padding: 0;
   list-style: none;
@@ -252,11 +280,11 @@ const PlaceRow = styled.li`
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  min-height: ${({ theme }) => theme.size.rowOrder}px;
+  min-height: 2rem;
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 
   strong {
-    display: block;
+    margin-right: ${({ theme }) => theme.spacing.sm};
   }
   small {
     color: ${({ theme }) => theme.c.muted};
@@ -274,8 +302,8 @@ function OrdersPerPlace({ view, orders, lang }: Pick<LiveProps, 'view' | 'orders
     <Aside aria-labelledby="home-places">
       <Heading>
         <h2 id="home-places">{t('live.cookingDay')}</h2>
+        <span>{formatDay(view.menu.cookingDate, lang)}</span>
       </Heading>
-      <p>{formatDay(view.menu.cookingDate, lang)}</p>
       <Places>
         {placeLoads(view, orders).map((place) => (
           <PlaceRow key={place.id}>
@@ -306,13 +334,10 @@ export function Taking(props: LiveProps) {
     <>
       <Phases {...props} />
       <NumberTiles {...props} />
-      <Tools>
-        <ChefIncomeButton menuId="current" />
-      </Tools>
-      <Columns>
+      <LiveBody>
         <DishStock {...props} />
         <OrdersPerPlace {...props} />
-      </Columns>
+      </LiveBody>
     </>
   );
 }
@@ -322,8 +347,8 @@ export function Taking(props: LiveProps) {
 const Bars = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: ${({ theme }) => theme.spacing.xl};
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadTablet}px;
+  gap: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px;
 
   @media (max-width: 52rem) {
     grid-template-columns: minmax(0, 1fr);
@@ -340,7 +365,7 @@ const BarBox = styled.div`
     font-variant-numeric: tabular-nums;
   }
   .count b {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
   .count span {
     margin-left: ${({ theme }) => theme.spacing.xs};
@@ -353,7 +378,7 @@ const BarBox = styled.div`
   }
 `;
 const BarMeter = styled(Meter)`
-  margin: ${({ theme }) => theme.spacing.sm} 0;
+  margin: ${({ theme }) => theme.spacing.xs} 0;
 `;
 
 function ProgressBar({ label, note, bar }: Readonly<{ label: string; note: string; bar: Bar }>) {
@@ -382,15 +407,15 @@ function ProgressBar({ label, note, bar }: Readonly<{ label: string; note: strin
 }
 
 const Handover = styled.section`
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px
-    ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadTablet}px
+    ${({ theme }) => theme.spacing.md};
 `;
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
 
   th {
-    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
     color: ${({ theme }) => theme.c.muted};
     font-size: 0.75rem;
     font-weight: 700;
@@ -408,7 +433,7 @@ const Table = styled.table`
     text-align: left;
   }
   td {
-    height: ${({ theme }) => theme.size.rowOrder}px;
+    height: 2.25rem;
     padding: 0 ${({ theme }) => theme.spacing.md};
     border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
     text-align: right;
@@ -437,8 +462,8 @@ const UnpaidStrip = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
-  margin: 0 ${({ theme }) => theme.size.pagePadTablet}px ${({ theme }) => theme.spacing.xl};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  margin: 0 ${({ theme }) => theme.size.pagePadTablet}px ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
   border-radius: ${({ theme }) => theme.size.radiusControl}px;
   background: ${({ theme }) => theme.c.warnTint};
 
@@ -515,9 +540,17 @@ export function CookingDay(props: LiveProps) {
   const { orders, lang, onGo } = props;
   const bars = cookingProgress(orders);
   const unpaid = unpaidOf(orders);
+  const dayDishes = props.view.dishes.filter((dish) => dish.dayStock !== undefined);
+  const dayGone = dayDishes.filter((dish) => dish.dayStock === 0).length;
   return (
     <>
       <Phases {...props} />
+      {props.stage === 'cookingDay' && dayDishes.length > 0 ? (
+        <OnTheDay>
+          {t('live.onTheDay', { count: dayDishes.length })}
+          {dayGone > 0 ? ` · ${t('live.onTheDaySold', { count: dayGone })}` : ''}
+        </OnTheDay>
+      ) : null}
       <Bars>
         <ProgressBar label={t('live.packed')} note={t('live.packedNote')} bar={bars.packed} />
         <ProgressBar

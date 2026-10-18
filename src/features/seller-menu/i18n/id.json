@@ -77,6 +77,9 @@
   },
   "live": {
     "kicker": "Menu tayang",
+    "tabsLabel": "Tampilan menu",
+    "tabPre": "Pra-pesan",
+    "tabDay": "Hari-H",
     "orders_other": "{{count}} pesanan",
     "close": "pesanan ditutup {{when}}",
     "deliveryOn": "antar tersedia",
@@ -255,6 +258,12 @@
     "soldOutFor": "Habis: {{name}}",
     "none": "Tanpa",
     "chef": "Koki",
+    "sellAs": "Dijual sebagai",
+    "sellAsFor": "Dijual sebagai: {{name}}",
+    "asPre": "Pra-pesan",
+    "asDay": "Hari-H",
+    "asBoth": "Keduanya",
+    "portionsFor": "Porsi hari-H: {{name}}",
     "hint": "Harga di sini hanya untuk menu ini. Batas: pelanggan melihat \"sisa N\" saat tinggal 5 atau kurang; hidangan habis di 0."
   },
   "details": {
@@ -439,5 +448,35 @@
     "ownerOnly": "Saat ini hanya pemilik yang dapat mengubah menu ini.",
     "addToMenu": "Tambah ke menu",
     "addToMenuFor": "Tambahkan {{name}} ke menu saat ini"
+  },
+  "session": {
+    "editMenu": "Ubah menu",
+    "title": "Mengubah menu · {{date}}",
+    "layer": "Ubah menu",
+    "band": "Mode ubah — pelanggan melihat menu saat ini sampai Anda menyimpan.",
+    "count_other": "{{count}} perubahan belum disimpan",
+    "countShort_other": "{{count}} belum",
+    "none": "Belum ada perubahan",
+    "saving": "Menyimpan…",
+    "savingCount_other": "Menyimpan {{count}} perubahan…",
+    "saved": "Tersimpan ✓",
+    "allSaved": "Semua perubahan tersimpan",
+    "failed": "Belum tersimpan — coba lagi",
+    "failedNote": "Perubahan Anda masih ada. Tidak ada yang hilang.",
+    "retry": "Coba lagi",
+    "discard": "Buang",
+    "save": "Simpan",
+    "leaveTitle_other": "Simpan {{count}} perubahan?",
+    "leaveBody": "Pelanggan melihat perubahan hanya setelah Anda menyimpan.",
+    "leaveBodyDraft": "Draf disimpan di perangkat ini sampai Anda menyimpannya.",
+    "dont": "Jangan simpan",
+    "keep": "Lanjut mengubah",
+    "added": "Ditambah",
+    "removed": "Dihapus",
+    "edited": "Diubah",
+    "pillFailed": "Belum tersimpan — coba lagi",
+    "newDishHint": "Hidangan baru dibuat di Hidangan Anda.",
+    "pill_other": "Draf · {{count}} perubahan belum disimpan",
+    "pillShort_other": "Draf · {{count}} belum"
   }
 }

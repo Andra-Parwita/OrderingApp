@@ -256,8 +256,12 @@ export function forgetAutoSavers(): void {
 }
 
 /** The saver for this key: the one still saving from an earlier mount, or a new one. */
-function acquireSaver<T>(key: string, send: (value: T) => Promise<SaveResult>): AutoSaver<T> {
-  return (registry.get(key) as AutoSaver<T> | undefined) ?? new AutoSaver<T>(key, send);
+function acquireSaver<T>(
+  key: string,
+  send: (value: T) => Promise<SaveResult>,
+  delayMs?: number,
+): AutoSaver<T> {
+  return (registry.get(key) as AutoSaver<T> | undefined) ?? new AutoSaver<T>(key, send, delayMs);
 }
 
 /** The wizard collects the savers of the step on screen, to ask before it lets the seller leave. */
@@ -266,6 +270,8 @@ export const AutoSaveGate = createContext<MutableRefObject<Set<Leavable>> | null
 export function useAutoSave<T>(
   key: string,
   send: (value: T) => Promise<SaveResult>,
+  /** Plan 103: 0 hands each change on at once (an edit session keeps it itself). */
+  delayMs?: number,
 ): {
   state: AutoSaveState<T>;
   update: (change: (previous: T | null) => T) => void;
@@ -275,8 +281,12 @@ export function useAutoSave<T>(
 } {
   const saver = useMemo(
     () =>
-      acquireSaver<T>(key, () => Promise.resolve({ ok: false, refused: false, code: 'network' })),
-    [key],
+      acquireSaver<T>(
+        key,
+        () => Promise.resolve({ ok: false, refused: false, code: 'network' }),
+        delayMs,
+      ),
+    [key, delayMs],
   );
   // The latest send (it closes over the store and the kitchen) is set after every render.
   useEffect(() => {

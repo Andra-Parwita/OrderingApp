@@ -83,18 +83,18 @@ const linkNames = (nav: HTMLElement) =>
     .map((link) => link.textContent);
 
 describe('seller shell, tablet', () => {
-  it('lists Home, Orders, Kitchen, Pickup & delivery, Sell, Menu and Settings for the seller', () => {
+  it('lists Home, Menu, Orders, Kitchen, Pickup & delivery, Dishes and Settings for the seller', () => {
     me = SELLER;
     renderAt('/seller');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
     expect(linkNames(nav).map((text) => text?.replace('Not published', ''))).toEqual([
       'Home',
+      'Menu',
       'Orders',
       'Private',
       'Kitchen',
       'Pickup & delivery',
-      'Sell',
-      'Menu',
+      'Dishes',
       'Settings',
       'Help',
       'About',
@@ -149,11 +149,11 @@ describe('seller shell, tablet', () => {
     renderAt('/seller');
     const nav = screen.getByRole('navigation', { name: 'Seller' });
     expect(linkNames(nav)).toEqual([
+      'Menu',
       'Orders',
       'Private',
       'Kitchen',
       'Pickup & delivery',
-      'Menu',
       'Help',
       'About',
     ]);
@@ -186,12 +186,12 @@ describe('seller shell, tablet', () => {
     const nav = screen.getByRole('navigation', { name: 'Penjual' });
     expect(linkNames(nav).map((text) => text?.replace('Belum terbit', ''))).toEqual([
       'Beranda',
+      'Menu',
       'Pesanan',
       'Khusus',
       'Dapur',
       'Serah terima',
-      'Jual',
-      'Menu',
+      'Hidangan',
       'Pengaturan',
       'Bantuan',
       'Tentang',

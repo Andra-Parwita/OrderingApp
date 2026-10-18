@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Kitchen print (mock-up 109)</title>
+    <style>
+      :root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+      button, select { font: inherit; color: inherit; cursor: pointer; }
+      :focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+      .notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+      .notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+      .notes h2 { font-size: 1.0625rem; margin: 14px 0 4px; }
+      .rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+      .rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+      .rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+      .rec ol, .rec ul { margin: 4px 0; padding-left: 20px; }
+      .rec li { margin: 3px 0; }
+      .wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+      .row { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+      figure { margin: 0; max-width: 100%; }
+      figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+      figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+      .row figcaption { width: 384px; }
+      .row.pg figcaption { width: 794px; max-width: 100%; }
+      .badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+      .muted { color: #5d6358; }
+      .fn { font-size: 0.75rem; color: #5d6358; }
+      .scrollx { overflow-x: auto; max-width: 100%; }
+
+      /* app frames (dark, as the owner asked) */
+      .frame { --bg: #15130e; --surf: #1e1b14; --surf2: #2c2819; --line: #3a3526; --text: #efe9da; --muted: #bdb6a3; --fill: #8fd09a; --onfill: #0f2412; --edge: #8f8873;
+        background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+      .frame.tab { width: 1138px; height: 640px; }
+      .frame.ph { width: 384px; height: 800px; flex-direction: column; }
+      .rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 1px; }
+      .rail span { width: 58px; min-height: 40px; display: grid; place-items: center; font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.1; border-radius: 8px; padding: 0 2px; overflow-wrap: anywhere; }
+      .rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+      .rail .k { font-weight: 800; color: #f6e9d2; min-height: 40px; font-size: 12px; }
+      .main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+      .tabbar { height: 56px; flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line); margin-top: auto; }
+      .tabbar span { flex: 1; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+      .tabbar span.on { color: var(--fill); font-weight: 700; }
+      .btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+      .btn.icon { width: 44px; padding: 0; }
+      .btn.pri { background: var(--fill); border-color: var(--fill); color: var(--onfill); }
+      .btn.flat { border-color: transparent; }
+      .btn.ring { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px #f0a64a; }
+      .ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      ul { list-style: none; margin: 0; padding: 0; }
+      .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 24px 0; }
+      .ph .head { padding: 12px 16px 0; flex-wrap: wrap; }
+      .head h1 { margin: 0; font-size: 28px; line-height: 1.2; display: flex; align-items: center; gap: 10px; }
+      .ph .head h1 { font-size: 22px; }
+      .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--fill); }
+      .head p { margin: 2px 0 0; color: var(--muted); }
+      .side { display: flex; gap: 8px; flex: none; }
+      .tabs { display: flex; gap: 16px; padding: 8px 24px 0; border-bottom: 1px solid var(--line); align-items: flex-end; }
+      .ph .tabs { gap: 4px; padding: 4px 16px 0; align-items: center; }
+      .tabs .t { min-height: 44px; display: inline-flex; align-items: baseline; gap: 8px; padding: 10px 4px 0; border-bottom: 3px solid transparent; color: var(--muted); font-weight: 500; }
+      .ph .tabs .t { padding: 0 12px; align-items: center; }
+      .tabs .t.on { color: var(--text); font-weight: 700; border-color: var(--fill); }
+      .tabs .t small { font-size: 14px; font-weight: 400; }
+      .tabs .sp { flex: 1; }
+      .tabs .btn.icon { margin-bottom: 2px; }
+      .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; padding: 10px 24px; border-bottom: 1px solid var(--line); }
+      .tools .lb, .ph .lb { color: var(--muted); }
+      .inl { display: flex; align-items: center; gap: 10px; }
+      .seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 8px; overflow: hidden; }
+      .seg span { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; font-weight: 600; white-space: nowrap; }
+      .seg.cmp span { padding: 0 10px; }
+      .seg span.on { background: var(--surf2); color: var(--fill); }
+      .seg span + span { border-left: 1px solid var(--edge); }
+      .sw { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; }
+      .sw i { width: 36px; height: 20px; border-radius: 10px; background: var(--surf2); border: 1px solid var(--edge); position: relative; flex: none; }
+      .sw i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--edge); }
+      .sw em { font-style: normal; font-weight: 400; color: var(--muted); }
+      .sel { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); padding: 0 10px; display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 600; min-width: 0; }
+      .sel::after { content: ''; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg) translateY(-2px); flex: none; }
+      .ctl { display: flex; align-items: center; gap: 8px; padding: 4px 16px; }
+      .ctl .sel { flex: 1; }
+      .gh { margin: 0; padding: 12px 24px 4px; font-size: 16px; }
+      .cr { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr) auto auto; align-items: center; gap: 12px 20px; min-height: 52px; padding: 4px 24px; border-bottom: 1px solid var(--line); }
+      .cr .big { font-size: 24px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+      .cr .nm { font-size: 17px; font-weight: 600; display: flex; flex-direction: column; }
+      .cr .nm small { font-size: 14px; font-weight: 400; color: var(--muted); }
+      .cr .sp2 { color: var(--muted); white-space: nowrap; }
+      .who { min-width: 44px; min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-weight: 600; padding: 0 8px; }
+      .pr { display: flex; align-items: center; gap: 8px; min-height: 58px; padding: 4px 8px 6px 16px; border-bottom: 1px solid var(--line); }
+      .pr .big { width: 32px; text-align: right; font-size: 22px; font-weight: 700; flex: none; }
+      .pr .nm { flex: 1; min-width: 0; }
+      .pr .nm b { display: block; font-size: 15px; font-weight: 600; line-height: 1.2; }
+      .pr .nm small { display: block; color: var(--muted); font-size: 13px; line-height: 1.25; }
+      .nt { padding: 6px 24px; border-bottom: 1px solid var(--line); }
+      .nt .mono, .mono { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.06em; }
+      .pnotes { display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 16px; border-top: 1px solid var(--line); font-weight: 600; }
+
+      .scrim { position: absolute; inset: 0; background: rgb(0 0 0/55%); z-index: 8; }
+      .dlg { position: absolute; z-index: 11; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 460px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: 0 10px 30px rgb(0 0 0/50%); }
+      .dlg.bot { left: 0; right: 0; top: auto; bottom: 0; transform: none; width: auto; border-radius: 14px 14px 0 0; border-bottom: 0; padding: 14px 16px 16px; }
+      .dlg h3 { margin: 0 0 12px; font-size: 18px; }
+      .fld { display: grid; gap: 4px; margin-bottom: 12px; }
+      .fld > span { color: var(--muted); font-size: 13.5px; }
+      .fld .seg span { flex: 1; justify-content: center; }
+      .fld .seg { display: flex; }
+      .chk { display: flex; align-items: center; gap: 10px; min-height: 48px; font-weight: 600; margin-bottom: 8px; }
+      .chk i { width: 24px; height: 24px; border: 2px solid var(--edge); border-radius: 5px; display: grid; place-items: center; flex: none; }
+      .chk i.on { background: var(--fill); border-color: var(--fill); color: var(--onfill); }
+      .chk i .ico { width: 16px; height: 16px; stroke-width: 3; }
+      .chk em { font-style: normal; color: var(--muted); font-weight: 400; }
+      .bt { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+      .bt .btn { min-height: 48px; }
+      .dlg.bot .bt .btn.pri { flex: 1; }
+      .tapw { position: relative; display: inline-flex; }
+
+      /* printed A4 pages: light, black on white (not themed) */
+      .a4 { width: 794px; height: 1123px; background: #fff; color: #000; box-shadow: 0 2px 10px rgb(40 30 15/30%); padding: 56px 56px 48px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; line-height: 1.3; position: relative; overflow: hidden; }
+      .a4 .ph1 { display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 8px; }
+      .a4 h2 { margin: 0; font-size: 26px; }
+      .a4 .ph1 p { margin: 2px 0 0; font-size: 15px; }
+      .a4 .ph1 .who2 { font-size: 20px; font-weight: 800; margin-top: 6px; }
+      .a4 .ph1 .r { text-align: right; }
+      .a4 h3 { margin: 18px 0 2px; font-size: 20px; padding-bottom: 3px; border-bottom: 1px solid #000; }
+      .a4 .it { display: grid; grid-template-columns: 34px 62px minmax(0, 1fr) auto; gap: 14px; align-items: center; min-height: 66px; border-bottom: 1px solid #bbb; }
+      .a4 .box { width: 28px; height: 28px; border: 2px solid #000; border-radius: 3px; }
+      .a4 .cnt { font-size: 38px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+      .a4 .nm { font-size: 21px; font-weight: 700; }
+      .a4 .nm small { font-size: 15px; font-weight: 400; color: #333; margin-left: 4px; }
+      .a4 .spl { font-size: 15px; color: #222; white-space: nowrap; }
+      .a4 .nts { margin-top: 24px; }
+      .a4 .nts h3 { margin-top: 0; }
+      .a4 .note { padding: 7px 0; border-bottom: 1px solid #bbb; font-size: 16px; }
+      .a4 .note .mono { font-weight: 700; }
+      .a4 .foot { position: absolute; left: 56px; right: 56px; bottom: 32px; font-size: 12px; color: #333; display: flex; justify-content: space-between; }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>Kitchen print: the cook list on paper (plan 109 mock-up)</h1>
+      <p>Target = owner, 18 Oct: "a kitchen print so a chef can print for the kitchen, or can print all in the kitchen to be cooked, and including notes too if whoever wants to print it includes it." Tablet 1138 × 640 (dark, rail Home · Menu · Orders · Private · Kitchen · Pickup &amp; delivery · Dishes · Settings · Help · About), phone 384 × 800 (dark, compact B2 Cook row), two printed A4 pages (794 × 1123 px, black on white), one Indonesian set. Samples are the owner's data (Onde Onde, menu for Wed 21 Oct, printed Sun 18 Oct 5:08 pm; Pastel (1 buah), lalampa (each), Mild Grilled wrapped rice with basil chicken; chefs Chandra and Sari; the two notes). <b>The counts (24/18/9 and the pickup/delivery split) and "14 orders" are made up to fill the page.</b> No prices anywhere: the Cook data has none.</p>
+
+      <div class="rec">
+        <h2 style="margin-top:2px">What each option does (data = the Cook tab's, nothing else)</h2>
+        <table>
+          <tr><th>Option</th><th>Effect</th><th>Same as on screen</th></tr>
+          <tr><td><b>Print</b> (new button, next to "Print labels")</td><td>Opens the print choice sheet. Print labels is unchanged.</td><td>Cook screen header (tablet); icon in the Cook | Pack row (phone).</td></tr>
+          <tr><td><b>Chef</b>: All chefs / one chef</td><td>Which dishes go on paper. A signed-in chef starts on themselves; the owner starts on All chefs. Hidden when the menu has no chefs (like the Chef filter today).</td><td>Chef filter (cookModel <code>ALL_CHEFS</code>, <code>chefChoices</code>); default from <code>lastSignedIn().chefId</code>.</td></tr>
+          <tr><td><b>Group by</b>: Dish / Chef</td><td>Dish = one flat list. Chef = a heading per chef (Chandra, Sari) with that chef's dishes.</td><td>Group by Dish | Chef on the Cook tab.</td></tr>
+          <tr><td><b>Include customer notes</b></td><td>Adds a "Notes (N)" section under the list: order code, first name, note. Only notes of the chosen chef's dishes (as the screen shows them).</td><td><code>selectCookNotes(…, chef.filter)</code>, "Notes (N)".</td></tr>
+          <tr><td><b>Print</b> (in the sheet)</td><td>Opens the browser print window with the A4 page(s). One-line label on tablet and phone.</td><td>Orders print uses the same Print wording.</td></tr>
+        </table>
+        <p class="fn" style="margin:6px 0 2px">Source: src/features/seller-cook/CookScreen.tsx (LabelsButton, Side/Tabs), CookTab.tsx (Tools, Row, notes), CookPhone.tsx (PhoneControls, PhoneRow, PhoneNotes), ChefFilterControl.tsx, i18n/en.json + id.json; seller-orders/PrintOrders.tsx (header: kitchen name, "Menu for {day}", heading, "Printed {time}", "Page n of m") and its "Which orders" choice.</p>
+      </div>
+
+      <div class="rec">
+        <h2 style="margin-top:2px">Questions for the owner (one by one)</h2>
+        <ol>
+          <li><b>Cooked count from Count mode.</b> Should the paper show "cooked 5 of 24" next to a dish? Recommend <b>no</b>: paper has its own tick box; two ticks confuse.</li>
+          <li><b>Phone buttons.</b> At 384 px both print buttons are icon-only (labels may not wrap). Labels keeps today's printer icon; Print needs a different icon (drawn: clipboard with lines). OK, or one "Print" icon opening a small menu "Kitchen list / Labels"?</li>
+          <li><b>Preview page or straight to the print window?</b> Orders print opens a preview page (Back, Print, "Which orders" choice). Here the sheet is the choice and Print goes straight to the print window. Recommend straight (less to build), but a preview would match Orders.</li>
+          <li><b>Chef signed in:</b> may they switch to "All chefs" or another chef in the sheet? Drawn: yes (the screen's Chef filter allows it).</li>
+          <li><b>Private orders.</b> The Cook rows show "Menu N · Private N". Print only the total, or add "(N private)" to the split line?</li>
+          <li><b>Totals.</b> Add a line with the number of orders (the Cook subtitle "From 14 orders") and/or total portions per chef? Not drawn.</li>
+          <li><b>Page breaks</b> when it is long: start each chef on a new page (grouped by chef)? Drawn: continuous, "Page 1 of 1" in the footer as in Orders print.</li>
+          <li><b>Remember the choice</b> (chef, group, notes) on the device, as plan 109 stage 1 says? Drawn as remembered; the sheet always opens on the last choice except Chef for a signed-in chef.</li>
+        </ol>
+      </div>
+
+      <div class="rec">
+        <h2 style="margin-top:2px">Not confirmed</h2>
+        <ul>
+          <li><b>Old kitchen print:</b> <code>git log -S PrintJob</code> shows it in 84c4b31, 3aca8f4 and 8fe5919. What 8fe5919 removed from seller-cook was the bag <b>label</b> text (qrName, pickup, delivery, part), so the "old kitchen print" looks like the label print job, not a cook list. Not opened line by line; nothing reused.</li>
+          <li><b>New strings</b> (not in the i18n files today): sheet title "Print kitchen list" / "Cetak daftar dapur", "All chefs" / "Semua koki", "Include customer notes" / "Sertakan catatan pelanggan", printed "Chef: Chandra" / "Koki: Chandra". Reused: Print / Cetak, Group by, Dish, Chef, Notes (N), "{n} pickup · {n} delivery", Menu for, Printed, Page n of m, Close. Indonesian day/time formats on the ID page ("Rab 21 Okt", "17.08") follow the 103 mock-up and "20.00" style; not checked against <code>shared/dates.ts</code>.</li>
+          <li><b>Phone bottom bar</b> shows Orders · Pickup &amp; delivery · More (from the comment in sellerNav.ts); I highlighted More because Kitchen is not a phone tab there. Not run on a device.</li>
+          <li>Dark colours are mock-up values, not the app theme tokens. Phone Pack tab and count mode are not drawn (unchanged).</li>
+          <li>Print width/margins: the A4 frames are 96 dpi screen pixels; real printer margins not tested.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        print: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5v-7h14v7h-2M7 14h10v6H7z"/></svg>',
+        list: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8M6 6h12v15H6zM9 11h6M9 15h6"/></svg>',
+        person: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1-4 4-6 8-6s7 2 8 6"/></svg>',
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+      };
+      const L = {
+        en: { rail: ['Home', 'Menu', 'Orders', 'Private', 'Kitchen', 'Pickup & delivery', 'Dishes', 'Settings', 'Help', 'About'], tabs: ['Orders', 'Pickup & delivery', 'More'],
+          title: 'Kitchen · Wed 21 Oct', sub: "From 14 orders. Cancelled orders aren't counted. Updates as orders change.", cook: 'Cook', cookSub: 'by dish', pack: 'Pack', packSub: 'by order',
+          group: 'Group by', dish: 'Dish', chefW: 'Chef', all: 'All', allChefs: 'All chefs', count: 'Count mode', hint: 'tick off as you cook',
+          pk: (n) => `${n} pickup`, dl: (n) => `${n} delivery`, notes: (n) => `Notes (${n})`, labels: 'Print labels', print: 'Print', close: 'Close',
+          sheet: 'Print kitchen list', incl: 'Include customer notes', menuFor: 'Menu for Wed 21 Oct', printed: 'Printed Sun 18 Oct 5:08 pm', page: 'Page 1 of 1',
+          chefHead: (c) => `Chef: ${c}`, who: (n) => `Who ordered`, kitchen: 'Onde Onde', hdr: 'Cook list' },
+        id: { rail: ['Beranda', 'Menu', 'Pesanan', 'Khusus', 'Dapur', 'Serah terima', 'Hidangan', 'Pengaturan', 'Bantuan', 'Tentang'], tabs: ['Pesanan', 'Serah terima', 'Lainnya'],
+          title: 'Dapur · Rab 21 Okt', sub: 'Dari 14 pesanan. Pesanan yang dibatalkan tidak dihitung. Diperbarui saat pesanan berubah.', cook: 'Masak', cookSub: 'per menu', pack: 'Kemas', packSub: 'per pesanan',
+          group: 'Kelompokkan', dish: 'Menu', chefW: 'Koki', all: 'Semua', allChefs: 'Semua koki', count: 'Mode hitung', hint: 'centang saat memasak',
+          pk: (n) => `${n} ambil`, dl: (n) => `${n} antar`, notes: (n) => `Catatan (${n})`, labels: 'Cetak label', print: 'Cetak', close: 'Tutup',
+          sheet: 'Cetak daftar dapur', incl: 'Sertakan catatan pelanggan', menuFor: 'Menu untuk Rab 21 Okt', printed: 'Dicetak Min 18 Okt 17.08', page: 'Halaman 1 dari 1',
+          chefHead: (c) => `Koki: ${c}`, who: () => 'Siapa yang pesan', kitchen: 'Onde Onde', hdr: 'Daftar masak' },
+      };
+      // [id, name, unit, chef, qty, pickup, delivery, customers]
+      const D = [['pastel', 'Pastel', '1 buah', 'Chandra', 24, 16, 8, 11], ['lalampa', 'lalampa', 'each', 'Sari', 18, 12, 6, 8], ['mild', 'Mild Grilled wrapped rice with basil chicken', '', 'Chandra', 9, 6, 3, 5]];
+      const NOTES = [['RL2-2A9', 'Anin', "Testing. Please don't process order.", 'Chandra'], ['YNA-5MH', 'sandra', 'titip dulu', 'Sari']];
+      const unitOf = (d, s) => (d[2] ? d[2] : '');
+      const split = (d, s) => `${s.pk(d[5])} · ${s.dl(d[6])}`;
+
+      const rail = (s) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === 4 ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const tabbar = (s) => `<div class="tabbar">${s.tabs.map((t, i) => `<span class="${i === 2 ? 'on' : ''}">${t}</span>`).join('')}</div>`;
+      const tapMark = (b) => `<span class="tapw">${b}</span>`;
+
+      // Kitchen screen, tablet. o.ring marks the new Print button.
+      const cookTab = (s, o = {}) => `${rail(s)}<div class="main">
+        <div class="head"><div><h1>${s.title}<span class="dot" aria-hidden="true"></span></h1><p>${s.sub}</p></div>
+          <div class="side"><button class="btn ${o.ring ? 'ring' : ''}">${I.print}${s.print}</button><button class="btn">${I.print}${s.labels}</button></div></div>
+        <div class="tabs" role="tablist"><span class="t">${s.cook} <small>${s.cookSub}</small></span><span class="t" style="color:var(--muted);font-weight:500;border-color:transparent">${s.pack} <small>${s.packSub}</small></span></div>
+        <div class="tools"><div class="inl"><span class="lb">${s.group}</span><span class="seg"><span class="on">${s.dish}</span><span>${s.chefW}</span></span></div>
+          <div class="inl"><span class="lb">${s.chefW}</span><span class="seg"><span class="on">${s.all}</span><span>Chandra</span><span>Sari</span></span></div>
+          <label class="sw"><i></i>${s.count} <em>${s.hint}</em></label></div>
+        <ul>${D.map((d) => `<li class="cr"><span class="big">${d[4]}</span><span class="nm"><span>${d[1]}</span>${d[2] ? `<small>${d[2]}</small>` : ''}</span><span class="sp2">${split(d, s)}</span><span class="who" aria-label="${s.who()}">${I.person}${d[7]}</span></li>`).join('')}</ul>
+        <h2 class="gh">${s.notes(2)}</h2>
+        ${NOTES.map((n) => `<div class="nt"><span class="mono">${n[0]}</span> <b>${n[1]}</b><div>“${n[2]}”</div></div>`).join('')}</div>`;
+
+      // Kitchen screen, phone: compact B2 Cook row. Both print buttons icon-only.
+      const cookPh = (s, o = {}) => `<div class="head"><div><h1>${s.title}<span class="dot" aria-hidden="true"></span></h1></div></div>
+        <div class="tabs" role="tablist"><span class="t on">${s.cook}</span><span class="t">${s.pack}</span><span class="sp"></span>
+          <button class="btn icon ${o.ring ? 'ring' : ''}" aria-label="${s.print}" title="${s.print}">${I.list}</button><button class="btn icon" aria-label="${s.labels}" title="${s.labels}">${I.print}</button></div>
+        <div class="ctl"><span class="seg cmp"><span class="on">${s.dish}</span><span>${s.chefW}</span></span><span class="lb" style="color:var(--muted)">${s.chefW}</span><span class="sel">${s.all}</span></div>
+        <div class="ctl" style="border-bottom:1px solid var(--line)"><label class="sw"><i></i>${s.count}</label></div>
+        <ul>${D.map((d) => `<li class="pr"><span class="big">${d[4]}</span><span class="nm"><b>${d[1]}</b>${d[2] ? `<small>${d[2]}</small>` : ''}<small>${split(d, s)}</small></span><span class="who">${I.person}${d[7]}</span></li>`).join('')}</ul>
+        <div class="pnotes"><span>${s.notes(2)}</span><span>›</span></div>${tabbar(s)}`;
+
+      // Print choice sheet. o: chef, group ('dish'|'chef'), notes (bool), phone
+      const sheet = (s, ph, o) => {
+        const chefLabel = o.chef === 'all' ? s.allChefs : o.chef;
+        const n = o.chef === 'all' ? 2 : NOTES.filter((x) => x[3] === o.chef).length;
+        return `<div class="scrim"></div><div class="dlg ${ph ? 'bot' : ''}" role="dialog" aria-label="${s.sheet}"><h3>${s.sheet}</h3>
+          <div class="fld"><span>${s.chefW}</span><span class="sel">${chefLabel}</span></div>
+          <div class="fld"><span>${s.group}</span><span class="seg"><span class="${o.group === 'dish' ? 'on' : ''}">${s.dish}</span><span class="${o.group === 'chef' ? 'on' : ''}">${s.chefW}</span></span></div>
+          <div class="chk"><i class="${o.notes ? 'on' : ''}">${o.notes ? I.check : ''}</i><span>${s.incl} <em>(${n})</em></span></div>
+          <div class="bt"><button class="btn flat">${s.close}</button><button class="btn pri">${I.print}${s.print}</button></div></div>`;
+      };
+      const tabSheet = (o) => (s) => `${cookTab(s)}${sheet(s, false, o)}`;
+      const phSheet = (o) => (s) => `${cookPh(s)}${sheet(s, true, o)}`;
+
+      // Printed page. o: chef ('all' | name), group, notes
+      const printed = (s, o) => {
+        const rows = (list) => list.map((d) => `<div class="it"><span class="box" aria-hidden="true"></span><span class="cnt">${d[4]}</span><span class="nm">${d[1]}${d[2] ? `<small>${d[2]}</small>` : ''}</span><span class="spl">${split(d, s)}</span></div>`).join('');
+        const dishes = o.chef === 'all' ? D : D.filter((d) => d[3] === o.chef);
+        const chefs = [...new Set(dishes.map((d) => d[3]))];
+        const body = o.group === 'chef' ? chefs.map((c) => `<h3>${c}</h3>${rows(dishes.filter((d) => d[3] === c))}`).join('') : rows(dishes);
+        const notes = NOTES.filter((n) => o.chef === 'all' || n[3] === o.chef);
+        return `<div class="a4"><div class="ph1"><div><h2>${s.kitchen}</h2><p>${s.menuFor}</p><p class="who2">${o.chef === 'all' ? s.allChefs : s.chefHead(o.chef)}</p></div><div class="r"><p>${s.printed}</p><p>${s.group}: ${o.group === 'chef' ? s.chefW : s.dish}</p></div></div>
+          ${body}
+          ${o.notes ? `<div class="nts"><h3>${s.notes(notes.length)}</h3>${notes.map((n) => `<div class="note"><span class="mono">${n[0]}</span> &nbsp;<b>${n[1]}</b> — ${n[2]}</div>`).join('')}</div>` : ''}
+          <div class="foot"><span>${s.hdr}</span><span>${s.page}</span></div></div>`;
+      };
+
+      const tabs = [
+        { badge: '1', title: 'Kitchen screen, tablet: new Print button', html: (s) => cookTab(s, { ring: true }),
+          cap: '<b>Print</b> sits next to <b>Print labels</b> in the header (both one line). Everything else is today\'s Cook tab. The amber ring only marks the new button.' },
+        { badge: '2', title: 'Print choice sheet (owner / all chefs)', html: tabSheet({ chef: 'all', group: 'dish', notes: true }),
+          cap: 'A dialog over the dimmed screen. <b>Chef</b>: "All chefs" or one chef (select). <b>Group by</b>: Dish | Chef. <b>Include customer notes (2)</b> tick. One-line <b>Print</b>. The sheet opens on the last choice used on this device.' },
+        { badge: '2b', title: 'Print choice sheet (a chef signed in)', html: tabSheet({ chef: 'Chandra', group: 'dish', notes: false }),
+          cap: 'A signed-in chef starts on themselves (here Chandra); the notes count follows the chef (Chandra has 1 note in this sample). Notes tick is off here only to show the other state.' },
+      ];
+      const phones = [
+        { badge: '1 · phone', title: 'Kitchen screen: Cook row', html: (s) => cookPh(s, { ring: true }),
+          cap: 'In the Cook | Pack row two 44 px icon buttons: the new <b>Print</b> (list icon, aria-label "Print") and <b>Print labels</b> (printer, as today). Labels never wrap, so the phone uses icons only.' },
+        { badge: '2 · phone', title: 'Print choice sheet', html: phSheet({ chef: 'all', group: 'chef', notes: true }),
+          cap: 'Bottom sheet, same four controls; Print is the wide button, Close a text button. Here Group by Chef is chosen.' },
+      ];
+      const pages = [
+        { badge: 'A', title: 'Printed page (a): All chefs, grouped by chef, notes included', html: (s) => printed(s, { chef: 'all', group: 'chef', notes: true }), lang: 'en',
+          cap: 'Header: kitchen, "Menu for Wed 21 Oct", "All chefs", "Printed Sun 18 Oct 5:08 pm", the Group by used. Per dish: tick box ☐, big count, name + unit, "16 pickup · 8 delivery". A heading per chef. "Notes (2)" lists code, name, note (both notes shown, since All chefs).' },
+        { badge: 'B', title: 'Printed page (b): one chef (Chandra), grouped by dish, no notes', html: (s) => printed(s, { chef: 'Chandra', group: 'dish', notes: false }), lang: 'en',
+          cap: 'Header says "Chef: Chandra". Only Chandra\'s dishes, one flat list, no chef headings, no notes section (tick left empty).' },
+      ];
+      const ids = [
+        { badge: 'ID', title: 'Indonesian: choice sheet', html: phSheet({ chef: 'all', group: 'dish', notes: true }), lang: 'id', kind: 'ph',
+          cap: 'Cetak daftar dapur · Koki "Semua koki" · Kelompokkan Menu | Koki · "Sertakan catatan pelanggan (2)" · Tutup · Cetak. Longest label: "Sertakan catatan pelanggan" fits on one line at 384 px.' },
+        { badge: 'ID', title: 'Indonesian: printed page, all chefs, by chef, with notes', html: (s) => printed(s, { chef: 'all', group: 'chef', notes: true }), lang: 'id', kind: 'pg',
+          cap: 'Reuses "Menu untuk", "Dicetak", "Halaman n dari m", "{n} ambil · {n} antar", "Catatan (N)". New: "Semua koki", "Koki: Chandra".' },
+      ];
+      const fig = (f, kind, lang) => `<figure><div class="scrollx">${kind === 'pg' ? f.html(L[lang]) : `<div class="frame ${kind}" role="group" aria-label="${f.title}">${f.html(L[lang])}</div>`}</div><figcaption><b><span class="badge">${f.badge}</span> ${f.title}</b>${f.cap}</figcaption></figure>`;
+      document.getElementById('wrap').innerHTML =
+        tabs.map((f) => fig(f, 'tab', 'en')).join('') +
+        `<div class="row">${phones.map((f) => fig(f, 'ph', 'en')).join('')}</div>` +
+        `<div class="row pg">${pages.map((f) => fig(f, 'pg', 'en')).join('')}</div>` +
+        `<div class="row" style="align-items:flex-start"><div class="row">${fig(ids[0], 'ph', 'id')}</div><div class="row pg">${fig(ids[1], 'pg', 'id')}</div></div>`;
+    </script>
+  </body>
+</html>

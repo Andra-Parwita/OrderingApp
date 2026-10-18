@@ -13,6 +13,8 @@ export type MenuSlots = Readonly<{
   share: (props: { onGoToOrders: () => void }) => ReactNode;
   /** The cook list in a modal (Edit chefs in the dish editor); the app injects the Chefs screen. */
   chefs: (props: { onClose: () => void }) => ReactNode;
+  /** The Menu's On the day tab (plan 107): the Sell screen, embedded. */
+  onTheDay: () => ReactNode;
   /** The New menu dialog (Home's), so Home and the Menu screen start a menu the same way. */
   newMenu: (props: {
     lang: Language;

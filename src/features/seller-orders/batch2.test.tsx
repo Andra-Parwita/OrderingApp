@@ -82,16 +82,16 @@ describe('seller batch 2: list', () => {
 
   it('shows a text marker per state, never colour only', () => {
     renderList();
-    expect(within(row(/Newbie/)).getByText('★ New customer')).toBeInTheDocument();
-    expect(within(row(/Regular/)).getByText('↩ Returning')).toBeInTheDocument();
+    expect(within(row(/Newbie/)).getByText('First order')).toBeInTheDocument();
+    expect(within(row(/Regular/)).getByText('Ordered before')).toBeInTheDocument();
     expect(within(row(/Heard/)).getByText('✓ WhatsApp received')).toBeInTheDocument();
     expect(within(row(/Editor/)).getByText('↻ Changed')).toBeInTheDocument();
     expect(within(row(/Editor/)).getByText('🔒 Locked')).toBeInTheDocument();
     const walkin = row(/Walkin/);
     expect(within(walkin).getByText('entered by Bu Ani')).toBeInTheDocument();
-    expect(within(walkin).queryByText('★ New customer')).not.toBeInTheDocument();
+    expect(within(walkin).queryByText('First order')).not.toBeInTheDocument();
     // Customer markers only while the order is still waiting for confirmation.
-    expect(within(row(/Editor/)).queryByText('★ New customer')).not.toBeInTheDocument();
+    expect(within(row(/Editor/)).queryByText('First order')).not.toBeInTheDocument();
   });
 
   it('filters to the edited-by-customer chip with a matching count', () => {
@@ -410,18 +410,10 @@ describe('seller polish: action labels, banners, filter chips', () => {
 
   const CASES = [
     [{ status: 'ordered' }, 'Confirm & send on WhatsApp', 'Konfirmasi & kirim lewat WhatsApp'],
-    [{ status: 'confirmed', fulfilment: 'pickup' }, 'Mark ready for pickup', 'Tandai siap diambil'],
-    [
-      { status: 'confirmed', fulfilment: 'delivery' },
-      'Mark out for delivery',
-      'Tandai sedang diantar',
-    ],
-    [{ status: 'ready_for_pickup' }, 'Mark collected', 'Tandai sudah diambil'],
-    [
-      { status: 'out_for_delivery', fulfilment: 'delivery' },
-      'Mark delivered',
-      'Tandai sudah diantar',
-    ],
+    [{ status: 'confirmed', fulfilment: 'pickup' }, 'Ready for pickup', 'Siap diambil'],
+    [{ status: 'confirmed', fulfilment: 'delivery' }, 'Out for delivery', 'Sedang diantar'],
+    [{ status: 'ready_for_pickup' }, 'Mark collected', 'Tandai diambil'],
+    [{ status: 'out_for_delivery', fulfilment: 'delivery' }, 'Mark delivered', 'Tandai diantar'],
   ] as const;
 
   it.each(CASES)('labels the next step as an action: %j', async (overrides, en, id) => {
@@ -431,16 +423,16 @@ describe('seller polish: action labels, banners, filter chips', () => {
     expect(await screen.findByRole('button', { name: id })).toBeInTheDocument();
   });
 
-  it('says "New customer" once, in the banner, for a customer still to be heard from', () => {
+  it('says "First order" once, in the banner, for a customer still to be heard from', () => {
     renderDetail({ status: 'ordered' });
-    expect(screen.getAllByText('★ New customer')).toHaveLength(1);
+    expect(screen.getAllByText('First order', { selector: 'strong' })).toHaveLength(1);
   });
 
   it.each([[{ status: 'ordered', returning: true }], [{ status: 'ordered', waReceived: true }]])(
     'has no new-customer banner when the customer is known: %j',
     (overrides) => {
       renderDetail(overrides);
-      expect(screen.queryByText('★ New customer')).toBeNull();
+      expect(screen.queryByText('First order', { selector: 'strong' })).toBeNull();
     },
   );
 
@@ -469,7 +461,7 @@ describe('seller polish: action labels, banners, filter chips', () => {
     const group = within(screen.getByRole('group', { name: 'Filter by status' }));
     const names = group.getAllByRole('button').map((chip) => chip.textContent);
     expect(names).toEqual([
-      'All 2',
+      'Active 2',
       'Ordered 1',
       'Edited by customer 0',
       'Confirmed 1',
@@ -481,7 +473,10 @@ describe('seller polish: action labels, banners, filter chips', () => {
       'aria-pressed',
       'true',
     );
-    expect(group.getByRole('button', { name: 'All 2' })).toHaveAttribute('aria-pressed', 'false');
+    expect(group.getByRole('button', { name: 'Active 2' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
   });
 
   it('makes every chip a native button: in the tab order, so Enter and Space work', () => {

@@ -4,9 +4,14 @@ import { pickText } from '../../../shared/text';
 
 // Plan 042: what the A4 print of the current menu's orders says. Pure: the screen translates.
 
-export type PrintWhich = 'all' | 'notCollected' | 'notPaid';
+export type PrintWhich = 'active' | 'confirmed' | 'selected' | 'everything';
 export type PrintSort = 'place' | 'code';
-export const PRINT_WHICH: ReadonlyArray<PrintWhich> = ['all', 'notCollected', 'notPaid'];
+export const PRINT_WHICH: ReadonlyArray<PrintWhich> = [
+  'active',
+  'confirmed',
+  'selected',
+  'everything',
+];
 export const PRINT_SORT: ReadonlyArray<PrintSort> = ['place', 'code'];
 
 export type PrintGroup = Readonly<{
@@ -29,16 +34,24 @@ export type PrintTotals = Readonly<{
 
 export type PrintPlan = Readonly<{ groups: ReadonlyArray<PrintGroup>; totals: PrintTotals }>;
 
-const isCollected = (order: Order): boolean =>
-  order.collectedAt !== undefined || order.status === 'collected' || order.status === 'delivered';
-
-/** Cancelled orders never print; the option narrows the rest. */
-export function pickPrintOrders(orders: ReadonlyArray<Order>, which: PrintWhich): Array<Order> {
-  return orders.filter(
-    (order) =>
-      order.status !== 'cancelled' &&
-      (which === 'all' || (which === 'notCollected' ? !isCollected(order) : !order.paid)),
-  );
+/** Plan 104: Active is every order but the cancelled ones (Done stays); "everything" adds them. */
+export function pickPrintOrders(
+  orders: ReadonlyArray<Order>,
+  which: PrintWhich,
+  selected: ReadonlySet<string> = new Set(),
+): Array<Order> {
+  return orders.filter((order) => {
+    switch (which) {
+      case 'active':
+        return order.status !== 'cancelled';
+      case 'confirmed':
+        return order.status === 'confirmed';
+      case 'selected':
+        return selected.has(order.id);
+      case 'everything':
+        return true;
+    }
+  });
 }
 
 export const lineCents = (order: Order): number =>
@@ -52,8 +65,9 @@ export function buildPrintPlan(
   which: PrintWhich,
   sort: PrintSort,
   lang: Language,
+  selected: ReadonlySet<string> = new Set(),
 ): PrintPlan {
-  const chosen = pickPrintOrders(orders, which).sort(byCode);
+  const chosen = pickPrintOrders(orders, which, selected).sort(byCode);
   const points = view?.pickupPoints ?? [];
   const first = points[0]?.id;
   let groups: Array<PrintGroup>;

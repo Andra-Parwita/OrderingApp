@@ -43,6 +43,7 @@ const slots: MenuSlots = {
   // This harness has no setup store, so Edit chefs shows nothing here.
   chefs: () => null,
   newMenu: (props) => <NewMenuDialog {...props} />,
+  onTheDay: () => null,
 };
 
 function createHarnessStore() {

@@ -17,17 +17,18 @@ describe('navIdsFor', () => {
   it('gives the seller all ten items, Home first, Private right under Orders, Help right under Settings and About last', () => {
     expect(navIdsFor('seller')).toEqual([
       'home',
+      'menu',
       'orders',
       'private',
       'kitchen',
       'handover',
-      'sell',
-      'menu',
+      'dishes',
       'settings',
       'help',
       'about',
     ]);
     expect(HREF.sell).toBe('/seller/sell');
+    expect(HREF.dishes).toBe('/seller/menu/dishes');
     expect(HREF.home).toBe('/seller');
     expect(HREF.orders).toBe('/seller/orders');
   });
@@ -36,11 +37,11 @@ describe('navIdsFor', () => {
   });
   it('shows a chef Menu (own dishes, plan 030) but not Home, Sell or Settings', () => {
     expect(navIdsFor('chef')).toEqual([
+      'menu',
       'orders',
       'private',
       'kitchen',
       'handover',
-      'menu',
       'help',
       'about',
     ]);
@@ -94,6 +95,7 @@ describe('Help inside the app (plan 079)', () => {
 describe('activeNav', () => {
   it('marks Sell for /seller/sell', () => {
     expect(activeNav('/seller/sell')).toBe('sell');
+    expect(activeNav('/seller/menu/dishes')).toBe('dishes');
   });
 
   it.each([
@@ -187,6 +189,7 @@ describe('fixesPage', () => {
     expect(fixesPage('/seller/orders/K7F2QX', true)).toBe(true);
     expect(fixesPage('/seller/new', true)).toBe(true);
     expect(fixesPage('/seller/cook', true)).toBe(false);
+    expect(fixesPage('/seller/orders/print', true)).toBe(false);
   });
   it('on a phone /seller is the Orders list, so it is fixed there; one order is its own page', () => {
     expect(fixesPage('/seller', false)).toBe(true);

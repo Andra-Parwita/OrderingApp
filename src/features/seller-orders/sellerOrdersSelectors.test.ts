@@ -33,7 +33,7 @@ function stateWith(...actions: Array<ReturnType<typeof ordersLoaded>>): SellerOr
 describe('selectCounts', () => {
   it('counts per tab, grouping the ready and done statuses', () => {
     expect(selectCounts(stateWith(ordersLoaded({ orders: ORDERS })))).toEqual({
-      all: 7,
+      all: 6,
       ordered: 1,
       changed: 0,
       confirmed: 1,
@@ -50,8 +50,10 @@ describe('selectCounts', () => {
 });
 
 describe('visibleOrders', () => {
-  it('shows everything on All with no search', () => {
-    expect(visibleOrders(ORDERS, 'all', '')).toHaveLength(7);
+  it('shows every order but the cancelled one on Active (All) with no search', () => {
+    const active = visibleOrders(ORDERS, 'all', '');
+    expect(active).toHaveLength(6);
+    expect(active.some((o) => o.status === 'cancelled')).toBe(false);
   });
 
   it('filters by tab', () => {

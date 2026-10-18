@@ -289,7 +289,7 @@ sequenceDiagram
 
 The customer shell mounts `CustomerLiveHost` once ([liveConnection.ts](../../src/features/customer-orders/liveConnection.ts)). It opens **one WebSocket per kitchen** where this phone has an active order (not collected, delivered or cancelled; not from a closed week; placed in the last 10 days; normally one). The order page and My orders never open sockets or poll: they read the store, which the connection keeps fresh.
 
-Authorisation is the private order tokens only: `GET /api/s/:slug/live?tokens=a,b` (up to 20, WebSocket upgrade). The Worker checks every token belongs to **that** kitchen, is on its active menu and is not finished, and hands the room only the **codes** of the orders it admitted. The room (`SellerLive`, `/connect-customer`, tagged `customer`, hibernating) sends such a socket only `order.changed` for those codes (a change without a code, such as "Ready now" or finishing the week, is a bare nudge to every customer socket of that kitchen; no data in it). Seller sockets are untouched: kitchen-wide events never reach a customer. At most 300 customer sockets per kitchen.
+Authorisation is the private order tokens only: `GET /api/s/:slug/live` with the tokens in the `Sec-WebSocket-Protocol` header as `delave.live, tok.a, tok.b` (up to 20, WebSocket upgrade; plan 098 C12 - the old `?tokens=a,b` form is still accepted for tabs opened before the update). The Worker checks every token belongs to **that** kitchen, is on its active menu and is not finished, and hands the room only the **codes** of the orders it admitted. The room (`SellerLive`, `/connect-customer`, tagged `customer`, hibernating) sends such a socket only `order.changed` for those codes (a change without a code, such as "Ready now" or finishing the week, is a bare nudge to every customer socket of that kitchen; no data in it). Seller sockets are untouched: kitchen-wide events never reach a customer. At most 300 customer sockets per kitchen.
 
 ```mermaid
 sequenceDiagram
@@ -298,7 +298,7 @@ sequenceDiagram
     participant W as Worker
     participant DO as SellerLive
     participant SW as Service worker
-    H->>W: GET /api/s/onde-onde/live?tokens=t1,t2 (upgrade)
+    H->>W: GET /api/s/onde-onde/live (upgrade, tokens in Sec-WebSocket-Protocol)
     W->>W: each token: this kitchen, active menu, not finished
     W->>DO: /connect-customer?codes=C1,C2
     Note over H,DO: live: no timer, no polling

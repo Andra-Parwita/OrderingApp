@@ -148,10 +148,16 @@ describe('SellerLayout', () => {
     expect(full).toHaveStyle({ maxHeight: '164px' });
     expect(clip).toHaveStyle({ maxHeight: '164px' });
     const content = screen.getByLabelText('Draft');
+    // The banner collapses only when the content overflows by more than the strip shrinks (+8 px).
+    const overflow = (px: number) => {
+      Object.defineProperty(content, 'clientHeight', { configurable: true, value: 500 });
+      Object.defineProperty(content, 'scrollHeight', { configurable: true, value: 500 + px });
+    };
     const scrollTo = (top: number) => {
       content.scrollTop = top;
       fireEvent.scroll(content);
     };
+    overflow(400);
     scrollTo(8);
     expect(clip).toHaveStyle({ maxHeight: '164px' });
     scrollTo(9);
@@ -159,6 +165,20 @@ describe('SellerLayout', () => {
     // The image keeps its size: only the strip around it shortens.
     expect(full).toHaveStyle({ maxHeight: '164px' });
     scrollTo(0);
+    expect(clip).toHaveStyle({ maxHeight: '164px' });
+  });
+
+  it('keeps the banner full when the content overflows by less than the strip shrinks', async () => {
+    stubKitchen();
+    wide = true;
+    renderLayout();
+    const banner = await screen.findByRole('img', { name: 'Onde Onde banner' });
+    const clip = banner.parentElement?.parentElement?.parentElement as HTMLElement;
+    const content = screen.getByLabelText('Draft');
+    Object.defineProperty(content, 'clientHeight', { configurable: true, value: 500 });
+    Object.defineProperty(content, 'scrollHeight', { configurable: true, value: 560 });
+    content.scrollTop = 30;
+    fireEvent.scroll(content);
     expect(clip).toHaveStyle({ maxHeight: '164px' });
   });
 

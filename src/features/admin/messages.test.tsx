@@ -67,8 +67,7 @@ describe('Short message panel (plan 086)', () => {
     const english = await open();
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
     fireEvent.change(english, { target: { value: 'Back online' } });
-    expect(screen.getByText('11/90')).toBeInTheDocument();
-    expect(english).toHaveAttribute('maxlength', '90');
+    expect(screen.getAllByTestId('message-counter')[0]).toHaveTextContent('11 / 90');
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled(); // Indonesian still empty
   });
 

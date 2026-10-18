@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · On the day in Menu (mock-up 107)</title>
+    <style>
+:root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+.notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+.notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+.rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+.rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+.rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+.wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+.phones { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+figure { margin: 0; max-width: 100%; }
+figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+figcaption b { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+.phones figcaption { width: 384px; }
+.badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+.muted { color: #5d6358; }
+.fn { font-size: 0.75rem; color: #5d6358; }
+.scrollx { overflow-x: auto; max-width: 100%; }
+
+.frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70; --warn: #8a2232;
+  background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+.frame.tab { width: 1138px; height: 640px; }
+.frame.ph { width: 384px; height: 800px; flex-direction: column; }
+.rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 2px; }
+.rail span { width: 56px; min-height: 52px; display: grid; place-items: center; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.15; border-radius: 8px; }
+.rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+.rail .k { font-weight: 800; color: var(--ink); min-height: 40px; font-size: 12px; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hdr { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+.tabbar { height: 56px; flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line); margin-top: auto; }
+.tabbar span { flex: 1; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+.tabbar span.on { color: var(--fill); font-weight: 700; }
+.btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.btn.icon { width: 44px; padding: 0; }
+.btn.pri { background: var(--fill); border-color: var(--fill); color: #fff; }
+.btn.flat { border-color: transparent; text-decoration: underline; }
+.ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.steps { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--line); overflow: hidden; background: var(--surf); }
+.steps .t { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; font-weight: 600; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+.steps .t.on { color: var(--text); border-color: var(--fill); }
+.intro { padding: 8px 16px; color: var(--muted); font-size: 13.5px; }
+ul { list-style: none; margin: 0; padding: 0; }
+.dr { display: flex; align-items: center; gap: 4px; padding: 0 8px 0 4px; min-height: 56px; border-bottom: 1px solid var(--line); }
+.dr label { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; min-height: 52px; cursor: pointer; }
+.dr .cb { width: 44px; height: 44px; display: grid; place-items: center; flex: none; }
+.dr .cb i { width: 22px; height: 22px; border: 2px solid var(--edge); border-radius: 5px; display: grid; place-items: center; background: var(--surf); }
+.dr .cb i.on { background: var(--fill); border-color: var(--fill); color: #fff; }
+.dr .cb i .ico { width: 15px; height: 15px; stroke-width: 3; }
+.dr .tx { flex: 1; min-width: 0; }
+.dr .tx b { font-weight: 600; display: block; }
+.dr .tx small { color: var(--muted); font-size: 13px; display: block; }
+.dr .pr { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; flex: none; }
+.dr.chg { background: #fff6e0; }
+.dr.rm .tx b { text-decoration: line-through; }
+.dr select { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); font: inherit; font-size: 14px; padding: 0 8px; max-width: 140px; color: var(--text); }
+.mk { display: inline-block; border: 1px solid #b5651d; color: #7a4210; border-radius: 999px; font-size: 11.5px; font-weight: 700; padding: 0 7px; margin-left: 6px; vertical-align: 1px; }
+.fld { padding: 8px 16px; display: grid; gap: 2px; }
+.fld span { font-size: 13px; color: var(--muted); }
+.fld div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; }
+
+.scrim { position: absolute; inset: 0; background: rgb(28 22 12/42%); z-index: 8; }
+.scrim.two { z-index: 10; }
+.dlg { position: absolute; z-index: 11; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(400px, calc(100% - 32px)); background: var(--surf); border-radius: 14px; padding: 18px; box-shadow: 0 10px 30px rgb(40 30 15/35%); }
+.dlg h3 { margin: 0 0 6px; font-size: 18px; }
+.dlg p { margin: 0 0 14px; color: var(--muted); font-size: 14.5px; }
+.dlg .bt { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.dlg .bt .btn { min-height: 48px; }
+.dlg.stack .bt { flex-direction: column; }
+.dlg.stack .bt .btn { width: 100%; }
+
+.sheet { position: absolute; z-index: 9; background: var(--surf); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgb(40 30 15/30%); }
+.sheet.tab { left: 50%; top: 16px; bottom: 16px; width: 760px; transform: translateX(-50%); border-radius: 14px; }
+.sheet.ph { inset: 0; border-radius: 0; }
+.band { margin: 0; padding: 8px 16px; background: #fde7b8; color: #4a2c05; border-bottom: 1px solid #e3c27c; font-size: 13.5px; font-weight: 600; }
+.errband { margin: 0; padding: 6px 16px; background: #fbeaec; color: #8a2232; font-size: 13px; font-weight: 600; }
+.foot { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+.foot .cnt { flex: 1; font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 14.5px; min-width: 0; white-space: nowrap; }
+.foot .cnt::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #b5651d; flex: none; }
+.foot.err .cnt { color: #8a2232; }
+.foot.err .cnt::before { background: #8a2232; }
+.foot.saved .cnt::before { background: var(--fill); }
+.foot .btn { min-height: 48px; }
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgb(255 255 255/40%); border-top-color: #fff; animation: sp 0.9s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.tapw { position: relative; display: inline-flex; }
+.btn.ring { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #b5651d; }
+.tapdot { position: absolute; right: -8px; bottom: -14px; width: 28px; height: 28px; border-radius: 50%; background: rgb(181 101 29/55%); border: 2px solid #7a4210; }
+/* new in this round */
+.pill { position: absolute; z-index: 6; right: 16px; bottom: 16px; min-height: 44px; max-width: calc(100% - 24px); border: 0; border-radius: 999px; background: var(--ink); color: #f6e9d2; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; white-space: nowrap; box-shadow: 0 4px 14px rgb(40 30 15/35%); }
+.pill::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #f0a64a; flex: none; }
+.pill.err { background: #8a2232; color: #fff; }
+.pill.err::before { background: #fff; }
+.ph .pill { bottom: 68px; right: 12px; }
+.pill.up { bottom: 76px; }
+.ph .pill.up { bottom: 132px; }
+.ph .toast { bottom: 132px; left: 12px; transform: none; }
+.ph .dr select { max-width: 104px; }
+.ph .pop { bottom: 124px; }
+.pop { position: absolute; z-index: 7; right: 16px; bottom: 68px; width: 360px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgb(40 30 15/30%); overflow: hidden; }
+.ph .pop { left: 12px; right: 12px; width: auto; bottom: 120px; }
+.pop h4 { margin: 0; padding: 10px 14px; font-size: 14.5px; border-bottom: 1px solid var(--line); }
+.pop li { padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.pop .bt { display: flex; gap: 8px; padding: 8px 12px; justify-content: flex-end; }
+.pop .bt .btn { min-height: 44px; }
+.note { margin: 0; padding: 8px 16px; font-size: 13.5px; color: #4a4f44; background: var(--surf2); }
+.toast { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 6px; background: var(--surf); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 700; color: var(--fill); bottom: 76px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 8px rgb(40 30 15/18%); }
+.dr.errrow { background: #fbeaec; }
+.errmsg { color: var(--warn); font-size: 13px; font-weight: 600; }
+.sw { min-height: 44px; min-width: 80px; border: 1px solid var(--edge); border-radius: 999px; background: transparent; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px 0 8px; font-size: 13.5px; font-weight: 600; }
+.sw i { width: 28px; height: 16px; border-radius: 8px; background: var(--surf2); border: 1px solid var(--edge); position: relative; }
+.sw i::after { content: ''; position: absolute; top: 1px; left: 1px; width: 12px; height: 12px; border-radius: 50%; background: var(--edge); }
+.sw.on { border-color: var(--warn); color: var(--warn); }
+.sw.on i::after { left: 13px; background: var(--warn); }
+.lv { display: grid; align-items: center; gap: 8px; min-height: 56px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--line); }
+.lv.t { grid-template-columns: minmax(0, 1fr) 5rem 4rem 4rem 7.5rem; }
+.lv.h { min-height: 36px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.lv .n { text-align: right; font-variant-numeric: tabular-nums; }
+.lv.gone { color: var(--muted); }
+.lv small { color: var(--muted); font-size: 13px; margin-left: 6px; }
+.lv.p { grid-template-columns: minmax(0, 1fr) auto; padding: 8px 12px 8px 16px; }
+.lv.p .sub { color: var(--muted); font-size: 13px; display: block; }
+.top { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-end; padding: 12px 16px; }
+.top h2 { margin: 0; font-size: 26px; line-height: 1.15; }
+.kick { color: #2f6b36; font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.meter { height: 4px; border-radius: 2px; background: var(--line); display: block; }
+.meter i { display: block; height: 100%; border-radius: 2px; background: var(--fill); }
+.st { display: grid; grid-template-columns: minmax(0, 1fr) 9rem 6.5rem; gap: 16px; align-items: center; min-height: 52px; padding: 0 16px; border-top: 1px solid var(--line); font-weight: 600; }
+.st.gone { color: var(--muted); }
+.ph .st { grid-template-columns: minmax(0, 1fr) 4rem 5.5rem; gap: 10px; }
+.st .am { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+.sc { overflow: hidden; flex: 1; min-height: 0; position: relative; }
+.ftr { flex: none; display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+.tiles { display: flex; gap: 12px; padding: 12px 16px; }
+.tiles div { flex: 1; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 13px; color: var(--muted); }
+.tiles b { display: block; font-size: 22px; color: var(--text); }
+.bsheet { position: absolute; z-index: 11; left: 0; right: 0; bottom: 0; max-height: 94%; overflow: hidden; background: var(--surf); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgb(40 30 15/30%); }
+.win { padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 10px; }
+.dlg.win { width: min(580px, calc(100% - 32px)); }
+.win h3 { margin: 0; font-size: 19px; line-height: 1.2; }
+.win .sub { margin: 0; color: var(--muted); font-size: 14px; }
+.win .sec { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.win .sec h4 { margin: 0; font-size: 15px; }
+.win .help { margin: 0; color: var(--muted); font-size: 13.5px; }
+.win .dup { margin: 0; font-size: 13.5px; font-weight: 700; color: #7a4210; background: #fff6e0; border-radius: 8px; padding: 6px 10px; }
+.mrow { display: flex; align-items: center; gap: 8px; min-height: 52px; border-bottom: 1px solid var(--line); }
+.mrow .tx { flex: 1; min-width: 0; }
+.mrow .tx b { display: block; font-weight: 600; }
+.mrow .tx small { color: var(--muted); font-size: 13px; display: block; }
+.win .field { display: grid; gap: 2px; }
+.win .field span { font-size: 13px; color: var(--muted); }
+.win .field div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; color: var(--muted); }
+.win .field div.fill { color: var(--text); }
+.win .foot2 { border-top: 1px solid var(--line); padding-top: 8px; display: flex; gap: 4px 12px; flex-wrap: wrap; justify-content: flex-end; }
+.win .foot2.col { flex-direction: column; align-items: stretch; }
+.win .foot2.col .btn { width: 100%; }
+.win .bts { display: flex; flex-direction: column; gap: 8px; }
+.win .bts .btn { width: 100%; justify-content: flex-start; padding: 0 14px; min-height: 52px; }
+.win .bts .btn small { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.win .x { position: absolute; top: 4px; right: 4px; }
+.rw { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.rw .tx { flex: 1; min-width: 0; }
+.rw .tx b { font-weight: 700; }
+.rw .tx small { color: var(--muted); font-size: 13px; display: block; }
+.ph .rw { padding: 0 12px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { display: inline-block; border: 1px solid var(--edge); border-radius: 999px; font-size: 12px; font-weight: 600; padding: 0 8px; color: var(--muted); white-space: nowrap; }
+.chip.first { border-color: #b5651d; color: #7a4210; background: #fff6e0; }
+.chip.old { border-color: var(--fill); color: var(--fill); }
+.chip.saved { background: var(--surf2); border-color: var(--line); color: #4a4f44; }
+table.w { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+table.w th, table.w td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+.opt { max-width: 1138px; width: 100%; border-top: 3px solid var(--ink); padding-top: 6px; }
+.opt h2 { margin: 0; font-size: 1.125rem; }
+
+.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 8px; overflow: hidden; }
+.seg span { min-height: 44px; padding: 0 12px; display: grid; place-items: center; font-weight: 600; font-size: 14px; white-space: nowrap; color: var(--text); }
+.seg span + span { border-left: 1px solid var(--edge); }
+.seg span.on { background: var(--fill); color: #fff; }
+.seg.full { display: flex; } .seg.full span { flex: 1; }
+.seg.sm span { min-height: 44px; }
+.vt { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--surf); }
+.vt .t { min-height: 48px; display: inline-flex; align-items: center; padding: 0 14px; font-weight: 700; font-size: 15px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+.vt .t.on { color: var(--text); border-color: var(--fill); }
+.bigbtn { margin: 4px 16px 8px; min-height: 64px; border: 0; border-radius: 12px; background: var(--ink); color: #f6e9d2; font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; white-space: nowrap; }
+.ph .bigbtn { margin: 4px 12px 8px; font-size: 16px; padding: 0 16px; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 20px; padding: 0 16px; }
+.ph .cards { grid-template-columns: 1fr; padding: 0 16px; }
+.cd { padding: 10px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.cd .hd { display: flex; align-items: baseline; justify-content: space-between; }
+.cd .hd b { font-size: 18px; }
+.cd .hd i { font-style: normal; font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cd .big { min-height: 64px; font-size: 24px; background: var(--fill); color: #fff; border: 0; border-radius: 8px; font-weight: 700; }
+.cd .big:disabled { opacity: .45; }
+.cd .rw2 { display: flex; align-items: flex-end; gap: 8px; }
+.cd .rw2 .f { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.cd .rw2 .f span { font-size: 13px; color: var(--muted); }
+.cd .rw2 .f div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; color: var(--muted); }
+.cd .rw2 .btn { min-height: 44px; }
+.cd .mt { color: var(--muted); font-size: 14px; }
+.undo { position: absolute; left: 16px; right: 16px; bottom: 12px; z-index: 6; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--ink); color: #f6e9d2; border-radius: 10px; padding: 6px 8px 6px 14px; font-weight: 600; box-shadow: 0 4px 14px rgb(40 30 15/35%); }
+.ph .undo { bottom: 68px; left: 12px; right: 12px; }
+.undo .btn { background: var(--surf); border-color: var(--surf); min-height: 44px; }
+.sm2 { display: flex; padding: 8px 16px 4px; }
+table.s { border-collapse: collapse; width: calc(100% - 32px); margin: 0 16px; font-size: 14px; }
+table.s th, table.s td { text-align: left; padding: 5px 6px 5px 0; border-bottom: 1px solid var(--line); }
+table.s th { font-size: 13px; color: var(--muted); }
+table.s td.n, table.s th.n { text-align: right; font-variant-numeric: tabular-nums; }
+h5 { margin: 8px 16px 2px; font-size: 15px; }
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+.ph .cols2 { grid-template-columns: 1fr; }
+.pr2 { padding: 8px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 6px; }
+.pr2.chg { background: #fff6e0; }
+.pr2 .l1 { display: flex; align-items: center; gap: 12px; }
+.pr2 .l1 b { flex: 1; }
+.pr2 .l2 { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.pr2 .f { display: grid; gap: 2px; width: 7.5rem; }
+.pr2 .f span { font-size: 12.5px; color: var(--muted); }
+.pr2 .f div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; font-variant-numeric: tabular-nums; }
+.pr2 .f div.off { background: var(--surf2); color: var(--muted); }
+.ph .pr2 .f { flex: 1; width: auto; }
+.pr2 .lab { font-size: 12.5px; color: var(--muted); display: block; }
+/* customer */
+.cust { background: #fffdf8; }
+.cban { height: 96px; flex: none; background: linear-gradient(135deg, #d8cdb4, #c9b996); display: flex; align-items: flex-end; padding: 10px 16px; font-weight: 800; font-size: 22px; color: #2b1d12; }
+.cinfo { padding: 8px 16px; font-size: 14px; color: var(--muted); }
+.cinfo b { color: var(--text); }
+.ctabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.ctabs .t { min-height: 48px; display: inline-flex; align-items: center; padding: 0 14px; font-weight: 700; font-size: 15px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+.ctabs .t.on { color: var(--text); border-color: var(--fill); }
+.cdh { margin: 0; padding: 10px 16px 4px; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); background: var(--surf2); }
+.cdr { display: flex; align-items: center; gap: 10px; min-height: 68px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.cdr .pic { width: 56px; height: 56px; border-radius: 8px; background: var(--surf2); flex: none; }
+.cdr .tx { flex: 1; min-width: 0; }
+.cdr .tx b { display: block; font-weight: 700; }
+.cdr .tx small { color: var(--muted); font-size: 13px; display: block; }
+.cdr .tx small.st { color: #7a4210; font-weight: 600; }
+.cdr .pl { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--fill); color: var(--fill); display: grid; place-items: center; font-size: 22px; flex: none; }
+.cdr .so { color: var(--muted); font-size: 13.5px; font-weight: 600; text-align: right; flex: none; max-width: 7rem; }
+.cdr.gone { color: var(--muted); }
+.bask { margin: auto 12px 12px; min-height: 52px; border-radius: 12px; background: var(--fill); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-weight: 700; flex: none; white-space: nowrap; }
+.frame.ph.cust { flex-direction: column; }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>On the day inside Menu (plan 107 mock-up)</h1>
+      <p>Owner rulings drawn (18 Oct): name <b>"On the day"</b> (ID <b>"Hari H"</b>); Menu view tabs <b>Pre-orders | On the day</b>; customers see on-the-day-only dishes, <b>not orderable, grouped separately</b>: drawn <b>both</b> as (a) a separate tab and (b) a separate list under the orderable dishes; on the cooking day Home shows <b>no button</b>, only one short read-only line ("On the day: 3 dishes · Lalampa sold out"); Menu tabs stay; the rail shows <b>Dishes</b>, not Sell, in the new order (Home, Menu, Orders, Private, Kitchen, Pickup &amp; delivery, Dishes, Settings, Help, About). Customer menu: both layouts kept, <b>(b) one list is the recommended one</b>; the owner picks. Tablet 1138 × 640 with rail, phone 384 × 800, ID frames. Light theme. Samples: Onde Onde, AUD, Adelaide; Pastel $3.00, Lalampa $3.00, Nasi Ayam Bali $12.00, Sambal Matah $1.50; Anin, Lenny, Larissa, sandra.</p>
+      <p><b>Strict rule:</b> nothing is invented. The On the day tab is today's <code>SellScreen</code> unchanged in function: per dish the portions left, the big <b>−1</b> (Sell one), a <b>Number</b> field with <b>−n</b> (Sell N) and <b>Set count</b>, "Sold out at the stall" text when 0, an <b>Undo</b> bar after a sale; <b>Sell | Summary</b> inside; Summary has By dish, total, By person, Log and <b>Download CSV</b>. Only the placement and the layout grid (3 cards across on the tablet) differ. Extra ideas are written as <b>Q</b> in the captions.</p>
+      <div class="rec">
+        <b>How a dish is set (data that exists today)</b>
+        <table class="w">
+          <tr><th>Choice</th><th>Fields (<code>MenuItem</code>)</th><th>Shows in</th></tr>
+          <tr><td>Pre-order</td><td><code>preorder</code> true, no <code>dayStock</code></td><td>Pre-orders tab only; customers order it</td></tr>
+          <tr><td>On the day</td><td><code>preorder</code> false + <code>dayStock</code></td><td>On the day tab only; customers see "Available on the day", cannot add</td></tr>
+          <tr><td>Both</td><td><code>preorder</code> true + <code>dayStock</code></td><td>Both tabs; customers order ahead and see "Also at the stall"; pre-orders never take from the day portions</td></tr>
+        </table>
+        <p class="fn" style="margin:4px 0 0"><b>Not confirmed in code:</b> (a) today the two fields are set in the <b>dish editor</b> (checkboxes "Pre-order" and "Sold on the day", field "Portions for the day"; the error "Turn on Sold on the day, or keep Pre-order on" means at least one must be on); the Prices tab of the edit sheet has price, limit, chef and sold-out only, so a 3-way choice there is a <b>new second place</b> writing the same fields. (b) Today's ID strings say "hari-H" with a hyphen; the owner wrote "Hari H". (c) Whether the rail "Dishes" item and the phone tab bar change beyond what is drawn is not in the plan. (d) Home phase strip on the cooking day is not drawn. (e) The ID rail labels (Pribadi, Dapur, Ambil &amp; antar, Pengaturan, Bantuan, Tentang) are first suggestions, not read from the app's strings. (f) Whether Menu still opens on the On the day tab on the cooking day is not drawn (Q3 = A was replaced for Home only).</p>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        check: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+        x: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+        pen: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg>',
+        share: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 9l5-5 5 5M5 14v6h14v-6"/></svg>',
+        arrow: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+      };
+      const L = {
+        en: {
+          rail: ['Home', 'Menu', 'Orders', 'Private', 'Kitchen', 'Pickup &amp; delivery', 'Dishes', 'Settings', 'Help', 'About'], tabs: ['Home', 'Orders', 'Menu', 'More'], kick: 'Live menu', sub: '12 orders · orders close Fri 23 Oct, 8:00 pm',
+          editMenu: 'Edit menu', share: 'Share again', unpub: 'Unpublish', vt: ['Pre-orders', 'On the day'], inner: ['Sell', 'Summary'],
+          cols: ['Dish', 'Price', 'Limit', 'Sold', 'Sold out'], on: 'On', off: 'Off', taking: 'Taking orders', tiles: ['orders', 'total', 'to confirm'],
+          homeTitle: 'Dishes', homeGo: 'Go to Menu to change limits', left: (n) => `${n} left`, gone: 'Sold out', nolim: (n) => `${n} sold · no limit`,
+          dayLine: (n, d) => `On the day: ${n} dishes · ${d} sold out`, num: 'Number', setCount: 'Set count', soldOutStall: 'Sold out at the stall', undo: 'Undo', soldTxt: (n, d) => `Sold ${n} × ${d}`,
+          byDish: 'By dish', dishCol: 'Dish', pre: 'Pre-ordered', day: 'On the day', leftCol: 'Left', total: (n) => `Sold on the day: ${n}`, byPerson: 'By person',
+          portions: (n) => (n === 1 ? '1 portion' : `${n} portions`), log: 'Log', csv: 'Download CSV', kinds: ['Sale', 'Set count', 'Undo'],
+          editing: 'Editing menu · Sat 24 Oct', band: 'Edit mode — customers see the current menu until you save.', sheetTabs: ['Dishes', 'Details', 'Prices'], sellAs: 'Sell as', modes: ['Pre-order', 'On the day', 'Both'],
+          limit: 'Pre-order limit', portionsDay: 'Portions for the day', cnt: (n) => `${n} change not saved`, discard: 'Discard', save: 'Save', edited: 'Edited', close: 'Close',
+          // customer
+          cooking: 'Cooking Sat 24 Oct', orderBy: 'Order by Fri 23 Oct, 8:00 pm', cTabs: ['Pre-order', 'On the day'], dayHead: 'On the day only · at the stall',
+          avail: 'Available on the day', also: 'Also at the stall', soldOut: 'Sold out', basket: 'View basket', basketN: '2 items · $15.00', size: '1 box',
+        },
+        id: {
+          rail: ['Beranda', 'Menu', 'Pesanan', 'Pribadi', 'Dapur', 'Ambil &amp; antar', 'Hidangan', 'Pengaturan', 'Bantuan', 'Tentang'], tabs: ['Beranda', 'Pesanan', 'Menu', 'Lainnya'], kick: 'Menu aktif', sub: '12 pesanan · pesanan ditutup Jum 23 Okt, 20.00',
+          editMenu: 'Ubah menu', share: 'Bagikan lagi', unpub: 'Batalkan publikasi', vt: ['Pre-order', 'Hari H'], inner: ['Jual', 'Ringkasan'],
+          cols: ['Hidangan', 'Harga', 'Batas', 'Terjual', 'Habis'], on: 'Ya', off: 'Tidak', taking: 'Menerima pesanan', tiles: ['pesanan', 'total', 'perlu konfirmasi'],
+          homeTitle: 'Hidangan', homeGo: 'Ke Menu untuk ubah batas', left: (n) => `sisa ${n}`, gone: 'Habis', nolim: (n) => `${n} terjual · tanpa batas`,
+          dayLine: (n, d) => `Hari H: ${n} hidangan · ${d} habis`, num: 'Jumlah', setCount: 'Atur jumlah', soldOutStall: 'Habis di lapak', undo: 'Batalkan', soldTxt: (n, d) => `Terjual ${n} × ${d}`,
+          byDish: 'Per hidangan', dishCol: 'Hidangan', pre: 'Pre-order', day: 'Hari H', leftCol: 'Sisa', total: (n) => `Terjual di hari H: ${n}`, byPerson: 'Per orang',
+          portions: (n) => `${n} porsi`, log: 'Catatan', csv: 'Unduh CSV', kinds: ['Jual', 'Atur jumlah', 'Batal'],
+          editing: 'Mengubah menu · Sab 24 Okt', band: 'Mode ubah — pelanggan melihat menu saat ini sampai Anda menyimpan.', sheetTabs: ['Hidangan', 'Rincian', 'Harga'], sellAs: 'Dijual sebagai', modes: ['Pre-order', 'Hari H', 'Keduanya'],
+          limit: 'Batas pre-order', portionsDay: 'Porsi untuk hari H', cnt: (n) => `${n} perubahan belum disimpan`, discard: 'Buang', save: 'Simpan', edited: 'Diubah', close: 'Tutup',
+          cooking: 'Memasak Sab 24 Okt', orderBy: 'Pesan sebelum Jum 23 Okt, 20.00', cTabs: ['Pre-order', 'Hari H'], dayHead: 'Hanya di hari H · di lapak',
+          avail: 'Tersedia di hari-H', also: 'Juga dijual di lapak', soldOut: 'Habis', basket: 'Lihat keranjang', basketN: '2 item · $15.00', size: '1 kotak',
+        },
+      };
+      const rail = (s, on) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const tabbar = (s, on) => `<div class="tabbar">${s.tabs.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</div>`;
+      const T = (fn, on = 1) => (s) => `${rail(s, on)}<div class="main">${fn(s, false)}</div>`;
+      const P = (fn, on = 2) => (s) => `${fn(s, true)}${tabbar(s, on)}`;
+      const sw = (s, v) => `<button class="sw ${v ? 'on' : ''}"><i></i>${v ? s.on : s.off}</button>`;
+
+      // Menu view shell: header, title block, view tabs
+      const menuTop = (s, ph, tab) => `<div class="hdr"><span>Menu</span></div><div class="top" style="${ph ? 'padding:8px 12px' : ''}"><div><div class="kick">${s.kick}</div><h2 style="${ph ? 'font-size:22px' : ''}">Sat 24 Oct</h2>${ph ? '' : `<span class="muted" style="font-size:13.5px">${s.sub}</span>`}</div>
+        <div class="acts"><button class="btn pri ${ph ? 'icon' : ''}" aria-label="${s.editMenu}">${I.pen}${ph ? '' : s.editMenu}</button><button class="btn ${ph ? 'icon' : ''}" aria-label="${s.share}">${I.share}${ph ? '' : s.share}</button>${ph ? '' : `<button class="btn flat">${s.unpub}</button>`}</div></div>
+        <div class="vt" role="tablist">${s.vt.map((t, i) => `<span class="t ${i === tab ? 'on' : ''}" role="tab">${t}</span>`).join('')}</div>`;
+      // Pre-orders tab: dishes with preorder true
+      const PRE = [['Pastel', '$3.00', '20', 8, 0], ['Lalampa', '$3.00', '15', 15, 1], ['Nasi Ayam Bali', '$12.00', '–', 9, 0]];
+      const preTable = (s, ph) => ph
+        ? `<ul>${PRE.map((d) => `<li class="lv p ${d[4] ? 'gone' : ''}"><span><b>${d[0]}</b><span class="sub">${d[1]} · ${d[2] === '–' ? '–' : s.cols[2] + ' ' + d[2]} · ${s.cols[3]} ${d[3]}</span></span>${sw(s, d[4])}</li>`).join('')}</ul>`
+        : `<div class="lv t h"><span>${s.cols[0]}</span><span class="n">${s.cols[1]}</span><span class="n">${s.cols[2]}</span><span class="n">${s.cols[3]}</span><span>${s.cols[4]}</span></div><ul>${PRE.map((d) => `<li class="lv t ${d[4] ? 'gone' : ''}"><b>${d[0]}</b><span class="n">${d[1]}</span><span class="n">${d[2]}</span><span class="n">${d[3]}</span>${sw(s, d[4])}</li>`).join('')}</ul>`;
+      const menuPre = (s, ph) => menuTop(s, ph, 0) + preTable(s, ph);
+
+      // On the day tab = SellScreen
+      const DAYS = [['Pastel', 12], ['Lalampa', 0], ['Sambal Matah', 30]];
+      const card = (s, d, n) => `<div class="cd"><div class="hd"><b>${d}</b><i aria-label="${d}">${n}</i></div>${n === 0 ? `<span class="mt">${s.soldOutStall}</span>` : ''}<button class="big" ${n < 1 ? 'disabled' : ''} aria-label="Sell one ${d}">−1</button>
+        <div class="rw2"><label class="f"><span>${s.num}</span><div>&nbsp;</div></label><button class="btn" aria-label="Sell the number of ${d}">−n</button><button class="btn">${s.setCount}</button></div></div>`;
+      const inner = (s, i) => `<div class="sm2"><div class="seg sm" role="tablist">${s.inner.map((t, k) => `<span class="${k === i ? 'on' : ''}" role="tab">${t}</span>`).join('')}</div></div>`;
+      const sellBody = (s, ph, o = {}) => `${inner(s, 0)}<div class="cards">${DAYS.map((d) => card(s, d[0], o.sold && d[0] === 'Pastel' ? d[1] - 1 : d[1])).join('')}</div>${o.sold ? `<div class="undo" role="status"><span>${s.soldTxt(1, 'Pastel')}</span><button class="btn">${s.undo}</button></div>` : ''}`;
+      const menuDay = (o = {}) => (s, ph) => `<div class="sc" style="display:flex;flex-direction:column;overflow:hidden">${menuTop(s, ph, 1)}${sellBody(s, ph, o)}</div>`;
+      const LOG = [['10:42', 'sandra', 0, 'Pastel', '−1'], ['10:38', 'Anin', 0, 'Sambal Matah', '−2'], ['10:31', 'sandra', 1, 'Lalampa', '0'], ['10:20', 'sandra', 2, 'Pastel', '+1']];
+      const sumBody = (s, ph) => `${inner(s, 1)}<div class="${ph ? '' : 'cols2'}"><div><h5>${s.byDish}</h5><table class="s"><tr><th>${s.dishCol}</th><th class="n">${s.pre}</th><th class="n">${s.day}</th><th class="n">${s.leftCol}</th></tr>
+        <tr><td>Pastel</td><td class="n">8</td><td class="n">7</td><td class="n">12</td></tr><tr><td>Lalampa</td><td class="n">15</td><td class="n">10</td><td class="n">0</td></tr><tr><td>Sambal Matah</td><td class="n">–</td><td class="n">11</td><td class="n">30</td></tr></table>
+        <p class="muted" style="margin:4px 16px;font-size:13.5px">${s.total(28)}</p>
+        <h5>${s.byPerson}</h5><table class="s"><tr><td>sandra</td><td class="n">${s.portions(19)}</td></tr><tr><td>Anin</td><td class="n">${s.portions(9)}</td></tr></table></div>
+        <div><h5>${s.log}</h5><div style="padding:2px 16px 4px"><button class="btn">${s.csv}</button></div><table class="s">${LOG.map((r) => `<tr><td>${r[0]} · ${r[1]} · ${s.kinds[r[2]]} · ${r[3]}</td><td class="n">${r[4]}</td></tr>`).join('')}</table></div></div>`;
+      const menuSum = (s, ph) => `<div class="sc" style="display:flex;flex-direction:column;overflow:hidden">${menuTop(s, ph, 1)}${sumBody(s, ph)}</div>`;
+
+      // Home on cooking day (tiles + dish stock as today, plus one read-only line)
+      const STOCK = (s) => [['Pastel', 0.4, s.left(12)], ['Lalampa', 1, s.gone], ['Nasi Ayam Bali', 0.25, s.nolim(9)]];
+      const home = (s, ph) => `<div class="hdr"><span>${s.taking}</span></div><p class="note" role="status" style="margin-top:12px">${s.dayLine(3, 'Lalampa')}</p><div class="tiles"><div><b>12</b>${s.tiles[0]}</div><div><b>$186.00</b>${s.tiles[1]}</div>${ph ? '' : `<div><b>3</b>${s.tiles[2]}</div>`}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 16px"><b style="font-size:17px">${s.homeTitle}</b><span style="color:#1f5a2a;text-decoration:underline;font-size:${ph ? 12.5 : 14}px">${s.homeGo}</span></div>
+        <div>${STOCK(s).map((d, i) => `<div class="st ${i === 1 ? 'gone' : ''}"><span>${d[0]}</span><span class="meter"><i style="width:${d[1] * 100}%${i === 1 ? ';background:#9a9f94' : ''}"></i></span><span class="am">${d[2]}</span></div>`).join('')}</div>`;
+
+      // Edit sheet, Prices tab with the sell-as choice
+      const SA = (s, ph) => [['Pastel', '$3.00', 2, '20', '20', 1], ['Lalampa', '$3.00', 2, '15', '10', 0], ['Nasi Ayam Bali', '$12.00', 0, '–', '', 0], ['Sambal Matah', '$1.50', 1, '–', '30', 0]]
+        .map((d) => `<li class="pr2 ${d[5] ? 'chg' : ''}"><div class="l1"><b>${d[0]}${d[5] ? `<span class="mk">${s.edited}</span>` : ''}</b><span class="muted">${d[1]}</span></div>
+          <div class="l2"><div><span class="lab">${s.sellAs}</span><div class="seg ${ph ? 'full' : ''}">${s.modes.map((m, k) => `<span class="${k === d[2] ? 'on' : ''}">${m}</span>`).join('')}</div></div>
+          <label class="f"><span>${s.limit}</span><div class="${d[2] === 1 ? 'off' : ''}">${d[3]}</div></label>${d[2] ? `<label class="f" style="width:${ph ? 'auto' : '9.5rem'}"><span>${s.portionsDay}</span><div>${d[4]}</div></label>` : ''}</div></li>`).join('');
+      const sheet = (s, ph) => `${ph ? '' : '<div class="scrim"></div>'}<div class="sheet ${ph ? 'ph' : 'tab'}" role="dialog"><div class="hdr"><span>${s.editing}</span><button class="btn icon flat" aria-label="${s.close}">${I.x}</button></div>
+        <div class="steps">${s.sheetTabs.map((t, i) => `<span class="t ${i === 2 ? 'on' : ''}">${t}</span>`).join('')}</div><p class="band">${s.band}</p><ul style="flex:1;overflow:hidden">${SA(s, ph)}</ul>
+        <div class="foot"><span class="cnt">${s.cnt(1)}</span><button class="btn">${s.discard}</button><button class="btn pri">${s.save}</button></div></div>`;
+      const sheetT = (s) => `${rail(s, 1)}<div class="main">${menuPre(s, false)}</div>${sheet(s, false)}`;
+      const sheetP = (s) => sheet(s, true);
+
+      // Customer menu (phone only)
+      const dish = (s, n, price, kind) => `<li class="cdr ${kind === 'gone' ? 'gone' : ''}"><span class="pic"></span><span class="tx"><b>${n}</b><small>${s.size} · <span style="font-weight:700;color:var(--text)">${price}</span></small>${kind === 'also' ? `<small class="st">${s.also}</small>` : ''}</span>${kind === 'gone' ? `<span class="so">${s.soldOut}</span>` : kind === 'day' ? `<span class="so">${s.avail}</span>` : '<span class="pl">+</span>'}</li>`;
+      const cTop = (s) => `<div class="cban">Onde Onde</div><div class="cinfo"><b>${s.cooking}</b> · ${s.orderBy}</div>`;
+      const bask = (s) => `<div class="bask"><span>${s.basket}</span><span>${s.basketN}</span></div>`;
+      const cA1 = (s) => `${cTop(s)}<div class="ctabs">${s.cTabs.map((t, i) => `<span class="t ${i === 0 ? 'on' : ''}">${t}</span>`).join('')}</div><ul style="flex:1;overflow:hidden">${dish(s, 'Pastel', '$3.00', 'also')}${dish(s, 'Lalampa', '$3.00', 'gone')}${dish(s, 'Nasi Ayam Bali', '$12.00', 'ord')}</ul>${bask(s)}`;
+      const cA2 = (s) => `${cTop(s)}<div class="ctabs">${s.cTabs.map((t, i) => `<span class="t ${i === 1 ? 'on' : ''}">${t}</span>`).join('')}</div><p class="cdh" style="border-top:0">${s.dayHead}</p><ul style="flex:1;overflow:hidden">${dish(s, 'Sambal Matah', '$1.50', 'day')}</ul>${bask(s)}`;
+      const cB = (s) => `${cTop(s)}<ul>${dish(s, 'Pastel', '$3.00', 'also')}${dish(s, 'Lalampa', '$3.00', 'gone')}${dish(s, 'Nasi Ayam Bali', '$12.00', 'ord')}</ul><p class="cdh">${s.dayHead}</p><ul style="flex:1">${dish(s, 'Sambal Matah', '$1.50', 'day')}</ul>${bask(s)}`;
+      const cust = (fn) => (s) => `<div class="cust" style="display:flex;flex-direction:column;flex:1;min-height:0;width:100%">${fn(s)}</div>`;
+
+      const tablets = [
+        { b: '1', t: 'Menu view: Pre-orders tab (any day but cooking day)', h: T(menuPre), cap: 'The live Menu screen as in mock-up 103, with two view tabs under the title: <b>Pre-orders</b> (selected) and <b>On the day</b>. The table lists only dishes customers can pre-order (Pastel, Lalampa, Nasi Ayam Bali); Sold out switch, Edit menu, Share again, Unpublish stay as today. Rail: <b>Dishes</b> replaces Sell.', tr: 'Sambal Matah (on the day only) is not here; it lives on the other tab.' },
+        { b: '2', t: 'Home on the cooking day', h: T(home, 0), cap: 'Home as today (tiles, "Dishes" stock list, read-only) plus <b>one short read-only line</b>, only on the menu\'s cooking day: <b>"On the day: 3 dishes · Lalampa sold out"</b>. No button, no link: the seller goes to Menu (rail) to sell. The count is the dishes with portions for the day on this menu (3 here: Pastel, Lalampa, Sambal Matah); "sold out" names those at 0 left. Both come from the data the Sell screen already reads.', tr: 'Replaces the earlier big button (owner, 18 Oct). Q: several sold out, how to write them ("Lalampa, Pastel sold out" or "2 sold out")? Q: after the cooking day ends (menu finished), hide the line? Q: does it also show on other days? Drawn only on the cooking day. Not drawn: a tap target.' },
+        { b: '3', t: 'Menu view: On the day tab (Sell)', h: T(menuDay()), cap: 'Today\'s Sell screen in the tab: per dish the portions left (big number), <b>−1</b>, <b>Number</b> with <b>−n</b> and <b>Set count</b>; Lalampa at 0 says "Sold out at the stall" and −1 is disabled. Inside: <b>Sell | Summary</b>. Shown for Pastel (both ways), Lalampa (both, sold out at the stall) and Sambal Matah (on the day only). Cards sit three across on the tablet; function unchanged.', tr: 'Q: Sell | Summary under the view tabs is a second tab row. Alternative: a third view tab "Summary". Drawn as today (Sell | Summary).' },
+        { b: '3b', t: 'On the day: after a sale (Undo)', h: T(menuDay({ sold: 1 })), cap: 'After −1 on Pastel the count drops to 11 and the Undo bar appears: "Sold 1 × Pastel" with <b>Undo</b>, as today (it disappears after a few seconds).', tr: '' },
+        { b: '4', t: 'On the day › Summary', h: T(menuSum), cap: 'Today\'s Summary: <b>By dish</b> (Pre-ordered, On the day, Left), "Sold on the day: 28", <b>By person</b>, <b>Log</b> with <b>Download CSV</b>. Two columns on the tablet; same data.', tr: '' },
+        { b: '5', t: 'Edit menu › Prices: choose how each dish is sold', h: sheetT, cap: 'Per dish a 3-way choice <b>Sell as: Pre-order | On the day | Both</b>. <b>Portions for the day</b> appears for On the day and Both (field exists today as dayStock). The pre-order limit is greyed for On the day. Pastel is edited (Both, 20) so the row is tinted; footer "1 change not saved". Limit, chef and Sold out columns stay as today (not redrawn in this frame to keep the new line readable).', tr: 'Maps to the data: Pre-order = preorder true; On the day = preorder false + dayStock; Both = preorder true + dayStock. Today these are set in the dish editor (library), not on the Prices tab: Q: add this second place, or only keep the dish editor?' },
+      ];
+      const phones = [
+        { b: '1 · phone', t: 'Pre-orders tab', h: P(menuPre), cap: 'Two view tabs; two-line rows with the Sold out switch.', tr: '' },
+        { b: '2 · phone', t: 'Home on the cooking day', h: P(home, 0), cap: 'The same single line, wraps as text if long (it is not a button).', tr: '' },
+        { b: '3 · phone', t: 'On the day tab (Sell)', h: P(menuDay()), cap: 'One card per dish, as today; scrolls. Edit menu and Share are icon-only here.', tr: '' },
+        { b: '3b · phone', t: 'After a sale: Undo', h: P(menuDay({ sold: 1 })), cap: 'Undo bar above the tab bar.', tr: '' },
+        { b: '4 · phone', t: 'Summary', h: P(menuSum), cap: 'By dish, By person, Log, Download CSV in one column.', tr: '' },
+        { b: '5 · phone', t: 'Edit menu › Prices', h: sheetP, cap: 'The 3-way choice is full width; limit and portions sit side by side. Full-screen sheet as in 103.', tr: '' },
+        { b: 'C-a1', t: 'Customer menu (a) tab: Pre-order tab', h: cust(cA1), cap: 'Option (a), a separate tab: <b>Pre-order | On the day</b>. Pre-order tab as today: Pastel shows "Also at the stall", Lalampa "Sold out", Nasi Ayam Bali has +.', tr: '' },
+        { b: 'C-a2', t: 'Customer menu (a) tab: On the day tab', h: cust(cA2), cap: 'Header "On the day only · at the stall"; Sambal Matah says "Available on the day" and has no + (today\'s wording and behaviour). The basket stays visible.', tr: 'Trade-off (a): clean split, but a customer may never open the second tab, and a basket made on the first tab is not visible to the second.' },
+        { b: 'C-b', t: 'Customer menu (b) one list, two groups (recommended)', h: cust(cB), cap: 'Option (b): the orderable dishes first, then a grouped list under them headed <b>"On the day only · at the stall"</b>. Same row look, no +.', tr: 'Trade-off (b): all dishes in one scroll, so nobody misses the stall dishes; the page is longer and the heading must be clear that these cannot be ordered. <b>Recommended (b)</b>; the owner picks (a) or (b).' },
+        { b: 'ID', t: 'Indonesian: On the day tab (Sell)', lang: 'id', h: P(menuDay()), cap: 'Tabs "Pre-order | Hari H", inner "Jual | Ringkasan", "Jumlah", "Atur jumlah", "Habis di lapak". All labels one line. ID wording for the new strings is a first suggestion.', tr: '' },
+        { b: 'ID', t: 'Indonesian: customer menu (b, recommended)', lang: 'id', h: cust(cB), cap: 'Heading "Hanya di hari H · di lapak"; rows keep today\'s "Tersedia di hari-H".', tr: '' },
+      ];
+      const fig = (f, kind) => `<figure><div class="scrollx"><div class="frame ${kind}" role="group" aria-label="${f.t}">${f.h(L[f.lang || 'en'])}</div></div><figcaption><b><span class="badge">${f.b}</span> ${f.t}</b>${f.cap}${f.tr ? `<br /><span class="muted">${f.tr}</span>` : ''}</figcaption></figure>`;
+      document.getElementById('wrap').innerHTML = tablets.map((f) => fig(f, 'tab')).join('') + `<div class="phones">${phones.map((f) => fig(f, 'ph')).join('')}</div>`;
+    </script>
+  </body>
+</html>

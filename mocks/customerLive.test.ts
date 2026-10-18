@@ -25,8 +25,14 @@ describe('customer live socket door', () => {
     },
   };
 
-  async function call(method: string, path: string, body?: unknown, upgrade = false) {
-    const headers: Record<string, string> = {};
+  async function call(
+    method: string,
+    path: string,
+    body?: unknown,
+    upgrade = false,
+    extra: Record<string, string> = {},
+  ) {
+    const headers: Record<string, string> = { ...extra };
     if (upgrade) headers['Upgrade'] = 'websocket';
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     const response = await devApi(
@@ -94,6 +100,34 @@ describe('customer live socket door', () => {
     const none = await call('GET', `/api/s/${A}/live?tokens=${both}`, undefined, true);
     expect(none.status).toBe(404);
     expect(admitted).toHaveLength(1);
+  });
+
+  it('C12: admits tokens sent in Sec-WebSocket-Protocol and answers with the marker only', async () => {
+    const mine = await place('Rina');
+    const other = await place('Tono');
+    const protocol = `delave.live, tok.${mine.token}, tok.${other.token}`;
+    const reply = await call('GET', `/api/s/${A}/live`, undefined, true, {
+      'Sec-WebSocket-Protocol': protocol,
+    });
+    expect(reply.status).toBe(200);
+    expect(reply.headers.get('Sec-WebSocket-Protocol')).toBe('delave.live');
+    expect(admitted[0]?.codes).toEqual([mine.code, other.code]);
+  });
+
+  it('C12: the header wins over a stale ?tokens=, and an unknown header token is refused', async () => {
+    const mine = await place('Rina');
+    const refused = await call('GET', `/api/s/${A}/live?tokens=${mine.token}`, undefined, true, {
+      'Sec-WebSocket-Protocol': 'delave.live, tok.nope',
+    });
+    expect(refused.status).toBe(404);
+    expect(admitted).toEqual([]);
+  });
+
+  it('C12: the old ?tokens= form still works and sets no protocol header', async () => {
+    const mine = await place('Rina');
+    const reply = await call('GET', `/api/s/${A}/live?tokens=${mine.token}`, undefined, true);
+    expect(reply.status).toBe(200);
+    expect(reply.headers.get('Sec-WebSocket-Protocol')).toBeNull();
   });
 
   it('limits the tokens per socket and needs a WebSocket upgrade', async () => {

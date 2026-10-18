@@ -85,7 +85,7 @@ describe('AboutScreen', () => {
 
   it('names the release number only', () => {
     setUp();
-    expect(screen.getByText('Release 1.0.41')).toBeInTheDocument();
+    expect(screen.getByText('Release 1.0.42')).toBeInTheDocument();
     expect(screen.queryByText(/build/)).toBeNull();
   });
 

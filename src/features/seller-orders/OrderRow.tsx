@@ -4,7 +4,10 @@ import { styled } from 'styled-components';
 import type { Order } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
+import { currentSellerSlug } from '../../api/device/sellerContext';
+import { useMediaQuery } from '../../components/useMediaQuery';
 import { ListRow, Pill } from '../../ui';
+import { findCustomer, useAddressBook } from './contacts/addressBook';
 import { ConfirmedPill } from './ConfirmedMark';
 import { SELLER_NS } from './i18n/register';
 import { KIND_MARK, customerKind } from './customerKind';
@@ -35,6 +38,10 @@ export const OrderRow = memo(function OrderRow({ order, onOpen }: OrderRowProps)
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
 
   const kind = customerKind(order);
+  const slug = currentSellerSlug();
+  useAddressBook(slug);
+  const tablet = useMediaQuery('(min-width: 600px)');
+  const saved = findCustomer(slug, order.code, order.customerCode) !== undefined;
   const primary = (
     <>
       <Code>{formatOrderCode(order.code)}</Code>
@@ -52,6 +59,13 @@ export const OrderRow = memo(function OrderRow({ order, onOpen }: OrderRowProps)
         </Mark>
       ) : null}
       {kind ? <Mark>{t(KIND_MARK[kind])}</Mark> : null}
+      {saved ? (
+        <Mark>
+          {t('orders.savedHere', {
+            device: t(tablet ? 'customers.device.tablet' : 'customers.device.phone'),
+          })}
+        </Mark>
+      ) : null}
       {order.locked ? <Mark>{t('orders.locked')}</Mark> : null}
       {order.note ? <Mark>{t('orders.note')}</Mark> : null}
       {order.enteredBy ? (

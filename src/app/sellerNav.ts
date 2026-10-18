@@ -1,18 +1,19 @@
 import type { IconName } from '../ui';
 
-// The seller navigation (D-058, D-065): Home · Orders · Kitchen · Pickup & delivery · Menu · Settings
+// The seller navigation (D-058, D-065): Home · Menu · Orders · Kitchen · Pickup & delivery · Dishes · Settings
 // on a tablet (plan 039: Home is the landing screen, Orders is /seller/orders); Orders · Pickup &
 // delivery · More on a phone, which has no Home (D-057, D-067). Pure data, so it is tested without
 // rendering.
 
 export const NAV_IDS = [
   'home',
+  'menu',
   'orders',
   'private',
   'kitchen',
   'handover',
   'sell',
-  'menu',
+  'dishes',
   'settings',
   'help',
   'about',
@@ -39,6 +40,8 @@ export const HREF: Readonly<Record<NavId | 'more', string>> = {
   kitchen: '/seller/cook',
   handover: '/seller/hand-over',
   sell: '/seller/sell',
+  // Plan 107: the rail's Dishes item (owners) opens Your dishes; Sell is reached from the Menu screen.
+  dishes: '/seller/menu/dishes',
   menu: '/seller/menu',
   // Settings opens on its first pane (stage 10); the phone's More tab keeps /seller/more.
   settings: '/seller/settings/kitchen',
@@ -60,6 +63,7 @@ export const ICON: Readonly<Record<Exclude<NavId, 'home'> | 'more', IconName>> =
   kitchen: 'pot',
   handover: 'box',
   sell: 'coin',
+  dishes: 'bag',
   menu: 'menu',
   settings: 'gear',
   more: 'dots',
@@ -69,15 +73,16 @@ type Role = 'seller' | 'chef' | 'helper' | undefined;
 
 /**
  * Chefs see no Home (it starts and finishes menus, which only the owner does), no Sell (owners
- * and helpers sell on the day, plan 029) and no Settings (hidden, not greyed out). Menu is theirs
- * for their own dishes only (plan 030).
+ * and helpers sell on the day, plan 029), no Dishes (their Menu is their own dishes, plan 030) and
+ * no Settings (hidden, not greyed out). The owner's rail has Dishes in place of Sell (plan 107);
+ * Sell stays routable from the Menu screen. A helper keeps Sell.
  * A helper (plan 028) sees Orders, Hand over and Sell only: no Home, Kitchen, Menu or Settings.
  */
 export function navIdsFor(role: Role): ReadonlyArray<NavId> {
   if (role === 'helper') return HELPER_NAV_IDS;
   return role === 'chef'
-    ? NAV_IDS.filter((id) => id !== 'home' && id !== 'settings' && id !== 'sell')
-    : NAV_IDS;
+    ? NAV_IDS.filter((id) => id !== 'home' && id !== 'settings' && id !== 'sell' && id !== 'dishes')
+    : NAV_IDS.filter((id) => id !== 'sell');
 }
 
 const under = (pathname: string, base: string) =>
@@ -125,6 +130,7 @@ export function activeNav(pathname: string): NavId {
     return 'handover';
   }
   if (under(pathname, '/seller/sell')) return 'sell';
+  if (under(pathname, '/seller/menu/dishes')) return 'dishes';
   if (under(pathname, '/seller/private')) return 'private';
   if (under(pathname, '/seller/about')) return 'about';
   if (under(pathname, '/seller/help')) return 'help';
@@ -182,6 +188,8 @@ export function fixesPage(pathname: string, tablet: boolean): boolean {
   // Plan 075: About pins its hero and version; only the about card scrolls. Plan 079: so does Help.
   if (pathname === '/seller/about' || pathname === '/seller/help') return true;
   if (pathname === '/seller') return !tablet;
+  // The print preview is a plain long page: it scrolls with the shell, not inside it.
+  if (pathname === '/seller/orders/print') return false;
   return tablet && (under(pathname, '/seller/new') || pathname.startsWith('/seller/orders/'));
 }
 

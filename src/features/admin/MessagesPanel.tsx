@@ -20,6 +20,7 @@ import type { ApiFailure } from '../../api/http';
 import { NotePreview } from '../../components/maintenance';
 import { Button, Pill, Segmented, SlideOver, SlideOverEditor, TextField } from '../../ui';
 import { ADMIN_NS } from './i18n/register';
+import { MessageCounter, PillPreview } from './MessagePreview';
 import { failureText, Message, Muted, SmallHeading, Sub } from './shared';
 
 const Panel = styled.section`
@@ -390,16 +391,17 @@ function NewMessage({
   onCancel: () => void;
   onSend: (draft: Draft) => void;
 }>) {
-  const { t, i18n } = useTranslation(ADMIN_NS);
-  const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
+  const { t } = useTranslation(ADMIN_NS);
   const [draft, setDraft] = useState<Draft>(start);
   const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const sample = t('home.message.sample');
-  const own = lang === 'id' && !draft.same ? draft.id : draft.en;
+  const idText = draft.same ? draft.en : draft.id;
+  const tooLong = [...draft.en].length > MESSAGE_MAX || [...idText].length > MESSAGE_MAX;
   const ready =
     draft.en.trim() !== '' &&
     (draft.same || draft.id.trim() !== '') &&
-    (draft.all || draft.picked.length > 0);
+    (draft.all || draft.picked.length > 0) &&
+    !tooLong;
   return (
     <SlideOverEditor
       title={t('home.message.title')}
@@ -419,10 +421,9 @@ function NewMessage({
         <TextField
           label={t('home.message.textEn')}
           value={draft.en}
-          maxLength={MESSAGE_MAX}
-          showCounter
           onChange={(event) => set({ en: event.target.value })}
         />
+        <MessageCounter text={draft.en} />
         <Check>
           <input
             type="checkbox"
@@ -435,11 +436,11 @@ function NewMessage({
           <TextField
             label={t('home.message.textId')}
             value={draft.id}
-            maxLength={MESSAGE_MAX}
-            showCounter
             onChange={(event) => set({ id: event.target.value })}
           />
         )}
+        {draft.same ? null : <MessageCounter text={draft.id} />}
+        <Muted>{t('home.message.emojiNote')}</Muted>
         <Group>
           <Label>{t('home.message.kitchens')}</Label>
           <Segmented
@@ -496,7 +497,8 @@ function NewMessage({
         </Group>
         <Group>
           <Label>{t('home.message.preview')}</Label>
-          <NotePreview text={own.trim() || sample} />
+          <PillPreview text={draft.en.trim() || sample} language={t('home.message.textEnShort')} />
+          <PillPreview text={idText.trim() || sample} language={t('home.message.textIdShort')} />
         </Group>
         <Muted>{t('home.message.fine')}</Muted>
         {problem ? (

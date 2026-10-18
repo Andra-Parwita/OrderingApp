@@ -22,6 +22,7 @@
   "search": "Bag code or name",
   "viewLabel": "Show",
   "view": {
+    "all": "All",
     "pickup": "Pickup · {{count}}",
     "delivery": "Delivery · {{count}}"
   },

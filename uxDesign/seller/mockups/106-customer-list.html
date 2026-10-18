@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ShaggyBobo · Customer list (mock-up 106)</title>
+    <style>
+:root { --ink: #2b1d12; --stage: #d9d4c6; --pill: #fff6ea; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--stage); color: #1c1f1a; font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; min-width: 420px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid #1f6b5c; outline-offset: 2px; }
+.notes { max-width: 1138px; margin: 0 auto; padding: 16px; font-size: 0.875rem; }
+.notes h1 { font-size: 1.25rem; margin: 0 0 4px; }
+.rec { background: var(--pill); border: 1px solid #ead8bf; border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+.rec table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+.rec th, .rec td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+.wrap { display: flex; flex-direction: column; gap: 28px; align-items: center; padding: 0 16px 32px; }
+.phones { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+figure { margin: 0; max-width: 100%; }
+figcaption { font-size: 0.8125rem; margin-top: 8px; max-width: 1138px; }
+figcaption > b:first-child { display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+.phones figcaption { width: 384px; }
+.badge { display: inline-block; background: var(--ink); color: #eadbc2; border-radius: 999px; padding: 0 8px; font-size: 0.75rem; font-weight: 700; }
+.muted { color: #5d6358; }
+.fn { font-size: 0.75rem; color: #5d6358; }
+.scrollx { overflow-x: auto; max-width: 100%; }
+
+.frame { --bg: #f6f2e8; --surf: #fffdf8; --surf2: #ece6d6; --line: #e4ded0; --text: #1c1f1a; --muted: #5d6358; --fill: #2f6b36; --edge: #767b70; --warn: #8a2232;
+  background: var(--bg); color: var(--text); border-radius: 14px; box-shadow: 0 2px 8px rgb(40 30 15/14%); overflow: hidden; position: relative; font-size: 15px; line-height: 1.3; display: flex; }
+.frame.tab { width: 1138px; height: 640px; }
+.frame.ph { width: 384px; height: 800px; flex-direction: column; }
+.rail { width: 64px; flex: none; background: var(--surf); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 2px; }
+.rail span { width: 56px; min-height: 52px; display: grid; place-items: center; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.15; border-radius: 8px; }
+.rail span.on { color: var(--fill); font-weight: 700; background: var(--surf2); }
+.rail .k { font-weight: 800; color: var(--ink); min-height: 40px; font-size: 12px; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hdr { height: 48px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: var(--surf); border-bottom: 1px solid var(--line); font-weight: 700; }
+.tabbar { height: 56px; flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line); margin-top: auto; }
+.tabbar span { flex: 1; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+.tabbar span.on { color: var(--fill); font-weight: 700; }
+.btn { min-height: 44px; border: 1px solid var(--edge); background: transparent; border-radius: 8px; padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.btn.icon { width: 44px; padding: 0; }
+.btn.pri { background: var(--fill); border-color: var(--fill); color: #fff; }
+.btn.flat { border-color: transparent; text-decoration: underline; }
+.ico { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.steps { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--line); overflow: hidden; background: var(--surf); }
+.steps .t { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; font-weight: 600; font-size: 14px; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+.steps .t.on { color: var(--text); border-color: var(--fill); }
+.intro { padding: 8px 16px; color: var(--muted); font-size: 13.5px; }
+ul { list-style: none; margin: 0; padding: 0; }
+.dr { display: flex; align-items: center; gap: 4px; padding: 0 8px 0 4px; min-height: 56px; border-bottom: 1px solid var(--line); }
+.dr label { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; min-height: 52px; cursor: pointer; }
+.dr .cb { width: 44px; height: 44px; display: grid; place-items: center; flex: none; }
+.dr .cb i { width: 22px; height: 22px; border: 2px solid var(--edge); border-radius: 5px; display: grid; place-items: center; background: var(--surf); }
+.dr .cb i.on { background: var(--fill); border-color: var(--fill); color: #fff; }
+.dr .cb i .ico { width: 15px; height: 15px; stroke-width: 3; }
+.dr .tx { flex: 1; min-width: 0; }
+.dr .tx b { font-weight: 600; display: block; }
+.dr .tx small { color: var(--muted); font-size: 13px; display: block; }
+.dr .pr { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; flex: none; }
+.dr.chg { background: #fff6e0; }
+.dr.rm .tx b { text-decoration: line-through; }
+.dr select { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); font: inherit; font-size: 14px; padding: 0 8px; max-width: 140px; color: var(--text); }
+.mk { display: inline-block; border: 1px solid #b5651d; color: #7a4210; border-radius: 999px; font-size: 11.5px; font-weight: 700; padding: 0 7px; margin-left: 6px; vertical-align: 1px; }
+.fld { padding: 8px 16px; display: grid; gap: 2px; }
+.fld span { font-size: 13px; color: var(--muted); }
+.fld div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; }
+
+.scrim { position: absolute; inset: 0; background: rgb(28 22 12/42%); z-index: 8; }
+.scrim.two { z-index: 10; }
+.dlg { position: absolute; z-index: 11; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(400px, calc(100% - 32px)); background: var(--surf); border-radius: 14px; padding: 18px; box-shadow: 0 10px 30px rgb(40 30 15/35%); }
+.dlg h3 { margin: 0 0 6px; font-size: 18px; }
+.dlg p { margin: 0 0 14px; color: var(--muted); font-size: 14.5px; }
+.dlg .bt { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.dlg .bt .btn { min-height: 48px; }
+.dlg.stack .bt { flex-direction: column; }
+.dlg.stack .bt .btn { width: 100%; }
+
+.sheet { position: absolute; z-index: 9; background: var(--surf); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgb(40 30 15/30%); }
+.sheet.tab { left: 50%; top: 16px; bottom: 16px; width: 760px; transform: translateX(-50%); border-radius: 14px; }
+.sheet.ph { inset: 0; border-radius: 0; }
+.band { margin: 0; padding: 8px 16px; background: #fde7b8; color: #4a2c05; border-bottom: 1px solid #e3c27c; font-size: 13.5px; font-weight: 600; }
+.errband { margin: 0; padding: 6px 16px; background: #fbeaec; color: #8a2232; font-size: 13px; font-weight: 600; }
+.foot { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+.foot .cnt { flex: 1; font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 14.5px; min-width: 0; white-space: nowrap; }
+.foot .cnt::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #b5651d; flex: none; }
+.foot.err .cnt { color: #8a2232; }
+.foot.err .cnt::before { background: #8a2232; }
+.foot.saved .cnt::before { background: var(--fill); }
+.foot .btn { min-height: 48px; }
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgb(255 255 255/40%); border-top-color: #fff; animation: sp 0.9s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.tapw { position: relative; display: inline-flex; }
+.btn.ring { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #b5651d; }
+.tapdot { position: absolute; right: -8px; bottom: -14px; width: 28px; height: 28px; border-radius: 50%; background: rgb(181 101 29/55%); border: 2px solid #7a4210; }
+/* new in this round */
+.pill { position: absolute; z-index: 6; right: 16px; bottom: 16px; min-height: 44px; max-width: calc(100% - 24px); border: 0; border-radius: 999px; background: var(--ink); color: #f6e9d2; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14.5px; white-space: nowrap; box-shadow: 0 4px 14px rgb(40 30 15/35%); }
+.pill::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #f0a64a; flex: none; }
+.pill.err { background: #8a2232; color: #fff; }
+.pill.err::before { background: #fff; }
+.ph .pill { bottom: 68px; right: 12px; }
+.pill.up { bottom: 76px; }
+.ph .pill.up { bottom: 132px; }
+.ph .toast { bottom: 132px; left: 12px; transform: none; }
+.ph .dr select { max-width: 104px; }
+.ph .pop { bottom: 124px; }
+.pop { position: absolute; z-index: 7; right: 16px; bottom: 68px; width: 360px; background: var(--surf); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgb(40 30 15/30%); overflow: hidden; }
+.ph .pop { left: 12px; right: 12px; width: auto; bottom: 120px; }
+.pop h4 { margin: 0; padding: 10px 14px; font-size: 14.5px; border-bottom: 1px solid var(--line); }
+.pop li { padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.pop .bt { display: flex; gap: 8px; padding: 8px 12px; justify-content: flex-end; }
+.pop .bt .btn { min-height: 44px; }
+.note { margin: 0; padding: 8px 16px; font-size: 13.5px; color: #4a4f44; background: var(--surf2); }
+.toast { position: absolute; z-index: 6; display: inline-flex; align-items: center; gap: 6px; background: var(--surf); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13.5px; font-weight: 700; color: var(--fill); bottom: 76px; left: 50%; transform: translateX(-50%); box-shadow: 0 2px 8px rgb(40 30 15/18%); }
+.dr.errrow { background: #fbeaec; }
+.errmsg { color: var(--warn); font-size: 13px; font-weight: 600; }
+.sw { min-height: 44px; min-width: 80px; border: 1px solid var(--edge); border-radius: 999px; background: transparent; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px 0 8px; font-size: 13.5px; font-weight: 600; }
+.sw i { width: 28px; height: 16px; border-radius: 8px; background: var(--surf2); border: 1px solid var(--edge); position: relative; }
+.sw i::after { content: ''; position: absolute; top: 1px; left: 1px; width: 12px; height: 12px; border-radius: 50%; background: var(--edge); }
+.sw.on { border-color: var(--warn); color: var(--warn); }
+.sw.on i::after { left: 13px; background: var(--warn); }
+.lv { display: grid; align-items: center; gap: 8px; min-height: 56px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--line); }
+.lv.t { grid-template-columns: minmax(0, 1fr) 5rem 4rem 4rem 7.5rem; }
+.lv.h { min-height: 36px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.lv .n { text-align: right; font-variant-numeric: tabular-nums; }
+.lv.gone { color: var(--muted); }
+.lv small { color: var(--muted); font-size: 13px; margin-left: 6px; }
+.lv.p { grid-template-columns: minmax(0, 1fr) auto; padding: 8px 12px 8px 16px; }
+.lv.p .sub { color: var(--muted); font-size: 13px; display: block; }
+.top { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-end; padding: 12px 16px; }
+.top h2 { margin: 0; font-size: 26px; line-height: 1.15; }
+.kick { color: #2f6b36; font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.meter { height: 4px; border-radius: 2px; background: var(--line); display: block; }
+.meter i { display: block; height: 100%; border-radius: 2px; background: var(--fill); }
+.st { display: grid; grid-template-columns: minmax(0, 1fr) 9rem 6.5rem; gap: 16px; align-items: center; min-height: 52px; padding: 0 16px; border-top: 1px solid var(--line); font-weight: 600; }
+.st.gone { color: var(--muted); }
+.ph .st { grid-template-columns: minmax(0, 1fr) 4rem 5.5rem; gap: 10px; }
+.st .am { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+.sc { overflow: hidden; flex: 1; min-height: 0; position: relative; }
+.ftr { flex: none; display: flex; justify-content: space-between; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surf); }
+.tiles { display: flex; gap: 12px; padding: 12px 16px; }
+.tiles div { flex: 1; background: var(--surf); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: 13px; color: var(--muted); }
+.tiles b { display: block; font-size: 22px; color: var(--text); }
+.bsheet { position: absolute; z-index: 11; left: 0; right: 0; bottom: 0; max-height: 94%; overflow: hidden; background: var(--surf); border-radius: 16px 16px 0 0; box-shadow: 0 -6px 24px rgb(40 30 15/30%); }
+.win { padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 10px; }
+.dlg.win { width: min(580px, calc(100% - 32px)); }
+.win h3 { margin: 0; font-size: 19px; line-height: 1.2; }
+.win .sub { margin: 0; color: var(--muted); font-size: 14px; }
+.win .sec { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.win .sec h4 { margin: 0; font-size: 15px; }
+.win .help { margin: 0; color: var(--muted); font-size: 13.5px; }
+.win .dup { margin: 0; font-size: 13.5px; font-weight: 700; color: #7a4210; background: #fff6e0; border-radius: 8px; padding: 6px 10px; }
+.mrow { display: flex; align-items: center; gap: 8px; min-height: 52px; border-bottom: 1px solid var(--line); }
+.mrow .tx { flex: 1; min-width: 0; }
+.mrow .tx b { display: block; font-weight: 600; }
+.mrow .tx small { color: var(--muted); font-size: 13px; display: block; }
+.win .field { display: grid; gap: 2px; }
+.win .field span { font-size: 13px; color: var(--muted); }
+.win .field div { min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; padding: 0 12px; color: var(--muted); }
+.win .field div.fill { color: var(--text); }
+.win .foot2 { border-top: 1px solid var(--line); padding-top: 8px; display: flex; gap: 4px 12px; flex-wrap: wrap; justify-content: flex-end; }
+.win .foot2.col { flex-direction: column; align-items: stretch; }
+.win .foot2.col .btn { width: 100%; }
+.win .bts { display: flex; flex-direction: column; gap: 8px; }
+.win .bts .btn { width: 100%; justify-content: flex-start; padding: 0 14px; min-height: 52px; }
+.win .bts .btn small { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.win .x { position: absolute; top: 4px; right: 4px; }
+.rw { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.rw .tx { flex: 1; min-width: 0; }
+.rw .tx b { font-weight: 700; }
+.rw .tx small { color: var(--muted); font-size: 13px; display: block; }
+.ph .rw { padding: 0 12px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.chip { display: inline-block; border: 1px solid var(--edge); border-radius: 999px; font-size: 12px; font-weight: 600; padding: 0 8px; color: var(--muted); white-space: nowrap; }
+.chip.first { border-color: #b5651d; color: #7a4210; background: #fff6e0; }
+.chip.old { border-color: var(--fill); color: var(--fill); }
+.chip.saved { background: var(--surf2); border-color: var(--line); color: #4a4f44; }
+table.w { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+table.w th, table.w td { text-align: left; padding: 3px 8px 3px 0; border-bottom: 1px solid #ead8bf; vertical-align: top; }
+.opt { max-width: 1138px; width: 100%; border-top: 3px solid var(--ink); padding-top: 6px; }
+.opt h2 { margin: 0; font-size: 1.125rem; }
+
+.srch { margin: 8px 16px; min-height: 44px; border: 1px solid var(--edge); border-radius: 8px; background: var(--surf); display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--muted); }
+.ph .srch { margin: 8px 12px; }
+.cr { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 0 8px 0 16px; border-bottom: 1px solid var(--line); }
+.ph .cr { padding: 0 4px 0 12px; }
+.cr .tx { flex: 1; min-width: 0; }
+.cr .tx b { font-weight: 700; }
+.cr .tx small { color: var(--muted); font-size: 13px; display: block; }
+.chip.dup { border-color: #b5651d; color: #7a4210; background: #fff6e0; }
+.bkb { border-top: 1px solid var(--line); background: var(--surf); padding: 10px 16px; display: flex; flex-direction: column; gap: 6px; flex: none; }
+.bkb h4 { margin: 0; font-size: 15px; }
+.bkb p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.bkb .pair { display: flex; gap: 8px; flex-wrap: wrap; }
+.ph .bkb { padding: 10px 12px; }
+.ph .bkb .pair { flex-direction: column; }
+.ph .bkb .pair .btn { width: 100%; }
+.settings { width: 300px; flex: none; border-right: 1px solid var(--line); background: var(--surf); }
+.settings .rw { min-height: 56px; }
+.settings .rw.on { background: var(--surf2); }
+.pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pane.pad { padding: 14px 16px; gap: 8px; }
+.pane.pad p { margin: 0; font-size: 14px; color: var(--muted); }
+.pane.pad h2 { margin: 0; font-size: 15px; }
+.cnt2 { padding: 0 16px 4px; font-size: 13px; color: var(--muted); }
+.ph .cnt2 { padding: 0 12px 4px; }
+.win .field div { color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div class="notes">
+      <h1>Customer list on this device (plan 106 mock-up)</h1>
+      <p>Plan 106, bullet "Customer list screen" (Option A accepted by the owner, 18 Oct). Today there is <b>no list</b>: Settings (phone: More) › <b>Customer details</b> shows only a count, the backup state and <b>Download backup (CSV)</b> / <b>Upload CSV</b> (<code>ContactsBackup.tsx</code>). The data is in <code>addressBook</code> (<code>listCustomers</code>). Light theme. Tablet 1138 × 640 with rail, phone 384 × 800, one ID frame. Samples: Onde Onde, Adelaide, AUD; Anin, Larissa, Lenny, sandra. Buttons stay on one line (stacked full width on the phone).</p>
+      <p><b>Strict rule (owner):</b> only today's app or the plan's rulings are drawn; anything else is a <b>Q</b> in a caption.</p>
+      <div class="rec">
+        <b>Fields that exist per saved customer (<code>Customer</code> in <code>bookTypes.ts</code>)</b>
+        <table class="w">
+          <tr><th>Field</th><th>Used in the list as</th><th>Status</th></tr>
+          <tr><td><code>firstName</code></td><td>Name on the row</td><td>exists</td></tr>
+          <tr><td><code>phone</code> (digits with 61…, optional)</td><td>"…678" last 3 digits; no number = no digits shown</td><td>exists; the "last 3 digits" display is the plan's ask</td></tr>
+          <tr><td><code>lastOrderDate</code> (YYYY-MM-DD or empty)</td><td>"last order 4 Oct 2026"; empty = "no order yet"</td><td>exists; "no order yet" wording is mine (Q)</td></tr>
+          <tr><td><code>address</code> (street, suburb, postcode, notes, optional)</td><td>not on the row</td><td>exists; whether the list edits it is a Q (plan says name and number)</td></tr>
+          <tr><td><code>customerCodes</code>, <code>orderCodes</code></td><td>not shown</td><td>exist (anonymous order codes); Q: show a count such as "3 orders linked"?</td></tr>
+          <tr><td><code>putCustomer</code> / <code>deleteCustomer</code></td><td>edit, delete</td><td>functions exist in the store; <b>no screen uses them today</b></td></tr>
+        </table>
+        <p class="fn" style="margin:4px 0 0"><b>Not confirmed:</b> (a) sort order (drawn A to Z; Q: or most recent order first?). (b) Whether the search matches the number too (drawn: name and digits). (c) The Settings section list is drawn with the four sections read from the strings (Team, Devices, Customer details, Backup); other sections are not redrawn. (d) The phone More screen is not redrawn; the entry is the same "Customer details" row. (e) ID wording is a first suggestion.</p>
+        <p class="fn" style="margin:4px 0 0"><b>Where it is reached:</b> tablet Settings › Customer details (the pane on the right); phone More › Customer details. Same place as today; the list takes the place of the count line and the backup moves under the list.</p>
+      </div>
+    </div>
+    <div class="wrap" id="wrap"></div>
+
+    <script>
+      const I = {
+        x: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+        down: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>',
+        up: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 8l5-5 5 5M5 20h14"/></svg>',
+        search: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>',
+        pen: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg>',
+        back: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+      };
+      const L = {
+        en: {
+          rail: ['Home', 'Menu', 'Orders', 'Private', 'Kitchen', 'Pickup &amp; delivery', 'Dishes', 'Settings', 'Help', 'About'], tabs: ['Home', 'Orders', 'Menu', 'More'],
+          sections: ['Team', 'Devices', 'Customer details', 'Backup'], settings: 'Settings', title: 'Customers', today: 'Customer details',
+          help: 'Names, phone numbers and addresses of your regulars. They stay on this device and are never sent to the server.', count: (n) => `${n} customers saved on this device`,
+          state: 'Up to date · last backup 4 Oct 2026', dl: 'Download backup (CSV)', ul: 'Upload CSV', priv: "Keep this file private. It has your customers' phone numbers and addresses.",
+          search: 'Search by name or number', only: 'Saved on this tablet only. Other tablets and phones keep their own list.', onlyPh: 'Saved on this phone only. Other tablets and phones keep their own list.',
+          last: (d) => `last order ${d}`, none: 'no order yet', noNum: 'no number', edit: 'Edit', del: 'Delete',
+          editT: 'Edit customer', name: 'Name', num: 'WhatsApp number', save: 'Save', cancel: 'Cancel', delT: (n) => `Delete ${n}?`, delB: (n, d) => `${n} (…678) is removed from this ${d}. Past orders are not changed. This cannot be undone here; a backup file still has them.`,
+          delGo: 'Delete customer', back: 'Back', close: 'Close', dupHelp: '2 saved customers called Anin. Check the last digits.', backup: 'Backup', dev: { tab: 'tablet', ph: 'phone' },
+        },
+        id: {
+          rail: ['Beranda', 'Menu', 'Pesanan', 'Pribadi', 'Dapur', 'Ambil &amp; antar', 'Hidangan', 'Pengaturan', 'Bantuan', 'Tentang'], tabs: ['Beranda', 'Pesanan', 'Menu', 'Lainnya'],
+          sections: ['Tim', 'Perangkat', 'Data pelanggan', 'Cadangan'], settings: 'Pengaturan', title: 'Pelanggan', today: 'Data pelanggan',
+          help: 'Nama, nomor telepon, dan alamat pelanggan tetap Anda. Semuanya tersimpan di perangkat ini dan tidak pernah dikirim ke server.', count: (n) => `${n} pelanggan tersimpan di perangkat ini`,
+          state: 'Sudah terbaru · cadangan terakhir 4 Okt 2026', dl: 'Unduh cadangan (CSV)', ul: 'Unggah CSV', priv: 'Simpan file ini secara pribadi. Isinya nomor telepon dan alamat pelanggan Anda.',
+          search: 'Cari nama atau nomor', only: 'Hanya tersimpan di tablet ini. Tablet dan ponsel lain punya daftar sendiri.', onlyPh: 'Hanya tersimpan di ponsel ini. Tablet dan ponsel lain punya daftar sendiri.',
+          last: (d) => `pesanan terakhir ${d}`, none: 'belum ada pesanan', noNum: 'tanpa nomor', edit: 'Ubah', del: 'Hapus',
+          editT: 'Ubah pelanggan', name: 'Nama', num: 'Nomor WhatsApp', save: 'Simpan', cancel: 'Batal', delT: (n) => `Hapus ${n}?`, delB: (n, d) => `${n} (…678) dihapus dari ${d}. Pesanan lama tidak berubah. Tidak bisa dibatalkan di sini; file cadangan masih menyimpannya.`,
+          delGo: 'Hapus pelanggan', back: 'Kembali', close: 'Tutup', dupHelp: '2 pelanggan tersimpan bernama Anin. Periksa digit terakhir.', backup: 'Cadangan', dev: { tab: 'tablet ini', ph: 'ponsel ini' },
+        },
+      };
+      const rail = (s, on) => `<nav class="rail" aria-label="App"><span class="k">Onde<br />Onde</span>${s.rail.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</nav>`;
+      const tabbar = (s, on) => `<div class="tabbar">${s.tabs.map((t, i) => `<span class="${i === on ? 'on' : ''}">${t}</span>`).join('')}</div>`;
+      const DATA = [['Anin', '…678', '4 Oct 2026', 1], ['Anin', '…123', '20 Sep 2026', 1], ['Larissa', '…901', '17 Oct 2026', 0], ['Lenny', '…045', '10 Oct 2026', 0], ['sandra', '', '', 0]];
+      const row = (s, r) => `<div class="cr"><div class="tx"><b>${r[0]}${r[1] ? ' ' + r[1] : ''}</b><small>${r[2] ? s.last(r[2]) : s.none}${r[1] ? '' : ' · ' + s.noNum}</small></div>${r[3] ? `<span class="chip dup">2 × Anin</span>` : ''}<button class="btn icon flat" aria-label="${s.edit} ${r[0]}">${I.pen}</button></div>`;
+      const backupBlock = (s) => `<div class="bkb"><h4>${s.backup}</h4><p>${s.state}</p><div class="pair"><button class="btn">${I.down}${s.dl}</button><button class="btn">${I.up}${s.ul}</button></div><p>${s.priv}</p></div>`;
+      const search = (s, q) => `<div class="srch">${I.search}<span style="${q ? 'color:var(--text)' : ''}">${q || s.search}</span></div>`;
+      const screenBody = (s, d, o = {}) => `${search(s, o.q)}<div class="cnt2">${s.count(o.q ? 2 : 5)}</div><div style="flex:1;min-height:0;overflow:hidden">${(o.q ? DATA.slice(0, 2) : DATA).map((r) => row(s, r)).join('')}</div><p class="note">${d === 'tab' ? s.only : s.onlyPh}</p>${backupBlock(s)}`;
+      const sect = (s, on) => `<div class="settings"><div class="hdr"><span>${s.settings}</span></div>${s.sections.map((t, i) => `<div class="rw ${i === on ? 'on' : ''}"><div class="tx"><b>${t}</b></div></div>`).join('')}</div>`;
+      const tabNew = (o) => (s) => `${rail(s, 7)}${sect(s, 2)}<div class="pane"><div class="hdr"><span>${s.title}</span></div>${screenBody(s, 'tab', o)}</div>`;
+      const tabToday = (s) => `${rail(s, 7)}${sect(s, 2)}<div class="pane"><div class="hdr"><span>${s.today}</span></div><div class="pane pad"><h2>${s.today}</h2><p>${s.help}</p><p>${s.count(5)}</p><p>${s.state}</p><div class="acts"><button class="btn">${s.dl}</button><button class="btn">${s.ul}</button></div><p>${s.priv}</p></div></div>`;
+      const phHdr = (s, t) => `<div class="hdr"><span style="display:flex;align-items:center;gap:6px"><button class="btn icon flat" aria-label="${s.back}">${I.back}</button>${t}</span></div>`;
+      const phNew = (o) => (s) => `${phHdr(s, s.title)}<div style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">${screenBody(s, 'ph', o)}</div>${tabbar(s, 3)}`;
+      const phToday = (s) => `${phHdr(s, s.today)}<div class="pane pad" style="flex:1"><p>${s.help}</p><p>${s.count(5)}</p><p>${s.state}</p><div class="acts"><button class="btn">${s.dl}</button><button class="btn">${s.ul}</button></div><p>${s.priv}</p></div>${tabbar(s, 3)}`;
+      const editWin = (s, d) => `<div class="scrim"></div><div class="${d === 'tab' ? 'dlg' : 'bsheet'} win" role="dialog"><button class="btn icon flat x" aria-label="${s.close}">${I.x}</button><h3>${s.editT}</h3><p class="dup">${s.dupHelp}</p><label class="field"><span>${s.name}</span><div>Anin</div></label><label class="field"><span>${s.num}</span><div>0412 345 678</div></label>
+        <div class="foot2 ${d === 'ph' ? 'col' : ''}" style="justify-content:space-between"><button class="btn flat" style="color:var(--warn)">${s.del}</button><span style="display:flex;gap:8px;${d === 'ph' ? 'flex-direction:column' : ''}"><button class="btn">${s.cancel}</button><button class="btn pri">${s.save}</button></span></div></div>`;
+      const delWin = (s, d) => `<div class="scrim"></div><div class="${d === 'tab' ? 'dlg' : 'bsheet'} win" role="dialog"><h3>${s.delT('Anin')}</h3><p class="sub">${s.delB('Anin', s.dev[d])}</p><div class="foot2 ${d === 'ph' ? 'col' : ''}"><button class="btn">${s.cancel}</button><button class="btn pri" style="background:var(--warn);border-color:var(--warn)">${s.delGo}</button></div></div>`;
+      const tabEdit = (s) => tabNew()(s) + editWin(s, 'tab'), tabDel = (s) => tabNew()(s) + delWin(s, 'tab');
+      const phEdit = (s) => phNew()(s) + editWin(s, 'ph'), phDel = (s) => phNew()(s) + delWin(s, 'ph');
+
+      const tablets = [
+        { b: '0', t: 'Today: Settings › Customer details', h: tabToday, cap: 'What exists now: help text, a count ("5 customers saved on this device"), the backup state, <b>Download backup (CSV)</b> and <b>Upload CSV</b>, the privacy line. <b>No list</b>, so the seller cannot see who is saved, fix a name or remove someone.', tr: 'The rail is drawn in the new order (Home, Menu, Orders, Private, Kitchen, Pickup &amp; delivery, Dishes, Settings, Help, About).' },
+        { b: '1', t: 'New: Customers list on this tablet', h: tabNew(), cap: 'Same place (Settings › Customer details), now titled <b>Customers</b>. Search on top; one row per saved customer: <b>name · …last 3 digits</b> and <b>last order date</b>; a pencil to edit. The two Anins carry a flag <b>"2 × Anin"</b> and are told apart by the digits and dates. A note says <b>"Saved on this tablet only…"</b>. The backup (state, Download, Upload, privacy line) is kept <b>at the bottom</b>, unchanged.', tr: 'Q: tap on the whole row or only the pencil? (Drawn: both open Edit.) Q: A to Z or most recent order first? Q: sandra has no number and no order yet: is "no order yet" the right wording? Q: an "Add customer" button? Not drawn; today customers are only added from the order window or an uploaded file.' },
+        { b: '2', t: 'New: searching', h: tabNew({ q: 'Anin' }), cap: 'Typing filters the rows; the count follows ("2 customers"). The same flag explains why two rows look alike.', tr: 'Q: should the search also match digits, or names only?' },
+        { b: '3', t: 'New: edit name and number', h: tabEdit, cap: 'Tap a row: a window with <b>Name</b> and <b>WhatsApp number</b>, <b>Save</b> / <b>Cancel</b>, and <b>Delete</b> on the left, away from Save. The duplicate warning repeats at the top.', tr: 'Q: also show and edit the address (the field exists and is in the CSV)? The plan says name and number only. Q: show how many orders are linked (codes exist)?' },
+        { b: '4', t: 'New: delete with a confirmation', h: tabDel, cap: 'Delete asks first, names the customer with the last digits and says what changes: past orders are not changed; a backup file still has the customer. The red button reads <b>Delete customer</b>.', tr: 'Q: the line "Past orders are not changed" is my reading (orders live in the cloud with only a code; the saved name and number just stop showing). Please confirm before the wording is final.' },
+      ];
+      const phones = [
+        { b: '0 · phone', t: 'Today: More › Customer details', h: phToday, cap: 'Same content as the tablet pane today; the two buttons sit side by side.', tr: '' },
+        { b: '1 · phone', t: 'New: Customers list', h: phNew(), cap: 'Rows keep name + digits and the last order date; the flag "2 × Anin" sits on the row. The note and the backup block come after the list; Download and Upload stack full width, one line each.', tr: '' },
+        { b: '3 · phone', t: 'New: edit (bottom sheet)', h: phEdit, cap: 'Save and Cancel stacked; Delete in red text on its own line.', tr: '' },
+        { b: '4 · phone', t: 'New: delete confirmation', h: phDel, cap: 'Same text as the tablet; two full-width buttons.', tr: '' },
+        { b: 'ID', t: 'Indonesian: Pelanggan list', lang: 'id', h: phNew(), cap: '"Unduh cadangan (CSV)" and "Unggah CSV" are today\'s strings and fit on one line at 384 px. New strings (search, "belum ada pesanan", "tanpa nomor", delete text) are first suggestions for the owner to check.', tr: '' },
+      ];
+      const fig = (f, kind) => `<figure><div class="scrollx"><div class="frame ${kind}" role="group" aria-label="${f.t}">${f.h(L[f.lang || 'en'])}</div></div><figcaption><b><span class="badge">${f.b}</span> ${f.t}</b>${f.cap}${f.tr ? `<br /><span class="muted">${f.tr}</span>` : ''}</figcaption></figure>`;
+      document.getElementById('wrap').innerHTML = `<div class="opt"><h2>Tablet</h2></div>` + tablets.map((f) => fig(f, 'tab')).join('') + `<div class="opt"><h2>Phone and Indonesian</h2></div><div class="phones">${phones.map((f) => fig(f, 'ph')).join('')}</div>`;
+    </script>
+  </body>
+</html>

@@ -118,6 +118,16 @@ export const FULFILMENT_CHANGED_TITLE: Record<Language, string> = {
   id: 'Pesanan diubah',
 };
 
+/** Plan 105: the seller edited the order's dishes, note or name; the inbox `text` is the diff. */
+export const ORDER_EDITED_KEY = 'orderEdited';
+
+/** The push body for a seller edit: "Your order 59X-MAP was changed by Onde Onde". */
+export function orderEditedPushBody(language: Language, code: string, kitchen: string): string {
+  return language === 'id'
+    ? `Pesanan ${code} Anda diubah oleh ${kitchen}`
+    : `Your order ${code} was changed by ${kitchen}`;
+}
+
 /** The sentence the customer gets, in the order's language. Delivery never names the street (D-105: the inbox text outlives the address). */
 export function fulfilmentChangedText(
   language: Language,

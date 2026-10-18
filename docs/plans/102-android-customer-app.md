@@ -139,4 +139,7 @@ Total L; stages 0-3 are the cheap, safe part.
 - **Q4 = A:** one "Install app" button everywhere with one fallback screen per browser.
 - **Q5 = A:** customer passkey: no change (already one for all kitchens).
 - **Q6 = A:** "Start fresh" Help page with "Reset this phone" + the same steps as WhatsApp text (EN/ID).
-- Q3 (My orders scope) and Q7 (release split) still open.
+- **Q3 = A (owner, 18 Oct):** My orders inside a kitchen's app shows that kitchen's orders only; the browser tab still shows all kitchens.
+- Q7 (release split) still open (Fable risk report pending).
+- **Release (owner, 18 Oct): 1.0.43, right after 1.0.42** ("all the icon/app things can be 1.0.43"). Fable's risk report (`docs/reports/2026-10-18-1042-scope-risk.md`): 101 + 102 stages 1–3 together (same files, one builder); 102 scope + routes (stages 4–6) on its own after the phone proofs (1.0.44) unless the owner says otherwise.
+- **Owner, 18 Oct ~21:20: 101 and 102 ship together in one deploy, 1.0.43** (Fable advised 102 routes separately; owner chose one deploy).

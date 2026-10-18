@@ -88,8 +88,10 @@ const smallButton = ({
 }) => `
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.375rem;
   min-height: 2.5rem;
+  white-space: nowrap;
   padding: 0 0.875rem;
   border: ${theme.border.hairline} solid ${theme.c.ctrl};
   border-radius: 0.75rem;
@@ -145,14 +147,18 @@ const Panel = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-  padding: 0 ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg};
+  padding: 0 ${({ theme }) => theme.spacing.lg}
+    calc(${({ theme }) => theme.spacing.lg} + env(safe-area-inset-bottom, 0rem));
   h2,
   p {
     margin: 0;
   }
   iframe {
     width: 100%;
-    height: 60vh;
+    height: min(45vh, 22rem);
+    height: min(45dvh, 22rem);
+    /* A check, not an editor: the embed must not swallow finger drags that scroll the panel. */
+    pointer-events: none;
     border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
     border-radius: 0.75rem;
   }
@@ -165,8 +171,8 @@ const Locate = styled.div`
 `;
 const Chip = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
@@ -402,22 +408,24 @@ export function AddressSection({
               {pinned && value ? (
                 <Chip role="status">
                   <span>{t('address.locationAdded')}</span>
-                  {mapsKey ? (
-                    <SmallButton type="button" onClick={() => setPanel('pin')}>
-                      {t('address.viewOnMap')}
+                  <Actions>
+                    {mapsKey ? (
+                      <SmallButton type="button" onClick={() => setPanel('pin')}>
+                        {t('address.viewOnMap')}
+                      </SmallButton>
+                    ) : (
+                      <SmallLink
+                        href={`https://www.google.com/maps/search/?api=1&query=${String(value.lat)},${String(value.lng)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t('address.viewOnMap')}
+                      </SmallLink>
+                    )}
+                    <SmallButton type="button" onClick={removePin} disabled={disabled}>
+                      {t('address.removeLocation')}
                     </SmallButton>
-                  ) : (
-                    <SmallLink
-                      href={`https://www.google.com/maps/search/?api=1&query=${String(value.lat)},${String(value.lng)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {t('address.viewOnMap')}
-                    </SmallLink>
-                  )}
-                  <SmallButton type="button" onClick={removePin} disabled={disabled}>
-                    {t('address.removeLocation')}
-                  </SmallButton>
+                  </Actions>
                 </Chip>
               ) : (
                 <Locate>

@@ -134,6 +134,16 @@ const Sub = styled.p`
   padding: 0 ${({ theme }) => theme.spacing.lg};
   color: ${({ theme }) => theme.c.muted};
 `;
+const GroupHeading = styled.h2`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg}
+    ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+`;
 const Empty = styled.p`
   margin: 0;
   padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
@@ -186,7 +196,7 @@ export const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: Dis
   const [viewing, setViewing] = useState(false);
   const closeViewer = useCallback(() => setViewing(false), []);
   return (
-    <Row $soldOut={item.soldOut}>
+    <Row $soldOut={item.soldOut || dayOnly}>
       {item.pictureRef ? (
         <PictureButton
           type="button"
@@ -276,19 +286,30 @@ type ListProps = Readonly<{
 export function DishList({ data, basket, lang, onQty, readOnly }: ListProps) {
   const { t } = useTranslation(CUSTOMER_NS);
   if (data.items.length === 0) return <Empty>{t('dishes.empty')}</Empty>;
+  // Plan 107: orderable dishes first, then the on-the-day-only ones in their own group (no add button).
+  const orderable = data.items.filter((item) => item.preorder !== false);
+  const dayOnly = data.items.filter((item) => item.preorder === false);
+  const rows = (items: ReadonlyArray<MenuItemView>) =>
+    items.map((item) => (
+      <Dish
+        key={item.id}
+        item={item}
+        qty={basket[item.id] ?? 0}
+        lang={lang}
+        onQty={onQty}
+        readOnly={readOnly}
+      />
+    ));
   return (
-    <List>
-      {data.items.map((item) => (
-        <Dish
-          key={item.id}
-          item={item}
-          qty={basket[item.id] ?? 0}
-          lang={lang}
-          onQty={onQty}
-          readOnly={readOnly}
-        />
-      ))}
-    </List>
+    <>
+      {orderable.length > 0 ? <List>{rows(orderable)}</List> : null}
+      {dayOnly.length > 0 ? (
+        <section aria-labelledby="day-only-heading">
+          <GroupHeading id="day-only-heading">{t('dishes.dayOnly')}</GroupHeading>
+          <List>{rows(dayOnly)}</List>
+        </section>
+      ) : null}
+    </>
   );
 }
 

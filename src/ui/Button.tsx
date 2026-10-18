@@ -59,6 +59,7 @@ const StyledButton = styled.button<StyleProps>`
   font: inherit;
   font-weight: ${({ theme }) => theme.type.weight.strong};
   cursor: pointer;
+  white-space: nowrap;
   transition: filter ${({ theme }) => theme.motion.fast} ${({ theme }) => theme.motion.easing};
   ${variantStyle}
 

@@ -20,7 +20,7 @@ import { useMediaQuery } from '../components/useMediaQuery';
 import { MenuPreview } from '../features/customer-menu';
 import { AboutScreen } from '../features/seller-about';
 import { DevicesScreen } from '../features/seller-auth';
-import { CookScreen } from '../features/seller-cook';
+import { CookScreen, KitchenPrintScreen } from '../features/seller-cook';
 import { HelpScreen } from '../features/seller-help';
 import { BackupScreen, PastWeeksScreen } from '../features/seller-history';
 import { NewMenuDialog } from '../features/seller-home';
@@ -189,10 +189,10 @@ function SellerIndexRoute() {
 }
 
 /** Plan 029: selling on the day. Owners and helpers; the owner may also correct the log. */
-function SellRoute() {
+function SellRoute({ embedded = false }: Readonly<{ embedded?: boolean }>) {
   const { me } = useSession();
   if (me?.role === 'chef') return <Navigate to="/seller" replace />;
-  return <SellScreen canCorrect={me?.role === 'seller'} />;
+  return <SellScreen canCorrect={me?.role === 'seller'} embedded={embedded} />;
 }
 
 function CookRoute() {
@@ -293,6 +293,11 @@ function PrintOrdersRoute() {
   const navigate = useNavigate();
   return <PrintOrdersScreen onBack={() => void navigate(-1)} />;
 }
+/** Plan 109: the Kitchen list as A4; reached from the Kitchen screen. */
+function KitchenPrintRoute() {
+  const navigate = useNavigate();
+  return <KitchenPrintScreen onBack={() => void navigate(-1)} />;
+}
 function PastWeeksRoute() {
   const { t } = useTranslation();
   return (
@@ -352,6 +357,7 @@ const MENU_SLOTS: MenuSlots = {
   share: ({ onGoToOrders }) => <ShareComposer withLink onGoToOrders={onGoToOrders} />,
   chefs: ({ onClose }) => <ChefsModal onClose={onClose} />,
   newMenu: (props) => <NewMenuDialog {...props} />,
+  onTheDay: () => <SellRoute embedded />,
 };
 
 /**
@@ -382,6 +388,8 @@ export const MENU_BACKGROUND: Location = {
 function WizardLayerContent({ mode, step }: Readonly<{ mode: 'make' | 'edit'; step: string }>) {
   const { t } = useTranslation('sellerMenu');
   const close = useCloseWizard();
+  // Plan 103 fix 8: a live menu's edit session is a sheet with its own header and footer.
+  if (mode === 'edit') return <MakeMenuRoute mode={mode} step={step} />;
   return (
     <FullLayer label={t('make.layer')} closeLabel={t('close')} onClose={close}>
       <MakeMenuRoute mode={mode} step={step} />
@@ -394,12 +402,14 @@ function WizardLayerHost() {
   const real = useContext(RealLocation);
   const tablet = useMediaQuery(DESKTOP_QUERY);
   const navigationType = useNavigationType();
-  if (!tablet || !real || !isWizardPath(real.pathname)) return null;
+  if (!real || !isWizardPath(real.pathname)) return null;
   const match =
     matchPath('/seller/menu/make/:step', real.pathname) ??
     matchPath('/seller/menu/edit/:step', real.pathname);
   if (!match) return null;
   const mode = real.pathname.startsWith('/seller/menu/make/') ? 'make' : 'edit';
+  // The wizard is for a tablet; the edit sheet is also a phone's full screen.
+  if (!tablet && mode === 'make') return null;
   return (
     // The layer reads the real address (and its state), not the background the shell is showing.
     <LocationContext.Provider value={{ location: real, navigationType }}>
@@ -447,6 +457,7 @@ export function sellerRoutes() {
       <Route path="new" element={<OrdersWorkspace />} />
       <Route path="deliveries" element={<DeliveriesRoute />} />
       <Route path="cook" element={<CookRoute />} />
+      <Route path="cook/print" element={<KitchenPrintRoute />} />
       <Route path="private" element={<PrivateRoute />} />
       <Route path="private/new" element={<PrivateEditorRoute />} />
       <Route path="private/:code" element={<PrivateDetailRoute />} />

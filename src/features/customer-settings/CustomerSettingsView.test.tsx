@@ -171,10 +171,10 @@ describe('CustomerSettingsView', () => {
     expect(screen.getByText(/only the kitchen.s team can see it/i)).toBeVisible();
     expect(screen.getByText(/locked with your passkey/)).toBeVisible();
     expect(screen.getByText(/4 weeks after the cooking day/)).toBeVisible();
-    expect(screen.getByText('Version 1.0.41')).toBeVisible();
+    expect(screen.getByText('Version 1.0.42')).toBeVisible();
     await i18n.changeLanguage('id');
     expect(screen.getByText(/hanya tim dapur yang bisa melihatnya/i)).toBeVisible();
-    expect(screen.getByText('Versi 1.0.41')).toBeVisible();
+    expect(screen.getByText('Versi 1.0.42')).toBeVisible();
     expect(screen.getByRole('dialog', { name: 'Cara kami menjaga datamu' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Alamat Anda' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: /Tutup/ }));

@@ -273,18 +273,16 @@ describe('Leaving the wizard step', () => {
     expect(first && dishesOf(first)).toEqual(['d1', 'd2', 'd3']);
   });
 
-  it('warns calmly when an earlier save did not get through', async () => {
+  it('plan 103: keeps the changes and stays when Next could not save them', async () => {
     const { sent, wrap, answer } = setup();
     render(wrap(<MakeMenuScreen mode="make" step="dishes" slots={slots} layered />));
     tick('Soto');
-    wait(AUTOSAVE_DELAY_MS);
+    wait(10);
+    expect(screen.getByRole('status', { name: /Draft · 1 change not saved/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Next: Details/ }));
     const index = sent.findIndex((item) => item.ref !== undefined);
     await answer(index, false, 'network');
-    fireEvent.click(screen.getByRole('button', { name: /Next: Details/ }));
-    expect(
-      screen.getByText(/Some changes aren't saved yet. They're kept on this device./),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Leave anyway' }));
-    expect(screen.queryByText(/kept on this device/)).not.toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Not saved — try again' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Soto/ })).toBeChecked();
   });
 });

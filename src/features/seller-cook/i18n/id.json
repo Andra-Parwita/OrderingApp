@@ -25,7 +25,7 @@
   },
   "countMode": "Mode hitung",
   "countHint": "centang saat memasak",
-  "cooked": "{{made}} dari {{total}} dimasak",
+  "cooked": "{{made}}/{{total}} dimasak",
   "less": "Kurangi satu {{name}}",
   "more": "Tambah satu {{name}}",
   "splitPickup": "{{count}} ambil",
@@ -76,5 +76,22 @@
     "other": "Perubahan tidak diterima, jadi dibatalkan."
   },
   "privateTag": "Khusus",
-  "menuPrivate": "Menu {{menu}} · Khusus {{private}}"
+  "menuPrivate": "Menu {{menu}} · Khusus {{private}}",
+  "printKitchen": "Cetak daftar dapur",
+  "printPage": {
+    "print": "Cetak",
+    "back": "Kembali",
+    "allChefs": "Semua koki",
+    "notes": "Sertakan catatan pelanggan",
+    "private": "Sertakan pesanan pribadi",
+    "pagePerChef": "Halaman baru per koki",
+    "empty": "Tidak ada yang dicetak.",
+    "paperHint": "Kalau hasil cetak beda dari ini, atur kertas printer ke A4 dan skala 100%.",
+    "menuFor": "Menu untuk {{day}}",
+    "printedAt": "Dicetak {{time}}",
+    "chefLine": "Koki: {{name}}",
+    "privateCount": "({{count}} khusus)",
+    "forPeople_one": "untuk {{count}} orang",
+    "forPeople_other": "untuk {{count}} orang"
+  }
 }
