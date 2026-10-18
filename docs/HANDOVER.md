@@ -2,8 +2,8 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-17 evening → 18 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.39** (plan 092), **1.0.40** (plan 093) and **1.0.41** (plans 094, 095, 096 + root page); built 1.0.42 stages 0–2 (plan 098).
-**Live:** Release **1.0.41** (18 Oct ~11:10; Worker `847e8574-2e33-4695-a63b-30743c3490af`; health OK, devTools false, site reports `1.0.104 · d3a3e1b`; "/" serves `noindex`, title "ShaggyBobo", preview "By invitation · Dengan undangan"); tag `v1.0.41` on `d3a3e1b`; `main` = the hand-over commit after it. Previous: 1.0.40 (Worker `ff9f06f1…`, tag `v1.0.40`), 1.0.39 (Worker `904ef961…`, tag `v1.0.39`), 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`).
+**Last session:** 2026-10-18 → 19 Oct morning, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.42** (plans 098 stages 0–3, 100, 103–109).
+**Live:** Release **1.0.42** (19 Oct ~06:40; Worker `21340f7c-b125-46e2-b261-f88f43668a10`; health OK, devTools false, site reports `1.0.110 · 450a175 · draft` — "draft" only because HANDOVER and the backup file were uncommitted at build time); tag `v1.0.42` on `450a175`; backup before deploy `backup-1.0.41.sql` (787 rows, kept outside git). Previous: 1.0.41 (Worker `847e8574…`, tag `v1.0.41`), 1.0.40 (Worker `ff9f06f1…`), 1.0.39 (Worker `904ef961…`).
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -43,7 +43,7 @@ Release note (owner "B"): "A fresher look for customers and clearer messages." /
 **Gate (scoped, 18 Oct):** typecheck, lint, format ✅; **all** unit tests 1905/1905; e2e customer 11 specs ✅ (p087 fixed: spec opened Settings before any kitchen was remembered), seller 5 specs 7/7, short-message + maintenance 2/2. Captures checked: closed menu, dishes, My orders, order page, root page.
 **Deploy impact 1.0.41:** client + one head-tag/meta change; no migration, no secret. Installed home-screen apps still start at their kitchen (manifest start_url unchanged). Live check on the iPhone: banner on every page incl. dishes/order, swipe a sheet down, privacy sheet doesn't scroll the page, the green "new version" pill appears after deploy (tap it), send one short message (amber pill), a first test order shows the home-screen pill, the name-step tick, "/" in Safari shows the welcome page.
 
-## 1.0.42 in progress (plan 098; branch `indra/brand_logo_ux`, not pushed)
+## 1.0.42 live (19 Oct)
 Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration).
 - **0** docs: `docs/architecture/data-model.md` "One model, many kinds", **D-109**, 082 note, 088/090 merged into 098.
 - **1a** `worker/api/routes.ts` 1,709 → 89 (dispatcher) + 13 area files; 82 seller routes carry `roles` (allow-list; `chefMayNot`/`helperMay` gone). `mocks/roleMatrix.test.ts` (129 probes × 7 callers) identical before/after, except chef/helper get 403 (was 404) on seller paths with no route. **6 suspicious chef permissions reported, kept as today** (delete-address, all order edits, translate/updates/demo, settings reads, cancel a normal order, private reads rely on handlers): ask the owner one at a time.
@@ -54,7 +54,7 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Gate (18 Oct ~15:40):** typecheck, lint, format ✅; unit **2,528/2,528**; mocks+shared 928; e2e touched screens 76 ✅ + 4 re-run alone ✅ (load flakes: Windows port exhaustion → run `mocks` with `--no-file-parallelism`, one Playwright run at a time).
 - **All of 1.0.42 built (18→19 Oct, uncommitted after 572a5df):** 100 compact Cook (B2); 103 fixes 1–8 (echo skip, fewer reloads, chef edit, menu loaded once, optimistic Confirm/Paid, Paid / Not paid sheet, menu edit session); 104 (Orders "Active", print "Which orders", rail Home · Menu · Orders · Private · Kitchen · Pickup & delivery · Dishes · Settings · Help · About, delivery rows + All/Delivery/Pickup filter, admin short-message preview, scroll fixes, customer address map buttons visible, small maps view-only); **105** seller edits any order (`PATCH /api/seller/orders/:code`, D-110); **106** link window A + Customers list (A–Z, device-only phone/address); **107** On the day (Menu tabs Pre-orders | On the day, Sell as per dish, Home line, customer one list "On the day only · at the stall"); **108** compact Home/Menu/Orders, order panel raised as a card; **109** kitchen print (per dish, per chef pages option, private orders option, notes); **098 stage 3** (C10 expired-code sweep, C12 live tokens in `Sec-WebSocket-Protocol` with `?tokens=` fallback). Release note "A" in `releaseNotes.ts`, `RELEASE_VERSION = '1.0.42'`.
 - **Gate 2 (18 Oct 22:07 → 19 Oct):** typecheck, lint, format ✅; unit **2,594/2,594** ✅; e2e 96 passed, 1 failed (helper-flow: test mistook the device's Customer details "Backup" button for the hidden Backup screen; test fixed, re-run).
-- **Deploy order 1.0.42:** backup → `pnpm build` → **Worker first** (C12) → app → health check → live checks. No migration, no secret.
+- **Deploy order (owner rule):** backup → `pnpm build` → migration (if any) → `pnpm run deploy` (Worker + app together; C12 keeps the `?tokens=` fallback) → health check → live checks. 1.0.42: no migration, no secret.
 - **Live checks 1.0.42:** seller Orders (Active tab, edit an order, Paid sheet), Edit menu → Save, Menu tabs + Sell as + Home "On the day" line, kitchen print, Customers list, a chef and a helper sign-in, customer order end to end incl. On the day group and address map on the iPhone, customer live updates (C12).
 - **1.0.43 = 101 + 102 together** (owner's choice; Fable advised splitting routes).
 - **Rules from 18 Oct:** ask the next question only after the owner says "go next question"; mock-ups never invent features; button labels never wrap (`docs/design/README.md`).
@@ -64,7 +64,7 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. Ask the owner whether setup is needed (same PC: usually not; other PC: `git pull`; `pnpm install`; `pnpm db:migrate:local`, never reseed).
 3. 1.0.41 iPhone checks: **done, all good** (owner, 18 Oct). Still open: 1.0.38 pickup map + QR scan, a short message, About animation; a real label print from the Samsung tablet.
-4. **1.0.42:** built and gated (above); after the owner's OK: commit, deploy, live checks, merge + tag v1.0.42. Then 1.0.43 (101 + 102).
+4. **1.0.42 live checks:** check 1 (Orders: Active tab, raised card, Paid sheet) ✅ owner 19 Oct. Still open: edit an order, Edit menu → Save, Menu tabs + Sell as + Home "On the day" line, kitchen print, Customers list, a chef and a helper sign-in, a customer order end to end incl. On the day group and the iPhone address map. Then **1.0.43** (plans 101 + 102).
 4. Owner checks still open: 1.0.38 pickup map + QR scan (CSP), send one short message, About animation (seller app: More → About), the seller ✓ on a Remember-me order; 1.0.36/1.0.37 phone checks; a real label print from the Samsung tablet.
 
 ## Later (owner rulings recorded)
@@ -80,4 +80,4 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.41 (tag v1.0.41). 1.0.42 is built and gated on branch `indra/brand_logo_ux`; if not live yet, deploy it (Worker first). Next is 1.0.43 (plans 101 + 102). Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.42 (tag v1.0.42). Finish the 1.0.42 live checks one at a time (HANDOVER step 4), then start 1.0.43 (plans 101 + 102). Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
