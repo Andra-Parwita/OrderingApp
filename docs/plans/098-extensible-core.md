@@ -135,6 +135,14 @@ Move-only refactors: typecheck while building; the scoped unit tests and the tou
 - [ ] No source file over 750 lines: `git ls-files 'src/*' 'worker/*' 'shared/*' | xargs wc -l | sort -rn | head`
 - [ ] Owner tries the customer flow on a phone after stage 2
 
+## Owner answers (18 Oct)
+- Q1, Q2 (labels per kind, where the kind lives): **saved for the store branch (v1.1.0)**.
+- Q3 checkout move: **B, now in 1.0.42** (move basket/checkout/placed out of `customer-menu` into `customer-checkout`, no behaviour change; the 905-line split happens in the move).
+- Q4 four menu copies: **A, only C5 (Cook reads the Orders slice) now; C4 waits for v1.1.0**.
+- Q5 dead code: **A, delete each leftover after a grep confirms it's unused** (note: `PrintJob` and the cook label keys were already removed in 1.0.38 (plan 089); re-check before listing; also the unused chip/nudge helpers in `src/api/customer/state.ts` from 096).
+- Q6 shared parts (C8a): **A, only in the files the clean-up splits anyway**.
+- Next: write D-109, then build 1.0.42 by stages 0–3 (one release per stage unless the owner bundles them).
+
 ## Decisions and notes
 
 - The owner's answers to Q1–Q5 go to `docs/decisions` (D-109 proposed: "Kinds of place: one model, vocabulary and rules per kind; built with the store").
