@@ -29,7 +29,7 @@ afterEach(() => {
 const pause = () => act(() => vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS + 50));
 
 function renderKitchen(): TestStore {
-  const store = createTestStore({ saga: false });
+  const store = createTestStore();
   seed(store, sampleOrders());
   renderWithStore(<CookScreen />, store);
   return store;

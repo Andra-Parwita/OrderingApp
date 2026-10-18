@@ -2,7 +2,7 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-17 evening → 18 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.39** (plan 092), **1.0.40** (plan 093) and **1.0.41** (plans 094, 095, 096 + root page).
+**Last session:** 2026-10-17 evening → 18 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.39** (plan 092), **1.0.40** (plan 093) and **1.0.41** (plans 094, 095, 096 + root page); built 1.0.42 stages 0–2 (plan 098).
 **Live:** Release **1.0.41** (18 Oct ~11:10; Worker `847e8574-2e33-4695-a63b-30743c3490af`; health OK, devTools false, site reports `1.0.104 · d3a3e1b`; "/" serves `noindex`, title "ShaggyBobo", preview "By invitation · Dengan undangan"); tag `v1.0.41` on `d3a3e1b`; `main` = the hand-over commit after it. Previous: 1.0.40 (Worker `ff9f06f1…`, tag `v1.0.40`), 1.0.39 (Worker `904ef961…`, tag `v1.0.39`), 1.0.38 (Worker `0708ee42…`, tag `v1.0.38`).
 
 ## House rules (binding)
@@ -43,11 +43,23 @@ Release note (owner "B"): "A fresher look for customers and clearer messages." /
 **Gate (scoped, 18 Oct):** typecheck, lint, format ✅; **all** unit tests 1905/1905; e2e customer 11 specs ✅ (p087 fixed: spec opened Settings before any kitchen was remembered), seller 5 specs 7/7, short-message + maintenance 2/2. Captures checked: closed menu, dishes, My orders, order page, root page.
 **Deploy impact 1.0.41:** client + one head-tag/meta change; no migration, no secret. Installed home-screen apps still start at their kitchen (manifest start_url unchanged). Live check on the iPhone: banner on every page incl. dishes/order, swipe a sheet down, privacy sheet doesn't scroll the page, the green "new version" pill appears after deploy (tap it), send one short message (amber pill), a first test order shows the home-screen pill, the name-step tick, "/" in Safari shows the welcome page.
 
+## 1.0.42 in progress (plan 098; branch `indra/brand_logo_ux`, not pushed)
+Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration).
+- **0** docs: `docs/architecture/data-model.md` "One model, many kinds", **D-109**, 082 note, 088/090 merged into 098.
+- **1a** `worker/api/routes.ts` 1,709 → 89 (dispatcher) + 13 area files; 82 seller routes carry `roles` (allow-list; `chefMayNot`/`helperMay` gone). `mocks/roleMatrix.test.ts` (129 probes × 7 callers) identical before/after, except chef/helper get 403 (was 404) on seller paths with no route. **6 suspicious chef permissions reported, kept as today** (delete-address, all order edits, translate/updates/demo, settings reads, cancel a normal order, private reads rely on handlers): ask the owner one at a time.
+- **1b** `worker/db/{seller,menus,auth}.ts` → 21 files by group, move-only, import paths unchanged.
+- **2** `AppRoutes.tsx` 997 → 30 + customer/seller/admin/More route files; `src/ui/Notice.tsx` (2 sites converted; SellerLayout had 1 notice, not 3); `orderRowCells.tsx` (only `NewTag` is truly shared); Help topics/Help/Install/OrdersTable/CheckoutViews split (all < 500), kit buttons kept where looks differ; **Cook/Pack read the Orders slice** (one counted live loop, `src/api/kitchenOrders.ts` contract, saga tests moved to `src/app/`).
+- **Q3 changed to C** (owner, 18 Oct): checkout stays in `customer-menu` until the store (one shared customer slice/saga/parts; the move needs a neutral shared core first). Only the in-place split (`CheckoutForms.tsx`).
+- Stale specs fixed: `mocks/rememberMe.test.ts` (1.0.41 passkey label), `e2e/p089-order-limit.spec.ts` (Language is a sheet since 1.0.39).
+- **Gate (18 Oct ~15:40):** typecheck, lint, format ✅; unit **2,528/2,528**; mocks+shared 928; e2e touched screens 76 ✅ + 4 re-run alone ✅ (load flakes: Windows port exhaustion → run `mocks` with `--no-file-parallelism`, one Playwright run at a time).
+- **Next: stage 3** (expired-code sweep, order tokens out of the live-socket URL, lint memory), dead-code deletions after a grep, admin short-message preview as a pill, then release notes + the release checklist.
+- **Deploy impact (so far):** server refactor with identical permissions (role matrix), client refactor; no migration, no secret. Medium risk only because of size: live check seller Orders/Cook/Pack, a chef and a helper sign-in, a customer order end to end.
+
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. Ask the owner whether setup is needed (same PC: usually not; other PC: `git pull`; `pnpm install`; `pnpm db:migrate:local`, never reseed).
 3. 1.0.41 iPhone checks: **done, all good** (owner, 18 Oct). Still open: 1.0.38 pickup map + QR scan, a short message, About animation; a real label print from the Samsung tablet.
-4. **Next release 1.0.42** (owner, 18 Oct): small follow-ups (admin preview pill, unused chip/nudge helpers in `src/api/customer/state.ts`, `CheckoutViews.tsx` 905 lines, real-iPhone check of swipe/scroll-lock) + plan **088** + plan **090**, as ordered in **plan 098** stages 0–3 (owner answers Q1–Q5 first, one at a time; phone page https://claude.ai/artifact/5yCfxuCZJokAxZ2wnZ9iVi).
+4. **1.0.42:** stages 0–2 committed (above); continue with stage 3. Small follow-ups still open: admin preview pill, unused chip/nudge helpers in `src/api/customer/state.ts`, real-iPhone check of swipe/scroll-lock.
 4. Owner checks still open: 1.0.38 pickup map + QR scan (CSP), send one short message, About animation (seller app: More → About), the seller ✓ on a Remember-me order; 1.0.36/1.0.37 phone checks; a real label print from the Samsung tablet.
 
 ## Later (owner rulings recorded)
@@ -63,4 +75,4 @@ Release note (owner "B"): "A fresher look for customers and clearer messages." /
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.41 (tag v1.0.41): banner everywhere, sheets, notice pills, nudges, root page. Ask the owner before any git write. Ask me whether setup is needed, then the 1.0.41 phone checks, then plan 098's questions Q1–Q5 for 1.0.42, one at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.41 (tag v1.0.41). 1.0.42 (plan 098) stages 0–2 are committed on the branch; continue with stage 3. Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.

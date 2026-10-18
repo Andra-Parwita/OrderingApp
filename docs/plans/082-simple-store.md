@@ -18,6 +18,8 @@ Differs: catalogue with category chips, search and a grid on tablet; product she
 ## Recommended data model (option C)
 Reuse dishes as products (one editor, one picture pipeline, one order path), add-only migration 0028: `sellers.mode`, `menus.kind` ('menu' | 'store', one permanent store menu), `categories (seller_id, id, name_en, name_id, position)`, `dishes/menu_items.category_id` and `.stock` (NULL = untracked). Guards: `ordering()` skips the cut-off for a store menu, `finishDueMenus` only finishes `kind='menu'`, `POST menus` refused on a store kitchen; the order write's portion guard also decrements stock; an hourly job archives finished store orders into a monthly "past" row; address wipe one day after delivered/collected. Limits: `MAX_STORE_ITEMS = 100`, `MAX_CATEGORIES = 20`. Rejected: A (no categories, finish/stock logic breaks), B (a second catalogue duplicating dishes, pictures, CSV, picker).
 
+**Note (plan 098, 18 Oct):** `sellers.mode` becomes `sellers.kind` (`kitchen` | `shop` | `events` | `community`, default `kitchen`). The vocabulary and rules per kind (i18next `context`, `shared/kinds.ts`, `usePlaceKind()`) are built in stage 0 of this plan with their first consumer. Target v1.1.0, on its own feature branch. See [098](098-extensible-core.md) §1 and `docs/architecture/data-model.md`.
+
 ## Open questions (Fable's recommendation in bold)
 1. ~~Mode~~ decided: A, fixed at creation (above).
 2. Stock: A none / **B counter per product, sold out at 0, seller restocks** / C counter + reserve on basket.

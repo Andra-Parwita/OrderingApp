@@ -319,6 +319,11 @@ const sellerOrdersSlice = createSlice({
       else state.orders.unshift(order);
       state.change = { status: 'idle' };
     },
+    /** One order changed on another screen (Pack ticks): replace it if the list holds it. */
+    orderPatched(state, action: PayloadAction<Order>) {
+      const index = state.orders.findIndex((candidate) => candidate.id === action.payload.id);
+      if (index >= 0) state.orders[index] = action.payload;
+    },
     changeFailed(state, action: PayloadAction<{ failed: FailedChange }>) {
       state.change = { status: 'error', failed: action.payload.failed };
     },
@@ -368,6 +373,7 @@ export const {
   createFailed,
   createReset,
   orderSaved,
+  orderPatched,
   changeFailed,
 } = sellerOrdersSlice.actions;
 export const sellerOrdersReducer = sellerOrdersSlice.reducer;

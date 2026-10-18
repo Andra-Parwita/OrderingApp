@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mockStore } from '../../../mocks/handlers';
-import { server } from '../../../mocks/server';
-import { createFakeLive } from '../../api/liveTestSupport';
-import { pollingStarted as cookStarted, pollingStopped as cookStopped } from './cookSlice';
-import { createTestStore as createCookStore } from './testSupport';
+import { mockStore } from '../../mocks/handlers';
+import { server } from '../../mocks/server';
+import { createFakeLive } from '../api/liveTestSupport';
+import {
+  pollingStarted as cookStarted,
+  pollingStopped as cookStopped,
+} from '../features/seller-cook/cookSlice';
+import { createCookOrdersStore } from './cookOrdersSupport';
 
 // Plan 074: a live event names what changed, and Cook reloads only that.
 
@@ -34,7 +37,7 @@ afterEach(() => {
 describe('Cook reloads by event type', () => {
   it('order.changed = orders + made + private today; menu.changed = the menu; stock.changed = nothing', async () => {
     const live = createFakeLive();
-    const store = createCookStore({ saga: true, pollMs: 100_000, channel: live.channel });
+    const store = createCookOrdersStore({ pollMs: 100_000, channel: live.channel });
     store.dispatch(cookStarted());
     await waitFor(() => store.getState().sellerCook.list.status === 'ready');
     live.status('live');
@@ -58,7 +61,8 @@ describe('Cook reloads by event type', () => {
     live.event('menu.changed');
     await waitFor(() => paths.length >= 1);
     await sleep(100);
-    expect(paths).toEqual(['/api/seller/menu']);
+    // The shared Orders loop reloads the current menu too; Cook adds only the seller menu.
+    expect([...paths].sort()).toEqual(['/api/seller/menu', '/api/seller/menus/current']);
     store.dispatch(cookStopped());
   });
 });

@@ -1,8 +1,9 @@
 import {
   call,
   delay,
+  cancel,
+  fork,
   put,
-  race,
   select,
   spawn,
   take,
@@ -37,7 +38,7 @@ import { liveRefreshLoop, type Changed, type LiveMessage } from '../../api/live'
 import { playChime } from '../../components/chime';
 import type { Order } from '../../../shared/domain';
 import { formatOrderCode } from '../../../shared/orderCode';
-import type { EventChannel } from 'redux-saga';
+import type { EventChannel, Task } from 'redux-saga';
 import type { ClearSamplesResponse, SampleOrdersResponse } from '../../../shared/devContract';
 import type { SellerMenuResponse } from '../../../shared/menuContract';
 import type { MenuViewResponse, UpdateMenuResponse } from '../../../shared/menusContract';
@@ -181,17 +182,29 @@ function* refresh(changed: Changed) {
   }
 }
 
+// Screens that need the orders (Orders, Home, Cook) each start and stop polling; one live loop
+// serves them all and runs while at least one is on screen.
 function* watchPolling(pollMs: number | (() => number), channel?: () => EventChannel<LiveMessage>) {
+  let users = 0;
+  let loop: Task | null = null;
   while (true) {
-    yield take(pollingStarted.type);
-    yield race({
-      poll: call(liveRefreshLoop, {
+    const action = (yield take([
+      pollingStarted.type,
+      pollingStopped.type,
+      staffSignedOut.type,
+    ])) as { type: string };
+    if (action.type === pollingStarted.type) users += 1;
+    else users = action.type === pollingStopped.type ? Math.max(0, users - 1) : 0;
+    if (users > 0 && !loop) {
+      loop = (yield fork(liveRefreshLoop, {
         load: refresh,
         fallbackMs: pollMs,
         ...(channel ? { channel } : {}),
-      }),
-      stop: take([pollingStopped.type, staffSignedOut.type]),
-    });
+      })) as Task;
+    } else if (users === 0 && loop) {
+      yield cancel(loop);
+      loop = null;
+    }
   }
 }
 

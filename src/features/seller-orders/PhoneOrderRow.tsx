@@ -9,6 +9,7 @@ import { Icon } from '../../ui';
 import { ConfirmedPill } from './ConfirmedMark';
 import { getContactDigits } from './contacts';
 import { SELLER_NS } from './i18n/register';
+import { NewTag } from './orderRowCells';
 import { StatusMark } from './StatusMark';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
 import { openOrderLink } from './whatsappLink';
@@ -29,16 +30,6 @@ const Row = styled.div<{ $fresh: boolean }>`
   @media (prefers-reduced-motion: reduce) {
     transition: none;
   }
-`;
-// Plan 021: the highlight is never colour alone; this word goes with it.
-const NewTag = styled.span`
-  padding: 0 ${({ theme }) => theme.spacing.xs};
-  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.atext};
-  border-radius: ${({ theme }) => theme.size.radiusControl}px;
-  color: ${({ theme }) => theme.c.atext};
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
 `;
 const Open = styled.button`
   display: flex;
@@ -153,7 +144,7 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
         <Top>
           <Name>{order.firstName}</Name>
           <ConfirmedPill order={order} />
-          {isNew ? <NewTag>{t('live.new')}</NewTag> : null}
+          {isNew ? <NewTag /> : null}
           <Code>{formatOrderCode(order.code)}</Code>
           <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
         </Top>

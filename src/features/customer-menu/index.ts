@@ -1,5 +1,6 @@
 export { BasketScreen, EditOrderFlow, type CheckoutStep } from './BasketScreen';
-export { BasketView, EmptyBasketView, PickupPlaceView, YourNameView } from './CheckoutViews';
+export { BasketView, EmptyBasketView } from './CheckoutViews';
+export { PickupPlaceView, YourNameView } from './CheckoutForms';
 export { DishesScreen, HowItWorksScreen, MenuPreview, MenuScreen } from './MenuScreen';
 export { OrderPlacedScreen, OrderPlacedView } from './OrderPlacedScreen';
 export { DishesView } from './DishesView';

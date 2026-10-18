@@ -678,7 +678,7 @@ describe('LIVE_MENU guard (plan 081)', () => {
     'orders.ts': 4, // liveMenu() itself, two doc comments, readLiveOrder (by code or token)
     'index.ts': 1, // lookupMany: a customer's token finds a private order too
     'push.ts': 1, // a customer subscribes to push for their private order
-    'seller.ts': 3, // setOrderAddress, orderAddresses, sendUpdates (by code)
+    'sellerOrders.ts': 3, // setOrderAddress, orderAddresses, sendUpdates (by code)
   };
 
   it('keeps raw past_week_id IS NULL out of worker/db except the allow-list', () => {

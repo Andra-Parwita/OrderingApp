@@ -15,7 +15,7 @@ import {
 } from '../../../shared/limits';
 import { isIphone } from '../../components/isIphone';
 import { BottomSheet, Button, SlideOver } from '../../ui';
-import { Field, Input } from './CheckoutViews';
+import { Field, Input } from './CheckoutForms';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
 

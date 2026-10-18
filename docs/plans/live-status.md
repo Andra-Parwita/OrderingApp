@@ -4,6 +4,21 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Plan 098 clean-up (release 1.0.42)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 0 · docs mapping + D-109 | general-purpose · sonnet | 11:18 | 15 min | 11:19 | 30 s | −14 min | 4 docs | ✅ |
+| 1a · C1+C2 routes split + role allow-list | general-purpose · sonnet | 11:18 | 60–90 min | 12:39 | 81 min | ≈ 0 | routes.ts → 13 files, 82 seller routes with roles, role matrix 129×7 | ✅ |
+| 1b · C3 db files by aggregate | general-purpose · sonnet | 11:18 | 45–60 min | 12:37 | 79 min | +19 min | 3 files → 21, move-only | ✅ |
+| 2a · C6 app routes split | general-purpose · sonnet | 12:55 | 30–45 min | 12:59 | 4.5 min | −30 min | AppRoutes 997 → 30 + 4 files | ✅ |
+| 2b · C5 Cook reads Orders slice | general-purpose · sonnet | 12:55 | 45–60 min | 13:12 | 16 min | −35 min | one live loop (counted), cook fetch gone, 448 tests | ✅ |
+| 2c · C8a Notice + order-row cells | general-purpose · sonnet | 13:00 | 30–45 min | 13:05 | 5 min | −30 min | Notice in kit (2 sites), only NewTag shared | ✅ |
+| 2d · C7 install + help + topics split | general-purpose · sonnet | 13:06 | 45–60 min | 13:10 | 4.7 min | −40 min | 3 files → 12, all < 500; kit kept (looks differ) | ✅ |
+| 2e · C7 orders table split | general-purpose · sonnet | 13:06 | 20–30 min | 13:12 | 5.7 min | −20 min | 756 → 276 + 3 files; buttons kept | ✅ |
+| 2f · C7 + E4 checkout move to customer-checkout | general-purpose · sonnet | 13:12 | 45–60 min | 13:13 | 0.5 min | — | stopped: one shared customer slice; move needs owner A/C | ⏸ |
+| 2g · C7 CheckoutViews split in place | general-purpose · sonnet | 13:13 | 20–30 min | 14:25 | 72 min | +42 min | 882 → 445 + 456; kit kept | ✅ |
+| 2h · debug p089 order-limit hang (4.5 s → 30 s timeout) | general-purpose · sonnet | 15:36 | 20–40 min | 15:39 | 2.8 min | −25 min | stale spec since 1.0.39 (Language is a sheet now); spec fixed | ✅ |
+
 ## Plan 094 one banner everywhere (release 1.0.41)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|

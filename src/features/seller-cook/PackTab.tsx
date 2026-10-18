@@ -24,7 +24,8 @@ import {
 import { ChefFilterControl, useChefFilter } from './ChefFilterControl';
 import { isOwnItem } from './cookModel';
 import { selectBags, selectCookMenu } from './cookSelectors';
-import { orderReplaced, type CookRootState } from './cookSlice';
+import { orderPatched } from '../../api/kitchenOrders';
+import type { CookRootState } from './cookSlice';
 
 const SORTS: ReadonlyArray<PackSort> = ['time', 'place', 'code'];
 
@@ -287,7 +288,7 @@ export function PackTab() {
       const result = await packOrder(order.code, body, undefined, currentSellerSlug());
       if (result.ok) {
         setFailed(false);
-        dispatch(orderReplaced(result.data.order));
+        dispatch(orderPatched(result.data.order));
         return result.data.order;
       }
       return result;
@@ -307,7 +308,7 @@ export function PackTab() {
         if (!result.ok) {
           const refused = !isKeptCode(result.error);
           if (refused) {
-            for (const [, rest] of entries.slice(index)) dispatch(orderReplaced(rest.base));
+            for (const [, rest] of entries.slice(index)) dispatch(orderPatched(rest.base));
           }
           return { ok: false, refused, code: result.error };
         }
@@ -318,7 +319,7 @@ export function PackTab() {
           latest.length === ticked.length &&
           latest.every((id) => ticked.includes(id))
         ) {
-          dispatch(orderReplaced(result.data.order));
+          dispatch(orderPatched(result.data.order));
         }
       }
       return { ok: true };
@@ -331,7 +332,7 @@ export function PackTab() {
   const tick = useCallback(
     (order: Order, itemId: string) => {
       const ids = toggledIds(order, itemId);
-      dispatch(orderReplaced(withTicks(order, ids)));
+      dispatch(orderPatched(withTicks(order, ids)));
       wanted.current[order.code] = ids;
       update((previous) => ({
         ...previous,

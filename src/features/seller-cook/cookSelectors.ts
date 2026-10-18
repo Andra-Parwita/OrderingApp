@@ -12,10 +12,21 @@ import {
   type GroupBy,
 } from './cookModel';
 import { bagsOf } from './packModel';
-import type { CookRootState } from './cookSlice';
+import type { CookListState, CookRootState } from './cookSlice';
 
-export const selectCookList = (state: CookRootState) => state.sellerCook.list;
-const selectMenuOrders = (state: CookRootState) => state.sellerCook.orders;
+/** Ready only when both the Orders list and Cook's own parts are; an error in either shows. */
+export const selectCookList = createSelector(
+  [
+    (state: CookRootState) => state.sellerOrders.list,
+    (state: CookRootState) => state.sellerCook.list,
+  ],
+  (orders, own): CookListState => {
+    if (orders.status === 'error' || own.status === 'error') return { status: 'error' };
+    if (orders.status === 'loading' || own.status === 'loading') return { status: 'loading' };
+    return { status: 'ready', live: orders.live === 'ok' && own.live === 'ok' ? 'ok' : 'error' };
+  },
+);
+const selectMenuOrders = (state: CookRootState) => state.sellerOrders.orders;
 const selectPrivateOrders = (state: CookRootState) => state.sellerCook.privateOrders;
 /** Plan 081: the menu's orders and today's private ones, counted together on the event day. */
 export const selectCookOrders = createSelector(

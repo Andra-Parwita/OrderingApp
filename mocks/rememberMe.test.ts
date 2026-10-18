@@ -208,7 +208,7 @@ describe('Remember me (plan 087), server', () => {
       body: { deviceId: PHONE_A, firstName: 'Rina' },
     });
     const options = (asked.body as { options: { user: { displayName: string } } }).options;
-    expect(options.user.displayName).toBe('Rina · Remember me');
+    expect(options.user.displayName).toBe('Rina · customer (Remember me)');
     const done = await register(phone, PHONE_A, {
       firstName: 'Rina',
       prf: true,

@@ -122,6 +122,22 @@ An optional customer passkey. Separate from the sellers' accounts, sessions and 
 | `short_messages` | plan 086 (migration 0028): `id`, `text_en`, `text_id` (plain, max 90), `audience` (everyone / sellers / customers), `seller_ids` (JSON list, NULL = all kitchens), `created_at`, `expires_at` (ISO), `stopped_at`. A device gets a message while `stopped_at` is NULL and `expires_at` is in the future; the admin list shows the newest 20 | kept (a small log; wiped only by dev reset) |
 | `app_settings` | one row (`id = 1`): `maintenance` (0/1), `notice_from`, `notice_until` (ISO instants), `notice_text_en`, `notice_text_id`, and (plan 074, migration 0023) `backup_customer_min`, `backup_seller_min` (default 5 each; 1 to 30 checked by the Worker). No row = all off and 5 / 5. Read by `GET /api/status` and before every write; changed by the admin or the release token | kept; the admin clears the announcement |
 
+## One model, many kinds (plan 098)
+
+One model serves a kitchen, a shop, an event organiser and a community group: the tables and types below are the general model, and a kind changes words, a few rules and two or three screens. **No table, column or type is renamed** (`menus`, `dishes`, `cooking_date`, `past_weeks`, `MenuItem`, `SellerOrder` stay); the docs translate, the code does not. `sellers.kind` arrives with the store (v1.1.0, plan 082 stage 0), replacing the planned `sellers.mode`. Nothing exists in the schema today.
+
+| concept | kitchen (today) | shop (082) | event organiser | community activity | today's table / type (unchanged) |
+|---|---|---|---|---|---|
+| **Place** (one `kind`, set at creation) | kitchen | shop | organiser | group | `sellers` + `kitchens`; `Seller`, `Kitchen` |
+| **Offering** | menu: dated, cut-off, finishes | catalogue: undated, never finishes | event: dated, "sales close" = cut-off, finishes | activity: dated | `menus`; `MenuView` |
+| **Item** | dish | product | ticket type (limit = capacity) | spot | `dishes` (library), `menu_items` (copy on the offering); `MenuItem` |
+| **Order** | order | order | booking (lines = tickets) | sign-up | `orders` + `order_lines`; `SellerOrder` |
+| **Fulfilment** | pickup / delivery | pickup / delivery | entry at the door (= pickup) | attend (= pickup) | `orders.fulfilment` |
+| **Hand-over** | scan the QR, Collected | collected / delivered | scan the QR, "Checked in" | attended | `collected_at/by`, the existing scan flow |
+| **Closing** | finish, `past_weeks` | monthly archive (082) | event over, past event | past activity | `past_weeks` |
+| **Places** | pickup places | counter / shop | venue | venue | `pickup_places` |
+| **Team** | owner / chef / helper | owner / helper | owner / door staff (= helper) | organiser / helper | `memberships.role` |
+
 ## Hashed, never stored
 
 | what | how it is kept |

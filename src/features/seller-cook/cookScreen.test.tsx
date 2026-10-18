@@ -1,13 +1,13 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import { useLocation } from 'react-router';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockStore } from '../../../mocks/handlers';
 import * as kitchen from '../../api/kitchen';
 import { CookScreen } from './CookScreen';
 import { selectCookGroups } from './cookSelectors';
+import { ordersLoaded } from '../../api/kitchenOrders';
 import { currentSellerSlug, rememberSignedIn } from '../../api/device/sellerContext';
 import { fetchMade } from '../../api/made';
-import { loaded, pollingStarted, pollingStopped } from './cookSlice';
+import { loaded } from './cookSlice';
 import {
   MENU,
   createTestStore,
@@ -39,7 +39,7 @@ beforeAll(setupI18n);
 beforeEach(() => window.localStorage.clear());
 
 function renderKitchen(): TestStore {
-  const store = createTestStore({ saga: false });
+  const store = createTestStore();
   seed(store, sampleOrders());
   renderWithStore(<CookScreen />, store);
   return store;
@@ -47,10 +47,10 @@ function renderKitchen(): TestStore {
 
 describe('Kitchen · Cook', () => {
   it('adds the private orders of today to the dish totals, tagged Private (plan 081)', () => {
-    const store = createTestStore({ saga: false });
+    const store = createTestStore();
+    store.dispatch(ordersLoaded({ orders: sampleOrders() }));
     store.dispatch(
       loaded({
-        orders: sampleOrders(),
         menu: MENU,
         privateOrders: [
           makeOrder({
@@ -121,7 +121,7 @@ describe('Kitchen · Cook', () => {
   });
 
   it('memoises the groups', () => {
-    const store = createTestStore({ saga: false });
+    const store = createTestStore();
     seed(store, sampleOrders());
     const state = store.getState();
     expect(selectCookGroups(state, 'all', 'chef')).toBe(selectCookGroups(state, 'all', 'chef'));
@@ -130,8 +130,9 @@ describe('Kitchen · Cook', () => {
 
 describe('Kitchen · chef filter', () => {
   it('hides the control when the kitchen has no chefs', () => {
-    const store = createTestStore({ saga: false });
-    store.dispatch(loaded({ orders: sampleOrders(), menu: { ...MENU, chefs: [] } }));
+    const store = createTestStore();
+    store.dispatch(ordersLoaded({ orders: sampleOrders() }));
+    store.dispatch(loaded({ menu: { ...MENU, chefs: [] }, made: {} }));
     renderWithStore(<CookScreen />, store);
     expect(screen.queryByRole('radio', { name: 'Chef Wati' })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: 'All' })).not.toBeInTheDocument();
@@ -181,7 +182,7 @@ describe('Kitchen · Pack', () => {
   });
 
   it('Print label opens the Labels page with the open bag selected', () => {
-    const store = createTestStore({ saga: false });
+    const store = createTestStore();
     seed(store, sampleOrders());
     renderWithStore(
       <>
@@ -237,7 +238,7 @@ describe('Kitchen · Pack', () => {
   });
 
   it('says packing does not change the status once everything is ticked', () => {
-    const store = createTestStore({ saga: false });
+    const store = createTestStore();
     const orders = sampleOrders().map((order) => ({
       ...order,
       lines: order.lines.map((line) => ({ ...line, ticked: true })),
@@ -246,36 +247,6 @@ describe('Kitchen · Pack', () => {
     renderWithStore(<CookScreen />, store);
     fireEvent.click(screen.getByRole('tab', { name: /Pack/ }));
     expect(screen.getByText(/Packing doesn't change the order status/)).toBeInTheDocument();
-  });
-});
-
-describe('cook polling', () => {
-  beforeEach(() => mockStore.reset());
-
-  it('loads orders and menu, polls while shown and stops when not', async () => {
-    const order = async (firstName: string) => {
-      const result = await mockStore.createOrder({
-        firstName,
-        language: 'en',
-        lines: [{ itemId: 'lemper', qty: 1 }],
-        fulfilment: 'pickup',
-      });
-      if (!result.ok) throw new Error(result.message);
-    };
-    await order('Rina');
-    const store = createTestStore({ saga: true, pollMs: 20 });
-    store.dispatch(pollingStarted());
-    await waitFor(() => store.getState().sellerCook.list.status === 'ready');
-    expect(store.getState().sellerCook.menu?.chefs.map((chef) => chef.name)).toEqual(['Chef Wati']);
-    expect(store.getState().sellerCook.orders).toHaveLength(1);
-
-    await order('Tom');
-    await waitFor(() => store.getState().sellerCook.orders.length === 2);
-    store.dispatch(pollingStopped());
-    await sleep(60);
-    await order('Dewi');
-    await sleep(100);
-    expect(store.getState().sellerCook.orders).toHaveLength(2);
   });
 });
 

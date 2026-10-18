@@ -4,6 +4,7 @@ export { Icon, type IconName } from './Icon';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { ListRow, type ListRowProps } from './ListRow';
 export { Menu, type MenuItem, type MenuProps } from './Menu';
+export { Notice, type NoticeProps, type NoticeTone } from './Notice';
 export { PageHeader, type PageHeaderProps } from './PageHeader';
 export { Pill, type PillProps } from './Pill';
 export { Segmented, type SegmentedOption, type SegmentedProps } from './Segmented';

@@ -57,7 +57,8 @@ test('the 6th order in ten minutes is refused with a message the customer can re
 
     // The same message in Indonesian.
     await page.goto('/settings');
-    await page.getByRole('radio', { name: 'ID' }).click();
+    await page.getByRole('button', { name: /^Language/ }).click();
+    await page.getByRole('radio', { name: 'Bahasa Indonesia' }).click();
     await page.goto('/onde-onde/basket/name');
     await page.getByRole('button', { name: /^Pesan ·/ }).click();
     await expect(page.getByText(TEXT.id)).toBeVisible();

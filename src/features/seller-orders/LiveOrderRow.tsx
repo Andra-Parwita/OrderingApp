@@ -7,6 +7,7 @@ import { formatOrderCode } from '../../../shared/orderCode';
 import { Icon, type IconName } from '../../ui';
 import { ConfirmedPill } from './ConfirmedMark';
 import { SELLER_NS } from './i18n/register';
+import { NewTag } from './orderRowCells';
 import { StatusMark } from './StatusMark';
 import { customerKind } from './customerKind';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
@@ -63,16 +64,6 @@ const Name = styled.span`
   font-size: 0.9375rem;
   font-weight: 600;
   text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-// Plan 021: the highlight is never colour alone; this word goes with it.
-const NewTag = styled.span`
-  padding: 0 ${({ theme }) => theme.spacing.xs};
-  border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.atext};
-  border-radius: ${({ theme }) => theme.size.radiusControl}px;
-  color: ${({ theme }) => theme.c.atext};
-  font-size: 0.75rem;
-  font-weight: 700;
   white-space: nowrap;
 `;
 const Flag = styled.span`
@@ -175,7 +166,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
         <Code>{formatOrderCode(order.code)}</Code>
         <Name>{order.firstName}</Name>
         <ConfirmedPill order={order} />
-        {isNew ? <NewTag>{t('live.new')}</NewTag> : null}
+        {isNew ? <NewTag /> : null}
         {order.changed || order.addressChanged === 'new' ? (
           <Flag>
             <Icon name="pencil" />

@@ -4,14 +4,12 @@ import i18n from 'i18next';
 import type { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, useLocation } from 'react-router';
-import createSagaMiddleware, { type EventChannel } from 'redux-saga';
-import type { LiveMessage } from '../../api/live';
 import type { Order, OrderLine, SellerMenuItemView } from '../../../shared/domain';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import type { CookMenu } from './cookModel';
-import { cookSaga } from './cookSaga';
 import { cookReducer, loaded } from './cookSlice';
+import { orderPatched, ordersLoaded, type KitchenOrdersRootState } from '../../api/kitchenOrders';
 import { registerCookI18n } from './i18n/register';
 
 /** Test-only helpers shared by this feature's tests. */
@@ -121,19 +119,29 @@ export function sampleOrders(): Array<Order> {
   ];
 }
 
-export function createTestStore(options: {
-  saga: boolean;
-  pollMs?: number;
-  /** A fake live channel (api/live.ts); without it the saga finds no socket and only polls. */
-  channel?: () => EventChannel<LiveMessage>;
-}) {
-  const sagaMiddleware = createSagaMiddleware();
-  const store = configureStore({
-    reducer: { sellerCook: cookReducer },
-    middleware: (getDefault) => getDefault({ thunk: false }).concat(sagaMiddleware),
+/** Stands in for the Orders slice (a feature may not import it); the real one is wired in src/app tests. */
+function ordersStandIn(
+  state: KitchenOrdersRootState['sellerOrders'] = {
+    list: { status: 'loading' },
+    orders: [],
+    current: { status: 'loading' },
+  },
+  action: { type: string; payload?: unknown },
+): KitchenOrdersRootState['sellerOrders'] {
+  if (ordersLoaded.match(action)) {
+    return { ...state, orders: action.payload.orders, list: { status: 'ready', live: 'ok' } };
+  }
+  if (orderPatched.match(action)) {
+    const patch = action.payload;
+    return { ...state, orders: state.orders.map((o) => (o.id === patch.id ? patch : o)) };
+  }
+  return state;
+}
+
+export function createTestStore() {
+  return configureStore({
+    reducer: { sellerCook: cookReducer, sellerOrders: ordersStandIn },
   });
-  if (options.saga) sagaMiddleware.run(cookSaga, options.pollMs, options.channel);
-  return store;
 }
 export type TestStore = ReturnType<typeof createTestStore>;
 
@@ -164,7 +172,8 @@ export function renderWithStore(ui: ReactNode, store: TestStore) {
 }
 
 export function seed(store: TestStore, orders: Array<Order>): void {
-  store.dispatch(loaded({ orders, menu: MENU }));
+  store.dispatch(ordersLoaded({ orders }));
+  store.dispatch(loaded({ menu: MENU, made: {} }));
 }
 
 function Where() {

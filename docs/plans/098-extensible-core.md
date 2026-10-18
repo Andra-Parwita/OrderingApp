@@ -138,6 +138,7 @@ Move-only refactors: typecheck while building; the scoped unit tests and the tou
 ## Owner answers (18 Oct)
 - Q1, Q2 (labels per kind, where the kind lives): **saved for the store branch (v1.1.0)**.
 - Q3 checkout move: **B, now in 1.0.42** (move basket/checkout/placed out of `customer-menu` into `customer-checkout`, no behaviour change; the 905-line split happens in the move).
+  - **Changed to C (owner, 18 Oct, after the builder found one shared customer slice):** the move waits for the store (082 stage 0, v1.1.0). It is files and folders only, no behaviour change, but menu and checkout share one slice, saga, page parts, icons and wording file, so ~12 shared files would first go to a neutral place. In 1.0.42 only `CheckoutViews` is split in place (882 → 445 + `CheckoutForms` 456).
 - Q4 four menu copies: **A, only C5 (Cook reads the Orders slice) now; C4 waits for v1.1.0**.
 - Q5 dead code: **A, delete each leftover after a grep confirms it's unused** (note: `PrintJob` and the cook label keys were already removed in 1.0.38 (plan 089); re-check before listing; also the unused chip/nudge helpers in `src/api/customer/state.ts` from 096).
 - Q6 shared parts (C8a): **A, only in the files the clean-up splits anyway**.

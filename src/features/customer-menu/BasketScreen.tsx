@@ -13,14 +13,8 @@ import { savedFirstName } from '../../api/device/firstName';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
 import { PageHeader } from '../../ui';
 import { AddressSection } from './AddressSection';
-import {
-  BasketView,
-  EmptyBasketView,
-  fulfilmentOptions,
-  PickupPlaceView,
-  YourNameView,
-  type ClosedReason,
-} from './CheckoutViews';
+import { BasketView, EmptyBasketView, fulfilmentOptions, type ClosedReason } from './CheckoutViews';
+import { PickupPlaceView, YourNameView } from './CheckoutForms';
 import {
   checkoutSet,
   editCleared,

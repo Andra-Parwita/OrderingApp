@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { styled } from 'styled-components';
+import { Notice } from '../ui/Notice';
 import { useSession } from './session';
 
 // The notice slot of the seller shell (plan 032 stage 4): lines shown above the page for the whole
@@ -19,23 +19,14 @@ export function useKitchenNotices(): ReadonlyArray<KitchenNotice> {
   return notices;
 }
 
-const Line = styled.p`
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  background: ${({ theme }) => theme.c.warnTint};
-  color: ${({ theme }) => theme.c.text};
-  font-size: 0.8125rem;
-`;
-
 export function KitchenNotices() {
   const notices = useKitchenNotices();
   return (
     <>
       {notices.map((notice) => (
-        <Line key={notice.id} role="status">
+        <Notice key={notice.id} tone="warn" layout="strip">
           {notice.text}
-        </Line>
+        </Notice>
       ))}
     </>
   );

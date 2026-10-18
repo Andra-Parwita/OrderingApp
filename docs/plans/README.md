@@ -117,9 +117,9 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 084 | ✅ | [Printing: preview first, A4 by default, label printer optional, Help "How to print"](084-printing-preview.md) | built 17 Oct, for 1.0.37; label printer switch per device |
 | 086 | ⬜ | [Admin short message: a 30-second note everyone can see](086-admin-short-message.md) | draft 17 Oct; delivery A |
 | 087 | ⬜ | [Keep my orders: optional, privacy-first (customers)](087-keep-my-orders.md) | built 17 Oct, pending the gate and deploy (D-107) |
-| 088 | ⬜ | [Split the large files](088-split-large-files.md) | draft 17 Oct; later, with the cleanup plan |
+| 088 | ⬜ | [Split the large files](088-split-large-files.md) | merged into 098 (1.0.42) |
 | 089 | ⬜ | [Security touch-ups from the code health report](089-security-touch-ups.md) | building 17 Oct |
-| 090 | ⬜ | [Clean-up plan (later)](090-cleanup.md) | collected 17 Oct; after current features |
+| 090 | ⬜ | [Clean-up plan (later)](090-cleanup.md) | merged into 098 (1.0.42) |
 | 091 | ⬜ | [Faster lint, Prettier and tests](091-faster-tooling.md) | analysis 17 Oct; measure after the 1.0.38 gate |
 | 092 | ✅ | [Remember me polish](092-remember-me-polish.md) | live 17 Oct in 1.0.39 (tag v1.0.39) (D-108) |
 | 093 | ✅ | [Customer banner doesn't flash on page change](093-banner-no-flash.md) | live 17 Oct in 1.0.40 (tag v1.0.40) |
