@@ -2,8 +2,8 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-18 → 19 Oct morning, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.42** (plans 098 stages 0–3, 100, 103–109).
-**Live:** Release **1.0.42** (19 Oct ~06:40; Worker `21340f7c-b125-46e2-b261-f88f43668a10`; health OK, devTools false, site reports `1.0.110 · 450a175 · draft` — "draft" only because HANDOVER and the backup file were uncommitted at build time); tag `v1.0.42` on `450a175`; backup before deploy `backup-1.0.41.sql` (787 rows, kept outside git). Previous: 1.0.41 (Worker `847e8574…`, tag `v1.0.41`), 1.0.40 (Worker `ff9f06f1…`), 1.0.39 (Worker `904ef961…`).
+**Last session:** 2026-10-18 → 20 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.42** (plans 098 stages 0–3, 100, 103–109) and hotfixes **1.0.42.1** (plan 110 by Andra: WhatsApp numbers from any country, D-111) and **1.0.42.2** (Help says which numbers are accepted).
+**Live:** Hotfix **1.0.42.2** (20 Oct ~08:45; Worker `922844c3-7fea-4c6a-98bc-9f51fc11fe40`; health OK, site reports `1.0.113 · d2a1212`; tag `v1.0.42.2`). Before: 1.0.42.1 (Worker `0170fa3c…`, `392a1a3`, tag `v1.0.42.1`), 1.0.42 (Worker `21340f7c…`, tag `v1.0.42` on `450a175`), 1.0.41 (Worker `847e8574…`). About still shows 1.0.42 (hotfixes keep `RELEASE_VERSION`; the "new version" pill follows the build commit). Backup before 1.0.42: `backups/shaggybobo-2026-10-19.sql` (787 rows); hotfixes had no database change, no backup.
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -56,6 +56,8 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Gate 2 (18 Oct 22:07 → 19 Oct):** typecheck, lint, format ✅; unit **2,594/2,594** ✅; e2e 96 passed, 1 failed (helper-flow: test mistook the device's Customer details "Backup" button for the hidden Backup screen; test fixed, re-run).
 - **Deploy order (owner rule):** backup → `pnpm build` → migration (if any) → `pnpm run deploy` (Worker + app together; C12 keeps the `?tokens=` fallback) → health check → live checks. 1.0.42: no migration, no secret.
 - **Live checks 1.0.42:** seller Orders (Active tab, edit an order, Paid sheet), Edit menu → Save, Menu tabs + Sell as + Home "On the day" line, kitchen print, Customers list, a chef and a helper sign-in, customer order end to end incl. On the day group and address map on the iPhone, customer live updates (C12).
+- **Phone numbers (20 Oct, owner):** accepted rule stays as D-111 (C: a 0 typed after the country code is not fixed); no specific error messages ("not worth it"), Help explains instead.
+- **Build time (analysis only):** `tsc -b` re-checks everything every run (~30 s; `noEmit` without `incremental`, "output file src/main.js does not exist"); `pnpm run deploy` builds again after `pnpm build`. Possible fix `"incremental": true` in the 3 tsconfigs, under plan 091; not done.
 - **1.0.43 = 101 + 102 together** (owner's choice; Fable advised splitting routes).
 - **Rules from 18 Oct:** ask the next question only after the owner says "go next question"; mock-ups never invent features; button labels never wrap (`docs/design/README.md`).
 - **Deploy impact:** medium (size). Server: new edit-order route, live-socket token header (old tabs use the fallback), retention sweep. Client: many seller screens. No migration.
@@ -80,4 +82,4 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.42 (tag v1.0.42). Finish the 1.0.42 live checks one at a time (HANDOVER step 4), then start 1.0.43 (plans 101 + 102). Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.42.2 (tag v1.0.42.2). Finish the 1.0.42 live checks one at a time (HANDOVER step 4), then start 1.0.43 (plans 101 + 102). Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
