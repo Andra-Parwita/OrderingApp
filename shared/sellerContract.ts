@@ -2,7 +2,7 @@ import type { KitchenSettings, OrderStatus } from './domain';
 import { FIRST_LANGUAGES, LANGUAGES } from './languages';
 import { POST_TEXT_MAX } from './limits';
 import { isOneOf, isRecord, parseLocalText } from './parse';
-import { normaliseAuMobile } from './phone';
+import { normalisePhone } from './phone';
 import { ORDER_STATUSES } from './status';
 
 /** POST /api/seller/orders/:code/status; `to` must be in nextStatuses(order). */
@@ -72,7 +72,7 @@ export function parseSettingsRequest(input: unknown): KitchenSettings | null {
   if (whatsappNumber !== undefined) {
     if (typeof whatsappNumber !== 'string') return null;
     if (whatsappNumber.trim() !== '') {
-      const normalised = normaliseAuMobile(whatsappNumber);
+      const normalised = normalisePhone(whatsappNumber);
       if (!normalised) return null;
       number = normalised;
     }

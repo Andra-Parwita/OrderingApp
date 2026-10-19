@@ -12,8 +12,8 @@
   },
   "whatsapp": {
     "label": "Your WhatsApp number",
-    "helper": "Australian mobile, for example 0412 345 678",
-    "invalid": "Enter an Australian mobile number, for example 0412 345 678."
+    "helper": "WhatsApp number: an Australian mobile like 0412 345 678, or another country with + (for example +62 812 3456 7890).",
+    "invalid": "Enter a WhatsApp number: an Australian mobile like 0412 345 678, or another country with + (for example +62 812 3456 7890)."
   },
   "greeting": {
     "en": "Greeting (English)",

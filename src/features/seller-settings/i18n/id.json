@@ -12,8 +12,8 @@
   },
   "whatsapp": {
     "label": "Nomor WhatsApp kamu",
-    "helper": "Nomor HP Australia, misalnya 0412 345 678",
-    "invalid": "Masukkan nomor HP Australia, misalnya 0412 345 678."
+    "helper": "Nomor WhatsApp: ponsel Australia seperti 0412 345 678, atau negara lain dengan + (misalnya +62 812 3456 7890).",
+    "invalid": "Masukkan nomor WhatsApp: ponsel Australia seperti 0412 345 678, atau negara lain dengan + (misalnya +62 812 3456 7890)."
   },
   "greeting": {
     "en": "Sapaan (Inggris)",

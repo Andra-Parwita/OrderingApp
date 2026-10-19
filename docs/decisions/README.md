@@ -707,3 +707,9 @@ Format for each entry:
 **Trade-off:** one more route and sheet; in return a typo or a changed mind no longer means cancel and retype.
 **Revisit when:** the seller wants an exact paid amount (one column, `orders.paid_cents`, a migration) because the audit's last 4 entries drop an old payment.
 
+
+## D-111 · A number with + (or 00) is international; 0… stays Australian (2026-10-19; builder)
+**Ruling:** "A, + should be international" (urgent: non-Australian WhatsApp numbers must be accepted).
+**Decision:** every phone field (the kitchen's WhatsApp number, customers' numbers in the seller's contacts) accepts `+<country code><number>` or `00<country code>…`, 8–15 digits in all; a number starting with `0` is read as an Australian mobile, as before. Stored as digits with the country code (plan 110).
+**Trade-off:** an Indonesian number must be typed with +62, not 0812…; no country picker.
+**Revisit when:** sellers outside Australia type local numbers often (a country picker, option B).

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { normaliseAuMobile } from '../../../../shared/phone';
+import { normalisePhone } from '../../../../shared/phone';
 import { parseOrderCode } from '../../../../shared/orderCode';
 import { askPersistence, openBackend, type BookBackend } from './bookBackend';
 import type { BookAddress, BookMeta, Customer } from './bookTypes';
@@ -72,7 +72,7 @@ function readLegacy(slug: string): Array<Customer> {
       if (!key.startsWith(`${slug}:`) || typeof value !== 'object' || value === null) continue;
       const v = value as Record<string, unknown>;
       const code = key.slice(slug.length + 1);
-      const phone = typeof v['phone'] === 'string' ? (normaliseAuMobile(v['phone']) ?? '') : '';
+      const phone = typeof v['phone'] === 'string' ? (normalisePhone(v['phone']) ?? '') : '';
       const street = typeof v['address'] === 'string' ? v['address'].slice(0, 300) : '';
       const at = typeof v['at'] === 'string' ? v['at'] : new Date().toISOString();
       if (phone === '' && street === '') continue;

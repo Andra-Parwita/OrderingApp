@@ -5,7 +5,7 @@ import { styled } from 'styled-components';
 import type { Fulfilment, Language, SellerMenuItemView } from '../../../shared/domain';
 import { LOW_STOCK, MAX_QTY } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
-import { normaliseAuMobile } from '../../../shared/phone';
+import { normalisePhone } from '../../../shared/phone';
 import { pickText } from '../../../shared/text';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Icon, Segmented, Stepper, type SegmentedOption } from '../../ui';
@@ -203,7 +203,7 @@ function FormView({ onDone, form }: Readonly<{ onDone: () => void; form: OrderFo
     [t],
   );
 
-  const digits = phone.trim() === '' ? null : normaliseAuMobile(phone);
+  const digits = phone.trim() === '' ? null : normalisePhone(phone);
   const phoneInvalid = phone.trim() !== '' && digits === null;
   const delivery = how === 'delivery';
 

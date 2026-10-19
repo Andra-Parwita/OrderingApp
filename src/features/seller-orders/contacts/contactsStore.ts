@@ -1,4 +1,4 @@
-import { normaliseAuMobile } from '../../../../shared/phone';
+import { normalisePhone } from '../../../../shared/phone';
 import { currentSellerSlug } from '../../../api/device/sellerContext';
 import {
   addressText,
@@ -53,7 +53,7 @@ export function saveContact(
   now: Date = new Date(),
 ): SaveResult {
   const typed = input.phone.trim();
-  const phone = typed === '' ? '' : normaliseAuMobile(typed);
+  const phone = typed === '' ? '' : normalisePhone(typed);
   if (phone === null) return 'invalid_phone';
   const kept = saveForOrder(
     slug,

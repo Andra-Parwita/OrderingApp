@@ -1,4 +1,4 @@
-import { normaliseAuMobile } from '../../../../shared/phone';
+import { normalisePhone } from '../../../../shared/phone';
 import { CUSTOMER_CODE_RE } from '../../../../shared/customerCode';
 import { emptyAddress, newId } from './addressBook';
 import type { Customer } from './bookTypes';
@@ -106,7 +106,7 @@ export function parseCustomersCsv(text: string): Array<CsvRow> | null {
   const out: Array<CsvRow> = [];
   for (const row of rows.slice(1)) {
     const rawPhone = col(row, 'phone');
-    const phone = rawPhone === '' ? '' : (normaliseAuMobile(rawPhone) ?? '');
+    const phone = rawPhone === '' ? '' : (normalisePhone(rawPhone) ?? '');
     const codes = col(row, 'customer codes')
       .split(/[\s;,]+/)
       .filter((code) => CUSTOMER_CODE_RE.test(code));

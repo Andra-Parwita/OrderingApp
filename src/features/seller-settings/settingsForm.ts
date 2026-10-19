@@ -1,5 +1,5 @@
 import type { KitchenSettings, Language, Languages, LocalText } from '../../../shared/domain';
-import { formatPhone, normaliseAuMobile } from '../../../shared/phone';
+import { formatPhone, normalisePhone } from '../../../shared/phone';
 
 // Branding, images and devices come in batches 3 and 4; this is the minimal settings page.
 
@@ -27,7 +27,7 @@ export function toDraft(settings: KitchenSettings): Draft {
 
 /** The same check the server makes; an empty number is allowed (it removes the number). */
 export function phoneIsValid(phone: string): boolean {
-  return phone.trim() === '' || normaliseAuMobile(phone) !== null;
+  return phone.trim() === '' || normalisePhone(phone) !== null;
 }
 
 export function toSettings(draft: Draft): KitchenSettings {

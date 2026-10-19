@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import { formatOrderCode } from '../../../../shared/orderCode';
-import { normaliseAuMobile } from '../../../../shared/phone';
+import { normalisePhone } from '../../../../shared/phone';
 import { currentSellerSlug } from '../../../api/device/sellerContext';
 import { useMediaQuery } from '../../../components/useMediaQuery';
 import { Button, SlideOver, TextField } from '../../../ui';
@@ -116,7 +116,7 @@ function LinkSheet({ code }: Readonly<{ code: string }>) {
       setNoName(true);
       return;
     }
-    const phone = typed === '' ? undefined : normaliseAuMobile(typed);
+    const phone = typed === '' ? undefined : normalisePhone(typed);
     if (phone === null) {
       setInvalid(true);
       return;

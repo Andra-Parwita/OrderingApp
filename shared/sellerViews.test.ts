@@ -1,23 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { normaliseAuMobile } from './phone';
+import { normalisePhone } from './phone';
 import { parseCreateOrderRequest, parseCreateSellerOrderRequest } from './orderContract';
 import { parseSettingsRequest } from './sellerContract';
 
 const text = { en: 'Hi', id: 'Halo' };
 const settings = { postGreeting: text, postClosing: text, orderingOpen: true };
 
-describe('normaliseAuMobile', () => {
+describe('normalisePhone', () => {
   it.each(['0412 345 678', '+61412345678', '61412345678', '+61 412-345-678', '(04) 1234 5678'])(
     'accepts %s',
     (input) => {
-      expect(normaliseAuMobile(input)).toBe('61412345678');
+      expect(normalisePhone(input)).toBe('61412345678');
     },
   );
 
   it.each(['', 'abc', '0312 345 678', '0412 345', '+6141234567890', '412345678', '04123x5678'])(
     'rejects %j',
     (input) => {
-      expect(normaliseAuMobile(input)).toBeNull();
+      expect(normalisePhone(input)).toBeNull();
     },
   );
 });

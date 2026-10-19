@@ -40,7 +40,9 @@ describe('SettingsScreen', () => {
     fireEvent.change(number(), { target: { value: '12345' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(
-      await screen.findByText('Enter an Australian mobile number, for example 0412 345 678.'),
+      await screen.findByText(
+        'Enter a WhatsApp number: an Australian mobile like 0412 345 678, or another country with + (for example +62 812 3456 7890).',
+      ),
     ).toBeInTheDocument();
     expect(number()).toHaveAttribute('aria-invalid', 'true');
     expect(puts).toBe(0);
@@ -56,7 +58,9 @@ describe('SettingsScreen', () => {
     fireEvent.change(number(), { target: { value: '0412 345 678' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(
-      await screen.findByText('Enter an Australian mobile number, for example 0412 345 678.'),
+      await screen.findByText(
+        'Enter a WhatsApp number: an Australian mobile like 0412 345 678, or another country with + (for example +62 812 3456 7890).',
+      ),
     ).toBeInTheDocument();
   });
 

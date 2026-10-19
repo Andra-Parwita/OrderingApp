@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { normaliseAuMobile } from '../../../../shared/phone';
+import { normalisePhone } from '../../../../shared/phone';
 import { Button, SlideOver, TextArea, TextField } from '../../../ui';
 import { SELLER_NS } from '../i18n/register';
 import { emptyAddress, newId } from './addressBook';
@@ -75,7 +75,7 @@ export function CustomerEditSheet({
   const save = () => {
     const firstName = name.trim();
     const typed = phone.trim();
-    const digits = typed === '' ? undefined : normaliseAuMobile(typed);
+    const digits = typed === '' ? undefined : normalisePhone(typed);
     if (firstName === '' || digits === null) {
       setErrors({ name: firstName === '', phone: digits === null });
       return;
