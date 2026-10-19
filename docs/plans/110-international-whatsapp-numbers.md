@@ -17,3 +17,5 @@
 ## Decisions and notes
 - D-111: `+` or `00` means international; a number starting with `0` stays an Australian mobile.
 - Gate (2026-10-19): typecheck, eslint and prettier on changed files; unit 399/399 (shared/phone, sellerViews, seller-orders, seller-settings, customer-menu, seller-share); e2e `seller-settings-batch2` passed. Non-Australian numbers display as `+` + two digits + blocks of four (e.g. `+62 8123 4567 890`): cosmetic, the country-code length is not known.
+
+- **Help (20 Oct, owner):** no new error messages ("not worth it"); the Help topic "Your customer list" says which numbers are accepted (EN/ID).

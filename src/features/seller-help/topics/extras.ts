@@ -28,6 +28,9 @@ export const EXTRA_TOPICS: ReadonlyArray<HelpTopic> = [
           text: "Phone numbers are never kept in the cloud. If you type a customer's number on an order, it is saved in a list on **this device only**, so **Call** and **WhatsApp** show next time.",
         },
         {
+          text: 'Which numbers work: an **Australian mobile** like 0412 345 678 (or +61 412 345 678), or a number from **another country with + and the country code**, like +62 812 3456 7890. Leave out the 0 after the country code. Numbers starting with 0 are read as Australian, so an Indonesian 0812… must be typed as +62 812…. Landlines are not accepted.',
+        },
+        {
           text: "When you **Confirm** an order from a phone this device has not seen, a window says **Order K7Q2MD is confirmed.** and asks if the customer is already in your list. If it found people with that name, tap **This is them** next to the right one (check the last digits and last order date). For someone new, type the name and, if you have it, the WhatsApp number, then tap **Add to my list**. **Ask me next time** changes nothing; **Don't ask for this order** stops the question for that order.",
         },
         {
@@ -82,6 +85,9 @@ export const EXTRA_TOPICS: ReadonlyArray<HelpTopic> = [
         { part: 'Daftar pelanggan Anda (hanya di perangkat ini)' },
         {
           text: 'Nomor telepon tidak pernah disimpan di cloud. Jika Anda mengetik nomor pelanggan di pesanan, nomor itu disimpan di daftar **hanya di perangkat ini**, sehingga **Telepon** dan **WhatsApp** muncul lain kali.',
+        },
+        {
+          text: 'Nomor yang bisa dipakai: **ponsel Australia** seperti 0412 345 678 (atau +61 412 345 678), atau nomor **negara lain dengan + dan kode negara**, seperti +62 812 3456 7890. Jangan tulis 0 setelah kode negara. Nomor yang diawali 0 dibaca sebagai nomor Australia, jadi nomor Indonesia 0812… harus ditulis +62 812…. Nomor telepon rumah tidak diterima.',
         },
         {
           text: 'Saat Anda **Konfirmasi** pesanan dari ponsel yang belum dikenal perangkat ini, muncul jendela **Pesanan K7Q2MD sudah dikonfirmasi.** yang bertanya apakah pelanggan sudah ada di daftar Anda. Jika ada orang dengan nama itu, ketuk **Ini dia** di samping yang benar (periksa digit terakhir dan tanggal pesanan terakhir). Untuk orang baru, ketik nama dan, jika ada, nomor WhatsApp, lalu ketuk **Tambah ke daftar saya**. **Tanya lagi nanti** tidak mengubah apa pun; **Jangan tanya untuk pesanan ini** menghentikan pertanyaan untuk pesanan itu.',
