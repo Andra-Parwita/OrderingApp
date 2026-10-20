@@ -138,6 +138,8 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 107 | ⬜ | [On-the-day selling as part of the menu](107-on-the-day-selling.md) | owner idea 18 Oct: rename/move "Sell" into the menu view; on-the-day-only dishes |
 | 108 | ⬜ | [Seller Home compact](108-home-compact.md) | owner 18 Oct: text too big, space not used; mock-up in progress |
 | 109 | 🔨 | [Kitchen print (cook list)](109-kitchen-print.md) | owner 18 Oct: in 1.0.42; per chef or all, notes optional; mock-up first |
+| 110 | ✅ | [WhatsApp numbers from any country](110-international-whatsapp-numbers.md) | live 1.0.42.x (D-111) |
+| 111 | ⬜ | [Square payments: event day first, then online](111-square-payments.md) | approved 20 Oct (stages 0–2); stage 0 needs the Square Developer app ([guide](../guide/square-setup.md)) |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 
