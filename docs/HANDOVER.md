@@ -2,8 +2,8 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-18 → 20 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.42**, hotfixes **1.0.42.1** / **1.0.42.2**, and **1.0.43** (plans 111, 112, 117 + new seller icon).
-**Live:** Release **1.0.43** (20 Oct ~21:53; Worker `63be2500-0346-4234-811f-f91e99901c8e`; health OK, site reports `1.0.115 · 4fcbc1d`; tag `v1.0.43`; migrations 0031 + 0032 applied to the live D1). Backup before it: `backups/shaggybobo-2026-10-20.sql` (897 rows). Before: 1.0.42.2 (Worker `922844c3…`, tag `v1.0.42.2`), 1.0.42.1 (`0170fa3c…`), 1.0.42 (`21340f7c…`).
+**Last session:** 2026-10-18 → 21 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.42** (+ hotfixes .1, .2), **1.0.43** (plans 111, 112, 117) and hotfix **1.0.43.1** (plans 114, 115, repeat note, flash and scroll fixes).
+**Live:** Hotfix **1.0.43.1** (21 Oct ~07:50; Worker `60ea7875-9427-413c-845a-e1d5f8f9bc5a`; health OK, site reports `1.0.117 · afe04bb`; tag `v1.0.43.1`; migration 0033 applied; `ORDER_DEDUPE` "on"). Backup before it: `backups/shaggybobo-2026-10-21.sql` (899 rows). Before: 1.0.43 (Worker `63be2500…`, tag `v1.0.43`), 1.0.42.2 (`922844c3…`).
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -74,7 +74,7 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Backup summary:** after each backup give the owner the counts (Remember me, passkeys, order notifications, new-menu notices, orders per day per kitchen, order counts per menu; never income), read locally from the backup file (python sqlite3 in memory), never `--remote`.
 - **Next: hotfix 1.0.43.1 = plans 114 + 115** (owner 20 Oct "A": "just perf and not too visible"; no version bump, no release note, tag `v1.0.43.1`). **1.0.44** is kept for 101/102, decided later, after Fable's risk review (must not break existing installs or links; DellaVee has live customers). Plan 114 items 1–5; plan 115 needs a mock-up first.
 
-## Hotfix 1.0.43.1 (21 Oct): built and gated, not yet deployed
+## Hotfix 1.0.43.1 live (21 Oct)
 - **Plan 114 slow networks:** request time limits (10 s reads, **45 s writes**, owner "A"; 60 s backup/CSV; feature-checked); **no double orders**: `clientOrderId` (migration `0033_client_order_id.sql`), fail-open (only a live, uncancelled menu order < 24 h is returned; any problem places the order; malformed id ignored), quiet automatic re-send once after a lost answer, off switch `ORDER_DEDUPE` in `wrangler.jsonc` vars ("on"); Sell −1 / set-count disabled while saving; Taking orders / Sold out disabled while saving + "That did not save" toast; `sw.js` serves the cache after 4.5 s on a slow link (cache v2).
 - **Seller "possible repeat" note** (client-only): same device code + same dishes within 2 min → amber note on the later order, "Repeat?" tag on rows.
 - **Plan 115 splash:** `index.html` first-paint colours + `public/splash.js` (no inline scripts, CSP-safe, `data-cfasync="false"`), kitchen logo/initials + name (sellers: Bobo + ShaggyBobo), woven texture + soft light, CSS fallback hides it once the app renders.
@@ -83,6 +83,7 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Gate (21 Oct):** server 1,010 · app 1,751 · full Playwright 120 passed / 0 failed; p114 order-safety 6/6 with the 45 s limit.
 - **Deploy:** backup → build → `wrangler d1 migrations apply shaggybobo-order --remote` (0033) → `pnpm run deploy` → health → live checks (order on the iPhone; dark mode in Settings; splash on a cold start; swipe back from Dishes and Basket; seller Taking orders switch; browser console has no CSP errors). Tag `v1.0.43.1`.
 - **Lessons 32–38** added (CSP testing, index.html styles, repeat failures, full-suite runs, fail-open, timing tests, shell `&`).
+- **Live checks 1.0.43.1: not done yet** (owner stopped for the day): splash + dark mode on a cold start (iPhone), swipe back from Dishes and Basket (no flash), Basket opens at the top, one order on a normal network, seller Taking orders switch, no CSP errors in the console.
 - **1.0.44:** plans 101 + 102 (decide after `docs/reports/2026-10-20-101-102-risk.html`).
 
 ## Next session (fresh)
@@ -105,4 +106,4 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.43 (tag v1.0.43). 1.0.43 live checks are done. Next is **hotfix 1.0.43.1 = plans 114 and 115** (owner, 20 Oct; no version bump or release note; 1.0.44 kept for 101/102); plan 115 needs a mock-up for the owner's OK first. 101/102: wait for Fable's risk review (DellaVee has live customers; existing installs and links must keep working or fall back) and the owner's decision. Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is hotfix 1.0.43.1 (tag v1.0.43.1). First the 1.0.43.1 live checks one at a time (HANDOVER), then decide 1.0.44 (plans 101 + 102) with the owner using docs/reports/2026-10-20-101-102-risk.html. Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
