@@ -3,12 +3,13 @@ import { MAX_DISHES, MAX_DISH_PICTURES, MAX_MENU_ITEMS, MAX_SETS } from '../../s
 import {
   importRowProblem,
   type Dish,
+  type DishChoiceInput,
   type ImportProblem,
   type ImportRowResult,
 } from '../../shared/menusContract';
 import { checkImageUpload } from '../../shared/imageSlots';
 import type { SellerRepository } from '../repo/Repository';
-import { marks } from './d1';
+import { marks, type D1Statement } from './d1';
 import { dishOf, type DishRow, type ItemRow, type SetDishRow, type SetRow } from './rows';
 import { dishStatement, setStatements } from './write';
 import { fail, ok, type MenuContext } from './menuContext';
@@ -31,21 +32,76 @@ export function dishesPart(
   | 'useDishSet'
 > {
   const { deps, db, sid, nowIso, readView, menuRow, dishRow, chefExists, copyStatements } = c;
+  /** Plan 111: a choice is a dish row that takes everything but its name and limit from the dish. */
+  const choiceDish = (parent: Dish, choice: DishChoiceInput, id: string): Dish => ({
+    id,
+    name: { ...choice.name },
+    description: { ...parent.description },
+    size: { ...parent.size },
+    priceCents: parent.priceCents,
+    ...(choice.limit !== null ? { limit: choice.limit } : {}),
+    ...(parent.chefId !== undefined ? { chefId: parent.chefId } : {}),
+    ...(parent.preorder === false ? { preorder: false } : {}),
+    ...(parent.dayStock !== undefined ? { dayStock: parent.dayStock } : {}),
+    ...(parent.pictureRef !== undefined ? { pictureRef: parent.pictureRef } : {}),
+  });
+  /** Keeps the choices of a dish in step with it (everything but their name and limit). */
+  const syncChoices = (dish: Dish): D1Statement =>
+    db.stmt(
+      `UPDATE dishes SET description_en = ?, description_id = ?, size_en = ?, size_id = ?,
+         price_cents = ?, chef_id = ?, preorder = ?, day_stock = ?
+       WHERE seller_id = ? AND group_id = ?`,
+      dish.description.en,
+      dish.description.id,
+      dish.size.en,
+      dish.size.id,
+      dish.priceCents,
+      dish.chefId ?? null,
+      dish.preorder !== false,
+      dish.dayStock ?? null,
+      sid,
+      dish.id,
+    );
+  const withChoices = (dish: Dish, choices: ReadonlyArray<Dish>): Dish => ({
+    ...dish,
+    ...(choices.length > 0
+      ? {
+          choices: choices.map((choice) => ({
+            id: choice.id,
+            name: choice.name,
+            limit: choice.limit ?? null,
+          })),
+        }
+      : {}),
+  });
   return {
     // ---- Your dishes ----
 
     async listDishes() {
-      const rows = await db.all<DishRow>(
-        `SELECT * FROM dishes WHERE seller_id = ?
-         ORDER BY last_used_at IS NULL, last_used_at DESC, name_en COLLATE NOCASE, id`,
-        sid,
+      const [parents, children] = await db.reads([
+        db.stmt(
+          `SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NULL
+           ORDER BY last_used_at IS NULL, last_used_at DESC, name_en COLLATE NOCASE, id`,
+          sid,
+        ),
+        db.stmt(
+          'SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NOT NULL ORDER BY rowid',
+          sid,
+        ),
+      ]);
+      const rows = parents as Array<DishRow>;
+      const choices = children as Array<DishRow>;
+      return rows.map((row) =>
+        dishOf(
+          row,
+          choices.filter((choice) => choice.group_id === row.id),
+        ),
       );
-      return rows.map(dishOf);
     },
 
     async createDish(input) {
       const count = await db.first<{ n: number }>(
-        'SELECT COUNT(*) AS n FROM dishes WHERE seller_id = ?',
+        'SELECT COUNT(*) AS n FROM dishes WHERE seller_id = ? AND group_id IS NULL',
         sid,
       );
       if ((count?.n ?? 0) >= MAX_DISHES) {
@@ -65,15 +121,20 @@ export function dishesPart(
         ...(input.preorder === false ? { preorder: false } : {}),
         ...(input.dayStock !== undefined ? { dayStock: input.dayStock } : {}),
       };
-      await dishStatement(db, sid, dish, nowIso()).run();
-      return ok(dish);
+      const at = nowIso();
+      const choices = (input.choices ?? []).map((choice) => choiceDish(dish, choice, deps.newId()));
+      await db.batch([
+        dishStatement(db, sid, dish, at),
+        ...choices.map((choice) => dishStatement(db, sid, choice, at, dish.id)),
+      ]);
+      return ok(withChoices(dish, choices));
     },
 
     async importDishes(input, asChefId) {
       const [dishes, chefs] = await Promise.all([
         db
-          .all<DishRow>('SELECT * FROM dishes WHERE seller_id = ?', sid)
-          .then((found) => found.map(dishOf)),
+          .all<DishRow>('SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NULL', sid)
+          .then((found) => found.map((row) => dishOf(row))),
         db.all<{ id: string; name: string }>('SELECT id, name FROM chefs WHERE seller_id = ?', sid),
       ]);
       const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -146,27 +207,30 @@ export function dishesPart(
         }
         const at = nowIso();
         await db.batch(
-          writes.map(({ dish, isNew }) =>
+          writes.flatMap(({ dish, isNew }) =>
             isNew
-              ? dishStatement(db, sid, dish, at)
-              : db.stmt(
-                  `UPDATE dishes SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
+              ? [dishStatement(db, sid, dish, at)]
+              : [
+                  db.stmt(
+                    `UPDATE dishes SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
                      price_cents = ?, portion_limit = ?, chef_id = ?, preorder = ?, day_stock = ?
                    WHERE seller_id = ? AND id = ?`,
-                  dish.name.en,
-                  dish.name.id,
-                  dish.description.en,
-                  dish.description.id,
-                  dish.size.en,
-                  dish.size.id,
-                  dish.priceCents,
-                  dish.limit ?? null,
-                  dish.chefId ?? null,
-                  dish.preorder !== false,
-                  dish.dayStock ?? null,
-                  sid,
-                  dish.id,
-                ),
+                    dish.name.en,
+                    dish.name.id,
+                    dish.description.en,
+                    dish.description.id,
+                    dish.size.en,
+                    dish.size.id,
+                    dish.priceCents,
+                    dish.limit ?? null,
+                    dish.chefId ?? null,
+                    dish.preorder !== false,
+                    dish.dayStock ?? null,
+                    sid,
+                    dish.id,
+                  ),
+                  syncChoices(dish),
+                ],
           ),
         );
       }
@@ -175,10 +239,11 @@ export function dishesPart(
 
     async updateDish(id, patch) {
       const row = await dishRow(id);
-      if (!row) return fail('not_found', 'Dish not found');
+      if (!row || row.group_id !== null) return fail('not_found', 'Dish not found');
       if (typeof patch.chefId === 'string' && !(await chefExists(patch.chefId))) {
         return fail('unknown_chef', 'Unknown chef');
       }
+      const before = (await c.choicesOf([id])).get(id) ?? [];
       const next = dishOf(row);
       if (patch.name) next.name = { ...patch.name };
       if (patch.description) next.description = { ...patch.description };
@@ -215,13 +280,36 @@ export function dishesPart(
           id,
         )
         .run();
-      return ok(next);
+      // Plan 111: the choices follow the dish; a new list replaces them (one left out is deleted).
+      if (patch.choices === undefined) {
+        await syncChoices(next).run();
+        return ok(
+          withChoices(
+            next,
+            before.map((choice) => dishOf(choice)),
+          ),
+        );
+      }
+      const had = new Set(before.map((choice) => choice.id));
+      const choices = patch.choices.map((choice) =>
+        choiceDish(
+          next,
+          choice,
+          choice.id !== undefined && had.has(choice.id) ? choice.id : deps.newId(),
+        ),
+      );
+      const at = nowIso();
+      await db.batch([
+        db.stmt('DELETE FROM dishes WHERE seller_id = ? AND group_id = ?', sid, id),
+        ...choices.map((choice) => dishStatement(db, sid, choice, at, id)),
+      ]);
+      return ok(withChoices(next, choices));
     },
 
     /** Plan 067: the dish's picture. The copies of the dish on the menu take it too. */
     async setDishPicture(id, dataUrl, ref) {
       const row = await dishRow(id);
-      if (!row) return fail('not_found', 'Dish not found');
+      if (!row || row.group_id !== null) return fail('not_found', 'Dish not found');
       const check = checkImageUpload('dishPicture', dataUrl);
       if (!check.ok) {
         const message = {
@@ -232,7 +320,7 @@ export function dishesPart(
         return fail(check.error, message);
       }
       const others = await db.first<{ n: number }>(
-        'SELECT COUNT(*) AS n FROM dishes WHERE seller_id = ? AND picture_ref IS NOT NULL AND id <> ?',
+        'SELECT COUNT(*) AS n FROM dishes WHERE seller_id = ? AND picture_ref IS NOT NULL AND group_id IS NULL AND id <> ?',
         sid,
         id,
       );
@@ -241,10 +329,19 @@ export function dishesPart(
       }
       const next = ref ?? (dataUrl as string);
       await db.batch([
-        db.stmt('UPDATE dishes SET picture_ref = ? WHERE seller_id = ? AND id = ?', next, sid, id),
         db.stmt(
-          'UPDATE menu_items SET picture_ref = ? WHERE seller_id = ? AND dish_id = ?',
+          'UPDATE dishes SET picture_ref = ? WHERE seller_id = ? AND (id = ? OR group_id = ?)',
           next,
+          sid,
+          id,
+          id,
+        ),
+        db.stmt(
+          `UPDATE menu_items SET picture_ref = ? WHERE seller_id = ?
+             AND (dish_id = ? OR group_id IN (SELECT id FROM menu_items WHERE seller_id = ? AND dish_id = ?))`,
+          next,
+          sid,
+          id,
           sid,
           id,
         ),
@@ -257,11 +354,19 @@ export function dishesPart(
 
     async removeDishPicture(id) {
       const row = await dishRow(id);
-      if (!row) return fail('not_found', 'Dish not found');
+      if (!row || row.group_id !== null) return fail('not_found', 'Dish not found');
       await db.batch([
-        db.stmt('UPDATE dishes SET picture_ref = NULL WHERE seller_id = ? AND id = ?', sid, id),
         db.stmt(
-          'UPDATE menu_items SET picture_ref = NULL WHERE seller_id = ? AND dish_id = ?',
+          'UPDATE dishes SET picture_ref = NULL WHERE seller_id = ? AND (id = ? OR group_id = ?)',
+          sid,
+          id,
+          id,
+        ),
+        db.stmt(
+          `UPDATE menu_items SET picture_ref = NULL WHERE seller_id = ?
+             AND (dish_id = ? OR group_id IN (SELECT id FROM menu_items WHERE seller_id = ? AND dish_id = ?))`,
+          sid,
+          id,
           sid,
           id,
         ),
@@ -273,7 +378,8 @@ export function dishesPart(
 
     /** Deleting a dish never touches a menu or an order; a live menu that uses it is only flagged (D-062). */
     async deleteDish(id) {
-      if (!(await dishRow(id))) return fail('not_found', 'Dish not found');
+      const found = await dishRow(id);
+      if (!found || found.group_id !== null) return fail('not_found', 'Dish not found');
       const onLive = await db.first(
         `SELECT 1 AS hit FROM menu_items i JOIN menus m ON m.seller_id = i.seller_id
          WHERE i.seller_id = ? AND i.dish_id = ? AND m.state = 'live'`,
@@ -282,11 +388,15 @@ export function dishesPart(
       );
       await db.batch([
         db.stmt(
-          'UPDATE menu_items SET dish_id = NULL WHERE seller_id = ? AND dish_id = ?',
+          `UPDATE menu_items SET dish_id = NULL WHERE seller_id = ?
+             AND (dish_id = ? OR dish_id IN (SELECT id FROM dishes WHERE seller_id = ? AND group_id = ?))`,
+          sid,
+          id,
           sid,
           id,
         ),
         db.stmt('DELETE FROM saved_set_dishes WHERE seller_id = ? AND dish_id = ?', sid, id),
+        db.stmt('DELETE FROM dishes WHERE seller_id = ? AND group_id = ?', sid, id),
         db.stmt('DELETE FROM dishes WHERE seller_id = ? AND id = ?', sid, id),
       ]);
       return ok({ usedOnLiveMenu: onLive !== null });
@@ -316,7 +426,7 @@ export function dishesPart(
       const [count, found] = await Promise.all([
         db.first<{ n: number }>('SELECT COUNT(*) AS n FROM saved_sets WHERE seller_id = ?', sid),
         db.all<{ id: string }>(
-          `SELECT id FROM dishes WHERE seller_id = ? AND id IN (${marks(input.dishIds.length)})`,
+          `SELECT id FROM dishes WHERE seller_id = ? AND group_id IS NULL AND id IN (${marks(input.dishIds.length)})`,
           sid,
           ...input.dishIds,
         ),
@@ -340,15 +450,15 @@ export function dishesPart(
         dishRow(dishId),
       ]);
       if (row.state === 'finished') return fail('week_closed', 'This menu is finished');
-      if (!dish) return fail('unknown_item', 'Unknown dish');
+      if (!dish || dish.group_id !== null) return fail('unknown_item', 'Unknown dish');
       if (items.some((item) => item.dish_id === dishId)) {
         return fail('already_on_menu', 'This dish is already on the menu');
       }
-      if (items.length >= MAX_MENU_ITEMS) {
+      if (items.filter((item) => item.group_id === null).length >= MAX_MENU_ITEMS) {
         return fail('limit_reached', `At most ${String(MAX_MENU_ITEMS)} dishes on a menu`);
       }
       const top = items.reduce((max, item) => Math.max(max, item.position), -1);
-      await db.batch(copyStatements([dish], top + 1));
+      await db.batch(await copyStatements([dish], top + 1));
       return ok(await readView());
     },
 
@@ -368,21 +478,21 @@ export function dishesPart(
       if (row.state === 'finished') return fail('week_closed', 'This menu is finished');
       const onMenu = new Set(items.map((item) => item.dish_id));
       const wanted = links.map((link) => link.dish_id).filter((dishId) => !onMenu.has(dishId));
-      if (items.length + wanted.length > MAX_MENU_ITEMS) {
+      if (items.filter((item) => item.group_id === null).length + wanted.length > MAX_MENU_ITEMS) {
         return fail('limit_reached', `At most ${String(MAX_MENU_ITEMS)} dishes on a menu`);
       }
       const dishes =
         wanted.length === 0
           ? []
           : await db.all<DishRow>(
-              `SELECT * FROM dishes WHERE seller_id = ? AND id IN (${marks(wanted.length)})`,
+              `SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NULL AND id IN (${marks(wanted.length)})`,
               sid,
               ...wanted,
             );
       const ordered = wanted.flatMap((dishId) => dishes.filter((dish) => dish.id === dishId));
       const top = items.reduce((max, item) => Math.max(max, item.position), -1);
       await db.batch([
-        ...copyStatements(ordered, top + 1),
+        ...(await copyStatements(ordered, top + 1)),
         db.stmt(
           'UPDATE saved_sets SET times_used = times_used + 1 WHERE seller_id = ? AND id = ?',
           sid,

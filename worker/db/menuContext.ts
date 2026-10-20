@@ -6,7 +6,7 @@ import { type MenuView, type Preferences } from '../../shared/menusContract';
 import type { ApiErrorCode } from '../../shared/apiError';
 import type { StoreResult } from '../repo/Repository';
 import { marks, type D1Statement, type Db } from './d1';
-import { itemFromDish, MENU_PLACES_SQL, sellerView, USED_SQL } from './menuView';
+import { itemFromDish, MENU_PLACES_SQL, sellerViews, USED_SQL } from './menuView';
 import {
   dishOf,
   itemOf,
@@ -71,12 +71,14 @@ export function createMenuContext(deps: MenuDeps, sid: string) {
     const usedMap = new Map(
       (used as Array<{ item_id: string; used: number }>).map((r) => [r.item_id, r.used]),
     );
+    const itemRows = items as Array<ItemRow>;
+    const views = sellerViews(itemRows.map(itemOf), usedMap);
     return {
       menu: menuOf(row, uses as Array<MenuPlaceRow>),
-      dishes: (items as Array<ItemRow>).map((item) => ({
-        ...sellerView(itemOf(item), usedMap),
-        ...(item.dish_id !== null ? { dishId: item.dish_id } : {}),
-      })),
+      dishes: views.map((view, index) => {
+        const dishId = itemRows[index]?.dish_id;
+        return { ...view, ...(dishId ? { dishId } : {}) };
+      }),
       pickupPoints: (points as Array<PickupRow>).map(pickupOf),
     };
   }
@@ -106,12 +108,57 @@ export function createMenuContext(deps: MenuDeps, sid: string) {
     );
   }
 
-  /** Statements that put copies of library dishes on the menu, after `position` items. */
-  function copyStatements(dishes: ReadonlyArray<DishRow>, from: number): Array<D1Statement> {
+  /** The choices of library dishes (plan 111), oldest first (the order they were entered in). */
+  async function choicesOf(dishIds: ReadonlyArray<string>): Promise<Map<string, Array<DishRow>>> {
+    const found =
+      dishIds.length === 0
+        ? []
+        : await db.all<DishRow>(
+            `SELECT * FROM dishes WHERE seller_id = ? AND group_id IN (${marks(dishIds.length)}) ORDER BY rowid`,
+            sid,
+            ...dishIds,
+          );
+    const byGroup = new Map<string, Array<DishRow>>();
+    for (const row of found) {
+      byGroup.set(row.group_id as string, [...(byGroup.get(row.group_id as string) ?? []), row]);
+    }
+    return byGroup;
+  }
+
+  /**
+   * Statements that put copies of library dishes on the menu from position `from`; each dish is
+   * followed by copies of its choices (plan 111), so a dish takes 1 + its choices positions.
+   */
+  async function copyStatements(
+    dishes: ReadonlyArray<DishRow>,
+    from: number,
+    known?: Map<string, Array<DishRow>>,
+  ): Promise<Array<D1Statement>> {
+    const choices = known ?? (await choicesOf(dishes.map((dish) => dish.id)));
+    let position = from;
     return [
-      ...dishes.map((dish, index) =>
-        itemStatement(db, sid, itemFromDish(dishOf(dish), deps.newId()), from + index, dish.id),
-      ),
+      ...dishes.flatMap((dish) => {
+        const parentId = deps.newId();
+        const own = choices.get(dish.id) ?? [];
+        const parent = dishOf(dish);
+        return [
+          itemStatement(db, sid, itemFromDish(parent, parentId), position++, dish.id),
+          ...own.map((choice) => {
+            const rest = { ...parent };
+            delete rest.limit;
+            const copy = itemFromDish(
+              {
+                ...rest,
+                name: dishOf(choice).name,
+                ...(choice.portion_limit !== null ? { limit: choice.portion_limit } : {}),
+              },
+              deps.newId(),
+              parentId,
+            );
+            return itemStatement(db, sid, copy, position++, choice.id);
+          }),
+        ];
+      }),
       ...(dishes.length > 0
         ? [
             db.stmt(
@@ -135,6 +182,7 @@ export function createMenuContext(deps: MenuDeps, sid: string) {
     menuRow,
     dishRow,
     chefExists,
+    choicesOf,
     copyStatements,
   };
 }

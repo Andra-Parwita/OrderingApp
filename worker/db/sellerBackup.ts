@@ -10,7 +10,6 @@ import { isOwnImageRef } from '../images/r2';
 import type { SellerRepository } from '../repo/Repository';
 import { marks, type D1Statement } from './d1';
 import { insertOrderStatements, LIVE_MENU, readOrders } from './orders';
-import { dropExpiredDetails } from './retention';
 import {
   dishStatement,
   itemStatement,
@@ -34,7 +33,6 @@ export function backupPart(
     // ---- Backup and CSV ----
 
     async exportBackup(): Promise<BackupFile> {
-      await dropExpiredDetails(db, deps.now(), sid);
       const [s, sets, live, past, archived, pastRows, view, places, dishes, links, prefs, log] =
         await Promise.all([
           loadState(),
@@ -249,7 +247,24 @@ export function backupPart(
         settingsStatement(db, sid, copy.settings, copy.preferences ?? defaultPreferences),
         ...pickupPlaces.map((place, position) => placeStatement(db, sid, place, position)),
         ...menuStatements(db, sid, menu),
-        ...dishes.map((dish) => dishStatement(db, sid, dish, at)),
+        // Plan 111: a dish's choices are rows of their own that point at it; the rest is the dish's.
+        ...dishes.flatMap((dish) => [
+          dishStatement(db, sid, dish, at),
+          ...(dish.choices ?? []).map((choice) =>
+            dishStatement(
+              db,
+              sid,
+              {
+                ...without(without(dish, 'choices'), 'limit'),
+                id: choice.id,
+                name: choice.name,
+                ...(choice.limit !== null ? { limit: choice.limit } : {}),
+              },
+              at,
+              dish.id,
+            ),
+          ),
+        ]),
         ...items.map((item, position) =>
           itemStatement(db, sid, item, position, itemDishIds[item.id]),
         ),

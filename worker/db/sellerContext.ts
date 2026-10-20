@@ -9,6 +9,7 @@ import type {
   KitchenImages,
   MenuItem,
   MenuItemView,
+  SellerMenuItemView,
   OrderingState,
   OrderLine,
   OrderStatus,
@@ -29,9 +30,15 @@ import { type PastWeekSummary } from '../../shared/pastWeeks';
 import type { SavedSet } from '../../shared/setupContract';
 import type { StoreResult } from '../repo/Repository';
 import { type D1Statement } from './d1';
-import { MENU_PLACES_SQL, sellerView, USED_SQL } from './menuView';
+import { MENU_PLACES_SQL, sellerViews, USED_SQL } from './menuView';
 import { createMenuOps, type CustomerNotice, type MenuDeps } from './menus';
-import { changeStatements, insertOrderStatements, LIVE_MENU, readLiveOrder } from './orders';
+import {
+  changeStatements,
+  insertOrderStatements,
+  lineNotesChanged,
+  LIVE_MENU,
+  readLiveOrder,
+} from './orders';
 import { createDayOps } from './daySales';
 import { createPrivateOps } from './private';
 import { createHandoverOps } from './handover';
@@ -245,8 +252,8 @@ export function createSellerContext(deps: Deps, seller: Seller) {
   }
 
   /** The customer view: the chef (D-012) and the manual flag are dropped here. */
-  function view(item: MenuItem, used: Map<string, number>): MenuItemView {
-    const { dayStock, ...copy } = sellerView(item, used);
+  function view(seller: SellerMenuItemView): MenuItemView {
+    const { dayStock, ...copy } = seller;
     delete copy.chefId;
     delete copy.manualSoldOut;
     // Plan 029: customers see that it is sold at the stall, never how many.
@@ -265,7 +272,7 @@ export function createSellerContext(deps: Deps, seller: Seller) {
         ...(s.settings.whatsappNumber ? { whatsappNumber: s.settings.whatsappNumber } : {}),
       },
       week: s.week,
-      items: draft ? [] : s.items.map((item) => view(item, s.used)),
+      items: draft ? [] : sellerViews(s.items, s.used).map(view),
       ordering: draft ? { open: false, reason: 'not_published' } : ordering(s),
       theme: s.theme,
       languages: s.settings.languages ?? 'both',
@@ -276,12 +283,28 @@ export function createSellerContext(deps: Deps, seller: Seller) {
 
   // ---- Order rules ----
 
-  function snapshot(item: MenuItem, qty: number): OrderLine {
+  /** A choice is ordered as `<dish> · <choice>` (plan 111); an empty Indonesian name shows the English one. */
+  function snapshot(s: State, item: MenuItem, qty: number): OrderLine {
+    const parent =
+      item.groupId === undefined ? undefined : s.items.find((p) => p.id === item.groupId);
+    if (!parent) {
+      return {
+        itemId: item.id,
+        name: { ...item.name },
+        size: { ...item.size },
+        priceCents: item.priceCents,
+        qty,
+      };
+    }
+    const part = (text: MenuItem['name'], lang: 'en' | 'id') => text[lang] || text.en || text.id;
     return {
       itemId: item.id,
-      name: { ...item.name },
-      size: { ...item.size },
-      priceCents: item.priceCents,
+      name: {
+        en: `${part(parent.name, 'en')} · ${part(item.name, 'en')}`,
+        id: `${part(parent.name, 'id')} · ${part(item.name, 'id')}`,
+      },
+      size: { ...parent.size },
+      priceCents: parent.priceCents,
       qty,
     };
   }
@@ -295,6 +318,7 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     requested: Array<RequestedLine>,
     existing: Array<OrderLine> = [],
     over: OverLimit = 'refuse',
+    keepNotes = false,
   ): StoreResult<Array<OrderLine>> {
     const lines: Array<OrderLine> = [];
     // Customers are refused; a seller-entered order warns (D-062) and `force` lets it pass.
@@ -304,16 +328,25 @@ export function createSellerContext(deps: Deps, seller: Seller) {
         : over === 'warn'
           ? warn(code, { code: 'over_limit' }, message)
           : fail(code, message);
-    for (const { itemId, qty } of requested) {
+    for (const { itemId, qty, note } of requested) {
       const item = s.items.find((candidate) => candidate.id === itemId);
       if (!item) return fail('unknown_item', `Unknown item: ${itemId}`);
       const previous = existing.find((line) => line.itemId === itemId);
+      // Plan 111: a dish with choices is ordered through its choices, never by itself.
+      if (s.items.some((candidate) => candidate.groupId === itemId)) {
+        return fail('pick_choice', `Pick a choice of ${item.name.en || item.name.id}`);
+      }
+      const parent =
+        item.groupId === undefined ? undefined : s.items.find((p) => p.id === item.groupId);
       // Plan 029: an on-the-day-only dish cannot be pre-ordered (an order may keep what it has).
       if (item.preorder === false && (!previous || qty > previous.qty)) {
         return fail('not_preorderable', `${item.name.en || item.name.id} is sold on the day only`);
       }
       // Manually sold out: no new portions (an order may keep what it already has).
-      if (item.soldOut === true && (!previous || qty > previous.qty)) {
+      if (
+        (item.soldOut === true || parent?.soldOut === true) &&
+        (!previous || qty > previous.qty)
+      ) {
         const refused = tooMany('sold_out', `${item.name.en || item.name.id} is sold out`);
         if (refused) return refused;
       }
@@ -327,7 +360,12 @@ export function createSellerContext(deps: Deps, seller: Seller) {
               : null;
         if (refused) return refused;
       }
-      lines.push(previous ? { ...previous, qty } : snapshot(item, qty));
+      const base = previous ? { ...previous, qty } : snapshot(s, item, qty);
+      delete base.note;
+      // Plan 111: a note sent with the line wins ('' removes it); otherwise only a seller edit keeps it.
+      const kept =
+        note === undefined ? (keepNotes ? previous?.note : undefined) : note || undefined;
+      lines.push(kept ? { ...base, note: kept } : base);
     }
     return ok(lines);
   }
@@ -547,11 +585,12 @@ export function createSellerContext(deps: Deps, seller: Seller) {
   /** Records a customer edit: the audit diff and the "changed" flag. No-op if nothing differs. */
   function editDraft(order: SellerOrder, next: SellerOrder, linesChanged: boolean): Draft | null {
     const diff = diffOrder(order, next);
-    if (!diff) return null;
-    return addAudit(
-      { ...draft({ ...next, changed: true }), linesChanged },
-      { by: { role: 'customer', name: order.firstName }, what: 'edited', diff },
-    );
+    const notes = lineNotesChanged(order.lines, next.lines);
+    if (!diff && !notes) return null;
+    const edited = { ...draft({ ...next, changed: true }), linesChanged: linesChanged || notes };
+    return diff
+      ? addAudit(edited, { by: { role: 'customer', name: order.firstName }, what: 'edited', diff })
+      : edited;
   }
 
   async function changeByCode(

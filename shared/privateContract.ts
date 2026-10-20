@@ -3,7 +3,7 @@
 // delivery address is the one personal field (D-099), exactly as on a menu order.
 import { parseDeliveryAddress, type DeliveryAddress } from './address';
 import type { Fulfilment, Language, SellerOrder } from './domain';
-import { FIRST_NAME_MAX, MAX_MENU_ITEMS, MAX_QTY, NOTE_MAX } from './limits';
+import { FIRST_NAME_MAX, MAX_MENU_ROWS, MAX_QTY, NOTE_MAX } from './limits';
 import { hasPersonalData, isInt, isLanguage, isOneOf, isRecord, parseArray } from './parse';
 
 const FULFILMENTS: ReadonlyArray<Fulfilment> = ['pickup', 'delivery'];
@@ -97,7 +97,7 @@ function parseLine(input: unknown): PrivateLineInput | null {
 
 function parseLines(input: unknown): Array<PrivateLineInput> | null {
   const lines = parseArray(input, parseLine);
-  if (!lines || lines.length === 0 || lines.length > MAX_MENU_ITEMS) return null;
+  if (!lines || lines.length === 0 || lines.length > MAX_MENU_ROWS) return null;
   return new Set(lines.map((line) => line.dishId)).size === lines.length ? lines : null;
 }
 

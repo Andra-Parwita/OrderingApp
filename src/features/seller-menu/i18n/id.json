@@ -478,5 +478,42 @@
     "newDishHint": "Hidangan baru dibuat di Hidangan Anda.",
     "pill_other": "Draf · {{count}} perubahan belum disimpan",
     "pillShort_other": "Draf · {{count}} belum"
+  },
+  "notify": {
+    "bell_other": "Beri tahu pelanggan ({{count}} ponsel)",
+    "notified": "Sudah diberi tahu {{count}}× · {{when}}",
+    "title": "Beri tahu pelanggan?",
+    "never": "Belum dikirim untuk menu ini.",
+    "sentOnce": "Terkirim untuk menu ini: sekali, {{when}} ke {{count}} ponsel.",
+    "getNotices_other": "{{count}} ponsel menerima pemberitahuan menu baru. Mereka akan melihat:",
+    "cancel": "Batal",
+    "send": "Kirim",
+    "sending": "Mengirim…",
+    "againTitle": "Kirim lagi?",
+    "againBody": "Anda sudah mengirim menu ini {{howMany}} ({{times}}). Terlalu banyak pemberitahuan membuat pelanggan mematikannya.",
+    "dontSend": "Jangan kirim",
+    "sendAnyway": "Tetap kirim",
+    "twice": "dua kali",
+    "nTimes": "{{count}} kali",
+    "today": "hari ini {{time}}",
+    "failed": "Gagal mengirim. Coba lagi."
+  },
+  "choices": {
+    "title": "Pilihan (opsional)",
+    "helper": "Untuk hidangan satu harga dengan beberapa jenis.",
+    "add": "+ Tambah pilihan",
+    "name": "Nama pilihan",
+    "nameEn": "Pilihan (Inggris)",
+    "nameId": "Pilihan (Indonesia)",
+    "limit": "Batas",
+    "remove": "Hapus pilihan {{name}}",
+    "err": "Beri nama untuk pilihan.",
+    "max": "Paling banyak {{max}} pilihan.",
+    "priceHelper": "Semua pilihan dijual dengan harga ini.",
+    "nextMenu": "Perubahan pilihan berlaku mulai menu berikutnya; menu sekarang tidak berubah.",
+    "count_other": "{{count}} pilihan",
+    "soldTotal": "{{n}} terjual",
+    "expand": "Tampilkan pilihan",
+    "collapse": "Sembunyikan pilihan"
   }
 }

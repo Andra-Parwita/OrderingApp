@@ -31,6 +31,7 @@ import {
   type ChipTone,
   Hint,
   MainButton,
+  LineNote,
   Muted,
   OrderHead,
   OutlineButton,
@@ -573,6 +574,7 @@ export function Details({
           <Row key={line.itemId}>
             <dt>
               {line.qty} × {pickText(line.name, lang)}
+              {line.note ? <LineNote>{line.note}</LineNote> : null}
             </dt>
             <dd>{formatMoney(line.priceCents * line.qty, lang)}</dd>
           </Row>

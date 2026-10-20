@@ -29,10 +29,35 @@ export function sellerView(item: MenuItem, used: Map<string, number>): SellerMen
   };
 }
 
+/**
+ * The seller's view of a whole menu (plan 111): a choice is sold out when its own flag or limit says
+ * so or its dish is switched to sold out; a dish with choices is sold out when it is switched off or
+ * every choice is. `manualSoldOut` stays the item's own switch.
+ */
+export function sellerViews(
+  items: ReadonlyArray<MenuItem>,
+  used: Map<string, number>,
+): Array<SellerMenuItemView> {
+  const views = items.map((item) => sellerView(item, used));
+  const byId = new Map(views.map((view) => [view.id, view]));
+  const choicesOf = new Map<string, Array<SellerMenuItemView>>();
+  for (const view of views) {
+    if (view.groupId === undefined) continue;
+    choicesOf.set(view.groupId, [...(choicesOf.get(view.groupId) ?? []), view]);
+  }
+  return views.map((view) => {
+    const parent = view.groupId === undefined ? undefined : byId.get(view.groupId);
+    if (parent) return parent.manualSoldOut === true ? { ...view, soldOut: true } : view;
+    const choices = choicesOf.get(view.id);
+    return choices && choices.every((choice) => choice.soldOut) ? { ...view, soldOut: true } : view;
+  });
+}
+
 /** The copy of a library dish that goes on a menu, with its own id. */
-export function itemFromDish(dish: Dish, id: string): MenuItem {
+export function itemFromDish(dish: Dish, id: string, groupId?: string): MenuItem {
   return {
     id,
+    ...(groupId !== undefined ? { groupId } : {}),
     name: { ...dish.name },
     description: { ...dish.description },
     size: { ...dish.size },

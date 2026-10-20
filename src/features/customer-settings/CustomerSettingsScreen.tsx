@@ -5,6 +5,7 @@ import { getCustomerLiveState, watchCustomerLiveState } from '../../api/customer
 import { markLanguageChosen } from '../../i18n/chosenLanguage';
 import { setThemePreference, useThemePreference } from '../../theme/themePreference';
 import { CustomerSettingsView } from './CustomerSettingsView';
+import { useMenuNotice } from './useMenuNotice';
 
 /** The customer's Settings tab: language, appearance, order updates and the home-screen card. */
 /** `showLanguage` is false for a kitchen that offers one language (plan 056). */
@@ -16,6 +17,7 @@ export function CustomerSettingsScreen({
   const theme = useThemePreference();
   const connection = useSyncExternalStore(watchCustomerLiveState, getCustomerLiveState);
   const lang: Language = i18n.language.startsWith('id') ? 'id' : 'en';
+  const menuNotice = useMenuNotice(kitchen?.name, lang);
   const onLang = useCallback(
     (next: Language) => {
       markLanguageChosen();
@@ -32,6 +34,7 @@ export function CustomerSettingsScreen({
       showLanguage={showLanguage}
       kitchen={kitchen}
       connection={connection}
+      menuNotice={menuNotice}
     />
   );
 }

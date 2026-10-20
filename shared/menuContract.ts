@@ -14,7 +14,7 @@ import type {
 import { DAY_STOCK_MAX } from './daySalesContract';
 import { FIRST_LANGUAGES, LANGUAGES } from './languages';
 import { isHexColour } from './kitchenImages';
-import { MAX_MENU_ITEMS } from './limits';
+import { MAX_MENU_ROWS } from './limits';
 import { locationOf } from './pickupAddress';
 import { parseSeller } from './seller';
 import { isInt, isIsoDate, isOneOf, isRecord, parseArray, parseLocalText } from './parse';
@@ -168,8 +168,9 @@ function parseMenuItemView(input: unknown): MenuItemView | null {
   if (limit !== undefined && !isInt(limit, 1, 10_000)) return null;
   if (remaining !== null && !isInt(remaining, 0, 10_000)) return null;
   if (typeof soldOut !== 'boolean') return null;
-  const { pictureRef } = input;
+  const { pictureRef, groupId } = input;
   if (pictureRef !== undefined && typeof pictureRef !== 'string') return null;
+  if (groupId !== undefined && (typeof groupId !== 'string' || groupId === '')) return null;
   return {
     id,
     name,
@@ -178,6 +179,7 @@ function parseMenuItemView(input: unknown): MenuItemView | null {
     priceCents,
     ...(limit !== undefined ? { limit } : {}),
     ...(pictureRef !== undefined ? { pictureRef } : {}),
+    ...(groupId !== undefined ? { groupId } : {}),
     remaining,
     soldOut,
     ...(preorder !== undefined ? { preorder } : {}),
@@ -220,7 +222,7 @@ export function parseMenuResponse(input: unknown): MenuResponse | null {
   const items = parseArray(input['items'], parseMenuItemView);
   const ordering = parseOrderingState(input['ordering']);
   if (!seller || !kitchen || !week || !items || !ordering) return null;
-  if (items.length > MAX_MENU_ITEMS || kitchen.sellerId !== seller.id) return null;
+  if (items.length > MAX_MENU_ROWS || kitchen.sellerId !== seller.id) return null;
   const { theme, pictureUrl, languages, firstLanguage, addresses, mapsEmbedKey } = input;
   if (addresses !== undefined && addresses !== true) return null;
   if (mapsEmbedKey !== undefined && (typeof mapsEmbedKey !== 'string' || mapsEmbedKey === '')) {
@@ -254,6 +256,6 @@ export function parseSellerMenuResponse(input: unknown): SellerMenuResponse | nu
   if (!chefs || !items) return null;
   // Reuse the customer parser for the shared part (it never sees the chef fields).
   const base = parseMenuResponse({ ...rest, items: [] });
-  if (!base || items.length > MAX_MENU_ITEMS) return null;
+  if (!base || items.length > MAX_MENU_ROWS) return null;
   return { ...base, chefs, items };
 }

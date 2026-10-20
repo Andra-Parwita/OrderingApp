@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>Basket line note</title>
+<style>
+/* Layout: three phone frames in a row (basket, note sheet open, basket with a note); stacked on a phone. */
+:root {
+  --bg: #f3f2ee; --fg: #23251f; --muted: #6a6d63; --line: #d9d8d0;
+  --app: #121410; --appLine: #2e322b; --appFg: #eceee6; --appMuted: #a3a89a; --appBtn: #2a2e27;
+  --appGreen: #9fc493; --appPrimary: #5f7f57; --appInk: #10140e; --appNote: #e2c27a; --scrim: rgba(0, 0, 0, .55);
+  --sheet: #1b1e19; --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.45; }
+.wrap { max-width: 66rem; margin: 0 auto; padding-block: 1.5rem 3rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+.lead { color: var(--muted); margin: 0 0 1.5rem; max-width: 46rem; }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.cap { font-weight: 700; margin-bottom: .5rem; }
+.cap small { display: block; font-weight: 400; color: var(--muted); }
+.phone { position: relative; background: var(--app); color: var(--appFg); border-radius: .9rem; padding: 1rem; font-size: .92rem; min-width: 0; overflow: hidden; min-height: 27rem; }
+.phone h3 { margin: 0 0 .5rem; font-size: 1.35rem; }
+.back { color: var(--appGreen); font-size: .9rem; margin-bottom: .4rem; }
+.line { display: flex; gap: .5rem; align-items: center; padding: .6rem 0; border-top: 1px solid var(--appLine); }
+.line .t { flex: 1; min-width: 0; }
+.name { font-weight: 700; }
+.sub { color: var(--appMuted); font-size: .84rem; font-variant-numeric: tabular-nums; }
+.sub b { color: var(--appFg); }
+.note { color: var(--appNote); font-size: .82rem; margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ctl { display: flex; align-items: center; gap: .35rem; flex: none; }
+.btn { width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--appBtn); display: grid; place-items: center; font-size: 1.1rem; }
+.qty { color: var(--appGreen); font-weight: 700; min-width: 1rem; text-align: center; }
+.noteBtn { width: 2.1rem; height: 2.1rem; border-radius: 50%; display: grid; place-items: center; color: var(--appMuted); flex: none; }
+.noteBtn.has { color: var(--appNote); }
+.noteBtn svg { width: 1.15rem; height: 1.15rem; }
+.total { display: flex; justify-content: space-between; padding: .7rem 0; border-top: 1px solid var(--appLine); font-weight: 700; }
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet); border-radius: 1rem 1rem 0 0; padding: .6rem 1rem 1rem; }
+.grab { width: 2.4rem; height: .25rem; border-radius: 1rem; background: var(--appLine); margin: 0 auto .7rem; }
+.sheet h4 { margin: 0; font-size: 1.05rem; }
+.input { border: 1px solid var(--appGreen); border-radius: .5rem; padding: .5rem .6rem; margin-top: .6rem; min-height: 2.6rem; }
+.count { text-align: right; color: var(--appMuted); font-size: .76rem; margin-top: .2rem; }
+.row2 { display: flex; gap: .5rem; margin-top: .6rem; }
+.ghost { flex: 1; text-align: center; padding: .55rem; border-radius: 999px; border: 1px solid var(--appLine); }
+.primary { flex: 1; text-align: center; padding: .55rem; border-radius: 999px; background: var(--appPrimary); color: var(--appInk); font-weight: 700; }
+.hl { outline: 2px dashed var(--appNote); outline-offset: .15rem; border-radius: 50%; }
+.foot { margin-top: 1.5rem; color: var(--muted); max-width: 46rem; font-size: .92rem; }
+@media (max-width: 52rem) { .cols { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="note" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></symbol>
+</svg>
+
+<div class="wrap">
+  <h1>Basket line note</h1>
+  <p class="lead">DellaVee's basket. No extra row when there is no note: a small pencil sits beside − / +. Tapping it opens a bottom sheet with one text box. The new pencil has a dashed outline in the first frame.</p>
+
+  <div class="cols">
+    <div>
+      <div class="cap">1 · Basket, no notes<small>same height as today</small></div>
+      <div class="phone">
+        <div class="back">‹ Dishes</div>
+        <h3>Your basket</h3>
+        <div class="line"><div class="t"><div class="name">Siomay</div><div class="sub">$15.00 each · <b>$15.00</b></div></div>
+          <span class="noteBtn hl"><svg><use href="#note"/></svg></span>
+          <div class="ctl"><span class="btn">−</span><span class="qty">1</span><span class="btn">+</span></div></div>
+        <div class="line"><div class="t"><div class="name">Aneka Snack Kering · Kripik Sukun</div><div class="sub">$6.00 each · <b>$12.00</b></div></div>
+          <span class="noteBtn"><svg><use href="#note"/></svg></span>
+          <div class="ctl"><span class="btn">−</span><span class="qty">2</span><span class="btn">+</span></div></div>
+        <div class="line"><div class="t"><div class="name">Aneka Snack Kering · Sarang Madu</div><div class="sub">$6.00 each · <b>$6.00</b></div></div>
+          <span class="noteBtn"><svg><use href="#note"/></svg></span>
+          <div class="ctl"><span class="btn">−</span><span class="qty">1</span><span class="btn">+</span></div></div>
+        <div class="total"><span>Total</span><span>$33.00</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap">2 · Tap the pencil on Siomay<small>bottom sheet, swipe down to close</small></div>
+      <div class="phone">
+        <div class="back">‹ Dishes</div>
+        <h3>Your basket</h3>
+        <div class="line"><div class="t"><div class="name">Siomay</div><div class="sub">$15.00 each · <b>$15.00</b></div></div></div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h4>Note for Siomay</h4>
+          <div class="sub">The kitchen sees it on this dish.</div>
+          <div class="input">No pare please</div>
+          <div class="count">15 / 200</div>
+          <div class="row2"><span class="ghost">Cancel</span><span class="primary">Save note</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap">3 · Basket with a note<small>one short line, only on that dish</small></div>
+      <div class="phone">
+        <div class="back">‹ Dishes</div>
+        <h3>Your basket</h3>
+        <div class="line"><div class="t"><div class="name">Siomay</div><div class="sub">$15.00 each · <b>$15.00</b></div><div class="note">No pare please</div></div>
+          <span class="noteBtn has"><svg><use href="#note"/></svg></span>
+          <div class="ctl"><span class="btn">−</span><span class="qty">1</span><span class="btn">+</span></div></div>
+        <div class="line"><div class="t"><div class="name">Aneka Snack Kering · Kripik Sukun</div><div class="sub">$6.00 each · <b>$12.00</b></div></div>
+          <span class="noteBtn"><svg><use href="#note"/></svg></span>
+          <div class="ctl"><span class="btn">−</span><span class="qty">2</span><span class="btn">+</span></div></div>
+        <div class="line"><div class="t"><div class="name">Aneka Snack Kering · Sarang Madu</div><div class="sub">$6.00 each · <b>$6.00</b></div></div>
+          <span class="noteBtn"><svg><use href="#note"/></svg></span>
+          <div class="ctl"><span class="btn">−</span><span class="qty">1</span><span class="btn">+</span></div></div>
+        <div class="total"><span>Total</span><span>$33.00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">Tap the note or the amber pencil to change it; an empty note removes it. The note limit shown (200) is a placeholder: it will use the same limit as today's order note. The order note for the whole order stays where it is today.</p>
+</div>
+</body>
+</html>

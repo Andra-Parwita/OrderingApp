@@ -28,6 +28,7 @@ import { LabelsScreen } from '../features/seller-labels';
 import {
   DishesScreen,
   MakeMenuScreen,
+  NotifyBell,
   type MenuSlots,
   SavedSetsScreen,
   isWizardPath,
@@ -71,7 +72,7 @@ import { SellerHomeRoute } from './SellerHomeRoute';
 import { SellerLayout } from './SellerLayout';
 import { SellerMenuRoute } from './SellerMenuRoute';
 import { PRIVATE_MENU_SLOTS } from './privateMenuSlots';
-import { useSession } from './session';
+import { mayNotify, useSession } from './session';
 
 // The seller list's filter and search live in the URL (?status=ready&q=rina): they survive a
 // reload and can be shared. Not mirrored in Redux. Opening an order keeps them in the URL, so
@@ -82,6 +83,7 @@ function SellerListRoute({
   newOrderOpen = false,
 }: Readonly<{ table?: boolean; selectedCode?: string; newOrderOpen?: boolean }>) {
   const navigate = useNavigate();
+  const { me } = useSession();
   const [params, setParams] = useSearchParams();
   const filter = parseStatusFilter(params.get('status'));
   const query = params.get('q') ?? '';
@@ -146,7 +148,12 @@ function SellerListRoute({
       onCloseNewOrder={onCloseNewOrder}
     />
   ) : (
-    <PhoneOrdersScreen {...props} toggles={toggles} onToggle={onToggle} />
+    <PhoneOrdersScreen
+      {...props}
+      toggles={toggles}
+      onToggle={onToggle}
+      headerExtra={mayNotify(me) ? <NotifyBell /> : undefined}
+    />
   );
 }
 

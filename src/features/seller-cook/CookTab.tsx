@@ -7,6 +7,7 @@ import { pickText } from '../../../shared/text';
 import { PrivateTag } from '../../components/PrivateTag';
 import { Button, Icon, Segmented, type SegmentedOption } from '../../ui';
 import { COOK_NS } from './i18n/register';
+import { LineNotes } from './LineNotes';
 import { WhoOrderedPanel } from './WhoOrderedPanel';
 import { ChefFilterControl, useChefFilter } from './ChefFilterControl';
 import type { CookRow, GroupBy } from './cookModel';
@@ -96,8 +97,9 @@ const Big = styled.span`
   font-variant-numeric: tabular-nums;
   text-align: right;
 `;
-const Name = styled.span<{ $done: boolean }>`
+const Name = styled.span<{ $done: boolean; $choice?: boolean }>`
   display: flex;
+  padding-left: ${({ $choice, theme }) => ($choice ? theme.spacing.lg : '0')};
   flex-direction: column;
   min-width: 0;
   font-size: 1.0625rem;
@@ -189,11 +191,22 @@ const Row = memo(function Row({ row, lang, counting, made, onChange, onWho }: Ro
   ]
     .filter((part) => part !== null)
     .join(' · ');
+  if (row.group) {
+    return (
+      <RowBox $done={false}>
+        <Big>{row.qty}</Big>
+        <Name $done={false}>
+          <span>{shown}</span>
+          <Sub>{t('choiceCount')}</Sub>
+        </Name>
+      </RowBox>
+    );
+  }
   const done = counting && made >= row.qty;
   return (
     <RowBox $done={done}>
       <Big>{row.qty}</Big>
-      <Name $done={done}>
+      <Name $done={done} $choice={row.choice === true}>
         <span>
           {shown} {row.privateQty > 0 ? <PrivateTag label={t('privateTag')} /> : null}
         </span>
@@ -238,6 +251,7 @@ const Row = memo(function Row({ row, lang, counting, made, onChange, onWho }: Ro
           </Steps>
         </>
       ) : null}
+      <LineNotes row={row} lang={lang} />
     </RowBox>
   );
 });
@@ -271,6 +285,7 @@ export function CookTab({
     let totalSum = 0;
     for (const group of groups) {
       for (const row of group.rows) {
+        if (row.group) continue;
         totalSum += row.qty;
         cookedSum += Math.min(made[row.itemId] ?? 0, row.qty);
       }

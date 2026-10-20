@@ -92,6 +92,9 @@
     "chefLine": "Koki: {{name}}",
     "privateCount": "({{count}} khusus)",
     "forPeople_one": "untuk {{count}} orang",
-    "forPeople_other": "untuk {{count}} orang"
-  }
+    "forPeople_other": "untuk {{count}} orang",
+    "lineNote": "{{note}} ({{who}})"
+  },
+  "lineNote": "Catatan: {{note}} ({{who}})",
+  "choiceCount": "Semua pilihan"
 }

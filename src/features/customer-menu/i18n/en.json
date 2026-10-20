@@ -245,5 +245,18 @@
     "pinRight": "Is the pin in the right place?",
     "pinYes": "Yes, looks right",
     "pinFix": "Fix address"
+  },
+  "choices": {
+    "pick": "pick how many of each",
+    "add": "Add {{count}} to basket · {{total}}"
+  },
+  "lineNote": {
+    "add": "Add a note for {{name}}",
+    "change": "Change the note for {{name}}",
+    "title": "Note for {{name}}",
+    "hint": "The kitchen sees it on this dish.",
+    "label": "Note",
+    "cancel": "Cancel",
+    "save": "Save note"
   }
 }

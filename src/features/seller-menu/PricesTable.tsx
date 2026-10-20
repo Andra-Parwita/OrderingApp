@@ -84,6 +84,12 @@ const Input = styled.input<{ $invalid: boolean }>`
 const Select = styled.select<{ $invalid: boolean }>`
   ${fieldControlStyle}
 `;
+const ChoiceName = styled.span`
+  && {
+    padding-left: ${({ theme }) => theme.spacing.xl};
+    font-weight: 400;
+  }
+`;
 const Hint = styled.p`
   margin: ${({ theme }) => theme.spacing.md} 0 0;
   color: ${({ theme }) => theme.c.muted};
@@ -150,6 +156,32 @@ function PriceRow({
       onEdit(dish.id, { dayStock: Number(portions) });
     }
   };
+  if (dish.groupId !== undefined) {
+    // Plan 111: a choice shows its own limit; the price, chef and selling way are the dish's.
+    return (
+      <Grid role="row" $changed={mark !== null}>
+        <ChoiceName role="cell" className="name">
+          {name}
+          {mark ? <ChangeMark kind={mark} /> : null}
+        </ChoiceName>
+        <span role="cell" />
+        <span role="cell">
+          <Input
+            $invalid={!limitOk}
+            aria-invalid={!limitOk}
+            aria-label={t('prices.limitFor', { name })}
+            inputMode="numeric"
+            placeholder={t('prices.none')}
+            value={limit}
+            onChange={(event) => setLimit(event.target.value)}
+            onBlur={commitLimit}
+          />
+        </span>
+        <span role="cell" />
+        <span role="cell" />
+      </Grid>
+    );
+  }
   return (
     <Grid role="row" $changed={mark !== null}>
       <span role="cell" className="name">

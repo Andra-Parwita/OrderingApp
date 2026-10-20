@@ -242,5 +242,18 @@
     "pinRight": "Apakah titiknya sudah di tempat yang benar?",
     "pinYes": "Ya, sudah benar",
     "pinFix": "Perbaiki alamat"
+  },
+  "choices": {
+    "pick": "pilih berapa untuk tiap jenis",
+    "add": "Tambah {{count}} ke keranjang · {{total}}"
+  },
+  "lineNote": {
+    "add": "Tambah catatan untuk {{name}}",
+    "change": "Ubah catatan untuk {{name}}",
+    "title": "Catatan untuk {{name}}",
+    "hint": "Dapur melihatnya pada hidangan ini.",
+    "label": "Catatan",
+    "cancel": "Batal",
+    "save": "Simpan catatan"
   }
 }

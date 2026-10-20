@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>Dish choices A vs B</title>
+<style>
+/* Layout: two columns (A | B), one row per step; each step is a phone screen drawn in the app's dark look. */
+:root {
+  --bg: #f3f2ee; --fg: #23251f; --muted: #6a6d63; --line: #d9d8d0; --chip: #e7e8df; --accentInk: #3f5a37;
+  /* the app's own dark screen (fixed on purpose, like the live screenshots) */
+  --app: #121410; --appSurf: #1b1e19; --appLine: #2e322b; --appFg: #eceee6; --appMuted: #a3a89a;
+  --appBtn: #2a2e27; --appGreen: #9fc493; --appPrimary: #5f7f57; --appAmber: #e2c27a;
+  --display: "Plus Jakarta Sans", system-ui, sans-serif; --body: "Plus Jakarta Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; --chip: #1f221d; --accentInk: #a9c99e; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; --chip: #1f221d; --accentInk: #a9c99e; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.45; }
+.wrap { max-width: 64rem; margin: 0 auto; padding-block: 1.5rem 3rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-family: var(--display); font-size: 1.6rem; margin: 0 0 .25rem; text-wrap: balance; }
+.lead { color: var(--muted); margin: 0 0 1.5rem; max-width: 44rem; }
+.grid { display: grid; grid-template-columns: 9rem minmax(0,1fr) minmax(0,1fr); gap: 1rem 1.25rem; align-items: start; }
+.colhead { font-weight: 700; font-size: 1.05rem; padding-bottom: .4rem; border-bottom: 1px solid var(--line); }
+.colhead small { display: block; font-weight: 400; color: var(--muted); font-size: .85rem; }
+.step { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding-top: .6rem; }
+.step b { display: block; color: var(--fg); text-transform: none; letter-spacing: 0; font-size: .95rem; margin-top: .2rem; }
+.phone { background: var(--app); color: var(--appFg); border-radius: .9rem; padding: .9rem; font-size: .9rem; min-width: 0; }
+.phone h3 { margin: 0 0 .6rem; font-size: 1.05rem; }
+.row { display: flex; gap: .6rem; align-items: center; justify-content: space-between; padding: .55rem 0; border-top: 1px solid var(--appLine); }
+.row:first-of-type { border-top: 0; }
+.row .t { min-width: 0; }
+.name { font-weight: 700; }
+.sub { color: var(--appMuted); font-size: .82rem; }
+.price { font-variant-numeric: tabular-nums; }
+.step-ctl { display: flex; align-items: center; gap: .45rem; flex: none; }
+.btn { width: 2rem; height: 2rem; border-radius: 50%; background: var(--appBtn); display: grid; place-items: center; font-size: 1.1rem; }
+.qty { color: var(--appGreen); font-weight: 700; min-width: 1rem; text-align: center; font-variant-numeric: tabular-nums; }
+.addnote { color: var(--appGreen); font-size: .82rem; margin-top: .15rem; }
+.note { color: var(--appAmber); font-size: .82rem; margin-top: .15rem; }
+.primary { margin-top: .7rem; background: var(--appPrimary); color: #10140e; border-radius: 999px; text-align: center; padding: .55rem; font-weight: 700; }
+.field { border: 1px solid var(--appLine); border-radius: .5rem; padding: .45rem .6rem; color: var(--appMuted); margin-top: .3rem; font-size: .85rem; }
+.label { font-size: .78rem; color: var(--appMuted); text-transform: uppercase; letter-spacing: .05em; margin-top: .6rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .35rem; }
+.chip { background: var(--appBtn); border-radius: 999px; padding: .2rem .6rem; font-size: .8rem; }
+.cook { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .25rem .75rem; }
+.cook .n { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; }
+.cook .in { padding-left: .9rem; color: var(--appMuted); }
+.verdict { font-size: .85rem; margin-top: .5rem; color: var(--muted); }
+.verdict.good { color: var(--accentInk); }
+.na { color: var(--muted); font-size: .85rem; font-style: italic; padding: .9rem; border: 1px dashed var(--line); border-radius: .9rem; }
+.foot { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; max-width: 46rem; }
+@media (max-width: 46rem) {
+  .grid { grid-template-columns: minmax(0,1fr); }
+  .colhead.h0 { display: none; }
+  .colhead { display: none; }
+  .phone::before, .na::before { display: block; font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; margin-bottom: .5rem; }
+  .phone.a::before, .na.a::before { content: "A · note per item"; color: var(--appMuted); }
+  .phone.b::before { content: "B · choice list + note per item"; color: var(--appMuted); }
+  .na.a::before { color: var(--muted); }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Dish choices: A or B</h1>
+  <p class="lead">DellaVee's real dish, Aneka Snack Kering ($6.00 a pack). A customer wants 2 × Kripik Sukun and 1 × Sarang Madu. In both, every basket line gets an optional note.</p>
+
+  <div class="grid">
+    <div class="colhead h0"></div>
+    <div class="colhead">A · note per item<small>no choice list</small></div>
+    <div class="colhead">B · choice list + note per item<small>the seller lists the choices once</small></div>
+
+    <!-- 1 seller sets up the dish -->
+    <div class="step">1 · Seller<b>Edit the dish</b></div>
+    <div class="na a">Nothing new. The seller writes "Pilihan: … tinggalkan pesan pilihan" in the description, as today.</div>
+    <div class="phone b">
+      <h3>Aneka Snack Kering</h3>
+      <div class="label">Choices (optional)</div>
+      <div class="chips"><span class="chip">Lanting Bawang</span><span class="chip">Slondok Loncang</span><span class="chip">Stick Ubi Ungu</span><span class="chip">Kripik Singkong Pedas</span><span class="chip">Kripik Sukun</span><span class="chip">Kripik Ubi Ungu</span><span class="chip">Sarang Madu</span></div>
+      <div class="field">+ Add a choice</div>
+      <div class="sub" style="margin-top:.5rem">Every choice is $6.00, the dish price.</div>
+    </div>
+
+    <!-- 2 customer adds -->
+    <div class="step">2 · Customer<b>Tap + on the dish</b></div>
+    <div class="phone a">
+      <div class="row"><div class="t"><div class="name">Aneka Snack Kering</div><div class="sub">1 Pack · <span class="price">$6.00</span></div></div>
+        <div class="step-ctl"><span class="btn">−</span><span class="qty">3</span><span class="btn">+</span></div></div>
+      <div class="sub">Same as today: + adds a pack.</div>
+    </div>
+    <div class="phone b">
+      <h3>Aneka Snack Kering · $6.00</h3>
+      <div class="sub" style="margin-bottom:.3rem">Pick how many of each</div>
+      <div class="row"><div class="t">Lanting Bawang</div><div class="step-ctl"><span class="btn">+</span></div></div>
+      <div class="row"><div class="t">Kripik Sukun</div><div class="step-ctl"><span class="btn">−</span><span class="qty">2</span><span class="btn">+</span></div></div>
+      <div class="row"><div class="t">Sarang Madu</div><div class="step-ctl"><span class="btn">−</span><span class="qty">1</span><span class="btn">+</span></div></div>
+      <div class="sub">… and the other 4 choices</div>
+      <div class="primary">Add 3 to basket · $18.00</div>
+    </div>
+
+    <!-- 3 basket -->
+    <div class="step">3 · Customer<b>Basket</b></div>
+    <div class="phone a">
+      <h3>Your basket</h3>
+      <div class="row"><div class="t"><div class="name">Aneka Snack Kering</div><div class="sub"><span class="price">$6.00</span> each · <b class="price">$18.00</b></div>
+        <div class="note">Note: 2 Kripik Sukun, 1 Sarang Madu</div></div>
+        <div class="step-ctl"><span class="btn">−</span><span class="qty">3</span><span class="btn">+</span></div></div>
+      <div class="sub">The customer types the choices as a note.</div>
+    </div>
+    <div class="phone b">
+      <h3>Your basket</h3>
+      <div class="row"><div class="t"><div class="name">Aneka Snack Kering · Kripik Sukun</div><div class="sub"><span class="price">$6.00</span> each · <b class="price">$12.00</b></div>
+        <div class="addnote">+ Add a note</div></div>
+        <div class="step-ctl"><span class="btn">−</span><span class="qty">2</span><span class="btn">+</span></div></div>
+      <div class="row"><div class="t"><div class="name">Aneka Snack Kering · Sarang Madu</div><div class="sub"><span class="price">$6.00</span> each · <b class="price">$6.00</b></div>
+        <div class="note">Note: extra crispy please</div></div>
+        <div class="step-ctl"><span class="btn">−</span><span class="qty">1</span><span class="btn">+</span></div></div>
+    </div>
+
+    <!-- 4 seller order -->
+    <div class="step">4 · Seller<b>Order detail</b></div>
+    <div class="phone a">
+      <div class="row"><div class="t"><div class="name">3 × Aneka Snack Kering</div><div class="note">2 Kripik Sukun, 1 Sarang Madu</div></div><div class="price">$18.00</div></div>
+    </div>
+    <div class="phone b">
+      <div class="row"><div class="t"><div class="name">2 × Aneka Snack Kering · Kripik Sukun</div></div><div class="price">$12.00</div></div>
+      <div class="row"><div class="t"><div class="name">1 × Aneka Snack Kering · Sarang Madu</div><div class="note">extra crispy please</div></div><div class="price">$6.00</div></div>
+    </div>
+
+    <!-- 5 cook -->
+    <div class="step">5 · Kitchen<b>Cook list and kitchen print</b><br>all orders</div>
+    <div>
+      <div class="phone a">
+        <div class="cook">
+          <div class="name">Aneka Snack Kering</div><div class="n">12</div>
+          <div class="in">Notes: "2 Kripik Sukun, 1 Sarang Madu" · "all Lanting" · "1 each pedas, sukun" · …</div><div></div>
+        </div>
+      </div>
+      <p class="verdict">The seller reads every note and counts by hand.</p>
+    </div>
+    <div>
+      <div class="phone b">
+        <div class="cook">
+          <div class="name">Aneka Snack Kering</div><div class="n">12</div>
+          <div class="in">Kripik Sukun</div><div class="n">5</div>
+          <div class="in">Lanting Bawang</div><div class="n">4</div>
+          <div class="in">Sarang Madu</div><div class="n">3</div>
+        </div>
+      </div>
+      <p class="verdict good">Counted for you. Notes still show on the order and the label.</p>
+    </div>
+  </div>
+
+  <p class="foot"><b>Not in A or B:</b> a different price per choice (Pangsit Bawang $5) stays a separate dish, as today. Labels and the WhatsApp text show the same line names as the order detail. Sold out per choice is not included.</p>
+</div>
+</body>
+</html>

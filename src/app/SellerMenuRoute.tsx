@@ -1,7 +1,7 @@
 import { MenuScreen, type MenuSlots } from '../features/seller-menu';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { DESKTOP_QUERY } from './layout';
-import { useSession } from './session';
+import { mayNotify, useSession } from './session';
 
 /** /seller/menu: the owner's Menu; a chef (plan 030) gets Your dishes only. A phone has no On the day tab (Sell is in More). */
 export function SellerMenuRoute({
@@ -13,6 +13,7 @@ export function SellerMenuRoute({
   return (
     <MenuScreen
       slots={tablet ? slots : phoneSlots}
+      canNotify={mayNotify(me)}
       {...(me?.role === 'chef' && me.chefId ? { chefId: me.chefId } : {})}
     />
   );

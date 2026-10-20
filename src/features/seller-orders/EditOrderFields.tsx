@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Language, SellerMenuItemView } from '../../../shared/domain';
-import { MAX_QTY } from '../../../shared/limits';
+import { MAX_QTY, NOTE_MAX } from '../../../shared/limits';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { Button, Icon, IconButton, Stepper } from '../../ui';
+import { fieldControlStyle } from '../../ui/Field';
 import { SELLER_NS } from './i18n/register';
 import type { EditRow } from './editOrderModel';
 import { roomFor } from './editOrderModel';
 import { Label, Names } from './orderFormParts';
+import { pickableItems } from './pickItems';
 
 // The dish lines and the "Add dish" list of the Edit order sheet (plan 105).
 
@@ -46,6 +49,12 @@ const NewMark = styled.span`
   font-size: 0.75rem;
   font-weight: 700;
 `;
+const NoteInput = styled.input<{ $invalid: boolean }>`
+  ${fieldControlStyle}
+  min-height: ${({ theme }) => theme.size.rowCompact}px;
+  margin-top: ${({ theme }) => theme.spacing.xs};
+  font-size: 0.875rem;
+`;
 const Have = styled.span`
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.875rem;
@@ -60,11 +69,14 @@ type RowsProps = Readonly<{
   lang: Language;
   onQty: (itemId: string, qty: number) => void;
   onRemoved: (itemId: string, removed: boolean) => void;
+  onNote: (itemId: string, note: string) => void;
 }>;
 
 /** The order's dishes: − n + and Remove (struck through with Undo until Save). */
-export function EditDishRows({ rows, menu, holds, lang, onQty, onRemoved }: RowsProps) {
+export function EditDishRows({ rows, menu, holds, lang, onQty, onRemoved, onNote }: RowsProps) {
   const { t } = useTranslation(SELLER_NS);
+  // Plan 111: the note box of a line opens with its pencil, and stays open when there is a note.
+  const [noting, setNoting] = useState<ReadonlyArray<string>>([]);
   return (
     <>
       {rows.map((row) => {
@@ -94,6 +106,16 @@ export function EditDishRows({ rows, menu, holds, lang, onQty, onRemoved }: Rows
                 {row.was === 0 ? <NewMark>{t('edit.newDish')}</NewMark> : null}
               </span>
               <small>{formatMoney(row.priceCents, lang)}</small>
+              {noting.includes(row.itemId) || (row.note ?? '') !== '' ? (
+                <NoteInput
+                  $invalid={false}
+                  aria-label={t('edit.lineNote', { name })}
+                  placeholder={t('edit.lineNotePlaceholder')}
+                  maxLength={NOTE_MAX}
+                  value={row.note ?? ''}
+                  onChange={(event) => onNote(row.itemId, event.target.value)}
+                />
+              ) : null}
               {room !== null && row.qty > room ? (
                 <Warn role="status">{t('edit.limit', { left: Math.max(room, 0), name })}</Warn>
               ) : null}
@@ -108,6 +130,16 @@ export function EditDishRows({ rows, menu, holds, lang, onQty, onRemoved }: Rows
                 decreaseLabel={t('new.decrease', { name })}
                 increaseLabel={t('new.increase', { name })}
               />
+              <IconButton
+                label={t('edit.lineNote', { name })}
+                onClick={() =>
+                  setNoting((previous) =>
+                    previous.includes(row.itemId) ? previous : [...previous, row.itemId],
+                  )
+                }
+              >
+                <Icon name="pencil" />
+              </IconButton>
               <IconButton
                 label={t('edit.remove', { name })}
                 onClick={() => onRemoved(row.itemId, true)}
@@ -135,7 +167,7 @@ export function AddDishList({ rows, menu, lang, onAdd }: AddListProps) {
   return (
     <div>
       <Label>{t('edit.addTitle')}</Label>
-      {menu.map((item) => {
+      {pickableItems(menu).map((item) => {
         const name = pickText(item.name, lang);
         const inOrder = rows.find((row) => row.itemId === item.id && !row.removed);
         const hint = item.soldOut

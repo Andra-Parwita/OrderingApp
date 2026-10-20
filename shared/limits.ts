@@ -1,11 +1,14 @@
 export const FIRST_NAME_MAX = 40;
 export const NOTE_MAX = 200;
+/** Plan 111 (D-112): choices under one dish, and the most rows a menu can hold (dishes and their choices). */
+export const MAX_CHOICES = 30;
 /** Plan 071: the delivery address fields. */
 export const ADDRESS_STREET_MAX = 120;
 export const ADDRESS_SUBURB_MAX = 60;
 export const ADDRESS_POSTCODE_MAX = 10;
 export const ADDRESS_NOTES_MAX = 200;
 export const MAX_MENU_ITEMS = 50;
+export const MAX_MENU_ROWS = MAX_MENU_ITEMS * (MAX_CHOICES + 1);
 export const MAX_QTY = 99;
 export const AUDIT_MAX = 4;
 /** "N left" shows only when this many or fewer remain (D-027). */

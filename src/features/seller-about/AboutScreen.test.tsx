@@ -85,7 +85,7 @@ describe('AboutScreen', () => {
 
   it('names the release number only', () => {
     setUp();
-    expect(screen.getByText('Release 1.0.42')).toBeInTheDocument();
+    expect(screen.getByText('Release 1.0.43')).toBeInTheDocument();
     expect(screen.queryByText(/build/)).toBeNull();
   });
 
@@ -100,5 +100,22 @@ describe('AboutScreen', () => {
     fireEvent.keyDown(dialog, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(button).toHaveFocus();
+  });
+
+  it('opens the releases with the newest marked New when it comes from the pill', () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-21T10:00:00'));
+    loadAnimation.mockReturnValue({ destroy, goToAndStop: vi.fn(), addEventListener: vi.fn() });
+    render(
+      <AppThemeProvider>
+        <MemoryRouter
+          initialEntries={[{ pathname: '/seller/about', state: { showReleases: true } }]}
+        >
+          <AboutScreen logo={<span>logo</span>} wideQuery="(min-width: 600px)" />
+        </MemoryRouter>
+      </AppThemeProvider>,
+    );
+    expect(screen.getByText('New')).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });

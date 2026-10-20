@@ -97,5 +97,7 @@ export function interceptOp(
 }
 
 function savedIds(data: MenuData): Array<string> {
-  return data.view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : []));
+  return data.view.dishes.flatMap((dish) =>
+    dish.dishId && dish.groupId === undefined ? [dish.dishId] : [],
+  );
 }

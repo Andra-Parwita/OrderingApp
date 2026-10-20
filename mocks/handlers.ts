@@ -5,6 +5,7 @@ import type { Week } from '../shared/domain';
 import type { HealthResponse } from '../shared/health';
 import { DEFAULT_SELLER_SLUG } from '../shared/seller';
 import { handleApiRequest } from '../worker/api/routes';
+import { createMenuNoticeService } from '../worker/push/menuNotice';
 import type { Repository, SellerRepository } from '../worker/repo/Repository';
 import { makeWorld, openDatabase, type Database, type World } from './impl';
 
@@ -98,8 +99,18 @@ export const apiHandlers = [
     if (closing) return new HttpResponse(null, { status: 503 });
     inflight++;
     try {
-      const { repo } = await openWorld();
-      const response = await handleApiRequest(repo, request.clone(), { devTools: true });
+      const { repo, db } = await openWorld();
+      // Notices: the real service on the file's database; the sender is a stand-in that reaches nobody.
+      const menuNotices = createMenuNoticeService({
+        db,
+        now: NOW,
+        sender: () => Promise.resolve(201),
+        log: () => undefined,
+      });
+      const response = await handleApiRequest(repo, request.clone(), {
+        devTools: true,
+        menuNotices,
+      });
       return response ?? undefined;
     } finally {
       inflight--;

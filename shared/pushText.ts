@@ -140,3 +140,13 @@ export function fulfilmentChangedText(
     ? `Pesananmu sekarang diambil di ${to.pickup}, ${to.times}`
     : `Your order is now for pickup at ${to.pickup}, ${to.times}`;
 }
+
+/** Plan 112: the body of a new-menu notice; `{{day}}` is the cooking day, e.g. "Sat 25 Oct". */
+export const MENU_NOTICE_BODY: Record<Language, string> = {
+  en: 'New menu is out: order for {{day}}.',
+  id: 'Menu baru sudah ada: pesan untuk {{day}}.',
+};
+
+export function menuNoticeBody(language: Language, day: string): string {
+  return MENU_NOTICE_BODY[language].replace('{{day}}', day);
+}

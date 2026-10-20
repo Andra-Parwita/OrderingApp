@@ -4,6 +4,15 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Plans 111 + 112 (release 1.0.43)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| W1a · 111 server: migration 0031, contracts, db, order rules | general-purpose · sonnet | 17:56 | 90 min | 18:06 | 10 min | | 0031 + 6 shared + 11 worker/db files; 6 tests | ✅ typecheck, own tests |
+| W1b · 112 full stack: migration 0032, routes, push, Settings, bell | general-purpose · sonnet | 17:56 | 90 min | 18:09 | 13 min | −77 min | 0032 + 13 new files, ~15 edited; 29 tests | ✅ typecheck, own tests |
+| W2a · 111 customer screens (choice sheet, line note) | general-purpose · sonnet | 18:08 | 75 min | 18:15 | 7 min | −68 min | 2 new sheets, 12 files edited, saga notes (coordinator); 9 new tests | ✅ own tests |
+| W2b · 111 seller screens (dish editor, Menu, Cook, print, labels, orders) | general-purpose · sonnet | 18:10 | 90 min | 18:23 | ~13 min | | ~35 files; 24 new tests | ✅ typecheck, own tests |
+| Gate · typecheck, lint, format, unit, full Playwright + fixes | coordinator + 4 fixers · sonnet | 18:23 | 60 min | ~20:40 | ~2 h 15 min | +75 min | lint 10, backup gap, 57-trip save, bell for staff, stale tests | ✅ |
+
 ## Plan 098 clean-up (release 1.0.42)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|

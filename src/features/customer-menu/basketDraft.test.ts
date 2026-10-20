@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { clearDraft, draftKey, readDraft, writeDraft } from '../../components/draft';
 import { basketDraftOf, type BasketDraft } from './basketDraft';
-import { checkoutSet, menuRequested, placeRequested, quantitySet } from './customerSlice';
+import { checkoutSet, menuRequested, noteSet, placeRequested, quantitySet } from './customerSlice';
 import { createTestStore } from './testSupport';
 
 // Plan 061 stage 9: the basket and checkout fields survive a reload, per kitchen and menu.
@@ -31,6 +31,24 @@ describe('basket draft', () => {
       note: 'no chilli',
       firstName: 'Rina',
     });
+    clearDraft(first.key);
+  });
+
+  it('saves line notes and puts them back with the basket', async () => {
+    const first = await storeWithMenu();
+    first.store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 1 }));
+    first.store.dispatch(noteSet({ itemId: 'tempe-mendoan', note: 'extra crispy' }));
+    await vi.waitFor(() =>
+      expect(readDraft<BasketDraft>(first.key)?.value.notes).toEqual({
+        'tempe-mendoan': 'extra crispy',
+      }),
+    );
+    const second = await storeWithMenu();
+    await vi.waitFor(() =>
+      expect(second.store.getState().customer.basketNotes).toEqual({
+        'tempe-mendoan': 'extra crispy',
+      }),
+    );
     clearDraft(first.key);
   });
 

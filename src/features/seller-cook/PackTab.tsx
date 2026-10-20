@@ -162,6 +162,11 @@ const Note = styled.p`
   background: ${({ theme }) => theme.c.warnTint};
   color: ${({ theme }) => theme.c.text};
 `;
+const LineNote = styled.span`
+  display: block;
+  color: ${({ theme }) => theme.c.warn};
+  font-size: 0.875rem;
+`;
 const Items = styled.ul`
   margin: 0 ${({ theme }) => theme.spacing.xl};
   padding: 0;
@@ -486,6 +491,7 @@ export function PackTab() {
                   <Qty>{line.qty}×</Qty>
                   <span>
                     {pickText(line.name, lang)} <Sub>· {pickText(line.size, lang)}</Sub>
+                    {line.note ? <LineNote>{line.note}</LineNote> : null}
                   </span>
                 </ItemButton>
               </li>

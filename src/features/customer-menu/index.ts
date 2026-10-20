@@ -13,6 +13,7 @@ export { MenuHomeView, NotPublishedView } from './MenuHomeView';
 export {
   customerReducer,
   placeRequested,
+  noteSet,
   placeReset,
   quantitySet,
   type CustomerRootState,
@@ -20,4 +21,10 @@ export {
 } from './customerSlice';
 export { registerCustomerI18n } from './i18n/register';
 export { customerSaga } from './saga';
-export { selectKitchenMissing, selectMenu, selectMenuSlug, selectPlace } from './selectors';
+export {
+  selectBasketNotes,
+  selectKitchenMissing,
+  selectMenu,
+  selectMenuSlug,
+  selectPlace,
+} from './selectors';

@@ -138,6 +138,14 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 107 | ⬜ | [On-the-day selling as part of the menu](107-on-the-day-selling.md) | owner idea 18 Oct: rename/move "Sell" into the menu view; on-the-day-only dishes |
 | 108 | ⬜ | [Seller Home compact](108-home-compact.md) | owner 18 Oct: text too big, space not used; mock-up in progress |
 | 109 | 🔨 | [Kitchen print (cook list)](109-kitchen-print.md) | owner 18 Oct: in 1.0.42; per chef or all, notes optional; mock-up first |
+| 110 | ✅ | [WhatsApp numbers from any country](110-international-whatsapp-numbers.md) | D-111; live in 1.0.42.1, help in 1.0.42.2 |
+| 111 | ⬜ | [Dish choices and a note per order line](111-dish-choices-line-notes.md) | owner 20 Oct: B, choices = grouped dishes (name + limit); target 1.0.43 |
+| 112 | ⬜ | [Tell customers when a new menu is published](112-new-menu-notices.md) | owner 20 Oct: in 1.0.43 with 111; quiet opt-in in customer Settings; count only |
+| 113 | 💤 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | Fable 20 Oct: 2 small fixes in 1.0.43, rest later |
+| 114 | ⬜ | [Slow networks: timeouts, no double orders, clear feedback](114-slow-network.md) | Fable review 20 Oct; items 1–5 in 1.0.44 (owner "A") |
+| 115 | ⬜ | [No blank screen while the app loads](115-loading-splash.md) | Fable 20 Oct: inline background + small splash; owner to decide |
+| 116 | 💤 | [Seller "Send a problem report"](116-seller-problem-report.md) | owner 20 Oct: plan it, after 1.0.44 |
+| 117 | 💤 | ["What's new" bubble for sellers](117-whats-new-bubble.md) | owner 20 Oct: in 1.0.43; floating pill once per release |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

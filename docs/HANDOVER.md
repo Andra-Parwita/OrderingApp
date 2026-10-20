@@ -62,6 +62,16 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Rules from 18 Oct:** ask the next question only after the owner says "go next question"; mock-ups never invent features; button labels never wrap (`docs/design/README.md`).
 - **Deploy impact:** medium (size). Server: new edit-order route, live-socket token header (old tabs use the fallback), retention sweep. Client: many seller screens. No migration.
 
+## 1.0.43 (plans 111, 112, 117, 20 Oct): built and gated, not yet deployed
+- **111 dish choices + line notes (D-112):** a choice is a grouped dish (name EN/ID + limit; price, chef, pre-order/on-the-day from the dish); Sold out per choice; customer bottom sheet; basket pencil + note sheet; Cook/kitchen print/labels/order detail/WhatsApp text/edit order/private orders show choices and notes; backup/restore carries choices. Choices added to a dish apply from the next menu.
+- **112 new-menu notices (D-113):** quiet customer Settings option with explanation; seller bell (owner only) on Home + Menu (tablet), Orders header (phone), only while orders are open; sends recorded per menu, 3rd send warns; 500 phones per kitchen; phones dropped 183 days after their last order.
+- **Also:** new ShaggyBobo seller app icon (192/512/maskable, `public/brand/`), seller splash stays cream; 2 query savings (plan 113): backup 15 trips, dish list 2; 57-trip menu save fixed (choices loaded once).
+- **Migrations:** `0031_dish_choices.sql` (3 add-only columns), `0032_menu_notices.sql` (2 new tables). Run both **before** the Worker deploy (the new routes read the tables).
+- **Deploy order:** backup → `pnpm build` → `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` → `pnpm run deploy` → health check → live checks (dish with choices end to end, line note on Cook/print, bell + Settings option, chef sign-in sees no bell).
+- **117 "What's new" pill:** shown once per release per seller device (floating pill, `src/components/whats-new`); See opens About with the releases, newest marked New for 14 days.
+- **Release note (owner "A"):** "Dishes with choices, a note on each dish, and send customers a notice when a new menu is out."
+- **Next (1.0.44):** plan 114 slow networks items 1–5 (owner "A"); plan 115 no blank screen (owner to confirm). Later: 113 rest, 116 problem report, 101/102.
+
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
 2. Ask the owner whether setup is needed (same PC: usually not; other PC: `git pull`; `pnpm install`; `pnpm db:migrate:local`, never reseed).

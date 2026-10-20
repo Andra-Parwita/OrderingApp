@@ -1,12 +1,12 @@
 // The public and seller menu reads, settings, past weeks, chefs and images (split out of seller.ts, plan 098 C3; the code is unchanged).
-import type { Chef, KitchenImages, MenuItem } from '../../shared/domain';
+import type { Chef, KitchenImages, MenuItem, SellerMenuItemView } from '../../shared/domain';
 import { checkImageUpload, type ImageSlot } from '../../shared/imageSlots';
 import { MAX_CHEFS } from '../../shared/limits';
 import type { SellerMenuResponse } from '../../shared/menuContract';
 import { type PastWeek } from '../../shared/pastWeeks';
 import type { ImageStyleRequest, UpdateItemRequest } from '../../shared/setupContract';
 import type { SellerRepository } from '../repo/Repository';
-import { sellerView } from './menuView';
+import { sellerViews } from './menuView';
 import { readOrders } from './orders';
 import {
   chefOf,
@@ -62,7 +62,7 @@ export function kitchenPart(
     async getSellerMenu(): Promise<SellerMenuResponse> {
       const s = await loadState();
       const menu = publicMenu(s, true);
-      return { ...menu, chefs: s.chefs, items: s.items.map((item) => sellerView(item, s.used)) };
+      return { ...menu, chefs: s.chefs, items: sellerViews(s.items, s.used) };
     },
 
     async getSettings() {
@@ -131,6 +131,13 @@ export function kitchenPart(
       if (typeof patch.chefId === 'string' && chefs.length === 0) {
         return fail('unknown_chef', 'Unknown chef');
       }
+      // Plan 111: a choice only has Sold out and a limit; the rest belongs to its dish.
+      if (
+        row.group_id !== null &&
+        Object.keys(patch).some((key) => key !== 'soldOut' && key !== 'limit')
+      ) {
+        return fail('invalid_request', 'A choice only has a limit and Sold out');
+      }
       const next: MenuItem = { ...itemOf(row) };
       if (patch.name) next.name = { ...patch.name };
       if (patch.description) next.description = { ...patch.description };
@@ -149,8 +156,8 @@ export function kitchenPart(
       if (next.preorder === false && next.dayStock === undefined) {
         return fail('invalid_request', 'On the day only needs a day stock');
       }
-      await db
-        .stmt(
+      await db.batch([
+        db.stmt(
           `UPDATE menu_items SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
              price_cents = ?, portion_limit = ?, chef_id = ?, sold_out = ?, preorder = ?, day_stock = ?
              WHERE seller_id = ? AND id = ?`,
@@ -168,12 +175,33 @@ export function kitchenPart(
           next.dayStock ?? null,
           sid,
           id,
-        )
-        .run();
+        ),
+        // The choices of a dish follow it (plan 111).
+        db.stmt(
+          `UPDATE menu_items SET description_en = ?, description_id = ?, size_en = ?, size_id = ?,
+             price_cents = ?, chef_id = ?, preorder = ?, day_stock = ?
+             WHERE seller_id = ? AND group_id = ?`,
+          next.description.en,
+          next.description.id,
+          next.size.en,
+          next.size.id,
+          next.priceCents,
+          next.chefId ?? null,
+          next.preorder !== false,
+          next.dayStock ?? null,
+          sid,
+          id,
+        ),
+      ]);
       const usedMap = new Map(
         (used as Array<{ item_id: string; used: number }>).map((r) => [r.item_id, r.used]),
       );
-      return ok(sellerView(next, usedMap));
+      const all = await db.all<ItemRow>(
+        'SELECT * FROM menu_items WHERE seller_id = ? ORDER BY position',
+        sid,
+      );
+      const view = sellerViews(all.map(itemOf), usedMap).find((candidate) => candidate.id === id);
+      return ok(view as SellerMenuItemView);
     },
 
     async setKitchenName(name: string) {

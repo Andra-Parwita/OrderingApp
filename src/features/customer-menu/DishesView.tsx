@@ -9,10 +9,11 @@ import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { CustomerPage } from '../../components/CustomerPage';
+import { ChoiceSheet } from './ChoiceSheet';
 import { FullPictureViewer } from './FullPictureViewer';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
-import { MainButton } from './menuParts';
+import { dishMax, Group, MainButton, Qty, Round } from './menuParts';
 
 // The dishes page (spec §4.1): a pushed page with a name, a muted description, size · price and a
 // round stepper per dish, then a sticky basket bar. Presentational: the basket lives in the store.
@@ -99,36 +100,6 @@ const SoldOut = styled.span`
   font-weight: 700;
   white-space: nowrap;
 `;
-export const Round = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.size.tap}px;
-  height: ${({ theme }) => theme.size.tap}px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: ${({ theme }) => theme.c.line};
-  color: ${({ theme }) => theme.c.text};
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;
-export const Group = styled.div`
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-export const Qty = styled.output`
-  min-width: 1.5rem;
-  text-align: center;
-  font-weight: 700;
-  color: ${({ theme }) => theme.c.atext};
-`;
 const Sub = styled.p`
   margin: -${({ theme }) => theme.spacing.sm} 0 ${({ theme }) => theme.spacing.md};
   padding: 0 ${({ theme }) => theme.spacing.lg};
@@ -174,33 +145,59 @@ type DishProps = Readonly<{
   onQty: (itemId: string, qty: number) => void;
   /** Ordering is off (closed, paused or the seller's preview): the dish shows, no stepper works. */
   readOnly: boolean;
+  /** Plan 111: the choices of a dish that has them, with the basket (the + opens a sheet to pick). */
+  choices?: ReadonlyArray<MenuItemView>;
+  basket?: Readonly<Record<string, number>>;
 }>;
 
-/** The most of a dish the basket may hold: what is left, never past MAX_QTY. */
-export function dishMax(item: MenuItemView): number {
-  return item.soldOut || item.preorder === false ? 0 : Math.min(MAX_QTY, item.remaining ?? MAX_QTY);
-}
-
-export const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: DishProps) {
+export const Dish = memo(function Dish({
+  item,
+  qty,
+  lang,
+  onQty,
+  readOnly,
+  choices,
+  basket,
+}: DishProps) {
   const { t } = useTranslation(CUSTOMER_NS);
   const name = pickText(item.name, lang);
   const description = pickText(item.description, lang);
   const size = pickText(item.size, lang);
-  const max = dishMax(item);
+  const grouped = choices !== undefined && choices.length > 0;
+  // A dish with choices is out when it is, or when every choice is.
+  const soldOut = grouped
+    ? item.soldOut || choices.every((choice) => choice.soldOut || dishMax(choice) === 0)
+    : item.soldOut;
+  const max = grouped ? MAX_QTY : dishMax(item);
   // Plan 029: on the day only = no Add button; sold both ways = as usual plus a stall line.
   const dayOnly = item.preorder === false;
   const stallOut = item.onTheDay === 'sold_out';
   const lowStock = item.remaining !== null && item.remaining > 0 && item.remaining <= LOW_STOCK;
-  const add = useCallback(() => onQty(item.id, qty + 1), [onQty, item.id, qty]);
-  const remove = useCallback(() => onQty(item.id, qty - 1), [onQty, item.id, qty]);
+  const [picking, setPicking] = useState(false);
+  const add = useCallback(
+    () => (grouped ? setPicking(true) : onQty(item.id, qty + 1)),
+    [grouped, onQty, item.id, qty],
+  );
+  const remove = useCallback(
+    () => (grouped ? setPicking(true) : onQty(item.id, qty - 1)),
+    [grouped, onQty, item.id, qty],
+  );
+  const closePicking = useCallback(() => setPicking(false), []);
+  const addPicked = useCallback(
+    (picked: Readonly<Record<string, number>>) => {
+      for (const [id, n] of Object.entries(picked)) onQty(id, (basket?.[id] ?? 0) + n);
+      setPicking(false);
+    },
+    [onQty, basket],
+  );
   const [viewing, setViewing] = useState(false);
   const closeViewer = useCallback(() => setViewing(false), []);
   return (
-    <Row $soldOut={item.soldOut || dayOnly}>
+    <Row $soldOut={soldOut || dayOnly}>
       {item.pictureRef ? (
         <PictureButton
           type="button"
-          $soldOut={item.soldOut}
+          $soldOut={soldOut}
           aria-haspopup="dialog"
           aria-label={t('menu.enlargePicture', { name })}
           onClick={() => setViewing(true)}
@@ -218,7 +215,7 @@ export const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: Dis
         {item.onTheDay && !dayOnly ? (
           <Stall>{stallOut ? t('menu.stallSoldOut') : t('menu.alsoAtStall')}</Stall>
         ) : null}
-        {lowStock && !item.soldOut && !dayOnly ? (
+        {lowStock && !grouped && !soldOut && !dayOnly ? (
           <Left>
             <MenuIcon name="clock" size="1rem" />
             {t('menu.left', { count: item.remaining })}
@@ -230,7 +227,7 @@ export const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: Dis
           {stallOut ? <MenuIcon name="ban" size="1rem" /> : null}
           {stallOut ? t('menu.soldOut') : t('menu.availableOnDay')}
         </SoldOut>
-      ) : item.soldOut ? (
+      ) : soldOut ? (
         <SoldOut>
           <MenuIcon name="ban" size="1rem" />
           {t('menu.soldOut')}
@@ -260,6 +257,16 @@ export const Dish = memo(function Dish({ item, qty, lang, onQty, readOnly }: Dis
           </Round>
         </Group>
       )}
+      {picking && grouped ? (
+        <ChoiceSheet
+          dish={item}
+          choices={choices}
+          lang={lang}
+          basket={basket ?? {}}
+          onAdd={addPicked}
+          onClose={closePicking}
+        />
+      ) : null}
       {viewing && item.pictureRef ? (
         <FullPictureViewer
           src={item.pictureRef}
@@ -287,19 +294,35 @@ export function DishList({ data, basket, lang, onQty, readOnly }: ListProps) {
   const { t } = useTranslation(CUSTOMER_NS);
   if (data.items.length === 0) return <Empty>{t('dishes.empty')}</Empty>;
   // Plan 107: orderable dishes first, then the on-the-day-only ones in their own group (no add button).
-  const orderable = data.items.filter((item) => item.preorder !== false);
-  const dayOnly = data.items.filter((item) => item.preorder === false);
+  // Plan 111: a choice shows inside its dish's sheet, not as a card of its own.
+  const dishes = data.items.filter((item) => item.groupId === undefined);
+  const orderable = dishes.filter((item) => item.preorder !== false);
+  const dayOnly = dishes.filter((item) => item.preorder === false);
   const rows = (items: ReadonlyArray<MenuItemView>) =>
-    items.map((item) => (
-      <Dish
-        key={item.id}
-        item={item}
-        qty={basket[item.id] ?? 0}
-        lang={lang}
-        onQty={onQty}
-        readOnly={readOnly}
-      />
-    ));
+    items.map((item) => {
+      const choices = data.items.filter((other) => other.groupId === item.id);
+      return choices.length > 0 ? (
+        <Dish
+          key={item.id}
+          item={item}
+          qty={choices.reduce((sum, choice) => sum + (basket[choice.id] ?? 0), 0)}
+          lang={lang}
+          onQty={onQty}
+          readOnly={readOnly}
+          choices={choices}
+          basket={basket}
+        />
+      ) : (
+        <Dish
+          key={item.id}
+          item={item}
+          qty={basket[item.id] ?? 0}
+          lang={lang}
+          onQty={onQty}
+          readOnly={readOnly}
+        />
+      );
+    });
   return (
     <>
       {orderable.length > 0 ? <List>{rows(orderable)}</List> : null}

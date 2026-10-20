@@ -14,7 +14,7 @@ import type {
   SellerRef,
   StaffActor,
 } from './domain';
-import { AUDIT_MAX, FIRST_NAME_MAX, INBOX_MAX, MAX_MENU_ITEMS, MAX_QTY, NOTE_MAX } from './limits';
+import { AUDIT_MAX, FIRST_NAME_MAX, INBOX_MAX, MAX_MENU_ROWS, MAX_QTY, NOTE_MAX } from './limits';
 import {
   hasPersonalData,
   isInt,
@@ -37,7 +37,12 @@ const COLLECTED_BY: ReadonlyArray<CollectedBy> = ['customer', 'seller'];
 const INBOX_KINDS: ReadonlyArray<InboxEntry['kind']> = ['status', 'nudge', 'message'];
 
 /** One requested line; the server snapshots the item's names, size and price. */
-export type RequestedLine = { itemId: string; qty: number };
+export type RequestedLine = {
+  itemId: string;
+  qty: number;
+  /** Plan 111: a short note for this line (trimmed, at most NOTE_MAX). '' removes it; never stored empty. */
+  note?: string;
+};
 
 /** POST /api/s/:slug/orders (customer; the seller comes from the slug). */
 export type CreateOrderRequest = {
@@ -173,6 +178,7 @@ export function toCustomerOrder(order: SellerOrder, seller: SellerRef): Customer
       size: line.size,
       priceCents: line.priceCents,
       qty: line.qty,
+      ...(line.note !== undefined ? { note: line.note } : {}),
     })),
     fulfilment: order.fulfilment,
     ...(order.note !== undefined ? { note: order.note } : {}),
@@ -228,13 +234,16 @@ function parseRequestedLine(input: unknown): RequestedLine | null {
   if (!isRecord(input)) return null;
   const { itemId, qty } = input;
   if (typeof itemId !== 'string' || itemId === '' || !isInt(qty, 1, MAX_QTY)) return null;
-  return { itemId, qty };
+  if (input['note'] === undefined) return { itemId, qty };
+  // '' is kept so a seller edit can clear a note (an absent note keeps it); it is never stored.
+  const note = parseNote(input['note']);
+  return note === null ? null : { itemId, qty, note };
 }
 
 /** 1 to 10 lines, no item twice. */
 function parseRequestedLines(input: unknown): Array<RequestedLine> | null {
   const lines = parseArray(input, parseRequestedLine);
-  if (!lines || lines.length === 0 || lines.length > MAX_MENU_ITEMS) return null;
+  if (!lines || lines.length === 0 || lines.length > MAX_MENU_ROWS) return null;
   if (new Set(lines.map((line) => line.itemId)).size !== lines.length) return null;
   return lines;
 }
@@ -403,12 +412,17 @@ function parseOrderLine(input: unknown): OrderLine | null {
   if (input['ticked'] !== undefined && typeof input['ticked'] !== 'boolean') return null;
   const chefId = input['chefId'];
   if (chefId !== undefined && (typeof chefId !== 'string' || chefId === '')) return null;
+  const note = input['note'];
+  if (note !== undefined && (typeof note !== 'string' || note === '' || note.length > NOTE_MAX)) {
+    return null;
+  }
   return {
     itemId,
     name,
     size,
     priceCents,
     qty,
+    ...(note !== undefined ? { note } : {}),
     ...(chefId !== undefined ? { chefId } : {}),
     ...(input['ticked'] === true ? { ticked: true } : {}),
   };

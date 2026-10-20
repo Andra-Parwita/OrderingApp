@@ -96,6 +96,9 @@
     "chefLine": "Chef: {{name}}",
     "privateCount": "({{count}} private)",
     "forPeople_one": "for {{count}} person",
-    "forPeople_other": "for {{count}} people"
-  }
+    "forPeople_other": "for {{count}} people",
+    "lineNote": "{{note}} ({{who}})"
+  },
+  "lineNote": "Note: {{note}} ({{who}})",
+  "choiceCount": "All choices"
 }

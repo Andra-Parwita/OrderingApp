@@ -154,6 +154,12 @@ const ItemRow = styled.div<{ $total?: boolean }>`
     font-size: 0.8125rem;
   }
 `;
+const LineNote = styled.span`
+  display: block;
+  color: ${({ theme }) => theme.c.warn};
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+`;
 const NoteText = styled.p`
   margin: 0;
   white-space: pre-wrap;
@@ -330,6 +336,7 @@ export function OrderPanelBody({
             <span>
               {pickText(line.name, lang)}
               {pickText(line.size, lang) ? <small> · {pickText(line.size, lang)}</small> : null}
+              {line.note ? <LineNote>{line.note}</LineNote> : null}
             </span>
             <small>×{line.qty}</small>
             <span>{formatMoney(line.priceCents * line.qty, lang)}</span>

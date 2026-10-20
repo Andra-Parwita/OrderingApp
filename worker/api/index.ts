@@ -8,6 +8,7 @@ import { createD1Repository } from '../db';
 import { importAddressKey } from '../db/address';
 import { Db, type D1Like } from '../db/d1';
 import { createPushDispatcher } from '../push/dispatch';
+import { createMenuNoticeService } from '../push/menuNotice';
 import { createWebPushSender, realVapidValue, vapidFromEnv, type PushSender } from '../push/sender';
 import { handleKitchenRequest } from './kitchenRoutes';
 import type { ImageBucket } from '../images/r2';
@@ -84,10 +85,8 @@ export async function handleWorkerRequest(
   // Web push: writes that tell customers something are collected, then sent after the answer is
   // ready (never inside the D1 write). Without VAPID keys nothing is sent.
   const vapid = vapidFromEnv(env);
-  const dispatcher = createPushDispatcher({
-    db: new Db(env.DB),
-    sender: deps.pushSender ?? (vapid ? createWebPushSender(vapid) : undefined),
-  });
+  const sender = deps.pushSender ?? (vapid ? createWebPushSender(vapid) : undefined);
+  const dispatcher = createPushDispatcher({ db: new Db(env.DB), sender });
   const repo = createD1Repository(env.DB, {
     now: () => new Date(),
     // A missing secret must never become a key anyone can guess: use one nobody knows.
@@ -103,6 +102,7 @@ export async function handleWorkerRequest(
     images: env.IMAGES,
     devTools,
     vapidPublicKey: realVapidValue(env.VAPID_PUBLIC_KEY),
+    menuNotices: createMenuNoticeService({ db: new Db(env.DB), now: () => new Date(), sender }),
     translate: { ai: env.AI, takeSlot: createTranslateSlots(env.SELLER_LIVE) },
     addressKey: await importAddressKey(env.ADDRESS_KEY),
     maintenanceToken: env.MAINTENANCE_TOKEN,

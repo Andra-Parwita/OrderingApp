@@ -166,7 +166,10 @@ export function StepTabs({
   const summary = (step: Step, state: StepState): string => {
     if (state === 'current') return t('draft.stoppedHere');
     if (state === 'todo') return t('draft.todo');
-    if (step === 'dishes') return t('draft.stepDishes', { count: data.view.dishes.length });
+    if (step === 'dishes')
+      return t('draft.stepDishes', {
+        count: data.view.dishes.filter((dish) => dish.groupId === undefined).length,
+      });
     if (step === 'details') {
       const count = data.view.pickupPoints.length;
       return [
@@ -259,13 +262,19 @@ function ReadOnlyStep({
       <Rows aria-label={t('check.dishesOn')}>
         {view.dishes.map((dish) => (
           <DishLine key={dish.id}>
-            <span className="name">{pickText(dish.name, lang)}</span>
-            <span>{formatMoney(dish.priceCents, lang)}</span>
+            <span className="name">
+              {dish.groupId === undefined ? '' : '– '}
+              {pickText(dish.name, lang)}
+            </span>
+            <span>{dish.groupId === undefined ? formatMoney(dish.priceCents, lang) : ''}</span>
             <span className="sub">
               {dish.limit === undefined ? '–' : t('draft.limitOf', { count: dish.limit })}
             </span>
             <span className="sub">
-              {data.chefs.find((chef) => chef.id === dish.chefId)?.name ?? t('dish.wholeKitchen')}
+              {dish.groupId === undefined
+                ? (data.chefs.find((chef) => chef.id === dish.chefId)?.name ??
+                  t('dish.wholeKitchen'))
+                : ''}
             </span>
           </DishLine>
         ))}

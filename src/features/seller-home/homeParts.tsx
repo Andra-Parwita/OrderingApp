@@ -62,6 +62,13 @@ export const Sub = styled.p`
   color: ${({ theme }) => theme.c.muted};
 `;
 
+/** The header's buttons: an optional extra (the bell) beside the main button. */
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
 export function Header({
   eyebrow,
   filled = false,
@@ -69,6 +76,7 @@ export function Header({
   title,
   sub,
   action,
+  extra,
 }: Readonly<{
   eyebrow: string;
   filled?: boolean;
@@ -76,6 +84,8 @@ export function Header({
   title: string;
   sub?: ReactNode;
   action: ReactNode;
+  /** Shown beside the action (plan 112: the notify bell). */
+  extra?: ReactNode;
 }>) {
   return (
     <HeaderBox>
@@ -87,7 +97,14 @@ export function Header({
         <Title>{title}</Title>
         {sub ? <Sub>{sub}</Sub> : null}
       </Line>
-      {action}
+      {extra ? (
+        <HeaderActions>
+          {extra}
+          {action}
+        </HeaderActions>
+      ) : (
+        action
+      )}
     </HeaderBox>
   );
 }

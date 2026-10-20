@@ -9,6 +9,7 @@ import { error } from './respond';
 import { actorOf, sellerSlugOf } from './devRoutes';
 import { withAddresses } from './routeAddresses';
 import { afterOrderWrite, noSeller, signal, type ApiCall, type RouteContext } from './routeKit';
+import { MENU_NOTICE_ROUTES } from './menuNoticeRoutes';
 import { MENU_ROUTES } from './menuRoutes';
 import { PRIVATE_ROUTES } from './privateRoutes';
 import { SELLER_ORDER_ROUTES } from './sellerOrderRoutes';
@@ -21,6 +22,7 @@ export const SELLER_ROUTES: ReadonlyArray<SellerRoute> = [
   ...SELLER_ORDER_ROUTES,
   ...SETTINGS_ROUTES,
   ...PRIVATE_ROUTES,
+  ...MENU_NOTICE_ROUTES,
 ];
 
 type Who = {

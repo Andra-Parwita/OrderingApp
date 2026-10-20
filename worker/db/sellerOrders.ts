@@ -22,7 +22,7 @@ import {
   type UpdateResult,
 } from '../../shared/updateContract';
 import type { SellerRepository } from '../repo/Repository';
-import { changeStatements, LIVE_MENU, readLiveOrder, readOrders } from './orders';
+import { changeStatements, lineNotesChanged, LIVE_MENU, readLiveOrder, readOrders } from './orders';
 import { fail, ok, warn, type Draft } from './sellerShared';
 import { type SellerContext } from './sellerContext';
 
@@ -299,7 +299,7 @@ export function ordersPart(
         const s = await loadState(order.id);
         // A cancelled order that stays cancelled holds no portions, so nothing to warn about.
         const over = input.force === true || (order.status === 'cancelled' && !reactivate);
-        const lines = c.buildLines(s, input.lines, order.lines, over ? 'allow' : 'warn');
+        const lines = c.buildLines(s, input.lines, order.lines, over ? 'allow' : 'warn', true);
         if (!lines.ok) return lines;
         next = { ...next, lines: lines.value };
       }
@@ -310,9 +310,13 @@ export function ordersPart(
         else next.note = input.note;
       }
       const diff = diffOrder(order, next, { staff: true });
-      if (!diff && !reactivate) return ok(order);
+      const notes = lineNotesChanged(order.lines, next.lines);
+      if (!diff && !reactivate && !notes) return ok(order);
       let d = withOrder(
-        { ...draft(next), linesChanged: (diff?.items.length ?? 0) > 0 || reactivate },
+        {
+          ...draft(next),
+          linesChanged: (diff?.items.length ?? 0) > 0 || reactivate || notes,
+        },
         { changed: false },
       );
       if (reactivate) {

@@ -139,6 +139,8 @@ export function lifecyclePart(
         );
       }
       let removed: Array<string> = [];
+      // A removed choice stands for its dish in the warning (plan 111).
+      const ownerOf = new Map<string, string>();
       if (request.dishIds) {
         const wanted = request.dishIds;
         const dishes =
@@ -150,14 +152,25 @@ export function lifecyclePart(
                 ...wanted,
               );
         const byId = new Map(dishes.map((dish) => [dish.id, dish]));
-        if (wanted.some((id) => !byId.has(id))) return fail('unknown_item', 'Unknown dish');
+        if (wanted.some((id) => !byId.has(id) || byId.get(id)?.group_id !== null)) {
+          return fail('unknown_item', 'Unknown dish');
+        }
         const items = itemRows as Array<ItemRow>;
+        // Plan 111: a dish with choices travels with its choices (kept ones stay as they are).
+        const choiceItems = (parentId: string) =>
+          items.filter((item) => item.group_id === parentId);
+        const parents = items.filter((item) => item.group_id === null);
         const kept = new Map(
-          items.filter((item) => item.dish_id !== null).map((item) => [item.dish_id, item]),
+          parents.filter((item) => item.dish_id !== null).map((item) => [item.dish_id, item]),
         );
-        removed = items
-          .filter((item) => item.dish_id === null || !wanted.includes(item.dish_id))
-          .map((item) => item.id);
+        const dropped = parents.filter(
+          (item) => item.dish_id === null || !wanted.includes(item.dish_id),
+        );
+        removed = dropped.flatMap((item) => {
+          const ids = [item.id, ...choiceItems(item.id).map((choice) => choice.id)];
+          ids.forEach((id) => ownerOf.set(id, item.id));
+          return ids;
+        });
         if (removed.length > 0) {
           statements.push(
             db.stmt(
@@ -167,27 +180,29 @@ export function lifecyclePart(
             ),
           );
         }
-        const added: Array<DishRow> = [];
-        wanted.forEach((dishId, position) => {
+        const newChoices = await c.choicesOf(wanted.filter((dishId) => !kept.has(dishId)));
+        let position = 0;
+        const move = (id: string) =>
+          statements.push(
+            db.stmt(
+              'UPDATE menu_items SET position = ? WHERE seller_id = ? AND id = ?',
+              position++,
+              sid,
+              id,
+            ),
+          );
+        for (const dishId of wanted) {
           const have = kept.get(dishId);
           if (have) {
+            move(have.id);
+            choiceItems(have.id).forEach((choice) => move(choice.id));
+          } else {
             statements.push(
-              db.stmt(
-                'UPDATE menu_items SET position = ? WHERE seller_id = ? AND id = ?',
-                position,
-                sid,
-                have.id,
-              ),
+              ...(await copyStatements([byId.get(dishId) as DishRow], position, newChoices)),
             );
-          } else added.push(byId.get(dishId) as DishRow);
-        });
-        // New copies go after the kept ones, in the order asked for.
-        const positions = new Map(wanted.map((id, index) => [id, index]));
-        statements.push(
-          ...added.flatMap((dish) =>
-            copyStatements([dish], positions.get(dish.id) ?? wanted.length),
-          ),
-        );
+            position += 1 + (newChoices.get(dishId)?.length ?? 0);
+          }
+        }
       }
       await db.batch(statements);
       // Dropping a dish that has orders is allowed (D-062); the screen is told which ones.
@@ -204,7 +219,11 @@ export function lifecyclePart(
             );
       return ok({
         menu: await readView(),
-        warnings: { removedWithOrders: withOrders.map((hit) => hit.item_id) },
+        warnings: {
+          removedWithOrders: [
+            ...new Set(withOrders.map((hit) => ownerOf.get(hit.item_id) ?? hit.item_id)),
+          ],
+        },
       });
     },
 

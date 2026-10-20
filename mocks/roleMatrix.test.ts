@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { handleApiRequest, type RouteContext } from '../worker/api/routes';
 import type { LiveNotifier } from '../worker/live/hub';
+import { createMenuNoticeService } from '../worker/push/menuNotice';
 import { DEV_ADMIN_SETUP_KEY, useWorld, type World } from './impl';
 import { SoftAuthenticator } from './softAuthenticator';
 
@@ -44,6 +45,8 @@ function probes(): Array<Probe> {
     p('GET', `/api/s/${SLUG}/live`),
     p('GET', `/api/s/${SLUG}/live?tokens=x`, undefined, true),
     p('POST', `/api/s/${SLUG}/orders`, {}),
+    p('POST', `/api/s/${SLUG}/menu-notices`, {}),
+    p('DELETE', `/api/s/${SLUG}/menu-notices`, {}),
     p('GET', `/api/s/${SLUG}/team-names`),
     p('POST', `/api/s/${SLUG}/orders/find`, {}),
     p('GET', `/api/s/${SLUG}/other`),
@@ -140,6 +143,8 @@ function probes(): Array<Probe> {
     p('DELETE', `${S}/pickup-places/x`),
     p('GET', `${S}/preferences`),
     p('PUT', `${S}/preferences`, {}),
+    p('GET', `${S}/menu-notices`),
+    p('POST', `${S}/menu-notices/send`, {}),
     // seller: kitchen, people, data
     p('GET', `${S}/settings`),
     p('PUT', `${S}/settings`, {}),
@@ -321,7 +326,17 @@ describe('role matrix (plan 098 C2)', () => {
     if (kind === 'chef') cookie = await person('chef', 'chef-0001-cccc', chefId);
     if (kind === 'admin') cookie = await admin();
     if (kind === 'customer') cookie = '__Host-customer=not-a-real-customer-session';
-    const context: RouteContext = { live, ...(kind === 'dev' ? { devTools: true } : {}) };
+    const menuNotices = createMenuNoticeService({
+      db: world.db,
+      now: () => new Date('2026-10-07T10:00:00Z'),
+      sender: () => Promise.resolve(201),
+      log: () => undefined,
+    });
+    const context: RouteContext = {
+      live,
+      menuNotices,
+      ...(kind === 'dev' ? { devTools: true } : {}),
+    };
     const lines: Array<string> = [];
     for (const probe of probes()) {
       const status = await send(probe, ids, cookie, context);
@@ -355,6 +370,8 @@ describe('role matrix (plan 098 C2)', () => {
       GET /api/s/onde-onde/live | none 426 | customer 426 | helper 426 | chef 426 | owner 426 | admin 426 | dev 426
       GET /api/s/onde-onde/live?tokens=x (ws) | none 404 | customer 404 | helper 404 | chef 404 | owner 404 | admin 404 | dev 404
       POST /api/s/onde-onde/orders {} | none 400 | customer 400 | helper 400 | chef 400 | owner 400 | admin 400 | dev 400
+      POST /api/s/onde-onde/menu-notices {} | none 400 | customer 400 | helper 400 | chef 400 | owner 400 | admin 400 | dev 400
+      DELETE /api/s/onde-onde/menu-notices {} | none 400 | customer 400 | helper 400 | chef 400 | owner 400 | admin 400 | dev 400
       GET /api/s/onde-onde/team-names | none 200 | customer 200 | helper 200 | chef 200 | owner 200 | admin 200 | dev 200
       POST /api/s/onde-onde/orders/find {} | none 400 | customer 400 | helper 400 | chef 400 | owner 400 | admin 400 | dev 400
       GET /api/s/onde-onde/other | none null | customer null | helper null | chef null | owner null | admin null | dev null
@@ -448,6 +465,8 @@ describe('role matrix (plan 098 C2)', () => {
       DELETE /api/seller/pickup-places/x | none 401 | customer 401 | helper 403 | chef 403 | owner 404 | admin 403 | dev 404
       GET /api/seller/preferences | none 401 | customer 401 | helper 200 | chef 200 | owner 200 | admin 403 | dev 200
       PUT /api/seller/preferences {} | none 401 | customer 401 | helper 403 | chef 403 | owner 400 | admin 403 | dev 400
+      GET /api/seller/menu-notices | none 401 | customer 401 | helper 403 | chef 403 | owner 200 | admin 403 | dev 200
+      POST /api/seller/menu-notices/send {} | none 401 | customer 401 | helper 403 | chef 403 | owner 409 | admin 403 | dev 409
       GET /api/seller/settings | none 401 | customer 401 | helper 403 | chef 200 | owner 200 | admin 403 | dev 200
       PUT /api/seller/settings {} | none 401 | customer 401 | helper 403 | chef 403 | owner 400 | admin 403 | dev 400
       PUT /api/seller/kitchen/name {} | none 401 | customer 401 | helper 403 | chef 403 | owner 400 | admin 403 | dev 400

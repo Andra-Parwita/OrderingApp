@@ -356,7 +356,7 @@ function* execute(op: MenuOp) {
     case 'addDishToMenu': {
       const data = yield* currentData();
       const onMenu = (data?.view.dishes ?? []).flatMap((dish) =>
-        dish.dishId ? [dish.dishId] : [],
+        dish.dishId && dish.groupId === undefined ? [dish.dishId] : [],
       );
       if (onMenu.includes(op.dishId)) return { ok: true, done: {} } satisfies Outcome;
       return viewOutcome(
@@ -405,7 +405,9 @@ function* execute(op: MenuOp) {
       const set = data?.sets.find((candidate) => candidate.id === op.setId);
       if (!data || !set)
         return { ok: false, code: 'not_found', message: 'Set not found' } as Outcome;
-      const onMenu = data.view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : []));
+      const onMenu = data.view.dishes.flatMap((dish) =>
+        dish.dishId && dish.groupId === undefined ? [dish.dishId] : [],
+      );
       const next = [...onMenu, ...set.dishIds.filter((id) => !onMenu.includes(id))];
       const result = (yield call(
         updateCurrentMenu,
@@ -421,7 +423,9 @@ function* execute(op: MenuOp) {
       const week = data?.past.find((candidate) => candidate.id === op.weekId);
       if (!data || !week)
         return { ok: false, code: 'not_found', message: 'Menu not found' } as Outcome;
-      const onMenu = data.view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : []));
+      const onMenu = data.view.dishes.flatMap((dish) =>
+        dish.dishId && dish.groupId === undefined ? [dish.dishId] : [],
+      );
       const { ids, missing } = matchPastDishes(week.totals.items, data.dishes);
       const next = [...onMenu, ...ids.filter((id) => !onMenu.includes(id))].slice(
         0,

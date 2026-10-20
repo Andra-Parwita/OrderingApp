@@ -165,7 +165,8 @@
     "whatsappInvalid": "Nomor HP tidak valid.",
     "send": "Kirim tautan pesanan lewat WhatsApp",
     "done": "Selesai",
-    "status": "Dimulai sebagai {{status}}"
+    "status": "Dimulai sebagai {{status}}",
+    "addLineNote": "Tambah catatan"
   },
   "linkMsg": "Halo {{name}}, ini pesanan Anda {{code}}: {{items}}. Total {{total}}. {{how}}. Pantau dan terima kabar terbaru di sini: {{link}}",
   "attention": {
@@ -587,7 +588,9 @@
     "warnPaid": "Lunas {{amount}}. Tetap Lunas; panel pesanan menunjukkan sisa yang perlu ditagih atau dikembalikan.",
     "editedBy": "Diubah oleh {{name}} · {{when}}",
     "gap": "Lunas {{paid}} · total kini {{total}} · {{amount}} lagi",
-    "gapRefund": "Lunas {{paid}} · total kini {{total}} · {{amount}} dikembalikan"
+    "gapRefund": "Lunas {{paid}} · total kini {{total}} · {{amount}} dikembalikan",
+    "lineNote": "Catatan untuk {{name}}",
+    "lineNotePlaceholder": "mis. tanpa cabai"
   },
   "paidSheet": {
     "titlePaid": "Tandai lunas?",

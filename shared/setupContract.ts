@@ -274,8 +274,9 @@ export function parseMenuItem(input: unknown): MenuItem | null {
   const { preorder, dayStock } = input;
   if (preorder !== undefined && typeof preorder !== 'boolean') return null;
   if (dayStock !== undefined && !isInt(dayStock, 0, DAY_STOCK_MAX)) return null;
-  const { pictureRef } = input;
+  const { pictureRef, groupId } = input;
   if (pictureRef !== undefined && typeof pictureRef !== 'string') return null;
+  if (groupId !== undefined && (typeof groupId !== 'string' || groupId === '')) return null;
   return {
     id,
     name,
@@ -288,6 +289,7 @@ export function parseMenuItem(input: unknown): MenuItem | null {
     ...(preorder !== undefined ? { preorder } : {}),
     ...(dayStock !== undefined ? { dayStock } : {}),
     ...(pictureRef !== undefined ? { pictureRef } : {}),
+    ...(groupId !== undefined ? { groupId } : {}),
   };
 }
 

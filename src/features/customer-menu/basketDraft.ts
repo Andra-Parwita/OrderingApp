@@ -6,6 +6,7 @@ import {
   checkoutSet,
   menuLoaded,
   placeSucceeded,
+  noteSet,
   quantitySet,
   type CheckoutState,
   type CustomerRootState,
@@ -20,6 +21,8 @@ import {
 export type BasketDraft = Readonly<{
   basket: Readonly<Record<string, number>>;
   names: Readonly<Record<string, LocalText>>;
+  /** Plan 111: the line notes (absent in drafts saved before). */
+  notes?: Readonly<Record<string, string>>;
   checkout: CheckoutState;
 }>;
 
@@ -31,7 +34,7 @@ export function basketKeyOf(state: CustomerRootState): string | null {
 }
 
 export function basketDraftOf(state: CustomerRootState): BasketDraft | null {
-  const { menu, basket, checkout } = state.customer;
+  const { menu, basket, basketNotes, checkout } = state.customer;
   if (menu.status !== 'ready') return null;
   const names: Record<string, LocalText> = {};
   for (const item of menu.data.items) if (basket[item.id]) names[item.id] = item.name;
@@ -42,7 +45,10 @@ export function basketDraftOf(state: CustomerRootState): BasketDraft | null {
     checkout.firstName === '' &&
     checkout.fulfilment === null &&
     checkout.pickupPlaceId === null;
-  return empty ? null : { basket, names, checkout };
+  if (empty) return null;
+  return Object.keys(basketNotes).length > 0
+    ? { basket, names, notes: basketNotes, checkout }
+    : { basket, names, checkout };
 }
 
 function* save() {
@@ -75,7 +81,7 @@ function* clearAfterOrder() {
 export function* basketDraftSaga() {
   // Once per kitchen and menu in this store: a basket emptied on purpose is not brought back.
   const restoredFor = new Set<string>();
-  yield takeEvery([quantitySet.type, checkoutSet.type], save);
+  yield takeEvery([quantitySet.type, noteSet.type, checkoutSet.type], save);
   yield takeEvery(menuLoaded.type, restore, restoredFor);
   yield takeEvery(placeSucceeded.type, clearAfterOrder);
 }

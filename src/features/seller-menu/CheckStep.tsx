@@ -119,7 +119,12 @@ export function CheckStep({
         <Head>
           <h2>
             {t('check.dishesOn')}{' '}
-            <Muted as="span">{t('live.nOf', { n: view.dishes.length, max: MAX_MENU_ITEMS })}</Muted>
+            <Muted as="span">
+              {t('live.nOf', {
+                n: view.dishes.filter((dish) => dish.groupId === undefined).length,
+                max: MAX_MENU_ITEMS,
+              })}
+            </Muted>
           </h2>
           <LinkButton onClick={() => onGo('dishes')}>{t('check.addOrRemove')}</LinkButton>
         </Head>

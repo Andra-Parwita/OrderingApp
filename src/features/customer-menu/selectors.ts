@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import type { MenuItemView } from '../../../shared/domain';
+import type { LocalText, MenuItemView } from '../../../shared/domain';
 import type { CustomerRootState } from './customerSlice';
 
 /** `max`: most of this item the basket may hold (undefined = no limit); an edited order's own portions count. */
@@ -8,12 +8,15 @@ export type BasketLine = Readonly<{
   qty: number;
   lineCents: number;
   max: number | undefined;
+  /** Plan 111: the dish a choice belongs to (its name leads the line's name). */
+  groupName?: LocalText;
 }>;
 
 const EMPTY_LINES: ReadonlyArray<BasketLine> = [];
 
 export const selectMenu = (state: CustomerRootState) => state.customer.menu;
 export const selectBasket = (state: CustomerRootState) => state.customer.basket;
+export const selectBasketNotes = (state: CustomerRootState) => state.customer.basketNotes;
 export const selectPlace = (state: CustomerRootState) => state.customer.place;
 export const selectMenuSlug = (state: CustomerRootState) => state.customer.slug;
 /** True when the server said this seller does not exist (a mistyped or old link). */
@@ -34,7 +37,17 @@ export const selectBasketLines = createSelector(
       if (qty > 0) {
         const own = edit.status === 'ready' ? (edit.original[item.id] ?? 0) : 0;
         const max = item.remaining === null ? undefined : item.remaining + own;
-        lines.push({ item, qty, lineCents: item.priceCents * qty, max });
+        const parent =
+          item.groupId === undefined
+            ? undefined
+            : menu.data.items.find((candidate) => candidate.id === item.groupId);
+        lines.push({
+          item,
+          qty,
+          lineCents: item.priceCents * qty,
+          max,
+          ...(parent ? { groupName: parent.name } : {}),
+        });
       }
     }
     return lines;

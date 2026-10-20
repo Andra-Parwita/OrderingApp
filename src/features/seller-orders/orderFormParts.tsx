@@ -1,8 +1,9 @@
-import type { ChangeEvent } from 'react';
+import { useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { FIRST_NAME_MAX, NOTE_MAX } from '../../../shared/limits';
-import { TextArea, TextField } from '../../ui';
+import { Button, Icon, TextArea, TextField } from '../../ui';
+import { fieldControlStyle } from '../../ui/Field';
 import { SELLER_NS } from './i18n/register';
 
 // The pieces New order (tablet panel, phone screen) and Edit order share: the field styles, the
@@ -87,6 +88,46 @@ export function NoteField({ value, onChange }: NoteFieldProps) {
       onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.target.value)}
       maxLength={NOTE_MAX}
       showCounter
+    />
+  );
+}
+
+const LineNoteInput = styled.input<{ $invalid: boolean }>`
+  ${fieldControlStyle}
+  min-height: ${({ theme }) => theme.size.rowCompact}px;
+  font-size: 0.875rem;
+`;
+
+/** Plan 111: a note for one order line; a pencil opens the box, which stays open once it has text. */
+export function LineNoteField({
+  name,
+  value,
+  onChange,
+}: Readonly<{ name: string; value: string; onChange: (next: string) => void }>) {
+  const { t } = useTranslation(SELLER_NS);
+  const [open, setOpen] = useState(value !== '');
+  if (!open) {
+    return (
+      <div>
+        <Button
+          variant="quiet"
+          aria-label={t('edit.lineNote', { name })}
+          onClick={() => setOpen(true)}
+        >
+          <Icon name="pencil" />
+          {t('new.addLineNote')}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <LineNoteInput
+      $invalid={false}
+      aria-label={t('edit.lineNote', { name })}
+      placeholder={t('edit.lineNotePlaceholder')}
+      maxLength={NOTE_MAX}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
     />
   );
 }

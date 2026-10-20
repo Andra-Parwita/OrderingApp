@@ -3,6 +3,7 @@
 // It runs when a seller opens their history or backup, when a customer looks an order up, and
 // once a week for every seller from the Worker's cron (worker/api/scheduled.ts).
 import { LOCKOUT_MINUTES } from '../../shared/authContract';
+import { MENU_NOTICE_KEEP_DAYS } from '../../shared/menuNoticeContract';
 import { keepsOrderDetails } from '../../shared/pastWeeks';
 import type { Db } from './d1';
 import { dropExpiredPrivate } from './private';
@@ -87,6 +88,28 @@ export async function dropStaleFindAttempts(db: Db, now: Date): Promise<number> 
     now.toISOString(),
   );
   return rows.length;
+}
+
+/**
+ * Plan 112 (D-113): new-menu notice phones that have not ordered from the kitchen for 183 days go,
+ * and so do the send records of any menu that is no longer the seller's current one.
+ * Returns counts only.
+ */
+export async function dropStaleMenuNotices(
+  db: Db,
+  now: Date,
+): Promise<{ phones: number; sends: number }> {
+  const cutoff = new Date(now.getTime() - MENU_NOTICE_KEEP_DAYS * 86_400_000).toISOString();
+  const phones = await db.all<{ endpoint: string }>(
+    'DELETE FROM menu_notice_subscriptions WHERE last_order_at < ? RETURNING endpoint',
+    cutoff,
+  );
+  const sends = await db.all<{ menu_id: string }>(
+    `DELETE FROM menu_notice_sends WHERE NOT EXISTS (
+       SELECT 1 FROM menus m WHERE m.seller_id = menu_notice_sends.seller_id
+       AND m.id = menu_notice_sends.menu_id) RETURNING menu_id`,
+  );
+  return { phones: phones.length, sends: sends.length };
 }
 
 const AUTH_EXPIRED_KEEP_DAYS = 7;

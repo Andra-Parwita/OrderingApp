@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type UIEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Outlet, useLocation } from 'react-router';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import type { Kitchen } from '../../shared/domain';
 import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
@@ -10,6 +10,8 @@ import { cssUrl } from '../components/cssUrl';
 import { useManifestLinks } from '../components/install';
 import { useBannerCollapsed } from '../components/useBannerCollapsed';
 import { useMediaQuery } from '../components/useMediaQuery';
+import { WhatsNewPill } from '../components/whats-new/WhatsNewPill';
+import { ABOUT_NS, currentRelease } from '../features/seller-about';
 import { IncomeAccessProvider } from '../components/chef-income';
 import { ReadOnlyOrdersProvider, useNewOrderTitle } from '../features/seller-orders';
 import { ImageSlot } from '../ui';
@@ -204,8 +206,22 @@ export function SellerLayout() {
   // The left menu and the banner are unlinked (owner, 2026-10-12): only the stored toggle or a scroll collapses it.
   const bannerCollapsed = (stored && fixesPage(pathname, tablet)) || (slides && scrolled);
 
+  const release = currentRelease();
+  const { t: tAbout } = useTranslation(ABOUT_NS);
+  const navigate = useNavigate();
+
   return (
     <Shell $tablet={tablet} $fixed={fixed}>
+      {release ? (
+        <WhatsNewPill
+          version={release.version}
+          note={release.lines[lang][0] ?? ''}
+          title={tAbout('whatsNewIn', { version: release.version })}
+          see={tAbout('see')}
+          hide={tAbout('hideWhatsNew')}
+          onSee={() => void navigate('/seller/about', { state: { showReleases: true } })}
+        />
+      ) : null}
       {tablet ? (
         <SellerRail
           ids={navIds}

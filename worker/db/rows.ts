@@ -81,6 +81,7 @@ export type DishRow = {
   preorder: number;
   day_stock: number | null;
   picture_ref: string | null;
+  group_id: string | null;
 };
 export type PickupRow = {
   id: string;
@@ -110,6 +111,7 @@ export type ItemRow = {
   preorder: number;
   day_stock: number | null;
   picture_ref: string | null;
+  group_id: string | null;
 };
 export type ChefRow = { id: string; name: string };
 export type SetRow = {
@@ -167,6 +169,7 @@ export type LineRow = {
   price_cents: number;
   qty: number;
   chef_id: string | null;
+  note?: string | null;
 };
 export type AuditRow = {
   order_id: string;
@@ -273,7 +276,8 @@ export function menuOf(row: MenuRow, uses: ReadonlyArray<MenuPlaceRow>): Menu {
   };
 }
 
-export function dishOf(row: DishRow): Dish {
+/** `choices` are the rows whose group_id is this dish (in order); a choice row itself has none. */
+export function dishOf(row: DishRow, choices: ReadonlyArray<DishRow> = []): Dish {
   return {
     id: row.id,
     name: text(row.name_en, row.name_id),
@@ -286,6 +290,15 @@ export function dishOf(row: DishRow): Dish {
     ...(row.day_stock !== null ? { dayStock: row.day_stock } : {}),
     ...(row.picture_ref !== null ? { pictureRef: row.picture_ref } : {}),
     ...(row.last_used_at !== null ? { lastUsedAt: row.last_used_at } : {}),
+    ...(choices.length > 0
+      ? {
+          choices: choices.map((choice) => ({
+            id: choice.id,
+            name: text(choice.name_en, choice.name_id),
+            limit: choice.portion_limit,
+          })),
+        }
+      : {}),
   };
 }
 
@@ -330,6 +343,7 @@ export function itemOf(row: ItemRow): MenuItem {
     ...(row.preorder === 0 ? { preorder: false } : {}),
     ...(row.day_stock !== null ? { dayStock: row.day_stock } : {}),
     ...(row.picture_ref !== null ? { pictureRef: row.picture_ref } : {}),
+    ...(row.group_id !== null && row.group_id !== undefined ? { groupId: row.group_id } : {}),
   };
 }
 
@@ -381,6 +395,7 @@ export function ordersOf(
       size: text(line.size_en, line.size_id),
       priceCents: line.price_cents,
       qty: line.qty,
+      ...(line.note !== null && line.note !== undefined ? { note: line.note } : {}),
       ...(line.chef_id !== null && line.chef_id !== undefined ? { chefId: line.chef_id } : {}),
       ...(line.ticked === 1 ? { ticked: true } : {}),
     })),

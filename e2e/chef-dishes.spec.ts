@@ -60,7 +60,7 @@ test('a chef adds and edits their own dish', async ({ page, request }) => {
   const rail = page.getByRole('navigation', { name: 'Seller' });
   await rail.getByRole('link', { name: 'Menu', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Your dishes' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'New menu' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'New menu', exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: /Saved sets/ })).toHaveCount(0);
 
   // Add a dish: the editor has no chef picker and no "add to this menu".

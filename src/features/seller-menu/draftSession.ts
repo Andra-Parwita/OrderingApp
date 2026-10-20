@@ -152,6 +152,21 @@ function itemOfDish(dish: Dish): MenuDishView {
   };
 }
 
+/** Plan 111: the choices a ticked dish brings, shaped like menu rows under it (same price). */
+function choicesOfDish(dish: Dish): Array<MenuDishView> {
+  const { limit: dishLimit, ...base } = itemOfDish(dish);
+  void dishLimit;
+  return (dish.choices ?? []).map((choice) => ({
+    ...base,
+    id: choice.id,
+    dishId: choice.id,
+    name: choice.name,
+    remaining: choice.limit,
+    groupId: dish.id,
+    ...(choice.limit !== null ? { limit: choice.limit } : {}),
+  }));
+}
+
 function withEdit(item: MenuDishView, request: ItemEdit['request']): MenuDishView {
   const next: MenuDishView = { ...item };
   if (request.name) next.name = request.name;
@@ -188,7 +203,9 @@ export type SessionDiff = {
 
 export function diffSession(data: MenuData, state: SessionState): SessionDiff {
   const saved = data.view.dishes;
-  const savedIds = saved.flatMap((item) => (item.dishId ? [item.dishId] : []));
+  const savedIds = saved.flatMap((item) =>
+    item.dishId && item.groupId === undefined ? [item.dishId] : [],
+  );
   const nowIds = state.dishIds ?? savedIds;
   const added = nowIds.filter((id) => !savedIds.includes(id));
   const removed = saved.filter((item) => item.dishId && !nowIds.includes(item.dishId));
@@ -228,10 +245,14 @@ export function applySession(data: MenuData, state: SessionState): MenuData {
   let dishes = data.view.dishes;
   if (state.dishIds) {
     dishes = state.dishIds.flatMap((libraryId) => {
-      const item = data.view.dishes.find((candidate) => candidate.dishId === libraryId);
-      if (item) return [item];
+      const item = data.view.dishes.find(
+        (candidate) => candidate.dishId === libraryId && candidate.groupId === undefined,
+      );
+      if (item) {
+        return [item, ...data.view.dishes.filter((choice) => choice.groupId === item.id)];
+      }
       const dish = data.dishes.find((candidate) => candidate.id === libraryId);
-      return dish ? [itemOfDish(dish)] : [];
+      return dish ? [itemOfDish(dish), ...choicesOfDish(dish)] : [];
     });
   }
   dishes = dishes.map((item) => {

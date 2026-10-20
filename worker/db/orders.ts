@@ -1,6 +1,6 @@
 // Reading and writing orders with their lines, audit trail and customer inbox. Every function takes
 // the seller id and filters by it (D-036).
-import type { AuditEntry, InboxEntry, SellerOrder } from '../../shared/domain';
+import type { AuditEntry, InboxEntry, OrderLine, SellerOrder } from '../../shared/domain';
 import { Db, type D1Statement } from './d1';
 import { ordersOf, type AuditRow, type InboxRow, type LineRow, type OrderRow } from './rows';
 
@@ -139,11 +139,23 @@ export function inboxStatement(
   );
 }
 
+/** Plan 111: whether any line's note differs (the audit diff only counts dishes, note and fulfilment). */
+export function lineNotesChanged(
+  before: ReadonlyArray<OrderLine>,
+  after: ReadonlyArray<OrderLine>,
+): boolean {
+  return after.some(
+    (line) =>
+      (before.find((candidate) => candidate.itemId === line.itemId)?.note ?? '') !==
+      (line.note ?? ''),
+  );
+}
+
 function lineStatements(db: Db, order: SellerOrder): Array<D1Statement> {
   return order.lines.map((line, position) =>
     db.stmt(
-      `INSERT INTO order_lines (seller_id, order_id, position, item_id, name_en, name_id, size_en, size_id, price_cents, qty, ticked, chef_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO order_lines (seller_id, order_id, position, item_id, name_en, name_id, size_en, size_id, price_cents, qty, ticked, chef_id, note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       order.sellerId,
       order.id,
       position,
@@ -156,6 +168,7 @@ function lineStatements(db: Db, order: SellerOrder): Array<D1Statement> {
       line.qty,
       line.ticked === true,
       line.chefId ?? null,
+      line.note ?? null,
     ),
   );
 }

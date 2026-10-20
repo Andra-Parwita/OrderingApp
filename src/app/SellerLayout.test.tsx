@@ -2,7 +2,9 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import i18n from 'i18next';
 import { useEffect, useState } from 'react';
 import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { RELEASE_VERSION } from '../../shared/release';
+import { WHATS_NEW_KEY_PREFIX } from '../components/whats-new/WhatsNewPill';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
 import type { Me } from '../../shared/authContract';
@@ -31,6 +33,9 @@ beforeAll(async () => {
   await initI18n();
   await i18n.changeLanguage('en');
 });
+
+// Plan 117: the What's new pill is not under test here.
+beforeEach(() => localStorage.setItem(WHATS_NEW_KEY_PREFIX + RELEASE_VERSION, '1'));
 
 afterEach(() => {
   wide = false;

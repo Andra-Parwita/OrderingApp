@@ -131,7 +131,10 @@ export function DishesStep({
   const marks = useMarks();
   const { view } = data;
   const serverIds = useMemo(
-    () => view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : [])),
+    () =>
+      view.dishes.flatMap((dish) =>
+        dish.dishId && dish.groupId === undefined ? [dish.dishId] : [],
+      ),
     [view.dishes],
   );
   // Plan 072: a tick shows at once and is saved ~1 s after the last one, in one request.
@@ -145,12 +148,14 @@ export function DishesStep({
   const onMenuIds = pending ?? serverIds;
   const onMenu = useMemo(() => {
     if (pending === null) {
-      return view.dishes.map((dish) => ({
-        key: dish.id,
-        dishId: dish.dishId,
-        name: dish.name,
-        priceCents: dish.priceCents,
-      }));
+      return view.dishes
+        .filter((dish) => dish.groupId === undefined)
+        .map((dish) => ({
+          key: dish.id,
+          dishId: dish.dishId,
+          name: dish.name,
+          priceCents: dish.priceCents,
+        }));
     }
     return pending.flatMap((dishId) => {
       const item = view.dishes.find((candidate) => candidate.dishId === dishId);

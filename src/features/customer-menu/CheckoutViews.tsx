@@ -1,4 +1,4 @@
-import { memo, useCallback, useId, type ReactNode } from 'react';
+import { memo, useCallback, useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { css, keyframes, styled } from 'styled-components';
 import type { Fulfilment, Language, PickupPoint } from '../../../shared/domain';
@@ -9,10 +9,10 @@ import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { CustomerPage } from '../../components/CustomerPage';
 import { Notice } from '../../ui/Notice';
-import { Group, Qty, Round } from './DishesView';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
-import { MainButton } from './menuParts';
+import { Group, MainButton, Qty, Round } from './menuParts';
+import { NoteSheet } from './NoteSheet';
 import type { BasketNotice } from './customerSlice';
 import type { BasketLine } from './selectors';
 
@@ -66,6 +66,9 @@ function AlertBanner({ lead, rest }: Readonly<{ lead: string; rest: string }>) {
 
 // ---- Basket ----
 
+const NO_NOTES: Readonly<Record<string, string>> = {};
+const noNote = () => undefined;
+
 const Lines = styled.ul`
   margin: 0;
   padding: 0;
@@ -96,6 +99,34 @@ const LineMeta = styled.span`
     color: ${({ theme }) => theme.c.text};
     font-weight: 700;
   }
+`;
+const LineNote = styled.span`
+  overflow: hidden;
+  color: ${({ theme }) => theme.c.warn};
+  font-size: ${({ theme }) => theme.type.size.md};
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+const NoteButton = styled.button<{ $has: boolean }>`
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: ${({ theme }) => theme.size.tap}px;
+  height: ${({ theme }) => theme.size.tap}px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: ${({ theme, $has }) => ($has ? theme.c.warn : theme.c.muted)};
+  cursor: pointer;
+`;
+const LineEnd = styled.div`
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 const TotalRow = styled.div`
   display: flex;
@@ -227,13 +258,33 @@ type LineProps = Readonly<{
   lang: Language;
   /** The only line of an order being changed: it cannot be taken out (cancel the order instead). */
   locked: boolean;
+  /** Plan 111: this line's note ('' = none). */
+  note: string;
   onQty: (itemId: string, qty: number) => void;
+  onNote: (itemId: string, note: string) => void;
 }>;
 
-const BasketLineRow = memo(function BasketLineRow({ line, lang, locked, onQty }: LineProps) {
+const BasketLineRow = memo(function BasketLineRow({
+  line,
+  lang,
+  locked,
+  note,
+  onQty,
+  onNote,
+}: LineProps) {
   const { t } = useTranslation(CUSTOMER_NS);
   const { item, qty, lineCents } = line;
-  const name = pickText(item.name, lang);
+  const own = pickText(item.name, lang);
+  const name = line.groupName ? `${pickText(line.groupName, lang)} · ${own}` : own;
+  const [editing, setEditing] = useState(false);
+  const closeNote = useCallback(() => setEditing(false), []);
+  const saveNote = useCallback(
+    (text: string) => {
+      onNote(item.id, text);
+      setEditing(false);
+    },
+    [onNote, item.id],
+  );
   const max = line.max ?? MAX_QTY;
   const less = useCallback(() => onQty(item.id, qty - 1), [onQty, item.id, qty]);
   const more = useCallback(() => onQty(item.id, qty + 1), [onQty, item.id, qty]);
@@ -246,26 +297,39 @@ const BasketLineRow = memo(function BasketLineRow({ line, lang, locked, onQty }:
           {t('basket.each', { price: formatMoney(item.priceCents, lang) })} ·{' '}
           <b>{formatMoney(lineCents, lang)}</b>
         </LineMeta>
+        {note ? <LineNote>{note}</LineNote> : null}
       </LineText>
-      <Group role="group" aria-label={name}>
-        <Round
+      <LineEnd>
+        <NoteButton
           type="button"
-          aria-label={removing ? t('checkout.remove', { name }) : t('menu.decrease', { name })}
-          disabled={removing && locked}
-          onClick={less}
+          $has={note !== ''}
+          aria-label={t(note ? 'lineNote.change' : 'lineNote.add', { name })}
+          aria-haspopup="dialog"
+          onClick={() => setEditing(true)}
         >
-          <MenuIcon name={removing ? 'bin' : 'minus'} />
-        </Round>
-        <Qty aria-live="polite">{qty}</Qty>
-        <Round
-          type="button"
-          aria-label={t('menu.increase', { name })}
-          disabled={qty >= max}
-          onClick={more}
-        >
-          <MenuIcon name="plus" />
-        </Round>
-      </Group>
+          <MenuIcon name="pencil" />
+        </NoteButton>
+        <Group role="group" aria-label={name}>
+          <Round
+            type="button"
+            aria-label={removing ? t('checkout.remove', { name }) : t('menu.decrease', { name })}
+            disabled={removing && locked}
+            onClick={less}
+          >
+            <MenuIcon name={removing ? 'bin' : 'minus'} />
+          </Round>
+          <Qty aria-live="polite">{qty}</Qty>
+          <Round
+            type="button"
+            aria-label={t('menu.increase', { name })}
+            disabled={qty >= max}
+            onClick={more}
+          >
+            <MenuIcon name="plus" />
+          </Round>
+        </Group>
+      </LineEnd>
+      {editing ? <NoteSheet name={name} note={note} onSave={saveNote} onClose={closeNote} /> : null}
     </LineRow>
   );
 });
@@ -287,7 +351,10 @@ type BasketProps = Readonly<{
   closed: ClosedReason | null;
   /** The server turned the order down for stock, but nothing in the basket could be adjusted. */
   stockProblem: boolean;
+  /** Plan 111: the note per line (itemId to text). */
+  notes?: Readonly<Record<string, string>>;
   onQty: (itemId: string, qty: number) => void;
+  onNote?: (itemId: string, note: string) => void;
   onFulfilment: (value: Fulfilment) => void;
   onChangePlace: () => void;
   onNext: () => void;
@@ -308,7 +375,9 @@ export function BasketView({
   notices,
   closed,
   stockProblem,
+  notes = NO_NOTES,
   onQty,
+  onNote = noNote,
   onFulfilment,
   onChangePlace,
   onNext,
@@ -362,7 +431,9 @@ export function BasketView({
               line={line}
               lang={lang}
               locked={editing && lines.length === 1}
+              note={notes[line.item.id] ?? ''}
               onQty={onQty}
+              onNote={onNote}
             />
           ))}
         </Lines>

@@ -42,6 +42,9 @@ export function isStaff(me: Me | null): me is Me {
   );
 }
 
+/** The new-menu bell asks an owner-only API: a chef or helper must not even try (a dev run with no session still may). */
+export const mayNotify = (me: Me | null): boolean => me?.role !== 'chef' && me?.role !== 'helper';
+
 /** Seller screens act for the session's seller; the device remembers who signed in last. */
 function applyMe(me: Me | null): void {
   setSessionDemo(isStaff(me) && me.demo === true);

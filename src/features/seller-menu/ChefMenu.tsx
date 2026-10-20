@@ -96,8 +96,11 @@ export function ChefMenu({ chefId }: Readonly<{ chefId: string }>) {
   }
   const mine = data.dishes.filter((dish) => dish.chefId === chefId);
   const menuOpen = data.view.menu.state !== 'finished';
-  const menuFull = data.view.dishes.length >= MAX_MENU_ITEMS;
-  const onMenu = menuOpen ? data.view.dishes.filter((item) => item.chefId === chefId) : [];
+  const menuFull =
+    data.view.dishes.filter((item) => item.groupId === undefined).length >= MAX_MENU_ITEMS;
+  const onMenu = menuOpen
+    ? data.view.dishes.filter((item) => item.chefId === chefId && item.groupId === undefined)
+    : [];
   return (
     <Page>
       <Head>

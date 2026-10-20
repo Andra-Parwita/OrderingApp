@@ -73,6 +73,8 @@ export const API_ERROR_CODES = [
   'no_recent_order',
   /** Plan 089: this client placed 5 orders in this kitchen in the last 10 minutes (429). */
   'too_many_orders',
+  /** Plan 111 (D-112): a dish with choices cannot be ordered by itself; pick a choice (400). */
+  'pick_choice',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

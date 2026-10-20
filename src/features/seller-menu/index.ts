@@ -1,4 +1,5 @@
 export { MenuScreen } from './MenuScreen';
+export { NotifyBell } from './NotifyBell';
 export { MakeMenuScreen } from './MakeMenuScreen';
 export { DishesScreen, SavedSetsScreen } from './LibraryScreens';
 export type { MenuSlots } from './slots';

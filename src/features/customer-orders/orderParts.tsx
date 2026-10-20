@@ -242,6 +242,12 @@ export const Rows = styled.dl`
 export const Muted = styled.span`
   color: ${({ theme }) => theme.c.muted};
 `;
+/** Plan 111: a line's note, one amber line under the dish. */
+export const LineNote = styled.span`
+  display: block;
+  color: ${({ theme }) => theme.c.warn};
+  font-size: ${({ theme }) => theme.type.size.md};
+`;
 export const Bold = styled.b`
   font-weight: 700;
 `;

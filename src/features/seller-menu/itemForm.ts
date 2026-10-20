@@ -1,11 +1,30 @@
 import type { SellerMenuItemView } from '../../../shared/domain';
-import type { Dish, UpdateDishRequest } from '../../../shared/menusContract';
-import { ITEM_DESCRIPTION_MAX, ITEM_NAME_MAX, ITEM_SIZE_MAX } from '../../../shared/limits';
+import type {
+  CreateDishRequest,
+  Dish,
+  DishChoiceInput,
+  UpdateDishRequest,
+} from '../../../shared/menusContract';
+import {
+  ITEM_DESCRIPTION_MAX,
+  ITEM_NAME_MAX,
+  ITEM_SIZE_MAX,
+  MAX_CHOICES,
+} from '../../../shared/limits';
 import { parsePriceInput, priceInputOf, PRICE_MAX_CENTS } from '../../../shared/priceInput';
-import type { CreateItemRequest, UpdateItemRequest } from '../../../shared/setupContract';
+import type { UpdateItemRequest } from '../../../shared/setupContract';
 
 export { parsePriceInput, priceInputOf, PRICE_MAX_CENTS };
 export const LIMIT_MAX = 10_000;
+
+/** Plan 111: one choice being typed; `id` is set for a saved one, `key` keeps the row steady. */
+export type ChoiceDraft = {
+  key: string;
+  id?: string;
+  nameEn: string;
+  nameId: string;
+  limit: string;
+};
 
 export type ItemDraft = {
   nameEn: string;
@@ -24,6 +43,8 @@ export type ItemDraft = {
   /** Plan 029: also sold at the stall on the day, with `dayStock` portions. */
   onTheDay: boolean;
   dayStock: string;
+  /** Plan 111 (D-112): the dish's choices; with one or more, limits are per choice. */
+  choices?: Array<ChoiceDraft>;
 };
 
 export const EMPTY_DRAFT: ItemDraft = {
@@ -41,6 +62,17 @@ export const EMPTY_DRAFT: ItemDraft = {
   onTheDay: false,
   dayStock: '',
 };
+
+let choiceSeq = 0;
+export function newChoiceDraft(): ChoiceDraft {
+  choiceSeq += 1;
+  return {
+    key: `new-${String(Date.now())}-${String(choiceSeq)}`,
+    nameEn: '',
+    nameId: '',
+    limit: '',
+  };
+}
 
 export function draftOf(item: SellerMenuItemView): ItemDraft {
   return {
@@ -74,6 +106,14 @@ export function unifyDraft(draft: ItemDraft, lang: 'en' | 'id'): ItemDraft {
     descId: desc,
     sizeEn: size,
     sizeId: size,
+    ...(draft.choices
+      ? {
+          choices: draft.choices.map((choice) => {
+            const choiceName = one(choice.nameEn, choice.nameId);
+            return { ...choice, nameEn: choiceName, nameId: choiceName };
+          }),
+        }
+      : {}),
   };
 }
 
@@ -86,9 +126,30 @@ export type ItemErrors = Partial<{
   price: 'invalid';
   limit: 'invalid';
   dayStock: 'invalid';
+  /** Plan 111: a choice without a name, a name too long, or a limit that is not 1 to 10000. */
+  choices: 'invalid';
   /** Switching pre-order off needs "Sold on the day" on. */
   preorder: 'needsDay';
 }>;
+
+function choiceInvalid(choice: ChoiceDraft): boolean {
+  const nameEn = choice.nameEn.trim();
+  const nameId = choice.nameId.trim();
+  if (nameEn === '' && nameId === '') return true;
+  if (nameEn.length > ITEM_NAME_MAX || nameId.length > ITEM_NAME_MAX) return true;
+  const limitText = choice.limit.trim();
+  if (limitText === '') return false;
+  return !/^\d+$/.test(limitText) || Number(limitText) < 1 || Number(limitText) > LIMIT_MAX;
+}
+
+/** The choices as a request sends them (the whole list). */
+export function choiceInputsOf(draft: ItemDraft): Array<DishChoiceInput> {
+  return (draft.choices ?? []).map((choice) => ({
+    ...(choice.id !== undefined ? { id: choice.id } : {}),
+    name: text(choice.nameEn, choice.nameId),
+    limit: choice.limit.trim() === '' ? null : Number(choice.limit.trim()),
+  }));
+}
 
 export function validateDraft(draft: ItemDraft): {
   errors: ItemErrors;
@@ -107,8 +168,12 @@ export function validateDraft(draft: ItemDraft): {
   if (draft.sizeId.trim().length > ITEM_SIZE_MAX) errors.sizeId = 'tooLong';
   const priceCents = parsePriceInput(draft.price);
   if (priceCents === null) errors.price = 'invalid';
+  const choices = draft.choices ?? [];
+  if (choices.length > MAX_CHOICES || choices.some((choice) => choiceInvalid(choice))) {
+    errors.choices = 'invalid';
+  }
   let limit: number | null = null;
-  const limitText = draft.limit.trim();
+  const limitText = choices.length > 0 ? '' : draft.limit.trim();
   if (limitText !== '') {
     const value = /^\d+$/.test(limitText) ? Number(limitText) : 0;
     if (value < 1 || value > LIMIT_MAX) errors.limit = 'invalid';
@@ -125,7 +190,7 @@ export function validateDraft(draft: ItemDraft): {
 
 const text = (en: string, id: string) => ({ en: en.trim(), id: id.trim() });
 
-export function createRequestOf(draft: ItemDraft): CreateItemRequest | null {
+export function createRequestOf(draft: ItemDraft): CreateDishRequest | null {
   const { errors, priceCents, limit, dayStock } = validateDraft(draft);
   if (Object.keys(errors).length > 0) return null;
   return {
@@ -137,6 +202,7 @@ export function createRequestOf(draft: ItemDraft): CreateItemRequest | null {
     ...(draft.chefId !== '' ? { chefId: draft.chefId } : {}),
     ...(draft.preorder ? {} : { preorder: false }),
     ...(dayStock !== null ? { dayStock } : {}),
+    ...((draft.choices ?? []).length > 0 ? { choices: choiceInputsOf(draft) } : {}),
   };
 }
 
@@ -172,6 +238,13 @@ export function draftOfDish(dish: Dish): ItemDraft {
     preorder: dish.preorder !== false,
     onTheDay: dish.dayStock !== undefined,
     dayStock: dish.dayStock === undefined ? '' : String(dish.dayStock),
+    choices: (dish.choices ?? []).map((choice) => ({
+      key: choice.id,
+      id: choice.id,
+      nameEn: choice.name.en,
+      nameId: choice.name.id,
+      limit: choice.limit === null ? '' : String(choice.limit),
+    })),
   };
 }
 
@@ -181,7 +254,7 @@ export function updateDishRequestOf(draft: ItemDraft): UpdateDishRequest | null 
   if (!request) return null;
   const rest = { ...request };
   delete rest.soldOut;
-  return rest;
+  return { ...rest, choices: choiceInputsOf(draft) };
 }
 
 /**

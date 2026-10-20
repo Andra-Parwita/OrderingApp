@@ -16,6 +16,7 @@ import { DRAFT_NS, DraftNotice, draftKey, fingerprint, useDraft } from '../../co
 import { TranslateButton } from '../../components/translate';
 import { Button, SlideOverEditor, TextArea, TextField, WarningDialog } from '../../ui';
 import { FieldFrame, fieldControlStyle, useFieldIds } from '../../ui/Field';
+import { ChoicesField } from './ChoicesField';
 import { DishPictureField } from './DishPictureField';
 import { MENU_NS } from './i18n/register';
 import {
@@ -163,13 +164,16 @@ export function DishEditor({
   const [failure, setFailure] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const menuOpen = view.menu.state !== 'finished';
-  const menuFull = view.dishes.length >= MAX_MENU_ITEMS;
+  const menuFull = view.dishes.filter((d) => d.groupId === undefined).length >= MAX_MENU_ITEMS;
   const [addToMenu, setAddToMenu] = useState(!asChef && menuOpen && !menuFull);
   const languages = useSellerLanguages();
   const oneLanguage = languages === 'en' || languages === 'id' ? languages : null;
   const shown = oneLanguage ? unifyDraft(draft, oneLanguage) : draft;
   const baseDraft = oneLanguage ? unifyDraft(start, oneLanguage) : start;
   const { errors } = validateDraft(shown);
+  // Plan 111: choices are edited on the library dish; a menu copy only shows that it has some.
+  const choiceList = shown.choices ?? [];
+  const hasChoices = item ? view.dishes.some((d) => d.groupId === item.id) : choiceList.length > 0;
   const setBoth =
     (a: keyof ItemDraft, b: keyof ItemDraft) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -424,19 +428,21 @@ export function DishEditor({
               label={t('dish.price')}
               value={draft.price}
               inputMode="decimal"
-              helper={t('dish.priceHelper')}
+              helper={hasChoices ? t('choices.priceHelper') : t('dish.priceHelper')}
               onChange={set('price')}
               {...(submitted && errors.price ? { error: err('price') } : {})}
             />
-            <TextField
-              label={t('dish.limit')}
-              value={draft.limit}
-              inputMode="numeric"
-              placeholder={t('dish.noLimit')}
-              helper={t('dish.limitHelper')}
-              onChange={set('limit')}
-              {...(submitted && errors.limit ? { error: err('limit') } : {})}
-            />
+            {hasChoices ? null : (
+              <TextField
+                label={t('dish.limit')}
+                value={draft.limit}
+                inputMode="numeric"
+                placeholder={t('dish.noLimit')}
+                helper={t('dish.limitHelper')}
+                onChange={set('limit')}
+                {...(submitted && errors.limit ? { error: err('limit') } : {})}
+              />
+            )}
           </Cols>
           <Check>
             <input
@@ -482,6 +488,17 @@ export function DishEditor({
               onEdit={renderChefs ? openChefs : undefined}
             />
           )}
+          {target.kind === 'library' ? (
+            <ChoicesField
+              choices={choiceList}
+              oneLanguage={oneLanguage}
+              invalid={submitted && errors.choices !== undefined}
+              onChange={(next) => setDraft((previous) => ({ ...previous, choices: next }))}
+            />
+          ) : null}
+          {!isNew && target.kind === 'library' && choiceList.length > 0 ? (
+            <Muted>{t('choices.nextMenu')}</Muted>
+          ) : null}
           {isNew && menuOpen ? (
             <Check>
               <input

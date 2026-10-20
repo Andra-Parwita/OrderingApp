@@ -195,6 +195,18 @@ const Row = styled.article`
   .meta {
     text-align: right;
   }
+  &[data-choice='true'] .name {
+    padding-left: 4mm;
+    font-weight: 400;
+  }
+  &[data-group='true'] .tick {
+    visibility: hidden;
+  }
+  .lineNote {
+    grid-column: 3 / -1;
+    font-size: 9pt;
+    font-style: italic;
+  }
 `;
 const NotesBlock = styled.section`
   margin-top: 5mm;
@@ -386,7 +398,12 @@ export function KitchenPrintScreen({ onBack }: Readonly<{ onBack?: () => void }>
               <Section key={section.key} $break={section.pageBreak}>
                 {section.title !== null ? <GroupHead>{section.title}</GroupHead> : null}
                 {section.rows.map((row) => (
-                  <Row key={row.itemId} data-testid="kitchen-print-row">
+                  <Row
+                    key={row.itemId}
+                    data-testid="kitchen-print-row"
+                    data-choice={row.choice === true}
+                    data-group={row.group === true}
+                  >
                     <span className="tick" aria-hidden="true" />
                     <span className="qty">{row.qty}</span>
                     <span className="name">
@@ -405,9 +422,19 @@ export function KitchenPrintScreen({ onBack }: Readonly<{ onBack?: () => void }>
                       ]
                         .filter((part) => part !== null)
                         .join(' · ')}
-                      <br />
-                      {t('printPage.forPeople', { count: row.people })}
+                      {row.group ? null : <br />}
+                      {row.group ? null : t('printPage.forPeople', { count: row.people })}
                     </span>
+                    {row.lineNotes?.map((note) => (
+                      <span className="lineNote" key={`${note.firstName}-${note.note}`}>
+                        {t('printPage.lineNote', {
+                          note: note.note,
+                          who: note.choice
+                            ? `${note.firstName}, ${pickText(note.choice, lang)}`
+                            : note.firstName,
+                        })}
+                      </span>
+                    ))}
                   </Row>
                 ))}
               </Section>

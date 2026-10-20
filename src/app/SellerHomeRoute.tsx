@@ -5,7 +5,8 @@ import { HomeScreenCard } from '../components/install';
 import { SellerHome, type GoTarget, type HomeData } from '../features/seller-home';
 import { useLiveOrders } from '../features/seller-orders';
 import { useMenuData } from '../features/seller-menu/menuShared';
-import { useMenuWizard } from '../features/seller-menu';
+import { NotifyBell, useMenuWizard } from '../features/seller-menu';
+import { mayNotify, useSession } from './session';
 
 // Home on a tablet (/seller): loads what the Menu screens load, and wires Home's actions to the
 // same ops the Menu screen uses. Home itself (src/features/seller-home) imports no other feature.
@@ -20,6 +21,7 @@ const GO: Readonly<Record<GoTarget, string>> = {
 
 export function SellerHomeRoute() {
   const { i18n } = useTranslation();
+  const { me } = useSession();
   const navigate = useNavigate();
   const { data, status } = useMenuData();
   // Make a menu and Continue open the wizard as a layer over Home (plan 037).
@@ -49,6 +51,7 @@ export function SellerHomeRoute() {
         startFailed={wizard.failed}
         onContinue={wizard.open}
         onGo={go}
+        headerExtra={mayNotify(me) ? <NotifyBell /> : undefined}
       />
     </>
   );

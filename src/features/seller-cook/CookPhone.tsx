@@ -10,6 +10,7 @@ import { Icon, Segmented, type SegmentedOption } from '../../ui';
 import { ChefFilterControl, type useChefFilter } from './ChefFilterControl';
 import type { CookRow, GroupBy } from './cookModel';
 import { COOK_NS } from './i18n/register';
+import { LineNotes } from './LineNotes';
 import type { useMadeCounts } from './madeCounts';
 
 // Plan 100 (ruling B2): the Cook tab below the tablet breakpoint. One row per dish, folded
@@ -138,6 +139,7 @@ export function PhoneControls({
 const Item = styled.li<{ $done: boolean }>`
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   min-height: 3.625rem;
@@ -155,9 +157,10 @@ const Big = styled.span`
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 `;
-const Names = styled.span`
+const Names = styled.span<{ $choice?: boolean }>`
   flex: 1;
   min-width: 0;
+  padding-left: ${({ $choice, theme }) => ($choice ? theme.spacing.md : '0')};
 `;
 const Name = styled.b<{ $done: boolean }>`
   display: block;
@@ -277,12 +280,23 @@ export const PhoneRow = memo(function PhoneRow({
   ]
     .filter((part) => part !== null)
     .join(' · ');
+  if (row.group) {
+    return (
+      <Item $done={false}>
+        <Big>{row.qty}</Big>
+        <Names>
+          <Name $done={false}>{shown}</Name>
+          <Split>{t('choiceCount')}</Split>
+        </Names>
+      </Item>
+    );
+  }
   const done = counting && made >= row.qty;
   const unit = pickText(row.size, lang);
   return (
     <Item $done={done}>
       <Big>{row.qty}</Big>
-      <Names>
+      <Names $choice={row.choice === true}>
         <Name $done={done}>
           {shown} {row.privateQty > 0 ? <PrivateTag label={t('privateTag')} /> : null}
           {unit ? <Unit> · {unit}</Unit> : null}
@@ -323,6 +337,7 @@ export const PhoneRow = memo(function PhoneRow({
           </Bar>
         </>
       ) : null}
+      <LineNotes row={row} lang={lang} />
     </Item>
   );
 });

@@ -11,6 +11,8 @@ export type OrderDraft = {
   customerLang: Language;
   how: string;
   qtys: Readonly<Record<string, number>>;
+  /** Plan 111: a note per dish, by menu item id. */
+  lineNotes?: Readonly<Record<string, string>>;
   note: string;
   confirmNow: YesNo;
   paid: YesNo;
@@ -35,6 +37,7 @@ export type OrderForm = Readonly<{
   values: OrderDraft;
   set: <K extends keyof OrderDraft>(field: K, value: OrderDraft[K]) => void;
   setQty: (itemId: string, qty: number) => void;
+  setLineNote: (itemId: string, note: string) => void;
   draft: DraftControls;
   /** Dishes of the draft that are no longer on the menu were removed. */
   dropped: boolean;
@@ -70,6 +73,11 @@ export function useOrderDraft(knownIds: ReadonlyArray<string> | null): OrderForm
     setValues((previous) => ({ ...previous, [field]: value }));
   const setQty = (itemId: string, qty: number) =>
     setValues((previous) => ({ ...previous, qtys: { ...previous.qtys, [itemId]: qty } }));
+  const setLineNote = (itemId: string, lineNote: string) =>
+    setValues((previous) => ({
+      ...previous,
+      lineNotes: { ...previous.lineNotes, [itemId]: lineNote },
+    }));
   const dirty = JSON.stringify(values) !== JSON.stringify(EMPTY_ORDER);
-  return { values, set, setQty, draft, dropped, dirty };
+  return { values, set, setQty, setLineNote, draft, dropped, dirty };
 }

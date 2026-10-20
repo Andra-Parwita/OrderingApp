@@ -80,6 +80,7 @@ type DishRow = {
   size_id: string;
   price_cents: number;
   chef_id: string | null;
+  group_id: string | null;
 };
 
 export type PrivateOps = ReturnType<typeof createPrivateOps>;
@@ -102,25 +103,59 @@ export function createPrivateOps(deps: PrivateDeps, sid: string) {
     existing: ReadonlyArray<OrderLine> = [],
   ): Promise<StoreResult<Array<OrderLine>>> {
     const ids = inputs.map((line) => line.dishId);
+    const marks = ids.map(() => '?').join(', ');
     const rows = await db.all<DishRow>(
-      `SELECT id, name_en, name_id, size_en, size_id, price_cents, chef_id FROM dishes
-       WHERE seller_id = ? AND id IN (${ids.map(() => '?').join(', ')})`,
+      `SELECT id, name_en, name_id, size_en, size_id, price_cents, chef_id, group_id FROM dishes
+       WHERE seller_id = ? AND id IN (${marks})`,
       sid,
       ...ids,
     );
     const byId = new Map(rows.map((row) => [row.id, row]));
+    // Plan 111: a choice is ordered as "<dish> · <choice>" at the dish's price; a dish that has
+    // choices cannot be ordered by itself.
+    const parentIds = [...new Set(rows.flatMap((row) => (row.group_id ? [row.group_id] : [])))];
+    const parents = new Map<string, DishRow>();
+    if (parentIds.length > 0) {
+      const found = await db.all<DishRow>(
+        `SELECT id, name_en, name_id, size_en, size_id, price_cents, chef_id, group_id FROM dishes
+         WHERE seller_id = ? AND id IN (${parentIds.map(() => '?').join(', ')})`,
+        sid,
+        ...parentIds,
+      );
+      for (const row of found) parents.set(row.id, row);
+    }
+    const withChoices = new Set(
+      (
+        await db.all<{ group_id: string }>(
+          `SELECT DISTINCT group_id FROM dishes WHERE seller_id = ? AND group_id IN (${marks})`,
+          sid,
+          ...ids,
+        )
+      ).map((row) => row.group_id),
+    );
     const lines: Array<OrderLine> = [];
     for (const input of inputs) {
       const dish = byId.get(input.dishId);
       if (!dish) return fail('unknown_item', `Unknown dish: ${input.dishId}`);
+      if (withChoices.has(dish.id)) return fail('pick_choice', `Pick a choice of ${dish.name_en}`);
+      const parent = dish.group_id ? parents.get(dish.group_id) : undefined;
+      if (dish.group_id && !parent) return fail('unknown_item', `Unknown dish: ${input.dishId}`);
+      const base = parent ?? dish;
       const ticked = existing.find((line) => line.itemId === dish.id)?.ticked === true;
+      const part = (en: string, id: string, language: 'en' | 'id') =>
+        (language === 'en' ? en : id) || (language === 'en' ? id : en);
       lines.push({
         itemId: dish.id,
-        name: { en: dish.name_en, id: dish.name_id },
-        size: { en: dish.size_en, id: dish.size_id },
-        priceCents: input.priceCents ?? dish.price_cents,
+        name: parent
+          ? {
+              en: `${part(parent.name_en, parent.name_id, 'en')} · ${part(dish.name_en, dish.name_id, 'en')}`,
+              id: `${part(parent.name_en, parent.name_id, 'id')} · ${part(dish.name_en, dish.name_id, 'id')}`,
+            }
+          : { en: dish.name_en, id: dish.name_id },
+        size: { en: base.size_en, id: base.size_id },
+        priceCents: input.priceCents ?? base.price_cents,
         qty: input.qty,
-        ...(dish.chef_id !== null ? { chefId: dish.chef_id } : {}),
+        ...(base.chef_id !== null ? { chefId: base.chef_id } : {}),
         ...(ticked ? { ticked: true } : {}),
       });
     }

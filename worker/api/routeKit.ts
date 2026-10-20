@@ -7,6 +7,7 @@ import type { ChefResponse, ItemResponse, OkResponse } from '../../shared/setupC
 import type { SellerOrderResponse } from '../../shared/orderContract';
 import type { ImageBucket } from '../images/r2';
 import type { LiveNotifier } from '../live/hub';
+import type { MenuNoticeService } from '../push/menuNotice';
 import type { Repository, StoreResult } from '../repo/Repository';
 import { error } from './respond';
 import type { TranslateContext } from './translate';
@@ -27,6 +28,8 @@ export type RouteContext = {
   vapidPublicKey?: string | undefined;
   /** Plan 057: the translator and its daily cap; absent means translation is unavailable. */
   translate?: TranslateContext;
+  /** Plan 112: new-menu notices (customers turn them on, the owner sends); absent = the routes answer 404. */
+  menuNotices?: MenuNoticeService;
   /** Plan 071 (D-099): the key for delivery addresses (secret `ADDRESS_KEY`); absent = addresses are off. */
   addressKey?: CryptoKey | null;
   /** Plan 071: the public Maps Embed key (env `MAPS_EMBED_KEY`); sent in the public menu answer when set. */

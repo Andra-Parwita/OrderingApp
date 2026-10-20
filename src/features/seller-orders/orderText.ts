@@ -10,9 +10,11 @@ export function useLang(): Language {
   return i18n.resolvedLanguage === 'id' ? 'id' : 'en';
 }
 
-/** "2 Lemper, 1 Tempe" in the seller's language. */
+/** "2 Lemper, 1 Tempe (no chilli)" in the seller's language; a line note follows in brackets (plan 111). */
 export function itemsSummary(order: Order, lang: Language): string {
-  return order.lines.map((line) => `${line.qty} ${pickText(line.name, lang)}`).join(', ');
+  return order.lines
+    .map((line) => `${line.qty} ${pickText(line.name, lang)}${line.note ? ` (${line.note})` : ''}`)
+    .join(', ');
 }
 
 export function orderTotalCents(order: Order): number {

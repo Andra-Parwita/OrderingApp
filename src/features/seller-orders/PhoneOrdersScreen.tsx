@@ -48,6 +48,8 @@ export type PhoneOrdersScreenProps = OrdersScreenProps &
   Readonly<{
     toggles?: Readonly<{ changed: boolean; unpaid: boolean }>;
     onToggle?: (key: 'changed' | 'unpaid') => void;
+    /** Plan 112: the Notify customers bell, given by the app (this feature imports no other). */
+    headerExtra?: ReactNode;
   }>;
 
 // Plan 008: the layout gives the page the height between the banner and the bottom bar; the header
@@ -276,6 +278,7 @@ function PhoneOrdersContent({
   query,
   toggles = { changed: false, unpaid: false },
   onToggle,
+  headerExtra,
   onFilterChange,
   onQueryChange,
   onOpenOrder,
@@ -487,6 +490,7 @@ function PhoneOrdersContent({
                 <b>{t('phone.newOrderShort')}</b>
               </Button>
             ) : null}
+            {headerExtra}
             <BannerToggle />
           </Actions>
         </TitleLine>

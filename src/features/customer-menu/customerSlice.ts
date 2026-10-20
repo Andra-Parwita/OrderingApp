@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { ApiFailure } from '../../api/http';
 import type { DeliveryAddress } from '../../../shared/address';
 import type { Fulfilment, Language, CustomerOrder, LocalText } from '../../../shared/domain';
-import { MAX_QTY } from '../../../shared/limits';
+import { MAX_QTY, NOTE_MAX } from '../../../shared/limits';
 import type { MenuResponse } from '../../../shared/menuContract';
 
 export type FailureCode = ApiFailure['error'];
@@ -72,6 +72,8 @@ export type CustomerState = {
   menu: MenuState;
   /** itemId to quantity; items at 0 are removed. */
   basket: Record<string, number>;
+  /** Plan 111: a short note per basket line (itemId to text); only for items in the basket. */
+  basketNotes: Record<string, string>;
   checkout: CheckoutState;
   /** What changed in the basket when a refreshed menu could not cover it; shown as a banner. */
   notices: Array<BasketNotice>;
@@ -112,6 +114,7 @@ const initialState: CustomerState = {
   slug: null,
   menu: { status: 'idle' },
   basket: {},
+  basketNotes: {},
   checkout: emptyCheckout,
   notices: [],
   place: { status: 'idle' },
@@ -142,7 +145,10 @@ const customerSlice = createSlice({
           // brings its own basket.)
           state.slug = action.payload;
           state.menu = { status: 'loading' };
-          if (state.edit.status === 'idle') state.basket = {};
+          if (state.edit.status === 'idle') {
+            state.basket = {};
+            state.basketNotes = {};
+          }
           state.checkout = emptyCheckout;
           state.notices = [];
         } else if (state.menu.status !== 'ready') {
@@ -161,6 +167,7 @@ const customerSlice = createSlice({
         const item = action.payload.items.find((candidate) => candidate.id === itemId);
         if (max === 0) {
           delete state.basket[itemId];
+          delete state.basketNotes[itemId];
           if (item) notices.push({ kind: 'sold_out', itemId, name: item.name, qty: 0 });
         } else if (qty > max) {
           state.basket[itemId] = max;
@@ -175,10 +182,20 @@ const customerSlice = createSlice({
     quantitySet(state, action: PayloadAction<{ itemId: string; qty: number }>) {
       const { itemId, qty } = action.payload;
       const next = Math.max(0, Math.min(Math.floor(qty), maxFor(state, itemId)));
-      if (next === 0) delete state.basket[itemId];
-      else state.basket[itemId] = next;
+      if (next === 0) {
+        delete state.basket[itemId];
+        delete state.basketNotes[itemId];
+      } else state.basket[itemId] = next;
       // The customer has acted on what the banner said.
       state.notices = [];
+    },
+    /** Plan 111: set (or, when empty, remove) the note of a line that is in the basket. */
+    noteSet(state, action: PayloadAction<{ itemId: string; note: string }>) {
+      const { itemId } = action.payload;
+      if (!state.basket[itemId]) return;
+      const note = action.payload.note.trim().slice(0, NOTE_MAX);
+      if (note === '') delete state.basketNotes[itemId];
+      else state.basketNotes[itemId] = note;
     },
     /** Plan 061: a basket and checkout typed before a reload, put back once the menu is known. */
     basketRestored(
@@ -186,6 +203,7 @@ const customerSlice = createSlice({
       action: PayloadAction<{
         basket: Record<string, number>;
         names: Record<string, LocalText>;
+        notes?: Record<string, string>;
         checkout: CheckoutState;
       }>,
     ) {
@@ -205,6 +223,8 @@ const customerSlice = createSlice({
         if (next <= 0) notices.push({ kind: 'sold_out', itemId, name, qty: 0 });
         else {
           state.basket[itemId] = next;
+          const saved = action.payload.notes?.[itemId];
+          if (saved) state.basketNotes[itemId] = saved.slice(0, NOTE_MAX);
           if (next < qty) notices.push({ kind: 'fewer', itemId, name, qty: next });
         }
       }
@@ -240,6 +260,7 @@ const customerSlice = createSlice({
       state.place = { status: 'placed', token: action.payload.token };
       state.order = { status: 'ready', order: action.payload };
       state.basket = {};
+      state.basketNotes = {};
       state.checkout = emptyCheckout;
       state.notices = [];
     },
@@ -265,13 +286,20 @@ const customerSlice = createSlice({
       for (const line of action.payload.lines) original[line.itemId] = line.qty;
       state.edit = { status: 'ready', order: action.payload, original };
       state.basket = { ...original };
+      state.basketNotes = {};
+      for (const line of action.payload.lines) {
+        if (line.note) state.basketNotes[line.itemId] = line.note;
+      }
     },
     editFailed(state, action: PayloadAction<FailureCode>) {
       state.edit = { status: 'error', code: action.payload };
     },
     /** Leaving the edit screen: the basket is emptied so it cannot leak into a new order. */
     editCleared(state) {
-      if (state.edit.status !== 'idle') state.basket = {};
+      if (state.edit.status !== 'idle') {
+        state.basket = {};
+        state.basketNotes = {};
+      }
       state.checkout = emptyCheckout;
       state.notices = [];
       state.edit = { status: 'idle' };
@@ -310,6 +338,7 @@ export const {
   menuLoaded,
   menuFailed,
   quantitySet,
+  noteSet,
   checkoutSet,
   basketRestored,
   placeRequested,

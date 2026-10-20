@@ -12,6 +12,19 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // Picked by the owner (20 Oct, "A"); plans 111, 112, 117
+  {
+    version: '1.0.43',
+    date: '2026-10-20',
+    lines: {
+      en: [
+        'Dishes with choices, a note on each dish, and send customers a notice when a new menu is out.',
+      ],
+      id: [
+        'Hidangan dengan pilihan, catatan untuk tiap hidangan, dan kirim pemberitahuan ke pelanggan saat menu baru terbit.',
+      ],
+    },
+  },
   // Picked by the owner (18 Oct, "A"); plans 098, 100, 103-109
   {
     version: '1.0.42',
@@ -116,4 +129,14 @@ export function visibleReleases(
   list: ReadonlyArray<ReleaseNote> = RELEASES,
 ): ReadonlyArray<ReleaseNote> {
   return list.slice(0, RELEASES_SHOWN);
+}
+
+/** The newest release is marked "New" for this many days after its date. */
+export const NEW_DAYS = 14;
+
+/** True when `date` (YYYY-MM-DD) is at most NEW_DAYS before `now`; a placeholder date is never new. */
+export function isNewRelease(date: string, now: number = Date.now()): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const age = now - new Date(`${date}T00:00:00`).getTime();
+  return age >= 0 && age <= NEW_DAYS * 86_400_000;
 }

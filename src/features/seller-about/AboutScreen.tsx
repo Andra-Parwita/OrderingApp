@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import { RELEASE_VERSION } from '../../../shared/release';
 import { useMediaQuery } from '../../components/useMediaQuery';
@@ -176,7 +176,9 @@ export function AboutScreen({ logo, wideQuery }: AboutScreenProps) {
   const { t } = useTranslation(ABOUT_NS);
   const navigate = useNavigate();
   const wide = useMediaQuery(wideQuery);
-  const [open, setOpen] = useState(false);
+  // "See" on the What's new pill (plan 117) arrives with the release list already open.
+  const arrivedFromPill = (useLocation().state as { showReleases?: boolean } | null)?.showReleases;
+  const [open, setOpen] = useState(arrivedFromPill === true);
   const opener = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
   const back = useCallback(() => void navigate('/seller/more'), [navigate]);

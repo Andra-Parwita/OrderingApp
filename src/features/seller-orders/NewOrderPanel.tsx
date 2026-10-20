@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
@@ -14,6 +14,7 @@ import {
   ErrorText,
   Field,
   Label,
+  LineNoteField,
   Muted,
   NameField,
   NoteField,
@@ -22,6 +23,7 @@ import {
   Select,
 } from './orderFormParts';
 import { useLang } from './orderText';
+import { pickableItems } from './pickItems';
 import { useOrderDraft, type YesNo } from './useOrderDraft';
 import { openOrderLink } from './whatsappLink';
 import { selectCreate, selectCurrent, selectMenu } from './sellerOrdersSelectors';
@@ -79,13 +81,21 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
   const view = current.status === 'ready' ? current.view : null;
   const places = view?.pickupPoints ?? [];
   const deliveryOn = view?.menu.delivery.available === true;
-  const items = useMemo(() => (menu.status === 'ready' ? menu.items : []), [menu]);
+  const items = useMemo(() => (menu.status === 'ready' ? pickableItems(menu.items) : []), [menu]);
+  const { lineNotes } = form.values;
   const lines = useMemo(
     () =>
       items
         .filter((item) => (qtys[item.id] ?? 0) > 0)
-        .map((item) => ({ itemId: item.id, qty: qtys[item.id] ?? 0 })),
-    [items, qtys],
+        .map((item) => {
+          const lineNote = lineNotes?.[item.id]?.trim();
+          return {
+            itemId: item.id,
+            qty: qtys[item.id] ?? 0,
+            ...(lineNote ? { note: lineNote } : {}),
+          };
+        }),
+    [items, qtys, lineNotes],
   );
   const totalCents = useMemo(
     () => items.reduce((sum, item) => sum + item.priceCents * (qtys[item.id] ?? 0), 0),
@@ -205,23 +215,32 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
                 ? t('new.left', { count: left })
                 : null;
             return (
-              <Row key={item.id}>
-                <Names>
-                  <span>{name}</span>
-                  <small>
-                    {formatMoney(item.priceCents, lang)}
-                    {hint ? ` · ${hint}` : ''}
-                  </small>
-                </Names>
-                <Stepper
-                  value={qtys[item.id] ?? 0}
-                  onChange={(next: number) => form.setQty(item.id, next)}
-                  label={name}
-                  decreaseLabel={t('new.decrease', { name })}
-                  increaseLabel={t('new.increase', { name })}
-                  max={max}
-                />
-              </Row>
+              <Fragment key={item.id}>
+                <Row>
+                  <Names>
+                    <span>{name}</span>
+                    <small>
+                      {formatMoney(item.priceCents, lang)}
+                      {hint ? ` · ${hint}` : ''}
+                    </small>
+                  </Names>
+                  <Stepper
+                    value={qtys[item.id] ?? 0}
+                    onChange={(next: number) => form.setQty(item.id, next)}
+                    label={name}
+                    decreaseLabel={t('new.decrease', { name })}
+                    increaseLabel={t('new.increase', { name })}
+                    max={max}
+                  />
+                </Row>
+                {(qtys[item.id] ?? 0) > 0 ? (
+                  <LineNoteField
+                    name={name}
+                    value={lineNotes?.[item.id] ?? ''}
+                    onChange={(next) => form.setLineNote(item.id, next)}
+                  />
+                ) : null}
+              </Fragment>
             );
           })}
           {submitted && noItems ? (

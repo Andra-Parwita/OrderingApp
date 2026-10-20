@@ -131,7 +131,9 @@ export function dishName(line: OrderLine, lang: Language): string {
 
 /** "2 × Chicken lemper, 1 × Tempe". */
 export function itemsLine(order: Order, lang: Language): string {
-  return order.lines.map((line) => `${line.qty} × ${dishName(line, lang)}`).join(', ');
+  return order.lines
+    .map((line) => `${line.qty} × ${dishName(line, lang)}${line.note ? ` (${line.note})` : ''}`)
+    .join(', ');
 }
 
 // ---- Pages ----

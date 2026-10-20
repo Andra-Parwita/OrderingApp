@@ -29,7 +29,7 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 | GET | `/images/<key>` | public | stream an image from R2 (content-hashed, cached a year) |
 | GET | `/k/<slug>/manifest.webmanifest` | public | the kitchen's customer web-app manifest (`?start=` for an order page); also `seller.webmanifest`, `icon-<180\|192\|512>.png\|svg` and `apple-touch-icon.png` (always an image: the upload, or the shared default) |
 | GET | `/api/s/:slug/menu` | public | the kitchen's menu, theme, languages and ordering state; each pickup point may carry `address`, `lat`, `lng` (plan 076); `mapsEmbedKey` whenever the server has `MAPS_EMBED_KEY` |
-| POST | `/api/s/:slug/orders` | public | place an order (a delivery order may carry `address`: street, suburb, postcode, notes, lat/lng; ignored when the server has no `ADDRESS_KEY`; the menu answer says `addresses: true` when it has; an optional `customerCode`, 24 hex characters, the phone's anonymous per-kitchen code, stored on the order). Plan 089: 5 orders per 10 minutes per kitchen per client, else 429 `too_many_orders` with `retryAfterSeconds`; the client is the signed-in customer's account, otherwise the salted network key (no address, as in dev: no limit); an attempt counts once the request is well-formed, before the order is checked; seller-entered and private orders are not limited |
+| POST | `/api/s/:slug/orders` | public | place an order (plan 111: each line may carry `note`; ordering a dish that has choices answers 400 `pick_choice`, order its choices instead) (a delivery order may carry `address`: street, suburb, postcode, notes, lat/lng; ignored when the server has no `ADDRESS_KEY`; the menu answer says `addresses: true` when it has; an optional `customerCode`, 24 hex characters, the phone's anonymous per-kitchen code, stored on the order). Plan 089: 5 orders per 10 minutes per kitchen per client, else 429 `too_many_orders` with `retryAfterSeconds`; the client is the signed-in customer's account, otherwise the salted network key (no address, as in dev: no limit); an attempt counts once the request is well-formed, before the order is checked; seller-entered and private orders are not limited |
 | POST | `/api/s/:slug/orders/find` | public | find a lost order by code and first name (2 wrong tries lock that code 15 min; every miss answers alike, D-075) |
 | GET | `/api/s/:slug/team-names` | public | names of people with a password, for the password sign-in picker (D-090) |
 | GET | `/api/s/:slug/live` | token | plan 074 / 098 C12: WebSocket (upgrade) for a customer's live updates; the tokens travel in the `Sec-WebSocket-Protocol` header (`delave.live, tok.<t1>, tok.<t2>`; the reply picks `delave.live` only), not the address, so they stay out of logs. Old open tabs may still send `?tokens=a,b` (accepted until they reload). Up to 20 tokens, each must be an unfinished order of this kitchen on its active menu (else 404 `not_found`; 400 for none or more than 20; 426 without upgrade). The room sends `order.changed` for those orders (and, plan 086, the bare `notice` nudge when a short message is sent) (`{type, code?, at}`; no code = a bare nudge), never kitchen-wide events |
@@ -39,6 +39,7 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 | POST | `/api/orders/:token/cancel` | token | customer cancel |
 | POST | `/api/orders/:token/collected` | token | "I've collected it" (idempotent) |
 | POST, DELETE | `/api/orders/:token/push` | token | turn web push on or off for this order |
+| POST, DELETE | `/api/s/:slug/menu-notices` | public | plan 112: turn "New menus from <kitchen>" on (`{subscription, language}`; also refreshes `last_order_at` after an order) or off (`{endpoint}`); max 500 phones per kitchen |
 | GET | `/api/push/public-key` | public | the VAPID public key; 404 when push is not set up |
 | POST | `/api/log` | public | a device sends a few scrubbed error entries (rate limited by a daily-salted keyed hash of the address; the address is never stored) |
 
@@ -114,7 +115,9 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 | GET | `live` | any staff | WebSocket to the kitchen's Durable Object: "something changed" events, no customer data (plan 086: also `notice`, a nudge to ask `GET /api/notes` again) |
 | POST | `translate` | chef | translate dish text EN/ID with Workers AI (see [Errors](#errors)) |
 | GET | `menu` | helper | the menu with remaining portions, chefs, ordering state |
-| PATCH | `menu/items/:id` | chef (own item), helper (sold-out switch alone) | change an item; the sold-out switch |
+| PATCH | `menu/items/:id` | chef (own item), helper (sold-out switch alone) | change an item; the sold-out switch (plan 111: on a choice only `soldOut` and `limit`; a parent's price, size, description, chef, pre-order and day stock flow to its choices) |
+| GET | `menu-notices` | owner | plan 112: `{ phones, sends (this menu), canSend, kitchenName, cookingDate }` |
+| POST | `menu-notices/send` | owner | plan 112: send "New menu is out" to every phone; 409 `not_open` when orders are closed, 409 `sent_twice` on a third send without `again: true`; records the send for this menu |
 | POST | `menus` | owner | make a new menu (only after the last one finished: `menu_in_progress`) |
 | GET, PUT | `menus/current` | helper (GET), owner (PUT) | read or change the current menu |
 | POST | `menus/current/items` | owner; chef (own dish) | add a library dish to the menu (`already_on_menu`) |
@@ -123,9 +126,9 @@ All under `/api/seller/`. See [Role limits](#role-limits) for who may call what:
 | PUT, DELETE | `menus/current/picture` | owner | upload (to R2) or remove the menu picture |
 | POST | `menus/current/finish` | owner | finish now: archive orders, close open ones (`menu_not_live`) |
 | GET | `menus/:id/chef-summary` | owner, chef | portions and income per chef for `current` or a menu id (plan 069): owner sees every chef, a chef only her own line and only while `chefs_see_income` is on (else 403 `forbidden`); the current (or just-finished) menu is computed live, an older menu is read from the `past_weeks.chef_summary` snapshot, and 404 when it has none ("not kept") |
-| GET, POST | `dishes` | chef | the dish library; add a dish (a chef's dish is forced to her own) |
+| GET, POST | `dishes` | chef | the dish library; add a dish (a chef's dish is forced to her own); plan 111: a dish may carry `choices` (name EN/ID + limit, max 30); choice rows are never listed on their own |
 | POST | `dishes/import` | chef | dish CSV import (a chef: own dishes) |
-| PATCH, DELETE | `dishes/:id` | chef (own) ; delete owner | edit a dish; delete (warns if on the live menu) |
+| PATCH, DELETE | `dishes/:id` | chef (own) ; delete owner | edit a dish (plan 111: `choices` is the whole new list; changes reach the next menu, not the current one); delete (warns if on the live menu; deletes its choices) |
 | PUT, DELETE | `dishes/:id/picture` | chef (own) | plan 067: upload (`{dataUrl}`, square, at most 200 KB, to R2) or remove the dish's one picture; answers `{dish}`; `dish_picture_limit` (409) at 300 pictures; the file is deleted once no dish, menu item, menu or set uses it |
 | GET, POST | `saved-sets` | owner | saved sets (lists of dishes) |
 | PATCH, DELETE | `saved-sets/:id` | owner | rename or delete a set |

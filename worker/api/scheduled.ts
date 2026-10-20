@@ -17,6 +17,7 @@ import {
   dropExpiredAuthRows,
   dropExpiredDetails,
   dropStaleFindAttempts,
+  dropStaleMenuNotices,
   type RetentionCounts,
 } from '../db/retention';
 
@@ -74,6 +75,13 @@ export async function runRetention(
   if (auth.keys > 0 || auth.codes > 0) {
     log(
       `retention: ${String(auth.keys)} expired key(s), ${String(auth.codes)} expired code(s) dropped`,
+    );
+  }
+  // Plan 112: new-menu notice phones idle for 6 months, and send records of old menus.
+  const notices = await dropStaleMenuNotices(db, now);
+  if (notices.phones > 0 || notices.sends > 0) {
+    log(
+      `retention: ${String(notices.phones)} notice phone(s), ${String(notices.sends)} notice send(s) dropped`,
     );
   }
   return counts;

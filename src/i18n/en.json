@@ -135,7 +135,19 @@
     "homeTitle": "Put it on your home screen",
     "homeBody": "Opens like an app, one tap away.",
     "aboutTitle": "About and privacy",
-    "aboutShow": "Read"
+    "aboutShow": "Read",
+    "menuNotice": "New menus from {{kitchen}}",
+    "menuNoticeOff": "Off",
+    "menuNoticeOn": "On",
+    "menuNoticeWorking": "Working…",
+    "menuNoticeBlocked": "Blocked in your browser settings",
+    "menuNoticeFailed": "Could not change this. Try again.",
+    "menuNoticeAsk": "Hear about new {{kitchen}} menus?",
+    "menuNoticeWhat": "You get a notice when {{kitchen}} publishes a new menu, usually once a week.",
+    "menuNoticePrivacy": "{{kitchen}} only sees how many phones get it, not who you are.",
+    "menuNoticeOffAnyTime": "Turn it off here any time.",
+    "menuNoticeNotNow": "Not now",
+    "menuNoticeTurnOn": "Turn on"
   },
   "notFound": {
     "title": "Page not found",

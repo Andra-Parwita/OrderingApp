@@ -5,6 +5,7 @@ import {
   parseSampleOrdersRequest,
   parseSampleOrdersResponse,
 } from './devContract';
+import { MAX_MENU_ROWS } from './limits';
 import { parseMenuResponse, parseSellerMenuResponse } from './menuContract';
 import {
   parseCreateOrderRequest,
@@ -129,8 +130,11 @@ describe('parseMenuResponse', () => {
     ['a bad week status', mutate(menu, (d) => (week(d)['status'] = 'open'))],
     ['a bad pickup time', mutate(menu, (d) => (week(d)['pickupPoints'] = [{ id: 'p' }]))],
     [
-      'more than 50 items',
-      mutate(menu, (d) => (d['items'] = Array.from({ length: 51 }, () => items(d)[1]))),
+      'more than the menu row cap (50 dishes x 31 rows)',
+      mutate(
+        menu,
+        (d) => (d['items'] = Array.from({ length: MAX_MENU_ROWS + 1 }, () => items(d)[1])),
+      ),
     ],
     ['a fractional price', mutate(menu, (d) => (items(d)[1]!['priceCents'] = 1.5))],
     ['a missing remaining', mutate(menu, (d) => delete items(d)[1]!['remaining'])],

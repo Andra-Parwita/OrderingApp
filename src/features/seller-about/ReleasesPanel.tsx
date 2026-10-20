@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { keyframes, styled } from 'styled-components';
 import { Icon } from '../../ui';
 import { ABOUT_NS } from './i18n/register';
-import { visibleReleases, type ReleaseNote } from './releaseNotes';
+import { isNewRelease, visibleReleases, type ReleaseNote } from './releaseNotes';
 import { TOP_BARS } from '../../theme/screen';
 
 // Plan 075: the releases panel. From the right on a tablet (about a third of the width, the page
@@ -259,6 +259,7 @@ export function ReleasesPanel({ wide, onClose, returnFocus, releases }: Releases
                 <Version>{release.version}</Version>
                 <When>{formatReleaseDate(release.date, lang)}</When>
                 {index === 0 ? <Tag>{t('current')}</Tag> : null}
+                {index === 0 && isNewRelease(release.date) ? <Tag>{t('newTag')}</Tag> : null}
                 <Icon name="forward" />
               </summary>
               <ul>

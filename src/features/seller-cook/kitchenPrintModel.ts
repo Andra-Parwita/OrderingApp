@@ -43,6 +43,12 @@ export type KitchenPrintRow = {
   delivery: number;
   /** Distinct orders (customers) the dish is for, as the Cook tab's person count. */
   people: number;
+  /** Plan 111: the heading row of a dish with choices (its total, no split). */
+  group?: true;
+  /** Plan 111: a choice, printed indented under its group row. */
+  choice?: true;
+  /** Plan 111: notes typed on this row's order lines; only with the "include notes" option. */
+  lineNotes?: Array<{ firstName: string; note: string; choice?: LocalText }>;
 };
 
 export type KitchenPrintSection = {
@@ -58,7 +64,7 @@ export type KitchenPrintPlan = {
   notes: Array<CookNote>;
 };
 
-function printRow(row: CookRow): KitchenPrintRow {
+function printRow(row: CookRow, withNotes: boolean): KitchenPrintRow {
   const pickup = row.who
     .filter((who) => who.fulfilment === 'pickup')
     .reduce((n, w) => n + w.qty, 0);
@@ -71,6 +77,17 @@ function printRow(row: CookRow): KitchenPrintRow {
     pickup,
     delivery: row.qty - pickup,
     people: new Set(row.who.map((who) => who.code)).size,
+    ...(row.group ? { group: true as const } : {}),
+    ...(row.choice ? { choice: true as const } : {}),
+    ...(withNotes && row.notes
+      ? {
+          lineNotes: row.notes.map((note) => ({
+            firstName: note.firstName,
+            note: note.note,
+            ...(row.choice ? { choice: row.name } : {}),
+          })),
+        }
+      : {}),
   };
 }
 
@@ -88,7 +105,7 @@ export function buildKitchenPrint(
     sections: groups.map((group, index) => ({
       key: group.key,
       title: group.title,
-      rows: group.rows.map(printRow),
+      rows: group.rows.map((row) => printRow(row, options.notes)),
       pageBreak: breaks && index > 0,
     })),
     notes: options.notes ? cookNotes(own) : [],

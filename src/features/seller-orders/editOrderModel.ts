@@ -14,6 +14,9 @@ export type EditRow = Readonly<{
   was: number;
   /** Struck through with Undo until Save; the dish leaves the order on Save. */
   removed: boolean;
+  /** Plan 111: the line's note as typed on the sheet, and as saved ('' = none). */
+  note?: string;
+  wasNote?: string;
 }>;
 
 export function initialRows(order: Order): Array<EditRow> {
@@ -24,13 +27,15 @@ export function initialRows(order: Order): Array<EditRow> {
     qty: line.qty,
     was: line.qty,
     removed: false,
+    note: line.note ?? '',
+    wasNote: line.note ?? '',
   }));
 }
 
 export function patchRow(
   rows: ReadonlyArray<EditRow>,
   itemId: string,
-  patch: Partial<Pick<EditRow, 'qty' | 'removed'>>,
+  patch: Partial<Pick<EditRow, 'qty' | 'removed' | 'note'>>,
 ): Array<EditRow> {
   return rows.map((row) => (row.itemId === itemId ? { ...row, ...patch } : row));
 }
@@ -51,6 +56,8 @@ export function addDish(rows: ReadonlyArray<EditRow>, item: SellerMenuItemView):
       qty: 1,
       was: 0,
       removed: false,
+      note: '',
+      wasNote: '',
     },
   ];
 }
@@ -96,11 +103,16 @@ export type EditValues = Readonly<{
   note: string;
 }>;
 
+const noteChanged = (row: EditRow): boolean => (row.note ?? '').trim() !== (row.wasNote ?? '');
+
 const linesDiffer = (order: Order, rows: ReadonlyArray<EditRow>): boolean => {
   const next = liveRows(rows);
   return (
     next.length !== order.lines.length ||
-    next.some((row) => order.lines.find((line) => line.itemId === row.itemId)?.qty !== row.qty)
+    next.some(
+      (row) =>
+        order.lines.find((line) => line.itemId === row.itemId)?.qty !== row.qty || noteChanged(row),
+    )
   );
 };
 
@@ -121,7 +133,12 @@ export function buildEditRequest(
 ): EditSellerOrderRequest {
   const request: EditSellerOrderRequest = { notify: options.notify };
   if (linesDiffer(order, values.rows)) {
-    request.lines = liveRows(values.rows).map((row) => ({ itemId: row.itemId, qty: row.qty }));
+    // A note is sent only when it changed ('' clears it); an absent one keeps the saved note.
+    request.lines = liveRows(values.rows).map((row) => ({
+      itemId: row.itemId,
+      qty: row.qty,
+      ...(noteChanged(row) ? { note: (row.note ?? '').trim() } : {}),
+    }));
   }
   if (values.name.trim() !== order.firstName) request.firstName = values.name.trim();
   if (values.note.trim() !== (order.note ?? '')) request.note = values.note.trim();

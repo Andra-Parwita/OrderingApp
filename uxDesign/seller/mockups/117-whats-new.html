@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>ShaggyBobo · What's new pill (mock-up 117)</title>
+<style>
+:root {
+  --bg: #f3f2ee; --fg: #23251f; --muted: #6a6d63; --line: #d9d8d0;
+  --app: #121410; --appLine: #2e322b; --appFg: #eceee6; --appMuted: #a3a89a; --appBtn: #2a2e27;
+  --appGreen: #9fc493; --pill: #1f241d; --pillLine: #3a4236;
+}
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 66rem; margin: 0 auto; padding: 1.5rem 16px 3rem; }
+h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+.lead { color: var(--muted); margin: 0 0 1.25rem; max-width: 48rem; }
+.cols { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.cap { font-weight: 700; margin-bottom: .5rem; }
+.cap small { display: block; font-weight: 400; color: var(--muted); }
+.screen { position: relative; background: var(--app); color: var(--appFg); border-radius: .9rem; overflow: hidden; font-size: .88rem; min-height: 22rem; }
+.tab { display: grid; grid-template-columns: 9rem minmax(0, 1fr); min-height: 22rem; }
+.rail { border-right: 1px solid var(--appLine); padding: 3.4rem .6rem .8rem; display: flex; flex-direction: column; gap: .15rem; }
+.rail span { padding: .35rem .5rem; border-radius: .4rem; color: var(--appMuted); }
+.rail span.on { background: var(--appBtn); color: var(--appFg); }
+.main { padding: 3.4rem 1.2rem 1rem; color: var(--appMuted); }
+.pill { position: absolute; top: .375rem; left: .375rem; right: .375rem; height: 2.5rem; display: flex; align-items: center; gap: .6rem; padding: 0 .3rem 0 .5rem; border-radius: 999px; background: var(--pill); border: 1px solid var(--pillLine); outline: 2px dashed #e2c27a; outline-offset: 2px; }
+.bobo { width: 1.6rem; height: 1.6rem; border-radius: 50%; background: #e9c27a; flex: none; }
+.pill .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill .t b { color: var(--appFg); }
+.pill .see { color: var(--appGreen); font-weight: 600; white-space: nowrap; }
+.pill .x { width: 2.5rem; height: 2.5rem; display: grid; place-items: center; color: var(--appMuted); flex: none; }
+.about { padding: 1rem 1.2rem; }
+.about h3 { margin: 0 0 .3rem; }
+.rel { border-top: 1px solid var(--appLine); padding: .6rem 0; }
+.rel .v { font-weight: 700; }
+.rel .d { color: var(--appMuted); font-size: .8rem; }
+.rel.new { border-left: 3px solid var(--appGreen); padding-left: .6rem; }
+.notes { margin-top: 1.5rem; color: var(--muted); max-width: 48rem; font-size: .92rem; }
+.notes li + li { margin-top: .3rem; }
+@media (max-width: 52rem) { .cols { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>What's new pill (plan 117)</h1>
+  <p class="lead">After the seller app updates to a new release, the same floating pill as the "new version" and short-message pills shows once (dashed outline = new). Tap opens About with the release notes; × hides it until the next release.</p>
+
+  <div class="cols">
+    <div>
+      <div class="cap">Tablet · Home, first open after the update<small>owner, chef and helper all see it once on this device</small></div>
+      <div class="screen">
+        <div class="pill"><span class="bobo"></span><span class="t"><b>What's new in 1.0.43:</b> dishes with choices, a note on each dish…</span><span class="see">See</span><span class="x">✕</span></div>
+        <div class="tab">
+          <div class="rail"><span class="on">Home</span><span>Menu</span><span>Orders</span><span>Private</span><span>Kitchen</span><span>Pickup &amp; delivery</span><span>Dishes</span><span>Settings</span><span>Help</span><span>About</span></div>
+          <div class="main">Home as today…</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="cap">Tap "See" → About<small>the newest release on top, marked new</small></div>
+      <div class="screen">
+        <div class="about">
+          <h3>About</h3>
+          <div class="rel new"><div class="v">Release 1.0.43 · New</div><div class="d">20 Oct 2026</div>Dishes with choices, a note on each dish, and send customers a notice when a new menu is out.</div>
+          <div class="rel"><div class="v">Release 1.0.42</div><div class="d">19 Oct 2026</div>Faster, tidier seller screens; edit any order; kitchen print and On the day selling.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols" style="margin-top:1.25rem">
+    <div>
+      <div class="cap">Phone · Orders<small>same pill at the top; the text shortens with an ellipsis</small></div>
+      <div class="screen" style="max-width:22rem;min-height:12rem">
+        <div class="pill"><span class="bobo"></span><span class="t"><b>What's new in 1.0.43</b></span><span class="see">See</span><span class="x">✕</span></div>
+        <div class="main">Orders as today…</div>
+      </div>
+    </div>
+    <div></div>
+  </div>
+
+  <ul class="notes">
+    <li>Shown once per release per device (remembered on the device). Never on top of the "new version" pill: that one comes first.</li>
+    <li>Text from the release note already written for About; Indonesian when the app is in Indonesian.</li>
+    <li>Not in this mock-up (later): links from a note line to a Help topic.</li>
+  </ul>
+</div>
+</body>
+</html>

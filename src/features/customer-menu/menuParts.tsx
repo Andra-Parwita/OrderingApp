@@ -1,4 +1,6 @@
 import { styled } from 'styled-components';
+import type { MenuItemView } from '../../../shared/domain';
+import { MAX_QTY } from '../../../shared/limits';
 
 // Shared building blocks of the customer menu screens (design: uxDesign/customer/SPEC.md §4.1).
 
@@ -95,3 +97,39 @@ export const CardBody = styled.p`
   color: ${({ theme }) => theme.c.muted};
   font-size: ${({ theme }) => theme.type.size.md};
 `;
+
+export const Round = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: ${({ theme }) => theme.size.tap}px;
+  height: ${({ theme }) => theme.size.tap}px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.c.line};
+  color: ${({ theme }) => theme.c.text};
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`;
+export const Group = styled.div`
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+export const Qty = styled.output`
+  min-width: 1.5rem;
+  text-align: center;
+  font-weight: 700;
+  color: ${({ theme }) => theme.c.atext};
+`;
+
+/** The most of a dish the basket may hold: what is left, never past MAX_QTY. */
+export function dishMax(item: MenuItemView): number {
+  return item.soldOut || item.preorder === false ? 0 : Math.min(MAX_QTY, item.remaining ?? MAX_QTY);
+}

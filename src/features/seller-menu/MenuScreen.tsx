@@ -10,6 +10,7 @@ import type { MenuDishView } from '../../../shared/menusContract';
 import { Button, Icon, ListWithPanel, Segmented, WarningDialog } from '../../ui';
 import { ChefMenu } from './ChefMenu';
 import { MENU_NS } from './i18n/register';
+import { NotifyBell } from './NotifyBell';
 import {
   GroupLabel,
   Head,
@@ -94,7 +95,7 @@ const Actions = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
 `;
-const DishRow = styled.div<{ $head?: boolean; $off?: boolean }>`
+const DishRow = styled.div<{ $head?: boolean; $off?: boolean; $choice?: boolean }>`
   display: grid;
   grid-template-columns: minmax(0, 1fr) 5rem 4rem 4rem 7.5rem;
   align-items: center;
@@ -114,8 +115,9 @@ const DishRow = styled.div<{ $head?: boolean; $off?: boolean }>`
     margin: -0.125rem 0;
   }
   .name {
-    font-size: 1rem;
-    font-weight: 600;
+    padding-left: ${({ $choice, theme }) => ($choice ? theme.spacing.xl : '0')};
+    font-size: ${({ $choice }) => ($choice ? '0.9375rem' : '1rem')};
+    font-weight: ${({ $choice }) => ($choice ? 400 : 600)};
   }
   .name small {
     margin-left: ${({ theme }) => theme.spacing.sm};
@@ -124,17 +126,31 @@ const DishRow = styled.div<{ $head?: boolean; $off?: boolean }>`
     font-weight: 400;
   }
 `;
+const GroupToggle = styled.button`
+  margin-left: ${({ theme }) => theme.spacing.sm};
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: ${({ theme }) => theme.c.muted};
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 400;
+  cursor: pointer;
+`;
 function LiveMenu({
   data,
   lang,
   onEditTab,
   onTheDay,
+  canNotify,
 }: Readonly<{
   data: MenuData;
   lang: Language;
   onEditTab: (tab: Tab) => void;
   /** The On the day tab's content (the Sell screen); absent on a phone. */
   onTheDay: MenuSlots['onTheDay'] | undefined;
+  /** The owner only: the notify bell asks the owner-only notices API. */
+  canNotify: boolean;
 }>) {
   const { t } = useTranslation(MENU_NS);
   const navigate = useNavigate();
@@ -159,6 +175,66 @@ function LiveMenu({
       label={t('live.tabsLabel')}
     />
   ) : null;
+  const [closed, setClosed] = useState<ReadonlyArray<string>>([]);
+  // One table row: a dish, or (plan 111) one of its choices, indented, with no price of its own.
+  const soldOutRow = (
+    dish: MenuDishView,
+    soldCount: number,
+    group?: { choices: number; open: boolean },
+  ) => (
+    <DishRow key={dish.id} role="row" $off={dish.soldOut} $choice={dish.groupId !== undefined}>
+      <span role="cell" className="name">
+        {dishName(dish, lang)}
+        {pickSize(dish, lang) && dish.groupId === undefined ? (
+          <small>{pickSize(dish, lang)}</small>
+        ) : null}
+        {group && group.choices > 0 ? (
+          <GroupToggle
+            type="button"
+            aria-expanded={group.open}
+            onClick={() =>
+              setClosed((previous) =>
+                previous.includes(dish.id)
+                  ? previous.filter((id) => id !== dish.id)
+                  : [...previous, dish.id],
+              )
+            }
+          >
+            {group.open ? '▾' : '▸'} {t('choices.count', { count: group.choices })}
+          </GroupToggle>
+        ) : null}
+      </span>
+      <span role="cell" className="num">
+        {dish.groupId === undefined ? formatMoney(dish.priceCents, lang) : ''}
+      </span>
+      <span role="cell" className="num">
+        {group && group.choices > 0 ? '' : (dish.limit ?? '–')}
+      </span>
+      <span role="cell" className="num">
+        {soldCount}
+      </span>
+      <span role="cell">
+        <SwitchButton
+          type="button"
+          role="switch"
+          aria-checked={dish.manualSoldOut === true}
+          aria-label={t('live.soldOutFor', { name: dishName(dish, lang) })}
+          $on={dish.manualSoldOut === true}
+          disabled={busy}
+          onClick={() =>
+            run({
+              kind: 'updateMenuDish',
+              id: dish.id,
+              request: { soldOut: dish.manualSoldOut !== true },
+            })
+          }
+        >
+          <i />
+          <span>{dish.manualSoldOut === true ? t('live.yes') : t('live.no')}</span>
+        </SwitchButton>
+      </span>
+    </DishRow>
+  );
   if (onTheDay && shown === 'day') {
     return (
       <Section>
@@ -199,6 +275,7 @@ function LiveMenu({
             <Icon name="share" />
             {t('live.share')}
           </Button>
+          {canNotify ? <NotifyBell /> : null}
           <Button variant="quiet" onClick={() => setAsking('unpublish')}>
             {t('live.unpublish')}
           </Button>
@@ -218,43 +295,22 @@ function LiveMenu({
           </span>
           <span role="columnheader">{t('live.soldOut')}</span>
         </DishRow>
-        {view.dishes.map((dish) => (
-          <DishRow key={dish.id} role="row" $off={dish.soldOut}>
-            <span role="cell" className="name">
-              {dishName(dish, lang)}
-              {pickSize(dish, lang) ? <small>{pickSize(dish, lang)}</small> : null}
-            </span>
-            <span role="cell" className="num">
-              {formatMoney(dish.priceCents, lang)}
-            </span>
-            <span role="cell" className="num">
-              {dish.limit ?? '–'}
-            </span>
-            <span role="cell" className="num">
-              {sold.get(dish.id) ?? 0}
-            </span>
-            <span role="cell">
-              <SwitchButton
-                type="button"
-                role="switch"
-                aria-checked={dish.manualSoldOut === true}
-                aria-label={t('live.soldOutFor', { name: dishName(dish, lang) })}
-                $on={dish.manualSoldOut === true}
-                disabled={busy}
-                onClick={() =>
-                  run({
-                    kind: 'updateMenuDish',
-                    id: dish.id,
-                    request: { soldOut: dish.manualSoldOut !== true },
-                  })
-                }
-              >
-                <i />
-                <span>{dish.manualSoldOut === true ? t('live.yes') : t('live.no')}</span>
-              </SwitchButton>
-            </span>
-          </DishRow>
-        ))}
+        {view.dishes
+          .filter((dish) => dish.groupId === undefined)
+          .flatMap((dish) => {
+            const choices = view.dishes.filter((choice) => choice.groupId === dish.id);
+            const open = !closed.includes(dish.id);
+            const total = choices.reduce((sum, choice) => sum + (sold.get(choice.id) ?? 0), 0);
+            return [
+              soldOutRow(dish, choices.length > 0 ? total : (sold.get(dish.id) ?? 0), {
+                choices: choices.length,
+                open,
+              }),
+              ...(open
+                ? choices.map((choice) => soldOutRow(choice, sold.get(choice.id) ?? 0))
+                : []),
+            ];
+          })}
       </div>
       <Actions style={{ marginTop: '0.5rem' }}>
         <LinkButton onClick={() => setAsking('finish')}>{t('live.finish')}</LinkButton>
@@ -312,7 +368,11 @@ function NotPublished({
         {t('draft.kicker')}
       </Kicker>
       <Big>{t('draft.title', { date: formatDay(menu.cookingDate, lang) })}</Big>
-      <Muted>{t('draft.saved', { dishes: data.view.dishes.length })}</Muted>
+      <Muted>
+        {t('draft.saved', {
+          dishes: data.view.dishes.filter((dish) => dish.groupId === undefined).length,
+        })}
+      </Muted>
       <StepTabs data={data} lang={lang} onOpen={onOpen} />
       <Actions style={{ marginTop: '1rem' }}>
         <Button variant="quiet" onClick={() => setAsking(true)}>
@@ -341,11 +401,15 @@ export type ScreenSlots = Pick<MenuSlots, 'newMenu' | 'chefs'> &
   Partial<Pick<MenuSlots, 'onTheDay'>>;
 
 /** The owner's Menu; a chef (plan 030, `chefId` is theirs) gets Your dishes only. */
-export function MenuScreen({ slots, chefId }: Readonly<{ slots: ScreenSlots; chefId?: string }>) {
-  return chefId ? <ChefMenu chefId={chefId} /> : <OwnerMenu slots={slots} />;
+export function MenuScreen({
+  slots,
+  chefId,
+  canNotify = false,
+}: Readonly<{ slots: ScreenSlots; chefId?: string; canNotify?: boolean }>) {
+  return chefId ? <ChefMenu chefId={chefId} /> : <OwnerMenu slots={slots} canNotify={canNotify} />;
 }
 
-function OwnerMenu({ slots }: Readonly<{ slots: ScreenSlots }>) {
+function OwnerMenu({ slots, canNotify }: Readonly<{ slots: ScreenSlots; canNotify: boolean }>) {
   const { t } = useTranslation(MENU_NS);
   const lang = useLang();
   const wizard = useMenuWizard();
@@ -394,7 +458,13 @@ function OwnerMenu({ slots }: Readonly<{ slots: ScreenSlots }>) {
 
   const main =
     state === 'live' ? (
-      <LiveMenu data={data} lang={lang} onEditTab={wizard.edit} onTheDay={slots.onTheDay} />
+      <LiveMenu
+        data={data}
+        lang={lang}
+        onEditTab={wizard.edit}
+        onTheDay={slots.onTheDay}
+        canNotify={canNotify}
+      />
     ) : state === 'not_published' ? (
       <NotPublished data={data} lang={lang} onOpen={wizard.open} />
     ) : (

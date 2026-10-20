@@ -135,7 +135,19 @@
     "homeTitle": "Pasang di layar utama",
     "homeBody": "Terbuka seperti aplikasi, cukup sekali ketuk.",
     "aboutTitle": "Tentang dan privasi",
-    "aboutShow": "Baca"
+    "aboutShow": "Baca",
+    "menuNotice": "Menu baru dari {{kitchen}}",
+    "menuNoticeOff": "Mati",
+    "menuNoticeOn": "Aktif",
+    "menuNoticeWorking": "Memproses…",
+    "menuNoticeBlocked": "Diblokir di pengaturan browser",
+    "menuNoticeFailed": "Gagal mengubahnya. Coba lagi.",
+    "menuNoticeAsk": "Mau tahu saat ada menu baru dari {{kitchen}}?",
+    "menuNoticeWhat": "Anda mendapat pemberitahuan saat {{kitchen}} menerbitkan menu baru, biasanya seminggu sekali.",
+    "menuNoticePrivacy": "{{kitchen}} hanya melihat berapa ponsel yang menerimanya, bukan siapa Anda.",
+    "menuNoticeOffAnyTime": "Matikan di sini kapan saja.",
+    "menuNoticeNotNow": "Nanti saja",
+    "menuNoticeTurnOn": "Aktifkan"
   },
   "notFound": {
     "title": "Halaman tidak ditemukan",

@@ -84,6 +84,8 @@ export type OrderLine = {
   ticked?: boolean;
   /** Plan 081: a private order's line keeps the chef of the library dish it was copied from. */
   chefId?: string;
+  /** Plan 111: a short note for this line (same limit as the order note). */
+  note?: string;
 };
 
 export type CollectedBy = 'customer' | 'seller';
@@ -219,6 +221,8 @@ export type MenuItem = {
   dayStock?: number;
   /** Plan 067: the dish's picture (a copy of the library dish's), square 600 x 600. */
   pictureRef?: string;
+  /** Plan 111 (D-112): set on a choice; the id of the parent item. A parent cannot be ordered by itself. */
+  groupId?: string;
 };
 
 /** Seller images and colour (D-035, D-038). Each is optional; the phone banner falls back to the desktop one. */

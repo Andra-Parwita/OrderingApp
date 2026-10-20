@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>1.0.43 mock-ups</title>
+<style>
+/* Layout: sections per plan; each section is a row of phone frames drawn in the app's dark look; stacked on a phone. */
+:root {
+  --bg: #f3f2ee; --fg: #23251f; --muted: #6a6d63; --line: #d9d8d0;
+  --app: #121410; --appLine: #2e322b; --appFg: #eceee6; --appMuted: #a3a89a; --appBtn: #2a2e27; --sheet: #1b1e19;
+  --appGreen: #9fc493; --appPrimary: #5f7f57; --appInk: #10140e; --appAmber: #e2c27a; --appRed: #e09a8c;
+  --scrim: rgba(0, 0, 0, .55); --paper: #ffffff; --paperInk: #1d1d1b; --paperLine: #cfcfc8;
+  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.45; }
+.wrap { max-width: 70rem; margin: 0 auto; padding-block: 1.5rem 3rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.2rem; margin: 2rem 0 .25rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.lead { color: var(--muted); margin: 0 0 1rem; max-width: 50rem; }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.cap { font-weight: 700; margin-bottom: .5rem; }
+.cap small { display: block; font-weight: 400; color: var(--muted); }
+.phone { position: relative; background: var(--app); color: var(--appFg); border-radius: .9rem; padding: 1rem; font-size: .9rem; min-width: 0; overflow: hidden; min-height: 25rem; }
+.phone h3 { margin: 0 0 .5rem; font-size: 1.2rem; }
+.sub { color: var(--appMuted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.row { display: flex; gap: .5rem; align-items: center; justify-content: space-between; padding: .5rem 0; border-top: 1px solid var(--appLine); }
+.row .t { flex: 1; min-width: 0; }
+.name { font-weight: 700; }
+.indent { padding-left: 1rem; }
+.pill { font-size: .75rem; padding: .15rem .55rem; border-radius: 999px; border: 1px solid var(--appLine); color: var(--appMuted); white-space: nowrap; }
+.pill.on { border-color: var(--appRed); color: var(--appRed); }
+.ctl { display: flex; align-items: center; gap: .35rem; flex: none; }
+.btn { width: 2rem; height: 2rem; border-radius: 50%; background: var(--appBtn); display: grid; place-items: center; font-size: 1.05rem; }
+.btn.off { opacity: .35; }
+.qty { color: var(--appGreen); font-weight: 700; min-width: 1rem; text-align: center; }
+.left { color: var(--appAmber); font-size: .8rem; }
+.out { color: var(--appRed); font-size: .8rem; }
+.dim { opacity: .5; }
+.primary { margin-top: .8rem; background: var(--appPrimary); color: var(--appInk); border-radius: 999px; text-align: center; padding: .55rem; font-weight: 700; }
+.ghost { text-align: center; padding: .55rem; border-radius: 999px; border: 1px solid var(--appLine); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: .7rem; }
+.scrim { position: absolute; inset: 0; background: var(--scrim); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sheet); border-radius: 1rem 1rem 0 0; padding: .6rem 1rem 1rem; }
+.grab { width: 2.4rem; height: .25rem; border-radius: 1rem; background: var(--appLine); margin: 0 auto .7rem; }
+.sheet h4 { margin: 0 0 .3rem; font-size: 1.05rem; }
+.cook { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .3rem .75rem; }
+.cook .n { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.cook .in { padding-left: 1rem; color: var(--appMuted); }
+.note { color: var(--appAmber); font-size: .8rem; }
+.paper { background: var(--paper); color: var(--paperInk); border-radius: .3rem; padding: .9rem; font-size: .85rem; min-height: 25rem; }
+.paper h4 { margin: 0 0 .5rem; font-size: 1rem; }
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .2rem .75rem; padding: .3rem 0; border-top: 1px solid var(--paperLine); }
+.prow .in { padding-left: 1rem; }
+.prow i { grid-column: 1 / -1; padding-left: 1rem; font-size: .8rem; }
+.switch { width: 2.4rem; height: 1.4rem; border-radius: 1rem; background: var(--appBtn); position: relative; flex: none; }
+.switch::after { content: ""; position: absolute; top: .2rem; left: .2rem; width: 1rem; height: 1rem; border-radius: 50%; background: var(--appMuted); }
+.switch.on { background: var(--appPrimary); }
+.switch.on::after { left: 1.2rem; background: var(--appInk); }
+.box { margin-top: .6rem; padding: .6rem .7rem; border-radius: .6rem; background: var(--appBtn); font-size: .84rem; }
+ul.tight { margin: .3rem 0 0; padding-left: 1.1rem; }
+ul.tight li + li { margin-top: .2rem; }
+.qs { margin-top: 1rem; color: var(--muted); font-size: .9rem; max-width: 50rem; }
+.qs b { color: var(--fg); }
+.tab { background: var(--app); color: var(--appFg); border-radius: .9rem; display: grid; grid-template-columns: 9rem minmax(0, 1fr); overflow: hidden; font-size: .88rem; position: relative; }
+.rail { border-right: 1px solid var(--appLine); padding: .8rem .6rem; display: flex; flex-direction: column; gap: .15rem; }
+.rail span { padding: .35rem .5rem; border-radius: .4rem; color: var(--appMuted); }
+.rail span.on { background: var(--appBtn); color: var(--appFg); }
+.main { padding: 1rem 1.2rem; min-width: 0; }
+.kick { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--appGreen); }
+.acts { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0; }
+.acts span { padding: .35rem .8rem; border-radius: 999px; border: 1px solid var(--appLine); white-space: nowrap; }
+.acts span.p { background: var(--appPrimary); color: var(--appInk); border-color: var(--appPrimary); font-weight: 700; }
+.acts span.q { border-color: transparent; color: var(--appMuted); }
+.acts span.new { outline: 2px dashed var(--appAmber); outline-offset: .15rem; }
+.tabs { display: inline-flex; border: 1px solid var(--appLine); border-radius: 999px; padding: .15rem; margin-bottom: .5rem; }
+.tabs span { padding: .2rem .8rem; border-radius: 999px; color: var(--appMuted); }
+.tabs span.on { background: var(--appBtn); color: var(--appFg); }
+.tbl { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem 4rem 4rem 5rem; gap: 0 .6rem; }
+.tbl > span { padding: .4rem 0; border-top: 1px solid var(--appLine); font-variant-numeric: tabular-nums; }
+.tbl > span.h { color: var(--appMuted); font-size: .76rem; border-top: 0; }
+.tbl > span.in { padding-left: 1rem; color: var(--appFg); }
+.modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(24rem, 90%); background: var(--sheet); border-radius: .8rem; padding: 1rem; }
+.modal h4 { margin: 0 0 .4rem; font-size: 1.05rem; }
+.full { grid-column: 1 / -1; }
+@media (max-width: 56rem) { .cols { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>1.0.43 mock-ups</h1>
+  <p class="lead">Plan 111 (dish choices) and plan 112 (new-menu notices). DellaVee samples, AUD. The earlier mock-ups still apply: New dish with choices, basket line note.</p>
+
+  <h2>111 · Dish choices</h2>
+  <div class="cols">
+    <div>
+      <div class="cap">Seller · Menu<small>a dish with choices opens to its choices; Sold out per choice</small></div>
+      <div class="phone">
+        <h3>Menu</h3>
+        <div class="row"><div class="t"><div class="name">Siomay</div><div class="sub">$15.00 · 6 sold</div></div><span class="pill">Sold out</span></div>
+        <div class="row"><div class="t"><div class="name">Aneka Snack Kering ▾</div><div class="sub">$6.00 · 7 choices · 12 sold</div></div><span class="pill">Sold out</span></div>
+        <div class="row indent"><div class="t">Kripik Sukun<div class="sub">5 of 10 sold</div></div><span class="pill">Sold out</span></div>
+        <div class="row indent"><div class="t">Lanting Bawang<div class="sub">4 of 8 sold</div></div><span class="pill">Sold out</span></div>
+        <div class="row indent"><div class="t">Sarang Madu<div class="sub">3 sold</div></div><span class="pill">Sold out</span></div>
+        <div class="row indent"><div class="t">Kripik Ubi Ungu<div class="sub">0 sold</div></div><span class="pill on">Sold out ✓</span></div>
+        <div class="row indent"><div class="t sub">… 3 more</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap">Customer · tap + on the dish<small>bottom sheet; a sold-out choice can't be picked</small></div>
+      <div class="phone">
+        <h3 class="dim">Dishes</h3>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h4>Aneka Snack Kering · $6.00</h4>
+          <div class="sub">1 Pack · pick how many of each</div>
+          <div class="row"><div class="t">Kripik Sukun<div class="left">5 left</div></div><div class="ctl"><span class="btn">−</span><span class="qty">2</span><span class="btn">+</span></div></div>
+          <div class="row"><div class="t">Lanting Bawang</div><div class="ctl"><span class="btn">+</span></div></div>
+          <div class="row"><div class="t">Sarang Madu</div><div class="ctl"><span class="btn">−</span><span class="qty">1</span><span class="btn">+</span></div></div>
+          <div class="row dim"><div class="t">Kripik Ubi Ungu<div class="out">Sold out</div></div><div class="ctl"><span class="btn off">+</span></div></div>
+          <div class="sub">… 3 more (the list scrolls)</div>
+          <div class="primary">Add 3 to basket · $18.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap">Seller · Cook<small>counted per choice; line notes listed under the dish</small></div>
+      <div class="phone">
+        <h3>Cook</h3>
+        <div class="cook">
+          <div class="name">Siomay</div><div class="n">6</div>
+          <div class="in note">Note: no pare please (Rina)</div><div></div>
+          <div class="name" style="margin-top:.5rem">Aneka Snack Kering</div><div class="n" style="margin-top:.5rem">12</div>
+          <div class="in">Kripik Sukun</div><div class="n">5</div>
+          <div class="in">Lanting Bawang</div><div class="n">4</div>
+          <div class="in">Sarang Madu</div><div class="n">3</div>
+          <div class="in note">Note: extra crispy please (Anin, Sarang Madu)</div><div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols" style="margin-top:1.25rem">
+    <div>
+      <div class="cap">Kitchen print<small>same layout as today, choices indented, line notes in italics</small></div>
+      <div class="paper">
+        <h4>Kitchen · Saturday 25 Oct</h4>
+        <div class="prow"><b>Siomay</b><b>6</b><i>no pare please (Rina)</i></div>
+        <div class="prow"><b>Aneka Snack Kering</b><b>12</b></div>
+        <div class="prow"><span class="in">Kripik Sukun</span><span>5</span></div>
+        <div class="prow"><span class="in">Lanting Bawang</span><span>4</span></div>
+        <div class="prow"><span class="in">Sarang Madu</span><span>3</span><i>extra crispy please (Anin)</i></div>
+      </div>
+    </div>
+    <div>
+      <div class="cap">Seller · order detail and label<small>one line per choice; note under its line</small></div>
+      <div class="phone">
+        <h3>K7Q2MD · Anin</h3>
+        <div class="row"><div class="t"><div class="name">2 × Aneka Snack Kering · Kripik Sukun</div></div><span class="sub">$12.00</span></div>
+        <div class="row"><div class="t"><div class="name">1 × Aneka Snack Kering · Sarang Madu</div><div class="note">extra crispy please</div></div><span class="sub">$6.00</span></div>
+        <div class="row"><div class="t"><div class="name">Total</div></div><span class="name">$18.00</span></div>
+        <div class="box">Label: <b>Anin · K7Q2MD</b><br>2 Aneka Snack Kering · Kripik Sukun<br>1 Aneka Snack Kering · Sarang Madu (extra crispy please)</div>
+      </div>
+    </div>
+    <div></div>
+  </div>
+
+  <h2>112 · New-menu notices</h2>
+  <div class="cols">
+    <div>
+      <div class="cap">Customer · Settings<small>a quiet option, off by default</small></div>
+      <div class="phone">
+        <h3>Settings</h3>
+        <div class="row"><div class="t"><div class="name">Order updates</div><div class="sub">On for your orders (as today)</div></div></div>
+        <div class="row"><div class="t"><div class="name">New menus from DellaVee</div><div class="sub">Off</div></div><span class="switch"></span></div>
+        <div class="row"><div class="t"><div class="name">Language</div><div class="sub">English</div></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap">Customer · turning it on<small>explanation first, then the phone's own permission</small></div>
+      <div class="phone">
+        <h3 class="dim">Settings</h3>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h4>Hear about new DellaVee menus?</h4>
+          <ul class="tight sub">
+            <li>You get a notice when DellaVee publishes a new menu, usually once a week.</li>
+            <li>DellaVee only sees how many phones get it, not who you are.</li>
+            <li>Turn it off here any time.</li>
+          </ul>
+          <div class="two"><span class="ghost">Not now</span><span class="primary" style="margin-top:0">Turn on</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="cap">Seller · after publishing<small>count only; sends are counted per menu</small></div>
+      <div class="phone">
+        <h3>Menu · Sat 25 Oct</h3>
+        <div class="sub">Published</div>
+        <div class="box"><b>Notify customers</b><br><span class="sub">23 phones get new-menu notices</span>
+          <div class="primary">Send "New menu is out"</div></div>
+        <div class="box"><span class="sub">After a send:</span><br>Sent today 08:10 to 23 phones (1×)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols" style="margin-top:1.25rem">
+    <div>
+      <div class="cap">Seller · third send for the same menu<small>a warning before it goes</small></div>
+      <div class="phone">
+        <h3 class="dim">Menu · Sat 25 Oct</h3>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <h4>Send again?</h4>
+          <div class="sub">You've sent this menu twice already (08:10 and 12:30). Too many notices make customers turn them off.</div>
+          <div class="two"><span class="ghost">Don't send</span><span class="primary" style="margin-top:0">Send anyway</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="cap">Customer · the notice<small>tapping it opens the kitchen's menu</small></div>
+      <div class="phone" style="min-height:10rem">
+        <div class="box"><b>DellaVee</b><br>New menu is out: order for Saturday 25 Oct.</div>
+      </div>
+    </div>
+    <div></div>
+  </div>
+
+  <h2>Tablet · seller (most sellers use a tablet)</h2>
+  <p class="lead">The bell is in the Menu toolbar (below) and on Home in the top header beside "Go to Kitchen", only while orders are open.</p>
+  <p class="lead">The same Menu screen as today, with the choices under their dish and one new toolbar button (dashed). On a tablet the questions open as a centred window, like other seller windows.</p>
+  <div class="cols">
+    <div class="full">
+      <div class="cap">Menu, published<small>a bell icon beside Share again (name and tooltip: "Notify customers (23 phones)"); shown only while orders are open</small></div>
+      <div class="tab"><div class="rail"><span>Home</span><span class="on">Menu</span><span>Orders</span><span>Private</span><span>Kitchen</span><span>Pickup &amp; delivery</span><span>Dishes</span><span>Settings</span><span>Help</span><span>About</span></div><div class="main"><div class="kick">Live menu</div><h3 style="margin:.1rem 0">Saturday 25 Oct</h3><div class="sub">12 orders · orders close Fri 24 Oct 6:00 pm · delivery on</div>
+<div class="acts"><span class="p">✎ Edit menu</span><span>Share again</span><span class="new" title="Notify customers (23 phones)">🔔</span><span class="q">Unpublish</span></div><div class="tabs"><span class="on">Pre-orders</span><span>On the day</span></div>
+<div class="tbl"><span class="h">Dish</span><span class="h">Price</span><span class="h">Limit</span><span class="h">Sold</span><span class="h">Sold out</span>
+<span class="name">Siomay</span><span>$15.00</span><span>—</span><span>6</span><span>No</span>
+<span class="name">Aneka Snack Kering ▾</span><span>$6.00</span><span></span><span>12</span><span>No</span>
+<span class="in">Kripik Sukun</span><span></span><span>10</span><span>5</span><span>No</span>
+<span class="in">Lanting Bawang</span><span></span><span>8</span><span>4</span><span>No</span>
+<span class="in">Sarang Madu</span><span></span><span>—</span><span>3</span><span>No</span>
+<span class="in">Kripik Ubi Ungu</span><span></span><span>—</span><span>0</span><span class="out">Yes</span>
+<span class="in sub">… 3 more</span><span></span><span></span><span></span><span></span></div></div></div>
+    </div>
+    <div class="full">
+      <div class="cap">Tap the bell (second send)<small>the window always says when it was last sent for this menu ("Not sent yet" the first time); sends are kept with the menu</small></div>
+      <div class="tab"><div class="rail"><span>Home</span><span class="on">Menu</span><span>Orders</span><span>Private</span><span>Kitchen</span><span>Pickup &amp; delivery</span><span>Dishes</span><span>Settings</span><span>Help</span><span>About</span></div><div class="main" style="opacity:.35"><div class="kick">Live menu</div><h3 style="margin:.1rem 0">Saturday 25 Oct</h3><div class="sub">12 orders · orders close Fri 24 Oct 6:00 pm · delivery on</div>
+<div class="acts"><span class="p">✎ Edit menu</span><span>Share again</span><span class="new" title="Notify customers (23 phones)">🔔</span><span class="q">Unpublish</span></div><div class="tabs"><span class="on">Pre-orders</span><span>On the day</span></div>
+<div class="tbl"><span class="h">Dish</span><span class="h">Price</span><span class="h">Limit</span><span class="h">Sold</span><span class="h">Sold out</span>
+<span class="name">Siomay</span><span>$15.00</span><span>—</span><span>6</span><span>No</span>
+<span class="name">Aneka Snack Kering ▾</span><span>$6.00</span><span></span><span>12</span><span>No</span>
+<span class="in">Kripik Sukun</span><span></span><span>10</span><span>5</span><span>No</span>
+<span class="in">Lanting Bawang</span><span></span><span>8</span><span>4</span><span>No</span>
+<span class="in">Sarang Madu</span><span></span><span>—</span><span>3</span><span>No</span>
+<span class="in">Kripik Ubi Ungu</span><span></span><span>—</span><span>0</span><span class="out">Yes</span>
+<span class="in sub">… 3 more</span><span></span><span></span><span></span><span></span></div></div>
+        <div class="modal"><h4>Notify customers?</h4><div class="sub">Sent for this menu: <b>once</b>, today 08:10 to 23 phones.</div><div class="sub" style="margin-top:.3rem">23 phones get new-menu notices. They will see:</div>
+          <div class="box"><b>DellaVee</b><br>New menu is out: order for Saturday 25 Oct.</div>
+          <div class="two"><span class="ghost">Cancel</span><span class="primary" style="margin-top:0">Send</span></div></div></div>
+    </div>
+    <div class="full">
+      <div class="cap">After sending, then a third time<small>the bell shows "1×" (tooltip: "Notified 1× · 08:10"); the third send warns first</small></div>
+      <div class="tab"><div class="rail"><span>Home</span><span class="on">Menu</span><span>Orders</span><span>Private</span><span>Kitchen</span><span>Pickup &amp; delivery</span><span>Dishes</span><span>Settings</span><span>Help</span><span>About</span></div><div class="main" style="opacity:.35"><div class="kick">Live menu</div><h3 style="margin:.1rem 0">Saturday 25 Oct</h3><div class="sub">12 orders · orders close Fri 24 Oct 6:00 pm · delivery on</div>
+<div class="acts"><span class="p">✎ Edit menu</span><span>Share again</span><span title="Notified 1× · 08:10">🔔 1×</span><span class="q">Unpublish</span></div><div class="tabs"><span class="on">Pre-orders</span><span>On the day</span></div>
+<div class="tbl"><span class="h">Dish</span><span class="h">Price</span><span class="h">Limit</span><span class="h">Sold</span><span class="h">Sold out</span>
+<span class="name">Siomay</span><span>$15.00</span><span>—</span><span>6</span><span>No</span>
+<span class="name">Aneka Snack Kering ▾</span><span>$6.00</span><span></span><span>12</span><span>No</span>
+<span class="in">Kripik Sukun</span><span></span><span>10</span><span>5</span><span>No</span>
+<span class="in">Lanting Bawang</span><span></span><span>8</span><span>4</span><span>No</span>
+<span class="in">Sarang Madu</span><span></span><span>—</span><span>3</span><span>No</span>
+<span class="in">Kripik Ubi Ungu</span><span></span><span>—</span><span>0</span><span class="out">Yes</span>
+<span class="in sub">… 3 more</span><span></span><span></span><span></span><span></span></div></div>
+        <div class="modal"><h4>Send again?</h4><div class="sub">You've sent this menu twice already (08:10 and 12:30). Too many notices make customers turn them off.</div>
+          <div class="two"><span class="ghost">Don't send</span><span class="primary" style="margin-top:0">Send anyway</span></div></div></div>
+    </div>
+  </div>
+
+  <div class="qs">
+    <p><b>Proposed, please confirm:</b> the notice text "New menu is out: order for &lt;cooking day&gt;." (ID: "Menu baru sudah ada: pesan untuk &lt;hari masak&gt;."). A phone that hasn't ordered from the kitchen for <b>6 months</b> stops getting notices (plan 112 question 3). The explanation sheet text above.</p>
+  </div>
+</div>
+</body>
+</html>

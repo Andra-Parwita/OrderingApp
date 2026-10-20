@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
@@ -21,6 +21,7 @@ import {
   draftStillToPay,
   draftTotalCents,
   emptyDraft,
+  pickableDishes,
   updateRequestOf,
   type DraftError,
   type PrivateDraft,
@@ -136,6 +137,7 @@ function EditorForm({
   // A dish made here is saved to the library; once the library has it, it joins this order.
   const awaited =
     awaiting === null ? undefined : data.dishes.find((candidate) => candidate.id === awaiting);
+  const pickable = useMemo(() => pickableDishes(data.dishes), [data.dishes]);
   if (awaited) {
     setAwaiting(null);
     setDraft((previous) =>
@@ -328,7 +330,7 @@ function EditorForm({
           <Section>{t('editor.dishes')}</Section>
           <Muted>{t('editor.dishesHelp')}</Muted>
           {tools.picker({
-            dishes: data.dishes,
+            dishes: pickable,
             lang,
             selected: draft.lines.map((line) => line.dishId),
             full: draft.lines.length >= MAX_MENU_ITEMS,

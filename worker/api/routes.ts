@@ -13,6 +13,7 @@ import { handleAdminLog, handleLog } from './logRoutes';
 import { maintenanceOn } from './maintenanceGuard';
 import { devRoutes } from './devRoutes';
 import { sellerSocket } from './liveRoutes';
+import { menuNoticeCustomerRoutes } from './menuNoticeRoutes';
 import { tokenOrderRoutes } from './orderTokenRoutes';
 import { kitchenPublicRoutes, pushKeyRoute, statusRoutes } from './publicRoutes';
 import type { ApiCall, RouteContext } from './routeKit';
@@ -61,6 +62,10 @@ export async function handleApiRequest(
     return error('maintenance', 'The app is being updated. Back in a few minutes.');
   }
 
+  if (area === 's' && a && b === 'menu-notices') {
+    const notice = await menuNoticeCustomerRoutes(call);
+    if (notice) return notice;
+  }
   if (area === 's' && a) return kitchenPublicRoutes(call);
   // Customer endpoints by private token are global: the order knows its seller.
   if (area === 'orders') return tokenOrderRoutes(call);

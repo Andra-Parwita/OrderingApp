@@ -11,6 +11,7 @@ import { rememberAddress } from '../../api/device/address';
 import { customerCodeFor } from '../../api/device/customerCode';
 import { rememberFirstName } from '../../api/device/firstName';
 import { isReturningCustomer, saveMyOrder } from '../../api/device/myOrders';
+import { refreshMenuNotice } from '../../components/install/menuNoticeDevice';
 import {
   editFailed,
   editLoaded,
@@ -30,7 +31,7 @@ import {
   type CustomerRootState,
 } from './customerSlice';
 import { basketDraftSaga } from './basketDraft';
-import { selectBasket, selectEdit } from './selectors';
+import { selectBasket, selectBasketNotes, selectEdit } from './selectors';
 
 export function* loadMenu(action: ReturnType<typeof menuRequested>) {
   const result = (yield call(fetchMenu, action.payload)) as Awaited<ReturnType<typeof fetchMenu>>;
@@ -57,6 +58,10 @@ export function* refreshMenuAfter(code: string, slug: string | null) {
 }
 
 export function* placeOrder(action: ReturnType<typeof placeRequested>) {
+  const notes = (yield select((state: CustomerRootState) => selectBasketNotes(state))) as Record<
+    string,
+    string
+  >;
   const basket = (yield select((state: CustomerRootState) => selectBasket(state))) as Record<
     string,
     number
@@ -72,7 +77,11 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     firstName: firstName.trim(),
     language,
     fulfilment,
-    lines: Object.entries(basket).map(([itemId, qty]) => ({ itemId, qty })),
+    lines: Object.entries(basket).map(([itemId, qty]) => ({
+      itemId,
+      qty,
+      ...(notes[itemId] ? { note: notes[itemId] } : {}),
+    })),
     ...(trimmedNote !== '' ? { note: trimmedNote } : {}),
     ...(fulfilment === 'pickup' && pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
     ...(returning ? { returning: true } : {}),
@@ -87,6 +96,8 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     yield call(rememberFirstName, result.data.order.firstName);
     if (input.address) yield call(rememberAddress, input.address);
     yield put(placeSucceeded(result.data.order));
+    // Plan 112: an order keeps a turned-on new-menu notice alive; fire and forget.
+    yield fork(refreshMenuNotice, slug, language);
   } else {
     yield put(placeFailed({ code: result.error, message: result.message }));
     yield call(refreshMenuAfter, result.error, slug);
@@ -110,12 +121,20 @@ export function* saveEdit(action: ReturnType<typeof updateRequested>) {
     typeof selectEdit
   >;
   if (edit.status !== 'ready') return;
+  const notes = (yield select((state: CustomerRootState) => selectBasketNotes(state))) as Record<
+    string,
+    string
+  >;
   const basket = (yield select((state: CustomerRootState) => selectBasket(state))) as Record<
     string,
     number
   >;
   const patch: UpdateOrderRequest = {
-    lines: Object.entries(basket).map(([itemId, qty]) => ({ itemId, qty })),
+    lines: Object.entries(basket).map(([itemId, qty]) => ({
+      itemId,
+      qty,
+      note: notes[itemId] ?? '',
+    })),
     fulfilment: action.payload.fulfilment,
     // An empty note clears it.
     note: action.payload.note.trim(),

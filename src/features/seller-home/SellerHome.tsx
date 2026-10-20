@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatCutoff, formatDay, localDate } from '../../../shared/dates';
 import { viewedKitchenZone } from '../../../shared/zone';
@@ -35,6 +35,8 @@ export type SellerHomeProps = Readonly<{
   onContinue: (wizardStep: number) => void;
   /** A "Go to …" button; Orders may come with a filter, as address parameters (`status=ordered`). */
   onGo: (target: GoTarget, search?: string) => void;
+  /** Plan 112: the notify bell, filled by the app (a feature may not import another); shown beside the live header's button. */
+  headerExtra?: ReactNode;
   /** "Now", for tests. */
   now?: Date;
 }>;
@@ -74,6 +76,7 @@ export function SellerHome({
   startFailed = false,
   onContinue,
   onGo,
+  headerExtra,
   now: nowProp,
 }: SellerHomeProps) {
   registerSellerHomeI18n();
@@ -178,6 +181,7 @@ export function SellerHome({
           <Header
             eyebrow={eyebrow}
             filled
+            extra={headerExtra}
             tone={stage === 'paused' ? 'warn' : undefined}
             title={stage === 'cookingDay' ? day : t('live.title', { date: day })}
             sub={sub}

@@ -8,6 +8,7 @@ import {
   ITEM_DESCRIPTION_MAX,
   ITEM_NAME_MAX,
   ITEM_SIZE_MAX,
+  MAX_CHOICES,
   MAX_MENU_ITEMS,
   MAX_PICKUP_PLACES,
   SET_NAME_MAX,
@@ -204,25 +205,77 @@ export type Dish = {
   pictureRef?: string;
   /** When a menu last took a copy of it. */
   lastUsedAt?: string;
+  /** Plan 111 (D-112): the choices of this dish, in order. Absent = a plain dish. */
+  choices?: Array<DishChoice>;
 };
 
-/** POST /api/seller/dishes: the same fields as a menu item (name, description, size, price, limit, chef). */
-export type CreateDishRequest = CreateItemRequest;
-/** PATCH /api/seller/dishes/:id, at least one field; `limit: null` and `chefId: null` clear them. */
-export type UpdateDishRequest = Omit<UpdateItemRequest, 'soldOut'>;
+/** Plan 111: a choice has a name and a limit (null = none); everything else comes from its dish. */
+export type DishChoice = { id: string; name: LocalText; limit: number | null };
+/** A choice in a create or update request; no id = a new choice. */
+export type DishChoiceInput = { id?: string; name: LocalText; limit: number | null };
+
+/**
+ * POST /api/seller/dishes: the same fields as a menu item (name, description, size, price, limit,
+ * chef) and, plan 111, up to MAX_CHOICES `choices`.
+ */
+export type CreateDishRequest = CreateItemRequest & { choices?: Array<DishChoiceInput> };
+/**
+ * PATCH /api/seller/dishes/:id, at least one field; `limit: null` and `chefId: null` clear them.
+ * `choices` (plan 111) is the whole new list: a choice left out is deleted.
+ */
+export type UpdateDishRequest = Omit<UpdateItemRequest, 'soldOut'> & {
+  choices?: Array<DishChoiceInput>;
+};
 
 export type DishResponse = { dish: Dish };
 export type DishesResponse = { dishes: Array<Dish> };
 /** DELETE answer. `usedOnLiveMenu` is the warning flag (D-062): the dish is gone from the library either way. */
 export type DeleteDishResponse = { ok: true; usedOnLiveMenu: boolean };
 
+function parseChoiceName(input: unknown): LocalText | null {
+  const name = parseTrimmedText(input, ITEM_NAME_MAX);
+  return name && (name.en !== '' || name.id !== '') ? name : null;
+}
+
+function parseChoiceInputs(input: unknown): Array<DishChoiceInput> | null {
+  const list = parseArray(input, (raw): DishChoiceInput | null => {
+    if (!isRecord(raw)) return null;
+    const { id, limit } = raw;
+    const name = parseChoiceName(raw['name']);
+    if (!name) return null;
+    if (id !== undefined && (typeof id !== 'string' || id === '' || id.length > 64)) return null;
+    if (limit !== null && !isInt(limit, 1, LIMIT_MAX)) return null;
+    return { ...(id !== undefined ? { id } : {}), name, limit };
+  });
+  if (!list || list.length > MAX_CHOICES) return null;
+  const ids = list.flatMap((choice) => (choice.id !== undefined ? [choice.id] : []));
+  return new Set(ids).size === ids.length ? list : null;
+}
+
 export function parseCreateDishRequest(input: unknown): CreateDishRequest | null {
-  return parseCreateItemRequest(input);
+  const base = parseCreateItemRequest(input);
+  if (!base || !isRecord(input) || input['choices'] === undefined) return base;
+  const choices = parseChoiceInputs(input['choices']);
+  return choices ? { ...base, choices } : null;
 }
 
 export function parseUpdateDishRequest(input: unknown): UpdateDishRequest | null {
-  if (isRecord(input) && input['soldOut'] !== undefined) return null; // sold out is per menu
-  return parseUpdateItemRequest(input);
+  if (!isRecord(input) || input['soldOut'] !== undefined) return null; // sold out is per menu
+  const { choices: rawChoices, ...rest } = input;
+  const choices = rawChoices === undefined ? undefined : parseChoiceInputs(rawChoices);
+  if (choices === null) return null;
+  const base: UpdateDishRequest | null =
+    choices !== undefined && Object.keys(rest).length === 0 ? {} : parseUpdateItemRequest(rest);
+  return base ? { ...base, ...(choices !== undefined ? { choices } : {}) } : null;
+}
+
+function parseDishChoice(input: unknown): DishChoice | null {
+  if (!isRecord(input)) return null;
+  const { id, limit } = input;
+  const name = parseLocalText(input['name']);
+  if (typeof id !== 'string' || id === '' || !name) return null;
+  if (limit !== null && !isInt(limit, 0, LIMIT_MAX)) return null;
+  return { id, name, limit };
 }
 
 export function parseDish(input: unknown): Dish | null {
@@ -236,6 +289,9 @@ export function parseDish(input: unknown): Dish | null {
   if (limit !== undefined && !isInt(limit, 1, LIMIT_MAX)) return null;
   if (chefId !== undefined && typeof chefId !== 'string') return null;
   if (lastUsedAt !== undefined && !isIsoDate(lastUsedAt)) return null;
+  const choices =
+    input['choices'] === undefined ? undefined : parseArray(input['choices'], parseDishChoice);
+  if (choices === null || (choices && choices.length > MAX_CHOICES)) return null;
   const { preorder, dayStock } = input;
   if (preorder !== undefined && typeof preorder !== 'boolean') return null;
   if (dayStock !== undefined && !isInt(dayStock, 0, DAY_STOCK_MAX)) return null;
@@ -253,6 +309,7 @@ export function parseDish(input: unknown): Dish | null {
     ...(dayStock !== undefined ? { dayStock } : {}),
     ...(pictureRef !== undefined ? { pictureRef } : {}),
     ...(lastUsedAt !== undefined ? { lastUsedAt } : {}),
+    ...(choices ? { choices } : {}),
   };
 }
 

@@ -258,7 +258,9 @@ function MakeMenuBody({
       if (!add || !active) return;
       const current =
         session.getState().dishIds ??
-        saved.view.dishes.flatMap((dish) => (dish.dishId ? [dish.dishId] : []));
+        saved.view.dishes.flatMap((dish) =>
+          dish.dishId && dish.groupId === undefined ? [dish.dishId] : [],
+        );
       if (current.length < MAX_MENU_ITEMS && !current.includes(add)) {
         session.patchMenu({ dishIds: [...current, add] });
       }

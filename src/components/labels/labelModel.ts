@@ -65,12 +65,16 @@ export function truncateNote(note: string, max: number = LABEL_NOTE_MAX): string
   return `${text.slice(0, max - 1).trimEnd()}…`;
 }
 
-/** "2× Lemper ayam / Chicken lemper": Indonesian first, then English; one name if they match. */
-export function itemText(line: Pick<OrderLine, 'qty' | 'name'>): string {
+/**
+ * "2× Lemper ayam / Chicken lemper": Indonesian first, then English; one name if they match.
+ * Plan 111: a line note follows in brackets, cut like the order note.
+ */
+export function itemText(line: Pick<OrderLine, 'qty' | 'name' | 'note'>): string {
   const id = line.name.id.trim();
   const en = line.name.en.trim();
   const name = id === '' || en === '' || id === en ? id || en : `${id} / ${en}`;
-  return `${String(line.qty)}× ${name}`;
+  const note = truncateNote(line.note ?? '');
+  return `${String(line.qty)}× ${name}${note === '' ? '' : ` (${note})`}`;
 }
 
 export function pickOrders(

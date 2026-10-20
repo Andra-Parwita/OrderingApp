@@ -33,6 +33,9 @@ export type CookWho = {
   private?: true;
 };
 
+/** Plan 111: a note typed on one order line. */
+export type CookLineNote = { code: string; firstName: string; note: string };
+
 export type CookRow = {
   itemId: string;
   name: LocalText;
@@ -43,6 +46,12 @@ export type CookRow = {
   /** Only set where `qty` is the item's whole total (group by item or chef). */
   limit?: number;
   who: Array<CookWho>;
+  /** Plan 111: line notes of this row (a choice's own row for a choice). */
+  notes?: Array<CookLineNote>;
+  /** Plan 111: the heading row of a dish with choices; `qty` is the total of its choices. */
+  group?: true;
+  /** Plan 111: a choice, shown indented under its group row; `name` is the choice's own name. */
+  choice?: true;
 };
 
 export type CookGroup = {
@@ -167,6 +176,12 @@ function rowsFrom(
       byItem.set(line.itemId, row);
     }
     row.qty += line.qty;
+    if (line.note) {
+      row.notes = [
+        ...(row.notes ?? []),
+        { code: formatOrderCode(order.code), firstName: order.firstName, note: line.note },
+      ];
+    }
     if (order.private) row.privateQty += line.qty;
     row.who.push({
       code: formatOrderCode(order.code),
@@ -177,11 +192,50 @@ function rowsFrom(
     });
   }
   // Menu order first; items no longer on the menu (D-020 snapshots) last.
-  return [...byItem.values()].sort(
+  const sorted = [...byItem.values()].sort(
     (a, b) =>
       (menuIndex.get(a.itemId) ?? Number.MAX_SAFE_INTEGER) -
       (menuIndex.get(b.itemId) ?? Number.MAX_SAFE_INTEGER),
   );
+  return withChoiceGroups(sorted, menu);
+}
+
+/**
+ * Plan 111: the rows of one dish's choices get a heading row with their total, and show the
+ * choice's own name. A choice whose menu item is not known stays a plain row ("Dish · Choice").
+ */
+function withChoiceGroups(rows: Array<CookRow>, menu: CookMenu | null): Array<CookRow> {
+  const items = menu?.items ?? [];
+  const out: Array<CookRow> = [];
+  const heads = new Map<string, CookRow>();
+  for (const row of rows) {
+    const choiceItem = items.find((item) => item.id === row.itemId);
+    const parent = choiceItem?.groupId
+      ? items.find((item) => item.id === choiceItem.groupId)
+      : null;
+    if (!choiceItem || !parent) {
+      out.push(row);
+      continue;
+    }
+    let head = heads.get(parent.id);
+    if (!head) {
+      head = {
+        itemId: parent.id,
+        name: parent.name,
+        size: parent.size,
+        qty: 0,
+        privateQty: 0,
+        who: [],
+        group: true,
+      };
+      heads.set(parent.id, head);
+      out.push(head);
+    }
+    head.qty += row.qty;
+    head.privateQty += row.privateQty;
+    out.push({ ...row, name: choiceItem.name, size: { en: '', id: '' }, choice: true });
+  }
+  return out;
 }
 
 function allPicks(orders: ReadonlyArray<Order>): Array<Pick> {

@@ -50,6 +50,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   passkey_other_kind: 409,
   no_recent_order: 409,
   too_many_orders: 429,
+  pick_choice: 400,
 };
 
 export function error(

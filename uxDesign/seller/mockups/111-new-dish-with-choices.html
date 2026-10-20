@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>New dish with choices</title>
+<style>
+/* Layout: two phone sheets side by side (today's New dish | the same sheet with choices), stacked on a phone. */
+:root {
+  --bg: #f3f2ee; --fg: #23251f; --muted: #6a6d63; --line: #d9d8d0; --accentInk: #3f5a37;
+  --app: #121410; --appLine: #2e322b; --appFg: #eceee6; --appMuted: #a3a89a; --appBtn: #2a2e27;
+  --appGreen: #9fc493; --appPrimary: #5f7f57; --appNew: #e2c27a; --appInk: #10140e;
+  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; --accentInk: #a9c99e; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #0d0e0c; --fg: #e9eae3; --muted: #9a9e92; --line: #2b2e28; --accentInk: #a9c99e; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); line-height: 1.45; }
+.wrap { max-width: 60rem; margin: 0 auto; padding-block: 1.5rem 3rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; text-wrap: balance; }
+.lead { color: var(--muted); margin: 0 0 1.5rem; max-width: 44rem; }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+.colhead { font-weight: 700; margin-bottom: .5rem; }
+.colhead small { display: block; font-weight: 400; color: var(--muted); }
+.sheet { background: var(--app); color: var(--appFg); border-radius: .9rem; padding: 1rem; font-size: .9rem; min-width: 0; }
+.sheet h3 { margin: 0; font-size: 1.15rem; }
+.sub { color: var(--appMuted); font-size: .82rem; }
+.lbl { margin-top: .75rem; font-weight: 600; font-size: .85rem; }
+.lbl .opt { font-weight: 400; color: var(--appMuted); }
+.in { border: 1px solid var(--appLine); border-radius: .5rem; padding: .45rem .6rem; margin-top: .25rem; min-height: 1.1rem; }
+.in.ph { color: var(--appMuted); }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .6rem; }
+.help { color: var(--appMuted); font-size: .78rem; margin-top: .2rem; }
+.pic { margin-top: .75rem; border: 1px dashed var(--appLine); border-radius: .5rem; padding: .6rem; color: var(--appMuted); text-align: center; font-size: .85rem; }
+.tick { display: flex; gap: .5rem; align-items: flex-start; margin-top: .55rem; font-size: .85rem; }
+.box { width: 1rem; height: 1rem; border-radius: .2rem; border: 1px solid var(--appMuted); flex: none; margin-top: .15rem; display: grid; place-items: center; font-size: .7rem; }
+.box.on { background: var(--appGreen); border-color: var(--appGreen); color: var(--appInk); }
+.new { outline: 2px dashed var(--appNew); outline-offset: .35rem; border-radius: .4rem; margin-top: 1rem; }
+.newtag { display: inline-block; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--appNew); margin-bottom: .2rem; }
+.choices { margin-top: .4rem; }
+.choice { display: grid; grid-template-columns: minmax(0, 1fr) 5rem 1.2rem; gap: .4rem; align-items: center; padding: .4rem 0; border-top: 1px solid var(--appLine); font-size: .84rem; }
+.choice.head { color: var(--appMuted); font-size: .74rem; border-top: 0; padding-bottom: 0; }
+.cell { border: 1px solid var(--appLine); border-radius: .35rem; padding: .2rem .35rem; text-align: center; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell.ph { color: var(--appMuted); }
+.x { color: var(--appMuted); text-align: center; }
+.idname { color: var(--appMuted); font-size: .76rem; }
+.addc { color: var(--appGreen); margin-top: .5rem; font-weight: 600; font-size: .88rem; }
+.gone { color: var(--appMuted); font-size: .8rem; margin-top: .55rem; padding: .45rem .6rem; border-radius: .5rem; background: var(--appBtn); }
+.primary { margin-top: 1rem; background: var(--appPrimary); color: var(--appInk); border-radius: 999px; text-align: center; padding: .6rem; font-weight: 700; }
+.qs { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); max-width: 46rem; }
+.qs h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+.qs ul { margin: 0; padding-left: 1.2rem; color: var(--muted); }
+.qs li + li { margin-top: .35rem; }
+@media (max-width: 44rem) { .cols { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>New dish with choices</h1>
+  <p class="lead">One "New dish" sheet for both. A normal dish is exactly today's form. Adding a choice turns it into a dish with choices. The new part is marked with a dashed outline.</p>
+
+  <div class="cols">
+    <div>
+      <div class="colhead">Normal dish<small>today's form, unchanged</small></div>
+      <div class="sheet">
+        <h3>New dish</h3>
+        <div class="sub">Saved to Your dishes for next time.</div>
+        <div class="lbl">Name (English)</div><div class="in">Siomay</div>
+        <div class="two">
+          <div><div class="lbl">Size (English)</div><div class="in">1 Box</div></div>
+          <div><div class="lbl">Price (AUD)</div><div class="in">15.00</div></div>
+        </div>
+        <div class="lbl">Description (English)</div><div class="in">3 Siomay, Tahu, Telor, Pare, kobis dengan Kuah Kacang</div>
+        <div class="pic">Photo</div>
+        <div class="two">
+          <div><div class="lbl">Limit <span class="opt">(optional)</span></div><div class="in ph">No limit</div></div>
+          <div><div class="lbl">Chef</div><div class="in">Whole kitchen</div></div>
+        </div>
+        <div class="tick"><span class="box on">✓</span><span>Pre-order</span></div>
+        <div class="tick"><span class="box"></span><span>Sold on the day</span></div>
+        <div class="new">
+          <span class="newtag">New</span>
+          <div class="lbl">Choices <span class="opt">(optional)</span></div>
+          <div class="help">For dishes sold at one price in several kinds.</div>
+          <div class="addc">+ Add a choice</div>
+        </div>
+        <div class="primary">Add dish</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="colhead">Dish with choices<small>the same sheet after "+ Add a choice"</small></div>
+      <div class="sheet">
+        <h3>New dish</h3>
+        <div class="sub">Saved to Your dishes for next time.</div>
+        <div class="lbl">Name (English)</div><div class="in">Aneka Snack Kering</div>
+        <div class="two">
+          <div><div class="lbl">Size (English)</div><div class="in">1 Pack</div></div>
+          <div><div class="lbl">Price (AUD)</div><div class="in">6.00</div></div>
+        </div>
+        <div class="help">Every choice sells at this price.</div>
+        <div class="lbl">Chef</div><div class="in">Della</div>
+        <div class="lbl">Description (English)</div><div class="in">Keripik dan snack kering, 100 gr</div>
+        <div class="pic">Photo</div>
+        <div class="tick"><span class="box on">✓</span><span>Pre-order</span></div>
+        <div class="tick"><span class="box"></span><span>Sold on the day</span></div>
+        <div class="new">
+          <span class="newtag">New</span>
+          <div class="lbl">Choices</div>
+          <div class="choices">
+            <div class="choice head"><span>Name</span><span>Limit</span><span></span></div>
+            <div class="choice"><span>Kripik Sukun<br><span class="idname">ID: Kripik Sukun</span></span><span class="cell">10</span><span class="x">✕</span></div>
+            <div class="choice"><span>Sarang Madu<br><span class="idname">ID: Sarang Madu</span></span><span class="cell ph">No limit</span><span class="x">✕</span></div>
+            <div class="choice"><span>Lanting Bawang<br><span class="idname">ID: Lanting Bawang</span></span><span class="cell">8</span><span class="x">✕</span></div>
+            <div class="choice"><span class="sub">… 4 more</span><span></span><span></span></div>
+          </div>
+          <div class="addc">+ Add a choice</div>
+          <div class="gone">A choice has only a name and a limit. Price, size, photo, description, chef, Pre-order and Sold on the day come from the dish. The dish's own Limit is now set per choice.</div>
+        </div>
+        <div class="primary">Add dish</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="qs">
+    <h2>Open questions (not decided, not drawn)</h2>
+    <ul>
+      <li>Sold out: tap per choice in the menu (like a dish today)?</li>
+      <li>A choice's Indonesian name: typed separately (drawn as "ID:"), or the same as English by default?</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

@@ -20,6 +20,7 @@ import {
   editCleared,
   editRequested,
   menuRequested,
+  noteSet,
   placeRequested,
   placeReset,
   quantitySet,
@@ -33,6 +34,7 @@ import { ScreenBoundary } from './ScreenBoundary';
 import {
   selectBasketCount,
   selectBasketLines,
+  selectBasketNotes,
   selectBasketTotalCents,
   selectCheckout,
   selectEdit,
@@ -135,6 +137,7 @@ function BasketContent({
   const dispatch = useDispatch();
   const menu = useSelector(selectMenu);
   const lines = useSelector(selectBasketLines);
+  const notes = useSelector(selectBasketNotes);
   const count = useSelector(selectBasketCount);
   const totalCents = useSelector(selectBasketTotalCents);
   const place = useSelector(selectPlace);
@@ -233,6 +236,10 @@ function BasketContent({
       dispatch(quantitySet({ itemId, qty }));
     },
     [dispatch, lines.length, onBack, editing],
+  );
+  const onLineNote = useCallback(
+    (itemId: string, text: string) => dispatch(noteSet({ itemId, note: text })),
+    [dispatch],
   );
   const onFulfilment = useCallback(
     (value: Fulfilment) => dispatch(checkoutSet({ fulfilment: value })),
@@ -394,7 +401,9 @@ function BasketContent({
       notices={notices}
       closed={closed}
       stockProblem={failedCode === 'sold_out' || failedCode === 'exceeds_remaining'}
+      notes={notes}
       onQty={onQty}
+      onNote={onLineNote}
       onFulfilment={onFulfilment}
       onChangePlace={onChangePlace}
       onNext={goNext}

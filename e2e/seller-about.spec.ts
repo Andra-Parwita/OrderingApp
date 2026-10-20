@@ -24,7 +24,7 @@ test('About opens from the menu, shows the card, and the releases panel opens an
   await expect(page.getByText(/^Release \d/)).toBeVisible();
 
   // The releases panel: current release open, Escape closes, focus returns to the button.
-  const open = page.getByRole('button', { name: "What's new" });
+  const open = page.getByRole('button', { name: "What's new", exact: true });
   await open.click();
   const dialog = page.getByRole('dialog', { name: 'Releases' });
   await expect(dialog).toBeVisible();

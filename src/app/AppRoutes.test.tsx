@@ -2,7 +2,9 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import i18n from 'i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter, useLocation } from 'react-router';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { RELEASE_VERSION } from '../../shared/release';
+import { WHATS_NEW_KEY_PREFIX } from '../components/whats-new/WhatsNewPill';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerCustomerI18n } from '../features/customer-menu';
 import { registerCustomerOrdersI18n } from '../features/customer-orders';
 import { registerCookI18n } from '../features/seller-cook';
@@ -37,6 +39,9 @@ function renderAt(path: string) {
 }
 
 let wide = false;
+
+// Plan 117: the What's new pill is not under test here.
+beforeEach(() => localStorage.setItem(WHATS_NEW_KEY_PREFIX + RELEASE_VERSION, '1'));
 
 afterEach(() => {
   wide = false;

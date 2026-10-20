@@ -23,6 +23,7 @@ import {
   type PrivateLineInput,
   type UpdatePrivateRequest,
 } from '../../../shared/privateContract';
+import type { Dish } from '../../../shared/menusContract';
 import { isFinalStatus } from '../../../shared/status';
 import { parsePriceInput, priceInputOf } from '../../../shared/priceInput';
 
@@ -30,6 +31,30 @@ import { parsePriceInput, priceInputOf } from '../../../shared/priceInput';
 // when the day-of Directions button shows, and the editor's draft, checks and request.
 
 export type PrivateView = 'upcoming' | 'past';
+
+// ---- dishes ----
+
+const joinName = (dish: string, choice: string, other: string, otherChoice: string): string =>
+  `${dish || other} · ${choice || otherChoice}`;
+
+/**
+ * Plan 111: what a private order can hold. A dish with choices cannot be ordered itself; each of
+ * its choices is listed as "Dish · Choice" at the dish's price (the choice id is the line's dish).
+ */
+export function pickableDishes(dishes: ReadonlyArray<Dish>): Array<Dish> {
+  return dishes.flatMap((dish) => {
+    const { choices, ...plain } = dish;
+    if (!choices || choices.length === 0) return [dish];
+    return choices.map((choice) => ({
+      ...plain,
+      id: choice.id,
+      name: {
+        en: joinName(dish.name.en, choice.name.en, dish.name.id, choice.name.id),
+        id: joinName(dish.name.id, choice.name.id, dish.name.en, choice.name.en),
+      },
+    }));
+  });
+}
 
 // ---- money ----
 

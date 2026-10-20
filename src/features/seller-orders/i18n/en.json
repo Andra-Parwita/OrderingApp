@@ -165,7 +165,8 @@
     "whatsappInvalid": "Not a valid mobile number.",
     "send": "Send order link on WhatsApp",
     "done": "Done",
-    "status": "Starts as {{status}}"
+    "status": "Starts as {{status}}",
+    "addLineNote": "Add a note"
   },
   "linkMsg": "Hi {{name}}, here is your order {{code}}: {{items}}. Total {{total}}. {{how}}. Track it and get updates here: {{link}}",
   "attention": {
@@ -587,7 +588,9 @@
     "warnPaid": "Paid {{amount}}. It stays Paid; the order panel shows what is left to collect or refund.",
     "editedBy": "Edited by {{name}} · {{when}}",
     "gap": "Paid {{paid}} · total now {{total}} · {{amount}} to collect",
-    "gapRefund": "Paid {{paid}} · total now {{total}} · {{amount}} to refund"
+    "gapRefund": "Paid {{paid}} · total now {{total}} · {{amount}} to refund",
+    "lineNote": "Note for {{name}}",
+    "lineNotePlaceholder": "e.g. no chilli"
   },
   "paidSheet": {
     "titlePaid": "Mark as paid?",

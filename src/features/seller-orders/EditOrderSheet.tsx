@@ -239,6 +239,9 @@ export function EditOrderSheet({ order, tablet, onClose }: EditOrderSheetProps) 
           onRemoved={(itemId, removed) =>
             setRows((previous) => patchRow(previous, itemId, { removed }))
           }
+          onNote={(itemId, lineNote) =>
+            setRows((previous) => patchRow(previous, itemId, { note: lineNote }))
+          }
         />
         <AddRow variant="quiet" onClick={() => setView('add')}>
           {t('edit.add')}

@@ -1,5 +1,5 @@
 import type { Chef, Kitchen, KitchenSettings, MenuItem, SellerOrder, Week } from './domain';
-import { MAX_CHEFS, MAX_DISHES, MAX_MENU_ITEMS, MAX_PICKUP_PLACES, MAX_SETS } from './limits';
+import { MAX_CHEFS, MAX_DISHES, MAX_MENU_ROWS, MAX_PICKUP_PLACES, MAX_SETS } from './limits';
 import { parseMessageLogEntry, type MessageLogEntry } from './handoverContract';
 import { parseChef, parseKitchen, parseWeek } from './menuContract';
 import { parseOrder } from './orderContract';
@@ -51,9 +51,9 @@ export type BackupFile = {
   menu?: Menu;
   /** The saved pickup places (up to 5). */
   pickupPlaces?: Array<PickupPlace>;
-  /** "Your dishes". */
+  /** "Your dishes", each with its `choices` (plan 111; absent in older files). */
   dishes?: Array<Dish>;
-  /** Which library dish each menu item (by item id) is a copy of. */
+  /** Which library dish each menu item (by item id) is a copy of; a choice item points at its choice. */
   itemDishIds?: Record<string, string>;
   /** Saved sets as lists of dish ids with their use count (`sets` keeps the item copies and images). */
   dishSets?: Array<DishSet>;
@@ -91,10 +91,12 @@ export function parseBackupFile(input: unknown): BackupFile | null {
   if (!kitchen || !settings || !week || !items || !chefs || !sets || !orders || !pastWeeks) {
     return null;
   }
-  if (items.length > MAX_MENU_ITEMS || sets.length > MAX_SETS || chefs.length > MAX_CHEFS) {
+  if (items.length > MAX_MENU_ROWS || sets.length > MAX_SETS || chefs.length > MAX_CHEFS) {
     return null;
   }
   if (pastWeeks.length > MAX_PAST_WEEKS) return null;
+  const itemIds = new Set(items.map((x) => x.id));
+  if (items.some((x) => x.groupId !== undefined && !itemIds.has(x.groupId))) return null;
   if (!unique(items.map((x) => x.id)) || !unique(chefs.map((x) => x.id))) return null;
   if (!unique(sets.map((x) => x.id)) || !unique(pastWeeks.map((x) => x.id))) return null;
   if (!unique(orders.map((x) => x.id)) || !unique(orders.map((x) => x.code))) return null;
@@ -164,7 +166,13 @@ function parseExtra(input: Record<string, unknown>): Extra | null {
     out.messageLog = log;
   }
   // Links must point at something in the file, or the restore would break a foreign key.
-  const dishIds = new Set(out.dishes?.map((dish) => dish.id));
+  // Plan 111: the choices of a dish are dish rows too, so a menu item may link to one of them.
+  const allDishIds = (out.dishes ?? []).flatMap((dish) => [
+    dish.id,
+    ...(dish.choices ?? []).map((choice) => choice.id),
+  ]);
+  if (!unique(allDishIds)) return null;
+  const dishIds = new Set(allDishIds);
   const placeIds = new Set(out.pickupPlaces?.map((place) => place.id));
   if (out.menu?.placeUses.some((use) => !placeIds.has(use.placeId))) return null;
   if (out.menu && !unique(out.menu.placeUses.map((use) => use.placeId))) return null;

@@ -713,3 +713,16 @@ Format for each entry:
 **Decision:** every phone field (the kitchen's WhatsApp number, customers' numbers in the seller's contacts) accepts `+<country code><number>` or `00<country code>…`, 8–15 digits in all; a number starting with `0` is read as an Australian mobile, as before. Stored as digits with the country code (plan 110).
 **Trade-off:** an Indonesian number must be typed with +62, not 0812…; no country picker.
 **Revisit when:** sellers outside Australia type local numbers often (a country picker, option B).
+
+## D-112 · A dish can have choices: grouped dishes with a name and a limit only (2026-10-20; owner)
+**Ruling:** "B" (one choice list per dish, same price) plus a note per order line; "in essence those are just order items grouped into 1"; "the option only has the count (limit) … the main info, price etc are in group".
+**Decision:** a choice is a `dishes` / `menu_items` row with `group_id` pointing to its parent. A choice has only a name (EN/ID) and a limit, plus Sold out; price, size, photo, description, chef, Pre-order and Sold on the day come from the parent, and a different price stays a separate dish. The parent cannot be ordered by itself. Customers pick in a bottom sheet; every basket line can carry a note (`order_lines.note`). Choices added to a dish in a published menu apply from the next menu (plan 111).
+**Trade-off:** no price per choice, no several option lists (size + colour); those belong to the v1.1.0 store (plans 082/098).
+**Revisit when:** a seller needs a price per choice or two option lists on one dish.
+
+## D-113 · New-menu notices are a separate, quiet opt-in; the seller sees a count only (2026-10-20; owner)
+**Ruling:** "in settings we add option to let me know new menu as separate option … quiet option … when turned on we show explanation"; the seller sees how many phones, not who; "if more than twice we warn the seller"; a bell icon, records kept "for that menu".
+**Decision:** customer Settings has "New menus from <kitchen>", off by default, turned on only after an explanation. It stores kitchen + push endpoint only (no name, no phone, no order) and stops after 6 months without an order from that phone. The seller (owner role) sends from a bell on Home and Menu while orders are open; every send is recorded for that menu, and the third send for the same menu asks "Send again?" first (plan 112).
+**Trade-off:** sellers can't see who listens; a customer must find the option in Settings.
+**Revisit when:** sellers ask for scheduled or automatic notices.
+
