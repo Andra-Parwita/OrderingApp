@@ -64,3 +64,8 @@ Mock-ups come before stages 1 and 2 (Settings → Payments, the ticket and Charg
 1. ~~Stall ticket~~: answered (Q10, a new kind of order).
 2. ~~Who may charge~~: answered (Q11).
 3. ~~Stall refunds~~: answered (Q12).
+
+## Stage 0 progress (2026-10-20)
+- Test page (not in the app): `scratch/square-test/` (git-ignored), served over HTTPS on the home Wi-Fi with the dev certificate (a phone browser upgrades plain http to https).
+- **iPhone, Safari:** our page opened Square Point of Sale with A$1.00, cash only, and Square returned to `https://order.shaggybobo.app/seller/sell/square-return?data={"error_code":"payment_canceled","status":"error","state":"stage0-…"}`. So the handoff and the return work, and **our reference (`state`) comes back unchanged**. The sale itself was cancelled.
+- **Paused:** the Square app on the test phone is signed in to an account that isn't set up as a business, so it can't finish a sale. Next: run the test with a Square account that can already take sales (a kitchen's, or the owner's), finish a cash sale, and look the `transaction_id` up on the server. Still to test: Android, and the installed home-screen app.

@@ -16,6 +16,10 @@ On **Credentials**:
   pnpm exec wrangler secret put SQUARE_APP_SECRET
   ```
 
+## Our app's IDs (not secret, set up 20 Oct 2026)
+- Production Application ID: `sq0idp-ygH58ICxRVqfKzkW8a0aiw`
+- Sandbox Application ID: `sandbox-sq0idb-NVYkkxxg6kM9Cx5NjmdoIw`
+
 ## 3 · Where Square sends people back
 On the **OAuth** page, **Redirect URL** (Production and Sandbox):
 
