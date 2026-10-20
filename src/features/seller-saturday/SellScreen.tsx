@@ -262,6 +262,20 @@ export function SellScreen({
   const [undo, setUndo] = useState<Undo | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [numbers, setNumbers] = useState<Readonly<Record<string, string>>>({});
+  // Plan 114: a dish whose sale or count is on its way; its buttons wait (a double tap sold twice).
+  const [busy, setBusy] = useState<ReadonlySet<string>>(new Set());
+  const busyRef = useRef<Set<string>>(new Set());
+  const guarded = async (itemId: string, work: () => Promise<void>) => {
+    if (busyRef.current.has(itemId)) return;
+    busyRef.current.add(itemId);
+    setBusy(new Set(busyRef.current));
+    try {
+      await work();
+    } finally {
+      busyRef.current.delete(itemId);
+      setBusy(new Set(busyRef.current));
+    }
+  };
 
   useEffect(() => {
     if (!undo) return undefined;
@@ -277,7 +291,9 @@ export function SellScreen({
     [load, lang],
   );
 
-  const sell = async (item: SellerMenuItemView, qty: number) => {
+  const sell = (item: SellerMenuItemView, qty: number) =>
+    guarded(item.id, () => sellNow(item, qty));
+  const sellNow = async (item: SellerMenuItemView, qty: number) => {
     setNote(null);
     const result = await sellOnDay({ itemId: item.id, qty }, slug);
     if (result.ok) {
@@ -292,7 +308,9 @@ export function SellScreen({
       await reloadMenu();
     }
   };
-  const setCount = async (item: SellerMenuItemView, count: number) => {
+  const setCount = (item: SellerMenuItemView, count: number) =>
+    guarded(item.id, () => setCountNow(item, count));
+  const setCountNow = async (item: SellerMenuItemView, count: number) => {
     setNote(null);
     const result = await setDayCount({ itemId: item.id, count }, slug);
     if (result.ok) applied(item.id, result.data.dayStock);
@@ -376,6 +394,7 @@ export function SellScreen({
               const name = pickText(item.name, lang);
               const stock = item.dayStock ?? 0;
               const n = parsed(item.id);
+              const saving = busy.has(item.id);
               return (
                 <Card key={item.id} data-testid={`sell-${item.id}`}>
                   <Head>
@@ -384,7 +403,7 @@ export function SellScreen({
                   </Head>
                   {stock === 0 ? <Muted>{t('sell.soldOut')}</Muted> : null}
                   <Big
-                    disabled={stock < 1}
+                    disabled={stock < 1 || saving}
                     onClick={() => void sell(item, 1)}
                     aria-label={t('sell.minusOne', { name })}
                   >
@@ -401,7 +420,7 @@ export function SellScreen({
                     />
                     <Button
                       variant="secondary"
-                      disabled={n === null || n < 1 || n > stock}
+                      disabled={n === null || n < 1 || n > stock || saving}
                       onClick={() => n !== null && void sell(item, n)}
                       aria-label={t('sell.minusN', { name })}
                     >
@@ -409,7 +428,7 @@ export function SellScreen({
                     </Button>
                     <Button
                       variant="secondary"
-                      disabled={n === null}
+                      disabled={n === null || saving}
                       onClick={() => n !== null && void setCount(item, n)}
                       aria-label={t('sell.setCountFor', { name })}
                     >

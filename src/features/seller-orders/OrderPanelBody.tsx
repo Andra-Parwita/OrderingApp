@@ -14,6 +14,7 @@ import { ConfirmedNote } from './ConfirmedMark';
 import { DeliveryAddressBlock } from './DeliveryAddressBlock';
 import { SELLER_NS } from './i18n/register';
 import { EditedNote } from './EditedNote';
+import { RepeatNote } from './RepeatNote';
 import { EditOrderButton } from './EditOrderButton';
 import { PaidSheet } from './PaidSheet';
 import { StatusMark } from './StatusMark';
@@ -290,6 +291,7 @@ export function OrderPanelBody({
         </div>
       )}
 
+      <RepeatNote code={order.code} />
       <EditedNote order={order} />
       {order.changed ? (
         <Notice>

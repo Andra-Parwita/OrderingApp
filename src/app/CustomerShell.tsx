@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { Link, NavigationType, Outlet, useLocation, useNavigationType } from 'react-router';
@@ -220,6 +221,10 @@ export function CustomerShell() {
   useShellManifest(pathname);
   useForcedKitchenLanguage();
   const navigationType = useNavigationType();
+  // The window scrolls (D-114): a new page starts at the top; Back keeps the browser's own restore.
+  useLayoutEffect(() => {
+    if (navigationType === NavigationType.Push) window.scrollTo(0, 0);
+  }, [pathname, navigationType]);
   const tabs = hasTabBar(pathname);
   const banner = useShellBanner(pathname);
   const hasBanner = banner.kind !== 'none';

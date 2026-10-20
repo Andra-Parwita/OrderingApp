@@ -23,6 +23,8 @@ async function open(page: Page, path: string) {
 test('add a dish, edit its price, change it on the menu, then remove it', async ({
   page,
 }, testInfo) => {
+  // About ten full page loads; ~24 s alone on the dev server, so 30 s leaves no room.
+  test.setTimeout(60_000);
   const errors = collectErrors(page);
   const name = `Spec dish ${testInfo.project.name} ${String(Date.now())}`;
   const dishes = page.getByRole('table', { name: 'Dishes on the live menu' });

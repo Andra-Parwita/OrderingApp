@@ -11,6 +11,8 @@ import {
   pollingStarted,
   pollingStopped,
   statusChangeRequested,
+  takingOrdersRequested,
+  dishPatchRequested,
   warningConfirmed,
 } from './sellerOrdersSlice';
 import { chooseSeller, SELLER_KEY } from '../../api/device/sellerContext';
@@ -202,6 +204,41 @@ describe('sellerOrdersSaga', () => {
     store.dispatch(devSampleOrdersRequested());
     await waitFor(() => store.getState().sellerOrders.toast !== null);
     expect(store.getState().sellerOrders.toast).toMatchObject({ kind: 'sampleFailed' });
+  });
+
+  it('plan 114: Taking orders waits while saving, and a failed save shows the toast', async () => {
+    const store = createTestStore({ saga: true, pollMs: 1000 });
+    server.use(http.put('*/api/seller/menus/current', () => HttpResponse.error()));
+    store.dispatch(takingOrdersRequested({ value: false }));
+    expect(store.getState().sellerOrders.savingControls).toEqual(['taking']);
+    await waitFor(() => store.getState().sellerOrders.toast !== null);
+    expect(store.getState().sellerOrders.toast).toMatchObject({ kind: 'saveFailed' });
+    expect(store.getState().sellerOrders.savingControls).toEqual([]);
+  });
+
+  it('plan 114: a second Taking orders tap while saving is ignored', async () => {
+    const store = createTestStore({ saga: true, pollMs: 1000 });
+    let puts = 0;
+    server.use(
+      http.put('*/api/seller/menus/current', () => {
+        puts += 1;
+        return HttpResponse.error();
+      }),
+    );
+    store.dispatch(takingOrdersRequested({ value: false }));
+    store.dispatch(takingOrdersRequested({ value: false }));
+    await waitFor(() => store.getState().sellerOrders.toast !== null);
+    expect(puts).toBe(1);
+  });
+
+  it('plan 114: Sold out waits per dish, and a failed save shows the toast', async () => {
+    const store = createTestStore({ saga: true, pollMs: 1000 });
+    server.use(http.patch('*/api/seller/menu/items/:id', () => HttpResponse.error()));
+    store.dispatch(dishPatchRequested({ id: 'pesmol', patch: { soldOut: true } }));
+    expect(store.getState().sellerOrders.savingControls).toEqual(['dish:pesmol']);
+    await waitFor(() => store.getState().sellerOrders.toast !== null);
+    expect(store.getState().sellerOrders.toast).toMatchObject({ kind: 'saveFailed' });
+    expect(store.getState().sellerOrders.savingControls).toEqual([]);
   });
 
   it('sends the chosen seller as X-Seller on seller calls, and lists only their orders', async () => {

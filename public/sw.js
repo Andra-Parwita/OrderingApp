@@ -5,7 +5,8 @@
 //      and tells open windows ({ type: 'order-push', url }) so an open page refreshes that order at once.
 //   2. notificationclick: focuses an open window on data.url, or opens one.
 //   3. offline: network-first with a cache fallback for the app shell and the last menu and order
-//      answers, so a phone without signal still shows what it loaded last (spec section 8).
+//      answers, so a phone without signal still shows what it loaded last (spec section 8). On a slow link
+//      the copy is shown after SLOW_LINK_MS (plan 114).
 //      Never cached: /version.json, /api/seller/*, /api/auth/*, /api/admin/*, /api/dev/*, /api/push/*, anything that
 //      is not a GET, and the seller and admin pages.
 //
@@ -14,7 +15,10 @@
 //   pnpm build, then run wrangler dev (or `pnpm exec vite preview` on a free port) and open the site.
 // Change CACHE_VERSION whenever this file's caching rules change: old caches are deleted on activate.
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
+// Plan 114: on a slow (not dead) link, the cached copy is shown after this long while the network
+// answer keeps loading and refreshes the cache for next time.
+const SLOW_LINK_MS = 4500;
 const SHELL_CACHE = `shell-${CACHE_VERSION}`;
 const DATA_CACHE = `data-${CACHE_VERSION}`;
 const KNOWN_CACHES = [SHELL_CACHE, DATA_CACHE];
@@ -48,17 +52,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-async function networkFirst(request, cacheName, fallbackKey) {
+async function networkFirst(event, request, cacheName, fallbackKey) {
   const cache = await caches.open(cacheName);
-  try {
-    const response = await fetch(request);
-    if (response.ok) await cache.put(fallbackKey ?? request, response.clone());
+  const key = fallbackKey ?? request;
+  const network = fetch(request).then(async (response) => {
+    if (response.ok) await cache.put(key, response.clone());
     return response;
-  } catch (error) {
-    const cached = await cache.match(fallbackKey ?? request);
-    if (cached) return cached;
-    throw error;
-  }
+  });
+  const cached = await cache.match(key);
+  if (!cached) return network;
+  // A copy exists: the network wins if it answers in time, else the copy is shown and the network
+  // answer still finishes in the background (event.waitUntil) to refresh the cache.
+  const slow = new Promise((resolve) => setTimeout(() => resolve(cached), SLOW_LINK_MS));
+  event.waitUntil(network.catch(() => undefined));
+  return Promise.race([network.catch(() => cached), slow]);
 }
 
 async function cacheFirst(request, cacheName) {
@@ -82,7 +89,7 @@ self.addEventListener('fetch', (event) => {
   // Pages: the SPA shell. Offline, any customer page gets the cached shell, which then shows the
   // last data it can find.
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request, SHELL_CACHE, '/'));
+    event.respondWith(networkFirst(event, request, SHELL_CACHE, '/'));
     return;
   }
   // Built files have a content hash in their name: safe to keep.
@@ -92,7 +99,7 @@ self.addEventListener('fetch', (event) => {
   }
   // The last menu and order answers.
   if (CACHEABLE_API.test(path + url.search)) {
-    event.respondWith(networkFirst(request, DATA_CACHE));
+    event.respondWith(networkFirst(event, request, DATA_CACHE));
   }
 });
 

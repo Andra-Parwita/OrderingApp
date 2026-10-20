@@ -67,6 +67,7 @@ import {
   pastRequested,
   takingOrdersRequested,
   devSamplingChanged,
+  controlSaving,
   toastShown,
   type ToastKind,
   warningConfirmed,
@@ -468,26 +469,50 @@ export function* sendForced() {
   }
 }
 
+/**
+ * Plan 114: runs one save of a control that shows the server's value (no optimistic change, so
+ * nothing to roll back): the control waits while it runs, and a failure says so in the toast.
+ */
+function* savingControl(key: string, save: () => Generator<unknown, boolean, unknown>) {
+  const saving = (yield select((state: SellerOrdersRootState) =>
+    state.sellerOrders.savingControls.includes(key),
+  )) as boolean;
+  if (saving) return;
+  yield put(controlSaving({ key, saving: true }));
+  try {
+    const saved = yield* save();
+    if (!saved) yield put(toastShown({ kind: 'saveFailed', name: '', undo: null }));
+  } finally {
+    yield put(controlSaving({ key, saving: false }));
+  }
+}
+
 export function* changeTakingOrders(action: ReturnType<typeof takingOrdersRequested>) {
-  const result = (yield call(
-    setTakingOrders,
-    action.payload.value,
-    undefined,
-    currentSellerSlug(),
-  )) as ApiResult<UpdateMenuResponse>;
-  if (result.ok) yield put(currentLoaded({ view: result.data.menu }));
+  yield* savingControl('taking', function* () {
+    const result = (yield call(
+      setTakingOrders,
+      action.payload.value,
+      undefined,
+      currentSellerSlug(),
+    )) as ApiResult<UpdateMenuResponse>;
+    if (result.ok) yield put(currentLoaded({ view: result.data.menu }));
+    return result.ok;
+  });
 }
 
 /** Live Dishes panel: limit and sold out go through today's menu item route (instant, D-069 Q2). */
 export function* patchDish(action: ReturnType<typeof dishPatchRequested>) {
-  const result = (yield call(
-    updateItem,
-    action.payload.id,
-    action.payload.patch,
-    undefined,
-    currentSellerSlug(),
-  )) as ApiResult<ItemResponse>;
-  if (result.ok) yield call(loadCurrent);
+  yield* savingControl(`dish:${action.payload.id}`, function* () {
+    const result = (yield call(
+      updateItem,
+      action.payload.id,
+      action.payload.patch,
+      undefined,
+      currentSellerSlug(),
+    )) as ApiResult<ItemResponse>;
+    if (result.ok) yield call(loadCurrent);
+    return result.ok;
+  });
 }
 
 // Dev only: the Worker has these routes only in dev.
@@ -562,7 +587,7 @@ export function* sellerOrdersSaga(
   yield takeEvery(seenRequested.type, markSeen);
   yield takeEvery(collectedRequested.type, markCollected);
   yield takeEvery(warningConfirmed.type, sendForced);
-  yield takeLatest(takingOrdersRequested.type, changeTakingOrders);
+  yield takeEvery(takingOrdersRequested.type, changeTakingOrders);
   yield takeEvery(dishPatchRequested.type, patchDish);
   yield takeLatest(currentRequested.type, loadCurrent);
   yield takeLatest(pastRequested.type, loadPast);

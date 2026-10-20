@@ -307,6 +307,7 @@
     "sampleFailed": "Tidak bisa menambah contoh pesanan",
     "samplesCleared": "{{name}} pesanan contoh dihapus",
     "clearFailed": "Tidak bisa menghapus pesanan contoh",
+    "saveFailed": "Belum tersimpan. Silakan coba lagi.",
     "newOrder": "Pesanan baru · {{name}}",
     "newOrders": "{{name}} pesanan baru",
     "open": "Buka",
@@ -600,5 +601,10 @@
     "cancel": "Batal",
     "saving": "Menyimpan…",
     "total": "Total"
+  },
+  "repeat": {
+    "tag": "Ganda?",
+    "note": "Mungkin pesanan ganda dari {{code}} (hidangan sama, selisih {{seconds}} dtk)",
+    "noteMin": "Mungkin pesanan ganda dari {{code}} (hidangan sama, selisih {{minutes}} mnt)"
   }
 }

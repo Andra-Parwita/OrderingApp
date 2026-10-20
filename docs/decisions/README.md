@@ -726,3 +726,9 @@ Format for each entry:
 **Trade-off:** sellers can't see who listens; a customer must find the option in Settings.
 **Revisit when:** sellers ask for scheduled or automatic notices.
 
+## D-114 · Customer pages scroll the window; a forward move starts at the top (2026-10-20; owner)
+**Ruling:** "Leave it as is" (window scrolling, not a scroll box per page), "record in our architecture doc the table".
+**Decision:** customer pages keep scrolling the window (native iPhone feel: shrinking toolbar, status-bar tap, back to the same spot); `CustomerShell` scrolls to the top on a forward move and lets the browser restore on back. The comparison table is in docs/architecture/overview.md ("Customer pages: routing, page swaps and scrolling").
+**Trade-off:** pages are unmounted on every move, so pictures must paint at once (eager, sync decode); a keep-alive is the next step if flashes remain.
+**Revisit when:** the customer app needs fixed headers or per-page scroll positions.
+

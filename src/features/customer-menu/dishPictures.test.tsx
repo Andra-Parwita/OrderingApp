@@ -41,12 +41,13 @@ describe('customer dish row picture', () => {
     expect(screen.getByText('Lemper')).toBeVisible();
   });
 
-  it('with a picture: a lazy 64 x 64 image before the text, no layout jump', () => {
+  it('with a picture: a 64 x 64 image (not lazy, sync decode) before the text, no layout jump', () => {
     show(item('/images/a.jpg'));
     const button = screen.getByRole('button', { name: 'Enlarge picture of Lemper' });
     const img = button.querySelector('img');
     expect(img).toHaveAttribute('src', '/images/a.jpg');
-    expect(img).toHaveAttribute('loading', 'lazy');
+    expect(img).not.toHaveAttribute('loading', 'lazy');
+    expect(img).toHaveAttribute('decoding', 'sync');
     expect(img).toHaveAttribute('width', '64');
     expect(img).toHaveAttribute('height', '64');
     // The picture comes first in the row, on the left of the name.

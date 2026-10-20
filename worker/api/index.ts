@@ -28,6 +28,8 @@ export type ApiEnv = {
   ADMIN_SETUP_KEY?: string;
   /** "1" turns every dev-only path on. Set only in `.dev.vars`; absent is production. */
   DEV_TOOLS?: string;
+  /** Plan 114 off switch: "on" (the default) de-duplicates repeated orders; any other value ignores `clientOrderId`. */
+  ORDER_DEDUPE?: string;
   /** Web push (plan 004 stage 6): the VAPID key pair and contact. Without them push is off. */
   VAPID_PUBLIC_KEY?: string;
   /** Secret. */
@@ -106,6 +108,7 @@ export async function handleWorkerRequest(
     translate: { ai: env.AI, takeSlot: createTranslateSlots(env.SELLER_LIVE) },
     addressKey: await importAddressKey(env.ADDRESS_KEY),
     maintenanceToken: env.MAINTENANCE_TOKEN,
+    orderDedupe: env.ORDER_DEDUPE === undefined || env.ORDER_DEDUPE === 'on',
     ...(env.MAPS_EMBED_KEY && MAPS_KEY_RE.test(env.MAPS_EMBED_KEY)
       ? { mapsEmbedKey: env.MAPS_EMBED_KEY }
       : {}),

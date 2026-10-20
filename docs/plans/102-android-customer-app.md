@@ -1,5 +1,6 @@
 # 102 · Android customer app: one install choice, one icon per kitchen, orders inside the kitchen
 
+**Target: later** (owner, 20 Oct: "start with 114/115 and decide 101/102 later"; Fable risk review: docs/reports/2026-10-20-101-102-risk.md).
 **Status:** analysis, owner 18 Oct, **not approved**. No app source was changed. Mock-up: `uxDesign/customer/mockups/102-android-install.html`. Aligns with plan 101 (seller app per kitchen, same day) and builds on plan 068 (manifest id per kitchen).
 **Owner, 18 Oct:** "iPhone is fine; the problem is Samsung/Android." (1) Installing the app is confusing, Chrome offers more than one way: **just one choice** to make the app. (2) On Android the installed app's icon is the first kitchen's, not the one being installed. (3) "maybe use one passkey". (4) "we may have to allow seeing orders only per kitchen or all, thus change the route of the order." (5, beta) "since we have a beta trial, it's important to also let them know how to reset or delete."
 

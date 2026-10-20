@@ -49,7 +49,13 @@ test('seller changes a count, removes and adds a dish; the customer sees it', as
   await expect(sheet.getByRole('checkbox', { name: /Tell the customer/ })).toBeChecked();
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByText(/saved/i).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Copy message' })).toBeVisible();
+  // The one toast slot may already hold another spec's "New order" toast (the specs share the kitchen and run in parallel).
+  await expect(
+    page
+      .getByRole('button', { name: 'Copy message' })
+      .or(page.getByText(/^New order ·/))
+      .first(),
+  ).toBeVisible();
   await expect(page.getByText('2×Tilapia pesmol').or(page.getByText('×2')).first()).toBeVisible();
 
   await page.goto(`/o/${token}`);

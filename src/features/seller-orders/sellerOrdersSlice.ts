@@ -78,6 +78,8 @@ export type ToastKind =
   // Plan 013 "Clear samples"; `name` carries the count.
   | 'samplesCleared'
   | 'clearFailed'
+  // Plan 114: the Taking orders switch or a dish's Sold out / limit did not save.
+  | 'saveFailed'
   // Plan 021 new customer orders; `name` is "Tom · V34-P42" or the count.
   | 'newOrder'
   | 'newOrders'
@@ -127,6 +129,8 @@ export type SellerOrdersState = {
   toast: ActionToast | null;
   /** Dev only: a sample-orders request is running (the button waits). */
   devSampling: boolean;
+  /** Plan 114: controls whose save is on its way (`taking`, `dish:<id>`); each waits. */
+  savingControls: Array<string>;
   /** Plan 021: ids of new customer orders still highlighted (about 6 s). */
   fresh: Array<string>;
   /** Plan 021: new customer orders since the list was last viewed (the Orders dot, the tab title). */
@@ -152,6 +156,7 @@ const initialState: SellerOrdersState = {
   warned: null,
   toast: null,
   devSampling: false,
+  savingControls: [],
   fresh: [],
   unseenNew: 0,
   linkPrompt: null,
@@ -295,6 +300,11 @@ const sellerOrdersSlice = createSlice({
     toastCleared(state) {
       state.toast = null;
     },
+    controlSaving(state, action: PayloadAction<{ key: string; saving: boolean }>) {
+      const { key, saving } = action.payload;
+      state.savingControls = state.savingControls.filter((other) => other !== key);
+      if (saving) state.savingControls.push(key);
+    },
     devSamplingChanged(state, action: PayloadAction<boolean>) {
       state.devSampling = action.payload;
     },
@@ -422,6 +432,7 @@ export const {
   toastShown,
   toastCleared,
   devSamplingChanged,
+  controlSaving,
   currentRequested,
   currentLoaded,
   currentFailed,

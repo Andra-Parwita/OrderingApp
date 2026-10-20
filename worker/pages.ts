@@ -54,7 +54,7 @@ export async function withKitchenLinks(
     });
     const found = await kitchenPageFor(repo, pathname, origin);
     if (found === null) return fallback();
-    const { head: html, theme } = found;
+    const { head: html, theme, splash } = found;
     const rewritten = new HTMLRewriter()
       .on('head', {
         element(head) {
@@ -64,6 +64,27 @@ export async function withKitchenLinks(
       .on('html', {
         element(root) {
           if (theme !== undefined) root.setAttribute('data-brand', theme);
+        },
+      })
+      .on('#splash-name', {
+        element(el) {
+          if (splash) el.setInnerContent(splash.name); // text: HTMLRewriter escapes it
+        },
+      })
+      .on('#splash-logo', {
+        element(el) {
+          if (!splash) return;
+          if (splash.logo === null) {
+            el.setAttribute('class', 'sp-logo sp-ini');
+            el.setInnerContent(splash.initials);
+          } else {
+            el.setAttribute('class', 'sp-logo');
+          }
+        },
+      })
+      .on('#splash-img', {
+        element(el) {
+          if (splash?.logo) el.setAttribute('src', splash.logo);
         },
       })
       .transform(page);

@@ -307,6 +307,7 @@
     "sampleFailed": "Couldn't add samples",
     "samplesCleared": "Cleared {{name}} sample orders",
     "clearFailed": "Couldn't clear samples",
+    "saveFailed": "That did not save. Please try again.",
     "newOrder": "New order · {{name}}",
     "newOrders": "{{name}} new orders",
     "open": "Open",
@@ -600,5 +601,10 @@
     "cancel": "Cancel",
     "saving": "Saving…",
     "total": "Total"
+  },
+  "repeat": {
+    "tag": "Repeat?",
+    "note": "Possible repeat of {{code}} (same dishes, {{seconds}} s apart)",
+    "noteMin": "Possible repeat of {{code}} (same dishes, {{minutes}} min apart)"
   }
 }

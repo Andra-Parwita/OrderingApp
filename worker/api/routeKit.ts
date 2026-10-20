@@ -34,6 +34,8 @@ export type RouteContext = {
   addressKey?: CryptoKey | null;
   /** Plan 071: the public Maps Embed key (env `MAPS_EMBED_KEY`); sent in the public menu answer when set. */
   mapsEmbedKey?: string;
+  /** Plan 114 off switch (env `ORDER_DEDUPE`): false = `clientOrderId` is ignored entirely. Absent = on. */
+  orderDedupe?: boolean;
   /** Plan 046: the release token (secret `MAINTENANCE_TOKEN`) that may switch maintenance on or off; absent = no such endpoint. */
   maintenanceToken?: string | undefined;
 };

@@ -108,6 +108,42 @@ describe('customer saga', () => {
     );
   });
 
+  it('quietly re-sends once after a network failure, with the same client id, and lands', async () => {
+    const ids: Array<string | undefined> = [];
+    let calls = 0;
+    server.use(
+      http.post('*/api/s/onde-onde/orders', async ({ request: req }) => {
+        calls += 1;
+        ids.push(((await req.clone().json()) as { clientOrderId?: string }).clientOrderId);
+        return calls === 1 ? HttpResponse.error() : undefined;
+      }),
+    );
+    const store = await storeWithMenu();
+    store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 1 }));
+    store.dispatch(placeRequested(request));
+    await vi.waitFor(() => expect(store.getState().customer.place.status).toBe('placed'));
+    expect(calls).toBe(2);
+    expect(ids[0]).toBeTruthy();
+    expect(ids[1]).toBe(ids[0]);
+  });
+
+  it('shows the failure after two network failures in a row', async () => {
+    let calls = 0;
+    server.use(
+      http.post('*/api/s/onde-onde/orders', () => {
+        calls += 1;
+        return HttpResponse.error();
+      }),
+    );
+    const store = await storeWithMenu();
+    store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 1 }));
+    store.dispatch(placeRequested(request));
+    await vi.waitFor(() =>
+      expect(store.getState().customer.place).toMatchObject({ status: 'failed', code: 'network' }),
+    );
+    expect(calls).toBe(2);
+  });
+
   it('loads an order by token, and fails with not_found for an unknown one', async () => {
     const store = await storeWithMenu();
     store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 1 }));

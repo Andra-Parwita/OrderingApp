@@ -587,3 +587,21 @@ describe('customer routes per seller (D-037)', () => {
     expect(store.getState().customer.slug).toBe('dapur-demo');
   });
 });
+
+describe('customer page scroll (D-114)', () => {
+  it('starts a new page at the top and leaves Back to the browser', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
+    renderAt(`/${DEFAULT_SELLER_SLUG}/dishes`);
+    scrollTo.mockClear();
+    act(() => {
+      void navigateTo(`/${DEFAULT_SELLER_SLUG}/basket`);
+    });
+    expect(scrollTo).toHaveBeenCalledWith(0, 0);
+    scrollTo.mockClear();
+    act(() => {
+      void navigateTo(-1);
+    });
+    expect(scrollTo).not.toHaveBeenCalled();
+    scrollTo.mockRestore();
+  });
+});

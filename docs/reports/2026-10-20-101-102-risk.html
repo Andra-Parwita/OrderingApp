@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>Risk review · plans 101 + 102</title>
+<style>
+:root { --bg: #f5f3ec; --fg: #23251f; --muted: #66695f; --line: #d8d5ca; --ok: #3f6a3a; --okBg: #e6efe2; --warn: #7a5a14; --warnBg: #f4ead2; --bad: #8a3b2c; --badBg: #f3e1dc; }
+@media (prefers-color-scheme: dark) { :root { --bg: #121411; --fg: #e9eae3; --muted: #9a9e92; --line: #2c3029; --ok: #a9cf9f; --okBg: #1e2a1c; --warn: #e2c27a; --warnBg: #2c2615; --bad: #e6a596; --badBg: #2e1c18; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 56rem; margin: 0 auto; padding: 1.5rem 16px 3rem; }
+h1 { font-size: 1.5rem; margin: 0 0 .2rem; }
+h2 { font-size: 1.15rem; margin: 2rem 0 .6rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.sub { color: var(--muted); margin: 0 0 1.2rem; }
+.verdict { padding: .9rem 1rem; border-radius: .6rem; background: var(--okBg); color: var(--fg); border-left: 4px solid var(--ok); }
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { text-align: left; vertical-align: top; padding: .5rem .55rem; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: .82rem; }
+.pill { display: inline-block; font-size: .78rem; font-weight: 600; padding: .05rem .5rem; border-radius: 999px; white-space: nowrap; }
+.ok { background: var(--okBg); color: var(--ok); }
+.warn { background: var(--warnBg); color: var(--warn); }
+.bad { background: var(--badBg); color: var(--bad); }
+ul { padding-left: 1.2rem; } li + li { margin-top: .35rem; }
+.scroll { overflow-x: auto; }
+code { font-size: .88em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Risk review: plans 101 + 102</h1>
+  <p class="sub">Fable, 20 Oct 2026, by reading the code (nothing changed). DellaVee has live customers, so the rule is: nothing existing may break; everything existing keeps working or falls back.</p>
+
+  <div class="verdict"><b>Verdict:</b> safe to ship <b>if three things stay untouched</b>: each kitchen app's identity (<code>id /&lt;kitchen&gt;</code>), the current "Seller" app file, and a <b>server-side redirect</b> for every old order link. Nobody has to reinstall. If the safeguards can't all be built, ship the new routes and redirects first and narrow the app scope in a later release.</div>
+
+  <h2>What happens to what exists today</h2>
+  <div class="scroll"><table>
+    <tr><th>Existing thing</th><th>After 101/102</th><th>Result</th></tr>
+    <tr><td>Customer's installed DellaVee app (iPhone)</td><td>Keeps opening and working; separate storage per icon, as today</td><td><span class="pill ok">safe</span></td></tr>
+    <tr><td>Customer's installed app (Android)</td><td>Keeps working; Chrome quietly updates it to the new setup some days later, on its own</td><td><span class="pill ok">safe</span></td></tr>
+    <tr><td>Order links already sent on WhatsApp, bookmarks</td><td>Old <code>/o/…</code> link → server sends it on to <code>/&lt;kitchen&gt;/o/…</code> → opens the order</td><td><span class="pill ok">safe with redirect</span></td></tr>
+    <tr><td>Notifications already delivered</td><td>Same redirect; one duplicate notification per order possible at the switch</td><td><span class="pill warn">small</span></td></tr>
+    <tr><td>QR codes on printed labels</td><td>They hold the order code, not a link</td><td><span class="pill ok">safe</span></td></tr>
+    <tr><td>My orders, customer settings, Remember me, passkeys</td><td>Unchanged (saved per website, not per route)</td><td><span class="pill ok">safe</span></td></tr>
+    <tr><td>Old order link tapped on Android after the app updated</td><td>Opens in Chrome instead of inside the app (still works)</td><td><span class="pill warn">looks different</span></td></tr>
+    <tr><td>The current "Seller" app</td><td>Keeps working, as long as it never loads a per-kitchen app file without the kitchen in the link</td><td><span class="pill ok">safe with safeguard</span></td></tr>
+  </table></div>
+
+  <h2>Risks, ranked</h2>
+  <div class="scroll"><table>
+    <tr><th>#</th><th>Risk</th><th>Severity</th><th>Safeguard in the build</th></tr>
+    <tr><td>1</td><td>Old order links stop working if only the app (not the server) redirects</td><td><span class="pill bad">high</span></td><td>Redirect in the Worker for every old path, query kept; unknown links fall back to the app's own "not found"</td></tr>
+    <tr><td>2</td><td>Android refuses to install or update a kitchen app whose start page is outside its new area (apps installed from an order page)</td><td><span class="pill bad">high</span></td><td>Start page always inside the kitchen's area; a test on every app file</td></tr>
+    <tr><td>3</td><td>A link inside the app still points to an old path, so it opens a browser bar inside the app</td><td><span class="pill warn">medium</span></td><td>One helper for order links; a check that no old-style link is left</td></tr>
+    <tr><td>4</td><td>The old "Seller" app swaps to a per-kitchen identity by surprise</td><td><span class="pill warn">medium</span></td><td>Per-kitchen seller file only when the link names the kitchen</td></tr>
+    <tr><td>5</td><td>Opening a per-kitchen seller app with a bad kitchen shows a blank screen</td><td><span class="pill warn">medium</span></td><td>Any failure falls back to today's behaviour</td></tr>
+    <tr><td>6</td><td>Two seller apps on one Android device keep switching kitchens back and forth</td><td><span class="pill warn">medium</span></td><td>Ship the session fix together; at most one reload</td></tr>
+    <tr><td>7</td><td>Notification links in two shapes during the switch</td><td><span class="pill ok">low</span></td><td>Accept both shapes</td></tr>
+  </table></div>
+
+  <h2>Escape hatch and rollback</h2>
+  <ul>
+    <li><b>Kill switch:</b> the new "kitchen-only area" setting sits behind one server switch, on by default. If the tablet shows a problem, flip it back in minutes. Customers' apps update no sooner than their next day's launch, so they aren't reached before a flip.</li>
+    <li><b>Rollback:</b> server only, no database change. Prefer the switch over rolling back the whole version: links made as <code>/&lt;kitchen&gt;/o/…</code> during the window would not open on 1.0.43.</li>
+  </ul>
+
+  <h2>Only a real device can show</h2>
+  <ul>
+    <li>When Android updates the installed apps, and whether a browser bar appears inside them</li>
+    <li>With two seller apps installed, which one opens a seller link</li>
+    <li>Samsung Internet's behaviour; iPhone icon names</li>
+  </ul>
+
+  <h2>Recommendation</h2>
+  <ul>
+    <li>Ship <b>both 101 and 102 in 1.0.44</b> with the safeguards above, on a day with <b>no open DellaVee menu</b>.</li>
+    <li>First check after deploy, on the Samsung tablet: a fresh Onde Onde install (My orders, Settings, an order, no browser bar), then an old WhatsApp link and an old notification.</li>
+    <li>If the kill switch or the start-page test can't be built: ship the new routes and redirects only, keep the wide scope, and narrow it in 1.0.45.</li>
+  </ul>
+</div>
+</body>
+</html>

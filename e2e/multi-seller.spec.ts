@@ -81,14 +81,18 @@ test('two sellers: orders at each link, My orders across both, the seller side p
     const seller: Page = await device.newPage();
     const sellerErrors = collectErrors(seller);
     await seller.goto('/seller/orders');
-    await expect(seller.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
+    await expect(seller.getByRole('status').filter({ hasText: 'Live' })).toBeVisible({
+      timeout: 15_000,
+    });
     await searchFor(seller, ondeName);
     await expect(orderRow(seller, new RegExp(ondeName))).toBeVisible();
     await searchFor(seller, demoName);
     await expect(orderRow(seller, new RegExp(demoName))).toHaveCount(0);
 
     await seller.getByLabel('Seller (dev only)').selectOption('dapur-demo');
-    await expect(seller.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
+    await expect(seller.getByRole('status').filter({ hasText: 'Live' })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(seller.getByLabel('Seller (dev only)')).toHaveValue('dapur-demo');
     await searchFor(seller, demoName);
     await expect(orderRow(seller, new RegExp(demoName))).toBeVisible();

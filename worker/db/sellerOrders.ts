@@ -26,6 +26,9 @@ import { changeStatements, lineNotesChanged, LIVE_MENU, readLiveOrder, readOrder
 import { fail, ok, warn, type Draft } from './sellerShared';
 import { type SellerContext } from './sellerContext';
 
+/** Plan 114: how long a client order id is remembered. */
+const CLIENT_ORDER_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 /** Orders: the customer side and the seller and chef side. */
 export function ordersPart(
   c: SellerContext,
@@ -36,6 +39,7 @@ export function ordersPart(
   | 'cancelOrder'
   | 'createSellerOrder'
   | 'getByCode'
+  | 'orderByClientId'
   | 'setOrderAddress'
   | 'orderAddresses'
   | 'listOrders'
@@ -70,11 +74,38 @@ export function ordersPart(
     editDraft,
     changeByCode,
   } = c;
+  /**
+   * The order this client id already made, only when a customer would still want it: this kitchen's
+   * live menu order (not archived, not private), under 24 hours old, not cancelled. Fails open: any
+   * error is logged and answers "none", so the order is placed normally.
+   */
+  async function orderByClientId(clientOrderId: string): Promise<SellerOrder | undefined> {
+    try {
+      const since = new Date(new Date(nowIso()).getTime() - CLIENT_ORDER_WINDOW_MS).toISOString();
+      const row = await db.first<{ token: string }>(
+        `SELECT token FROM orders AS o WHERE o.seller_id = ? AND o.client_order_id = ? AND o.created_at >= ? AND o.status <> 'cancelled' AND ${LIVE_MENU}`,
+        sid,
+        clientOrderId,
+        since,
+      );
+      return row ? await readLiveOrder(db, sid, 'token', row.token) : undefined;
+    } catch (error) {
+      console.error('client order id lookup failed; placing the order normally', error);
+      return undefined;
+    }
+  }
+
   return {
     // ---- Orders: customer side ----
 
     /** Customer order: refused for a draft week, when closed by the seller, or after the cut-off. */
     async createOrder(input: CreateOrderRequest) {
+      // Plan 114: the same client id again (the answer was lost) returns the order already made,
+      // even if the menu has closed since.
+      if (input.clientOrderId !== undefined) {
+        const again = await orderByClientId(input.clientOrderId);
+        if (again) return ok(again);
+      }
       const s = await loadState();
       if (s.week.status !== 'published') return fail('week_not_published', 'The menu is not open');
       const closed = closedError<SellerOrder>(s);
@@ -152,6 +183,8 @@ export function ordersPart(
     },
 
     getByCode: (code: string) => readLiveOrder(db, sid, 'code', code),
+
+    orderByClientId,
 
     async setOrderAddress(orderId: string, cipher: string | null, edited = false) {
       // Only a flag is kept for a customer's change: the old address is never stored (D-099).

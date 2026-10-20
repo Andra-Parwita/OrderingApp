@@ -94,6 +94,23 @@ One React + TypeScript app (Vite), Redux Toolkit with redux-saga, with three app
 | Home-screen apps | each kitchen has its own web-app manifest with a fixed `id` (`/<slug>` for customers, `/seller` for the seller app) so installed apps keep their identity; the page links it in the head (server-side first, React after). A home-screen app remembers its own kitchen and does not follow the last one visited (plan 068) | [`shared/kitchenManifest.ts`](../../shared/kitchenManifest.ts), [`src/components/install/`](../../src/components/install/) |
 | Error log | devices send short scrubbed error entries to `/api/log`; the admin reads them | [`src/api/clientLog.ts`](../../src/api/clientLog.ts) |
 
+### Customer pages: routing, page swaps and scrolling (D-114)
+
+The customer pages share one layout route, `CustomerShell` (`src/app/CustomerShell.tsx`): the banner and the tab bar sit outside `<Slide key={pathname}>`, so they stay mounted; each page inside `<Slide>` is unmounted and mounted again on every page change (the slide-in plays only on a forward move). Redux keeps the data, so a page comes back without a loading state, but its DOM (and every `<img>`) is new: pictures use `loading="eager"` and `decoding="sync"` so the first frame already shows them (iOS swipe-back swaps Safari's snapshot for the new page).
+
+The **window** scrolls, not a box inside each page. A forward move scrolls to the top; a back move leaves the browser's own restore alone. Compared with the other common pattern:
+
+| | Window scrolls (chosen) | Each page scrolls its own box |
+|---|---|---|
+| New page starts at the top | `scrollTo(0, 0)` on a forward move | automatic (the box is new) |
+| Back returns to the same spot in the list | Safari restores it | lost unless saved and restored by hand |
+| iPhone toolbar and address bar shrink on scroll | yes | no (Safari does it only for the window) |
+| Banner scrolls away | yes | fixed unless a collapse is built |
+| Tap the status bar to scroll to top (iPhone) | works | window only |
+| Effort | a few lines | a layout change on every customer page |
+
+The seller screens are app-like (fixed headers, tablet first) and use their own scroll areas.
+
 ## The dev flag
 
 `DEV_TOOLS=1` (set only in a local `.dev.vars`, never in `wrangler.jsonc` or as a Cloudflare variable) turns on every dev-only path: the `X-Seller` / `X-Actor` headers that stand in for a session, the `?seller=` fallback on the live socket, `/api/dev/*`, sample orders and reset, and the dev seller picker. The app asks `/api/health` whether it is on. Production runs without it: those paths answer as if they did not exist, and the repository itself refuses `dev.reset`.

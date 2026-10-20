@@ -71,10 +71,16 @@ export type CreateOrderRequest = {
    * (old apps send none). Stored on the order and returned in seller reads only.
    */
   customerCode?: string;
+  /**
+   * plan 114: a random id the phone made for this order (kept in its basket draft until the order
+   * succeeds). A repeat of the same id within 24 hours returns the order already made. Optional
+   * (old apps send none). Customer requests only.
+   */
+  clientOrderId?: string;
 };
 
 /** POST /api/seller/orders (seller or chef, in the X-Seller seller; D-027 row 8). Defaults: confirmNow true, paid false. */
-export type CreateSellerOrderRequest = Omit<CreateOrderRequest, 'returning'> & {
+export type CreateSellerOrderRequest = Omit<CreateOrderRequest, 'returning' | 'clientOrderId'> & {
   confirmNow?: boolean;
   paid?: boolean;
   /** D-062: go ahead although the order takes more portions than are left (`over_limit`). */
@@ -262,7 +268,7 @@ function withoutAddress(input: Record<string, unknown>): Record<string, unknown>
   return rest;
 }
 
-type CreateCore = Omit<CreateOrderRequest, 'returning'>;
+type CreateCore = Omit<CreateOrderRequest, 'returning' | 'clientOrderId'>;
 
 function parseCreateCore(input: unknown): CreateCore | null {
   if (!isRecord(input) || hasPersonalData(withoutAddress(input))) return null;
@@ -310,12 +316,23 @@ function parseCreateCore(input: unknown): CreateCore | null {
   };
 }
 
+/** A uuid-like id: letters, digits and dashes, 32 to 64 characters. */
+function isClientOrderId(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9-]{32,64}$/.test(value);
+}
+
 export function parseCreateOrderRequest(input: unknown): CreateOrderRequest | null {
   const core = parseCreateCore(input);
   if (!core || !isRecord(input)) return null;
   const returning = input['returning'];
-  if (returning === undefined) return core;
-  return typeof returning === 'boolean' ? { ...core, returning } : null;
+  if (returning !== undefined && typeof returning !== 'boolean') return null;
+  const clientOrderId = input['clientOrderId'];
+  return {
+    ...core,
+    ...(returning !== undefined ? { returning } : {}),
+    // A malformed id is ignored, never a reason to refuse the order (plan 114).
+    ...(isClientOrderId(clientOrderId) ? { clientOrderId } : {}),
+  };
 }
 
 export function parseCreateSellerOrderRequest(input: unknown): CreateSellerOrderRequest | null {

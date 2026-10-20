@@ -66,7 +66,7 @@ import {
   type SendUpdatesRequest,
   type SendUpdatesResponse,
 } from '../../shared/updateContract';
-import { request, requestText, type ApiResult } from './http';
+import { BIG_TIMEOUT_MS, request, requestText, type ApiResult } from './http';
 import { invalidateCached, SETTINGS_PREFIX } from './shortCache';
 
 const enc = encodeURIComponent;
@@ -434,7 +434,10 @@ export function fetchPastWeek(
 }
 
 export function exportBackup(actor?: StaffActor, seller?: string): Promise<ApiResult<BackupFile>> {
-  return request('/api/seller/backup', parseBackupFile, who(actor, seller));
+  return request('/api/seller/backup', parseBackupFile, {
+    ...who(actor, seller),
+    timeoutMs: BIG_TIMEOUT_MS,
+  });
 }
 
 /** Replaces this seller's data with the backup (400 `invalid_backup` if it is not valid). */
@@ -446,13 +449,17 @@ export function restoreBackup(
   return request('/api/seller/backup', parseRestoreResponse, {
     method: 'POST',
     body: file,
+    timeoutMs: BIG_TIMEOUT_MS,
     ...who(actor, seller),
   });
 }
 
 /** The week's orders as CSV text (UTF-8 with a BOM, for Excel). */
 export function fetchOrdersCsv(actor?: StaffActor, seller?: string): Promise<ApiResult<string>> {
-  return requestText('/api/seller/orders.csv', who(actor, seller));
+  return requestText('/api/seller/orders.csv', {
+    ...who(actor, seller),
+    timeoutMs: BIG_TIMEOUT_MS,
+  });
 }
 
 // Saturday tools (stage 7.1).

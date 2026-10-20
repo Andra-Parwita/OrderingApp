@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { http } from 'msw';
 import { mockStore } from '../../../mocks/handlers';
+import { server } from '../../../mocks/server';
 import { DEFAULT_SELLER_SLUG } from '../../../shared/seller';
 import { updateItem } from '../../api/client';
 import { fetchDayLog } from '../../api/day';
@@ -57,6 +59,33 @@ describe('Sell screen', () => {
       ).toHaveTextContent('2'),
     );
     expect(screen.getByRole('status')).toHaveTextContent('Sold 1 × Tilapia pesmol');
+  });
+
+  it('plan 114: -1 waits while its sale is on the way, so a double tap sells once', async () => {
+    await stockUp('pesmol', 5);
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let sales = 0;
+    server.use(
+      http.post('*/api/seller/day/sale', async () => {
+        sales += 1;
+        await gate;
+        return undefined;
+      }),
+    );
+    renderSell();
+    const minus = await screen.findByRole('button', { name: 'Sell one Tilapia pesmol' });
+    fireEvent.click(minus);
+    fireEvent.click(minus);
+    await waitFor(() => expect(minus).toBeDisabled());
+    release();
+    await waitFor(() => expect(minus).toBeEnabled());
+    expect(sales).toBe(1);
+    expect(
+      within(screen.getByTestId('sell-pesmol')).getByLabelText(/portions left/),
+    ).toHaveTextContent('4');
   });
 
   it('Undo within the window gives the portion back; the bar goes after 5 seconds', async () => {

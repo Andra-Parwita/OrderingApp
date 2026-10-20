@@ -309,7 +309,12 @@ export function MenuHomeView({
             aria-label={t('home.seeFullPicture')}
             onClick={() => setViewing(true)}
           >
-            <img src={pictureUrl} alt={t('home.menuFor', { date })} />
+            <img
+              decoding="sync"
+              loading="eager"
+              src={pictureUrl}
+              alt={t('home.menuFor', { date })}
+            />
           </ClosedPicture>
         ) : null}
         <StatusCard role="status">
@@ -443,7 +448,12 @@ export function MenuHomeView({
     <Screen>
       <Banner kitchen={kitchen} lang={lang} />
       <Hero>
-        <HeroImage src={pictureUrl} alt={t('home.menuFor', { date })} />
+        <HeroImage
+          decoding="sync"
+          loading="eager"
+          src={pictureUrl}
+          alt={t('home.menuFor', { date })}
+        />
         <PictureTap
           type="button"
           aria-label={t('home.seeFullPicture')}

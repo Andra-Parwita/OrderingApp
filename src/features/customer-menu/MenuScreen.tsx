@@ -1,4 +1,4 @@
-import { useCallback, useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
@@ -26,6 +26,20 @@ import {
 // The routed menu screens: menu home, dishes and how ordering works. Each loads the menu through
 // the store and hands it to a presentational view (the fixtures page feeds the same views).
 
+// When this slug's menu was last requested here. A page remount (back from Dishes) skips the
+// request while the stored menu is ready and this fresh; live updates keep it current.
+const FRESH_MS = 30_000;
+let lastRequest: { slug: string; at: number } | undefined;
+export function resetMenuFreshness(): void {
+  lastRequest = undefined;
+}
+function markRequested(slug: string): void {
+  lastRequest = { slug, at: Date.now() };
+}
+function requestedRecently(slug: string): boolean {
+  return lastRequest?.slug === slug && Date.now() - lastRequest.at < FRESH_MS;
+}
+
 function useMenuData(slug: string, preview?: MenuResponse) {
   const dispatch = useDispatch();
   const stored = useSelector(selectMenu);
@@ -45,9 +59,20 @@ function useMenuData(slug: string, preview?: MenuResponse) {
   }, [theme, preview]);
 
   const load = useCallback(() => {
-    if (!preview) dispatch(menuRequested(slug));
+    if (preview) return;
+    markRequested(slug);
+    dispatch(menuRequested(slug));
   }, [dispatch, slug, preview]);
-  useEffect(load, [load]);
+  const ready = menu.status === 'ready';
+  const readyRef = useRef(ready);
+  useEffect(() => {
+    readyRef.current = ready;
+  });
+  useEffect(() => {
+    // Only on mount or a new slug: back from Dishes the ready, fresh menu is not fetched again.
+    const fresh = readyRef.current && requestedRecently(slug);
+    if (!fresh) load();
+  }, [load, slug]);
   return { menu, load };
 }
 

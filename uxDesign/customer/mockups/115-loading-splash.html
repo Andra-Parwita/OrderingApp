@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>ShaggyBobo · Loading splash (mock-up 115)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" />
+<style>
+/* Plan: the kitchen's own page colour, lit like a lamp over a woven tray (anyaman), the kitchen's
+   logo and name sitting in that light. One quiet idea: the light breathes once while loading. */
+:root {
+  --stage: #e7e3d8; --ink: #2b2a24; --muted: #6a6d63;
+  --cream: #F6F2E8; --creamHi: #fdfaf3; --creamLo: #e9e1cd; --creamInk: #2f2b22; --creamWeave: rgba(120, 96, 58, .055);
+  --night: #121411; --nightHi: #22271f; --nightLo: #0a0b09; --nightInk: #ebe7dc; --nightWeave: rgba(235, 220, 190, .035);
+  --logoBg: #ead9b6; --logoInk: #5b4426;
+  --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--stage); color: var(--ink); font: 16px/1.5 var(--font); }
+.wrap { max-width: 72rem; margin: 0 auto; padding: 1.5rem 16px 3rem; }
+h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; }
+p.lead { color: var(--muted); margin: 0 0 1rem; max-width: 52rem; }
+.row { display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: flex-start; }
+.cap { font-weight: 600; font-size: .9rem; margin-bottom: .4rem; max-width: 13rem; }
+.cap small { display: block; font-weight: 400; color: var(--muted); }
+.phone { width: 13rem; height: 26rem; border-radius: 1.8rem; border: .5rem solid #1c1c1a; overflow: hidden; position: relative; }
+
+/* The splash itself: everything below is what index.html would carry inline. */
+.splash { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .85rem; font-family: var(--font); }
+.splash.light { color: var(--creamInk); background:
+  radial-gradient(70% 45% at 50% 44%, var(--creamHi) 0%, transparent 70%),
+  repeating-linear-gradient(45deg, var(--creamWeave) 0 2px, transparent 2px 9px),
+  repeating-linear-gradient(-45deg, var(--creamWeave) 0 2px, transparent 2px 9px),
+  linear-gradient(180deg, var(--cream) 0%, var(--creamLo) 100%); }
+.splash.dark { color: var(--nightInk); background:
+  radial-gradient(70% 45% at 50% 44%, var(--nightHi) 0%, transparent 70%),
+  repeating-linear-gradient(45deg, var(--nightWeave) 0 2px, transparent 2px 9px),
+  repeating-linear-gradient(-45deg, var(--nightWeave) 0 2px, transparent 2px 9px),
+  linear-gradient(180deg, var(--night) 0%, var(--nightLo) 100%); }
+.logo { width: 4.5rem; height: 4.5rem; border-radius: 1.1rem; display: grid; place-items: center; background: var(--logoBg); color: var(--logoInk); font-weight: 700; font-size: 1.35rem; letter-spacing: .02em; box-shadow: 0 .6rem 1.6rem rgba(60, 40, 10, .14); }
+.dark .logo { box-shadow: 0 .6rem 1.8rem rgba(0, 0, 0, .45); }
+.name { font-size: 1.2rem; font-weight: 600; letter-spacing: .01em; }
+.bobo { width: 4.2rem; height: 4.2rem; position: relative; }
+.bobo::before { content: ""; position: absolute; inset: 0; background: #e8bf72; border-radius: 52% 48% 40% 40% / 62% 62% 38% 38%; box-shadow: inset 0 -.35rem 0 rgba(150, 100, 30, .18), 0 0 0 .22rem #2a1a0d; }
+.bobo::after { content: ""; position: absolute; left: 34%; top: 48%; width: .5rem; height: .5rem; border-radius: 50%; background: #2a1a0d; box-shadow: .95rem -.15rem 0 #2a1a0d; }
+
+/* Live demo: replay shows the real timing (colour at once, splash after 250 ms, out when ready). */
+.demo .splash > * { opacity: 0; }
+.demo.play .splash > * { animation: in 220ms ease-out 250ms forwards; }
+.demo.play .splash .logo { animation: in 220ms ease-out 650ms forwards; }
+.demo.play .splash .glow { animation: breathe 2.4s ease-in-out 450ms 1; }
+.demo.done .splash { animation: out 200ms ease-in forwards; }
+.demo .app { position: absolute; inset: 0; background: var(--cream); padding: 1rem; font-size: .8rem; color: var(--muted); }
+.demo .app b { display: block; color: var(--ink); font-size: 1rem; margin-bottom: .4rem; }
+.glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(45% 28% at 50% 44%, rgba(255, 246, 225, .55), transparent 70%); opacity: 0; }
+@keyframes in { to { opacity: 1; } }
+@keyframes out { to { opacity: 0; visibility: hidden; } }
+@keyframes breathe { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .demo.play .splash > *, .demo.play .splash .logo { animation: none; opacity: 1; }
+  .demo.play .splash .glow { animation: none; }
+  .demo.done .splash { animation: none; visibility: hidden; }
+}
+button { font: inherit; padding: .4rem .9rem; border-radius: .5rem; border: 1px solid #b9b3a3; background: #fffdf7; cursor: pointer; }
+button:focus-visible { outline: 3px solid #4d6b47; outline-offset: 2px; }
+ul.notes { margin-top: 1.5rem; color: var(--muted); max-width: 52rem; font-size: .92rem; padding-left: 1.1rem; }
+ul.notes li + li { margin-top: .3rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Loading splash (plan 115)</h1>
+  <p class="lead">The kitchen's own page colour, lit softly in the middle like a lamp over a woven tray, with the kitchen's logo and name in that light. No spinner. Owner's picks: logo + name (B), soft gradient (B). DellaVee without an uploaded logo shows its initials, as the app already does.</p>
+
+  <h2>Customer app</h2>
+  <div class="row">
+    <div><div class="cap">Light<small>cream page colour, faint woven texture, soft light</small></div>
+      <div class="phone"><div class="splash light"><span class="logo">DV</span><span class="name">DellaVee</span></div></div></div>
+    <div><div class="cap">Dark<small>the same, in the dark page colour</small></div>
+      <div class="phone"><div class="splash dark"><span class="logo">DV</span><span class="name">DellaVee</span></div></div></div>
+    <div><div class="cap">Slow link, logo not here yet<small>its space is kept, so nothing moves when it arrives</small></div>
+      <div class="phone"><div class="splash light"><span class="logo" style="background:transparent;box-shadow:none"></span><span class="name">DellaVee</span></div></div></div>
+  </div>
+
+  <h2>Seller app</h2>
+  <div class="row">
+    <div><div class="cap">Light<small>Bobo + ShaggyBobo</small></div>
+      <div class="phone"><div class="splash light"><span class="bobo"></span><span class="name">ShaggyBobo</span></div></div></div>
+    <div><div class="cap">Dark</div>
+      <div class="phone"><div class="splash dark"><span class="bobo"></span><span class="name">ShaggyBobo</span></div></div></div>
+  </div>
+
+  <h2>The timing, live</h2>
+  <div class="row">
+    <div>
+      <div class="cap">Replay a slow launch<small>colour at once · name after ¼ s · logo fades in when it arrives · the light breathes once · out when the menu is ready</small></div>
+      <div class="phone demo" id="demo">
+        <div class="app"><b>DellaVee</b>The menu is here.</div>
+        <div class="splash light"><span class="glow"></span><span class="logo">DV</span><span class="name">DellaVee</span></div>
+      </div>
+      <p><button type="button" id="replay">Replay</button></p>
+    </div>
+  </div>
+
+  <ul class="notes">
+    <li>Everything is drawn by the browser from the page itself; only the logo is a picture (usually already saved on the phone).</li>
+    <li>Fast launches (under ¼ s) show only the colour, then the app: nothing flickers.</li>
+    <li>"Reduce motion" on the phone: no fades and no breathing light, the splash simply switches.</li>
+    <li>The texture and light stay faint so text and logo keep their contrast in both modes.</li>
+  </ul>
+</div>
+<script>
+const demo = document.getElementById('demo');
+function play() {
+  demo.classList.remove('play', 'done'); void demo.offsetWidth;
+  demo.classList.add('play');
+  setTimeout(() => demo.classList.add('done'), 3400);
+}
+document.getElementById('replay').addEventListener('click', play);
+play();
+</script>
+</body>
+</html>

@@ -36,11 +36,19 @@ export type RequestOptions = {
   actor?: StaffActor;
   /** Seller calls only; becomes the X-Seller header (dev; phase 4 uses the session). */
   seller?: string;
+  /** Plan 114: overrides the default wait (10 s read, 20 s write) for a big transfer. */
+  timeoutMs?: number;
 };
+
+/** Plan 114: how long a call may wait for the server before it counts as "no answer". */
+export const READ_TIMEOUT_MS = 10_000;
+export const WRITE_TIMEOUT_MS = 45_000;
+/** A whole-kitchen backup, restore or CSV is bigger than a normal call. */
+export const BIG_TIMEOUT_MS = 60_000;
 
 async function send(
   path: string,
-  { method = 'GET', body, actor, seller }: RequestOptions,
+  { method = 'GET', body, actor, seller, timeoutMs }: RequestOptions,
 ): Promise<{ response: Response } | ApiFailure> {
   // Before stage 8.2 the session token sat in localStorage. It is not used any more: forget it.
   dropLegacySessionToken();
@@ -58,6 +66,14 @@ async function send(
       method,
       headers,
       credentials: 'same-origin',
+      // A stalled link ends as the usual `network` failure (offline strip, "Didn't go through").
+      // An old browser without AbortSignal.timeout sends with no limit rather than not at all.
+      signal:
+        typeof AbortSignal.timeout === 'function'
+          ? AbortSignal.timeout(
+              timeoutMs ?? (method === 'GET' ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS),
+            )
+          : undefined,
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
     return { response };

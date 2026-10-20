@@ -37,6 +37,7 @@ import {
   insertOrderStatements,
   lineNotesChanged,
   LIVE_MENU,
+  liveMenu,
   readLiveOrder,
 } from './orders';
 import { createDayOps } from './daySales';
@@ -431,6 +432,13 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     );
   }
 
+  function isUniqueClientId(error: unknown): boolean {
+    for (let e: unknown = error; e instanceof Error; e = e.cause) {
+      if (/client_order_id/i.test(e.message) && /unique/i.test(e.message)) return true;
+    }
+    return false;
+  }
+
   function isPortionRace(error: unknown): boolean {
     for (let e: unknown = error; e instanceof Error; e = e.cause) {
       if (/integer overflow/i.test(e.message)) return true;
@@ -552,8 +560,53 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     const order = only === 'en' || only === 'id' ? { ...built, language: only } : built;
     // A forced order takes the portions it asked for, so the race guard must not stop it.
     const guard = over === 'allow' ? null : portionGuard(order);
+    // Plan 114: remember the phone's client id on the order (a customer order only). Fail open: an
+    // old row holding this id that a customer would not want back (cancelled, archived, private, over
+    // 24 h) lets go of it in the same batch, so the unique index can never stop a real order.
+    const clientId = 'clientOrderId' in input ? input.clientOrderId : undefined;
+    const since = new Date(new Date(nowIso()).getTime() - 24 * 3600 * 1000);
+    const withId = (id: string) => [
+      db.stmt(
+        `UPDATE orders SET client_order_id = NULL WHERE seller_id = ? AND client_order_id = ? AND NOT (status <> 'cancelled' AND ${liveMenu('')} AND created_at >= ?)`,
+        sid,
+        id,
+        since.toISOString(),
+      ),
+    ];
+    const remember = (id: string) => [
+      db.stmt(
+        'UPDATE orders SET client_order_id = ? WHERE seller_id = ? AND id = ?',
+        id,
+        sid,
+        order.id,
+      ),
+    ];
+    const run = (id: string | undefined) =>
+      db.batch([
+        ...(guard ? [guard] : []),
+        ...(id !== undefined ? withId(id) : []),
+        ...insertOrderStatements(db, order, null),
+        ...(id !== undefined ? remember(id) : []),
+      ]);
     try {
-      await db.batch([...(guard ? [guard] : []), ...insertOrderStatements(db, order, null)]);
+      try {
+        await run(clientId);
+      } catch (error) {
+        if (clientId === undefined || isPortionRace(error)) throw error;
+        if (isUniqueClientId(error)) {
+          // Two sends of the same order raced: the other one won; answer with its order.
+          const first = await db.first<{ token: string }>(
+            `SELECT token FROM orders WHERE seller_id = ? AND client_order_id = ? AND status <> 'cancelled' AND ${liveMenu('')}`,
+            sid,
+            clientId,
+          );
+          const existing = first ? await readLiveOrder(db, sid, 'token', first.token) : undefined;
+          if (existing) return ok(existing);
+        }
+        // Anything else around the client id: place the order without it. A rare duplicate is fine.
+        console.error('client order id failed; placing the order without it', error);
+        await run(undefined);
+      }
     } catch (error) {
       if (!isPortionRace(error)) throw error;
       return lostRace(await loadState(), input.lines);

@@ -77,7 +77,7 @@ test('a seller adds a dish picture and the customer sees and enlarges it', async
       await openDishes(customer, SELLER);
       const enlarge = customer.getByRole('button', { name: `Enlarge picture of ${name}` });
       await expect(enlarge).toBeVisible();
-      await expect(enlarge.locator('img')).toHaveAttribute('loading', 'lazy');
+      await expect(enlarge.locator('img')).toHaveAttribute('decoding', 'sync');
       await enlarge.click();
       const viewer = customer.getByRole('dialog', { name: `Picture of ${name}` });
       await expect(viewer).toBeVisible();

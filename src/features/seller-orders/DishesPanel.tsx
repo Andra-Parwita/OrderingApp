@@ -9,7 +9,7 @@ import { Button, SlideOver, TextField } from '../../ui';
 import { SELLER_NS } from './i18n/register';
 import { useReadOnlyOrders } from './orderAccess';
 import { useLang } from './orderText';
-import { selectCurrent, selectSoldByItem } from './sellerOrdersSelectors';
+import { selectControlSaving, selectCurrent, selectSoldByItem } from './sellerOrdersSelectors';
 import { dishPatchRequested } from './sellerOrdersSlice';
 
 // The live Dishes panel (D-069 Q6): sold / limit / left for each dish, with Edit limit and Sold
@@ -109,6 +109,7 @@ function DishRow({ dish, sold }: Readonly<{ dish: MenuDishView; sold: number }>)
   const [editing, setEditing] = useState(false);
   const stop = useCallback(() => setEditing(false), []);
   const start = useCallback(() => setEditing(true), []);
+  const saving = useSelector(selectControlSaving(`dish:${dish.id}`));
   const toggleSoldOut = useCallback(
     () =>
       dispatch(
@@ -135,7 +136,11 @@ function DishRow({ dish, sold }: Readonly<{ dish: MenuDishView; sold: number }>)
             {t('dishes.editLimit')}
           </Button>
         )}
-        <Button onClick={toggleSoldOut} aria-pressed={dish.manualSoldOut === true}>
+        <Button
+          onClick={toggleSoldOut}
+          disabled={saving}
+          aria-pressed={dish.manualSoldOut === true}
+        >
           {dish.manualSoldOut === true ? t('dishes.backOn') : t('dishes.markSoldOut')}
         </Button>
       </Buttons>

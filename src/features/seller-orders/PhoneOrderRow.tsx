@@ -7,6 +7,7 @@ import { formatOrderCode } from '../../../shared/orderCode';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Icon } from '../../ui';
 import { ConfirmedPill } from './ConfirmedMark';
+import { RepeatTag } from './RepeatNote';
 import { getContactDigits } from './contacts';
 import { SELLER_NS } from './i18n/register';
 import { NewTag } from './orderRowCells';
@@ -145,6 +146,7 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
           <Name>{order.firstName}</Name>
           <ConfirmedPill order={order} />
           {isNew ? <NewTag /> : null}
+          <RepeatTag code={order.code} />
           <Code>{formatOrderCode(order.code)}</Code>
           <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
         </Top>

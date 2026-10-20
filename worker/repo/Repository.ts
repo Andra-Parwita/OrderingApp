@@ -273,6 +273,8 @@ export type SellerRepository = {
     actor: StaffActor,
   ): Promise<StoreResult<SellerOrder>>;
   getByCode(code: string): Promise<SellerOrder | undefined>;
+  /** Plan 114: the live order a phone already placed with this client id in the last 24 hours. */
+  orderByClientId(clientOrderId: string): Promise<SellerOrder | undefined>;
 
   // Private (Khusus) orders (plan 081). The owner-only gate is in the routes; the store trusts it.
   createPrivate(input: CreatePrivateRequest, actor: StaffActor): Promise<StoreResult<SellerOrder>>;

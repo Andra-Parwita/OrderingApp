@@ -70,9 +70,20 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Deploy order:** backup → `pnpm build` → `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` → `pnpm run deploy` → health check → live checks (dish with choices end to end, line note on Cook/print, bell + Settings option, chef sign-in sees no bell).
 - **117 "What's new" pill:** shown once per release per seller device (floating pill, `src/components/whats-new`); See opens About with the releases, newest marked New for 14 days.
 - **Release note (owner "A"):** "Dishes with choices, a note on each dish, and send customers a notice when a new menu is out."
-- **Live checks 1.0.43:** none done yet (owner stopped for the day).
-- **Backup summary:** after each backup give the owner the counts (Remember me, passkeys, order notifications, new-menu notices, orders per day per kitchen, per menu totals), read locally from the backup file (python sqlite3 in memory), never `--remote`.
-- **Next (1.0.44):** plan 114 slow networks items 1–5 (owner "A"); plan 115 no blank screen (owner to confirm). Later: 113 rest, 116 problem report, 101/102.
+- **Live checks 1.0.43:** ✅ all good (owner, 20 Oct evening).
+- **Backup summary:** after each backup give the owner the counts (Remember me, passkeys, order notifications, new-menu notices, orders per day per kitchen, order counts per menu; never income), read locally from the backup file (python sqlite3 in memory), never `--remote`.
+- **Next: hotfix 1.0.43.1 = plans 114 + 115** (owner 20 Oct "A": "just perf and not too visible"; no version bump, no release note, tag `v1.0.43.1`). **1.0.44** is kept for 101/102, decided later, after Fable's risk review (must not break existing installs or links; DellaVee has live customers). Plan 114 items 1–5; plan 115 needs a mock-up first.
+
+## Hotfix 1.0.43.1 (21 Oct): built and gated, not yet deployed
+- **Plan 114 slow networks:** request time limits (10 s reads, **45 s writes**, owner "A"; 60 s backup/CSV; feature-checked); **no double orders**: `clientOrderId` (migration `0033_client_order_id.sql`), fail-open (only a live, uncancelled menu order < 24 h is returned; any problem places the order; malformed id ignored), quiet automatic re-send once after a lost answer, off switch `ORDER_DEDUPE` in `wrangler.jsonc` vars ("on"); Sell −1 / set-count disabled while saving; Taking orders / Sold out disabled while saving + "That did not save" toast; `sw.js` serves the cache after 4.5 s on a slow link (cache v2).
+- **Seller "possible repeat" note** (client-only): same device code + same dishes within 2 min → amber note on the later order, "Repeat?" tag on rows.
+- **Plan 115 splash:** `index.html` first-paint colours + `public/splash.js` (no inline scripts, CSP-safe, `data-cfasync="false"`), kitchen logo/initials + name (sellers: Bobo + ShaggyBobo), woven texture + soft light, CSS fallback hides it once the app renders.
+- **Customer flashes:** dish/hero pictures `loading="eager"` + `decoding="sync"`; no second menu fetch within 30 s on back; forward page moves scroll to the top (D-114, window scrolling kept).
+- **Route safety tests** for future 101/102 (`docs/plans/102-route-safety-checklist.md`, 13 pending cases).
+- **Gate (21 Oct):** server 1,010 · app 1,751 · full Playwright 120 passed / 0 failed; p114 order-safety 6/6 with the 45 s limit.
+- **Deploy:** backup → build → `wrangler d1 migrations apply shaggybobo-order --remote` (0033) → `pnpm run deploy` → health → live checks (order on the iPhone; dark mode in Settings; splash on a cold start; swipe back from Dishes and Basket; seller Taking orders switch; browser console has no CSP errors). Tag `v1.0.43.1`.
+- **Lessons 32–38** added (CSP testing, index.html styles, repeat failures, full-suite runs, fail-open, timing tests, shell `&`).
+- **1.0.44:** plans 101 + 102 (decide after `docs/reports/2026-10-20-101-102-risk.html`).
 
 ## Next session (fresh)
 1. Read this file, then CLAUDE.md and `docs/guide/agent-working-conventions.md`.
@@ -94,4 +105,4 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.43 (tag v1.0.43). First do the 1.0.43 live checks one at a time (What's new pill; a dish with choices end to end incl. a line note on Cook/kitchen print; the bell + customer Settings option; a chef sees no bell), then start 1.0.44 (plans 114 + 115). Finish the 1.0.42 live checks one at a time (HANDOVER step 4), then start 1.0.43 (plans 101 + 102). Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.43 (tag v1.0.43). 1.0.43 live checks are done. Next is **hotfix 1.0.43.1 = plans 114 and 115** (owner, 20 Oct; no version bump or release note; 1.0.44 kept for 101/102); plan 115 needs a mock-up for the owner's OK first. 101/102: wait for Fable's risk review (DellaVee has live customers; existing installs and links must keep working or fall back) and the owner's decision. Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.

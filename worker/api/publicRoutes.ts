@@ -10,7 +10,7 @@ import {
   type TeamNamesResponse,
 } from '../../shared/authContract';
 import { parseCreateOrderRequest, parseFindOrderRequest } from '../../shared/orderContract';
-import type { FindOrderResponse } from '../../shared/orderContract';
+import type { CreateOrderRequest, FindOrderResponse } from '../../shared/orderContract';
 import type { PublicKeyResponse } from '../../shared/pushContract';
 import { sha256Hex } from '../db/crypto';
 import { bustMaintenanceCache } from './maintenanceGuard';
@@ -71,6 +71,13 @@ export async function statusRoutes(call: ApiCall): Promise<Response | undefined>
   return undefined;
 }
 
+/** Plan 114 off switch: the order as if the phone had sent no client id. */
+function withoutClientId(input: CreateOrderRequest): CreateOrderRequest {
+  const copy = { ...input };
+  delete copy.clientOrderId;
+  return copy;
+}
+
 /**
  * Public, per seller (D-037): /api/s/:slug/*. The old unscoped GET /api/menu and POST /api/orders
  * are gone: they fall through (404). Called only when the area is `s` and a slug is given.
@@ -91,8 +98,25 @@ export async function kitchenPublicRoutes(call: ApiCall): Promise<Response | nul
   }
   if (b === 'live' && !c && method === 'GET') return customerSocket(call, sellerStore);
   if (b === 'orders' && !c && method === 'POST') {
-    const input = parseCreateOrderRequest(await readJson(request));
-    if (!input) return bad();
+    const parsed = parseCreateOrderRequest(await readJson(request));
+    if (!parsed) return bad();
+    // Plan 114 off switch: with ORDER_DEDUPE off the client id is dropped before anything reads it.
+    const input = context.orderDedupe === false ? withoutClientId(parsed) : parsed;
+    // Plan 114: the same client id again means the answer was lost. Return the order already made:
+    // not a new order for the rate limit, and no second push, address or live signal.
+    if (input.clientOrderId !== undefined) {
+      const again = await sellerStore.orderByClientId(input.clientOrderId);
+      if (again) {
+        // A first try whose address was not stored (the answer was lost mid-way): store it now.
+        if (again.fulfilment === 'delivery' && input.address) {
+          const stored = (await sellerStore.orderAddresses([again.code])).get(again.code);
+          if (stored === undefined) {
+            await storeAddress(sellerStore, context, { ok: true, value: again }, input.address);
+          }
+        }
+        return customerResult({ ok: true, value: again }, sellerStore, context, 201);
+      }
+    }
     const tooMany = await orderLimitResponse(
       store,
       sellerStore.seller.id,

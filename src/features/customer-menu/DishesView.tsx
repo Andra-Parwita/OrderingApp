@@ -202,7 +202,7 @@ export const Dish = memo(function Dish({
           aria-label={t('menu.enlargePicture', { name })}
           onClick={() => setViewing(true)}
         >
-          <img src={item.pictureRef} alt="" width={64} height={64} loading="lazy" />
+          <img src={item.pictureRef} alt="" width={64} height={64} decoding="sync" />
         </PictureButton>
       ) : null}
       <Text>

@@ -1,5 +1,6 @@
 # 101 · One seller app per kitchen on the home screen
 
+**Target: later** (owner, 20 Oct: "start with 114/115 and decide 101/102 later"; Fable risk review: docs/reports/2026-10-20-101-102-risk.md).
 **Status:** mock-up + analysis, owner "A" 18 Oct, target 1.0.42 if small (see stage 0: only if the spike passes). Not approved for building.
 **Owner, 18 Oct:** Onde Onde's chefs see "Seller" with the ShaggyBobo logo. A person in Dellavee and Onde Onde has one seller icon and must use the kitchen switcher. Ruling "A": **one seller app per kitchen** on the home screen, like the customer apps (plan 068).
 **Mock-up:** `uxDesign/seller/mockups/101-seller-app-per-kitchen.html` (Android and iPhone home screens, 3 naming/badge options, the install row, the one-time move notice, the four launch states; EN / ID toggle).

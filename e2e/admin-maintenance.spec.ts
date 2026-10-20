@@ -36,7 +36,7 @@ test('admin announces an update, switches maintenance on, and the Updating scree
     // Maintenance has its own admin page (plan 086 split it from the announcement).
     await page
       .getByRole('navigation', { name: 'Admin sections' })
-      .getByRole('button', { name: 'Maintenance' })
+      .getByRole('button', { name: 'Maintenance', exact: true })
       .click();
     await page.getByRole('button', { name: 'Turn maintenance on' }).click();
     await page.getByRole('button', { name: 'Tap again to turn on' }).click();

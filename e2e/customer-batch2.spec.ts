@@ -8,6 +8,8 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
   page,
   context,
 }, testInfo) => {
+  // About ten full page loads; under the parallel suite the dev server needs ~3 s for each, so 30 s is too tight.
+  test.setTimeout(60_000);
   const consoleErrors: Array<string> = [];
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());

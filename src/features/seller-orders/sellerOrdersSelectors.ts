@@ -1,6 +1,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import type { Order } from '../../../shared/domain';
 import { parseOrderCode, scannedText } from '../../../shared/orderCode';
+import { findRepeats } from './repeatOrders';
 import { filterOf, type StatusFilter } from './orderStatus';
 import type { SellerOrdersRootState } from './sellerOrdersSlice';
 
@@ -78,6 +79,9 @@ export const selectCurrent = (state: SellerOrdersRootState) => state.sellerOrder
 export const selectPast = (state: SellerOrdersRootState) => state.sellerOrders.past;
 export const selectWarned = (state: SellerOrdersRootState) => state.sellerOrders.warned;
 export const selectToast = (state: SellerOrdersRootState) => state.sellerOrders.toast;
+/** Plan 114: is the save of this control (`taking`, `dish:<id>`) still on its way? */
+export const selectControlSaving = (key: string) => (state: SellerOrdersRootState) =>
+  state.sellerOrders.savingControls.includes(key);
 export const selectDevSampling = (state: SellerOrdersRootState) => state.sellerOrders.devSampling;
 
 /** Portions sold per menu item id (not cancelled), for the live Dishes panel. */
@@ -136,3 +140,6 @@ export const selectOrdersCount = createSelector(
 );
 
 export const selectLinkPrompt = (state: SellerOrdersRootState) => state.sellerOrders.linkPrompt;
+
+/** Possible accidental repeat orders, keyed by the later order's code (repeatOrders.ts). */
+export const selectRepeats = createSelector([selectOrders], (orders) => findRepeats(orders));

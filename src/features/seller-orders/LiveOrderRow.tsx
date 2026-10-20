@@ -6,6 +6,7 @@ import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { Icon, type IconName } from '../../ui';
 import { ConfirmedPill } from './ConfirmedMark';
+import { RepeatTag } from './RepeatNote';
 import { SELLER_NS } from './i18n/register';
 import { NewTag } from './orderRowCells';
 import { StatusMark } from './StatusMark';
@@ -201,6 +202,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
         <Name>{order.firstName}</Name>
         <ConfirmedPill order={order} />
         {isNew ? <NewTag /> : null}
+        <RepeatTag code={order.code} />
         {order.changed || order.addressChanged === 'new' ? (
           <Flag>
             <Icon name="pencil" />

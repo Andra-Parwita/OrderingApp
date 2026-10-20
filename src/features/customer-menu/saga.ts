@@ -30,7 +30,7 @@ import {
   updateSucceeded,
   type CustomerRootState,
 } from './customerSlice';
-import { basketDraftSaga } from './basketDraft';
+import { basketDraftSaga, basketKeyOf, clientOrderIdFor, forgetClientOrder } from './basketDraft';
 import { selectBasket, selectBasketNotes, selectEdit } from './selectors';
 
 export function* loadMenu(action: ReturnType<typeof menuRequested>) {
@@ -88,9 +88,19 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     ...(fulfilment === 'delivery' && address ? { address } : {}),
     ...(customerCode !== null ? { customerCode } : {}),
   };
-  const result = (yield call(placeOrderRequest, slug, input)) as Awaited<
+  // Plan 114: the same order sent again (its answer was lost) must not become a second order.
+  const key = (yield select((state: CustomerRootState) => basketKeyOf(state))) as string | null;
+  const clientOrderId = clientOrderIdFor(key, JSON.stringify(input));
+  let result = (yield call(placeOrderRequest, slug, { ...input, clientOrderId })) as Awaited<
     ReturnType<typeof placeOrderRequest>
   >;
+  // Quiet retry: no answer (timeout, dropped link) is sent once more with the same id, which the server
+  // answers with the first order if it did get through.
+  if (!result.ok && result.error === 'network') {
+    result = (yield call(placeOrderRequest, slug, { ...input, clientOrderId })) as Awaited<
+      ReturnType<typeof placeOrderRequest>
+    >;
+  }
   if (result.ok) {
     yield call(saveMyOrder, result.data.order);
     yield call(rememberFirstName, result.data.order.firstName);
@@ -99,6 +109,9 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     // Plan 112: an order keeps a turned-on new-menu notice alive; fire and forget.
     yield fork(refreshMenuNotice, slug, language);
   } else {
+    // Only "no answer" (network, 5xx, unreadable) keeps the id for the retry; a definitive 4xx
+    // answer (sold out, invalid, closed, rate limit) starts the next try fresh.
+    if (result.status >= 400 && result.status < 500) forgetClientOrder(key);
     yield put(placeFailed({ code: result.error, message: result.message }));
     yield call(refreshMenuAfter, result.error, slug);
   }

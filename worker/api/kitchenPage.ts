@@ -10,13 +10,30 @@ import {
   kitchenPageTarget,
   themeColourHtml,
 } from '../../shared/kitchenHeadLinks';
+import { iconPath, initialsOf } from '../../shared/kitchenManifest';
 import { DEFAULT_THEME, type ThemeName } from '../../shared/themes';
 import type { Repository } from '../repo/Repository';
+import { iconTypeOfRef } from './kitchenRoutes';
 
 /** What the Worker adds to a page: head HTML and, on kitchen and order pages, the kitchen's theme (plan 024). */
 export interface KitchenPage {
   head: string;
   theme?: ThemeName;
+  /** The loading splash's kitchen name and logo (plan 115): the uploaded icon, else the initials. */
+  splash?: { name: string; logo: string | null; initials: string };
+}
+
+function splashFor(
+  slug: string,
+  name: string,
+  railIcon: string | undefined,
+): NonNullable<KitchenPage['splash']> {
+  const uploaded = iconTypeOfRef(railIcon) !== undefined;
+  return {
+    name,
+    logo: uploaded ? iconPath(encodeURIComponent(slug), 192) : null,
+    initials: initialsOf(name),
+  };
 }
 
 /**
@@ -48,6 +65,7 @@ export async function kitchenPageFor(
         themeColourHtml(theme) +
         linkPreviewHtml(kitchenPreview(name, menu.kitchen.images), origin, pathname),
       theme,
+      splash: splashFor(slug, name, menu.kitchen.images?.railIcon),
     };
   }
   const found = await store.lookupByToken(target.token);
@@ -62,6 +80,7 @@ export async function kitchenPageFor(
       themeColourHtml(theme) +
       linkPreviewHtml(kitchenPreview(name, menu.kitchen.images), origin, pathname),
     theme,
+    splash: splashFor(slug, name, menu.kitchen.images?.railIcon),
   };
 }
 

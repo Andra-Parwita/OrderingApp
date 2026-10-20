@@ -6,7 +6,7 @@ import type { MenuView } from '../../../shared/menusContract';
 import { Icon } from '../../ui';
 import { SELLER_NS } from './i18n/register';
 import type { OrdersTableScreenProps } from './ordersTableProps';
-import { selectCounts, selectUnpaidCount } from './sellerOrdersSelectors';
+import { selectControlSaving, selectCounts, selectUnpaidCount } from './sellerOrdersSelectors';
 import { takingOrdersRequested } from './sellerOrdersSlice';
 
 export const Switch = styled.button<{ $on: boolean }>`
@@ -198,6 +198,7 @@ export function TakingOrders({ view }: Readonly<{ view: MenuView }>) {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
   const on = view.menu.takingOrders;
+  const saving = useSelector(selectControlSaving('taking'));
   const flip = useCallback(() => dispatch(takingOrdersRequested({ value: !on })), [dispatch, on]);
   return (
     <Switch
@@ -206,6 +207,8 @@ export function TakingOrders({ view }: Readonly<{ view: MenuView }>) {
       aria-label={on ? t('home.takingOrders') : t('home.paused')}
       aria-checked={on}
       $on={on}
+      disabled={saving}
+      aria-busy={saving}
       onClick={flip}
     >
       <i aria-hidden="true" />

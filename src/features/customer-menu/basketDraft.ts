@@ -24,7 +24,49 @@ export type BasketDraft = Readonly<{
   /** Plan 111: the line notes (absent in drafts saved before). */
   notes?: Readonly<Record<string, string>>;
   checkout: CheckoutState;
+  /**
+   * Plan 114: the id sent with "Place order" and the exact order it was made for. If the answer is
+   * lost and the same order is sent again, the server returns the first one. Gone once the order
+   * succeeds (the whole draft is cleared); absent in drafts saved before.
+   */
+  clientOrder?: Readonly<{ id: string; signature: string }>;
 }>;
+
+type Mutable<T> = { -readonly [K in keyof T]: T[K] };
+
+// The same pair in memory, for a phone that cannot store anything (private window).
+const memoryOrders = new Map<string, { id: string; signature: string }>();
+
+/**
+ * The client id for this basket's order: the one already made for the same `signature` (the request
+ * body), else a new one, kept with the draft until the order succeeds.
+ */
+export function clientOrderIdFor(key: string | null, signature: string): string {
+  const stored =
+    key === null
+      ? undefined
+      : (memoryOrders.get(key) ?? readDraft<BasketDraft>(key)?.value.clientOrder);
+  if (stored && stored.signature === signature) return stored.id;
+  const made = { id: crypto.randomUUID(), signature };
+  if (key !== null) {
+    memoryOrders.set(key, made);
+    const found = readDraft<BasketDraft>(key);
+    if (found) writeDraft(key, { ...found.value, clientOrder: made }, found.baseline);
+  }
+  return made.id;
+}
+
+/** The server answered "no" (sold out, invalid, closed): the next tap is a fresh order with a new id. */
+export function forgetClientOrder(key: string | null): void {
+  if (key === null) return;
+  memoryOrders.delete(key);
+  const found = readDraft<BasketDraft>(key);
+  if (found?.value.clientOrder) {
+    const rest: Partial<Mutable<BasketDraft>> = { ...found.value };
+    delete rest.clientOrder;
+    writeDraft(key, rest as BasketDraft, found.baseline);
+  }
+}
 
 /** The key of the menu on screen, or null when there is none (or an order is being edited). */
 export function basketKeyOf(state: CustomerRootState): string | null {
@@ -56,8 +98,13 @@ function* save() {
   const key = basketKeyOf(state);
   if (key === null) return;
   const draft = basketDraftOf(state);
-  if (draft) writeDraft(key, draft, '');
-  else clearDraft(key);
+  if (draft) {
+    const clientOrder = memoryOrders.get(key) ?? readDraft<BasketDraft>(key)?.value.clientOrder;
+    writeDraft(key, clientOrder ? { ...draft, clientOrder } : draft, '');
+  } else {
+    clearDraft(key);
+    memoryOrders.delete(key);
+  }
 }
 
 function* restore(restoredFor: Set<string>) {
@@ -74,7 +121,9 @@ function* clearAfterOrder() {
   const state = (yield select()) as CustomerRootState;
   const { slug, menu } = state.customer;
   if (slug !== null && menu.status === 'ready') {
-    clearDraft(draftKey(slug, 'basket', menu.data.week.cookingDate));
+    const key = draftKey(slug, 'basket', menu.data.week.cookingDate);
+    clearDraft(key);
+    memoryOrders.delete(key);
   }
 }
 
