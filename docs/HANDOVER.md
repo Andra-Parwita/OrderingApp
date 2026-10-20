@@ -2,8 +2,8 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
 
-**Last session:** 2026-10-18 → 20 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.42** (plans 098 stages 0–3, 100, 103–109) and hotfixes **1.0.42.1** (plan 110 by Andra: WhatsApp numbers from any country, D-111) and **1.0.42.2** (Help says which numbers are accepted).
-**Live:** Hotfix **1.0.42.2** (20 Oct ~08:45; Worker `922844c3-7fea-4c6a-98bc-9f51fc11fe40`; health OK, site reports `1.0.113 · d2a1212`; tag `v1.0.42.2`). Before: 1.0.42.1 (Worker `0170fa3c…`, `392a1a3`, tag `v1.0.42.1`), 1.0.42 (Worker `21340f7c…`, tag `v1.0.42` on `450a175`), 1.0.41 (Worker `847e8574…`). About still shows 1.0.42 (hotfixes keep `RELEASE_VERSION`; the "new version" pill follows the build commit). Backup before 1.0.42: `backups/shaggybobo-2026-10-19.sql` (787 rows); hotfixes had no database change, no backup.
+**Last session:** 2026-10-18 → 20 Oct, the owner's PC (Adelaide), Claude as coordinator. Shipped **1.0.42**, hotfixes **1.0.42.1** / **1.0.42.2**, and **1.0.43** (plans 111, 112, 117 + new seller icon).
+**Live:** Release **1.0.43** (20 Oct ~21:53; Worker `63be2500-0346-4234-811f-f91e99901c8e`; health OK, site reports `1.0.115 · 4fcbc1d`; tag `v1.0.43`; migrations 0031 + 0032 applied to the live D1). Backup before it: `backups/shaggybobo-2026-10-20.sql` (897 rows). Before: 1.0.42.2 (Worker `922844c3…`, tag `v1.0.42.2`), 1.0.42.1 (`0170fa3c…`), 1.0.42 (`21340f7c…`).
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
@@ -62,7 +62,7 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Rules from 18 Oct:** ask the next question only after the owner says "go next question"; mock-ups never invent features; button labels never wrap (`docs/design/README.md`).
 - **Deploy impact:** medium (size). Server: new edit-order route, live-socket token header (old tabs use the fallback), retention sweep. Client: many seller screens. No migration.
 
-## 1.0.43 (plans 111, 112, 117, 20 Oct): built and gated, not yet deployed
+## 1.0.43 live (plans 111, 112, 117, 20 Oct)
 - **111 dish choices + line notes (D-112):** a choice is a grouped dish (name EN/ID + limit; price, chef, pre-order/on-the-day from the dish); Sold out per choice; customer bottom sheet; basket pencil + note sheet; Cook/kitchen print/labels/order detail/WhatsApp text/edit order/private orders show choices and notes; backup/restore carries choices. Choices added to a dish apply from the next menu.
 - **112 new-menu notices (D-113):** quiet customer Settings option with explanation; seller bell (owner only) on Home + Menu (tablet), Orders header (phone), only while orders are open; sends recorded per menu, 3rd send warns; 500 phones per kitchen; phones dropped 183 days after their last order.
 - **Also:** new ShaggyBobo seller app icon (192/512/maskable, `public/brand/`), seller splash stays cream; 2 query savings (plan 113): backup 15 trips, dish list 2; 57-trip menu save fixed (choices loaded once).
@@ -70,6 +70,8 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - **Deploy order:** backup → `pnpm build` → `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` → `pnpm run deploy` → health check → live checks (dish with choices end to end, line note on Cook/print, bell + Settings option, chef sign-in sees no bell).
 - **117 "What's new" pill:** shown once per release per seller device (floating pill, `src/components/whats-new`); See opens About with the releases, newest marked New for 14 days.
 - **Release note (owner "A"):** "Dishes with choices, a note on each dish, and send customers a notice when a new menu is out."
+- **Live checks 1.0.43:** none done yet (owner stopped for the day).
+- **Backup summary:** after each backup give the owner the counts (Remember me, passkeys, order notifications, new-menu notices, orders per day per kitchen, per menu totals), read locally from the backup file (python sqlite3 in memory), never `--remote`.
 - **Next (1.0.44):** plan 114 slow networks items 1–5 (owner "A"); plan 115 no blank screen (owner to confirm). Later: 113 rest, 116 problem report, 101/102.
 
 ## Next session (fresh)
@@ -92,4 +94,4 @@ Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration)
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.42.2 (tag v1.0.42.2). Finish the 1.0.42 live checks one at a time (HANDOVER step 4), then start 1.0.43 (plans 101 + 102). Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.43 (tag v1.0.43). First do the 1.0.43 live checks one at a time (What's new pill; a dish with choices end to end incl. a line note on Cook/kitchen print; the bell + customer Settings option; a chef sees no bell), then start 1.0.44 (plans 114 + 115). Finish the 1.0.42 live checks one at a time (HANDOVER step 4), then start 1.0.43 (plans 101 + 102). Ask the owner before any git write. Ask me whether setup is needed, then the 6 chef permissions one at a time.
