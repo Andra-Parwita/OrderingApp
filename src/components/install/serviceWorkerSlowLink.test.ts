@@ -78,18 +78,15 @@ describe('service worker on a slow link', () => {
 
   it('uses the network answer when it comes in time', async () => {
     const sw = boot(() => Promise.resolve(new Response('fresh')), new Response('cached'));
-    const { answer } = sw.run('/', 'navigate');
+    const { answer } = sw.run('/api/orders/abc');
     await vi.advanceTimersByTimeAsync(10);
     expect(await body(await answer)).toBe('fresh');
   });
 
   it('a fast network answer is returned at once: no timer needed, never the cached copy', async () => {
     const sw = boot(() => Promise.resolve(new Response('fresh')), new Response('cached'));
-    for (const [path, mode] of [
-      ['/api/s/onde-onde/menu', 'cors'],
-      ['/', 'navigate'],
-    ] as const) {
-      const { answer } = sw.run(path, mode);
+    for (const path of ['/api/s/onde-onde/menu', '/api/orders/abc']) {
+      const { answer } = sw.run(path);
       // No timers advanced at all: the answer is the network's.
       expect(await body(await answer)).toBe('fresh');
     }

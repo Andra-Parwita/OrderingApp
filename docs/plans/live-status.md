@@ -4,6 +4,13 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Plan 115 stage 2 (hotfix 1.0.43.2)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| B1 · saved page per kitchen at once + splash at once | general-purpose · sonnet | 10:09 | 15 min | 10:11 | 2.5 min | −12 min | sw.js +38 −6, index.html ±3, 1 new test file (4), 1 test edited | ✅ typecheck, own tests 9/9 |
+| B2 · item 3 gap: a failed script load after a deploy drops the saved page before the reload | general-purpose · sonnet | 10:12 | 10 min | 10:13 | 1.5 min | −8.5 min | updateCheck.ts +12 −1, update.test.tsx +36 −1 | ✅ typecheck, own tests 11/11 |
+| Gate · scoped (typecheck, lint, format, unit, 3 e2e × 2 phones) | coordinator | 10:14 | 15 min | 10:16 | ~2.5 min | −12.5 min | — | ✅ unit 109/109, e2e 11/11 |
+
 ## Plans 111 + 112 (release 1.0.43)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|

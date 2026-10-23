@@ -1,5 +1,7 @@
 # 101 · One seller app per kitchen on the home screen
 
+**Owner, 24 Oct: 1.0.44 = 101 + 102 together, with all of Fable's safeguards** (old-link redirects in the Worker, start page always inside the kitchen's area with a test on every app file, the scope kill switch, per-kitchen seller file only when the link names the kitchen, fallback to today on any failure, session fix together), deployed on a day with no open DellaVee menu ("A", after `docs/reports/2026-10-20-101-102-risk.html`). No migration.
+
 **Target: later** (owner, 20 Oct: "start with 114/115 and decide 101/102 later"; Fable risk review: docs/reports/2026-10-20-101-102-risk.md).
 **Status:** mock-up + analysis, owner "A" 18 Oct, target 1.0.42 if small (see stage 0: only if the spike passes). Not approved for building.
 **Owner, 18 Oct:** Onde Onde's chefs see "Seller" with the ShaggyBobo logo. A person in Dellavee and Onde Onde has one seller icon and must use the kitchen switcher. Ruling "A": **one seller app per kitchen** on the home screen, like the customer apps (plan 068).

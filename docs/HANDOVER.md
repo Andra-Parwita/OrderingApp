@@ -14,6 +14,7 @@
 - **Gate scope for small changes** (owner, 17 Oct: "run also only selected test if needed"): typecheck + lint/format on changed files + the unit tests of the touched areas + the e2e specs of every touched screen; the full suite only when the owner asks.
 - Files under ~750 lines (soft); don't grow routes.ts, seller.ts, menus.ts, auth.ts, AppRoutes.tsx.
 - Agents never deploy, never run `--remote` / `wrangler secret`, never reseed; back up before migrations.
+- **Plan list and roadmap stay current (D-115, owner 24 Oct):** update `docs/plans/README.md` + `docs/product/roadmap.md` when a plan starts or gets its mock-up, when it is done, and **before every deploy** (step 0 of the deploy order), then `pnpm run docs`.
 
 ## 1.0.39 (plan 092, D-108): what's in it
 Source: the owner's first real-phone use of Remember me (iPhone home-screen app, passkey saved in Keeper → no address lock; after switching to Apple Passwords the lock worked).

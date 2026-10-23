@@ -120,12 +120,47 @@ describe('reloadOnPreloadError', () => {
   beforeEach(() => sessionStorage.clear());
   afterEach(() => sessionStorage.clear());
 
-  it('reloads once, not twice', () => {
+  afterEach(() => Reflect.deleteProperty(window, 'caches'));
+
+  it('reloads once, not twice, without caches', async () => {
     const reload = vi.fn();
     const stop = reloadOnPreloadError(reload);
     window.dispatchEvent(new Event('vite:preloadError'));
     window.dispatchEvent(new Event('vite:preloadError'));
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    await new Promise((r) => setTimeout(r, 10));
     stop();
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('deletes the saved pages (shell-*) only, then reloads once', async () => {
+    const del = vi.fn(() => Promise.resolve(true));
+    Object.defineProperty(window, 'caches', {
+      configurable: true,
+      value: { keys: () => Promise.resolve(['shell-v3', 'data-v3']), delete: del },
+    });
+    const reload = vi.fn();
+    const stop = reloadOnPreloadError(reload);
+    window.dispatchEvent(new Event('vite:preloadError'));
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    expect(del).toHaveBeenCalledTimes(1);
+    expect(del).toHaveBeenCalledWith('shell-v3');
+    window.dispatchEvent(new Event('vite:preloadError'));
+    await new Promise((r) => setTimeout(r, 10));
+    stop();
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(del).toHaveBeenCalledTimes(1);
+  });
+
+  it('still reloads when the cache delete fails', async () => {
+    Object.defineProperty(window, 'caches', {
+      configurable: true,
+      value: { keys: () => Promise.reject(new Error('nope')), delete: vi.fn() },
+    });
+    const reload = vi.fn();
+    const stop = reloadOnPreloadError(reload);
+    window.dispatchEvent(new Event('vite:preloadError'));
+    await vi.waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    stop();
   });
 });

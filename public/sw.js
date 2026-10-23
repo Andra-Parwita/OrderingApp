@@ -7,6 +7,9 @@
 //   3. offline: network-first with a cache fallback for the app shell and the last menu and order
 //      answers, so a phone without signal still shows what it loaded last (spec section 8). On a slow link
 //      the copy is shown after SLOW_LINK_MS (plan 114).
+//      Pages (plan 115 stage 2): a saved copy is shown at once and refreshed from the network in the
+//      background (the next open shows the new one). One copy per kitchen: /<slug> and /o/<token> each
+//      keep their own, '/' is the install-time copy and the offline fallback. Only 200 HTML is saved.
 //      Never cached: /version.json, /api/seller/*, /api/auth/*, /api/admin/*, /api/dev/*, /api/push/*, anything that
 //      is not a GET, and the seller and admin pages.
 //
@@ -15,7 +18,7 @@
 //   pnpm build, then run wrangler dev (or `pnpm exec vite preview` on a free port) and open the site.
 // Change CACHE_VERSION whenever this file's caching rules change: old caches are deleted on activate.
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 // Plan 114: on a slow (not dead) link, the cached copy is shown after this long while the network
 // answer keeps loading and refreshes the cache for next time.
 const SLOW_LINK_MS = 4500;
@@ -52,9 +55,9 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-async function networkFirst(event, request, cacheName, fallbackKey) {
+async function networkFirst(event, request, cacheName) {
   const cache = await caches.open(cacheName);
-  const key = fallbackKey ?? request;
+  const key = request;
   const network = fetch(request).then(async (response) => {
     if (response.ok) await cache.put(key, response.clone());
     return response;
@@ -66,6 +69,35 @@ async function networkFirst(event, request, cacheName, fallbackKey) {
   const slow = new Promise((resolve) => setTimeout(() => resolve(cached), SLOW_LINK_MS));
   event.waitUntil(network.catch(() => undefined));
   return Promise.race([network.catch(() => cached), slow]);
+}
+
+// The key a customer page is saved under: its kitchen (/<slug>), or its order link (/o/<token>).
+function pageKey(path) {
+  const [first, second] = path.split('/').filter(Boolean);
+  if (first === undefined) return '/';
+  return first === 'o' && second !== undefined ? `/o/${second}` : `/${first}`;
+}
+
+// Saved copy at once, refreshed in the background. No copy: the network, and offline the '/' copy.
+async function pageFirst(event, request, key) {
+  const cache = await caches.open(SHELL_CACHE);
+  const cached = await cache.match(key);
+  const network = fetch(request).then(async (response) => {
+    const type = response.headers.get('content-type') || '';
+    if (response.status === 200 && type.includes('text/html')) {
+      await cache.put(key, response.clone());
+    }
+    return response;
+  });
+  if (cached) {
+    event.waitUntil(network.catch(() => undefined));
+    return cached;
+  }
+  return network.catch(async (error) => {
+    const shell = await cache.match('/');
+    if (shell) return shell;
+    throw error;
+  });
 }
 
 async function cacheFirst(request, cacheName) {
@@ -86,10 +118,10 @@ self.addEventListener('fetch', (event) => {
   if (NEVER_CACHE_API.test(path) || NEVER_CACHE_PAGES.test(path)) return;
   if (NEVER_CACHE_FILES.test(path)) return;
 
-  // Pages: the SPA shell. Offline, any customer page gets the cached shell, which then shows the
-  // last data it can find.
+  // Pages: the SPA shell, one saved copy per kitchen. Offline with no copy, the '/' shell is shown,
+  // which then shows the last data it can find.
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(event, request, SHELL_CACHE, '/'));
+    event.respondWith(pageFirst(event, request, pageKey(path)));
     return;
   }
   // Built files have a content hash in their name: safe to keep.

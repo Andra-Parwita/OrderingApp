@@ -1,5 +1,7 @@
 # 102 · Android customer app: one install choice, one icon per kitchen, orders inside the kitchen
 
+**Owner, 24 Oct: 1.0.44 = 101 + 102 together, with all of Fable's safeguards** (old-link redirects in the Worker, start page always inside the kitchen's area with a test on every app file, the scope kill switch, per-kitchen seller file only when the link names the kitchen, fallback to today on any failure, session fix together), deployed on a day with no open DellaVee menu ("A", after `docs/reports/2026-10-20-101-102-risk.html`). No migration.
+
 **Target: later** (owner, 20 Oct: "start with 114/115 and decide 101/102 later"; Fable risk review: docs/reports/2026-10-20-101-102-risk.md).
 **Status:** analysis, owner 18 Oct, **not approved**. No app source was changed. Mock-up: `uxDesign/customer/mockups/102-android-install.html`. Aligns with plan 101 (seller app per kitchen, same day) and builds on plan 068 (manifest id per kitchen).
 **Owner, 18 Oct:** "iPhone is fine; the problem is Samsung/Android." (1) Installing the app is confusing, Chrome offers more than one way: **just one choice** to make the app. (2) On Android the installed app's icon is the first kitchen's, not the one being installed. (3) "maybe use one passkey". (4) "we may have to allow seeing orders only per kitchen or all, thus change the route of the order." (5, beta) "since we have a beta trial, it's important to also let them know how to reset or delete."
@@ -141,6 +143,6 @@ Total L; stages 0-3 are the cheap, safe part.
 - **Q5 = A:** customer passkey: no change (already one for all kitchens).
 - **Q6 = A:** "Start fresh" Help page with "Reset this phone" + the same steps as WhatsApp text (EN/ID).
 - **Q3 = A (owner, 18 Oct):** My orders inside a kitchen's app shows that kitchen's orders only; the browser tab still shows all kitchens.
-- Q7 (release split) still open (Fable risk report pending).
+- **Q7 = together (owner 24 Oct "A"):** 101 + 102 in one release, 1.0.44, with the safeguards.
 - **Release (owner, 18 Oct): 1.0.43, right after 1.0.42** ("all the icon/app things can be 1.0.43"). Fable's risk report (`docs/reports/2026-10-18-1042-scope-risk.md`): 101 + 102 stages 1–3 together (same files, one builder); 102 scope + routes (stages 4–6) on its own after the phone proofs (1.0.44) unless the owner says otherwise.
 - **Owner, 18 Oct ~21:20: 101 and 102 ship together in one deploy, 1.0.43** (Fable advised 102 routes separately; owner chose one deploy).

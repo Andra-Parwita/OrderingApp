@@ -732,3 +732,8 @@ Format for each entry:
 **Trade-off:** pages are unmounted on every move, so pictures must paint at once (eager, sync decode); a keep-alive is the next step if flashes remain.
 **Revisit when:** the customer app needs fixed headers or per-page scroll positions.
 
+## D-115 · The plan list and the roadmap stay current at every plan step and before every deploy (2026-10-24; owner)
+**Ruling:** "that doc must be kept up to date … we can do it when a plan started or has design and then when a plan is done and especially we need to make sure it is updated before deploy".
+**Decision:** `docs/plans/README.md` (plan status) and `docs/product/roadmap.md` ("Now" table) are updated by the coordinator when a plan starts or gets its mock-up, when it is done, and **always before a deploy** (a deploy-order step); then `pnpm run docs`. On 24 Oct both were found 1 week stale (22 plan rows, "Now" still at 1.0.36).
+**Trade-off:** a few minutes of docs per plan step; the owner can see where things stand from the docs site alone.
+**Revisit when:** a tool generates the status from git or the board.

@@ -73,7 +73,18 @@ export function reloadOnPreloadError(
     } catch {
       return; // no storage: cannot guard against a loop, so do not reload
     }
-    reload();
+    // Plan 115 stage 2: the service worker answers pages from a saved copy. Drop the copies first,
+    // so the reload goes to the network instead of getting the same old page again.
+    const dropSavedPages = async (): Promise<void> => {
+      if (!('caches' in window)) return;
+      const names = await window.caches.keys();
+      await Promise.all(
+        names.filter((n) => n.startsWith('shell-')).map((n) => window.caches.delete(n)),
+      );
+    };
+    dropSavedPages()
+      .catch(() => undefined)
+      .finally(reload);
   };
   window.addEventListener('vite:preloadError', handler);
   return () => window.removeEventListener('vite:preloadError', handler);

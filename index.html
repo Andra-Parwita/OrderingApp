@@ -122,15 +122,15 @@
       #splash > * {
         position: relative;
       }
-      /* Colour at once; everything else after 250 ms, so a fast launch never flickers. */
+      /* Colour, icon and name show at once (plan 115): the saved page is served instantly, so no delay. */
       #splash::before,
       #splash > * {
         opacity: 0;
-        animation: sp-in 220ms ease-out 250ms forwards;
+        animation: sp-in 220ms ease-out forwards;
       }
       #splash::after {
         opacity: 0;
-        animation: sp-breathe 2.4s ease-in-out 450ms 1;
+        animation: sp-breathe 2.4s ease-in-out 220ms 1;
       }
       #splash.sp-out {
         animation: sp-out 200ms ease-in forwards;

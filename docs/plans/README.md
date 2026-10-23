@@ -12,6 +12,8 @@ The long-range [roadmap](../plan/roadmap.md), the live [board](../plan/board.md)
 
 ## Next, in order (2026-10-11)
 
+**History.** What is current now (24 Oct) is in the [roadmap](../product/roadmap.md) "Now" table.
+
 From a read-only analysis of the unfinished plans. **The owner took over all of it on this PC (2026-10-11)**, on `indra/brand_logo_ux`, which is rebased on the son's `plan/flow-and-prototype`. When it's done it merges back to `main`, and the son pulls and deploys. Until then the son pauses building, so there are no conflicts.
 
 | track | order | note |
@@ -115,37 +117,37 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 082 | ⬜ | [Store mode: a simple online store (100 products, 20 categories)](082-simple-store.md) | roadmap, later (owner 17 Oct); draft analysis, questions 2–9 open |
 | 083 | ✅ | [The seller changes pickup ↔ delivery and the customer is told](083-seller-changes-fulfilment.md) | built 17 Oct (D-105), for 1.0.37 |
 | 084 | ✅ | [Printing: preview first, A4 by default, label printer optional, Help "How to print"](084-printing-preview.md) | built 17 Oct, for 1.0.37; label printer switch per device |
-| 086 | ⬜ | [Admin short message: a 30-second note everyone can see](086-admin-short-message.md) | draft 17 Oct; delivery A |
-| 087 | ⬜ | [Keep my orders: optional, privacy-first (customers)](087-keep-my-orders.md) | built 17 Oct, pending the gate and deploy (D-107) |
-| 088 | ⬜ | [Split the large files](088-split-large-files.md) | merged into 098 (1.0.42) |
-| 089 | ⬜ | [Security touch-ups from the code health report](089-security-touch-ups.md) | building 17 Oct |
-| 090 | ⬜ | [Clean-up plan (later)](090-cleanup.md) | merged into 098 (1.0.42) |
+| 086 | ✅ | [Admin short message: a 30-second note everyone can see](086-admin-short-message.md) | live in 1.0.38 |
+| 087 | ✅ | [Keep my orders: optional, privacy-first (customers)](087-keep-my-orders.md) | live in 1.0.38 (D-107); polished in 1.0.39 |
+| 088 | ✅ | [Split the large files](088-split-large-files.md) | merged into 098 stages 1–2, live in 1.0.42 |
+| 089 | ✅ | [Security touch-ups from the code health report](089-security-touch-ups.md) | live in 1.0.38 |
+| 090 | ✅ | [Clean-up plan (later)](090-cleanup.md) | merged into 098 stages 1–3, live in 1.0.42 |
 | 091 | ⬜ | [Faster lint, Prettier and tests](091-faster-tooling.md) | analysis 17 Oct; measure after the 1.0.38 gate |
 | 092 | ✅ | [Remember me polish](092-remember-me-polish.md) | live 17 Oct in 1.0.39 (tag v1.0.39) (D-108) |
 | 093 | ✅ | [Customer banner doesn't flash on page change](093-banner-no-flash.md) | live 17 Oct in 1.0.40 (tag v1.0.40) |
 | 094 | ✅ | [One big banner on every customer page](094-one-banner-everywhere.md) | live 18 Oct in 1.0.41 (+ seller banners, sheet scroll lock, swipe to close) |
 | 095 | ✅ | [Clearer notice bars (pills)](095-notice-bars.md) | live 18 Oct in 1.0.41 (option E2) |
 | 096 | ✅ | [Home-screen and Remember me nudges, root page](096-install-nudge.md) | live 18 Oct in 1.0.41 |
-| 098 | ⬜ | [Extensible core: one model for kitchen, shop, events](098-extensible-core.md) | analysis (Fable, 18 Oct); clean-up stages = 1.0.42 candidates; kinds/store = v1.1.0 |
+| 098 | ⬜ | [Extensible core: one model for kitchen, shop, events](098-extensible-core.md) | stages 0–3 (clean-up) live in 1.0.42; kinds/store = v1.1.0, analysis only |
 | 099 | ⬜ | [Bigger grocery store analysis](099-bigger-store-analysis.md) | analysis only (Fable, 18 Oct), v1.1.0 or later |
-| 100 | 🔨 | [Cook tab compact on phones](100-cook-compact-phone.md) | option B2 approved (owner "A", 18 Oct), building for 1.0.42 |
-| 101 | ⬜ | [Seller app per kitchen](101-seller-app-per-kitchen.md) | owner "A" 18 Oct: own name + icon per kitchen; analysis + mock-up in progress |
-| 102 | ⬜ | [Android customer app per kitchen](102-android-customer-app.md) | owner 18 Oct: one install choice, own icon per kitchen on Android, order pages inside the kitchen; analysis in progress |
-| 103 | ⬜ | [Seller app speed](103-seller-speed.md) | Fable analysis 18 Oct: echo reloads, chef edit 3 calls, menu bundle per mount; 8 fixes, owner to pick |
-| 104 | ⬜ | [Seller small fixes (18 Oct checks)](104-seller-small-fixes.md) | labels: printer settings on top, preview clipped, note size; header chips; Pickup & delivery rows |
-| 105 | 🔨 | [Seller edits an order](105-seller-edit-order.md) | approved for 1.0.42 (owner 18 Oct); all questions answered |
-| 106 | ⬜ | [Customer list: clearer link window](106-customer-link-redesign.md) | owner 18 Oct: window/text unclear; explainer done; show duplicate names |
-| 107 | ⬜ | [On-the-day selling as part of the menu](107-on-the-day-selling.md) | owner idea 18 Oct: rename/move "Sell" into the menu view; on-the-day-only dishes |
-| 108 | ⬜ | [Seller Home compact](108-home-compact.md) | owner 18 Oct: text too big, space not used; mock-up in progress |
-| 109 | 🔨 | [Kitchen print (cook list)](109-kitchen-print.md) | owner 18 Oct: in 1.0.42; per chef or all, notes optional; mock-up first |
+| 100 | ✅ | [Cook tab compact on phones](100-cook-compact-phone.md) | live in 1.0.42 (B2) |
+| 101 | ⬜ | [Seller app per kitchen](101-seller-app-per-kitchen.md) | **1.0.44** with 102 and all safeguards (owner 24 Oct "A"); questions answered; next: stage 0 phone proof |
+| 102 | ⬜ | [Android customer app per kitchen](102-android-customer-app.md) | **1.0.44** with 101 and all safeguards (owner 24 Oct "A"); questions answered; next: stage 0 phone proof |
+| 103 | ✅ | [Seller app speed](103-seller-speed.md) | fixes 1–8 live in 1.0.42 |
+| 104 | ✅ | [Seller small fixes (18 Oct checks)](104-seller-small-fixes.md) | live in 1.0.42 |
+| 105 | ✅ | [Seller edits an order](105-seller-edit-order.md) | live in 1.0.42 (D-110) |
+| 106 | ✅ | [Customer list: clearer link window](106-customer-link-redesign.md) | live in 1.0.42 |
+| 107 | ✅ | [On-the-day selling as part of the menu](107-on-the-day-selling.md) | live in 1.0.42 |
+| 108 | ✅ | [Seller Home compact](108-home-compact.md) | live in 1.0.42 |
+| 109 | ✅ | [Kitchen print (cook list)](109-kitchen-print.md) | live in 1.0.42 |
 | 110 | ✅ | [WhatsApp numbers from any country](110-international-whatsapp-numbers.md) | D-111; live in 1.0.42.1, help in 1.0.42.2 |
-| 111 | ⬜ | [Dish choices and a note per order line](111-dish-choices-line-notes.md) | owner 20 Oct: B, choices = grouped dishes (name + limit); target 1.0.43 |
-| 112 | ⬜ | [Tell customers when a new menu is published](112-new-menu-notices.md) | owner 20 Oct: in 1.0.43 with 111; quiet opt-in in customer Settings; count only |
-| 113 | 💤 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | Fable 20 Oct: 2 small fixes in 1.0.43, rest later |
-| 114 | ⬜ | [Slow networks: timeouts, no double orders, clear feedback](114-slow-network.md) | Fable review 20 Oct; items 1–5 in 1.0.44 (owner "A") |
-| 115 | ⬜ | [No blank screen while the app loads](115-loading-splash.md) | Fable 20 Oct: inline background + small splash; owner to decide |
+| 111 | ✅ | [Dish choices and a note per order line](111-dish-choices-line-notes.md) | live in 1.0.43 (D-112) |
+| 112 | ✅ | [Tell customers when a new menu is published](112-new-menu-notices.md) | live in 1.0.43 (D-113) |
+| 113 | 💤 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | 2 fixes live in 1.0.43; the rest later |
+| 114 | ✅ | [Slow networks: timeouts, no double orders, clear feedback](114-slow-network.md) | items 1–5 live in hotfix 1.0.43.1 |
+| 115 | 🔨 | [No blank screen while the app loads](115-loading-splash.md) | stage 1 live in 1.0.43.1; stage 2 (saved page at once) built, gate green, ready for hotfix 1.0.43.2 (owner 24 Oct "A") |
 | 116 | 💤 | [Seller "Send a problem report"](116-seller-problem-report.md) | owner 20 Oct: plan it, after 1.0.44 |
-| 117 | 💤 | ["What's new" bubble for sellers](117-whats-new-bubble.md) | owner 20 Oct: in 1.0.43; floating pill once per release |
+| 117 | ✅ | ["What's new" bubble for sellers](117-whats-new-bubble.md) | live in 1.0.43 |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 
