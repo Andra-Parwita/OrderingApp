@@ -12,6 +12,19 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // Picked by the owner (25 Oct, "A"); plans 101, 102, 113, 118, 121, 122, D-120
+  {
+    version: '1.0.44',
+    date: '2026-10-25',
+    lines: {
+      en: [
+        "Each kitchen now has its own app with its name and icon; on the tablet, tap the kitchen name to switch kitchens. Customers see only your kitchen's orders, and a cleaner look on iPhone.",
+      ],
+      id: [
+        'Setiap dapur kini punya aplikasi sendiri dengan nama dan ikonnya; di tablet, ketuk nama dapur untuk berpindah dapur. Pelanggan hanya melihat pesanan dari dapur Anda, dan tampilan lebih rapi di iPhone.',
+      ],
+    },
+  },
   // Picked by the owner (20 Oct, "A"); plans 111, 112, 117
   {
     version: '1.0.43',

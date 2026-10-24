@@ -31,9 +31,9 @@
 ## Not done yet (before the deploy)
 1. ~~Final gate~~ **✅ 25 Oct 00:46–01:30:** typecheck, lint (needs `NODE_OPTIONS=--max-old-space-size=8192`), format ✅; unit 2,939 passed + 22 load failures (EADDRINUSE / timeouts) that all pass alone, 193/193 (`scratch/gate-044*.log`); build ✅, customer entry 914 KB (limit 1,100); full e2e **130 passed, 0 failed, 46 skipped by project** with `--workers=2` (`scratch/e2e-044b.log`; the default-workers run had 2 load flakes). Re-run only if code changes (release note + version bump: run the About/version unit tests).
 2. **Release note + version bump** (owner picks the text, one question): `RELEASE_VERSION = '1.0.44'` in `shared/release.ts` and a new first entry in `src/features/seller-about/releaseNotes.ts` (EN/ID). The tests now follow these automatically.
-3. Quick emulator re-check of the customer multi-kitchen steps (rule above), if time allows.
+3. ~~Emulator check~~ **✅ 25 Oct 05:34–05:49** (Pixel_9, local build, commit 945a55c): browser, bookmark and two installed apps each open the right kitchen; My orders per kitchen; old `/o/<token>` → 302 and new links; nudge ✕; Settings restore line. Screenshots `scratch/emu-044/`. Seen once, not reproduced: the splash stayed > 40 s on an adb-launched open with 9 Chrome tabs (refresh fixed it) — watch on real phones after the deploy. Nudge ✕ is per phone (plan 121: device-only state), so it also hides the card in the other kitchen.
 4. `pnpm run docs`; plan list (101, 102, 113, 118, 121, 122 → ✅ at deploy) and roadmap (D-115).
-5. **Owner OK to commit**, then fast-forward `main`.
+5. ~~Commit~~ ✅ `945a55c` on `indra/brand_logo_ux` (local, owner "A"); at deploy: version bump + release note commit, then fast-forward `main`.
 
 ## Deploy steps 1.0.44 (owner runs them, one at a time; Claude shows the full numbered table)
 | # | step |

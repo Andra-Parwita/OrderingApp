@@ -403,3 +403,4 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 2026-10-11 | Playwright Chromium install (for specs and captures) | coordinator · shell | 16:04 | 3 min | 16:05 | 1 min | −2 min | — | ✅ |
 | 2026-10-11 | 036 · rebase on `plan/flow-and-prototype`, renumber 027/028 → 036, 037 | coordinator · opus | ~15:25 | 10 min | ~15:40 | ~15 min | +5 min | 2 conflicts; 12 files (renames, comments, index) | ✅ typecheck, 254/254 unit |
 | 2026-10-11 | 037 · map the menu wizard (review) | Explore · haiku | ~14:55 | 2 min | ~14:56 | 1 min | −1 min | — | ✅ |
+| EMU · 1.0.44 customer multi-kitchen check on the Android phone emulator (browser, bookmark, two installed apps, order links) | general-purpose · sonnet | 05:34 | 40 min | 05:49 | 15 min | −25 min | none (check only) | ✅ all 21 checks; 1 unexplained stuck splash once (emulator load?) |
