@@ -1,0 +1,19 @@
+{
+  "edgeColor": "#2A2B26",
+  "centerColor": "#4A4B43",
+  "cornerDarken": 0.16,
+  "bottomDarken": 0.08,
+  "spotlight": { "centerYPercent": 44, "radiusWidthFactor": 0.68 },
+  "icon": "public/brand/logo-icon.webp",
+  "iconSize": 72,
+  "name": "ShaggyBobo",
+  "nameColor": "#F1EEE6",
+  "font": {
+    "family": "Plus Jakarta Sans",
+    "weight": 600,
+    "size": "1.2rem",
+    "letterSpacing": "0.01em"
+  },
+  "gap": "0.85rem",
+  "dither": 0
+}

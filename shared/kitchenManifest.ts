@@ -3,6 +3,9 @@
 // src/theme/designTokens.ts; the worker cannot import src/).
 import type { ThemeName } from './themes';
 
+/** Android start screen: the dark edge colour of the launch picture (scripts/startup-images/kitchen.json). */
+export const LAUNCH_BACKGROUND = '#2A2B26';
+
 type ThemeColours = { fill: string; on: string; bg: string };
 
 export const THEME_COLOURS: Record<ThemeName, ThemeColours> = {
@@ -127,7 +130,7 @@ export function buildManifest(input: {
     start_url: seller === true ? '/seller' : safeStartUrl(start, slug),
     scope: seller === true ? '/seller' : '/',
     display: 'standalone',
-    background_color: bg,
+    background_color: LAUNCH_BACKGROUND,
     theme_color: bg,
     icons,
   };

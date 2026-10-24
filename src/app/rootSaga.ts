@@ -1,13 +1,13 @@
 import { all, call } from 'redux-saga/effects';
 import { customerSaga } from '../features/customer-menu';
 import { customerOrdersSaga } from '../features/customer-orders';
-import { cookSaga } from '../features/seller-cook';
-import { privateSaga } from '../features/seller-private';
-import { sellerOrdersSaga } from '../features/seller-orders';
-import { menuSaga } from '../features/seller-menu';
-import { settingsSaga } from '../features/seller-settings';
-import { setupSaga } from '../features/seller-setup';
-import { shareSaga } from '../features/seller-share';
+import { cookSaga } from '../features/seller-cook/cookSaga';
+import { privateSaga } from '../features/seller-private/privateSaga';
+import { sellerOrdersSaga } from '../features/seller-orders/sellerOrdersSaga';
+import { menuSaga } from '../features/seller-menu/menuSaga';
+import { settingsSaga } from '../features/seller-settings/settingsSaga';
+import { setupSaga } from '../features/seller-setup/setupSaga';
+import { shareSaga } from '../features/seller-share/shareSaga';
 
 export function* rootSaga() {
   yield all([

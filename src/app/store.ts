@@ -2,13 +2,13 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import createSagaMiddleware from 'redux-saga';
 import { customerReducer } from '../features/customer-menu';
 import { customerOrdersReducer } from '../features/customer-orders';
-import { cookReducer } from '../features/seller-cook';
-import { privateReducer } from '../features/seller-private';
-import { sellerOrdersReducer } from '../features/seller-orders';
-import { menuReducer } from '../features/seller-menu';
-import { settingsReducer } from '../features/seller-settings';
-import { setupReducer } from '../features/seller-setup';
-import { shareReducer } from '../features/seller-share';
+import { cookReducer } from '../features/seller-cook/cookSlice';
+import { privateReducer } from '../features/seller-private/privateSlice';
+import { sellerOrdersReducer } from '../features/seller-orders/sellerOrdersSlice';
+import { menuReducer } from '../features/seller-menu/menuSlice';
+import { settingsReducer } from '../features/seller-settings/settingsSlice';
+import { setupReducer } from '../features/seller-setup/setupSlice';
+import { shareReducer } from '../features/seller-share/shareSlice';
 import { rootSaga } from './rootSaga';
 
 const rootReducer = combineReducers({

@@ -21,6 +21,8 @@ for (const scheme of ['light', 'dark'] as const) {
     const splash = page.locator('#splash');
     await expect(splash).toBeVisible();
     await expect(page.locator('#splash-name')).toHaveText('Onde Onde');
+    // Hotfix 1.0.43.3: the splash is the dark spotlight in both modes (edge #2A2B26), whatever the page colour.
+    await expect(splash).toHaveCSS('background-color', 'rgb(42, 43, 38)');
     const colour = await page.evaluate(
       () => getComputedStyle(document.documentElement).backgroundColor,
     );

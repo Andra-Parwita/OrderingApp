@@ -149,6 +149,9 @@ describe('The live Menu screen', () => {
 
   const withDay = { ...slots, onTheDay: () => <p>Sell screen here</p> } as unknown as MenuSlots;
   it('shows Pre-orders | On the day tabs; the On the day tab holds the Sell screen', () => {
+    // The default tab depends on today vs the cooking day (2026-10-24): freeze on the Wednesday before.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-21T02:00:00Z'));
     const { wrap } = setup();
     render(wrap(<MenuScreen slots={withDay} />));
     expect(screen.getByRole('radio', { name: 'Pre-orders' })).toBeChecked();

@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { brands, neutral } from './designTokens';
+import { brands } from './designTokens';
 
-// Plan 115: index.html carries copies of the page background and text colours for the loading
-// splash. They must equal the design tokens, or the splash colour jumps when the app takes over.
+// Plan 115: index.html carries copies of the page background colours (painted under the splash).
+// They must equal the design tokens, or the page colour jumps when the app takes over.
 const html = readFileSync(resolve(process.cwd(), 'index.html'), 'utf8');
 
 function valueIn(selector: string, property: string): string {
@@ -22,7 +22,7 @@ const rules = (brand: string, mode: 'light' | 'dark'): Array<string> => {
   return [`html:not([data-theme='light'])${attr}`, `html[data-theme='dark']${attr}`];
 };
 
-describe('index.html splash colours', () => {
+describe('index.html colours', () => {
   it('page background equals designTokens for every theme and mode', () => {
     for (const [name, colours] of Object.entries(brands)) {
       for (const mode of ['light', 'dark'] as const) {
@@ -33,11 +33,40 @@ describe('index.html splash colours', () => {
     }
   });
 
-  it('text colour equals the neutral text token in both modes', () => {
-    expect(valueIn(':root', '--ink')).toBe(neutral.light.text.toLowerCase());
-    expect(valueIn("html:not([data-theme='light'])", '--ink')).toBe(
-      neutral.dark.text.toLowerCase(),
+  // Hotfix 1.0.43.3: the splash is the dark spotlight in every mode and kitchen. Its colours are
+  // pinned to the iOS launch picture's design, so the picture and the splash cannot drift apart.
+  it('splash colours equal scripts/startup-images/kitchen.json', () => {
+    const cfg = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'scripts/startup-images/kitchen.json'), 'utf8'),
+    ) as {
+      edgeColor: string;
+      centerColor: string;
+      nameColor: string;
+      iconSize: number;
+      gap: string;
+      font: { size: string };
+      spotlight: { centerYPercent: number; radiusWidthFactor: number };
+      cornerDarken: number;
+      bottomDarken: number;
+    };
+    const rule = /#splash\s*\{([^}]*)\}/.exec(html)?.[1] ?? '';
+    expect(rule).not.toBe('');
+    const lower = rule.toLowerCase();
+    expect(lower).toContain(`color: ${cfg.nameColor.toLowerCase()};`);
+    expect(lower).toContain(`gap: ${cfg.gap};`);
+    expect(lower).toMatch(new RegExp(`\\s${cfg.edgeColor.toLowerCase()};\\s*font-family`));
+    expect(lower).toContain(
+      `circle ${Math.round(cfg.spotlight.radiusWidthFactor * 100)}vw at 50% ${cfg.spotlight.centerYPercent}%`,
     );
-    expect(valueIn("html[data-theme='dark']", '--ink')).toBe(neutral.dark.text.toLowerCase());
+    expect(lower).toContain(`${cfg.centerColor.toLowerCase()} 0%`);
+    expect(lower).toContain(`${cfg.edgeColor.toLowerCase()} 100%`);
+    expect(lower).toContain(`rgba(0, 0, 0, ${cfg.cornerDarken})`);
+    expect(lower).toContain(`rgba(0, 0, 0, ${cfg.bottomDarken})`);
+    // Group centred at 44%: padding-bottom = 2 x (50 - 44) vh.
+    expect(lower).toContain(`padding-bottom: ${2 * (50 - cfg.spotlight.centerYPercent)}vh;`);
+    expect(html).toContain(`width: ${cfg.iconSize}px;`);
+    expect(html).toMatch(new RegExp(`#splash-name\\s*\\{[^}]*font-size: ${cfg.font.size};`));
+    // The splash never reads the page tokens.
+    expect(rule).not.toContain('var(--bg)');
   });
 });

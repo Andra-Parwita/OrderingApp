@@ -145,9 +145,10 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 112 | ✅ | [Tell customers when a new menu is published](112-new-menu-notices.md) | live in 1.0.43 (D-113) |
 | 113 | 💤 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | 2 fixes live in 1.0.43; the rest later |
 | 114 | ✅ | [Slow networks: timeouts, no double orders, clear feedback](114-slow-network.md) | items 1–5 live in hotfix 1.0.43.1 |
-| 115 | 🔨 | [No blank screen while the app loads](115-loading-splash.md) | stage 1 live in 1.0.43.1; stage 2 (saved page at once) built, gate green, ready for hotfix 1.0.43.2 (owner 24 Oct "A") |
+| 115 | ✅ | [No blank screen while the app loads](115-loading-splash.md) | stage 1 live in 1.0.43.1; stage 2 (saved page at once) live in hotfix 1.0.43.2 (24 Oct) |
 | 116 | 💤 | [Seller "Send a problem report"](116-seller-problem-report.md) | owner 20 Oct: plan it, after 1.0.44 |
 | 117 | ✅ | ["What's new" bubble for sellers](117-whats-new-bubble.md) | live in 1.0.43 |
+| 119 | 🔨 | [Customers load only the customer app (bundle split)](119-customer-bundle-split.md) | hotfix 1.0.43.3: light split (owner "A"), + iOS launch pictures (dark spotlight) + splash cache rule; phone message sheet fix; gate ✅ (unit 2,782 + full e2e 120/120, emulator customer check ✅); ready to deploy |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

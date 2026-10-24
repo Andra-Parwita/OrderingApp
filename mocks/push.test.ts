@@ -440,7 +440,7 @@ describe('web push and kitchen files', () => {
         start_url: '/o/token-1',
         scope: '/',
         display: 'standalone',
-        background_color: '#F6F2E8',
+        background_color: '#2A2B26',
         theme_color: '#F6F2E8',
       });
       // The sample kitchen has a small icon (a sample picture): PNG-named icons, real type.

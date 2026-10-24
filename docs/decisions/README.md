@@ -737,3 +737,9 @@ Format for each entry:
 **Decision:** `docs/plans/README.md` (plan status) and `docs/product/roadmap.md` ("Now" table) are updated by the coordinator when a plan starts or gets its mock-up, when it is done, and **always before a deploy** (a deploy-order step); then `pnpm run docs`. On 24 Oct both were found 1 week stale (22 plan rows, "Now" still at 1.0.36).
 **Trade-off:** a few minutes of docs per plan step; the owner can see where things stand from the docs site alone.
 **Revisit when:** a tool generates the status from git or the board.
+
+## D-119 · Customers download only the customer app; iPhone launch pictures per app kind (2026-10-24; owner)
+**Ruling:** after the cold-start measurement (the 1.86 MB bundle, not the pictures, delayed the menu): "A" light split ("only split the customer app, leave the seller app untouched"); progressive loading of rare extras later. Launch pictures: "make it small", "same for both dark/light", option 2 dark "but … lighter around the ShaggyBobo so it kind of makes it in a spotlight", and "A" a reusable generator per app kind because "we will have different customer app for store, ticketing". "Also fix that splash found by Fable" (render-blocking `splash.js` revalidated on every cold start).
+**Decision:** hotfix 1.0.43.3: seller/admin load as a lazy `StaffArea` chunk (customer entry 1,861 → 891 KB raw), store unchanged, `check:bundle` in the gate; iPhone 14+ launch pictures (dark spotlight, 7 sizes, ~130–147 KB, `scripts/startup-images/<kind>.json`); `_headers` keeps `splash.js`, `/brand/*`, `/startup/*` a day.
+**Trade-off:** sellers make one extra download on a cold start; older iPhones and iPads keep the black launch screen; a changed `splash.js` can be a day old on a phone.
+**Revisit when:** a store or events app needs its own pictures (add a kind), or plan 120 (instant first screen) lands.

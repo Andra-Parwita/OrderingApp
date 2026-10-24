@@ -59,6 +59,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "e2e": "playwright test",
+    "check:bundle": "node scripts/check-customer-bundle.mjs",
     "docs": "node scripts/build-docs.mjs",
     "db:migrate:local": "node scripts/seed-local.mjs --local --persist-to .wrangler/state --migrate-only",
     "db:seed:local": "node scripts/seed-local.mjs --local --persist-to .wrangler/state"

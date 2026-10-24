@@ -61,6 +61,8 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
         expect(m.id, `${slug} ${query}`).toBe(`/${slug}`);
         expect(inside(m.scope, m.start_url), `${slug} ${query} -> ${m.start_url}`).toBe(true);
         expect(m.display).toBe('standalone');
+        // Hotfix 1.0.43.3: Android start screen is the dark launch colour, not the brand colour.
+        expect(m.background_color, `${slug} ${query}`).toBe('#2A2B26');
       }
     }
   });
@@ -82,6 +84,7 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
     for (const slug of slugs) {
       const m = await manifestOf(slug, '', 'seller.webmanifest');
       expect([m.id, m.start_url, m.scope]).toEqual(['/seller', '/seller', '/seller']);
+      expect(m.background_color).toBe('#2A2B26');
     }
   });
 

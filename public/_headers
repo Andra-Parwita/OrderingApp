@@ -3,3 +3,14 @@
 
 /assets/*
   X-Content-Type-Options: nosniff
+
+# Render-blocking head script and launch pictures: they change rarely, so a day-old copy is fine
+# (splash.js tolerates any app version). Without this every cold start revalidates over the network.
+/splash.js
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/brand/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/startup/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

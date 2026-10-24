@@ -3,24 +3,13 @@ import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { App } from './app/App';
+import { areaOf } from './app/area';
+import { preloadStaffArea } from './app/AppRoutes';
 import { CustomerTabBar, TAB_BAR_HEIGHT } from './app/CustomerShell';
 import { AppThemeProvider } from './theme/AppThemeProvider';
 import { createAppStore } from './app/store';
 import { registerCustomerI18n } from './features/customer-menu';
 import { registerCustomerOrdersI18n } from './features/customer-orders';
-import { registerAdminI18n } from './features/admin';
-import { registerSellerAuthI18n } from './features/seller-auth';
-import { registerSellerSaturdayI18n } from './features/seller-saturday';
-import { registerCookI18n } from './features/seller-cook';
-import { registerPrivateI18n } from './features/seller-private';
-import { registerSellerI18n } from './features/seller-orders';
-import { registerSellerHistoryI18n } from './features/seller-history';
-import { registerSellerLabelsI18n } from './features/seller-labels';
-import { registerSellerMenuI18n } from './features/seller-menu';
-import { registerSettingsI18n } from './features/seller-settings';
-import { registerSellerHelpI18n } from './features/seller-help';
-import { registerSellerSetupI18n } from './features/seller-setup';
-import { registerShareI18n } from './features/seller-share';
 import { registerInstallI18n, startInstallSupport } from './components/install';
 import { mountMaintenance } from './components/maintenance';
 import { mountOfflineBanner } from './components/network';
@@ -57,6 +46,8 @@ const harness = import.meta.env.DEV
   : null;
 
 startClientLog();
+// Plan 119: a staff address starts its chunk download now, in parallel with i18n.
+if (areaOf(window.location.pathname) === 'staff') preloadStaffArea();
 
 void initI18n().then(async () => {
   registerCustomerI18n();
@@ -65,23 +56,12 @@ void initI18n().then(async () => {
   registerRememberMeI18n();
   startRememberMeSync();
   startInstallSupport();
-  registerSellerI18n();
-  registerCookI18n();
-  registerPrivateI18n();
-  registerShareI18n();
-  registerSettingsI18n();
-  registerSellerMenuI18n();
-  registerSellerSetupI18n();
-  registerSellerHelpI18n();
-  registerSellerLabelsI18n();
-  registerSellerHistoryI18n();
-  registerSellerAuthI18n();
-  registerAdminI18n();
-  registerSellerSaturdayI18n();
   mountUpdateBar();
   mountOfflineBanner();
   mountMaintenance();
   if (harness) {
+    // Dev only: harnesses show staff screens, whose strings register with the staff chunk.
+    await import('./app/StaffArea');
     const module = await harness.loader();
     const component = module[harness.component];
     if (typeof component === 'function') {

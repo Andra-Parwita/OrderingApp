@@ -68,7 +68,7 @@ test('message a pickup place, and walk a delivery through its steps', async ({
   const dialog = page.getByRole('dialog', { name: 'Message Glen Waverley' });
   await expect(dialog).toBeVisible();
   await dialog.getByRole('radio', { name: 'Ready in N min' }).check();
-  await dialog.getByRole('radio', { name: `${minutes} min` }).check();
+  await dialog.getByRole('radio', { name: `${minutes} minutes` }).check();
   await expect(dialog.getByText('This does not change any order')).toBeVisible();
   await page.screenshot({ path: `captures/saturday-update-${project}.png`, fullPage: true });
   await dialog.getByRole('button', { name: /^Send to \d+ orders?$/ }).click();

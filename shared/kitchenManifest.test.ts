@@ -52,7 +52,7 @@ describe('the manifest', () => {
       start_url: '/k',
       scope: '/',
       display: 'standalone',
-      background_color: '#F6F0E6',
+      background_color: '#2A2B26',
       theme_color: '#F6F0E6',
     });
     expect(plain.icons.map((icon) => icon.src)).toEqual([

@@ -13,7 +13,8 @@ Today's product is deliberately small (see [overview.md](overview.md) and the [c
 | 1.0.42 (+ .1, .2) | code clean-up, seller edits any order, Customers list, On the day selling, compact Home/Cook, kitchen print, WhatsApp numbers from any country | 098 st. 0–3, 100, 103–110 | ✅ live 19–20 Oct |
 | 1.0.43 | dish choices + a note per line, new-menu notices, "What's new" pill, new seller icon | 111, 112, 113 (part), 117 | ✅ live 20 Oct |
 | hotfix 1.0.43.1 | slow networks (no double orders), loading splash, picture flash and scroll fixes | 114, 115 st. 1 | ✅ live 21 Oct |
-| **hotfix 1.0.43.2** | **the saved page opens at once, the splash with the kitchen's icon and name shows at once** (no more black second) | 115 st. 2 | 🔨 built, gate green 24 Oct; waiting for deploy |
+| **hotfix 1.0.43.2** | **the saved page opens at once, the splash with the kitchen's icon and name shows at once** (no more black second) | 115 st. 2 | ✅ live 24 Oct |
+| **hotfix 1.0.43.3** | **customers download only the customer app** (1.86 MB → 891 KB; menu about 0.85 s instead of 1.3 s on a phone); iPhone dark-spotlight launch picture instead of black; no network wait for the splash script | [119](../plans/119-customer-bundle-split.md) | 🔨 gate ✅ 24 Oct, ready to deploy |
 | **1.0.44** | one seller app per kitchen; Android customer app per kitchen, order links inside the kitchen; no migration, kill switch | [101](../plans/101-seller-app-per-kitchen.md), [102](../plans/102-android-customer-app.md) | ⬜ approved 24 Oct: both, with all safeguards, on a day with no open DellaVee menu ([risk review](../reports/2026-10-20-101-102-risk.html)); next: phone proof |
 | after 1.0.44 | seller "Send a problem report" | [116](../plans/116-seller-problem-report.md) | 💤 |
 

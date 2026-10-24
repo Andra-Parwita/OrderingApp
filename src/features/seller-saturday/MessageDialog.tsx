@@ -15,12 +15,12 @@ import {
   Button,
   ComposeAndSend,
   Icon,
-  Segmented,
   TextArea,
   WarningDialog,
   type SegmentedOption,
 } from '../../ui';
 import { useModalFocus } from '../../ui/patterns/modal';
+import { MessageChoices } from './MessageChoices';
 import { SATURDAY_NS } from './i18n/register';
 import { clock, customText, Notice } from './parts';
 
@@ -73,9 +73,9 @@ const Sent = styled.ul`
     height: 1rem;
   }
 `;
-const Label = styled.p`
+const Label = styled.p<{ $disabled?: boolean }>`
   margin: 0;
-  color: ${({ theme }) => theme.c.muted};
+  color: ${({ theme, $disabled }) => ($disabled ? theme.c.ctrl : theme.c.muted)};
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -122,9 +122,10 @@ export function MessageDialog({ place, reach, sent, lang, onClose, onSent }: Pro
     { value: 'ready_now', label: t('message.ready') },
     { value: 'custom', label: t('message.custom') },
   ];
-  const minuteChoices: ReadonlyArray<SegmentedOption<string>> = UPDATE_MINUTE_CHOICES.map((m) => ({
+  const minuteChoices = UPDATE_MINUTE_CHOICES.map((m) => ({
     value: String(m),
-    label: t('message.minutes', { count: m }),
+    label: String(m),
+    aria: t('message.minutesAria', { count: m }),
   }));
 
   // The preview is built in the chosen language, whatever the screen language is.
@@ -210,22 +211,22 @@ export function MessageDialog({ place, reach, sent, lang, onClose, onSent }: Pro
           onSend={() => void send(false)}
         >
           <Label>{t('message.choose')}</Label>
-          <Segmented
+          <MessageChoices
+            kind="list"
             options={choices}
             value={choice}
             onChange={setChoice}
             label={t('message.choose')}
-            compact
           />
-          {choice === 'ready_in' ? (
-            <Segmented
-              options={minuteChoices}
-              value={String(minutes)}
-              onChange={(value) => setMinutes(Number(value))}
-              label={t('message.minutesLabel')}
-              compact
-            />
-          ) : null}
+          <Label $disabled={choice !== 'ready_in'}>{t('message.minutesLabel')}</Label>
+          <MessageChoices
+            kind="grid"
+            options={minuteChoices}
+            value={String(minutes)}
+            onChange={(value) => setMinutes(Number(value))}
+            label={t('message.minutesLabel')}
+            disabled={choice !== 'ready_in'}
+          />
           {choice === 'custom' ? (
             <TextArea
               label={t('message.customLabel', { lang: preview.toUpperCase() })}

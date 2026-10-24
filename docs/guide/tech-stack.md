@@ -23,7 +23,7 @@ The owner's minimum stack; it is required. No new dependency beyond this list wi
 
 While building a plan's stages, run only `typecheck` ([D-055](../decisions/README.md)). At the end of the phase, the full gate is green before it is "done":
 
-`typecheck` · `lint` (includes the cycle check) · `format:check` · `test` (Vitest) · the Playwright specs of anything changed.
+`typecheck` · `lint` (includes the cycle check) · `format:check` · `test` (Vitest) · `check:bundle` (no seller or admin code in the customer download, plan 119) · the Playwright specs of anything changed.
 
 The full Playwright suite runs only when the owner asks.
 

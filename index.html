@@ -7,20 +7,15 @@
     <script src="/splash.js" data-cfasync="false"></script>
     <!--
       Plan 115: the page colour and the loading splash, drawn before the app file arrives.
-      --bg is each kitchen theme's page background and --ink the text colour: COPIES of
-      src/theme/designTokens.ts (brands.<theme>.<mode>.bg, neutral.<mode>.text);
-      src/theme/indexHtmlColours.test.ts fails if they drift apart.
+      --bg is each kitchen theme's page background: a COPY of src/theme/designTokens.ts
+      (brands.<theme>.<mode>.bg); src/theme/indexHtmlColours.test.ts fails if they drift apart.
+      Hotfix 1.0.43.3: the splash itself is the dark spotlight in light and dark mode and for every
+      kitchen, the same as the iOS launch picture (scripts/startup-images/kitchen.json); the test
+      pins its colours to that file. It does not use --bg.
     -->
     <style>
       :root {
         --bg: #f6f2e8;
-        --ink: #1c1f1a;
-        --glow: rgba(255, 255, 255, 0.6);
-        --weave: rgba(120, 96, 58, 0.055);
-        --shade: rgba(120, 96, 58, 0.1);
-        --logo-bg: #ead9b6;
-        --logo-ink: #5b4426;
-        --logo-shadow: rgba(60, 40, 10, 0.14);
       }
       html[data-brand='bali'] {
         --bg: #f1f4f4;
@@ -37,11 +32,6 @@
       @media (prefers-color-scheme: dark) {
         html:not([data-theme='light']) {
           --bg: #121411;
-          --ink: #f1eee6;
-          --glow: rgba(255, 255, 255, 0.07);
-          --weave: rgba(235, 220, 190, 0.035);
-          --shade: rgba(0, 0, 0, 0.35);
-          --logo-shadow: rgba(0, 0, 0, 0.45);
         }
         html:not([data-theme='light'])[data-brand='bali'] {
           --bg: #101417;
@@ -58,11 +48,6 @@
       }
       html[data-theme='dark'] {
         --bg: #121411;
-        --ink: #f1eee6;
-        --glow: rgba(255, 255, 255, 0.07);
-        --weave: rgba(235, 220, 190, 0.035);
-        --shade: rgba(0, 0, 0, 0.35);
-        --logo-shadow: rgba(0, 0, 0, 0.45);
       }
       html[data-theme='dark'][data-brand='bali'] {
         --bg: #101417;
@@ -88,8 +73,35 @@
         align-items: center;
         justify-content: center;
         gap: 0.85rem;
+        /* Icon and name sit as one group at 44% of the height (centre of the box is 50%). */
+        padding-bottom: 12vh;
         pointer-events: none;
-        color: var(--ink);
+        color: #f1eee6;
+        --logo-bg: #ead9b6;
+        --logo-ink: #5b4426;
+        /* Dark spotlight, the same as the iOS launch picture: edge #2a2b26, centre #4a4b43 at 44%,
+           smoothstep fade to 68% of the width, then the corner and bottom darkening. */
+        background:
+          linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.08) 100%),
+          radial-gradient(
+            ellipse farthest-corner at 50% 50%,
+            transparent 0%,
+            rgba(0, 0, 0, 0.04) 50%,
+            rgba(0, 0, 0, 0.16) 100%
+          ),
+          radial-gradient(
+            circle 68vw at 50% 44%,
+            #4a4b43 0%,
+            #494a42 12.5%,
+            #45463e 25%,
+            #40413a 37.5%,
+            #3a3b35 50%,
+            #34352f 62.5%,
+            #2f302b 75%,
+            #2b2c27 87.5%,
+            #2a2b26 100%
+          ),
+          #2a2b26;
         font-family:
           'Plus Jakarta Sans',
           system-ui,
@@ -97,40 +109,14 @@
           'Segoe UI',
           sans-serif;
       }
-      /* Woven texture, lamp light and a soft fall-off, over the page colour. */
-      #splash::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background:
-          radial-gradient(70% 45% at 50% 44%, var(--glow) 0%, transparent 70%),
-          repeating-linear-gradient(45deg, var(--weave) 0 2px, transparent 2px 9px),
-          repeating-linear-gradient(-45deg, var(--weave) 0 2px, transparent 2px 9px),
-          linear-gradient(180deg, transparent 0%, var(--shade) 100%);
-      }
-      /* The light breathes once. */
-      #splash::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(45% 28% at 50% 44%, var(--glow), transparent 70%);
-      }
       /* Safety net without JS: a rendered app is never covered. */
       #root:not(:empty) ~ #splash {
         animation: sp-out 200ms ease-in forwards;
       }
-      #splash > * {
-        position: relative;
-      }
       /* Colour, icon and name show at once (plan 115): the saved page is served instantly, so no delay. */
-      #splash::before,
-      #splash > * {
-        opacity: 0;
+      #splash {
         animation: sp-in 220ms ease-out forwards;
-      }
-      #splash::after {
         opacity: 0;
-        animation: sp-breathe 2.4s ease-in-out 220ms 1;
       }
       #splash.sp-out {
         animation: sp-out 200ms ease-in forwards;
@@ -138,15 +124,15 @@
       .sp-logo {
         display: grid;
         place-items: center;
-        width: 4.5rem;
-        height: 4.5rem;
+        width: 72px;
+        height: 72px;
       }
       .sp-logo img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         border-radius: 1.1rem;
-        box-shadow: 0 0.6rem 1.6rem var(--logo-shadow);
+        box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.45);
         opacity: 0;
         transition: opacity 220ms ease-out;
       }
@@ -162,7 +148,7 @@
         border-radius: 1.1rem;
         background: var(--logo-bg);
         color: var(--logo-ink);
-        box-shadow: 0 0.6rem 1.6rem var(--logo-shadow);
+        box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.45);
         font-weight: 700;
         font-size: 1.35rem;
         letter-spacing: 0.02em;
@@ -183,26 +169,13 @@
           visibility: hidden;
         }
       }
-      @keyframes sp-breathe {
-        0%,
-        100% {
-          opacity: 0;
-        }
-        50% {
-          opacity: 1;
-        }
-      }
       @media (prefers-reduced-motion: reduce) {
         #root:not(:empty) ~ #splash {
           display: none;
         }
-        #splash::before,
-        #splash > * {
+        #splash {
           animation: none;
           opacity: 1;
-        }
-        #splash::after {
-          animation: none;
         }
         .sp-logo img {
           transition: none;
@@ -214,6 +187,45 @@
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    />
+    <!-- Plan 119 / hotfix 1.0.43.3: iOS launch pictures for the kitchen apps (dark spotlight), made by
+         scripts/make-startup-images.mjs from scripts/startup-images/kitchen.json. Guide: docs/guide/launch-pictures.md -->
+    <!-- Some iOS versions only use launch pictures with this; every page is a standalone home-screen app via its manifest anyway. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link
+      rel="apple-touch-startup-image"
+      href="/startup/kitchen/startup-390x844.png"
+      media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/startup/kitchen/startup-393x852.png"
+      media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/startup/kitchen/startup-402x874.png"
+      media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/startup/kitchen/startup-420x912.png"
+      media="screen and (device-width: 420px) and (device-height: 912px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/startup/kitchen/startup-428x926.png"
+      media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/startup/kitchen/startup-430x932.png"
+      media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/startup/kitchen/startup-440x956.png"
+      media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
     />
     <meta name="robots" content="noindex, nofollow" />
     <title>ShaggyBobo</title>

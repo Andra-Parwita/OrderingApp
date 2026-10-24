@@ -118,6 +118,44 @@ describe('Pickup & delivery · Pickup', () => {
     fireEvent.click(within(warning).getByRole('button', { name: 'Send anyway' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
+
+  it('shows minutes as numbers with the unit in the label, and the three options are selectable', async () => {
+    await make('Rina', 'pickup', ['confirmed']);
+    renderThemed(<HandOverScreen />);
+    await screen.findByText('Rina');
+    fireEvent.click(screen.getAllByRole('button', { name: /^Message / })[0] as HTMLElement);
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Minutes until ready')).toBeVisible();
+    const minutes = within(dialog).getByRole('radiogroup', { name: 'Minutes until ready' });
+    const buttons = within(minutes).getAllByRole('radio');
+    expect(buttons.map((b) => b.textContent)).toEqual(['10', '15', '20', '30', '45', '60']);
+    fireEvent.click(within(minutes).getByRole('radio', { name: '45 minutes' }));
+    expect(within(dialog).getByText(/ready for pickup in 45 min/)).toBeVisible();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Your own text' }));
+    expect(within(dialog).getByRole('radio', { name: 'Your own text' })).toBeChecked();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Ready for pickup' }));
+    expect(within(dialog).getByRole('radio', { name: 'Ready for pickup' })).toBeChecked();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Ready in N min' }));
+    expect(within(dialog).getByRole('radio', { name: '45 minutes' })).toBeChecked();
+  });
+
+  it('enables the minutes only while "Ready in N min" is chosen, and keeps the value', async () => {
+    await make('Rina', 'pickup', ['confirmed']);
+    renderThemed(<HandOverScreen />);
+    await screen.findByText('Rina');
+    fireEvent.click(screen.getAllByRole('button', { name: /^Message / })[0] as HTMLElement);
+    const dialog = await screen.findByRole('dialog');
+    const minutes = within(dialog).getByRole('radiogroup', { name: 'Minutes until ready' });
+    fireEvent.click(within(minutes).getByRole('radio', { name: '45 minutes' }));
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Ready for pickup' }));
+    expect(minutes).toHaveAttribute('aria-disabled', 'true');
+    for (const button of within(minutes).getAllByRole('radio')) expect(button).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Your own text' }));
+    expect(within(minutes).getByRole('radio', { name: '45 minutes' })).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole('radio', { name: 'Ready in N min' }));
+    for (const button of within(minutes).getAllByRole('radio')) expect(button).toBeEnabled();
+    expect(within(minutes).getByRole('radio', { name: '45 minutes' })).toBeChecked();
+  });
 });
 
 describe('Pickup & delivery · Delivery', () => {

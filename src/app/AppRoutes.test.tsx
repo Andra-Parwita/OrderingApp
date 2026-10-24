@@ -143,8 +143,9 @@ describe('AppRoutes', () => {
     expect(fetchedUrls()).not.toContainEqual(expect.stringContaining('/menu'));
   });
 
-  it('shows the bottom tab bar on a phone and the left rail on a desktop', () => {
+  it('shows the bottom tab bar on a phone and the left rail on a desktop', async () => {
     const phone = renderAt('/seller');
+    await screen.findByRole('link', { name: 'More' }, { timeout: 5000 });
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'More' })).toHaveAttribute('href', '/seller/more');
     expect(screen.getByRole('link', { name: 'Pickup & delivery' })).toHaveAttribute(
@@ -155,7 +156,7 @@ describe('AppRoutes', () => {
 
     wide = true;
     renderAt('/seller/orders');
-    expect(screen.getByRole('navigation', { name: 'Seller' })).toBeInTheDocument();
+    expect(await screen.findByRole('navigation', { name: 'Seller' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { level: 1, name: 'Orders' })).toBeInTheDocument();
     expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
@@ -164,6 +165,7 @@ describe('AppRoutes', () => {
 
   it('lands on Home at /seller on a tablet (Home marked, no Orders list) and on Orders on a phone', async () => {
     const phone = renderAt('/seller');
+    await screen.findByRole('link', { name: 'Orders' }, { timeout: 5000 });
     // Phone: no Home anywhere; the Orders tab is current and the Orders list is the page.
     expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
@@ -172,7 +174,7 @@ describe('AppRoutes', () => {
 
     wide = true;
     renderAt('/seller');
-    const rail = screen.getByRole('navigation', { name: 'Seller' });
+    const rail = await screen.findByRole('navigation', { name: 'Seller' }, { timeout: 5000 });
     expect(within(rail).getByRole('link', { name: 'Home' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -185,10 +187,10 @@ describe('AppRoutes', () => {
     ).toBeInTheDocument();
   });
 
-  it('collapses the rail to icons, remembers it, and names every item on focus', () => {
+  it('collapses the rail to icons, remembers it, and names every item on focus', async () => {
     wide = true;
     const first = renderAt('/seller');
-    const rail = screen.getByRole('navigation', { name: 'Seller' });
+    const rail = await screen.findByRole('navigation', { name: 'Seller' }, { timeout: 5000 });
     const toggle = within(rail).getByRole('button', { name: 'Collapse menu' });
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(toggle);
@@ -209,7 +211,7 @@ describe('AppRoutes', () => {
 
     // A new visit starts collapsed, and the button expands it again.
     renderAt('/seller');
-    const again = screen.getByRole('button', { name: 'Expand menu' });
+    const again = await screen.findByRole('button', { name: 'Expand menu' });
     fireEvent.click(again);
     expect(screen.getByRole('button', { name: 'Collapse menu' })).toHaveAttribute(
       'aria-expanded',
