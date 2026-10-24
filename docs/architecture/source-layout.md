@@ -6,7 +6,7 @@ Written 2026-10-13 from the repo itself: `eslint.config.js`, `tsconfig*.json`, `
 
 | folder | what lives there |
 |---|---|
-| `src/app` | the shell: routes (`AppRoutes.tsx`), store and root saga, session, guards, seller rail and layout, sign-in frame, kitchen switcher. The only place that wires features together |
+| `src/app` | the shell (customer addresses: `customerRoutes.tsx`, `customerPath.ts`; seller app per kitchen: `LaunchGate.tsx`, `launchKitchen.ts`, `SellerMoveNotice.tsx`): routes (`AppRoutes.tsx`), store and root saga, session, guards, seller rail and layout, sign-in frame, kitchen switcher. The only place that wires features together |
 | `src/features/*` | one folder per screen group; each owns its screens, state and API use. Today: `admin`, `chef-income`, `customer-menu`, `customer-orders`, `customer-settings`, `seller-auth`, `seller-cook`, `seller-help`, `seller-history`, `seller-home`, `seller-labels`, `seller-menu`, `seller-orders` (and more; `ls src/features`) |
 | `src/components` | pieces shared by customer and seller screens that know about the app: draft notice, install and push flow, network banner, update bar, language and theme switches, QR and scan, labels |
 | `src/ui` | the generic kit (button, field, list row, pill, dialog, menu, icons). Knows nothing about orders |
@@ -15,7 +15,7 @@ Written 2026-10-13 from the repo itself: `eslint.config.js`, `tsconfig*.json`, `
 | `src/i18n` | i18next setup and the shared `en.json` / `id.json`; each feature adds its own bundle |
 | `src/harness` | dev-only pages (`?harness=<name>`), dropped from production builds |
 | `shared/` | contracts (`*Contract.ts`), types, limits, dates and pure helpers used by **both** the app and the Worker. No React, no Worker APIs |
-| `worker/` | the Cloudflare Worker: `index.ts` (fetch and cron entry), `pages.ts` (head rewrite), `api/` (routes), `db/` (D1 code), `repo/` (the Repository interface), `live/` (Durable Object), `images/` (R2), `auth/`, `push/` |
+| `worker/` | the Cloudflare Worker: `index.ts` (fetch and cron entry), `pages.ts` (head rewrite), `redirects.ts` (old `/o/<token>` to the kitchen path), `api/` (routes), `db/` (D1 code), `repo/` (the Repository interface), `live/` (Durable Object), `images/` (R2), `auth/`, `push/` |
 | `migrations/` | D1 SQL migrations, numbered `0001_...sql` |
 | `mocks/` | MSW setup and the unit tests that run the real Worker code on a local D1 (`impl.ts`, `server.ts`, `*.test.ts`) |
 | `e2e/` | Playwright specs and their helpers |

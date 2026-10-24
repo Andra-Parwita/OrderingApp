@@ -25,7 +25,9 @@
   },
   // Plan 114 off switch: "on" de-duplicates a repeated order (client order id); any other value places every order
   // as before. Flip it here and `pnpm run deploy`, or in the Cloudflare dashboard (Settings > Variables).
-  "vars": { "ORDER_DEDUPE": "on" },
+  // Plan 102 kill switch: "on" scopes each customer app to its kitchen (/<slug>/); "off" (or missing) keeps the scope "/".
+  // Ships "off": flip it with a deploy only after the phone check.
+  "vars": { "ORDER_DEDUPE": "on", "KITCHEN_SCOPE": "off" },
   // Other variables and secrets are NOT set here: `.dev.vars` locally (see .dev.vars.example) and Cloudflare
   // secrets in production. Never put DEV_TOOLS in this file: only a local `.dev.vars` may turn it on.
   //

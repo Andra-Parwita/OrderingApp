@@ -354,7 +354,7 @@ describe('seller batch 2: new order', () => {
     expect(text).toContain('Hi Lisa');
     expect(text).toContain('2× Chicken lemper');
     expect(text).toContain('Total $20.00');
-    expect(text).toContain(`${window.location.origin}/o/`);
+    expect(text).toContain(`${window.location.origin}/onde-onde/o/`);
 
     expect(requests.some((request) => request.url.includes('/api/seller/orders'))).toBe(true);
     for (const request of requests) {

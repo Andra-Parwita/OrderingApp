@@ -4,6 +4,7 @@
 // Runs against a local D1; see mocks/impl.ts. Tests only: no product code is touched.
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { KitchenManifest } from '../shared/kitchenManifest';
 import { handleKitchenRequest } from '../worker/api/kitchenRoutes';
@@ -25,13 +26,45 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
   let world: World;
   let slugs: Array<string>;
 
-  const manifestOf = async (slug: string, query = '', file = 'manifest.webmanifest') => {
+  // The Worker's ASSETS binding, read from public/ (a 404 for anything else).
+  const assets = {
+    fetch: (req: Request): Promise<Response> => {
+      const file = resolve('public', `.${new URL(req.url).pathname}`);
+      return Promise.resolve(
+        existsSync(file)
+          ? new Response(readFileSync(file), { headers: { 'Content-Type': 'image/png' } })
+          : new Response('no', { status: 404 }),
+      );
+    },
+  };
+
+  const manifestOf = async (
+    slug: string,
+    query = '',
+    file = 'manifest.webmanifest',
+    context: { kitchenScope?: boolean } = {},
+  ) => {
     const res = await handleKitchenRequest(
       world.repo,
       new Request(`${origin}/k/${slug}/${file}${query}`),
+      context,
     );
     expect(res?.status).toBe(200);
     return (await res?.json()) as KitchenManifest;
+  };
+
+  // One order of the first sample kitchen; its private token decides the kitchen of every order address.
+  const placeOrder = async (): Promise<{ token: string }> => {
+    const onde = await world.repo.sellerBySlug('onde-onde');
+    if (!onde) throw new Error('no seller');
+    const created = await onde.createOrder({
+      firstName: 'Safety',
+      language: 'en',
+      fulfilment: 'pickup',
+      lines: [{ itemId: 'pesmol', qty: 1 }],
+    });
+    if (!created.ok) throw new Error('order failed');
+    return { token: created.value.token };
   };
 
   beforeEach(async () => {
@@ -50,6 +83,7 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
         '',
         `?start=${encodeURIComponent(`/${slug}`)}`,
         `?start=${encodeURIComponent(`/o/${TOKEN}?source=homescreen`)}`,
+        `?start=${encodeURIComponent(`/${slug}/o/${TOKEN}?source=homescreen`)}`,
         `?start=${encodeURIComponent('/my-orders')}`,
         `?start=${encodeURIComponent('/settings')}`,
         `?start=${encodeURIComponent('/somewhere/else')}`,
@@ -74,36 +108,102 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
     );
     expect(order.start_url).toBe(`/o/${TOKEN}?source=homescreen`);
     expect(order.scope).toBe('/');
+    // plan 102: the order start under its kitchen is kept as it is
+    const under = await manifestOf(
+      'onde-onde',
+      `?start=${encodeURIComponent(`/onde-onde/o/${TOKEN}?source=homescreen`)}`,
+    );
+    expect(under.start_url).toBe(`/onde-onde/o/${TOKEN}?source=homescreen`);
+    // another kitchen's order start is not this kitchen's start
+    const other = await manifestOf(
+      'onde-onde',
+      `?start=${encodeURIComponent(`/dapur-demo/o/${TOKEN}?source=homescreen`)}`,
+    );
+    expect(other.start_url).toBe('/onde-onde');
     expect((await manifestOf('onde-onde')).start_url).toBe('/onde-onde');
     expect((await manifestOf('onde-onde', '?start=/unknown/page')).start_url).toBe('/onde-onde');
     // today /my-orders and /settings are not valid manifest starts (they fall back to the menu)
     expect((await manifestOf('onde-onde', '?start=/my-orders')).start_url).toBe('/onde-onde');
   });
 
-  it('the per-kitchen seller manifest today: id, start and scope /seller', async () => {
+  it('102 switch on: every kitchen, every start input: scope /<slug>/, id unchanged, start inside', async () => {
     for (const slug of slugs) {
-      const m = await manifestOf(slug, '', 'seller.webmanifest');
-      expect([m.id, m.start_url, m.scope]).toEqual(['/seller', '/seller', '/seller']);
-      expect(m.background_color).toBe('#2A2B26');
+      for (const query of [
+        '',
+        `?start=${encodeURIComponent(`/${slug}`)}`,
+        `?start=${encodeURIComponent(`/o/${TOKEN}?source=homescreen`)}`,
+        `?start=${encodeURIComponent(`/${slug}/o/${TOKEN}?source=homescreen`)}`,
+        `?start=${encodeURIComponent('/my-orders')}`,
+        `?start=${encodeURIComponent('//evil.example/x')}`,
+      ]) {
+        const m = await manifestOf(slug, query, 'manifest.webmanifest', { kitchenScope: true });
+        expect(m.id, `${slug} ${query}`).toBe(`/${slug}`);
+        expect(m.scope).toBe(`/${slug}/`);
+        expect(inside(m.scope, m.start_url), `${slug} ${query} -> ${m.start_url}`).toBe(true);
+      }
+      // an order start is the order under its kitchen, inside the scope (plan 102 stage 4)
+      const order = await manifestOf(
+        slug,
+        `?start=${encodeURIComponent(`/o/${TOKEN}?source=homescreen`)}`,
+        'manifest.webmanifest',
+        { kitchenScope: true },
+      );
+      expect(order.start_url).toBe(`/${slug}/o/${TOKEN}?source=homescreen`);
+      // missing or off (the default) is today's scope
+      expect((await manifestOf(slug, '', 'manifest.webmanifest', {})).scope).toBe('/');
     }
   });
 
-  it('icons: each manifest icon answers 200 or a redirect to a public file that exists', async () => {
+  it('101: the per-kitchen seller manifest is /seller?k=<slug> in scope /seller (both switch values)', async () => {
     for (const slug of slugs) {
-      const m = await manifestOf(slug);
-      expect(m.icons.length).toBeGreaterThan(0);
-      for (const icon of m.icons) {
-        const res = await handleKitchenRequest(world.repo, new Request(`${origin}${icon.src}`));
-        expect(res, icon.src).not.toBeNull();
-        if (res?.status === 302) {
-          const target = res.headers.get('Location') ?? '';
-          expect(existsSync(resolve('public', `.${target}`)), `${icon.src} -> ${target}`).toBe(
-            true,
-          );
-        } else {
-          expect(res?.status, icon.src).toBe(200);
-        }
+      for (const kitchenScope of [false, true]) {
+        const m = await manifestOf(slug, '', 'seller.webmanifest', { kitchenScope });
+        expect([m.id, m.start_url, m.scope]).toEqual([
+          `/seller?k=${slug}`,
+          `/seller?k=${slug}`,
+          '/seller',
+        ]);
+        expect(m.background_color).toBe('#2A2B26');
+        expect(inside(m.scope, m.start_url)).toBe(true);
       }
+    }
+  });
+
+  // The sample kitchens carry a sample icon; take it away so the shared default is served.
+  const withoutUpload = async (): Promise<Array<string>> => {
+    await world.db.batch([world.db.stmt("DELETE FROM kitchen_images WHERE slot = 'railIcon'")]);
+    return slugs;
+  };
+
+  it('102: the default icon answers 200 with the bytes of public/app-icon.png (no redirect)', async () => {
+    const plain = await withoutUpload();
+    expect(plain.length).toBeGreaterThan(0);
+    const bytes = readFileSync(resolve('public/app-icon.png'));
+    for (const slug of plain) {
+      const m = await manifestOf(slug);
+      for (const icon of [...m.icons.map((i) => i.src), `/k/${slug}/apple-touch-icon.png`]) {
+        const res = await handleKitchenRequest(world.repo, new Request(`${origin}${icon}`), {
+          assets,
+        });
+        expect(res?.status, icon).toBe(200);
+        expect(res?.headers.get('Content-Type'), icon).toBe('image/png');
+        expect(Buffer.from(await (res as Response).arrayBuffer()).equals(bytes), icon).toBe(true);
+      }
+    }
+  });
+
+  it('102: if the assets fail, the icon route falls back to the old redirect', async () => {
+    const [slug] = await withoutUpload();
+    const broken = { fetch: () => Promise.reject(new Error('down')) };
+    const missing = { fetch: () => Promise.resolve(new Response('no', { status: 404 })) };
+    for (const fake of [undefined, broken, missing]) {
+      const res = await handleKitchenRequest(
+        world.repo,
+        new Request(`${origin}/k/${String(slug)}/icon-192.png`),
+        { assets: fake },
+      );
+      expect(res?.status).toBe(302);
+      expect(res?.headers.get('Location')).toBe('/app-icon.png');
     }
   });
 
@@ -122,6 +222,7 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
     const menu = await kitchenPageFor(world.repo, '/onde-onde', origin);
     expect(menu?.head).toContain('href="/k/onde-onde/manifest.webmanifest?start=%2Fonde-onde"');
 
+    // The old addresses still get the head (the Worker redirects them first); the start is the new shape.
     for (const path of [
       `/o/${token}`,
       `/o/${token}/placed`,
@@ -131,7 +232,9 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
     ]) {
       const page = await kitchenPageFor(world.repo, path, origin);
       expect(page?.head, path).toContain('/k/onde-onde/manifest.webmanifest?start=');
-      expect(page?.head, path).toContain(encodeURIComponent(`/o/${token}?source=homescreen`));
+      expect(page?.head, path).toContain(
+        encodeURIComponent(`/onde-onde/o/${token}?source=homescreen`),
+      );
       expect(page?.theme, path).toBeDefined();
     }
 
@@ -147,12 +250,77 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
     expect(seller?.head).not.toContain('/k/');
   });
 
-  it('today /<slug>/o/<token> is read as the plain kitchen page (no order start)', async () => {
-    const page = await kitchenPageFor(world.repo, '/onde-onde/o/some-token', origin);
-    expect(page?.head).toContain('/k/onde-onde/manifest.webmanifest?start=%2Fonde-onde');
+  it('101: /seller* with no k, an unknown or invalid k, or a lookup error keeps the default head', async () => {
+    const lookupFails = {
+      sellerBySlug: () => Promise.reject(new Error('db down')),
+    } as unknown as typeof world.repo;
+    for (const path of ['/seller', '/seller/orders', '/seller/sign-in']) {
+      for (const search of [
+        '',
+        '?k=',
+        '?k=no-such-kitchen',
+        '?k=A%20B',
+        '?k=../x',
+        '?x=onde-onde',
+      ]) {
+        const page = await kitchenPageFor(world.repo, path, origin, search);
+        expect(page?.head, `${path}${search}`).toContain(
+          'rel="manifest" href="/seller.webmanifest"',
+        );
+        expect(page?.head, `${path}${search}`).not.toContain('/k/');
+      }
+      const failed = await kitchenPageFor(lookupFails, path, origin, '?k=onde-onde');
+      expect(failed?.head).toContain('rel="manifest" href="/seller.webmanifest"');
+    }
   });
 
-  it.todo('102: /<slug>/o/<token> head carries the order start_url (?source=homescreen)');
-  it.todo('102: /<wrongslug>/o/<token> resolves the real kitchen from the token');
-  it.todo('101: /seller with no ?k= never links a per-kitchen seller manifest');
+  it("101: /seller* with a known k links that kitchen's seller app", async () => {
+    for (const slug of slugs) {
+      for (const path of ['/seller', '/seller/more']) {
+        const page = await kitchenPageFor(world.repo, path, origin, `?k=${slug}`);
+        expect(page?.head, `${path} ${slug}`).toContain(
+          `<link rel="manifest" href="/k/${slug}/seller.webmanifest">`,
+        );
+        expect(page?.head).toContain(`href="/k/${slug}/apple-touch-icon.png"`);
+        expect(page?.head).not.toContain('"/seller.webmanifest"');
+      }
+    }
+    // customer pages ignore k
+    const menu = await kitchenPageFor(world.repo, '/onde-onde', origin, '?k=dapur-demo');
+    expect(menu?.head).toContain('/k/onde-onde/manifest.webmanifest');
+  });
+
+  it('102: /<slug>/o/<token> head carries the order start_url (?source=homescreen)', async () => {
+    const { token } = await placeOrder();
+    for (const sub of ['', '/placed', '/qr', '/edit', '/edit/name']) {
+      const page = await kitchenPageFor(world.repo, `/onde-onde/o/${token}${sub}`, origin);
+      expect(page?.head, sub).toContain('/k/onde-onde/manifest.webmanifest?start=');
+      expect(page?.head, sub).toContain(
+        encodeURIComponent(`/onde-onde/o/${token}?source=homescreen`),
+      );
+      expect(page?.theme, sub).toBeDefined();
+    }
+  });
+
+  it('102: /<wrongslug>/o/<token> resolves the real kitchen from the token', async () => {
+    const { token } = await placeOrder();
+    const page = await kitchenPageFor(world.repo, `/dapur-demo/o/${token}`, origin);
+    expect(page?.head).toContain('/k/onde-onde/manifest.webmanifest?start=');
+    expect(page?.head).toContain(encodeURIComponent(`/onde-onde/o/${token}?source=homescreen`));
+    expect(page?.head).not.toContain('/k/dapur-demo/');
+  });
+
+  it('102: an unknown token under a kitchen gets no order head (the app shows not found)', async () => {
+    expect(
+      await kitchenPageFor(world.repo, '/onde-onde/o/no-such-token-at-all', origin),
+    ).toBeNull();
+  });
+
+  it('101: /seller with no ?k= never links a per-kitchen seller manifest', async () => {
+    for (const path of ['/seller', '/seller/orders']) {
+      const page = await kitchenPageFor(world.repo, path, origin);
+      expect(page?.head, path).toContain('rel="manifest" href="/seller.webmanifest"');
+      expect(page?.head, path).not.toContain('/k/');
+    }
+  });
 });

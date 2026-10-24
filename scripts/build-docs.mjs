@@ -25,6 +25,7 @@ const GROUPS = [
       ['product/overview.md', 'Overview'],
       ['product/flows.md', 'Main UX flows'],
       ['product/roadmap.md', 'Roadmap (payments, store, events)'],
+      ['product/app-store-roadmap.md', 'Store apps (analysis)'],
     ],
   ],
   [

@@ -1,12 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Kitchen, Language } from '../../../shared/domain';
 import type { CustomerLiveState } from '../../api/customerLiveState';
 import {
   INSTALL_NS,
   InstallOverlay,
-  promptInstall,
   useCanInstall,
   useSavedOrdersInstall,
   type InstallOverride,
@@ -130,15 +129,6 @@ const Install = styled.button`
   font-weight: 700;
   cursor: pointer;
 `;
-const Fallback = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.c.muted};
-  font-size: ${({ theme }) => theme.type.size.md};
-
-  b {
-    color: ${({ theme }) => theme.c.text};
-  }
-`;
 
 type Picker = 'language' | 'theme' | 'size' | null;
 
@@ -159,6 +149,8 @@ export type CustomerSettingsViewProps = Readonly<{
   connection?: CustomerLiveState;
   /** Plan 112: the "New menus from <kitchen>" option; absent = no kitchen known, no row. */
   menuNotice?: MenuNoticeControl | undefined;
+  /** Plan 102: opens the "Start fresh" help page; absent = no Help row. */
+  onStartFresh?: (() => void) | undefined;
 }>;
 
 /** "10:42", in the phone's own clock style. */
@@ -182,6 +174,7 @@ export function CustomerSettingsView({
   kitchen,
   connection,
   menuNotice,
+  onStartFresh,
 }: CustomerSettingsViewProps) {
   const { t } = useTranslation();
   const { t: ti } = useTranslation(INSTALL_NS);
@@ -223,12 +216,10 @@ export function CustomerSettingsView({
     if (status === 'on') install.disable();
     else install.start();
   }, [status, install]);
-  const onInstall = useCallback(() => void promptInstall(), []);
 
   // Offered on a phone (or when the browser offers its own Install) until it is installed.
   const showHome =
     !env.installed && (env.platform === 'ios' || env.platform === 'android' || canInstall);
-  const iosGuide = env.platform === 'ios';
   const hint =
     status === 'on'
       ? ti('settings.on')
@@ -301,6 +292,16 @@ export function CustomerSettingsView({
             {t('customerSettings.aboutShow')}
           </AboutButton>
         </Row>
+        {onStartFresh ? (
+          <Row>
+            <Label>
+              <Name id="settings-help">{t('customerSettings.helpTitle')}</Name>
+            </Label>
+            <AboutButton type="button" aria-describedby="settings-help" onClick={onStartFresh}>
+              {t('customerSettings.startFresh')}
+            </AboutButton>
+          </Row>
+        ) : null}
       </Rows>
       {picker === 'language' ? (
         <ChoiceSheet
@@ -376,30 +377,12 @@ export function CustomerSettingsView({
               <Hint>{t('customerSettings.homeBody')}</Hint>
             </CardText>
           </CardHead>
-          {iosGuide ? (
-            <Install type="button" onClick={install.startGuide}>
-              {ti('settings.homeShow')}
-            </Install>
-          ) : (
-            <>
-              {canInstall ? (
-                <Install type="button" onClick={onInstall}>
-                  {ti('settings.homeInstall')}
-                </Install>
-              ) : null}
-              <Fallback>
-                <Trans
-                  t={ti}
-                  i18nKey="settings.homeFallback"
-                  ns={INSTALL_NS}
-                  components={{ b: <b /> }}
-                />
-              </Fallback>
-            </>
-          )}
+          <Install type="button" onClick={install.install}>
+            {kitchen ? ti('settings.homeInstall', { name: kitchen.name }) : ti('homeCard.install')}
+          </Install>
         </Card>
       ) : null}
-      <InstallOverlay controller={install} kitchenName={t('app.name')} />
+      <InstallOverlay controller={install} kitchenName={kitchen?.name ?? t('app.name')} />
     </Page>
   );
 }

@@ -79,6 +79,7 @@
   },
   "signIn": {
     "title": "Masuk",
+    "titleKitchen": "Masuk ke {{name}}",
     "passwordTitle": "Masuk dengan kata sandi",
     "back": "Kembali",
     "passkey": "Masuk dengan wajah atau sidik jari",
@@ -117,6 +118,8 @@
     "signOutDevice": "Keluarkan",
     "signOutDeviceConfirm": "Ketuk lagi untuk keluarkan",
     "add": "Tambah perangkat",
+    "join": "Gabung dapur lain",
+    "close": "Tutup",
     "addHelp": "Ketik kode ini di perangkat baru. Kode hanya berlaku sekali.",
     "codeLabel": "Kodemu",
     "expiresIn": "Berakhir dalam {{time}}",
@@ -129,6 +132,7 @@
   },
   "join": {
     "title": "Gabung ke {{kitchen}}",
+    "sheetTitle": "Gabung ke dapur ini",
     "submit": "Gabung",
     "signInToJoin": "Sudah punya login? Masuk untuk bergabung",
     "thisKitchen": "dapur ini"

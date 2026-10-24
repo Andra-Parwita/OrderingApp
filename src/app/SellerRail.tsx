@@ -4,7 +4,6 @@ import { ReactReduxContext } from 'react-redux';
 import { Link } from 'react-router';
 import { styled } from 'styled-components';
 import type { Kitchen } from '../../shared/domain';
-import { LanguageSwitch } from '../components/LanguageSwitch';
 import {
   selectOrdersCount,
   useUnseenNewOrders,
@@ -92,23 +91,6 @@ const LogoBox = styled.div<{ $collapsed: boolean }>`
   align-items: center;
   justify-content: center;
   height: ${({ $collapsed }) => ($collapsed ? RAIL_TOP_COLLAPSED_PX - 1 : RAIL_LOGO_PX)}px;
-`;
-const KitchenName = styled.p`
-  display: flex;
-  flex: 1;
-  align-items: center;
-  margin: 0;
-  padding: 0 ${({ theme }) => theme.spacing.md};
-  overflow: hidden;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.25;
-  white-space: nowrap;
-
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
 `;
 const List = styled.ul`
   display: flex;
@@ -232,9 +214,6 @@ const FootButton = styled.button<{ $collapsed: boolean }>`
     background: ${({ theme }) => theme.c.surf2};
   }
 `;
-const ExpandedLanguage = styled.div`
-  align-self: flex-start;
-`;
 const Initial = styled.div`
   display: flex;
   align-items: center;
@@ -253,24 +232,6 @@ const Initial = styled.div`
 /** The first letter of the kitchen name, for the collapsed panel when there is no icon. */
 function initialOf(name: string): string {
   return Array.from(name.trim())[0]?.toUpperCase() ?? '?';
-}
-
-/** EN / ID as one small button, for the collapsed panel. */
-function CompactLanguage() {
-  const { t, i18n } = useTranslation();
-  const isId = i18n.language.startsWith('id');
-  const next = isId ? 'en' : 'id';
-  const change = useCallback(() => void i18n.changeLanguage(next), [i18n, next]);
-  return (
-    <FootButton
-      type="button"
-      $collapsed
-      onClick={change}
-      aria-label={`${t('language.label')}: ${isId ? 'ID' : 'EN'}. ${t('language.switchTo', { name: t(`language.name.${next}`) })}`}
-    >
-      {isId ? 'ID' : 'EN'}
-    </FootButton>
-  );
 }
 
 export type SellerRailProps = Readonly<{
@@ -341,13 +302,8 @@ export function SellerRail({
               />
             )}
           </LogoBox>
-          {collapsed ? null : (
-            <KitchenName>
-              <span>{kitchenName}</span>
-            </KitchenName>
-          )}
+          {collapsed ? null : <KitchenSwitcher name={kitchenName} />}
         </TopBlock>
-        {collapsed ? null : <KitchenSwitcher />}
         <List>
           {ids.map((id) => {
             const flagged = id === 'menu' && menuNotPublished;
@@ -398,13 +354,6 @@ export function SellerRail({
         <Foot $collapsed={collapsed}>
           {showPicker && !collapsed ? <SellerPicker /> : null}
           <RailSwitchPerson collapsed={collapsed} />
-          {collapsed ? (
-            <CompactLanguage />
-          ) : (
-            <ExpandedLanguage>
-              <LanguageSwitch compact />
-            </ExpandedLanguage>
-          )}
           <Tooltip text={collapsed ? collapseLabel : undefined}>
             <FootButton
               type="button"

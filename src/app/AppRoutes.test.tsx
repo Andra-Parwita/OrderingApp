@@ -159,7 +159,7 @@ describe('AppRoutes', () => {
     expect(await screen.findByRole('navigation', { name: 'Seller' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { level: 1, name: 'Orders' })).toBeInTheDocument();
-    expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
+    expect(screen.queryByRole('radiogroup', { name: /language/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -203,7 +203,7 @@ describe('AppRoutes', () => {
     expect(within(rail).getByRole('link', { name: 'Kitchen' })).toBeInTheDocument();
     expect(within(rail).getByRole('link', { name: 'Pickup & delivery' })).toBeInTheDocument();
     expect(within(rail).queryByRole('radiogroup')).not.toBeInTheDocument();
-    expect(within(rail).getByRole('button', { name: /Language: EN/ })).toBeInTheDocument();
+    expect(within(rail).queryByRole('button', { name: /Language/ })).not.toBeInTheDocument();
     expect(within(rail).queryByText('Home', { selector: '[aria-hidden]' })).toBeNull();
     fireEvent.focus(orders);
     expect(within(rail).getByText('Home', { selector: 'span[aria-hidden]' })).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe('AppRoutes', () => {
       'true',
     );
     expect(localStorage.getItem('sellerRailCollapsed')).toBe('0');
-    expect(screen.getByRole('radiogroup', { name: 'Language' })).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup', { name: 'Language' })).not.toBeInTheDocument();
   });
 
   it('keeps the table beside an open order on a desktop, with the filter in the URL', async () => {
@@ -233,12 +233,12 @@ describe('AppRoutes', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('has one main landmark and one language switch on the desktop table', async () => {
+  it('has one main landmark and no language switch on the desktop table (it is in Settings)', async () => {
     wide = true;
     renderAt('/seller/orders/K7F2QX');
     await screen.findByRole('button', { name: 'Search orders' }, { timeout: 5000 });
     expect(screen.getAllByRole('main')).toHaveLength(1);
-    expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
+    expect(screen.queryByRole('radiogroup', { name: /language/i })).not.toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Order K7F2QX' })).toBeInTheDocument();
   });
 
@@ -249,6 +249,7 @@ describe('AppRoutes', () => {
     const entries = within(screen.getByRole('navigation', { name: 'More' }));
     expect(entries.getByText('Kitchen')).toBeInTheDocument();
     expect(entries.getByText('Labels')).toBeInTheDocument();
+    expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
     phone.unmount();
 
     wide = true;

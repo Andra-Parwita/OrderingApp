@@ -23,6 +23,22 @@
     "light": "Light",
     "dark": "Dark"
   },
+  "sellerLaunch": {
+    "opening": "Opening {{name}}…",
+    "openingBody": "Switching kitchen. One moment.",
+    "notMember": "You are not on {{name}}'s team any more",
+    "notMemberBody": "Ask the owner to add you again, or open your other kitchen.",
+    "paused": "{{name}} is paused",
+    "pausedBody": "The kitchen is switched off for now. Contact ShaggyBobo.",
+    "openOther": "Open {{name}}",
+    "yourKitchen": "your other kitchen",
+    "thisKitchen": "this kitchen",
+    "removeIcon": "You can remove this icon from your home screen.",
+    "installTitle": "Install {{name}}'s seller app",
+    "moveText": "{{name}} now has its own seller app.",
+    "moveInstall": "Install",
+    "moveHide": "Hide"
+  },
   "sellerNav": {
     "devSeller": "Seller (dev only)",
     "label": "Seller",
@@ -136,6 +152,8 @@
     "homeBody": "Opens like an app, one tap away.",
     "aboutTitle": "About and privacy",
     "aboutShow": "Read",
+    "helpTitle": "Help",
+    "startFresh": "Start fresh",
     "menuNotice": "New menus from {{kitchen}}",
     "menuNoticeOff": "Off",
     "menuNoticeOn": "On",
@@ -148,6 +166,20 @@
     "menuNoticeOffAnyTime": "Turn it off here any time.",
     "menuNoticeNotNow": "Not now",
     "menuNoticeTurnOn": "Turn on"
+  },
+  "startFresh": {
+    "title": "Start fresh",
+    "back": "Settings",
+    "intro": "Beta testers: follow these steps to start again, one at a time.",
+    "step1": "<b>Remove the old or wrong kitchen icon.</b> Android: press and hold the icon, tap Uninstall (Samsung: Settings → Apps → the kitchen name → Uninstall). iPhone: press and hold → Remove App → Delete App.",
+    "step2": "<b>Reset this phone</b> (button below). It signs out and clears My orders, your name, address, language and the saved kitchen from this phone. It does not delete your account on our side.",
+    "step3": "<b>Delete my saved data</b> on our side, in Settings. It deletes your Remember me account, order links and saved address, and asks your phone to drop the passkey where it can.",
+    "step4": "If the app misbehaves, <b>clear the site's data</b>. Chrome: ⋮ → Settings → Site settings → All sites → order.shaggybobo.app → Delete & reset. Samsung Internet: ≡ → Settings → Sites and downloads → Manage website data → the site → Delete. iPhone Safari: Settings → Apps → Safari → Advanced → Website Data → search \"shaggybobo\" → Remove (menu names differ by iOS version).",
+    "step5": "<b>Remove the Remember me passkey.</b> Google Password Manager: Settings → Google → Password Manager → Passkeys → order.shaggybobo.app → Delete. Samsung Pass: Passkeys → pick the site → Delete. Apple Passwords: Passwords app → order.shaggybobo.app → Delete. Keeper: open the record order.shaggybobo.app → Delete.",
+    "step6": "<b>Install the right kitchen again.</b> Open the kitchen's link from the owner, tap Install app, check the icon and name.",
+    "reset": "Reset this phone",
+    "resetting": "Resetting…",
+    "deleteLink": "Delete my saved data (in Settings)"
   },
   "notFound": {
     "title": "Page not found",

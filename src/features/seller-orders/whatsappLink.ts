@@ -1,6 +1,8 @@
 import type { i18n as I18n } from 'i18next';
 import type { Order } from '../../../shared/domain';
 import { whatsAppUrl } from '../../api/device/whatsapp';
+import { orderPath } from '../../../shared/orderPath';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
@@ -21,7 +23,7 @@ export function openOrderLink(i18n: I18n, order: Order, digits: string | null = 
       .join(', '),
     total: formatMoney(orderTotalCents(order), order.language),
     how: fixed(`fulfilment.${order.fulfilment}`),
-    link: `${window.location.origin}/o/${order.token}`,
+    link: `${window.location.origin}${orderPath(currentSellerSlug(), order.token)}`,
   });
   window.open(whatsAppUrl(text, digits ?? undefined), '_blank', 'noopener');
 }

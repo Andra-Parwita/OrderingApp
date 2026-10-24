@@ -738,6 +738,24 @@ Format for each entry:
 **Trade-off:** a few minutes of docs per plan step; the owner can see where things stand from the docs site alone.
 **Revisit when:** a tool generates the status from git or the board.
 
+## D-116 · No animation round for the customer app (2026-10-24; owner)
+**Ruling:** "we don't need animation for customer app, we will keep it simple for now".
+**Decision:** the planned customer-app Lottie round is dropped; no animation library is added. Existing small CSS motions (sheet slide-up, splash fade, About hero) stay.
+**Trade-off:** a plainer customer app; no new dependency, less to load.
+**Revisit when:** the owner sends animations or asks for them.
+
+## D-117 · Customer pages live under the kitchen; one seller app per kitchen; the kitchen-only scope is a switch (2026-10-24; owner)
+**Ruling:** "A" (24 Oct) to "1.0.44 = 101 + 102 together, with all of Fable's safeguards", after docs/reports/2026-10-20-101-102-risk.html; earlier answers 18 Oct (102 Q1 = A per-kitchen paths, Q3 = A1 My orders per kitchen in the app, Q4 = A one install button, Q6 = A Start fresh; 101 Q1 = A `/seller?k=<slug>`, Q2 = B names, Q4 = A keep the old app).
+**Decision:** order, My orders and Settings move to `/<slug>/…`; the Worker 302s every old `/o/<token>…` link to its kitchen (fail-open: unknown token or error → the page as before); all new links use `orderPath`. Each kitchen gets its own seller app (`/seller?k=<slug>`), the old "Seller" app keeps working. The customer manifest scope `/<slug>/` is behind `KITCHEN_SCOPE` (wrangler var, "off" at deploy; flip to "on" after a device check, back to "off" in minutes if a URL bar or wrong app shows). No migration.
+**Trade-off:** more routes and one redirect hop for old links; Android may take days to re-mint installed apps after the switch; the proof of the wrong-icon cause needs a real WebAPK (the emulator only made shortcuts).
+**Revisit when:** a real Android device shows the wrong app opening a link, or the switch has been "on" for a few weeks without problems (then remove the "off" path).
+
+## D-118 · Website only for the near future; no store apps yet (2026-10-24; owner)
+**Ruling:** "We will do just website in near future, most important is customer don't get confused if sent different link for different kitchen."
+**Decision:** no Play Store or App Store app for now; the analysis (docs/product/app-store-roadmap.md) is parked as background. The priority is that each kitchen's link clearly opens that kitchen (1.0.44 routes under the kitchen, the Worker redirect, the kitchen banner, My orders per kitchen inside an installed app).
+**Trade-off:** the Samsung install confusion is handled by the one Install button (102 stage 2), not by a store app.
+**Revisit when:** customers ask for a store app, or v1.1.0 (store, events, payments) needs native features.
+
 ## D-119 · Customers download only the customer app; iPhone launch pictures per app kind (2026-10-24; owner)
 **Ruling:** after the cold-start measurement (the 1.86 MB bundle, not the pictures, delayed the menu): "A" light split ("only split the customer app, leave the seller app untouched"); progressive loading of rare extras later. Launch pictures: "make it small", "same for both dark/light", option 2 dark "but … lighter around the ShaggyBobo so it kind of makes it in a spotlight", and "A" a reusable generator per app kind because "we will have different customer app for store, ticketing". "Also fix that splash found by Fable" (render-blocking `splash.js` revalidated on every cold start).
 **Decision:** hotfix 1.0.43.3: seller/admin load as a lazy `StaffArea` chunk (customer entry 1,861 → 891 KB raw), store unchanged, `check:bundle` in the gate; iPhone 14+ launch pictures (dark spotlight, 7 sizes, ~130–147 KB, `scripts/startup-images/<kind>.json`); `_headers` keeps `splash.js`, `/brand/*`, `/startup/*` a day.

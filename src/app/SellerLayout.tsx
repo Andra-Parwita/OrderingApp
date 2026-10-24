@@ -8,10 +8,13 @@ import { fetchMenu } from '../api/client';
 import { currentSellerSlug } from '../api/device/sellerContext';
 import { cssUrl } from '../components/cssUrl';
 import { useManifestLinks } from '../components/install';
+import { sellerKitchenOfSearch, sellerManifestTarget } from '../components/install/manifestLinks';
 import { useBannerCollapsed } from '../components/useBannerCollapsed';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { WhatsNewPill } from '../components/whats-new/WhatsNewPill';
 import { ABOUT_NS, currentRelease } from '../features/seller-about';
+import { SellerMoveNotice } from './SellerMoveNotice';
+import { launchMemory } from './launchKitchen';
 import { IncomeAccessProvider } from '../components/chef-income';
 import { ReadOnlyOrdersProvider, useNewOrderTitle } from '../features/seller-orders';
 import { ImageSlot } from '../ui';
@@ -159,7 +162,14 @@ export function SellerLayout() {
   const { pathname } = useLocation();
   const { me } = useSession();
   const who = useWho();
-  useManifestLinks(null, true); // ShaggyBobo's seller app manifest on every seller page (plan 048)
+  // ShaggyBobo's seller app manifest on every seller page (plan 048), unless the page was opened with
+  // `?k=<slug>` (plan 101): then the Worker already linked that kitchen's seller app, and this keeps it
+  // through the in-app navigation that drops the query. With no `?k` the kitchen this window was launched
+  // for (session memory) is used; with neither, the generic app (plan 101 risk 4).
+  const [launchSlug] = useState(
+    () => sellerKitchenOfSearch(window.location.search) ?? launchMemory() ?? undefined,
+  );
+  useManifestLinks(sellerManifestTarget(launchSlug), true);
   const role =
     me?.role === 'chef' || me?.role === 'helper' || me?.role === 'seller' ? me.role : undefined;
   const navIds = useMemo(() => navIdsFor(role), [role]);
@@ -212,6 +222,7 @@ export function SellerLayout() {
 
   return (
     <Shell $tablet={tablet} $fixed={fixed}>
+      <SellerMoveNotice />
       {release ? (
         <WhatsNewPill
           version={release.version}

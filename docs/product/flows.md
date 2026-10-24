@@ -4,7 +4,7 @@ Written 2026-10-13 (plan 070) from the routes in `src/app/AppRoutes.tsx` and the
 
 ## Customer: from the link to the updates
 
-The customer opens the kitchen's link (`/:slug`), in English or Indonesian. There is no account and no payment. The order is confirmed on the **Order placed** page, where one button opens WhatsApp with the order already written; the customer sends it to the seller. The private link `/o/:token` is the way back to the order, and **My orders** (`/my-orders`) lists the orders this phone has placed.
+The customer opens the kitchen's link (`/:slug`), in English or Indonesian. There is no account and no payment. The order is confirmed on the **Order placed** page, where one button opens WhatsApp with the order already written; the customer sends it to the seller. The private link `/:slug/o/:token` is the way back to the order (old `/o/:token` links still work: they redirect to the kitchen path), and **My orders** (`/:slug/my-orders`, or `/my-orders` in the browser) lists the orders this phone has placed.
 
 ```mermaid
 flowchart TD
@@ -15,14 +15,14 @@ flowchart TD
     E --> F{"Place order"}
     F -- "menu closed or sold out" --> G["Message, change the basket"]
     G --> C
-    F -- "accepted" --> H["Order placed<br/>/o/:token/placed"]
+    F -- "accepted" --> H["Order placed<br/>/:slug/o/:token/placed"]
     H --> I["Send to the cook on WhatsApp"]
-    I --> J["Order page<br/>/o/:token"]
-    J --> K["My orders<br/>/my-orders"]
+    I --> J["Order page<br/>/:slug/o/:token"]
+    J --> K["My orders<br/>/:slug/my-orders"]
     J --> L["Updates: status, messages,<br/>push if turned on"]
-    J --> M["Edit or cancel<br/>/o/:token/edit"]
+    J --> M["Edit or cancel<br/>/:slug/o/:token/edit"]
     K --> J
-    J --> N["Show QR at pickup<br/>/o/:token/qr"]
+    J --> N["Show QR at pickup<br/>/:slug/o/:token/qr"]
 ```
 
 ### Customer: Remember me (optional, D-107)
@@ -40,6 +40,10 @@ flowchart TD
     D --> K["Delete my saved data<br/>(asks first)"]
 ```
 
+- **Links:** WhatsApp messages, copy links, customer push and the seller's WhatsApp and status links all use `/:slug/o/:token`. The order-link reader accepts both shapes.
+- **Install app:** one "Install app" button everywhere. On Android without a browser prompt it opens one screen with steps for Chrome and Samsung Internet. With the `KITCHEN_SCOPE` switch on, an installed kitchen app stays inside `/:slug/`.
+- **My orders in an installed kitchen app** shows only that kitchen. The browser tab keeps all kitchens, with the "Other kitchens (N)" fold.
+- **Start fresh:** Help has a "Start fresh" page (`/:slug/settings/start-fresh`) with a "Reset this phone" button.
 - One shell banner (the kitchen's picture) sits on every customer page of a kitchen, with no small logo bar, so it no longer flashes when moving between pages. Bottom sheets lock the page behind them and close with a swipe down (or Close).
 - Notice pills (one at a time, 40 px, ShaggyBobo icon): new version is green and the whole pill refreshes on tap; announcements and maintenance are amber. Home-screen and Remember me nudges use the same pill in a neutral colour.
 - First visit: no nudges, only the menu. The name step has a quiet "Remember me on all my phones (?)" tick (the ? opens the explanation sheet; ticked, the turn-on runs after the order). After the first order a home-screen pill shows (browser only); the Remember me pill shows on the order-placed page only when it is off, 30 days after a dismiss, at most 3 times, then only the Settings card.
@@ -84,13 +88,27 @@ flowchart TD
     A["Private<br/>/seller/private"] --> B["New private order<br/>owner only"]
     B --> C["Dishes from the library, date, time,<br/>delivery or pickup, deposit"]
     C --> D["Order detail<br/>send code on WhatsApp"]
-    D --> E["Customer page /o/:token<br/>read-only, still to pay"]
+    D --> E["Customer page /:slug/o/:token<br/>read-only, still to pay"]
     D --> F{"Event day"}
     F --> G["Cook, Pack, labels, per-chef income<br/>tagged Private"]
     F --> H["Directions and map<br/>Deliveries list"]
     G --> I["Status: Ready, Handed over or Out for delivery, Delivered"]
     D -- "cancel" --> J["Past, marked Cancelled"]
 ```
+
+### Seller: one app per kitchen (plan 101)
+
+Each kitchen has its own seller app (manifest `/k/<slug>/seller.webmanifest`, start `/seller?k=<slug>`, name "<Kitchen> · Seller"). The install row says "Install <Kitchen>'s seller app". On launch:
+
+| who opens it | what happens |
+|---|---|
+| same kitchen as the app | opens |
+| a member of that kitchen | switches with one reload |
+| not a member | a message |
+| kitchen paused | a message |
+| signed out | sign-in, headed "Sign in to <Kitchen>" |
+
+Each app remembers its own kitchen and switches back when it becomes visible again. People in 2+ kitchens see a one-time move notice in the old app. The old `/seller.webmanifest` app keeps working.
 
 ## Admin: kitchens and the first sign-in
 

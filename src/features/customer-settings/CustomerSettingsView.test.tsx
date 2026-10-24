@@ -146,21 +146,45 @@ describe('CustomerSettingsView', () => {
     expect(screen.getByRole('switch', { name: 'Order updates' })).toBeDisabled();
   });
 
-  it('offers Install on Android when the browser does, and the Chrome fallback text', () => {
-    show({ canInstall: true });
-    expect(screen.getByRole('button', { name: 'Install' })).toBeVisible();
-    expect(screen.getByText(/No Install button\?/)).toBeVisible();
+  const kitchen = {
+    sellerId: 's1',
+    name: 'Onde Onde',
+    tagline: { en: 'x', id: 'x' },
+    bannerImageUrl: '/banner.png',
+  };
+
+  it('Android: one "Install <kitchen>" button, no second way written under it', () => {
+    show({ canInstall: true, kitchen });
+    expect(screen.getByRole('button', { name: 'Install Onde Onde' })).toBeVisible();
+    expect(screen.queryByText(/No Install button\?/)).toBeNull();
+    expect(screen.queryByText(/Add to home screen/i)).toBeNull();
   });
 
-  it('opens the guide from the home-screen card on an iPhone', () => {
+  it('Android without a browser offer: the same button opens the by-hand screen', () => {
+    show({ kitchen });
+    fireEvent.click(screen.getByRole('button', { name: 'Install Onde Onde' }));
+    expect(screen.getByRole('heading', { name: 'Install from your browser' })).toBeVisible();
+  });
+
+  it('opens the install steps from the home-screen card on an iPhone', () => {
     show({
       install: {
         env: { ...base, platform: 'ios', safari: true, pushSupported: false },
       },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Show me how' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Install app' }));
     expect(screen.getByRole('dialog')).toBeVisible();
     expect(screen.getByText('Step 1 of 4')).toBeVisible();
+  });
+
+  it('has a Help row that opens Start fresh, in Indonesian too', async () => {
+    const onStartFresh = vi.fn();
+    show({ onStartFresh });
+    fireEvent.click(screen.getByRole('button', { name: 'Start fresh' }));
+    expect(onStartFresh).toHaveBeenCalledTimes(1);
+    await i18n.changeLanguage('id');
+    expect(screen.getByRole('button', { name: 'Mulai dari awal' })).toBeVisible();
+    await i18n.changeLanguage('en');
   });
 
   it('opens About and privacy in English and in Indonesian', async () => {

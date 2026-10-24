@@ -9,7 +9,9 @@ import {
   buildManifest,
   safeStartUrl,
   sellerManifestPath,
+  startInKitchenScope,
 } from './kitchenManifest';
+import { orderStartPath } from './orderPath';
 import { THEMES } from './themes';
 
 const read = (file: string): string => readFileSync(resolve(file), 'utf8');
@@ -25,6 +27,8 @@ const STARTS = [
   '/onde-onde',
   '/o/tok123?source=homescreen',
   '/o/tok123',
+  '/onde-onde/o/tok123?source=homescreen',
+  '/dapur-demo/o/tok123',
   '/my-orders',
   '/settings',
   '/other-kitchen',
@@ -52,6 +56,11 @@ describe('route safety: customer manifests (risk 2)', () => {
       '/o/tok123?source=homescreen',
     );
     expect(safeStartUrl('/onde-onde', 'onde-onde')).toBe('/onde-onde');
+    // plan 102: an order under its own kitchen is a valid start too, another kitchen's is not
+    expect(safeStartUrl('/onde-onde/o/tok123?source=homescreen', 'onde-onde')).toBe(
+      '/onde-onde/o/tok123?source=homescreen',
+    );
+    expect(safeStartUrl('/dapur-demo/o/tok123', 'onde-onde')).toBe('/onde-onde');
     for (const bad of ['/unknown/path', '//evil.test', '/seller', '/my-orders', 'o/x', null]) {
       expect(safeStartUrl(bad, 'onde-onde')).toBe('/onde-onde');
     }
@@ -67,15 +76,42 @@ describe('route safety: customer manifests (risk 2)', () => {
     expect(m.icons.filter((i) => i.purpose === 'maskable')).toHaveLength(1);
   });
 
-  it('the per-kitchen seller manifest keeps id, start and scope /seller', () => {
-    const m = buildManifest({
-      slug: 'onde-onde',
-      name: 'Onde Onde',
-      theme: 'onde',
-      start: '/o/tok',
-      seller: true,
-    });
-    expect([m.id, m.start_url, m.scope]).toEqual(['/seller', '/seller', '/seller']);
+  it('plan 102 switch on: every theme and start input stays inside /<slug>/, id unchanged', () => {
+    for (const theme of THEMES) {
+      for (const start of STARTS) {
+        const m = buildManifest({
+          slug: 'onde-onde',
+          name: 'Onde Onde',
+          theme,
+          start,
+          kitchenScope: true,
+        });
+        expect(m.id).toBe('/onde-onde');
+        expect(m.scope).toBe('/onde-onde/');
+        expect(m.start_url.startsWith('/onde-onde/'), `${String(start)} -> ${m.start_url}`).toBe(
+          true,
+        );
+        expect(isInScope(m.scope, m.start_url)).toBe(true);
+      }
+    }
+  });
+
+  it('plan 101: the per-kitchen seller manifest is /seller?k=<slug> in scope /seller', () => {
+    for (const theme of THEMES) {
+      const m = buildManifest({
+        slug: 'onde-onde',
+        name: 'Onde Onde',
+        theme,
+        start: '/o/tok',
+        seller: true,
+      });
+      expect([m.id, m.start_url, m.scope]).toEqual([
+        '/seller?k=onde-onde',
+        '/seller?k=onde-onde',
+        '/seller',
+      ]);
+      expect(isInScope(m.scope, m.start_url)).toBe(true);
+    }
   });
 });
 
@@ -117,9 +153,15 @@ describe('route safety: the old seller app (risk 4)', () => {
 });
 
 describe('route safety: page targets and manifest links', () => {
-  it("kitchenPageTarget reads today's paths", () => {
+  it('kitchenPageTarget reads both order shapes, a kitchen, and nothing else', () => {
     expect(kitchenPageTarget('/o/tok')).toEqual({ token: 'tok' });
     expect(kitchenPageTarget('/o/tok/qr')).toEqual({ token: 'tok' });
+    // plan 102: under a kitchen the token decides (a wrong slug still finds the real one)
+    expect(kitchenPageTarget('/onde-onde/o/tok')).toEqual({ token: 'tok' });
+    expect(kitchenPageTarget('/dapur-demo/o/tok/edit/name')).toEqual({ token: 'tok' });
+    expect(kitchenPageTarget('/onde-onde/my-orders')).toEqual({ slug: 'onde-onde' });
+    expect(kitchenPageTarget('/onde-onde/o')).toEqual({ slug: 'onde-onde' });
+    expect(kitchenPageTarget('/my-orders/o/tok')).toBeNull();
     expect(kitchenPageTarget('/onde-onde')).toEqual({ slug: 'onde-onde' });
     expect(kitchenPageTarget('/onde-onde/basket')).toEqual({ slug: 'onde-onde' });
     expect(kitchenPageTarget('/o')).toBeNull();
@@ -137,8 +179,22 @@ describe('route safety: page targets and manifest links', () => {
     );
   });
 
-  it.todo('102: kitchenPageTarget reads /<slug>/o/<token> as an order');
-  it.todo('102: manifestHref start for an order is /<slug>/o/<token>?source=homescreen');
+  it('102: manifestHref start for an order is /<slug>/o/<token>?source=homescreen', () => {
+    expect(manifestHref('onde-onde', orderStartPath('onde-onde', 't'))).toBe(
+      '/k/onde-onde/manifest.webmanifest?start=%2Fonde-onde%2Fo%2Ft%3Fsource%3Dhomescreen',
+    );
+  });
+
+  it('102 switch on: an order start is the order under its kitchen; an old /o/ start moves under it', () => {
+    expect(startInKitchenScope('/onde-onde/o/tok?source=homescreen', 'onde-onde')).toBe(
+      '/onde-onde/o/tok?source=homescreen',
+    );
+    expect(startInKitchenScope('/o/tok?source=homescreen', 'onde-onde')).toBe(
+      '/onde-onde/o/tok?source=homescreen',
+    );
+    expect(startInKitchenScope('/onde-onde', 'onde-onde')).toBe('/onde-onde/');
+    expect(startInKitchenScope('/my-orders', 'onde-onde')).toBe('/onde-onde/');
+  });
 });
 
 describe('route safety: where order links are built (risk 3)', () => {
@@ -164,26 +220,42 @@ describe('route safety: where order links are built (risk 3)', () => {
         "shared/kitchenManifest.ts",
         "shared/logContract.ts",
         "shared/orderCode.ts",
-        "src/api/device/whatsapp.ts",
+        "shared/orderPath.ts",
         "src/app/CustomerShell.tsx",
         "src/app/ShellBanner.tsx",
+        "src/app/customerPath.ts",
         "src/app/customerRoutes.tsx",
         "src/components/install/InstallPictures.tsx",
-        "src/components/install/manifestLinks.ts",
         "src/components/install/useInstallFlow.ts",
         "src/features/customer-orders/liveConnection.ts",
-        "src/features/seller-orders/editMessage.ts",
-        "src/features/seller-orders/useOrderActions.ts",
-        "src/features/seller-orders/whatsappLink.ts",
-        "worker/api/kitchenPage.ts",
         "worker/api/kitchenRoutes.ts",
-        "worker/push/dispatch.ts",
+        "worker/pages.ts",
+        "worker/redirects.ts",
       ]
     `);
   });
 
-  it("push and menu-notice payload urls keep today's shape", () => {
-    expect(read('worker/push/dispatch.ts')).toContain('data: { url: `/o/${change.order.token}` }');
+  it('no customer-side code builds the old /o/<token> link: only orderPath does (the seller messages use orderPath too)', () => {
+    const files = [...sourceFiles('src'), ...sourceFiles('worker'), ...sourceFiles('shared')];
+    const builders = files
+      .filter((f) => /`[^`]*\/o\/\$\{/.test(readFileSync(f, 'utf8')))
+      .map((f) => f.replace(/\\/g, '/'))
+      .sort();
+    expect(builders).toEqual([
+      'shared/orderPath.ts',
+      // A picture of the iPhone share sheet: it shows the address as text, it is not a link.
+      'src/components/install/InstallPictures.tsx',
+    ]);
+    // and in orderPath.ts it is the kitchen shape, plus the one documented slug-less fallback
+    const own = read('shared/orderPath.ts');
+    expect(own).toContain('`/${slug}/o/${encodeURIComponent(token)}${sub}`');
+    expect(own).toContain('`/o/${encodeURIComponent(token)}`');
+  });
+
+  it('push payload urls are /<slug>/o/<token> through orderPath; the menu notice keeps /<slug>', () => {
+    expect(read('worker/push/dispatch.ts')).toContain(
+      'data: { url: orderPath(change.slug, change.order.token) }',
+    );
     expect(read('worker/push/menuNotice.ts')).toContain('data: { url: `/${menu.slug}` }');
   });
 

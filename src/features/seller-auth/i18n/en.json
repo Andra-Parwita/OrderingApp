@@ -79,6 +79,7 @@
   },
   "signIn": {
     "title": "Sign in",
+    "titleKitchen": "Sign in to {{name}}",
     "passwordTitle": "Sign in with password",
     "back": "Back",
     "passkey": "Sign in with face or fingerprint",
@@ -117,6 +118,8 @@
     "signOutDevice": "Sign out",
     "signOutDeviceConfirm": "Tap again to sign out",
     "add": "Add a device",
+    "join": "Join another kitchen",
+    "close": "Close",
     "addHelp": "Type this code on the new device. It works once.",
     "codeLabel": "Your code",
     "expiresIn": "Expires in {{time}}",
@@ -129,6 +132,7 @@
   },
   "join": {
     "title": "Join {{kitchen}}",
+    "sheetTitle": "Join this kitchen",
     "submit": "Join",
     "signInToJoin": "Already have a login? Sign in to join",
     "thisKitchen": "this kitchen"

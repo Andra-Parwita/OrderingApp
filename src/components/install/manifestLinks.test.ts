@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   manifestHref,
   manifestTarget,
+  sellerKitchenOfSearch,
   sellerManifestTarget,
   setManifestLinks,
 } from './manifestLinks';
@@ -26,24 +27,30 @@ describe('manifestTarget', () => {
   });
 
   it("an order page starts at that order with the home-screen source, for the order's kitchen", () => {
+    const start = '/dapur-bu-rina/o/tok123?source=homescreen';
+    // the old address, once the order's kitchen is known
     expect(manifestTarget('/o/tok123', { orderSlug: 'dapur-bu-rina' })).toEqual({
       slug: 'dapur-bu-rina',
-      start: '/o/tok123?source=homescreen',
+      start,
     });
-    expect(manifestTarget('/o/tok123/qr', { orderSlug: 'dapur-bu-rina' })?.start).toBe(
-      '/o/tok123?source=homescreen',
-    );
+    expect(manifestTarget('/o/tok123/qr', { orderSlug: 'dapur-bu-rina' })?.start).toBe(start);
+    // under the kitchen (plan 102): the address already names it
+    expect(manifestTarget('/dapur-bu-rina/o/tok123')).toEqual({ slug: 'dapur-bu-rina', start });
+    expect(manifestTarget('/dapur-bu-rina/o/tok123/edit/name')?.start).toBe(start);
+    // the loaded order's seller wins over a wrong slug in the address
+    expect(manifestTarget('/onde-onde/o/tok123', { orderSlug: 'dapur-bu-rina' })).toEqual({
+      slug: 'dapur-bu-rina',
+      start,
+    });
   });
 
-  it('an order page waits for its kitchen', () => {
+  it('an old-style order page waits for its kitchen', () => {
     expect(manifestTarget('/o/tok123')).toBeNull();
   });
 
-  it('My orders and Settings use the last kitchen and their own address', () => {
-    expect(manifestTarget('/my-orders', { lastSlug: 'onde-onde' })).toEqual({
-      slug: 'onde-onde',
-      start: '/my-orders',
-    });
+  it('My orders and Settings link no kitchen, not even the last one visited (plan 102)', () => {
+    expect(manifestTarget('/my-orders', { lastSlug: 'onde-onde' })).toBeNull();
+    expect(manifestTarget('/settings', { lastSlug: 'onde-onde' })).toBeNull();
     expect(manifestTarget('/settings', { lastSlug: null })).toBeNull();
   });
 
@@ -53,11 +60,21 @@ describe('manifestTarget', () => {
   });
 });
 
+describe('sellerKitchenOfSearch', () => {
+  it('reads a valid k only', () => {
+    expect(sellerKitchenOfSearch('?k=onde-onde')).toBe('onde-onde');
+    expect(sellerKitchenOfSearch('')).toBeUndefined();
+    expect(sellerKitchenOfSearch('?k=')).toBeUndefined();
+    expect(sellerKitchenOfSearch('?k=A%20B')).toBeUndefined();
+    expect(sellerKitchenOfSearch('?x=onde-onde')).toBeUndefined();
+  });
+});
+
 describe('setManifestLinks', () => {
   it('sets the manifest link with the start page encoded', () => {
-    setManifestLinks({ slug: 'onde-onde', start: '/o/tok?source=homescreen' });
+    setManifestLinks({ slug: 'onde-onde', start: '/onde-onde/o/tok?source=homescreen' });
     expect(link('manifest')?.getAttribute('href')).toBe(
-      '/k/onde-onde/manifest.webmanifest?start=%2Fo%2Ftok%3Fsource%3Dhomescreen',
+      '/k/onde-onde/manifest.webmanifest?start=%2Fonde-onde%2Fo%2Ftok%3Fsource%3Dhomescreen',
     );
   });
 
@@ -77,6 +94,9 @@ describe('setManifestLinks', () => {
     expect(link('apple-touch-icon')?.getAttribute('href')).toBe(
       '/k/onde-onde/apple-touch-icon.png',
     );
+    // no kitchen: the old seller app's links stay
+    setManifestLinks(null, true);
+    expect(link('manifest')?.getAttribute('href')).toBe('/seller.webmanifest');
   });
 
   it('updates the one link instead of adding another, and removes both for no kitchen', () => {

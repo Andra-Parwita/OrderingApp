@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 import type { CustomerOrder } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
+import { orderPath } from '../../../shared/orderPath';
 import { pickText } from '../../../shared/text';
 
 /**
@@ -26,7 +27,7 @@ export function buildWhatsAppText(order: CustomerOrder, t: TFunction, when: stri
     total: formatMoney(total, lang),
     how,
     name: order.firstName,
-  })} ${t('wa.link', { link: `${window.location.origin}/o/${order.token}` })}`;
+  })} ${t('wa.link', { link: `${window.location.origin}${orderPath(order.seller.slug, order.token)}` })}`;
   // Plan 071: an order with an address in the app does not ask for it again on WhatsApp.
   return order.fulfilment === 'delivery' && order.addressState !== 'saved'
     ? `${text} ${t('wa.addAddress')}`

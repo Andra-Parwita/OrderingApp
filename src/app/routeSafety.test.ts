@@ -3,10 +3,12 @@
 import type { i18n as I18n, TFunction } from 'i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CustomerOrder, Order } from '../../shared/domain';
+import { orderPath, orderStartPath, parseOrderPath } from '../../shared/orderPath';
 import { manifestTarget } from '../components/install/manifestLinks';
 import { MY_ORDERS_KEY, activeOrders, readMyOrders, saveMyOrder } from '../api/device/myOrders';
 import { buildWhatsAppText } from '../api/device/whatsapp';
 import { tokenOfOrderUrl } from '../features/customer-orders/liveConnection';
+import { setSessionSeller } from '../api/device/sellerContext';
 import { openOrderLink } from '../features/seller-orders/whatsappLink';
 
 const TOKEN = 'tok-AbC123_xyz';
@@ -50,7 +52,14 @@ const customerOrder = (patch: Partial<CustomerOrder> = {}): CustomerOrder => ({
 });
 
 describe('route safety: order links parse back to the token (risks 1, 3, 7)', () => {
-  it('tokenOfOrderUrl reads the push URL shape /o/<token> and its sub-pages', () => {
+  it('tokenOfOrderUrl reads the push URL shape /<slug>/o/<token> and its sub-pages', () => {
+    expect(tokenOfOrderUrl(`/onde-onde/o/${TOKEN}`)).toBe(TOKEN);
+    expect(tokenOfOrderUrl(`/onde-onde/o/${TOKEN}/qr`)).toBe(TOKEN);
+    expect(tokenOfOrderUrl(`/onde-onde/o/${TOKEN}?source=homescreen`)).toBe(TOKEN);
+    expect(tokenOfOrderUrl(`/onde-onde/o/${TOKEN}#x`)).toBe(TOKEN);
+  });
+
+  it('tokenOfOrderUrl still reads the old /o/<token> (notifications sent before 1.0.44)', () => {
     expect(tokenOfOrderUrl(`/o/${TOKEN}`)).toBe(TOKEN);
     expect(tokenOfOrderUrl(`/o/${TOKEN}/qr`)).toBe(TOKEN);
     expect(tokenOfOrderUrl(`/o/${TOKEN}?source=homescreen`)).toBe(TOKEN);
@@ -59,15 +68,17 @@ describe('route safety: order links parse back to the token (risks 1, 3, 7)', ()
 
   it('tokenOfOrderUrl ignores things that are not order links (menu notice, junk)', () => {
     expect(tokenOfOrderUrl('/onde-onde')).toBeNull();
+    expect(tokenOfOrderUrl('/onde-onde/my-orders')).toBeNull();
     expect(tokenOfOrderUrl('/my-orders')).toBeNull();
+    expect(tokenOfOrderUrl('/my-orders/o/tok')).toBeNull();
     expect(tokenOfOrderUrl('/')).toBeNull();
     expect(tokenOfOrderUrl(undefined)).toBeNull();
     expect(tokenOfOrderUrl(42)).toBeNull();
   });
 
-  it('the customer WhatsApp text carries /o/<token>', () => {
+  it('the customer WhatsApp text carries /<slug>/o/<token>', () => {
     const link = linkIn(buildWhatsAppText(customerOrder(), echo, null));
-    expect(new URL(link).pathname).toBe(`/o/${TOKEN}`);
+    expect(new URL(link).pathname).toBe(`/onde-onde/o/${TOKEN}`);
     expect(tokenOfOrderUrl(new URL(link).pathname)).toBe(TOKEN);
   });
 
@@ -84,40 +95,55 @@ describe('route safety: order links parse back to the token (risks 1, 3, 7)', ()
       vi.restoreAllMocks();
     });
 
-    it('the seller "send link" WhatsApp text carries /o/<token>', () => {
+    it('the seller "send link" WhatsApp text carries /<slug>/o/<token> of the signed-in kitchen', () => {
       const fake = { getFixedT: () => echo } as unknown as I18n;
+      setSessionSeller('onde-onde');
       openOrderLink(fake, { ...customerOrder(), audit: [] } as unknown as Order, null);
       const text = decodeURIComponent(new URL(opened).searchParams.get('text') ?? '');
       const link = linkIn(text);
-      expect(new URL(link).pathname).toBe(`/o/${TOKEN}`);
+      expect(new URL(link).pathname).toBe(`/onde-onde/o/${TOKEN}`);
       expect(tokenOfOrderUrl(new URL(link).pathname)).toBe(TOKEN);
+      expect(parseOrderPath(new URL(link).pathname)).toEqual({
+        slug: 'onde-onde',
+        token: TOKEN,
+        sub: '',
+      });
     });
   });
 
-  // The edit message (editMessage.ts), the seller status message (useOrderActions.ts) and the
-  // install flow (useInstallFlow.ts) build the same `${origin}/o/${token}`; shared/routeSafety.test.ts
-  // pins which files do, so a new or changed builder is noticed.
+  // The seller's edit and status messages build the same link through orderPath with the signed-in
+  // kitchen (see seller-orders/links.test.ts). shared/routeSafety.test.ts pins which files mention `/o/`.
 
-  it('the order start for a home-screen install is /o/<token>?source=homescreen', () => {
-    expect(manifestTarget(`/o/${TOKEN}`, { orderSlug: 'onde-onde' })).toEqual({
+  it('the order start for a home-screen install is /<slug>/o/<token>?source=homescreen', () => {
+    const start = { slug: 'onde-onde', start: `/onde-onde/o/${TOKEN}?source=homescreen` };
+    // under the kitchen: the path's slug is enough, the loaded order's seller wins
+    expect(manifestTarget(`/onde-onde/o/${TOKEN}`)).toEqual(start);
+    expect(manifestTarget(`/onde-onde/o/${TOKEN}/qr`, { orderSlug: 'onde-onde' })).toEqual(start);
+    expect(manifestTarget(`/dapur-demo/o/${TOKEN}`, { orderSlug: 'onde-onde' })).toEqual(start);
+    // the old address, once the order's seller is known
+    expect(manifestTarget(`/o/${TOKEN}`, { orderSlug: 'onde-onde' })).toEqual(start);
+    expect(manifestTarget(`/o/${TOKEN}`)).toBeNull();
+  });
+
+  it('My orders and Settings pages link no manifest; under a kitchen they install its menu', () => {
+    expect(manifestTarget('/my-orders', { lastSlug: 'onde-onde' })).toBeNull();
+    expect(manifestTarget('/settings', { lastSlug: 'onde-onde' })).toBeNull();
+    expect(manifestTarget('/onde-onde/my-orders')).toEqual({
       slug: 'onde-onde',
-      start: `/o/${TOKEN}?source=homescreen`,
+      start: '/onde-onde',
     });
-  });
-
-  it('My orders and Settings pages install to the last kitchen with their own path', () => {
-    expect(manifestTarget('/my-orders', { lastSlug: 'onde-onde' })).toEqual({
+    expect(manifestTarget('/onde-onde/settings')).toEqual({
       slug: 'onde-onde',
-      start: '/my-orders',
+      start: '/onde-onde',
     });
-    expect(manifestTarget('/settings', { lastSlug: 'onde-onde' })?.start).toBe('/settings');
   });
 
-  it.todo('102: tokenOfOrderUrl accepts /<slug>/o/<token> (push, notificationclick, postMessage)');
-  it.todo(
-    '102: every sent order link is /<slug>/o/<token> or still redirects (old links keep working)',
-  );
-  it.todo('102: manifestTarget start for an order page is /<slug>/o/<token>?source=homescreen');
+  it('every link the customer app sends is /<slug>/o/<token> (WhatsApp text, copy link, push, start)', () => {
+    const wa = linkIn(buildWhatsAppText(customerOrder(), echo, null));
+    expect(parseOrderPath(new URL(wa).pathname)?.slug).toBe('onde-onde');
+    expect(orderPath('onde-onde', TOKEN)).toBe(`/onde-onde/o/${TOKEN}`);
+    expect(orderStartPath('onde-onde', TOKEN)).toBe(`/onde-onde/o/${TOKEN}?source=homescreen`);
+  });
 });
 
 describe('route safety: My orders saved entries still load (risk 9)', () => {

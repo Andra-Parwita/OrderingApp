@@ -3,7 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ApiResult } from '../../api/http';
 import type { Environment } from './detect';
 import type { BrowserSubscription, PushDeps, PushRegistration } from './pushBrowser';
-import { useInstallFlow } from './useInstallFlow';
+import { setSavedInstallPrompt } from './installPrompt';
+import { useInstallFlow, useOrderInstall } from './useInstallFlow';
+import { MY_ORDERS_KEY } from '../../api/device/myOrders';
 
 const ENDPOINT = 'https://push.example.test/send/abc';
 const ok = <T,>(data: T): ApiResult<T> => ({ ok: true, data });
@@ -59,6 +61,7 @@ function stubNotification(answer: NotificationPermission) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  setSavedInstallPrompt(null);
 });
 
 describe('useInstallFlow', () => {
@@ -177,6 +180,34 @@ describe('useInstallFlow', () => {
     expect(subscription.unsubscribe).toHaveBeenCalled();
   });
 
+  it('install on Android without a prompt opens the by-hand screen and never asks for notifications', () => {
+    const notification = stubNotification('granted');
+    const { result } = renderHook(() => useInstallFlow({ tokens: () => ['tok'], env: android }));
+    act(() => result.current.install());
+    expect(result.current.flow.screen).toBe('android-install');
+    expect(notification.requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('install inside WhatsApp shows the Open in Chrome screen; with a prompt it uses the browser dialog', () => {
+    const notification = stubNotification('granted');
+    const inApp = renderHook(() =>
+      useInstallFlow({ tokens: () => [], env: { ...android, inApp: true, inAppName: 'WhatsApp' } }),
+    );
+    act(() => inApp.result.current.install());
+    expect(inApp.result.current.flow.screen).toBe('android-inside-whatsapp');
+
+    const prompt = vi.fn().mockResolvedValue(undefined);
+    setSavedInstallPrompt({
+      prompt,
+      userChoice: Promise.resolve({ outcome: 'accepted' }),
+    } as never);
+    const plain = renderHook(() => useInstallFlow({ tokens: () => [], env: android }));
+    act(() => plain.result.current.install());
+    expect(prompt).toHaveBeenCalledTimes(1);
+    expect(plain.result.current.flow.screen).toBeNull();
+    expect(notification.requestPermission).not.toHaveBeenCalled();
+  });
+
   it('copies the order link for the in-app screens', async () => {
     const writeText = vi.fn(() => Promise.resolve());
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
@@ -190,5 +221,39 @@ describe('useInstallFlow', () => {
     act(() => result.current.copyLink());
     await waitFor(() => expect(result.current.flow.hint).toBe('copied'));
     expect(writeText).toHaveBeenCalledWith('https://delave.test/o/tok');
+  });
+
+  it('copies the order link under its kitchen (plan 102): from the page, else from My orders', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    const env = { ...iphoneInstalled, installed: false, inApp: true, safari: false };
+    window.history.replaceState(null, '', '/onde-onde/o/tok-page/placed');
+    const onPage = renderHook(() => useOrderInstall('tok-page', { env }));
+    act(() => onPage.result.current.copyLink());
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/onde-onde/o/tok-page`),
+    );
+
+    // an old address: the kitchen My orders saved
+    localStorage.setItem(
+      MY_ORDERS_KEY,
+      JSON.stringify([
+        {
+          code: 'ABC234',
+          token: 'tok-saved',
+          placedAt: new Date().toISOString(),
+          sellerSlug: 'dapur-demo',
+          lastStatus: 'ordered',
+        },
+      ]),
+    );
+    window.history.replaceState(null, '', '/o/tok-saved');
+    const old = renderHook(() => useOrderInstall('tok-saved', { env }));
+    act(() => old.result.current.copyLink());
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/dapur-demo/o/tok-saved`),
+    );
+    window.history.replaceState(null, '', '/');
+    localStorage.clear();
   });
 });

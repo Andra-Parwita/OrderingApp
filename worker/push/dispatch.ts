@@ -8,6 +8,7 @@
 import type { InboxEntry, SellerOrder } from '../../shared/domain';
 import { iconPath } from '../../shared/kitchenManifest';
 import { formatOrderCode } from '../../shared/orderCode';
+import { orderPath } from '../../shared/orderPath';
 import type { PushPayload } from '../../shared/pushContract';
 import {
   FULFILMENT_CHANGED_KEY,
@@ -121,7 +122,7 @@ export function createPushDispatcher(options: {
               )
             : body,
           icon: iconPath(change.slug, 192),
-          data: { url: `/o/${change.order.token}` },
+          data: { url: orderPath(change.slug, change.order.token) },
         };
         for (const row of byOrder.get(`${change.sellerId}/${change.order.id}`) ?? []) {
           sends.push({ row, payload });

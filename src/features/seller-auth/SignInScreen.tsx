@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { passkeysSupported, signInWithPasskey, signOut } from '../../api/auth';
 import type { Me } from '../../../shared/authContract';
 import { Button } from '../../ui';
+import { useLaunchKitchenName } from './useLaunchKitchenName';
 import { failureMessage } from './authText';
 import { AUTH_NS } from './i18n/register';
 import {
@@ -48,6 +49,8 @@ export function SignInScreen({
   switchPerson = false,
 }: SignInScreenProps) {
   const { t } = useTranslation(AUTH_NS);
+  // Plan 101: a kitchen's own seller app (`?k=`) says which kitchen the person signs in to.
+  const launchName = useLaunchKitchenName();
   const passkeys = passkeysSupported();
   const canUsePassword = slug !== undefined;
   const [step, setStep] = useState<'main' | 'password'>(
@@ -123,7 +126,9 @@ export function SignInScreen({
 
   return (
     <AuthPanel>
-      <AuthTitle>{t('signIn.title')}</AuthTitle>
+      <AuthTitle>
+        {launchName ? t('signIn.titleKitchen', { name: launchName }) : t('signIn.title')}
+      </AuthTitle>
       {passkeys ? (
         <Actions>
           <BigAction>

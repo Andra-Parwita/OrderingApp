@@ -11,7 +11,7 @@ import { PRIVATE_NS, usePrivateDue } from '../features/seller-private';
 import { paneHref, type PaneId } from '../features/seller-settings';
 import { Button, ListRow, PageHeader } from '../ui';
 import { DESKTOP_QUERY } from './layout';
-import { KitchenSwitcher } from './KitchenSwitcher';
+import { KitchenSelect } from './KitchenSelect';
 import { useSession } from './session';
 import { MoreSwitchPerson } from './SwitchPerson';
 
@@ -159,7 +159,7 @@ export function MoreRoute() {
         </nav>
         {sellerInstall.overlay}
         <PhoneBlocks>
-          <KitchenSwitcher />
+          <KitchenSelect />
           <MoreSwitchPerson />
           <PhoneLanguageRow />
           {me === null ? null : (

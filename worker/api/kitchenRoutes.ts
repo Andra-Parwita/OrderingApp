@@ -5,8 +5,11 @@
 //                                                         browser scales the 512)
 //   GET /k/<slug>/icon-<180|192|512>.svg                  the default icon: initials on the theme colour
 //   GET /k/<slug>/apple-touch-icon.png                    the same as icon-180.png
-// The `.png` files always answer with an image (plan 011): the seller's upload, else a redirect to the
-// shared default PNG in public/. iOS needs a PNG for `apple-touch-icon`, so the page can always link it.
+// The `.png` files always answer with an image (plan 011): the seller's upload, else the shared default PNG
+// in public/ itself (200, plan 102; a 302 only when the assets are not at hand). iOS needs a PNG for
+// `apple-touch-icon`, so the page can always link it.
+// The seller manifest has id and start `/seller?k=<slug>` and scope `/seller` (plan 101). The customer
+// manifest has scope `/` unless `kitchenScope` (the KITCHEN_SCOPE=on switch) narrows it to `/<slug>/`.
 import {
   buildManifest,
   DEFAULT_ICON_PATH,
@@ -33,6 +36,31 @@ const defaultIconRedirect = () =>
     status: 302,
     headers: { Location: DEFAULT_ICON_PATH, 'Cache-Control': 'public, max-age=3600' },
   });
+
+/** Where the Worker reads its public files (the `ASSETS` binding). */
+export type AssetFetcher = { fetch(request: Request): Promise<Response> };
+
+/**
+ * The shared default icon as a 200 with its bytes (a manifest icon must not redirect, plan 102). Any
+ * problem (no assets at hand, not found, not an image) falls back to the redirect of before.
+ */
+async function defaultIcon(request: Request, assets: AssetFetcher | undefined): Promise<Response> {
+  if (!assets) return defaultIconRedirect();
+  try {
+    const found = await assets.fetch(new Request(new URL(DEFAULT_ICON_PATH, request.url)));
+    const type = found.headers.get('Content-Type') ?? '';
+    if (!found.ok || !type.startsWith('image/')) return defaultIconRedirect();
+    return new Response(request.method === 'HEAD' ? null : found.body, {
+      headers: {
+        'Content-Type': type,
+        'Cache-Control': 'public, max-age=3600',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
+  } catch {
+    return defaultIconRedirect();
+  }
+}
 
 /** The content type of a stored small-icon ref, or undefined when there is none (or it is unusable). */
 export function iconTypeOfRef(ref: string | undefined): string | undefined {
@@ -79,7 +107,12 @@ async function serveUploadedIcon(
 export async function handleKitchenRequest(
   store: Repository,
   request: Request,
-  context: { images?: ImageBucket | undefined } = {},
+  context: {
+    images?: ImageBucket | undefined;
+    assets?: AssetFetcher | undefined;
+    /** KITCHEN_SCOPE=on (plan 102): the customer manifest's scope is `/<slug>/`. */
+    kitchenScope?: boolean | undefined;
+  } = {},
 ): Promise<Response | null> {
   const url = new URL(request.url);
   const match =
@@ -115,6 +148,7 @@ export async function handleKitchenRequest(
       theme,
       start: url.searchParams.get('start'),
       seller: file === 'seller.webmanifest',
+      kitchenScope: context.kitchenScope === true,
       ...(uploadedType !== undefined ? { uploadedType } : {}),
     });
     return Response.json(manifest, {
@@ -131,7 +165,7 @@ export async function handleKitchenRequest(
       ref !== undefined && uploadedType !== undefined
         ? await serveUploadedIcon(ref, uploadedType, context.images)
         : undefined;
-    return own && own.status !== 404 ? own : defaultIconRedirect();
+    return own && own.status !== 404 ? own : await defaultIcon(request, context.assets);
   }
   // `.svg`: always the default, so a page can always show something.
   return new Response(defaultIconSvg(menu.kitchen.name, theme), {

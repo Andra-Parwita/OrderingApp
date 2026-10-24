@@ -23,6 +23,7 @@ import { AppRoutes } from './AppRoutes';
 import { CustomerPage } from '../components/CustomerPage';
 import { activeTab, hasTabBar, isRootPage, menuTabHref } from './CustomerShell';
 import { createAppStore } from './store';
+import { formatOrderCode } from '../../shared/orderCode';
 import { DEFAULT_SELLER_SLUG } from '../../shared/seller';
 
 let navigateTo: NavigateFunction = () => undefined;
@@ -135,7 +136,7 @@ describe('customer tab bar', () => {
   });
 
   it('shows the right tab on an order page', () => {
-    renderAt('/o/some-token');
+    renderAt('/onde-onde/o/some-token');
     expect(within(tabBar()).getByRole('link', { name: 'My orders' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -397,7 +398,7 @@ describe('basket after ordering', () => {
       );
     });
     await waitFor(() =>
-      expect(screen.getByTestId('where').textContent).toMatch(/^\/o\/.+\/placed$/),
+      expect(screen.getByTestId('where').textContent).toMatch(/^\/onde-onde\/o\/.+\/placed$/),
     );
 
     act(() => void navigateTo('/onde-onde/basket'));
@@ -445,7 +446,7 @@ describe('customer sub-page headers', () => {
 
   it('order page: back goes to My orders, named in the chosen language', async () => {
     const token = await savedToken();
-    renderAt(`/o/${token}`);
+    renderAt(`/onde-onde/o/${token}`);
     expect(await screen.findByRole('button', { name: 'Back to My orders' })).toBeVisible();
     await act(() => i18n.changeLanguage('id'));
     const back = await screen.findByRole('button', { name: /^Kembali ke/ });
@@ -455,20 +456,20 @@ describe('customer sub-page headers', () => {
 
   it('order placed: no back arrow; View order details goes to the order page', async () => {
     const token = await savedToken();
-    renderAt(`/o/${token}/placed`);
+    renderAt(`/onde-onde/o/${token}/placed`);
     expect(await screen.findByRole('heading', { name: 'Order placed' })).toBeVisible();
     expect(screen.queryByRole('button', { name: /^Back/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'View order details' }));
-    await waitFor(() => expect(where()).toHaveTextContent(`/o/${token}`));
+    await waitFor(() => expect(where()).toHaveTextContent(`/onde-onde/o/${token}`));
     expect(where()).not.toHaveTextContent('placed');
   });
 
   it('edit basket: back goes to the order page', async () => {
     const token = await savedToken();
-    renderAt(`/o/${token}/edit`);
+    renderAt(`/onde-onde/o/${token}/edit`);
     expect(await screen.findByRole('heading', { name: 'Change your order' })).toBeVisible();
     fireEvent.click(await screen.findByRole('button', { name: 'Back to Order' }));
-    await waitFor(() => expect(where()).toHaveTextContent(new RegExp(`^/o/${token}$`)));
+    await waitFor(() => expect(where()).toHaveTextContent(new RegExp(`^/onde-onde/o/${token}$`)));
   });
 
   it('keeps one back button per checkout page', async () => {
@@ -582,9 +583,116 @@ describe('customer routes per seller (D-037)', () => {
     });
     if (!created.ok) throw new Error('could not place the sample order');
     saveMyOrder(created.data.order);
-    const { store } = renderAt(`/o/${created.data.order.token}/edit`);
+    const { store } = renderAt(`/dapur-demo/o/${created.data.order.token}/edit`);
     expect(await screen.findByText('Iced sweet tea')).toBeVisible();
     expect(store.getState().customer.slug).toBe('dapur-demo');
+  });
+});
+
+describe('order, My orders and Settings under the kitchen (plan 102 stage 4)', () => {
+  async function saved(slug = DEFAULT_SELLER_SLUG, itemId = 'tempe-mendoan'): Promise<string> {
+    return (await savedOrder(slug, itemId)).token;
+  }
+  async function savedOrder(slug: string, itemId: string): Promise<CustomerOrder> {
+    const created = await placeOrder(slug, {
+      firstName: 'Rina',
+      language: 'en',
+      fulfilment: 'pickup',
+      lines: [{ itemId, qty: 1 }],
+    });
+    if (!created.ok) throw new Error('could not place the sample order');
+    saveMyOrder(created.data.order);
+    return created.data.order;
+  }
+  const where = () => screen.getByTestId('where');
+
+  it('/<slug>/o/<token> opens the order with My orders current', async () => {
+    const token = await saved();
+    renderAt(`/onde-onde/o/${token}`);
+    expect(await screen.findByRole('button', { name: 'Back to My orders' })).toBeVisible();
+    expect(within(tabBar()).getByRole('link', { name: 'My orders' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(where()).toHaveTextContent(`/onde-onde/o/${token}`);
+  });
+
+  it('an old /o/<token> link moves under the saved kitchen, keeping sub-page and query', async () => {
+    const token = await saved();
+    renderAt(`/o/${token}/qr?x=1`);
+    await waitFor(() => expect(where()).toHaveTextContent(`/onde-onde/o/${token}/qr`));
+  });
+
+  it('an old link to an order this phone has not saved waits for the order, then moves', async () => {
+    const created = await placeOrder('dapur-demo', {
+      firstName: 'Rina',
+      language: 'en',
+      fulfilment: 'pickup',
+      lines: [{ itemId: 'es-teh', qty: 1 }],
+    });
+    if (!created.ok) throw new Error('could not place the sample order');
+    const token = created.data.order.token;
+    renderAt(`/o/${token}`);
+    await waitFor(() => expect(where()).toHaveTextContent(`/dapur-demo/o/${token}`));
+    expect(await screen.findByRole('button', { name: 'Back to My orders' })).toBeVisible();
+  });
+
+  it('a wrong kitchen in the address is corrected once the order is known', async () => {
+    const token = await saved();
+    renderAt(`/dapur-demo/o/${token}/qr`);
+    await waitFor(() => expect(where()).toHaveTextContent(`/onde-onde/o/${token}/qr`));
+  });
+
+  it('an unknown token stays where it is and shows the app, not a redirect', async () => {
+    renderAt('/o/no-such-token-at-all');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(where()).toHaveTextContent(/^\/o\/no-such-token-at-all$/);
+    expect(tabBar()).toBeVisible();
+  });
+
+  it('an unknown token under a kitchen stays too', async () => {
+    renderAt('/onde-onde/o/no-such-token-at-all');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(where()).toHaveTextContent(/^\/onde-onde\/o\/no-such-token-at-all$/);
+  });
+
+  it('a reserved word is not a kitchen for an order address', async () => {
+    renderAt('/my-orders/o/some-token');
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeVisible();
+  });
+
+  it('/<slug>/my-orders and /<slug>/settings open, with their own tab current', async () => {
+    renderAt('/onde-onde/my-orders');
+    expect(await screen.findByRole('heading', { name: 'My orders' })).toBeVisible();
+    expect(within(tabBar()).getByRole('link', { name: 'My orders' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  it('/<slug>/settings opens, with Settings current', async () => {
+    renderAt('/onde-onde/settings');
+    expect(await screen.findByRole('heading', { name: 'Settings' })).toBeVisible();
+    expect(within(tabBar()).getByRole('link', { name: 'Settings' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  it('/<slug>/settings of a malformed kitchen is not found', async () => {
+    renderAt('/Not_A_Slug/settings');
+    expect(
+      await screen.findByRole('heading', { name: "We couldn't find this kitchen" }),
+    ).toBeVisible();
+  });
+
+  it('My orders opens an order under its saved kitchen', async () => {
+    const order = await savedOrder(DEFAULT_SELLER_SLUG, 'tempe-mendoan');
+    renderAt('/onde-onde/my-orders');
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(formatOrderCode(order.code)) }),
+    );
+    await waitFor(() => expect(where()).toHaveTextContent(`/onde-onde/o/${order.token}`));
   });
 });
 

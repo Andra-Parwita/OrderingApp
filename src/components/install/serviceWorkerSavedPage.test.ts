@@ -80,6 +80,22 @@ describe('service worker pages', () => {
     expect(await body(await sw.open('/o/xyz').answer)).toBe('from network');
   });
 
+  it('keeps one copy per order link, under the kitchen or the old /o/ address', async () => {
+    const sw = boot(() => Promise.reject(new TypeError('offline')), {
+      '/onde-onde': 'menu page',
+      '/onde-onde/o/abc': 'order page',
+      '/o/old': 'old order page',
+      '/': 'shell',
+    });
+    expect(await body(await sw.open('/onde-onde/o/abc').answer)).toBe('order page');
+    expect(await body(await sw.open('/onde-onde/o/abc/qr').answer)).toBe('order page');
+    expect(await body(await sw.open('/onde-onde/o/xyz').answer)).toBe('shell');
+    expect(await body(await sw.open('/della-vee/o/abc').answer)).toBe('shell');
+    expect(await body(await sw.open('/onde-onde').answer)).toBe('menu page');
+    expect(await body(await sw.open('/o/old/edit').answer)).toBe('old order page');
+    expect(await body(await sw.open('/').answer)).toBe('shell');
+  });
+
   it('saves a page per kitchen, only when it is a 200 HTML answer', async () => {
     const sw = boot(() => Promise.resolve(html('della')));
     const first = sw.open('/della-vee');

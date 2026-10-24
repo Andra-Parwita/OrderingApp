@@ -6,6 +6,7 @@ import {
   appleTouchIconPath,
   sellerManifestPath,
 } from '../../../shared/kitchenManifest';
+import { ORDER_HOME_SOURCE, orderStartPath, parseOrderPath } from '../../../shared/orderPath';
 import { isValidSlug } from '../../../shared/seller';
 
 // The per-kitchen web app manifest and the iPhone home-screen icon (plan 004 stage 7, spec 6.4).
@@ -16,27 +17,26 @@ import { isValidSlug } from '../../../shared/seller';
 export type ManifestTarget = Readonly<{ slug: string; start: string; seller?: true }>;
 
 /** The order link the installed app opens first (the first-open code in OrderScreen reads it). */
-export const HOME_SCREEN_SOURCE = 'homescreen';
+export const HOME_SCREEN_SOURCE = ORDER_HOME_SOURCE;
 
 /**
  * The manifest for this page, or null when no kitchen is known yet. `orderSlug` is the seller of the
- * order on an order page; `lastSlug` is the kitchen this phone visited last (for My orders and
- * Settings, which belong to no kitchen of their own).
+ * order on an order page. My orders and Settings belong to no kitchen, so they link none (plan 102:
+ * the app is installed from a kitchen's own page, never from the kitchen visited last); `lastSlug` is
+ * accepted but no longer used.
  */
 export function manifestTarget(
   pathname: string,
   known: Readonly<{ orderSlug?: string | undefined; lastSlug?: string | null | undefined }> = {},
 ): ManifestTarget | null {
-  const parts = pathname.split('/').filter(Boolean);
-  const first = parts[0];
-  if (first === 'o' && parts[1] !== undefined) {
-    return known.orderSlug === undefined
-      ? null
-      : { slug: known.orderSlug, start: `/o/${parts[1]}?source=${HOME_SCREEN_SOURCE}` };
+  const order = parseOrderPath(pathname);
+  if (order) {
+    // The order page lives under its kitchen (plan 102): the loaded order's seller, else the path's own slug.
+    const slug = known.orderSlug ?? order.slug;
+    return slug === null ? null : { slug, start: orderStartPath(slug, order.token) };
   }
-  if (first === 'my-orders' || first === 'settings') {
-    return known.lastSlug ? { slug: known.lastSlug, start: `/${first}` } : null;
-  }
+  const first = pathname.split('/').filter(Boolean)[0];
+  if (first === 'my-orders' || first === 'settings') return null;
   // Any other kitchen page (dishes, basket...) installs to the kitchen's menu, not mid-checkout.
   return isValidSlug(first) ? { slug: first, start: `/${first}` } : null;
 }
@@ -44,6 +44,15 @@ export function manifestTarget(
 /** The seller app's manifest for the signed-in kitchen; null when there is no kitchen (admin, signed out). */
 export function sellerManifestTarget(slug: string | undefined): ManifestTarget | null {
   return isValidSlug(slug) ? { slug, start: '/seller', seller: true } : null;
+}
+
+/**
+ * The kitchen a seller link names (`?k=<slug>`, plan 101), or undefined for none or an invalid one.
+ * Only a named kitchen switches the seller page to that kitchen's manifest; no `k` keeps the old app's.
+ */
+export function sellerKitchenOfSearch(search: string): string | undefined {
+  const k = new URLSearchParams(search).get('k');
+  return isValidSlug(k) ? k : undefined;
 }
 
 export function manifestHref({ slug, start, seller }: ManifestTarget): string {

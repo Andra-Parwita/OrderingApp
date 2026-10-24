@@ -56,6 +56,10 @@
       "title": "Appearance",
       "sub": "Light / dark, theme"
     },
+    "language": {
+      "title": "Language",
+      "sub": "English / Bahasa Indonesia"
+    },
     "chefs": {
       "title": "Team",
       "sub": "People who sign in, and your cooks"

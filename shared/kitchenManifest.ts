@@ -30,6 +30,13 @@ export const appleTouchIconPath = (slug: string): string =>
 /** The seller app's home-screen name; a name, so the same in EN and ID. */
 export const sellerAppName = (kitchenName: string): string => `${kitchenName} · Seller`;
 
+/** The seller app's short home-screen label (plan 101): the kitchen first, then a seller mark ("OndeOnde ✓"), at most 12 characters. */
+export const sellerShortName = (kitchenName: string): string =>
+  `${[...kitchenName.replace(/\s+/g, '')].slice(0, 10).join('')} ✓`;
+
+/** The per-kitchen seller app's identity and start page: the same for `id` and `start_url`, inside the scope `/seller`. */
+export const sellerAppStart = (slug: string): string => `/seller?k=${encodeURIComponent(slug)}`;
+
 /** The seller app's manifest: start and scope `/seller`, the same icons (plan 011 stage 4). */
 export const sellerManifestPath = (slug: string): string =>
   `/k/${encodeURIComponent(slug)}/seller.webmanifest`;
@@ -86,6 +93,20 @@ export function safeStartUrl(start: string | null, slug: string): string {
   return ok ? start : fallback;
 }
 
+/**
+ * With the kitchen-only scope `/<slug>/` the start page must be inside it: `/<slug>` becomes `/<slug>/`
+ * (a scope matches by prefix). An order page now lives under the kitchen (plan 102 stage 4), so
+ * `/<slug>/o/<token>?source=homescreen` stays as it is and an old-style `/o/<token>` start is moved
+ * under the kitchen; anything else outside starts at `/<slug>/`.
+ */
+export function startInKitchenScope(start: string, slug: string): string {
+  const home = `/${slug}/`;
+  if (start.startsWith(home)) return start;
+  if (start.startsWith('/o/')) return `/${slug}${start}`;
+  const rest = start.slice(`/${slug}`.length);
+  return start.startsWith(`/${slug}`) && /^[?#]/.test(rest) ? `${home}${rest}` : home;
+}
+
 export type ManifestIcon = { src: string; sizes: string; type: string; purpose?: string };
 
 export type KitchenManifest = {
@@ -110,11 +131,14 @@ export function buildManifest(input: {
   theme: ThemeName;
   start: string | null;
   uploadedType?: string;
-  /** The seller app's manifest: named "<kitchen> · Seller", starting and scoped at `/seller`. */
+  /** The seller app's manifest: named "<kitchen> · Seller", id and start `/seller?k=<slug>`, scope `/seller`. */
   seller?: boolean;
+  /** Plan 102 kill switch (`KITCHEN_SCOPE=on`): the customer app's scope is `/<slug>/` instead of `/`. */
+  kitchenScope?: boolean;
 }): KitchenManifest {
-  const { slug, theme, start, uploadedType, seller } = input;
+  const { slug, theme, start, uploadedType, seller, kitchenScope } = input;
   const name = seller === true ? sellerAppName(input.name) : input.name;
+  const scoped = kitchenScope === true && seller !== true;
   const { bg } = THEME_COLOURS[theme];
   const type = uploadedType ?? 'image/png';
   const icons: Array<ManifestIcon> = [
@@ -124,11 +148,17 @@ export function buildManifest(input: {
   ];
   return {
     // Fixed identity (plan 068): equals the plain start_url, so installed apps keep theirs.
-    id: seller === true ? '/seller' : `/${slug}`,
+    // The seller app's id equals its start_url (plan 101), differs per kitchen and from the old `/seller`.
+    id: seller === true ? sellerAppStart(slug) : `/${slug}`,
     name,
-    short_name: name,
-    start_url: seller === true ? '/seller' : safeStartUrl(start, slug),
-    scope: seller === true ? '/seller' : '/',
+    short_name: seller === true ? sellerShortName(input.name) : name,
+    start_url:
+      seller === true
+        ? sellerAppStart(slug)
+        : scoped
+          ? startInKitchenScope(safeStartUrl(start, slug), slug)
+          : safeStartUrl(start, slug),
+    scope: seller === true ? '/seller' : scoped ? `/${slug}/` : '/',
     display: 'standalone',
     background_color: LAUNCH_BACKGROUND,
     theme_color: bg,

@@ -6,6 +6,11 @@
 **Status:** analysis, owner 18 Oct, **not approved**. No app source was changed. Mock-up: `uxDesign/customer/mockups/102-android-install.html`. Aligns with plan 101 (seller app per kitchen, same day) and builds on plan 068 (manifest id per kitchen).
 **Owner, 18 Oct:** "iPhone is fine; the problem is Samsung/Android." (1) Installing the app is confusing, Chrome offers more than one way: **just one choice** to make the app. (2) On Android the installed app's icon is the first kitchen's, not the one being installed. (3) "maybe use one passkey". (4) "we may have to allow seeing orders only per kitchen or all, thus change the route of the order." (5, beta) "since we have a beta trial, it's important to also let them know how to reset or delete."
 
+## Stage 0 result (24 Oct, Android emulator Pixel 9, Android 15, Chrome 136, against live)
+- Chrome's ⋮ menu offers only **"Add to Home screen"**, which opens a sheet with **"Install"** and **"Create shortcut"** ("Shortcuts open in Chrome"); after Install, a launcher "widget 1x1" prompt. The page's own card also says "Add to home screen". So "more than one way" is confirmed.
+- Installing DellaVee then OndeOnde gave **two Chrome-badged shortcuts, not WebAPKs** (`chrome://webapks` empty; no webapk package), each with its **own icon and label**; launcher data: `webapp_url=/<slug>`, **scope = whole origin `/`**, standalone. My orders and Settings stay inside each app (no Custom Tab).
+- The "first kitchen's icon" bug did **not** reproduce, but this emulator does not mint WebAPKs (old Chrome, "Update Chrome" shown; likely no minting service), so cause 1 is neither confirmed nor ruled out. The plan is unchanged (owner Q1 = A routes regardless); the device check after deploy uses the scope switch. Screenshots: `scratch/android-proof/` (git-ignored).
+
 ## Findings (file:line)
 
 ### 1 · Why Android can give the first kitchen's icon

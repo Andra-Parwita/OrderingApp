@@ -139,7 +139,7 @@ sequenceDiagram
   S-->>B: place.status = placed, token
   B->>Rt: onPlaced(token)
   Rt->>S: dispatch placeReset
-  Rt->>Rt: navigate /o/token/placed (replace)
+  Rt->>Rt: navigate /slug/o/token/placed (replace)
   DO-->>L: WebSocket event
   Note over L: runs sellerOrdersSaga loadOrders, one reload per burst
   L->>H: call fetchSellerOrders (GET, retried)

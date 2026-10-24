@@ -11,6 +11,8 @@ export type ScreenId =
   | 'ios-open-from-home'
   | 'ios-inside-whatsapp'
   | 'android-inside-whatsapp'
+  /** Android, no install dialog from the browser: the one by-hand path (plan 102). */
+  | 'android-install'
   | 'android-allow'
   | 'notify-off'
   | 'notify-blocked'

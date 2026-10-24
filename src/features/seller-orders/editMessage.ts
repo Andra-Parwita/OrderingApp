@@ -1,6 +1,8 @@
 import i18n from 'i18next';
 import type { Order } from '../../../shared/domain';
 import { formatAuditDiff } from '../../../shared/auditDiff';
+import { orderPath } from '../../../shared/orderPath';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { SELLER_NS } from './i18n/register';
@@ -18,6 +20,6 @@ export function editCopyMessage(order: Order): string | undefined {
     code: formatOrderCode(order.code),
     diff: formatAuditDiff(diff, order.language),
     total: formatMoney(orderTotalCents(order), order.language),
-    link: `${window.location.origin}/o/${order.token}`,
+    link: `${window.location.origin}${orderPath(currentSellerSlug(), order.token)}`,
   });
 }

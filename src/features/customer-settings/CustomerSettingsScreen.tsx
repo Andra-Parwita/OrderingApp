@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import type { Kitchen, Language } from '../../../shared/domain';
 import { getCustomerLiveState, watchCustomerLiveState } from '../../api/customerLiveState';
@@ -12,8 +13,10 @@ import { useMenuNotice } from './useMenuNotice';
 export function CustomerSettingsScreen({
   showLanguage = true,
   kitchen,
-}: Readonly<{ showLanguage?: boolean; kitchen?: Kitchen }>) {
+  startFreshPath = '/settings/start-fresh',
+}: Readonly<{ showLanguage?: boolean; kitchen?: Kitchen; startFreshPath?: string }>) {
   const { i18n } = useTranslation();
+  const navigate = useNavigate();
   const theme = useThemePreference();
   const connection = useSyncExternalStore(watchCustomerLiveState, getCustomerLiveState);
   const lang: Language = i18n.language.startsWith('id') ? 'id' : 'en';
@@ -35,6 +38,7 @@ export function CustomerSettingsScreen({
       kitchen={kitchen}
       connection={connection}
       menuNotice={menuNotice}
+      onStartFresh={() => void navigate(startFreshPath)}
     />
   );
 }

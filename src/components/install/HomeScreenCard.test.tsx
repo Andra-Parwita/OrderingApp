@@ -60,23 +60,36 @@ describe('HomeScreenCard (plan 054)', () => {
       } as never),
     );
     expect(screen.getByText('Put Onde Onde on your home screen')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Add to home screen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Install app' }));
     expect(prompt).toHaveBeenCalledTimes(1);
   });
 
-  it('iPhone: "Show me how" opens the picture steps', () => {
+  it('iPhone: the same "Install app" button opens the picture steps', () => {
     show(iphone);
     expect(screen.queryByRole('dialog')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Show me how' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Install app' }));
     expect(screen.getByRole('dialog')).toBeVisible();
   });
 
-  it('a browser that cannot install says to open Chrome; desktop shows nothing', () => {
+  it('Android without an install offer: the same label opens the one by-hand screen', () => {
     show(android);
-    expect(screen.getByText(/Open this page in Chrome/)).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Add to home screen' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /home screen/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Install app' }));
+    expect(screen.getByRole('dialog')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Install from your browser' })).toBeVisible();
+    expect(screen.getByText(/Add to Home screen/)).toBeVisible();
+    expect(screen.queryByText(/Create shortcut/)).toBeNull();
+  });
+
+  it('Android inside WhatsApp keeps the Open in Chrome screen', () => {
+    show({ ...android, inApp: true, inAppName: 'WhatsApp' });
+    fireEvent.click(screen.getByRole('button', { name: 'Install app' }));
+    expect(screen.getByRole('heading', { name: 'First, open this page in Chrome' })).toBeVisible();
+  });
+
+  it('a desktop browser that cannot install shows nothing', () => {
     show({ ...android, platform: 'desktop' });
-    expect(screen.getAllByTestId('home-screen-card')).toHaveLength(1);
+    expect(screen.queryByTestId('home-screen-card')).toBeNull();
   });
 
   it('the seller wording, in Indonesian too', async () => {

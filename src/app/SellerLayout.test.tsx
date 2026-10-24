@@ -247,6 +247,34 @@ describe('SellerLayout', () => {
   });
 });
 
+describe('SellerLayout manifest link (plan 101)', () => {
+  const manifest = () => document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  beforeEach(() => {
+    stubKitchen();
+    sessionStorage.clear();
+    window.history.replaceState(null, '', '/seller');
+  });
+  afterEach(() => {
+    sessionStorage.clear();
+    window.history.replaceState(null, '', '/');
+  });
+
+  it('links the remembered launch kitchen when the address has no ?k', () => {
+    sessionStorage.setItem('launchKitchen', 'onde-onde');
+    renderLayout();
+    expect(manifest()?.getAttribute('href')).toBe('/k/onde-onde/seller.webmanifest');
+  });
+  it('links the kitchen of ?k', () => {
+    window.history.replaceState(null, '', '/seller?k=dellavee');
+    renderLayout();
+    expect(manifest()?.getAttribute('href')).toBe('/k/dellavee/seller.webmanifest');
+  });
+  it('links the generic app with no ?k and no memory', () => {
+    renderLayout();
+    expect(manifest()?.getAttribute('href')).toBe('/seller.webmanifest');
+  });
+});
+
 describe('SellerLayout banner (plan 094)', () => {
   function Go() {
     const go = useNavigate();

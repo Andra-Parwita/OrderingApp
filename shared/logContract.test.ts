@@ -36,6 +36,9 @@ describe('scrubPath', () => {
   it('turns the order token into * and drops the query', () => {
     expect(scrubPath('/o/AbCdEf1234567890xyzAB')).toBe('/o/*');
     expect(scrubPath('/o/AbCdEf1234567890xyzAB/qr?x=1#y')).toBe('/o/*/qr');
+    // plan 102: under the kitchen, even a short token goes
+    expect(scrubPath('/onde-onde/o/short1')).toBe('/onde-onde/o/*');
+    expect(scrubPath('/onde-onde/o/AbCdEf1234567890xyzAB/qr?x=1#y')).toBe('/onde-onde/o/*/qr');
     expect(scrubPath('/onde-onde/basket')).toBe('/onde-onde/basket');
   });
   it('masks order codes', () => {

@@ -12,7 +12,7 @@ import { CustomerLinkPane } from './CustomerLinkPane';
 import { KitchenPane, PostPane } from './KitchenPanes';
 import { PANE_IDS, SECOND_GROUP, paneHref, type PaneId } from './panes';
 import { PickupPane } from './PickupPane';
-import { AppearancePane, DefaultsPane } from './PreferencePanes';
+import { AppearancePane, DefaultsPane, LanguagePane } from './PreferencePanes';
 import { toastDismissed, type SettingsRootState } from './settingsSlice';
 
 const Page = styled.div`
@@ -149,6 +149,7 @@ export function SettingsPanes({ pane, devices, images, chefs, customers, backup 
     pickup: <PickupPane />,
     defaults: <DefaultsPane onToast={flashSaved} />,
     look: <AppearancePane onToast={flashSaved} />,
+    language: <LanguagePane />,
     chefs,
     devices,
     customers,

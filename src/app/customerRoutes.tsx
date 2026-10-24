@@ -1,7 +1,9 @@
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Route, useLocation, useNavigate, useParams } from 'react-router';
+import { Navigate, Outlet, Route, useLocation, useNavigate, useParams } from 'react-router';
+import { orderPath, parseOrderPath, unresolvedOrderPath } from '../../shared/orderPath';
 import { isValidSlug } from '../../shared/seller';
+import { readMyOrders } from '../api/device/myOrders';
 import { lastKitchen } from '../api/device/lastKitchen';
 import {
   BasketScreen,
@@ -13,13 +15,20 @@ import {
   placeReset,
   selectKitchenMissing,
   selectMenu,
+  selectMenuSlug,
   useKitchenLanguages,
   type CheckoutStep,
   type CustomerRootState,
 } from '../features/customer-menu';
 import { menuRequested } from '../features/customer-menu/customerSlice';
-import { MyOrdersScreen, OrderQrScreen, OrderScreen } from '../features/customer-orders';
-import { CustomerSettingsScreen } from '../features/customer-settings';
+import {
+  MyOrdersScreen,
+  OrderQrScreen,
+  OrderScreen,
+  selectOrderPage,
+} from '../features/customer-orders';
+import { readEnvironment } from '../components/install';
+import { CustomerSettingsScreen, StartFreshScreen } from '../features/customer-settings';
 import { CustomerShell } from './CustomerShell';
 import { KitchenNotFoundPage, NotFoundPage } from './pages';
 
@@ -96,11 +105,11 @@ function BasketRoute({ step }: Readonly<{ step: CheckoutStep }>) {
   const placed = useCallback(
     (token: string) => {
       // Replace, so Back from the confirmation does not return to a basket that is now empty.
-      void navigate(`/o/${token}/placed`, { replace: true });
+      void navigate(orderPath(slug, token, '/placed'), { replace: true });
       // Otherwise the next visit to the basket would see the old "placed" result and redirect.
       dispatch(placeReset());
     },
-    [navigate, dispatch],
+    [navigate, dispatch, slug],
   );
   if (!isValidSlug(slug) || missing) return <KitchenNotFoundPage />;
   return (
@@ -116,12 +125,43 @@ function BasketRoute({ step }: Readonly<{ step: CheckoutStep }>) {
   );
 }
 
+/** An order page's kitchen from the loaded order (the token decides it, whatever the address says). */
+function useOrderSlug(token: string): string | undefined {
+  const page = useSelector(selectOrderPage);
+  const known = page.status === 'ready' || page.status === 'expired';
+  return known && page.order.token === token ? page.order.seller.slug : undefined;
+}
+
+/**
+ * The order pages under their kitchen (`/:slug/o/:token/...`). If the address names another kitchen than
+ * the order's own (the Worker corrects it on a full load; this covers navigation inside the app), the
+ * same page under the real kitchen replaces it.
+ */
+function OrderScope() {
+  const { slug = '', token = '' } = useParams();
+  const { pathname, search, hash } = useLocation();
+  const real = useOrderSlug(token);
+  if (!isValidSlug(slug)) return <NotFoundPage />;
+  if (real !== undefined && real !== slug) {
+    return <Navigate replace to={`/${real}${pathname.slice(slug.length + 1)}${search}${hash}`} />;
+  }
+  return <Outlet />;
+}
+
+/** My orders: inside a kitchen's app it stays under `/<slug>`; in a browser tab it is the all-kitchens page. */
+function useMyOrdersPath(slug: string | undefined): string {
+  return slug !== undefined && readEnvironment().installed ? `/${slug}/my-orders` : '/my-orders';
+}
+
 /** "Order placed": the confirmation straight after ordering. Its only exit is the order page. */
 function PlacedRoute() {
-  const { token } = useParams();
+  const { slug = '', token = '' } = useParams();
   const navigate = useNavigate();
-  const toOrder = useCallback(() => void navigate(`/o/${token ?? ''}`), [navigate, token]);
-  const toQr = useCallback(() => void navigate(`/o/${token ?? ''}/qr`), [navigate, token]);
+  const toOrder = useCallback(() => void navigate(orderPath(slug, token)), [navigate, slug, token]);
+  const toQr = useCallback(
+    () => void navigate(orderPath(slug, token, '/qr')),
+    [navigate, slug, token],
+  );
   if (!token) return <NotFoundPage />;
   return (
     <OrderPlacedScreen
@@ -136,20 +176,32 @@ function PlacedRoute() {
 
 /** The full-screen QR to show at pickup. */
 function QrRoute() {
-  const { token } = useParams();
-  const back = useBackTo(`/o/${token ?? ''}`);
+  const { slug = '', token = '' } = useParams();
+  const back = useBackTo(orderPath(slug, token));
   if (!token) return <NotFoundPage />;
   return <OrderQrScreen key={token} token={token} onBack={back} />;
 }
 
-/** The order page: status, updates, change or cancel. Opening the link adds it to My orders. */
+/**
+ * The order page: status, updates, change or cancel. Opening the link adds it to My orders. Also the
+ * placeholder of the old `/o/:token` while the order loads (see `LegacyOrderRoute`).
+ */
 function OrderRoute() {
-  const { token } = useParams();
+  const { slug, token } = useParams();
   const navigate = useNavigate();
-  const back = useCallback(() => void navigate('/my-orders'), [navigate]);
-  const change = useCallback((next: string) => void navigate(`/o/${next}/edit`), [navigate]);
-  const showQr = useCallback((next: string) => void navigate(`/o/${next}/qr`), [navigate]);
-  const openMenu = useCallback((slug: string) => void navigate(`/${slug}`), [navigate]);
+  const myOrders = useMyOrdersPath(slug);
+  const back = useCallback(() => void navigate(myOrders), [navigate, myOrders]);
+  // The order's own kitchen: the address's, else (old address) the one the order says.
+  const own = useOrderSlug(token ?? '') ?? slug;
+  const change = useCallback(
+    (next: string) => void navigate(orderPath(own ?? '', next, '/edit')),
+    [navigate, own],
+  );
+  const showQr = useCallback(
+    (next: string) => void navigate(orderPath(own ?? '', next, '/qr')),
+    [navigate, own],
+  );
+  const openMenu = useCallback((menuSlug: string) => void navigate(`/${menuSlug}`), [navigate]);
   if (!token) return <NotFoundPage />;
   return (
     <OrderScreen
@@ -163,13 +215,34 @@ function OrderRoute() {
   );
 }
 
+/**
+ * An old order link opened inside the app (`/o/:token...`; a full page load never gets here, the Worker
+ * redirects it first). Moves it under the order's kitchen as soon as that is known: from My orders, else
+ * once the order has loaded. An unknown order keeps the order page's own "not found".
+ */
+function LegacyOrderRoute() {
+  const { token = '' } = useParams();
+  const { pathname, search, hash } = useLocation();
+  const loaded = useOrderSlug(token);
+  const saved = readMyOrders().find((entry) => entry.token === token)?.sellerSlug;
+  const slug = loaded ?? saved;
+  if (isValidSlug(slug)) {
+    const sub = parseOrderPath(pathname)?.sub ?? '';
+    return <Navigate replace to={`${orderPath(slug, token, sub)}${search}${hash}`} />;
+  }
+  return <OrderRoute />;
+}
+
 /** Change an order: the basket, then your name (the pickup place stays as ordered). */
 function EditOrderRoute({ step }: Readonly<{ step: 'basket' | 'name' }>) {
-  const { token } = useParams();
+  const { slug = '', token = '' } = useParams();
   const navigate = useNavigate();
-  const toOrder = useCallback(() => void navigate(`/o/${token ?? ''}`), [navigate, token]);
-  const toBasket = useBackTo(`/o/${token ?? ''}/edit`);
-  const toName = useCallback(() => void navigate(`/o/${token ?? ''}/edit/name`), [navigate, token]);
+  const toOrder = useCallback(() => void navigate(orderPath(slug, token)), [navigate, slug, token]);
+  const toBasket = useBackTo(orderPath(slug, token, '/edit'));
+  const toName = useCallback(
+    () => void navigate(orderPath(slug, token, '/edit/name')),
+    [navigate, slug, token],
+  );
   if (!token) return <NotFoundPage />;
   return (
     <EditOrderFlow token={token}>
@@ -187,38 +260,69 @@ function EditOrderRoute({ step }: Readonly<{ step: 'basket' | 'name' }>) {
   );
 }
 
-/** After a reload no kitchen is loaded: load the last one this phone visited, for the banner, theme and Menu tab. */
-function useLastKitchenMenu() {
+/**
+ * Loads the kitchen's menu for the banner, theme and Menu tab: the address's kitchen (`/<slug>/settings`,
+ * `/<slug>/my-orders`), else after a reload the last one this phone visited.
+ */
+function useKitchenMenu(slug: string | undefined) {
   const dispatch = useDispatch();
   const menu = useSelector(selectMenu);
-  const idle = menu.status === 'idle';
+  const menuSlug = useSelector(selectMenuSlug);
+  const wanted = slug ?? lastKitchen();
+  const need = slug === undefined ? menu.status === 'idle' : menuSlug !== slug;
   useEffect(() => {
-    const slug = lastKitchen();
-    if (idle && slug !== null) dispatch(menuRequested(slug));
-  }, [idle, dispatch]);
-  return menu;
+    if (need && wanted !== null) dispatch(menuRequested(wanted));
+  }, [need, wanted, dispatch]);
+  // Only this kitchen's own menu counts under `/<slug>/...`.
+  return slug === undefined || menuSlug === slug ? menu : { status: 'loading' as const };
 }
 
 function CustomerSettingsRoute() {
-  const menu = useLastKitchenMenu();
+  const { slug } = useParams();
+  const valid = slug === undefined || isValidSlug(slug);
+  const menu = useKitchenMenu(valid ? slug : undefined);
+  const languages = useKitchenLanguages();
+  if (!valid) return <KitchenNotFoundPage />;
   return (
     <CustomerSettingsScreen
-      showLanguage={useKitchenLanguages() === 'both'}
+      showLanguage={languages === 'both'}
       kitchen={menu.status === 'ready' ? menu.data.kitchen : undefined}
+      startFreshPath={slug === undefined ? undefined : `/${slug}/settings/start-fresh`}
     />
   );
 }
 
-function MyOrdersRoute() {
+function StartFreshRoute() {
+  const { slug } = useParams();
   const navigate = useNavigate();
-  useLastKitchenMenu();
-  // "Go to the menu": the last kitchen this phone visited, else the home page.
+  const settings = slug === undefined ? '/settings' : `/${slug}/settings`;
+  const toSettings = useCallback(() => void navigate(settings), [navigate, settings]);
+  if (slug !== undefined && !isValidSlug(slug)) return <KitchenNotFoundPage />;
+  return <StartFreshScreen onBack={toSettings} onOpenSettings={toSettings} />;
+}
+
+function MyOrdersRoute() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const valid = slug === undefined || isValidSlug(slug);
+  useKitchenMenu(valid ? slug : undefined);
+  // "Go to the menu": this kitchen, else the last kitchen this phone visited, else the home page.
   const back = useCallback(() => {
-    const slug = lastKitchen();
-    void navigate(slug === null ? '/' : `/${slug}`);
-  }, [navigate]);
-  const open = useCallback((token: string) => void navigate(`/o/${token}`), [navigate]);
-  return <MyOrdersScreen onBack={back} onOpenOrder={open} />;
+    const to = slug ?? lastKitchen();
+    void navigate(to === null ? '/' : `/${to}`);
+  }, [navigate, slug]);
+  // An order opens under its kitchen: the one My orders saved, else this app's.
+  const open = useCallback(
+    (token: string) => {
+      const own = readMyOrders().find((entry) => entry.token === token)?.sellerSlug ?? slug;
+      void navigate(isValidSlug(own) ? orderPath(own, token) : unresolvedOrderPath(token));
+    },
+    [navigate, slug],
+  );
+  if (!valid) return <KitchenNotFoundPage />;
+  // Inside a kitchen's installed app, only that kitchen's orders; the browser tab lists all (plan 102 Q3).
+  const onlyKitchen = slug !== undefined && readEnvironment().installed ? slug : null;
+  return <MyOrdersScreen onBack={back} onOpenOrder={open} onlyKitchen={onlyKitchen} />;
 }
 
 /** Customer pages share the bottom tab bar (D-039). */
@@ -231,13 +335,22 @@ export function customerRoutes() {
       <Route path="/:slug/basket" element={<BasketRoute step="basket" />} />
       <Route path="/:slug/basket/pickup" element={<BasketRoute step="pickup" />} />
       <Route path="/:slug/basket/name" element={<BasketRoute step="name" />} />
-      <Route path="/o/:token" element={<OrderRoute />} />
-      <Route path="/o/:token/placed" element={<PlacedRoute />} />
-      <Route path="/o/:token/qr" element={<QrRoute />} />
-      <Route path="/o/:token/edit" element={<EditOrderRoute step="basket" />} />
-      <Route path="/o/:token/edit/name" element={<EditOrderRoute step="name" />} />
+      {/* An order lives under its kitchen (plan 102). */}
+      <Route path="/:slug/o/:token" element={<OrderScope />}>
+        <Route index element={<OrderRoute />} />
+        <Route path="placed" element={<PlacedRoute />} />
+        <Route path="qr" element={<QrRoute />} />
+        <Route path="edit" element={<EditOrderRoute step="basket" />} />
+        <Route path="edit/name" element={<EditOrderRoute step="name" />} />
+      </Route>
+      <Route path="/:slug/my-orders" element={<MyOrdersRoute />} />
+      <Route path="/:slug/settings" element={<CustomerSettingsRoute />} />
+      <Route path="/:slug/settings/start-fresh" element={<StartFreshRoute />} />
+      {/* The old addresses stay: links already sent, bookmarks, and the browser tab's all-kitchens pages. */}
+      <Route path="/o/:token/*" element={<LegacyOrderRoute />} />
       <Route path="/my-orders" element={<MyOrdersRoute />} />
       <Route path="/settings" element={<CustomerSettingsRoute />} />
+      <Route path="/settings/start-fresh" element={<StartFreshRoute />} />
     </Route>
   );
 }

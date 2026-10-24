@@ -69,6 +69,7 @@ export function scrubPath(path: string): string {
   const parts = bare.split('/');
   const out = parts.map((part, index) => {
     if (index === 2 && parts[1] === 'o') return '*';
+    if (index === 3 && parts[2] === 'o' && parts[1] !== '') return '*'; // /<slug>/o/<token> (plan 102)
     // Order codes (ABC-DEF): the segment after "orders", and any segment shaped like a code.
     if (index > 0 && parts[index - 1] === 'orders' && part !== '') return '*';
     if (ORDER_CODE_SHAPE.test(part)) return '*';

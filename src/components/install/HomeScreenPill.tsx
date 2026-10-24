@@ -5,7 +5,7 @@ import { Pill, PillBody, PillButton, PillClose, PillLink } from '../notice/Notic
 import { InstallOverlay } from './InstallScreens';
 import { INSTALL_NS } from './i18n/register';
 import { readEnvironment, type Environment } from './detect';
-import { promptInstall, useCanInstall } from './installPrompt';
+import { useCanInstall } from './installPrompt';
 import { useInstallFlow, type InstallOverride } from './useInstallFlow';
 
 // Plan 096: "Add to your home screen · How" in the soft-stone pill (N1), on the order-placed page of a
@@ -33,14 +33,7 @@ export function HomeScreenPill({
 }: Readonly<{ kitchenName: string; override?: InstallOverride }>) {
   const { t } = useTranslation(INSTALL_NS);
   const flow = useInstallFlow({ tokens: noTokens, syncOnMount: false, ...override });
-  const browserOffers = useCanInstall();
   const [hidden, setHidden] = useState(false);
-  const { env, startGuide, start } = flow;
-  const how = useCallback(() => {
-    if (browserOffers) void promptInstall();
-    else if (env.platform === 'ios' && !env.inApp) startGuide();
-    else start();
-  }, [browserOffers, env, startGuide, start]);
   const hide = useCallback(() => {
     hideHomeNudge();
     setHidden(true);
@@ -52,7 +45,7 @@ export function HomeScreenPill({
           <PillButton
             type="button"
             aria-label={`${t('homePill.text')}. ${t('homePill.how')}`}
-            onClick={how}
+            onClick={flow.install}
           >
             <PillBody text={t('homePill.text')} />
             <PillLink>{t('homePill.how')}</PillLink>

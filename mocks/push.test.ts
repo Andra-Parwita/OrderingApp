@@ -232,7 +232,7 @@ describe('web push and kitchen files', () => {
         title: 'Onde Onde',
         body: 'Ready in 15 min',
         icon: '/k/onde-onde/icon-192.png',
-        data: { url: `/o/${a.token}` },
+        data: { url: `/onde-onde/o/${a.token}` },
       });
       expect(byEndpoint.get(endpointOf(2))?.body).toBe('Siap dalam 15 menit');
       expect(byEndpoint.has(endpointOf(3))).toBe(false);
@@ -597,23 +597,24 @@ describe('web push and kitchen files', () => {
       );
       expect(slugHead).toContain('apple-mobile-web-app-title" content="Onde Onde"');
       const { token } = await place('Rina');
-      const orderHead = await kitchenHeadFor(world.repo, `/o/${token}`);
-      expect(orderHead).toContain('/k/onde-onde/manifest.webmanifest?start=%2Fo%2F');
+      const orderHead = await kitchenHeadFor(world.repo, `/onde-onde/o/${token}`);
+      expect(orderHead).toContain('/k/onde-onde/manifest.webmanifest?start=%2Fonde-onde%2Fo%2F');
       expect(orderHead).toContain('source%3Dhomescreen');
       for (const none of ['/nobody-here', '/o/not-a-token', '/', '/o', '/sw.js']) {
         expect(await kitchenHeadFor(world.repo, none)).toBeNull();
       }
     });
 
-    it('the seller manifest starts and is scoped at /seller, named for the kitchen, same icons', async () => {
+    it('the seller manifest is per kitchen (/seller?k=), scoped at /seller, named for the kitchen, same icons', async () => {
       const manifest = (await (await get('/k/onde-onde/seller.webmanifest'))?.json()) as Record<
         string,
         unknown
       >;
       expect(manifest).toMatchObject({
-        id: '/seller',
+        id: '/seller?k=onde-onde',
         name: 'Onde Onde · Seller',
-        start_url: '/seller',
+        short_name: 'OndeOnde ✓',
+        start_url: '/seller?k=onde-onde',
         scope: '/seller',
         display: 'standalone',
       });

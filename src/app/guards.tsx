@@ -7,6 +7,8 @@ import { adminSetup } from '../api/auth';
 import { useDevTools } from '../api/devTools';
 import { lastSignedIn } from '../api/device/sellerContext';
 import { getCredentialId, hasSessionHint } from '../api/device/session';
+import { LaunchGate } from './LaunchGate';
+import { launchTarget } from './launchKitchen';
 import { HELPER_HOME, helperMayOpen } from './sellerNav';
 import { isStaff, useSession } from './session';
 
@@ -41,17 +43,30 @@ function useEntryCheck(): { done: boolean; me: Me | null } {
 export function SellerGuard({ children }: Readonly<{ children: ReactNode }>) {
   const { done, me } = useEntryCheck();
   const devTools = useDevTools();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  // Plan 101: a kitchen's own seller app names its kitchen (`?k=`, remembered for this window).
+  const target = launchTarget(search);
   if (!done) return null;
   // A helper (plan 028) opens a few pages only; a link to any other goes to Orders.
   if (isStaff(me) && me.role === 'helper' && !helperMayOpen(pathname)) {
     return <Navigate to={HELPER_HOME} replace />;
   }
-  if (isStaff(me)) return <>{children}</>;
+  if (isStaff(me)) {
+    return target ? (
+      <LaunchGate me={me} target={target}>
+        {children}
+      </LaunchGate>
+    ) : (
+      <>{children}</>
+    );
+  }
   if (me === null && !hasSessionHint()) {
     if (devTools === undefined) return null; // the server has not said yet
     if (devTools) return <>{children}</>;
   }
+  // The launch kitchen is kept through the sign-in (heading and password check); `lastSignedIn` is the
+  // fallback for a launch with no kitchen only.
+  if (target) return <Navigate to={`/seller/sign-in?kitchen=${target}&k=${target}`} replace />;
   return <Navigate to={lastSignedIn() ? '/seller/sign-in' : '/seller/setup'} replace />;
 }
 

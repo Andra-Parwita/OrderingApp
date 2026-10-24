@@ -205,15 +205,23 @@ describe('events', () => {
   it('a notification message from the service worker refreshes that order', () => {
     const worker = new EventTarget();
     Object.defineProperty(navigator, 'serviceWorker', { value: worker, configurable: true });
-    setOrders([entry({ token: 'tok-a', code: 'AAA111' })]);
+    setOrders([
+      entry({ token: 'tok-a', code: 'AAA111' }),
+      entry({ token: 'tok-b', code: 'BBB222' }),
+    ]);
     const { deps: d, refreshOrder } = deps();
     const stop = startCustomerLive(d);
     worker.dispatchEvent(
       new MessageEvent('message', { data: { type: 'order-push', url: '/o/tok-a' } }),
     );
     expect(refreshOrder.mock.calls).toEqual([['tok-a']]);
+    // a notification sent after 1.0.44 carries the address under the kitchen
+    worker.dispatchEvent(
+      new MessageEvent('message', { data: { type: 'order-push', url: '/dapur-demo/o/tok-b' } }),
+    );
+    expect(refreshOrder.mock.calls).toEqual([['tok-a'], ['tok-b']]);
     worker.dispatchEvent(new MessageEvent('message', { data: { type: 'other', url: '/o/x' } }));
-    expect(refreshOrder).toHaveBeenCalledTimes(1);
+    expect(refreshOrder).toHaveBeenCalledTimes(2);
     stop();
     Reflect.deleteProperty(navigator, 'serviceWorker');
   });
@@ -221,6 +229,10 @@ describe('events', () => {
   it('reads the token from a notification address', () => {
     expect(tokenOfOrderUrl('/o/abc')).toBe('abc');
     expect(tokenOfOrderUrl('/o/abc/qr')).toBe('abc');
+    // plan 102: the address under the kitchen
+    expect(tokenOfOrderUrl('/onde-onde/o/abc')).toBe('abc');
+    expect(tokenOfOrderUrl('/onde-onde/o/abc/qr?x=1')).toBe('abc');
+    expect(tokenOfOrderUrl('/onde-onde/my-orders')).toBeNull();
     expect(tokenOfOrderUrl('/menu')).toBeNull();
     expect(tokenOfOrderUrl(5)).toBeNull();
   });

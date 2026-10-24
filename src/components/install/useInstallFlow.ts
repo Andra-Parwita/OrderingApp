@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { TOKENS_MAX } from '../../../shared/limits';
+import { orderPath, parseOrderPath } from '../../../shared/orderPath';
 import { readMyOrders } from '../../api/device/myOrders';
 import {
   chooseFlow,
@@ -20,6 +21,7 @@ import {
   type GuideVariant,
   type ScreenId,
 } from './flow';
+import { hasInstallPrompt, promptInstall } from './installPrompt';
 import {
   browserPushDeps,
   currentSubscription,
@@ -61,6 +63,11 @@ export type InstallController = Readonly<{
   busy: boolean;
   /** "Turn on updates": what happens depends on the device (spec 6.1). */
   start: () => void;
+  /**
+   * The one "Install app" button (plan 102): the browser's own dialog when it has one for this
+   * page, else the by-hand screen for this device. Never asks for notification permission.
+   */
+  install: () => void;
   /** Opens the guide at its first step (Settings → "Show me how"). */
   startGuide: () => void;
   /** "Turn on notifications": asks for permission, then subscribes. */
@@ -85,13 +92,23 @@ export type InstallOverride = Pick<
   'env' | 'subscribed' | 'screen' | 'variant' | 'deps'
 >;
 
+/**
+ * The order's link to copy: under its kitchen (`/<slug>/o/<token>`, plan 102). The kitchen is the page's own,
+ * else the one My orders saved; with neither, this page's address is itself the order's link.
+ */
+function orderLinkUrl(token: string): string {
+  const slug =
+    parseOrderPath(window.location.pathname)?.slug ??
+    readMyOrders().find((saved) => saved.token === token)?.sellerSlug;
+  return slug === undefined
+    ? `${window.location.origin}${window.location.pathname}`
+    : `${window.location.origin}${orderPath(slug, token)}`;
+}
+
 /** The flow for one order (the order page and "order placed"): subscribes just that order. */
 export function useOrderInstall(token: string, override?: InstallOverride): InstallController {
   const tokens = useCallback(() => [token], [token]);
-  const linkUrl = useCallback(
-    () => `${window.location.origin}/o/${encodeURIComponent(token)}`,
-    [token],
-  );
+  const linkUrl = useCallback(() => orderLinkUrl(token), [token]);
   return useInstallFlow({ tokens, linkUrl, ...override });
 }
 
@@ -217,6 +234,25 @@ export function useInstallFlow(options: InstallOptions): InstallController {
     });
   }, []);
 
+  const install = useCallback(() => {
+    if (hasInstallPrompt()) {
+      void promptInstall();
+      return;
+    }
+    const current = latest.current.env;
+    if (current.platform === 'ios' && !current.inApp) {
+      startGuide();
+    } else if (current.inApp) {
+      // The "open it in Safari / Chrome first" screens; they ask for nothing.
+      const entry = entryFor(current);
+      if (entry.screen !== null) {
+        dispatch({ type: 'open', screen: entry.screen, variant: entry.variant });
+      }
+    } else if (current.platform === 'android') {
+      dispatch({ type: 'open', screen: 'android-install' });
+    }
+  }, [startGuide]);
+
   const recheck = useCallback(() => {
     const permission = currentPermission();
     if (permission === 'granted') {
@@ -260,6 +296,7 @@ export function useInstallFlow(options: InstallOptions): InstallController {
     showBack: flow.screen !== null && canGoBack(flow.screen, flow.variant),
     busy: flow.busy || working,
     start,
+    install,
     startGuide,
     enable,
     recheck,

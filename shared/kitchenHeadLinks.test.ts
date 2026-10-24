@@ -18,6 +18,10 @@ describe('kitchenPageTarget', () => {
     expect(kitchenPageTarget('/onde-onde')).toEqual({ slug: 'onde-onde' });
     expect(kitchenPageTarget('/onde-onde/basket/name')).toEqual({ slug: 'onde-onde' });
     expect(kitchenPageTarget('/o/tok123/qr')).toEqual({ token: 'tok123' });
+    // plan 102: the order under its kitchen; the token, not the slug, decides
+    expect(kitchenPageTarget('/onde-onde/o/tok123')).toEqual({ token: 'tok123' });
+    expect(kitchenPageTarget('/dapur-demo/o/tok123/edit/name')).toEqual({ token: 'tok123' });
+    expect(kitchenPageTarget('/onde-onde/my-orders')).toEqual({ slug: 'onde-onde' });
     for (const path of [
       '/',
       '/o',
@@ -106,6 +110,14 @@ describe('the default seller app links (plan 048)', () => {
     expect(isSellerPath('/seller/sign-in')).toBe(true);
     expect(isSellerPath('/sellers')).toBe(false);
     expect(sellerHeadHtml('onde-onde')).toContain('/k/onde-onde/seller.webmanifest');
+  });
+
+  it('the named kitchen head has its seller manifest, icon and "<Kitchen> · Seller" title; the default never does', () => {
+    const html = sellerHeadHtml('onde-onde', 'Onde Onde');
+    expect(html).toContain('<link rel="manifest" href="/k/onde-onde/seller.webmanifest">');
+    expect(html).toContain('href="/k/onde-onde/apple-touch-icon.png"');
+    expect(html).toContain('apple-mobile-web-app-title" content="Onde Onde · Seller"');
+    expect(defaultSellerHeadHtml()).not.toContain('/k/');
   });
 });
 

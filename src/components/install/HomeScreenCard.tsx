@@ -4,7 +4,7 @@ import { styled } from 'styled-components';
 import { InstallOverlay } from './InstallScreens';
 import { INSTALL_NS } from './i18n/register';
 import { InstallIcon } from './installIcons';
-import { promptInstall, useCanInstall } from './installPrompt';
+import { useCanInstall } from './installPrompt';
 import { useInstallFlow, type InstallOverride } from './useInstallFlow';
 
 // Plan 054: a gentle "put it on your home screen" card for people using the app in a browser. Never
@@ -107,21 +107,14 @@ export function HomeScreenCard({ who, kitchenName, override }: Props) {
   const browserOffers = useCanInstall();
   const [hidden, setHidden] = useState(hiddenNow);
   const { env } = flow;
-  const { startGuide, start } = flow;
+  const { install } = flow;
   const notNow = useCallback(() => {
     hideForAWeek();
     setHidden(true);
   }, []);
-  const add = useCallback(() => {
-    if (browserOffers) void promptInstall();
-    else if (env.platform === 'ios' && !env.inApp) startGuide();
-    else start();
-  }, [browserOffers, env, startGuide, start]);
-
   if (env.installed || hidden) return null;
-  const canAdd = browserOffers || env.platform === 'ios';
   // A desktop browser that cannot install has nothing to suggest.
-  if (!canAdd && env.platform !== 'android') return null;
+  if (!browserOffers && env.platform !== 'ios' && env.platform !== 'android') return null;
 
   const name = kitchenName ?? '';
   return (
@@ -134,13 +127,10 @@ export function HomeScreenCard({ who, kitchenName, override }: Props) {
           {who === 'customer' ? t('homeCard.customerTitle', { name }) : t('homeCard.sellerTitle')}
         </h2>
         <p>{who === 'customer' ? t('homeCard.customerBody') : t('homeCard.sellerBody')}</p>
-        {canAdd ? null : <p>{t('homeCard.openInChrome')}</p>}
         <Actions>
-          {canAdd ? (
-            <Go type="button" onClick={add}>
-              {browserOffers ? t('homeCard.add') : t('homeCard.showMe')}
-            </Go>
-          ) : null}
+          <Go type="button" onClick={install}>
+            {t('homeCard.install')}
+          </Go>
           <NotNow type="button" onClick={notNow}>
             {t('notNow')}
           </NotNow>

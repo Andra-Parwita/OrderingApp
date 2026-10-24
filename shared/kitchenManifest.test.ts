@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildManifest, defaultIconSvg, initialsOf, safeStartUrl } from './kitchenManifest';
+import {
+  buildManifest,
+  defaultIconSvg,
+  initialsOf,
+  safeStartUrl,
+  sellerShortName,
+  startInKitchenScope,
+} from './kitchenManifest';
+import { THEMES } from './themes';
 import { parseCustomerOrder, toCustomerOrder } from './orderContract';
 import { parsePushSubscribeRequest } from './pushContract';
 import { pushBodyOf, pushEntryOf } from './pushText';
@@ -25,6 +33,8 @@ describe('initials and the default icon', () => {
 describe('the start url guard', () => {
   it('keeps /o/... and /<slug>... and falls back for anything else', () => {
     expect(safeStartUrl('/o/abc', 'k')).toBe('/o/abc');
+    expect(safeStartUrl('/k/o/abc?source=homescreen', 'k')).toBe('/k/o/abc?source=homescreen');
+    expect(safeStartUrl('/other/o/abc', 'k')).toBe('/k');
     expect(safeStartUrl('/k', 'k')).toBe('/k');
     expect(safeStartUrl('/k/menu?x=1', 'k')).toBe('/k/menu?x=1');
     for (const bad of [
@@ -71,6 +81,94 @@ describe('the manifest', () => {
     });
     expect(own.start_url).toBe('/o/t');
     expect(own.icons.map((icon) => icon.type)).toEqual(['image/webp', 'image/webp', 'image/webp']);
+  });
+});
+
+const inScope = (scope: string, startUrl: string): boolean => {
+  const path = new URL(startUrl, 'https://x.test').pathname;
+  return scope === '/' ? true : path.startsWith(scope);
+};
+
+describe('the kitchen-only scope switch (plan 102)', () => {
+  const STARTS = [
+    null,
+    '/k',
+    '/k/',
+    '/k/basket',
+    '/o/tok?source=homescreen',
+    '/my-orders',
+    '//x',
+    'o/x',
+  ];
+
+  it.each(THEMES)(
+    'theme %s: start_url is inside the scope for every start, on and off',
+    (theme) => {
+      for (const kitchenScope of [false, true]) {
+        for (const start of STARTS) {
+          for (const slug of ['k', 'onde-onde']) {
+            const m = buildManifest({ slug, name: 'Kedai', theme, start, kitchenScope });
+            expect(m.id).toBe(`/${slug}`);
+            expect(m.scope).toBe(kitchenScope ? `/${slug}/` : '/');
+            expect(inScope(m.scope, m.start_url), `${String(start)} -> ${m.start_url}`).toBe(true);
+          }
+        }
+      }
+    },
+  );
+
+  it('on: the menu and its sub-pages keep their place, an order page starts at the kitchen', () => {
+    const on = (start: string | null) =>
+      buildManifest({ slug: 'k', name: 'Kedai', theme: 'onde', start, kitchenScope: true });
+    expect(on(null).start_url).toBe('/k/');
+    expect(on('/k').start_url).toBe('/k/');
+    expect(on('/k/basket').start_url).toBe('/k/basket');
+    // an order page lives under its kitchen (plan 102 stage 4), inside the scope
+    expect(on('/k/o/tok?source=homescreen').start_url).toBe('/k/o/tok?source=homescreen');
+    expect(on('/o/tok?source=homescreen').start_url).toBe('/k/o/tok?source=homescreen');
+    expect(on('/other/o/tok').start_url).toBe('/k/');
+  });
+
+  it('off or missing is today: scope "/", order start kept', () => {
+    const base = { slug: 'k', name: 'Kedai', theme: 'onde', start: '/o/tok' } as const;
+    expect(buildManifest(base)).toMatchObject({ scope: '/', start_url: '/o/tok' });
+    expect(buildManifest({ ...base, kitchenScope: false })).toMatchObject({ scope: '/' });
+  });
+
+  it('startInKitchenScope never leaves the scope', () => {
+    expect(startInKitchenScope('/k', 'k')).toBe('/k/');
+    expect(startInKitchenScope('/k?x=1', 'k')).toBe('/k/?x=1');
+    expect(startInKitchenScope('/kk', 'k')).toBe('/k/');
+    expect(startInKitchenScope('/o/t', 'k')).toBe('/k/o/t');
+    expect(startInKitchenScope('/k/o/t', 'k')).toBe('/k/o/t');
+    expect(startInKitchenScope('/my-orders', 'k')).toBe('/k/');
+  });
+});
+
+describe('the per-kitchen seller manifest (plan 101)', () => {
+  const seller = (slug: string, name: string) =>
+    buildManifest({ slug, name, theme: 'onde', start: '/o/x', seller: true, kitchenScope: true });
+
+  it('id and start are /seller?k=<slug>, scope /seller (start inside scope), whatever the switch', () => {
+    for (const slug of ['onde-onde', 'dellavee']) {
+      const m = seller(slug, 'Kitchen');
+      expect([m.id, m.start_url, m.scope]).toEqual([
+        `/seller?k=${slug}`,
+        `/seller?k=${slug}`,
+        '/seller',
+      ]);
+      expect(inScope(m.scope, m.start_url)).toBe(true);
+    }
+    expect(seller('a-b', 'X').id).not.toBe(seller('c-d', 'X').id);
+  });
+
+  it('names: "<Kitchen> · Seller", short name kitchen first with a seller mark, at most 12 characters', () => {
+    expect(seller('onde-onde', 'Onde Onde')).toMatchObject({
+      name: 'Onde Onde · Seller',
+      short_name: 'OndeOnde ✓',
+    });
+    expect(sellerShortName('DellaVee')).toBe('DellaVee ✓');
+    expect([...sellerShortName('A Very Long Kitchen Name')].length).toBeLessThanOrEqual(12);
   });
 });
 

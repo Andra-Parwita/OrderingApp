@@ -12,6 +12,7 @@
 // order is active.
 import { customerLiveProtocols } from '../../../shared/liveContract';
 import { TOKENS_MAX } from '../../../shared/limits';
+import { parseOrderPath } from '../../../shared/orderPath';
 import { activeOrders, MY_ORDERS_CHANGED, type SavedOrder } from '../../api/device/myOrders';
 import { connectLive, type LiveConnection, type SocketLike } from '../../api/live';
 import { setCustomerLiveState, type LiveMode } from '../../api/customerLiveState';
@@ -60,10 +61,9 @@ function groupBySlug(orders: ReadonlyArray<SavedOrder & { sellerSlug: string }>)
   return bySlug;
 }
 
-/** The token in a notification's address (`/o/<token>`), if it is one. */
+/** The token in a notification's address (`/<slug>/o/<token>` or the old `/o/<token>`), if it is one. */
 export function tokenOfOrderUrl(url: unknown): string | null {
-  if (typeof url !== 'string') return null;
-  return /^\/o\/([^/?#]+)/.exec(url)?.[1] ?? null;
+  return parseOrderPath(url)?.token ?? null;
 }
 
 /** Starts the connection manager; returns the way to stop it. */

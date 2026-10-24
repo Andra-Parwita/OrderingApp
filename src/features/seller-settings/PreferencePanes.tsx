@@ -12,6 +12,7 @@ import { fetchPreferences } from '../../api/menus';
 import { updatePreferences } from '../../api/settings';
 import { setSoundPreference, useSoundPreference } from '../../components/chime';
 import { DraftNotice, draftKey, fingerprint, useDraft } from '../../components/draft';
+import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { Button, Segmented, TextField, type SegmentedOption } from '../../ui';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
 import {
@@ -389,5 +390,18 @@ export function AppearancePane({ onToast }: Readonly<{ onToast: () => void }>) {
         </Gate>
       </PaneGroup>
     </>
+  );
+}
+
+/** Language (this device): the seller app's EN / ID, moved here from the menu (plan 118). */
+export function LanguagePane() {
+  const { t } = useTranslation(SETTINGS_NS);
+  return (
+    <PaneGroup>
+      <GroupTitle>{t('panes.language.title')}</GroupTitle>
+      <div>
+        <LanguageSwitch />
+      </div>
+    </PaneGroup>
   );
 }

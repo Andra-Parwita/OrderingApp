@@ -7,11 +7,14 @@ import {
   isSellerPath,
   kitchenHeadHtml,
   kitchenPreview,
+  sellerHeadHtml,
   linkPreviewHtml,
   kitchenPageTarget,
   themeColourHtml,
 } from '../../shared/kitchenHeadLinks';
 import { iconPath, initialsOf } from '../../shared/kitchenManifest';
+import { orderStartPath } from '../../shared/orderPath';
+import { isValidSlug } from '../../shared/seller';
 import { DEFAULT_THEME, type ThemeName } from '../../shared/themes';
 import type { Repository } from '../repo/Repository';
 import { iconTypeOfRef } from './kitchenRoutes';
@@ -38,6 +41,21 @@ function splashFor(
 }
 
 /**
+ * The seller head of the kitchen a seller link names (`/seller?k=<slug>`, plan 101), or null for no `k`,
+ * an invalid or unknown one, or any lookup error: the caller then keeps the default seller head.
+ */
+async function namedSellerHead(store: Repository, search: string): Promise<string | null> {
+  try {
+    const k = new URLSearchParams(search).get('k');
+    if (!isValidSlug(k)) return null;
+    const repo = await store.sellerBySlug(k);
+    return repo ? sellerHeadHtml(repo.seller.slug, repo.seller.name) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The head HTML for this page path, or null when it belongs to no known kitchen (reserved words,
  * unknown slug or token). Seller pages (`/seller`, `/seller/*`) get the default seller app links.
  * Kitchen and order pages also carry the kitchen's current theme, read from the DB on every call.
@@ -46,11 +64,16 @@ export async function kitchenPageFor(
   store: Repository,
   pathname: string,
   origin = '',
+  search = '',
 ): Promise<KitchenPage | null> {
-  // Every seller page, signed in or not, gets ShaggyBobo's seller app manifest (plan 048): the URL has
-  // no kitchen, and the kitchen's own seller manifest was not installable on Android Chrome.
+  // Every seller page gets ShaggyBobo's seller app manifest (plan 048), because the URL has no kitchen;
+  // except a link that names one (`?k=<slug>`, plan 101), which gets that kitchen's seller app links.
   if (isSellerPath(pathname)) {
-    return { head: defaultSellerHeadHtml() + linkPreviewHtml(defaultPreview(), origin, pathname) };
+    const named = await namedSellerHead(store, search);
+    return {
+      head:
+        (named ?? defaultSellerHeadHtml()) + linkPreviewHtml(defaultPreview(), origin, pathname),
+    };
   }
   const target = kitchenPageTarget(pathname);
   if (!target) return null;
@@ -75,10 +98,10 @@ export async function kitchenPageFor(
   const { slug, name } = found.sellerRepo.seller;
   const menu = await found.sellerRepo.getMenu();
   const theme = menu.theme ?? DEFAULT_THEME;
-  // Same start page as the one React sets (HOME_SCREEN_SOURCE in src/components/install/manifestLinks.ts).
+  // Same start page as the one React sets (manifestTarget in src/components/install/manifestLinks.ts): the order under its own kitchen.
   return {
     head:
-      kitchenHeadHtml(slug, name, `/o/${target.token}?source=homescreen`) +
+      kitchenHeadHtml(slug, name, orderStartPath(slug, target.token)) +
       themeColourHtml(theme) +
       bannerPreloadHtml(menu.kitchen) +
       linkPreviewHtml(kitchenPreview(name, menu.kitchen.images), origin, pathname),

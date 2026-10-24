@@ -70,6 +70,13 @@
     "step1": "Ketuk <b>⋮</b> di kanan atas",
     "step2": "Ketuk <b>Buka di Chrome</b>"
   },
+  "androidInstall": {
+    "title": "Pasang dari browser",
+    "chrome": "<b>Chrome:</b> ketuk <b>⋮</b>, lalu <b>Tambahkan ke Layar utama</b>, lalu <b>Instal</b>",
+    "samsung": "<b>Samsung Internet:</b> ketuk <b>≡</b>, lalu <b>Tambah halaman ke</b>, lalu <b>Layar utama</b>",
+    "check": "Pastikan ikon bertuliskan <b>{{kitchen}}</b>",
+    "done": "Mengerti"
+  },
   "inAppName": "aplikasi ini",
   "copyLink": "Salin tautan",
   "linkCopied": "Tautan tersalin. Sekarang buka Safari.",
@@ -134,9 +141,7 @@
     "blocked": "Diblokir di pengaturan ponsel",
     "unsupported": "Tidak tersedia di browser ini",
     "working": "Memproses…",
-    "homeInstall": "Pasang",
-    "homeShow": "Tunjukkan caranya",
-    "homeFallback": "Tidak ada tombol Pasang? Ketuk ⋮ di Chrome, lalu <b>Tambahkan ke layar utama</b>."
+    "homeInstall": "Pasang {{name}}"
   },
   "homeCard": {
     "label": "Layar utama",
@@ -144,9 +149,7 @@
     "customerBody": "Pesan lagi dengan satu ketukan dan dapat pesan saat pesananmu siap.",
     "sellerTitle": "Taruh aplikasi penjual di layar utama",
     "sellerBody": "Buka dengan satu ketukan di hari memasak.",
-    "add": "Tambah ke layar utama",
-    "showMe": "Tunjukkan caranya",
-    "openInChrome": "Buka halaman ini di Chrome untuk menambahkannya ke layar utama."
+    "install": "Pasang aplikasi"
   },
   "sellerInstall": {
     "name": "ShaggyBobo Penjual",
@@ -155,7 +158,7 @@
   },
   "homePill": {
     "text": "Tambahkan ke layar utama",
-    "how": "Caranya",
+    "how": "Pasang aplikasi",
     "hide": "Sembunyikan dulu"
   }
 }

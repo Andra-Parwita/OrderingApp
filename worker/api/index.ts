@@ -30,6 +30,10 @@ export type ApiEnv = {
   DEV_TOOLS?: string;
   /** Plan 114 off switch: "on" (the default) de-duplicates repeated orders; any other value ignores `clientOrderId`. */
   ORDER_DEDUPE?: string;
+  /** Plan 102 kill switch: "on" narrows each customer app's scope to `/<slug>/`; missing or any other value keeps the scope `/`. */
+  KITCHEN_SCOPE?: string;
+  /** The built app's public files (wrangler.jsonc `assets.binding`); absent in unit tests. */
+  ASSETS?: { fetch(request: Request): Promise<Response> };
   /** Web push (plan 004 stage 6): the VAPID key pair and contact. Without them push is off. */
   VAPID_PUBLIC_KEY?: string;
   /** Secret. */
@@ -97,7 +101,11 @@ export async function handleWorkerRequest(
     onCustomerChange: dispatcher.collect,
   });
   // The kitchen's manifest and icons (public, cacheable).
-  const kitchenFile = await handleKitchenRequest(repo, request, { images: env.IMAGES });
+  const kitchenFile = await handleKitchenRequest(repo, request, {
+    images: env.IMAGES,
+    assets: env.ASSETS,
+    kitchenScope: env.KITCHEN_SCOPE === 'on',
+  });
   if (kitchenFile) return kitchenFile;
   const response = await handleApiRequest(repo, request, {
     live: createLiveNotifier(env.SELLER_LIVE),

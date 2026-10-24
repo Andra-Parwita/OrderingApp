@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
+import i18n from 'i18next';
 import { MemoryRouter } from 'react-router';
 import { Provider } from 'react-redux';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -85,11 +86,11 @@ describe('SettingsPanes', () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(link));
   });
 
-  it('lists all ten panes and marks the open one', async () => {
+  it('lists all eleven panes and marks the open one', async () => {
     server.use(http.get('*/api/seller/pickup-places', () => HttpResponse.json({ places: [] })));
     renderPane('pickup');
     const nav = screen.getByRole('navigation', { name: 'Settings sections' });
-    expect(nav.querySelectorAll('a')).toHaveLength(10);
+    expect(nav.querySelectorAll('a')).toHaveLength(11);
     expect(screen.getByText('Version 1.0.43')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Pickup locations/ })).toHaveAttribute(
       'aria-current',
@@ -204,5 +205,17 @@ describe('SettingsPanes', () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(body).toMatchObject({ languages: 'id', firstLanguage: 'id' }));
+  });
+
+  it('has a Language pane under Appearance that switches the language (plan 118)', async () => {
+    renderPane('language');
+    const names = screen.getAllByRole('link').map((a) => a.textContent);
+    expect(names.findIndex((n) => n?.startsWith('Language'))).toBe(
+      names.findIndex((n) => n?.startsWith('Appearance')) + 1,
+    );
+    expect(screen.getByText('English / Bahasa Indonesia')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'ID' }));
+    await waitFor(() => expect(i18n.language).toBe('id'));
+    await i18n.changeLanguage('en');
   });
 });

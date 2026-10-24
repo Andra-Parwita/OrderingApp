@@ -1,6 +1,6 @@
 # 113 · Fewer database round trips per request
 
-**Status:** analysis (Fable, 20 Oct); two small fixes went into 1.0.43; the rest **later**, not approved for building.
+**Status:** items 3–7 approved for **1.0.44** (owner 24 Oct "B": all, including the backup, with a row-by-row comparison test of old vs new backup). Building.
 
 ## Findings
 - The Worker already batches well (`Db.reads` / `Db.batch`, no per-item loops, no N+1). The waste is **repeated reads inside one request**, mostly from composing service calls with `Promise.all`.

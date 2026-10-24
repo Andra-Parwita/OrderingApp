@@ -131,8 +131,8 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 098 | ⬜ | [Extensible core: one model for kitchen, shop, events](098-extensible-core.md) | stages 0–3 (clean-up) live in 1.0.42; kinds/store = v1.1.0, analysis only |
 | 099 | ⬜ | [Bigger grocery store analysis](099-bigger-store-analysis.md) | analysis only (Fable, 18 Oct), v1.1.0 or later |
 | 100 | ✅ | [Cook tab compact on phones](100-cook-compact-phone.md) | live in 1.0.42 (B2) |
-| 101 | ⬜ | [Seller app per kitchen](101-seller-app-per-kitchen.md) | **1.0.44** with 102 and all safeguards (owner 24 Oct "A"); questions answered; next: stage 0 phone proof |
-| 102 | ⬜ | [Android customer app per kitchen](102-android-customer-app.md) | **1.0.44** with 101 and all safeguards (owner 24 Oct "A"); questions answered; next: stage 0 phone proof |
+| 101 | 🔨 | [Seller app per kitchen](101-seller-app-per-kitchen.md) | 🔨 **1.0.44** with 102 (D-117): stages 1–6 built 24 Oct; scoped gate ✅ (unit, 19 e2e specs); waiting for the owner's deploy |
+| 102 | 🔨 | [Android customer app per kitchen](102-android-customer-app.md) | 🔨 **1.0.44** with 101 (D-117): stage 0 emulator (inconclusive), stages 1–6 built + launch-reload fix 24 Oct; scoped gate ✅; emulator: each seller app opens its kitchen; waiting for the owner's deploy |
 | 103 | ✅ | [Seller app speed](103-seller-speed.md) | fixes 1–8 live in 1.0.42 |
 | 104 | ✅ | [Seller small fixes (18 Oct checks)](104-seller-small-fixes.md) | live in 1.0.42 |
 | 105 | ✅ | [Seller edits an order](105-seller-edit-order.md) | live in 1.0.42 (D-110) |
@@ -143,12 +143,15 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 110 | ✅ | [WhatsApp numbers from any country](110-international-whatsapp-numbers.md) | D-111; live in 1.0.42.1, help in 1.0.42.2 |
 | 111 | ✅ | [Dish choices and a note per order line](111-dish-choices-line-notes.md) | live in 1.0.43 (D-112) |
 | 112 | ✅ | [Tell customers when a new menu is published](112-new-menu-notices.md) | live in 1.0.43 (D-113) |
-| 113 | 💤 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | 2 fixes live in 1.0.43; the rest later |
+| 113 | 🔨 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | 2 fixes live in 1.0.43; items 3–7 in **1.0.44** (owner 24 Oct "B", backup with a comparison test) |
 | 114 | ✅ | [Slow networks: timeouts, no double orders, clear feedback](114-slow-network.md) | items 1–5 live in hotfix 1.0.43.1 |
-| 115 | ✅ | [No blank screen while the app loads](115-loading-splash.md) | stage 1 live in 1.0.43.1; stage 2 (saved page at once) live in hotfix 1.0.43.2 (24 Oct) |
+| 115 | ✅ | [No blank screen while the app loads](115-loading-splash.md) | stage 1 live in 1.0.43.1; stage 2 (saved page at once) live as 1.0.43.2 (24 Oct; a brief rollback was a VPN false alarm); iPhone check ✅ (owner 24 Oct "A") |
 | 116 | 💤 | [Seller "Send a problem report"](116-seller-problem-report.md) | owner 20 Oct: plan it, after 1.0.44 |
 | 117 | ✅ | ["What's new" bubble for sellers](117-whats-new-bubble.md) | live in 1.0.43 |
-| 119 | 🔨 | [Customers load only the customer app (bundle split)](119-customer-bundle-split.md) | hotfix 1.0.43.3: light split (owner "A"), + iOS launch pictures (dark spotlight) + splash cache rule; phone message sheet fix; gate ✅ (unit 2,782 + full e2e 120/120, emulator customer check ✅); ready to deploy |
+| 118 | 🔨 | [Join another kitchen, switch by the kitchen name, language in Settings](118-join-kitchen-switcher.md) | owner 24 Oct: mock-up approved; building for 1.0.44 |
+| 119 | ✅ | [Customers load only the customer app (bundle split)](119-customer-bundle-split.md) | live in hotfix 1.0.43.3 (24 Oct): light split, iOS launch pictures (dark spotlight), dark splash + Android colour, splash cache rule, phone message sheet fix, banner preload |
+| 120 | 💤 | [Instant first screen (snapshot)](120-instant-first-screen.md) | parked (owner 24 Oct): "iPhone image is enough" |
+| 121 | ⬜ | Anonymous order statistics + nudges for Remember me and notifications | owner 24 Oct: in **1.0.44**; mock-up and plan first |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

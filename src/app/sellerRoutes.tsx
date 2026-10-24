@@ -72,6 +72,7 @@ import { SellerHomeRoute } from './SellerHomeRoute';
 import { SellerLayout } from './SellerLayout';
 import { SellerMenuRoute } from './SellerMenuRoute';
 import { PRIVATE_MENU_SLOTS } from './privateMenuSlots';
+import { useOpenKitchen } from './KitchenSwitcher';
 import { mayNotify, useSession } from './session';
 
 // The seller list's filter and search live in the URL (?status=ready&q=rina): they survive a
@@ -265,6 +266,7 @@ function SettingsRoute() {
   const { pane } = useParams();
   const navigate = useNavigate();
   const { end } = useSession();
+  const openKitchen = useOpenKitchen();
   const signedOut = useCallback(() => {
     void navigate('/seller/sign-in', { replace: true });
   }, [navigate]);
@@ -273,7 +275,9 @@ function SettingsRoute() {
   return (
     <SettingsPanes
       pane={id}
-      devices={<DevicesScreen embedded onSignedOut={signedOut} signOutHere={end} />}
+      devices={
+        <DevicesScreen embedded onSignedOut={signedOut} signOutHere={end} onJoined={openKitchen} />
+      }
       images={<ImagesScreen embedded />}
       chefs={<TeamScreen embedded />}
       customers={<ContactsBackup />}

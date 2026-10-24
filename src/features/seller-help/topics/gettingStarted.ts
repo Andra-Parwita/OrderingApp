@@ -143,10 +143,17 @@ export const GETTING_STARTED_TOPICS: ReadonlyArray<HelpTopic> = [
         },
         { text: 'The key works once, on one device, within 24 hours.' },
         {
-          text: 'Their WhatsApp is on a different device than the tablet? Tap **Copy key**, send it, and they type it at order.shaggybobo.app/seller/setup under **Invite key**.',
+          text: 'Their WhatsApp is on a different device than the tablet? Tap **Copy key**, send it, and they type it at order.shaggybobo.app/seller/setup under **Invite key**. On the tablet, someone already signed in to another kitchen can instead tap **Settings** → **Devices** → **Join another kitchen** and paste it there.',
         },
         {
           text: 'A **Chef** adds and changes their own dishes (also on the current menu), sees and updates orders, and prints them. A **Helper** only sees orders, marks dishes sold out and marks orders collected.',
+        },
+        { part: 'C · Join another kitchen' },
+        {
+          text: 'Already signed in on the tablet, and someone invites you to their kitchen? Open **Settings** → **Devices** → **Join another kitchen**, paste the key, and tap **Join**. The app opens the new kitchen. (Not on phones.)',
+        },
+        {
+          text: 'In two or more kitchens? On the tablet, tap the kitchen name at the top of the left menu and pick one. On a phone, use the **Kitchen** choice in **More**.',
         },
       ],
       note: 'Each device keeps its own passkey. If a device is lost, open Devices, find it under Other devices and tap Sign out.',
@@ -188,10 +195,17 @@ export const GETTING_STARTED_TOPICS: ReadonlyArray<HelpTopic> = [
         },
         { text: 'Kunci hanya berlaku sekali, di satu perangkat, dalam 24 jam.' },
         {
-          text: 'WhatsApp mereka ada di perangkat lain, bukan di tablet? Ketuk **Salin kunci**, kirim, lalu mereka mengetiknya di order.shaggybobo.app/seller/setup pada **Kunci undangan**.',
+          text: 'WhatsApp mereka ada di perangkat lain, bukan di tablet? Ketuk **Salin kunci**, kirim, lalu mereka mengetiknya di order.shaggybobo.app/seller/setup pada **Kunci undangan**. Di tablet, yang sudah masuk di dapur lain bisa mengetuk **Pengaturan** → **Perangkat** → **Gabung dapur lain** dan menempel kuncinya di sana.',
         },
         {
           text: '**Koki** menambah dan mengubah hidangannya sendiri (juga di menu yang sedang berjalan), melihat dan mengubah pesanan, dan mencetaknya. **Asisten** hanya melihat pesanan, menandai hidangan habis dan menandai pesanan sudah diambil.',
+        },
+        { part: 'C · Gabung ke dapur lain' },
+        {
+          text: 'Sudah masuk di tablet, lalu seseorang mengundang Anda ke dapurnya? Buka **Pengaturan** → **Perangkat** → **Gabung dapur lain**, tempel kuncinya, lalu ketuk **Gabung**. Aplikasi membuka dapur yang baru. (Tidak di ponsel.)',
+        },
+        {
+          text: 'Ada di dua dapur atau lebih? Di tablet, ketuk nama dapur di bagian atas menu kiri, lalu pilih satu. Di ponsel, pakai pilihan **Dapur** di **Lainnya**.',
         },
       ],
       note: 'Setiap perangkat punya passkey sendiri. Kalau perangkat hilang, buka Perangkat, cari di Perangkat lain lalu ketuk Keluarkan.',

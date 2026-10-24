@@ -76,11 +76,14 @@ async function networkFirst(event, request, cacheName) {
   return Promise.race([network.catch(() => cached), slow]);
 }
 
-// The key a customer page is saved under: its kitchen (/<slug>), or its order link (/o/<token>).
+// The key a customer page is saved under: its kitchen (/<slug>), or its order link
+// (/<slug>/o/<token>, or the old /o/<token>).
 function pageKey(path) {
-  const [first, second] = path.split('/').filter(Boolean);
+  const [first, second, third] = path.split('/').filter(Boolean);
   if (first === undefined) return '/';
-  return first === 'o' && second !== undefined ? `/o/${second}` : `/${first}`;
+  if (first === 'o' && second !== undefined) return `/o/${second}`;
+  if (second === 'o' && third !== undefined) return `/${first}/o/${third}`;
+  return `/${first}`;
 }
 
 // Saved copy at once, refreshed in the background. No copy: the network, and offline the '/' copy.

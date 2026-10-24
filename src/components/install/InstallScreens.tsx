@@ -289,6 +289,40 @@ function Screen({ screen, ...props }: ScreenProps & { screen: ScreenId }): React
           </Actions>
         </>
       );
+    case 'android-install':
+      return (
+        <>
+          <TopRow>
+            <span />
+            <Close onClose={controller.close} />
+          </TopRow>
+          <Body>
+            <Heading data-focus-target tabIndex={-1}>
+              {t('androidInstall.title')}
+            </Heading>
+            <Numbered>
+              {(['chrome', 'samsung', 'check'] as const).map((key) => (
+                <li key={key}>
+                  <span>
+                    <Trans
+                      t={t}
+                      i18nKey={`androidInstall.${key}`}
+                      ns={INSTALL_NS}
+                      values={{ kitchen: kitchenName }}
+                      components={{ b: <b /> }}
+                    />
+                  </span>
+                </li>
+              ))}
+            </Numbered>
+          </Body>
+          <Actions>
+            <Primary type="button" onClick={controller.close}>
+              {t('androidInstall.done')}
+            </Primary>
+          </Actions>
+        </>
+      );
     case 'android-allow':
       return (
         <>

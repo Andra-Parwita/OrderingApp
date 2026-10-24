@@ -15,10 +15,11 @@ import {
   signOut,
   signOutDevice,
 } from '../../api/auth';
-import { DEVICE_NAME_MAX, type DeviceView } from '../../../shared/authContract';
+import { DEVICE_NAME_MAX, type DeviceView, type Me } from '../../../shared/authContract';
 import { Button, ConfirmButton, TextField } from '../../ui';
 import { failureMessage, formatCountdown } from './authText';
 import { AUTH_NS } from './i18n/register';
+import { JoinKitchenSheet } from './JoinKitchenSheet';
 import {
   Actions,
   Body,
@@ -240,6 +241,8 @@ export type DevicesScreenProps = Readonly<{
   signOutHere?: () => Promise<void>;
   /** Inside a Settings pane: the pane has the title. */
   embedded?: boolean;
+  /** Shows "Join another kitchen" under "Add a device"; called with the new session after a key is accepted. */
+  onJoined?: (me: Me) => void;
 }>;
 
 /** This device, the others, rename and sign out, and "Add a device" with its 6-digit code. */
@@ -247,11 +250,13 @@ export function DevicesScreen({
   onSignedOut,
   signOutHere: endSession,
   embedded = false,
+  onJoined,
 }: DevicesScreenProps) {
   const { t } = useTranslation(AUTH_NS);
   const [devices, setDevices] = useState<ReadonlyArray<DeviceView> | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
 
   // Bumping `round` loads the list again (after a rename, a sign-out or "Try again").
   const [round, setRound] = useState(0);
@@ -321,6 +326,11 @@ export function DevicesScreen({
             <OtherDevices others={others} row={row} />
           )}
           <AddDevice onError={setError} />
+          {onJoined ? (
+            <Button fullWidth onClick={() => setJoining(true)}>
+              {t('devices.join')}
+            </Button>
+          ) : null}
         </Section>
         <Section>
           <ConfirmButton
@@ -332,6 +342,9 @@ export function DevicesScreen({
           <Hint>{t('devices.signOutHereHint')}</Hint>
         </Section>
       </Body>
+      {joining && onJoined ? (
+        <JoinKitchenSheet onClose={() => setJoining(false)} onJoined={onJoined} />
+      ) : null}
     </Page>
   );
 }

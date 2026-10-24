@@ -55,7 +55,7 @@ sequenceDiagram
     W-->>S: 200 updated order
     W-)P: waitUntil: web push to this order's subscription
     P-)C: notification (kitchen name, short text)
-    C->>W: tap opens /o/:token, GET /api/orders/:token
+    C->>W: tap opens /:slug/o/:token (data.url), GET /api/orders/:token
     W-->>C: order with its new status and message
     Note over C,W: no push? The open order page polls the same GET
 ```
@@ -307,7 +307,7 @@ sequenceDiagram
     DO-->>H: order.changed C1 (only this phone's orders)
     H->>W: GET /api/orders/t1 (one targeted fetch, no menu)
     W-->>P: store updated: order page and list change together
-    SW-->>H: postMessage order-push /o/t1 (a notification arrived)
+    SW-->>H: postMessage order-push /:slug/o/t1 (a notification arrived)
     H->>W: GET /api/orders/t1 (events within 1 s collapse)
     Note over H,W: socket lost, page visible: GET /api/orders?tokens= every backupMinutes.customer
     Note over H: back in the app after 10 s or more, or socket reconnects: one check at once

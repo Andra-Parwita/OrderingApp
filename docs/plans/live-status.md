@@ -4,6 +4,34 @@ The plan work in progress, one row per stage or check, kept current by the coord
 
 **Columns:** *agent · tier* is the agent type and model (haiku, sonnet, opus, or the coordinator itself). *Est.* is the estimate given at the start. *Took* is the real time from start to end. *± est.* is Took minus Est. (+ is slower than expected). *Diff* is the files and lines changed (`git diff --stat`), or "—" for read-only work. *State:* ⏳ running · ✅ done · ❌ failed · ⏸ waiting.
 
+## Plans 101 + 102 (release 1.0.44)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 0 · Android proof in the emulator against live (install DellaVee + OndeOnde, icons, scopes, Custom Tabs) | general-purpose · sonnet | 10:40 | 40 min | 10:52 | 12.5 min | −27 min | — | ✅ inconclusive (shortcuts, no WebAPK) |
+| 1 · 101 st. 1–2 + 102 st. 1: manifests, heads, icon 200, scope switch | general-purpose · sonnet | 10:53 | 20 min | 11:03 | 10 min | −10 min | 9 src files + 6 tests; KITCHEN_SCOPE "off" | ✅ typecheck, own tests 92 + 10 |
+| 3a · 101 st. 3–5: seller launch per kitchen, own-kitchen memory, install row + notice | general-purpose · sonnet | 11:04 | 25 min | 11:17 | 13 min | −12 min | 4 new files + 2 tests, ~9 edited | ✅ typecheck, own tests |
+| 3b · 102 st. 4–5 + 101 st. 6: routes under the kitchen, Worker redirects, links, push | general-purpose · sonnet | 11:04 | 30 min | 11:29 | 25 min | −5 min | 4 new files, ~12 edited, 15 tests edited | ✅ typecheck, own tests (30 files) |
+| 4 · 102 st. 6 My orders per kitchen + sw.js order-page key + seller links under the kitchen | general-purpose · sonnet | 11:31 | 20 min | 11:35 | 5 min | −15 min | 7 files + 2 new tests | ✅ typecheck, own tests 38 |
+| 5a · docs: architecture + product pages for 101/102 | general-purpose · sonnet | 11:35 | 20 min | 11:36 | 1 min | −19 min | 6 pages, ~+39 −17 | ✅ docs site built |
+| 5b · gate part 1: typecheck, lint, format, unit (touched areas) | coordinator | 11:35 | 20 min | 11:53 | 18 min | −2 min | — | ⚠ typecheck ✅ format ✅ lint 1 (Array<Me>) · unit 1168/1169 (stale /o/ expectation in batch2.test) · mocks 64/64 |
+| 6 · emulator: install 2 seller apps on phone + tablet (local, new code) | general-purpose · sonnet | 11:46 | 30 min | 12:09 | 23 min | −7 min | — | ✅ each icon opens its own kitchen, no loops (shortcuts, not WebAPKs; dev mock session) |
+| 7 · fixer: keep ?k through the launch reload + gate findings (lint, stale test, stub) | general-purpose · sonnet | 12:10 | 15 min | 12:17 | 7 min | −8 min | 3 src + 5 tests (1 new) | ✅ typecheck, eslint, 245 tests |
+| 8 · gate part 2: e2e 19 specs (main + settings + archived + auth projects) | coordinator | 12:17 | 30 min | 12:25 | 8 min | −22 min | — | ✅ 58 passed; 3 failed under load (2 emulators running) → each passed alone (route-safety redirect, p071-address, seller-auth passkey) |
+| 9 · plan 118: join in Settings, name switcher, language in Settings, help | general-purpose · sonnet | 12:42 | 25 min | 13:05 | 23 min | −2 min | 2 new files, ~12 edited, 7 new tests | ✅ typecheck, eslint, 345 tests; phone language question open |
+| 10 · plan 118 follow-up: phone seller back as before (tablet only) | general-purpose · sonnet | 13:12 | 15 min | 13:26 | 14 min | −1 min | KitchenSelect.tsx (+test) restored, 5 edited | ✅ typecheck, eslint, 562 tests (1 fixed); e2e seller-batch1:84 + batch2-flow:158 need updates |
+| H1 · hotfix 1.0.43.3 (worktree): plan 119 light split, stages 1 + 3 | general-purpose · sonnet | 13:17 | 45 min | 13:29 | 12 min | −33 min | 4 new, 5 edited | ✅ entry 1,861 → 891 KB raw (527 → 267 gzip); 235 tests; check:bundle OK |
+| H2 · hotfix 1.0.43.3 (worktree): iOS launch pictures | general-purpose · sonnet | 13:27 | 30 min | 13:28 | — | — | partial | ⏸ stopped twice: owner changed the design (one neutral set, then texture options to pick) |
+| H3 · hotfix gate part 1: e2e 11 specs (customer, seller, auth, admin, session) | coordinator | 13:29 | 15 min | 13:33 | 4 min | −11 min | — | ✅ 34 passed, 0 failed |
+| H4 · hotfix launch pictures, dark spotlight (owner pick) | general-purpose · sonnet | 13:33 | 20 min | 13:35 | 1.5 min | −18 min | 7 PNGs (6 MB), index.html links | ✅ look approved; too big → H5 |
+| H5 · launch pictures small + reusable per app kind + test + guide | general-purpose · sonnet | 13:38 | 20 min | 13:44 | 6 min | −14 min | 7 PNGs 0.8–1 MB → 130–147 KB; kitchen.json, recompress, test, guide | ✅ 4 tests; same look |
+| H6 · cache rule for splash.js, /brand, /startup (Fable finding) | general-purpose · sonnet | 13:39 | 10 min | 13:40 | 1 min | −9 min | _headers +9, 1 new test | ✅ 4 tests; rule applies (Worker passes non-HTML through) |
+| H7 · splash + Android start screen = dark spotlight everywhere | general-purpose · sonnet | 13:56 | 20 min | 14:07 | 11 min | −9 min | index.html splash, manifests, 6 tests | ✅ |
+| H8 · date-dependent seller-menu test frozen; message sheet on phones (numbers only, rows, minutes only for "Ready in") | 3 × sonnet | 14:26 | 30 min | 15:45 | ~25 min work | — | 4 src + tests | ✅ |
+| H9 · final gate: typecheck, lint, format, all unit, check:bundle, 5 e2e | coordinator | 15:48 | 30 min | 16:20 | 32 min | +2 min | — | ✅ unit 2,782/2,783 (auth.test fetch failed under load → 78/78 alone); entry 891 KB; e2e 12/12 |
+| H10 · full Playwright suite | coordinator | 16:23 | 30 min | 16:32 | 9 min | −21 min | — | ✅ 120 passed, 0 failed (56 skipped as usual); 105 captures, 0 console errors |
+| H11 · customer multi-kitchen check on the phone emulator (no app, bookmark, both installed) | general-purpose · sonnet | 16:34 | 40 min | | | | — | ⏳ |
+| 2 · 102 st. 2–3: one Install button, Start fresh help | general-purpose · sonnet | 10:53 | 20 min | 11:00 | 7 min | −13 min | ~20 files, +293 −104 tracked + 5 new; route /settings/start-fresh | ✅ typecheck, own tests 132 |
+
 ## Plan 115 stage 2 (hotfix 1.0.43.2)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|

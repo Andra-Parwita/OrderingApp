@@ -8,6 +8,7 @@ import {
   sellerAppName,
   sellerManifestPath,
 } from './kitchenManifest';
+import { parseOrderPath } from './orderPath';
 import type { Kitchen } from './domain';
 import { phoneBannerSrc } from './kitchenImages';
 import { isValidSlug } from './seller';
@@ -40,10 +41,15 @@ export const isSellerPath = (pathname: string): boolean =>
 
 export type KitchenPageTarget = { slug: string } | { token: string };
 
-/** What a page path belongs to: `/o/<token>` an order, `/<slug>[/...]` a kitchen, else nothing (reserved words included). */
+/**
+ * What a page path belongs to: `/<slug>/o/<token>` or the old `/o/<token>` an order (the token decides the
+ * kitchen, so a wrong slug still finds the real one), `/<slug>[/...]` a kitchen, else nothing (reserved words included).
+ */
 export function kitchenPageTarget(pathname: string): KitchenPageTarget | null {
-  const [first, second] = pathname.split('/').filter(Boolean);
-  if (first === 'o') return second === undefined ? null : { token: second };
+  const order = parseOrderPath(pathname);
+  if (order) return { token: order.token };
+  const [first] = pathname.split('/').filter(Boolean);
+  if (first === 'o') return null;
   return isValidSlug(first) ? { slug: first } : null;
 }
 

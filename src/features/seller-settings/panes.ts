@@ -7,6 +7,7 @@ export const PANE_IDS = [
   'pickup',
   'defaults',
   'look',
+  'language',
   'chefs',
   'devices',
   'customers',

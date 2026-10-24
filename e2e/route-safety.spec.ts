@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { goToName, markHowItWorksSeen } from './customerHelpers';
 import { collectErrors } from './sellerHelpers';
 
-// Safety net for plans 101/102 (docs/plans/102-route-safety-checklist.md): today's customer routes
-// all open, survive a reload and log no console errors. The 102 cases below are skipped until the
-// route change ships; the builder of 102 turns them on.
+// Safety net for plans 101/102 (docs/plans/102-route-safety-checklist.md): the customer routes all
+// open, survive a reload and log no console errors. Since plan 102 stage 4 an order lives under its
+// kitchen (`/<slug>/o/<token>`) and every old link (`/o/<token>...`) is redirected by the Worker.
 
 async function placeOrder(page: Page, firstName: string): Promise<string> {
   await page.goto('/onde-onde/dishes');
@@ -12,14 +12,14 @@ async function placeOrder(page: Page, firstName: string): Promise<string> {
   await goToName(page);
   await page.getByLabel('First name').fill(firstName);
   await page.getByRole('button', { name: /Place order/ }).click();
-  await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
+  await expect(page).toHaveURL(/\/onde-onde\/o\/[^/]+\/placed$/);
   const token = /\/o\/([^/]+)\/placed$/.exec(page.url())?.[1];
   if (!token) throw new Error('no token in the URL');
   return token;
 }
 
 test.describe('route safety', () => {
-  test('today: an order opens by /o/<token>, /qr, /my-orders and /settings, and survives reload', async ({
+  test('an order opens by /<slug>/o/<token>, /qr, /<slug>/my-orders and /<slug>/settings, and survives reload', async ({
     page,
     request,
   }, testInfo) => {
@@ -33,16 +33,25 @@ test.describe('route safety', () => {
     const orderCode = (await page.getByTestId('order-code').textContent()) ?? '';
     expect(orderCode).toMatch(/^[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}$/);
 
-    // The Worker answers every route with the app (HTML 200), an unknown token included.
+    // The Worker answers every route with the app (HTML 200), an unknown token included. The old
+    // order addresses are redirected first (the request follows the redirect).
     for (const path of [
+      `/onde-onde/o/${token}`,
+      `/onde-onde/o/${token}/placed`,
+      `/onde-onde/o/${token}/qr`,
+      `/onde-onde/o/${token}/edit`,
+      `/onde-onde/o/${token}/edit/name`,
       `/o/${token}`,
       `/o/${token}/placed`,
       `/o/${token}/qr`,
       `/o/${token}/edit`,
       `/o/${token}/edit/name`,
       '/o/no-such-token-at-all',
+      '/onde-onde/o/no-such-token-at-all',
       '/my-orders',
       '/settings',
+      '/onde-onde/my-orders',
+      '/onde-onde/settings',
       '/onde-onde',
       '/seller',
     ]) {
@@ -52,59 +61,77 @@ test.describe('route safety', () => {
     }
 
     // The order page, by link.
-    await page.goto(`/o/${token}`);
+    await page.goto(`/onde-onde/o/${token}`);
     await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
     await page.reload();
     await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`/o/${token}$`));
+    await expect(page).toHaveURL(new RegExp(`/onde-onde/o/${token}$`));
 
     // The QR page.
-    await page.goto(`/o/${token}/qr`);
-    await expect(page).toHaveURL(new RegExp(`/o/${token}/qr$`));
+    await page.goto(`/onde-onde/o/${token}/qr`);
+    await expect(page).toHaveURL(new RegExp(`/onde-onde/o/${token}/qr$`));
     await expect(page.locator('svg, canvas, img').first()).toBeVisible();
     await page.reload();
-    await expect(page).toHaveURL(new RegExp(`/o/${token}/qr$`));
+    await expect(page).toHaveURL(new RegExp(`/onde-onde/o/${token}/qr$`));
     await expect(page.locator('svg, canvas, img').first()).toBeVisible();
 
-    // My orders lists the order.
-    await page.goto('/my-orders');
-    await expect(page.getByRole('button', { name: new RegExp(orderCode) })).toBeVisible();
-    await page.reload();
-    await expect(page.getByRole('button', { name: new RegExp(orderCode) })).toBeVisible();
+    // My orders lists the order, inside the kitchen and as the all-kitchens page.
+    for (const path of ['/onde-onde/my-orders', '/my-orders']) {
+      await page.goto(path);
+      await expect(page.getByRole('button', { name: new RegExp(orderCode) })).toBeVisible();
+      await page.reload();
+      await expect(page.getByRole('button', { name: new RegExp(orderCode) })).toBeVisible();
+    }
 
     // Settings.
-    await page.goto('/settings');
-    await expect(page).toHaveURL(/\/settings$/);
+    await page.goto('/onde-onde/settings');
+    await expect(page).toHaveURL(/\/onde-onde\/settings$/);
     await expect(page.getByRole('heading').first()).toBeVisible();
     await page.reload();
-    await expect(page).toHaveURL(/\/settings$/);
+    await expect(page).toHaveURL(/\/onde-onde\/settings$/);
     await expect(page.getByRole('heading').first()).toBeVisible();
 
-    // An unknown token still shows the app (not a Worker 404 page).
-    await page.goto('/o/no-such-token-at-all');
-    await expect(page.locator('#root')).not.toBeEmpty();
+    // An unknown token still shows the app (not a Worker 404 page), in both shapes.
+    for (const path of ['/o/no-such-token-at-all', '/onde-onde/o/no-such-token-at-all']) {
+      await page.goto(path);
+      await expect(page.locator('#root')).not.toBeEmpty();
+    }
 
     expect(errors.filter((e) => !/404|Failed to load resource/.test(e))).toEqual([]);
   });
 
-  test.skip('102: old /o/<token> redirects to /onde-onde/o/<token>', async ({ page, request }) => {
+  test('102: old /o/<token> redirects to /onde-onde/o/<token> (302, sub-paths and query kept)', async ({
+    page,
+    request,
+  }) => {
     const token = await placeOrder(page, `Route-${Date.now()}`);
     const res = await request.get(`/o/${token}`, { maxRedirects: 0 });
     expect(res.status()).toBe(302);
     expect(res.headers()['location']).toContain(`/onde-onde/o/${token}`);
     for (const sub of ['/qr', '/placed', '/edit', '/edit/name']) {
+      const sent = await request.get(`/o/${token}${sub}?source=homescreen`, { maxRedirects: 0 });
+      expect(sent.status(), sub).toBe(302);
+      expect(sent.headers()['location'], sub).toContain(
+        `/onde-onde/o/${token}${sub}?source=homescreen`,
+      );
       await page.goto(`/o/${token}${sub}`);
       await expect(page).toHaveURL(new RegExp(`/onde-onde/o/${token}${sub}$`));
     }
+    // An unknown token is not redirected: the app answers and shows its own not found.
+    const unknown = await request.get('/o/no-such-token-at-all', { maxRedirects: 0 });
+    expect(unknown.status()).toBe(200);
   });
 
-  test.skip('102: /<wrongslug>/o/<token> corrects the slug', async ({ page }) => {
+  test('102: /<wrongslug>/o/<token> corrects the slug', async ({ page, request }) => {
     const token = await placeOrder(page, `Route-${Date.now()}`);
+    const res = await request.get(`/dapur-demo/o/${token}`, { maxRedirects: 0 });
+    expect(res.status()).toBe(302);
+    expect(res.headers()['location']).toContain(`/onde-onde/o/${token}`);
     await page.goto(`/dapur-demo/o/${token}`);
     await expect(page).toHaveURL(new RegExp(`/onde-onde/o/${token}$`));
   });
 
-  test.skip('102: /<slug>/o/<token> opens the order and survives reload', async ({ page }) => {
+  test('102: /<slug>/o/<token> opens the order and survives reload', async ({ page }) => {
     const token = await placeOrder(page, `Route-${Date.now()}`);
     await page.goto(`/onde-onde/o/${token}`);
     await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
@@ -112,7 +139,7 @@ test.describe('route safety', () => {
     await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
   });
 
-  test.skip('102: /<slug>/my-orders and /<slug>/settings open; /my-orders and /settings still live', async ({
+  test('102: /<slug>/my-orders and /<slug>/settings open; /my-orders and /settings still live', async ({
     page,
   }) => {
     for (const path of ['/onde-onde/my-orders', '/onde-onde/settings', '/my-orders', '/settings']) {
@@ -122,7 +149,7 @@ test.describe('route safety', () => {
     }
   });
 
-  test.skip('102: the customer manifest of an order page has start_url inside its scope', async ({
+  test('102: the customer manifest of an order page has start_url inside its scope', async ({
     page,
     request,
   }) => {
@@ -135,5 +162,7 @@ test.describe('route safety', () => {
     };
     const path = new URL(manifest.start_url, 'https://x.test').pathname;
     expect(path.startsWith(manifest.scope)).toBe(true);
+    // The order starts under its own kitchen (plan 102), whatever the scope switch says.
+    expect(manifest.start_url).toBe(`/onde-onde/o/${token}?source=homescreen`);
   });
 });

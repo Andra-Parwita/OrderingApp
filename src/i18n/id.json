@@ -23,6 +23,22 @@
     "light": "Terang",
     "dark": "Gelap"
   },
+  "sellerLaunch": {
+    "opening": "Membuka {{name}}…",
+    "openingBody": "Berpindah dapur. Sebentar.",
+    "notMember": "Anda bukan lagi anggota tim {{name}}",
+    "notMemberBody": "Minta pemilik menambahkan lagi, atau buka dapur Anda yang lain.",
+    "paused": "{{name}} sedang dijeda",
+    "pausedBody": "Dapur dimatikan untuk sementara. Hubungi ShaggyBobo.",
+    "openOther": "Buka {{name}}",
+    "yourKitchen": "dapur Anda yang lain",
+    "thisKitchen": "dapur ini",
+    "removeIcon": "Anda bisa menghapus ikon ini dari layar utama.",
+    "installTitle": "Pasang aplikasi penjual {{name}}",
+    "moveText": "{{name}} kini punya aplikasi penjual sendiri.",
+    "moveInstall": "Pasang",
+    "moveHide": "Sembunyikan"
+  },
   "sellerNav": {
     "devSeller": "Penjual (hanya dev)",
     "label": "Penjual",
@@ -136,6 +152,8 @@
     "homeBody": "Terbuka seperti aplikasi, cukup sekali ketuk.",
     "aboutTitle": "Tentang dan privasi",
     "aboutShow": "Baca",
+    "helpTitle": "Bantuan",
+    "startFresh": "Mulai dari awal",
     "menuNotice": "Menu baru dari {{kitchen}}",
     "menuNoticeOff": "Mati",
     "menuNoticeOn": "Aktif",
@@ -148,6 +166,20 @@
     "menuNoticeOffAnyTime": "Matikan di sini kapan saja.",
     "menuNoticeNotNow": "Nanti saja",
     "menuNoticeTurnOn": "Aktifkan"
+  },
+  "startFresh": {
+    "title": "Mulai dari awal",
+    "back": "Pengaturan",
+    "intro": "Untuk penguji beta: ikuti langkah ini untuk mulai lagi, satu per satu.",
+    "step1": "<b>Hapus ikon dapur yang lama atau salah.</b> Android: tekan lama ikon, ketuk Copot pemasangan (Samsung: Setelan → Aplikasi → nama dapur → Copot). iPhone: tekan lama → Hapus App → Hapus.",
+    "step2": "<b>Atur ulang HP ini</b> (tombol di bawah). Keluar, lalu hapus pesanan, nama, alamat, bahasa dan dapur tersimpan dari HP ini. Tidak menghapus akun di server.",
+    "step3": "<b>Hapus data tersimpanku</b> di sisi kami, lewat Pengaturan. Menghapus akun Remember me, tautan pesanan dan alamat tersimpan, dan meminta ponsel melepas passkey jika bisa.",
+    "step4": "Jika aplikasi bermasalah, <b>hapus data situs</b>. Chrome: ⋮ → Setelan → Setelan situs → Semua situs → order.shaggybobo.app → Hapus & reset. Samsung Internet: ≡ → Setelan → Situs dan unduhan → Kelola data situs → situsnya → Hapus. iPhone Safari: Pengaturan → App → Safari → Lanjutan → Data Situs Web → cari \"shaggybobo\" → Hapus (nama menu berbeda menurut versi iOS).",
+    "step5": "<b>Hapus passkey Remember me.</b> Google Password Manager: Setelan → Google → Pengelola Sandi → Passkey → order.shaggybobo.app → Hapus. Samsung Pass: Passkey → pilih situsnya → Hapus. Apple Passwords: app Passwords → order.shaggybobo.app → Hapus. Keeper: buka catatan order.shaggybobo.app → Hapus.",
+    "step6": "<b>Pasang dapur yang benar lagi.</b> Buka tautan dapur dari pemilik, ketuk Pasang aplikasi, periksa ikon dan namanya.",
+    "reset": "Atur ulang HP ini",
+    "resetting": "Mengatur ulang…",
+    "deleteLink": "Hapus data tersimpanku (di Pengaturan)"
   },
   "notFound": {
     "title": "Halaman tidak ditemukan",

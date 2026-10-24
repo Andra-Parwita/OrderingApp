@@ -647,6 +647,16 @@ describe('DevicesScreen', () => {
     expect(me.ok && me.data.me.deviceName).toBe('Phone A (kitchen)');
   });
 
+  it('shows "Join another kitchen" only where onJoined is given (the tablet pane, not the phone page)', async () => {
+    await signInAsSeller('password', 'Phone A');
+    const phone = renderScreen(<DevicesScreen onSignedOut={vi.fn()} />);
+    await screen.findByText('Phone A');
+    expect(screen.queryByRole('button', { name: 'Join another kitchen' })).not.toBeInTheDocument();
+    phone.unmount();
+    renderScreen(<DevicesScreen embedded onSignedOut={vi.fn()} onJoined={vi.fn()} />);
+    expect(await screen.findByRole('button', { name: 'Join another kitchen' })).toBeInTheDocument();
+  });
+
   it('signs another device out on the second tap', async () => {
     await signInAsSeller('password', 'Phone A');
     await otherDevice('Laptop B');

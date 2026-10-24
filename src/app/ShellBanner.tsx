@@ -15,6 +15,7 @@ import {
   type CustomerRootState,
 } from '../features/customer-menu';
 import { selectMenus, selectOrderPage } from '../features/customer-orders';
+import { customerArea } from './customerPath';
 
 // The kitchen banner of every customer page that belongs to a kitchen (plans 093, 094). It lives in the shell,
 // outside the sliding page, so a page change never remounts it (an iPhone paints a fresh <img>
@@ -41,7 +42,7 @@ const BannerSkeleton = styled.div`
   background: ${({ theme }) => theme.c.surf2};
 `;
 
-/** The kitchen's slug for the order page at `/o/:token…`: the loaded order's, else the saved one's. */
+/** The kitchen's slug for the order page at `/<slug>/o/:token…` (or the old `/o/:token…`): the loaded order's, else the saved one's. */
 function orderSlug(orderPage: ReturnType<typeof selectOrderPage>, token: string): string | null {
   if (
     (orderPage.status === 'ready' || orderPage.status === 'expired') &&
@@ -58,21 +59,31 @@ function useWanted(pathname: string): Wanted {
   const menuSlug = useSelector(selectMenuSlug);
   const menus = useSelector(selectMenus);
   const orderPage = useSelector(selectOrderPage);
-  const first = /^\/([^/]+)/.exec(pathname)?.[1] ?? '';
-  const orderToken = first === 'o' ? /^\/o\/([^/]+)/.exec(pathname)?.[1] : undefined;
-  const pageSlug = orderToken === undefined ? first : (orderSlug(orderPage, orderToken) ?? '');
+  const area = customerArea(pathname);
+  const orderToken = area.token;
+  const pageSlug =
+    orderToken === undefined
+      ? (area.slug ?? '')
+      : (orderSlug(orderPage, orderToken) ?? area.slug ?? '');
   const missing = useSelector((state: CustomerRootState) => selectKitchenMissing(state, pageSlug));
 
-  if (pathname === '/settings') {
+  if (area.kind === 'settings' && area.sub.length === 0) {
+    // `/<slug>/settings` is that kitchen's; `/settings` shows whichever menu is loaded.
+    if (area.slug !== null) {
+      return menu.status === 'ready' && menuSlug === area.slug
+        ? { kind: 'ready', slug: area.slug, kitchen: menu.data.kitchen }
+        : { kind: 'pending', slug: area.slug };
+    }
     return menu.status === 'ready' && menuSlug !== null
       ? { kind: 'ready', slug: menuSlug, kitchen: menu.data.kitchen }
       : { kind: 'pending', slug: lastKitchen() };
   }
-  if (pathname === '/my-orders') {
-    const slug = ownKitchen() ?? lastKitchen();
+  if (area.kind === 'orders' && area.sub.length === 0) {
+    const slug = area.slug ?? ownKitchen() ?? lastKitchen();
     const kitchen = slug === null ? undefined : menus[slug]?.kitchen;
     return slug !== null && kitchen ? { kind: 'ready', slug, kitchen } : { kind: 'pending', slug };
   }
+  if (area.kind === 'settings' || area.kind === 'orders') return NONE; // their sub-pages (Start fresh)
   // Every other page of a kitchen: the path's slug, or the order's seller (plan 094).
   if (!isValidSlug(pageSlug) || missing) return NONE;
   if (orderToken !== undefined) {
@@ -99,7 +110,8 @@ export function useShellBanner(pathname: string): ShellBannerState {
   if (wanted.kind === 'none') return { kind: 'none' };
   // Still loading: the banner already shown for this kitchen stays; else a grey block on the menu.
   if (kept && kept.slug === wanted.slug) return { kind: 'kitchen', kitchen: kept.kitchen };
-  const onMenu = pathname !== '/settings' && pathname !== '/my-orders';
+  const { kind, sub } = customerArea(pathname);
+  const onMenu = !((kind === 'settings' || kind === 'orders') && sub.length === 0);
   return onMenu ? { kind: 'skeleton' } : { kind: 'none' };
 }
 

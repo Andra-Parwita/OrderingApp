@@ -10,18 +10,29 @@ import { manifestTarget, readEnvironment, useManifestLinks } from '../components
 import { useForcedKitchenLanguage } from '../features/customer-menu';
 import { CustomerLiveHost, selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
 import { Icon, type IconName } from '../ui';
+import { customerArea } from './customerPath';
 import { SHELL_BANNER_HEIGHT, ShellBanner, useShellBanner } from './ShellBanner';
 
 // The customer app's bottom tab bar (D-039): Menu · My orders · Settings, fixed to the bottom,
 // icon above label, safe-area aware. Pages leave room for it through --customer-tabbar-height.
 export type TabId = 'menu' | 'orders' | 'settings';
 
-const TABS: ReadonlyArray<Readonly<{ id: TabId; href: string; icon: IconName }>> = [
-  // Menu goes to the last seller menu this phone visited (D-037), else the home page.
-  { id: 'menu', href: '/', icon: 'menu' },
-  { id: 'orders', href: '/my-orders', icon: 'bag' },
-  { id: 'settings', href: '/settings', icon: 'gear' },
+const TABS: ReadonlyArray<Readonly<{ id: TabId; icon: IconName }>> = [
+  { id: 'menu', icon: 'menu' },
+  { id: 'orders', icon: 'bag' },
+  { id: 'settings', icon: 'gear' },
 ];
+
+/**
+ * Where a tab leads. Menu goes to the last seller menu this phone visited (D-037), else the home page
+ * (`menuHref`). My orders and Settings stay inside the kitchen when the app belongs to one (plan 102:
+ * `/<slug>/my-orders`, `/<slug>/settings`); in a browser tab (`slug` null) they are the all-kitchens pages.
+ */
+export function tabHref(id: TabId, menuHref: string, slug: string | null): string {
+  if (id === 'menu') return menuHref;
+  const page = id === 'orders' ? 'my-orders' : 'settings';
+  return slug === null ? `/${page}` : `/${slug}/${page}`;
+}
 
 /**
  * The Menu tab's address: the seller menu being shown, else the last one visited on this phone,
@@ -40,26 +51,28 @@ export function menuTabHref(pathname: string): string {
 
 /** The basket belongs to Menu; an order page, its confirmation and edit belong to My orders. */
 export function activeTab(pathname: string): TabId {
-  if (pathname.startsWith('/my-orders') || pathname.startsWith('/o/')) return 'orders';
-  if (pathname.startsWith('/settings')) return 'settings';
-  return 'menu';
+  const { kind } = customerArea(pathname);
+  if (kind === 'orders' || kind === 'order') return 'orders';
+  return kind === 'settings' ? 'settings' : 'menu';
 }
 
 /**
  * Checkout pages (basket, pickup place, your name; also in change-order mode) hide the tab bar
- * (spec §3). So does the full-screen QR page (`/o/{token}/qr`).
+ * (spec §3). So does the full-screen QR page (`/<slug>/o/{token}/qr`, or the old `/o/{token}/qr`).
  */
 export function hasTabBar(pathname: string): boolean {
-  return (
-    !/^\/[^/]+\/basket(\/(pickup|name))?\/?$/.test(pathname) &&
-    !/^\/o\/[^/]+\/edit(\/name)?\/?$/.test(pathname) &&
-    !/^\/o\/[^/]+\/qr\/?$/.test(pathname)
-  );
+  const { kind, sub } = customerArea(pathname);
+  const path = sub.join('/');
+  if (kind === 'kitchen') return !/^basket(\/(pickup|name))?$/.test(path);
+  if (kind === 'order') return !/^(edit(\/name)?|qr)$/.test(path);
+  return true;
 }
 
 /** Root pages are the tabs' own pages; every other page is pushed on top of one. */
 export function isRootPage(pathname: string): boolean {
-  return pathname.split('/').filter(Boolean).length <= 1;
+  const { kind, sub } = customerArea(pathname);
+  if (kind === 'order') return false;
+  return kind === 'other' ? sub.length <= 1 : sub.length === 0;
 }
 
 const TAB_HEIGHT = '3.5rem';
@@ -171,7 +184,8 @@ export function CustomerTabBar({
   active,
   unseen,
   menuHref,
-}: Readonly<{ active: TabId; unseen: boolean; menuHref: string }>) {
+  slug = null,
+}: Readonly<{ active: TabId; unseen: boolean; menuHref: string; slug?: string | null }>) {
   const { t } = useTranslation();
   return (
     <Bar aria-label={t('customerNav.label')}>
@@ -179,7 +193,7 @@ export function CustomerTabBar({
         {TABS.map((tab) => (
           <Item key={tab.id}>
             <Tab
-              to={tab.id === 'menu' ? menuHref : tab.href}
+              to={tabHref(tab.id, menuHref, slug)}
               $active={tab.id === active}
               aria-current={tab.id === active ? 'page' : undefined}
             >
@@ -205,13 +219,22 @@ export function CustomerTabBar({
  */
 function useShellManifest(pathname: string): void {
   const orderPage = useSelector(selectOrderPage);
-  const orderToken = /^\/o\/([^/]+)/.exec(pathname)?.[1];
+  const orderToken = customerArea(pathname).token;
   const orderSlug =
     orderPage.status === 'ready' && orderPage.order.token === orderToken
       ? orderPage.order.seller.slug
       : undefined;
   const target = manifestTarget(pathname, { orderSlug, lastSlug: lastKitchen() });
   useManifestLinks(target);
+}
+
+/**
+ * The kitchen the My orders and Settings tabs stay in: only a home-screen app belongs to one (the kitchen
+ * it was launched on, else the page's). A browser tab keeps the all-kitchens pages (plan 102, owner Q3).
+ */
+function tabKitchen(pathname: string): string | null {
+  if (!readEnvironment().installed) return null;
+  return appKitchen() ?? customerArea(pathname).slug;
 }
 
 /** Wraps the customer pages with the tab bar. */
@@ -242,6 +265,7 @@ export function CustomerShell() {
           active={activeTab(pathname)}
           unseen={unseen}
           menuHref={menuTabHref(pathname)}
+          slug={tabKitchen(pathname)}
         />
       ) : null}
     </Wrap>

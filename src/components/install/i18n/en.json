@@ -70,6 +70,13 @@
     "step1": "Tap <b>⋮</b> at the top right",
     "step2": "Tap <b>Open in Chrome</b>"
   },
+  "androidInstall": {
+    "title": "Install from your browser",
+    "chrome": "<b>Chrome:</b> tap <b>⋮</b>, then <b>Add to Home screen</b>, then <b>Install</b>",
+    "samsung": "<b>Samsung Internet:</b> tap <b>≡</b>, then <b>Add page to</b>, then <b>Home screen</b>",
+    "check": "Check the icon says <b>{{kitchen}}</b>",
+    "done": "Got it"
+  },
   "inAppName": "this app",
   "copyLink": "Copy link",
   "linkCopied": "Link copied. Now open Safari.",
@@ -134,9 +141,7 @@
     "blocked": "Blocked in your phone's settings",
     "unsupported": "Not available in this browser",
     "working": "Working…",
-    "homeInstall": "Install",
-    "homeShow": "Show me how",
-    "homeFallback": "No Install button? Tap ⋮ in Chrome, then <b>Add to home screen</b>."
+    "homeInstall": "Install {{name}}"
   },
   "homeCard": {
     "label": "Home screen",
@@ -144,9 +149,7 @@
     "customerBody": "Order again with one tap and get a message when your order is ready.",
     "sellerTitle": "Put the seller app on your home screen",
     "sellerBody": "Open it with one tap on cooking day.",
-    "add": "Add to home screen",
-    "showMe": "Show me how",
-    "openInChrome": "Open this page in Chrome to add it to your home screen."
+    "install": "Install app"
   },
   "sellerInstall": {
     "name": "ShaggyBobo Seller",
@@ -155,7 +158,7 @@
   },
   "homePill": {
     "text": "Add to your home screen",
-    "how": "How",
+    "how": "Install app",
     "hide": "Hide this for now"
   }
 }

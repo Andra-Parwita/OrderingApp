@@ -15,6 +15,8 @@ type Props = Readonly<{
   onBack: () => void;
   /** Open the order page for this private token. */
   onOpenOrder: (token: string) => void;
+  /** Plan 102 Q3 (A1): inside a kitchen's installed app, only this kitchen's orders are listed. */
+  onlyKitchen?: string | null;
 }>;
 
 const NO_ROWS: ReadonlyArray<never> = [];
@@ -22,7 +24,7 @@ const NO_ROWS: ReadonlyArray<never> = [];
 /** The saved order's token for a parsed code, if this phone has it. */
 const findToken = (code: string) => readMyOrders().find((entry) => entry.code === code)?.token;
 
-function MyOrdersContent({ onBack, onOpenOrder }: Props) {
+function MyOrdersContent({ onBack, onOpenOrder, onlyKitchen = null }: Props) {
   const lang = useLang();
   // D-075: ask the kitchen the customer is in (the last one visited). The order opens by its token
   // and is saved in My orders when its page loads.
@@ -81,20 +83,24 @@ function MyOrdersContent({ onBack, onOpenOrder }: Props) {
   }, [dispatch]);
   useEffect(load, [load]);
 
-  const rows = useMemo(
-    () =>
-      list.status === 'ready'
-        ? buildMyOrders({
-            orders: list.orders,
-            expired: list.expired,
-            saved: list.saved,
-            menus,
-            lang,
-            paid: Object.fromEntries(list.orders.map((order) => [order.token, order.paid])),
-          })
-        : { current: NO_ROWS, earlier: NO_ROWS },
-    [list, menus, lang],
-  );
+  const rows = useMemo(() => {
+    if (list.status !== 'ready') return { current: NO_ROWS, earlier: NO_ROWS };
+    const all = buildMyOrders({
+      orders: list.orders,
+      expired: list.expired,
+      saved: list.saved,
+      menus,
+      lang,
+      paid: Object.fromEntries(list.orders.map((order) => [order.token, order.paid])),
+    });
+    if (onlyKitchen === null) return all;
+    // The row's slug comes from the order itself, so an old saved entry without a slug matches once
+    // its order is loaded; one that did not load has no row and stays out.
+    return {
+      current: all.current.filter((row) => row.slug === onlyKitchen),
+      earlier: all.earlier.filter((row) => row.slug === onlyKitchen),
+    };
+  }, [list, menus, lang, onlyKitchen]);
   const stale = list.status === 'ready' ? list.stale : undefined;
 
   return (

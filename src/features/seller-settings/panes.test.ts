@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PANE_IDS, SECOND_GROUP, paneHref, parsePane } from './panes';
 
 describe('panes', () => {
-  it('lists the nine panes, with Chefs, Devices and Backup in the second group', () => {
+  it('lists the eleven panes, with Chefs, Devices and Backup in the second group', () => {
     expect(PANE_IDS).toEqual([
       'link',
       'kitchen',
@@ -10,6 +10,7 @@ describe('panes', () => {
       'pickup',
       'defaults',
       'look',
+      'language',
       'chefs',
       'devices',
       'customers',

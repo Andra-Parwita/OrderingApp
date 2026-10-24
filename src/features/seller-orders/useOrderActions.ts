@@ -1,4 +1,6 @@
 import { useCallback, useMemo } from 'react';
+import { orderPath } from '../../../shared/orderPath';
+import { currentSellerSlug } from '../../api/device/sellerContext';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AuditEntry, Language, Order } from '../../../shared/domain';
@@ -113,7 +115,7 @@ export function useOrderActions(order: Order) {
     const text = fixed('whatsapp.message', {
       name: order.firstName,
       code: formatOrderCode(order.code),
-      link: `${window.location.origin}/o/${order.token}`,
+      link: `${window.location.origin}${orderPath(currentSellerSlug(), order.token)}`,
     });
     window.open(whatsAppUrl(text), '_blank', 'noopener');
   }, [i18n, order]);

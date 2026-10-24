@@ -206,7 +206,7 @@ describe('WhatsApp link', () => {
     const t = ((key: string, values?: Record<string, string>) =>
       `${key}${values ? JSON.stringify(values) : ''}`) as never;
     const text = buildWhatsAppText(order(), t, null);
-    expect(text).toContain(`${window.location.origin}/o/tok-1`);
+    expect(text).toContain(`${window.location.origin}/${order().seller.slug}/o/tok-1`);
     expect(text).toContain('wa.link');
   });
 });
