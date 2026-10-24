@@ -86,7 +86,8 @@ const MAX_WIDTH = '30rem'; // 480 px: phone width, centred on wider screens
 // Plan 122: in an iPhone home-screen app the page runs under the status bar (--sat > 0, else 0). With a
 // banner, the banner's own safe-area band covers it; without one, the shell pads the page down by --sat.
 // Either way the shell draws one fixed thin fade behind the clock, so it reads after the banner scrolls away.
-// Plan 123: while a tall banner is on screen the thin fade stays off, so it never darkens the picture.
+// Plan 123: while a tall banner is on screen, or its shape is not yet known, the thin fade stays off: it never
+// darkens the picture, and nothing fixed sits at the top edge over it (iOS 26 blurs the picture behind it).
 const Wrap = styled.div<{ $tabs: boolean; $banner: boolean; $fade: boolean }>`
   --customer-tabbar-height: ${({ $tabs }) => ($tabs ? TAB_BAR_HEIGHT : '0px')};
   /* The banner above the page (plan 093): pages take it off their minimum height. */
@@ -264,11 +265,13 @@ export function CustomerShell() {
   const banner = useShellBanner(pathname);
   const hasBanner = banner.kind !== 'none';
   useKitchenTitle(pathname, banner.kind === 'kitchen' ? banner.kitchen.name : null);
-  const [tallInView, setTallInView] = useState(false);
+  // Held (fade off) from the first paint of a kitchen banner until its picture is known not to be tall-and-in-view.
+  const [holdFade, setHoldFade] = useState(true);
+  const fade = banner.kind === 'none' || (banner.kind === 'kitchen' && !holdFade);
   return (
-    <Wrap $tabs={tabs} $banner={hasBanner} $fade={!tallInView}>
+    <Wrap $tabs={tabs} $banner={hasBanner} $fade={fade}>
       <CustomerLiveHost />
-      <ShellBanner state={banner} onTallInView={setTallInView} />
+      <ShellBanner state={banner} onHoldFade={setHoldFade} />
       <Slide key={pathname} $push={navigationType === NavigationType.Push && !isRootPage(pathname)}>
         <ShellOwnsBanner.Provider value={hasBanner}>
           <Outlet />

@@ -107,9 +107,16 @@ describe('iPhone status bar (plan 122)', () => {
     await waitFor(() => expect(getComputedStyle(copy).opacity).toBe('1'));
   });
 
-  it('a page with a banner also has the fixed thin fade behind the clock', async () => {
+  it('a page with a 3:1 banner also has the fixed thin fade behind the clock, once the picture is known', async () => {
     renderAt('/onde-onde');
-    await screen.findByTestId('status-bar-blur');
+    const copy = await screen.findByTestId('status-bar-blur');
+    const real = screen.getAllByRole('img').find((img) => img !== copy && img.getAttribute('src'));
+    // Plan 123 fix: not on the first paint (the picture may be a tall one), as soon as it is known to be wide.
+    expect(pageCss()).not.toContain(PAGE_FADE);
+    Object.defineProperty(real, 'naturalWidth', { value: 1200 });
+    Object.defineProperty(real, 'naturalHeight', { value: 400 });
+    fireEvent.load(real as Element);
+    await waitFor(() => expect(pageCss()).toContain(PAGE_FADE));
     const css = pageCss();
     expect(css).toContain(BANNER_FADE);
     expect(css).toContain(PAGE_FADE); // one fixed fade for every customer page, banner or not

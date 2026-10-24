@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -12,9 +11,9 @@ import { css, styled } from 'styled-components';
 import type { Kitchen, Language } from '../../shared/domain';
 import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { ImageSlot } from '../ui';
-import { bandPicture, bannerFade, blurBand, blurImage } from './statusBarFade';
+import { BLUR_TALL_BANNER, bandPicture, bannerFade, blurBand, blurImage } from './statusBarFade';
 
-// A tall (2:1) banner (plan 123) has no fade: its own top part runs behind the clock, as drawn.
+// A tall (2:1) banner (plan 123) has no fade: its own top part runs behind the clock, as drawn (unless BLUR_TALL_BANNER).
 const tallTop = css`
   position: relative;
 `;
@@ -126,22 +125,30 @@ function BandPictures({
  */
 export const ShellOwnsBanner = createContext(false);
 
+type BannerShape = 'none' | 'unknown' | 'wide' | 'tall';
+
 /**
- * Tells the shell whether the thin page fade (plan 122) must stay off: true while a tall banner is in view, so
- * the fade never darkens it (plan 123). Without IntersectionObserver the banner counts as in view.
+ * Tells the shell whether its fixed thin page fade (plan 122) must stay off: true from the first paint while the
+ * banner's shape is still unknown, and while a tall banner is in view (plan 123), so nothing fixed ever sits on
+ * top of the tall picture. iOS 26 blurs and dims the picture behind any fixed element at the top edge, and a
+ * fade that is only removed after the picture has loaded can leave that effect on. A wide banner, or no banner
+ * picture, never holds the fade. Without IntersectionObserver a tall banner counts as in view.
  */
-function useTallBannerInView(
+function useFadeHold(
   box: RefObject<HTMLDivElement | null>,
-  tall: boolean,
-  report: ((inView: boolean) => void) | undefined,
+  shape: BannerShape,
+  report: ((hold: boolean) => void) | undefined,
 ) {
-  useEffect(() => {
-    if (!report || !tall) return;
-    const element = box.current;
-    if (!element || typeof IntersectionObserver === 'undefined') {
-      report(true);
-      return () => report(false);
+  useLayoutEffect(() => {
+    if (!report) return;
+    if (shape === 'none' || shape === 'wide') {
+      report(false);
+      return;
     }
+    report(true);
+    if (shape === 'unknown') return () => report(false);
+    const element = box.current;
+    if (!element || typeof IntersectionObserver === 'undefined') return () => report(false);
     const observer = new IntersectionObserver((entries) => {
       const last = entries[entries.length - 1];
       if (last) report(last.isIntersecting);
@@ -151,38 +158,46 @@ function useTallBannerInView(
       observer.disconnect();
       report(false);
     };
-  }, [box, tall, report]);
+  }, [box, shape, report]);
 }
 
 /**
  * The kitchen's banner picture, on top of the customer pages (Menu, My orders, Settings).
  *
  * A tall (2:1, plan 123) picture shows only its bottom 3:1 here, like any banner; in the iPhone home-screen app it
- * reaches up over the safe-area band, one image, no blur and no fade. `onTallInView` tells the shell while that
- * tall banner is on screen.
+ * reaches up over the safe-area band, one image, no blur and no fade. `onHoldFade` tells the shell while its fixed
+ * thin fade must stay off (shape unknown, or a tall banner on screen).
  */
 export function KitchenBanner({
   kitchen,
   lang,
   placeholder,
-  onTallInView,
+  onHoldFade,
 }: Readonly<{
   kitchen: Kitchen;
   lang: Language;
   placeholder: string;
-  onTallInView?: (inView: boolean) => void;
+  onHoldFade?: (hold: boolean) => void;
 }>) {
   const shellOwns = useContext(ShellOwnsBanner);
   const src = phoneBannerSrc(kitchen.images) ?? kitchen.bannerImageUrl;
-  // The address of the banner found to be tall; a new picture starts again as not tall.
-  const [tallSrc, setTallSrc] = useState<string | undefined>(undefined);
-  const tall = src !== undefined && tallSrc === src;
-  const onTall = useCallback((isTall: boolean) => setTallSrc(isTall ? src : undefined), [src]);
+  // The picture's shape, read once it has loaded, with the address it was read for; a new picture starts again as unknown.
+  const [found, setFound] = useState<Readonly<{ src: string | undefined; tall: boolean }> | null>(
+    null,
+  );
+  const known = src !== undefined && found !== null && found.src === src;
+  const tall = known && found.tall;
+  const onTall = useCallback((isTall: boolean) => setFound({ src, tall: isTall }), [src]);
   const boxRef = useRef<HTMLDivElement>(null);
-  useTallBannerInView(boxRef, tall && !shellOwns, onTallInView);
+  let shape: BannerShape = 'unknown';
+  if (src === undefined) shape = 'none';
+  else if (known) shape = tall ? 'tall' : 'wide';
+  useFadeHold(boxRef, shellOwns ? 'none' : shape, onHoldFade);
+  // Sharp (the default): a tall banner has no band picture and no fade. With BLUR_TALL_BANNER it keeps both, over its picture.
+  const sharpTall = tall && !BLUR_TALL_BANNER;
   if (shellOwns) return null;
   return (
-    <BannerTop ref={boxRef} $background={kitchen.images?.bannerBackground} $tall={tall}>
+    <BannerTop ref={boxRef} $background={kitchen.images?.bannerBackground} $tall={sharpTall}>
       <ImageSlot
         aspectRatio="3 / 1"
         background={kitchen.images?.bannerBackground}
@@ -196,11 +211,11 @@ export function KitchenBanner({
         onTall={onTall}
       />
       {/* After the picture in the page order (the picture comes first for readers); it paints in the safe-area band above it. */}
-      {tall ? null : (
+      {sharpTall ? null : (
         <BandPictures
-          key={kitchen.images?.bannerBackgroundImage ?? ''}
+          key={`${kitchen.images?.bannerBackgroundImage ?? ''}${String(tall)}`}
           src={src}
-          backgroundSrc={kitchen.images?.bannerBackgroundImage}
+          backgroundSrc={tall ? undefined : kitchen.images?.bannerBackgroundImage}
         />
       )}
     </BannerTop>

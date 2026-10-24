@@ -119,8 +119,8 @@ export function useShellBanner(pathname: string): ShellBannerState {
 
 export function ShellBanner({
   state,
-  onTallInView,
-}: Readonly<{ state: ShellBannerState; onTallInView?: (inView: boolean) => void }>) {
+  onHoldFade,
+}: Readonly<{ state: ShellBannerState; onHoldFade?: (hold: boolean) => void }>) {
   const lang = useLang();
   if (state.kind === 'skeleton') return <BannerSkeleton />;
   if (state.kind === 'none') return null;
@@ -129,7 +129,7 @@ export function ShellBanner({
       kitchen={state.kitchen}
       lang={lang}
       placeholder={state.kitchen.name}
-      onTallInView={onTallInView}
+      onHoldFade={onHoldFade}
     />
   );
 }

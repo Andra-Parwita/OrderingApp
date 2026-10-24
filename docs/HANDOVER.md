@@ -3,7 +3,7 @@
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs (1.0.39 → 1.0.43.3 detail) are in git history.
 
 **Last session:** 24 → 25 Oct (Sat–Sun night), the owner's PC (Adelaide), Claude as coordinator. Hotfixes 1.0.43.2 and 1.0.43.3 shipped; **1.0.44 fully built, waiting for the final gate result and the owner's deploy** (owner, 25 Oct ~00:50: "we will deploy tomorrow").
-**Live:** **1.0.44** (25 Oct 07:02; Worker `5c5ee9c4-919a-4dfd-906a-6100ac3de537`; `1.0.124 · 42bc62f` on `main`; migration 0034 applied first). Rollback point 1.0.43.3: `68dd13cb-0e8d-4c70-8f42-6d1f7277e486` (`pnpm exec wrangler rollback <id>`; 0034 stays, old code ignores it). Backup before deploy: `backups/shaggybobo-2026-10-25.sql` (975 rows). **Live checks ✅ all 6** (owner, 25 Oct: customer app + old links, iPhone status bar after re-adding, Remember me restore + "Turned on", seller tablet + What's new + order edit, admin Statistics, phone banner re-save).
+**Live:** **hotfix 1.0.44.1** (25 Oct; Worker `8e7bca61-bae9-4c76-bc3b-91beff03c0d3`, tag + message on the version; `main` = `b39811c`; tall phone banner, plan 123; no migration). Before: 1.0.44 (Worker `5c5ee9c4-919a-4dfd-906a-6100ac3de537`, 07:02, live checks ✅ all 6). Backups: `backups/shaggybobo-2026-10-25.sql`, `…-25-b.sql`.
 **Branch:** `indra/brand_logo_ux` = `369c660` (1.0.44 WIP, rebased on main, pushed) **plus a large uncommitted working tree** (everything below). The owner has not yet said whether to commit it.
 
 ## House rules (binding)
@@ -81,6 +81,10 @@ Deploy on a day with **no open DellaVee menu**. `KITCHEN_SCOPE` stays "off".
 - Pictures made 25 Oct (`D:\Projects\home\assets\`): DellaVee `DapurDellaVee_banner_1200x600.jpg`, `…_magical.jpg`, `…_enchanted.jpg` (Claude recommends enchanted); Onde Onde `OndeOnde_banner_1200x600.jpg`. Comparison `uxDesign/customer/mockups/123-banner-versions.html` (images in git-ignored `temp/banner-versions/`). Prompts: `docs/architecture/images.md`.
 - Deploy: backup → `pnpm build` → no migration → `pnpm run deploy -- --tag v1.0.44.1 --message "1.0.44.1: tall phone banner"` → health → upload the new banners → tag `v1.0.44.1` + push.
 - Unused now: `public/guides/template-phone-banner.png` (ask the owner before deleting).
+
+## Hotfix 1.0.44.2 = tall banner blur fix (25 Oct)
+- Owner's iPhone (iOS 26) showed the top of the tall DellaVee banner blurred and dim at rest, sharp when pulled down. Not reproducible in WebKit on Windows; likely the fixed thin page fade at first paint plus an iOS 26 blur under fixed top elements (unverified). Fix: the fade stays off until the banner shape is known and, for a tall banner, until it has scrolled away (`useFadeHold`); constant `BLUR_TALL_BANNER` (false) brings back the soft look. Client only, no migration.
+- If the top is still blurred after this deploy, it is iOS itself; then the planned setting (Clear / Light 8 px / Soft 12 px / Strong 20 px, mock-up `uxDesign/customer/mockups/123-clock-area-setting.html`, plan 123 stage 5) offers blur strengths only.
 
 ## Next session
 1. Owner cleanup: the duplicate Remember me account + its unnamed passkey (keep "Indra · customer"); Onde Onde phone banner re-save if not done.

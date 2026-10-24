@@ -63,6 +63,13 @@ export const pageFade = css`
 // slightly darkened copy of the same picture, so the clock sits on "the picture continuing" instead of a flat
 // colour. The real picture below stays whole (3:1, uncropped). Same `--sat` switch: the band is `--sat` tall,
 // so it is 0 px (nothing painted) everywhere but the iPhone home-screen app.
+/**
+ * Plan 123 owner choice (25 Oct): a tall banner shows sharp behind the clock (false). Set true to give it the soft look
+ * again: the blurred, dimmed copy of its own top plus the banner fade, over the picture, as an old 3:1 banner has.
+ * No setting yet; it may become a per-kitchen one.
+ */
+export const BLUR_TALL_BANNER = false;
+
 const BLUR_PX = '20px';
 const BLUR_DIM = 0.85; // brightness: the copy reads a little darker than the picture
 const BLUR_BLEED_PX = '48px'; // the copy reaches this far past the band, so the blurred edges are clipped away

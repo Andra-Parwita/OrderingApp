@@ -64,14 +64,14 @@ function loaded(picture: HTMLElement, width: number, height: number) {
 const bandHeight = (px: number) =>
   vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(px);
 
-function renderBanner(images: Kitchen['images'], onTallInView?: (inView: boolean) => void) {
+function renderBanner(images: Kitchen['images'], onHoldFade?: (hold: boolean) => void) {
   return render(
     <AppThemeProvider>
       <KitchenBanner
         kitchen={kitchen(images)}
         lang="en"
         placeholder="Dapur"
-        {...(onTallInView ? { onTallInView } : {})}
+        {...(onHoldFade ? { onHoldFade } : {})}
       />
     </AppThemeProvider>,
   );
@@ -130,7 +130,7 @@ describe('a tall phone banner on the customer pages (plan 123)', () => {
     expect(bannerPicture().getAttribute('data-reveal')).toBe('hidden');
   });
 
-  it('tells the shell while the tall banner is on screen, and only a tall one', async () => {
+  it('tells the shell to hold its fixed fade from the first render, and while a tall banner is on screen', async () => {
     const observers: Array<(entries: Array<{ isIntersecting: boolean }>) => void> = [];
     vi.stubGlobal(
       'IntersectionObserver',
@@ -144,19 +144,31 @@ describe('a tall phone banner on the customer pages (plan 123)', () => {
     );
     const report = vi.fn();
     renderBanner({ phoneBanner: BANNER }, report);
+    // Regression (iPhone, 1.0.44.1): a fixed fade at the top edge over the not yet known picture blurred and
+    // dimmed it on iOS 26. Nothing fixed may be there on the first render.
+    expect(report).toHaveBeenLastCalledWith(true);
     expect(observers).toHaveLength(0); // not known to be tall yet: nothing watched
     loaded(bannerPicture(), 1200, 600);
     await waitFor(() => expect(observers).toHaveLength(1));
+    expect(report).toHaveBeenLastCalledWith(true); // still held until the observer says otherwise
     observers[0]?.([{ isIntersecting: true }]);
     expect(report).toHaveBeenLastCalledWith(true);
     observers[0]?.([{ isIntersecting: false }]);
     expect(report).toHaveBeenLastCalledWith(false);
   });
 
-  it('a 3:1 banner never keeps the page fade off', () => {
+  it('a 3:1 banner lets go of the fade as soon as its shape is known', () => {
     const report = vi.fn();
     renderBanner({ phoneBanner: BANNER }, report);
+    expect(report).toHaveBeenLastCalledWith(true);
     loaded(bannerPicture(), 1200, 400);
+    expect(report).toHaveBeenLastCalledWith(false);
+  });
+
+  it('no banner picture never holds the fade', () => {
+    const report = vi.fn();
+    renderBanner(undefined, report);
+    expect(report).toHaveBeenLastCalledWith(false);
     expect(report).not.toHaveBeenCalledWith(true);
   });
 });
@@ -187,13 +199,33 @@ describe('the shell page fade over a tall banner (plan 123)', () => {
     const real = screen.getAllByRole('img').find((img) => img !== copy && img.getAttribute('src'));
     const wrap = (await screen.findByRole('navigation', { name: 'Customer' }))
       .parentElement as Element;
-    expect(hasFade(wrap)).toBe(true); // a 3:1 banner: the thin fade as in 1.0.44
+    // Regression: shape not known yet, so no fixed fade over the picture on the first paint.
+    expect(hasFade(wrap)).toBe(false);
     loaded(real as HTMLElement, 1200, 600);
     await waitFor(() => expect(observers.length).toBeGreaterThan(0));
     const watch = observers[observers.length - 1];
     watch?.([{ isIntersecting: true }]);
     await waitFor(() => expect(hasFade(wrap)).toBe(false));
     watch?.([{ isIntersecting: false }]);
+    await waitFor(() => expect(hasFade(wrap)).toBe(true));
+  });
+
+  it('a 3:1 banner gets the thin fade (as in 1.0.44) once its shape is known', async () => {
+    render(
+      <Provider store={createAppStore()}>
+        <AppThemeProvider>
+          <MemoryRouter initialEntries={['/onde-onde']}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AppThemeProvider>
+      </Provider>,
+    );
+    const copy = await screen.findByTestId('status-bar-blur');
+    const real = screen.getAllByRole('img').find((img) => img !== copy && img.getAttribute('src'));
+    const wrap = (await screen.findByRole('navigation', { name: 'Customer' }))
+      .parentElement as Element;
+    expect(hasFade(wrap)).toBe(false);
+    loaded(real as HTMLElement, 1200, 400);
     await waitFor(() => expect(hasFade(wrap)).toBe(true));
   });
 });
