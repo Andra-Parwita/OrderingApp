@@ -120,6 +120,18 @@ describe('admin kitchen images', () => {
     expect((await menuImages(A))?.desktopBanner).toBeUndefined();
   });
 
+  it('the admin uploads a 1200 x 600 phone banner (plan 123) and a wrong shape is refused', async () => {
+    const admin = await adminToken();
+    const tall = fakePng(1200, 600, 20);
+    const reply = await put(admin, A_ID, 'phoneBanner', tall);
+    expect(reply.status).toBe(200);
+    expect((await menuImages(A))?.phoneBanner).toBe(tall);
+    const wrong = await put(admin, A_ID, 'phoneBanner', fakePng(1200, 800));
+    expect(wrong.status).toBe(400);
+    expect(parseApiError(wrong.body)?.error).toBe('image_ratio');
+    expect((await menuImages(A))?.phoneBanner).toBe(tall);
+  });
+
   it('refuses a seller, an anonymous caller and a missing kitchen', async () => {
     const admin = await adminToken();
     const seller = await sellerToken(admin);

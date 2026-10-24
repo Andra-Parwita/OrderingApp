@@ -286,6 +286,7 @@ export function SellerLayout() {
                 alt={bannerText}
                 placeholder={placeholder}
                 eager
+                anchorTall
               />
             </BannerClip>
           )}

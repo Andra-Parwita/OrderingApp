@@ -41,6 +41,32 @@ const SIZES: Record<UploadSlot, { width: number; height: number }> = {
   dishPicture: { width: 600, height: 600 },
 };
 
+/**
+ * Plan 123: the phone banner may also be 2:1 (1200 x 600). Its bottom 3:1 is the banner everyone sees; the top
+ * 200 px shows only behind the clock in the iPhone home-screen app. `slotSpec` stays the wide (3:1) shape.
+ */
+export const PHONE_BANNER_TALL: Readonly<{ width: number; height: number }> = {
+  width: 1200,
+  height: 600,
+};
+
+/** Every shape a slot accepts (each within the same tolerance); the first is the slot's usual one. */
+export function slotShapes(
+  slot: UploadSlot,
+): ReadonlyArray<Readonly<{ width: number; height: number }>> {
+  const { width, height } = SIZES[slot];
+  return slot === 'phoneBanner' ? [{ width, height }, PHONE_BANNER_TALL] : [{ width, height }];
+}
+
+/**
+ * Whether a phone banner picture of this pixel size is the tall (2:1) kind: about 2:1, not about 3:1.
+ * Anything else (a 3:1 banner, the wide desktop banner used as a fallback) is shown as it always was.
+ */
+export function isTallPhoneBanner(width: number, height: number): boolean {
+  const ratio = width / height;
+  return ratio >= 1.5 && ratio < 2.5;
+}
+
 /** Target size of a slot, so the screen can resize before uploading. */
 export function slotSpec(slot: UploadSlot): SlotSpec {
   const { width, height } = SIZES[slot];
@@ -150,12 +176,12 @@ export type ImageCheck =
 
 /**
  * Checks an upload for a slot: a base64 data URL of jpeg, png or webp, at most 600 KB, whose
- * header size has the slot's aspect ratio within 5%. The client resizes first (slotSpec).
+ * header size has one of the slot's aspect ratios within 5%. The client resizes first (slotSpec).
  */
 export function checkImageUpload(slot: UploadSlot, dataUrl: unknown): ImageCheck {
   if (typeof dataUrl !== 'string') return { ok: false, error: 'image_type' };
   // Cheap size guard before the regex and the decode (base64 is 4/3 of the bytes).
-  const { ratio, maxKB } = slotSpec(slot);
+  const { maxKB } = slotSpec(slot);
   if (dataUrl.length > Math.ceil(((maxKB * 1024) / 3) * 4) + 64) {
     return { ok: false, error: 'image_too_big' };
   }
@@ -172,8 +198,12 @@ export function checkImageUpload(slot: UploadSlot, dataUrl: unknown): ImageCheck
   if (bytes.length > maxKB * 1024) return { ok: false, error: 'image_too_big' };
   const size = readImageSize(bytes, mime);
   if (!size) return { ok: false, error: 'image_type' };
-  if (Math.abs(size.width / size.height - ratio) / ratio > RATIO_TOLERANCE) {
-    return { ok: false, error: 'image_ratio' };
-  }
+  const fits = slotShapes(slot).some(
+    (shape) =>
+      Math.abs(size.width / size.height - shape.width / shape.height) /
+        (shape.width / shape.height) <=
+      RATIO_TOLERANCE,
+  );
+  if (!fits) return { ok: false, error: 'image_ratio' };
   return { ok: true, mime, bytes: bytes.length, ...size };
 }

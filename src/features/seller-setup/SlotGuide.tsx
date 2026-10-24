@@ -5,10 +5,13 @@ import type { ImageSlot } from '../../../shared/imageSlots';
 import { Button, SlideOver } from '../../ui';
 import { SETUP_NS } from './i18n/register';
 
-/** The zone template picture of each slot, served from public/guides. */
+/**
+ * The zone template picture of each slot, served from public/guides. The phone banner's is the tall 1200 x 600 one
+ * (plan 123): it shows both zones, and a seller can download it as the template.
+ */
 export const GUIDE_TEMPLATES: Record<ImageSlot, string> = {
   desktopBanner: '/guides/template-desktop-banner.png',
-  phoneBanner: '/guides/template-phone-banner.png',
+  phoneBanner: '/guides/template-phone-banner-tall.svg',
   railImage: '/guides/template-rail-image.png',
   railIcon: '/guides/template-rail-icon.png',
   bannerBackgroundImage: '/guides/template-banner-background.png',
@@ -73,7 +76,15 @@ export function SlotGuide({ slot, name }: Props) {
         >
           <Content>
             <Title>{name}</Title>
-            <Template src={src} alt={t('images.help.templateAlt', { name })} />
+            <Template
+              src={src}
+              alt={t(
+                slot === 'phoneBanner' ? 'images.help.templateAltTall' : 'images.help.templateAlt',
+                {
+                  name,
+                },
+              )}
+            />
             <Lines>
               {lines.map((line) => (
                 <li key={line}>{line}</li>

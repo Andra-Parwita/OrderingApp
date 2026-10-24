@@ -1,4 +1,10 @@
-import { RATIO_TOLERANCE, slotAimKB, slotSpec, type UploadSlot } from '../../shared/imageSlots';
+import {
+  RATIO_TOLERANCE,
+  slotAimKB,
+  slotShapes,
+  slotSpec,
+  type UploadSlot,
+} from '../../shared/imageSlots';
 
 export type ResizeResult = {
   /** Exactly the slot's size, already small enough to upload. */
@@ -53,7 +59,8 @@ function hasTransparency(context: CanvasRenderingContext2D, width: number, heigh
  * Draws the picture at the slot's exact size and encodes it under the size limit: JPEG with the
  * quality stepped down, or PNG for a small icon that has see-through parts. A picture whose shape
  * is more than 5% off is fitted whole inside (never cropped), on `background`. A dish picture
- * (plan 067) is the exception: it is centre-cropped to a square and aimed at about 100 KB. The
+ * (plan 067) is the exception: it is centre-cropped to a square and aimed at about 100 KB. A phone banner
+ * keeps its shape, 1200 x 400 or 1200 x 600 (plan 123). The
  * phone banner is also aimed at about 100 KB (`slotAimKB`), the server's cap stays 600 KB.
  */
 export const resizeImage: ResizeFn = async (file, slot, background) => {
@@ -63,7 +70,19 @@ export const resizeImage: ResizeFn = async (file, slot, background) => {
   const sh = img.naturalHeight;
   if (sw === 0 || sh === 0) throw new ImageReadError('image_type');
 
-  const spec = slotSpec(slot);
+  // A slot with two shapes (the phone banner, plan 123) keeps the one the picture is closest to; a picture that
+  // matches neither is fitted into the slot's usual shape.
+  const usual = slotSpec(slot);
+  const fitsShape = (shape: { width: number; height: number }) =>
+    Math.abs(sw / sh - shape.width / shape.height) / (shape.width / shape.height) <=
+    RATIO_TOLERANCE;
+  const shape = slotShapes(slot).find(fitsShape) ?? usual;
+  const spec = {
+    ...usual,
+    width: shape.width,
+    height: shape.height,
+    ratio: shape.width / shape.height,
+  };
   const canvas = document.createElement('canvas');
   canvas.width = spec.width;
   canvas.height = spec.height;

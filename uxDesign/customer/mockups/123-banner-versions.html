@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banner versions on iPhone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .lead { color: var(--mute); margin: 0 0 20px; max-width: 80ch; }
+  h2 { font-size: 1.1rem; margin: 28px 0 10px; }
+  h2 small { font-weight: 400; color: var(--mute); }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+  figure { margin: 0; }
+  figcaption { font-size: .85rem; color: var(--mute); margin-top: 6px; }
+  figcaption b { color: var(--ink); }
+  .phone { width: 100%; max-width: 380px; border: 4px solid #0d0d0d; border-radius: 46px; overflow: hidden; position: relative; background: #f6f2e8; container-type: inline-size; }
+  .screen { position: relative; }
+  .clip { position: relative; overflow: hidden; }
+  .clip img { position: absolute; left: 0; width: 100%; display: block; }
+  .sb { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; color: #fff; font: 600 4cqw -apple-system, 'SF Pro Text', system-ui, sans-serif; z-index: 3; }
+  .sb .l, .sb .r { flex: 1; display: flex; justify-content: center; align-items: center; gap: 1.2cqw; }
+  .icons svg { height: 3cqw; width: auto; display: block; }
+  .island { position: absolute; left: 50%; transform: translateX(-50%); background: #000; z-index: 4; }
+  .body { padding: 4cqw 4.5cqw 6cqw; color: #1c1f1a; }
+  .body h3 { margin: 0; font-size: 6cqw; }
+  .body p { margin: 1cqw 0 0; font-size: 3.6cqw; color: #5d6358; }
+  .tabs { display: flex; gap: 4cqw; margin-top: 3cqw; font-size: 3.4cqw; color: #5d6358; }
+  .tabs b { color: #1c1f1a; border-bottom: 2px solid #2f6b4f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DellaVee tall banner: 3 versions on iPhone</h1>
+  <p class="lead">Each version on an iPhone 16 Pro Max and an iPhone 16 (Dynamic Island) and an iPhone 13 (notch), in the installed app. The status bar (time, island or notch, icons) is drawn here only for the preview; iOS draws it live. Browsers and Android show only the bottom 1200 × 400.</p>
+  <div id="out"></div>
+</div>
+<script>
+const VERSIONS = [
+  ['enchanted', '1 · Enchanted', 'recommended: calm dark leaves behind the time and the battery'],
+  ['magical', '2 · Magical', 'the pill sits inside the glowing swirl; lanterns near the battery'],
+  ['first', '3 · First version', 'temple roof and sunset, calmer and plainer'],
+];
+// width (pt), status-bar height (pt), cutout: island {top,w,h} or notch {w,h}
+const PHONES = [
+  { name: 'iPhone 16 Pro Max', w: 440, sat: 62, island: { top: 11, w: 126, h: 37 } },
+  { name: 'iPhone 16', w: 393, sat: 59, island: { top: 11, w: 126, h: 37 } },
+  { name: 'iPhone 13 (notch)', w: 390, sat: 47, notch: { w: 162, h: 32 } },
+];
+const icons = `<span class="icons" style="display:flex;gap:1.2cqw;align-items:center">
+<svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx=".6" fill="#fff"/><rect x="5" y="6" width="3" height="6" rx=".6" fill="#fff"/><rect x="10" y="3" width="3" height="9" rx=".6" fill="#fff"/><rect x="15" y="0" width="3" height="12" rx=".6" fill="#fff"/></svg>
+<svg viewBox="0 0 16 12"><path d="M8 11.5 5.6 9a3.4 3.4 0 0 1 4.8 0z M3.4 6.8a6.5 6.5 0 0 1 9.2 0l-1.4 1.4a4.5 4.5 0 0 0-6.4 0z M1.1 4.5a9.8 9.8 0 0 1 13.8 0l-1.4 1.4a7.8 7.8 0 0 0-11 0z" fill="#fff"/></svg>
+<svg viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="#fff" opacity=".5"/><rect x="2" y="2" width="17" height="9" rx="2" fill="#fff"/><rect x="24.5" y="4.5" width="1.6" height="4" rx=".8" fill="#fff" opacity=".5"/></svg></span>`;
+const out = document.getElementById('out');
+for (const [file, title, note] of VERSIONS) {
+  const h = document.createElement('h2');
+  h.innerHTML = `${title} <small>· ${note}</small>`;
+  out.appendChild(h);
+  const row = document.createElement('div'); row.className = 'row';
+  for (const p of PHONES) {
+    const u = 100 / p.w;                 // 1 pt in cqw
+    const strip = p.sat * u, banner = 100 / 3, topPart = 100 / 6;
+    const cut = p.island
+      ? `<div class="island" style="top:${p.island.top * u}cqw;width:${p.island.w * u}cqw;height:${p.island.h * u}cqw;border-radius:${p.island.h * u / 2}cqw"></div>`
+      : `<div class="island" style="top:0;width:${p.notch.w * u}cqw;height:${p.notch.h * u}cqw;border-radius:0 0 ${4 * u * 4}cqw ${4 * u * 4}cqw"></div>`;
+    const cw = p.island ? p.island.w : p.notch.w;
+    const fig = document.createElement('figure');
+    fig.innerHTML = `<div class="phone"><div class="screen">
+      <div class="clip" style="height:${strip + banner}cqw"><img src="../../../temp/banner-versions/${file}.jpg" style="top:${strip - topPart}cqw" alt=""></div>
+      <div class="sb" style="height:${strip}cqw;padding-top:${p.island ? 0 : 0.5}cqw"><span class="l">9:41</span><span style="width:${cw * u}cqw"></span><span class="r">${icons}</span></div>
+      ${cut}
+      <div class="body"><h3>DellaVee</h3><p>Menu for Sat 31 Oct · pickup or delivery</p><div class="tabs"><b>Menu</b><span>My orders</span><span>Settings</span></div></div>
+    </div></div><figcaption><b>${p.name}</b> · shows the bottom ${Math.round(p.sat / p.w * 1200)} px of the top 200 px</figcaption>`;
+    row.appendChild(fig);
+  }
+  out.appendChild(row);
+}
+</script>
+</body>
+</html>

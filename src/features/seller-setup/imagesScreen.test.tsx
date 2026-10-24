@@ -40,7 +40,7 @@ describe('ImagesScreen', () => {
     }
     const types = 'JPEG, PNG or WebP · up to 600 KB';
     for (const line of [
-      /^1200 × 400 px · keep faces and the logo in the middle 1080 × 340 px · /,
+      /^1200 × 400, or 1200 × 600 for the iPhone app top · /,
       /^1200 × 600 px · keep faces and the logo in the middle 1000 × 500 px · /,
       /^512 × 512 px · keep the mark in the middle 410 × 410 · square, no transparency, no rounded corners · /,
       /^1280 × 256 px · JPEG/,
@@ -117,6 +117,58 @@ describe('ImagesScreen', () => {
     pick('Phone banner');
     fireEvent.click(await screen.findByRole('button', { name: 'Use this picture' }));
     await waitFor(async () => expect((await mockStore.getImages()).phoneBanner).toBe(dataUrl));
+  });
+
+  it('takes a 2:1 phone banner with no different-shape sheet, and shows the new hint and guide', async () => {
+    const dataUrl = fakePng(1200, 600, 5);
+    const resize = vi.fn<ResizeFn>().mockResolvedValue({
+      dataUrl,
+      offRatio: false,
+      sourceWidth: 2400,
+      sourceHeight: 1200,
+    });
+    await renderImages(resize);
+    pick('Phone banner');
+    await waitFor(async () => expect((await mockStore.getImages()).phoneBanner).toBe(dataUrl));
+    expect(screen.queryByText('This picture is a different shape')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Use this picture' })).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/^1200 × 400, or 1200 × 600 for the iPhone app top · JPEG/),
+    ).toBeInTheDocument();
+
+    const buttons = screen.getAllByRole('button', { name: 'How to make this picture' });
+    fireEvent.click(buttons[1] as HTMLElement);
+    const dialog = screen.getByRole('dialog', { name: /How to make: Phone banner/ });
+    expect(within(dialog).getByRole('img')).toHaveAttribute(
+      'src',
+      '/guides/template-phone-banner-tall.svg',
+    );
+    expect(within(dialog).getByRole('link', { name: 'Download template' })).toHaveAttribute(
+      'download',
+      'template-phone-banner-tall.svg',
+    );
+    for (const line of [
+      /^Bottom 1200 × 400: the banner everyone sees\./,
+      /^Optional top 200 px \(1200 × 600 in total\): shown only in the iPhone app, behind the clock\./,
+      /^Keep the area of the time, camera and battery calm and fairly dark/,
+    ]) {
+      expect(within(dialog).getByText(line)).toBeInTheDocument();
+    }
+  });
+
+  it('marks the seam on a saved tall banner, and none on a 3:1 one', async () => {
+    await renderImages(vi.fn());
+    const picture = within(card('Phone banner')).getByAltText('Phone banner');
+    Object.defineProperty(picture, 'naturalWidth', { value: 1200, configurable: true });
+    Object.defineProperty(picture, 'naturalHeight', { value: 400, configurable: true });
+    fireEvent.load(picture);
+    expect(screen.queryByTestId('phone-banner-seam')).not.toBeInTheDocument();
+
+    Object.defineProperty(picture, 'naturalHeight', { value: 600, configurable: true });
+    fireEvent.load(picture);
+    expect(await screen.findByTestId('phone-banner-seam')).toBeInTheDocument();
+    expect(screen.getByText('iPhone app only (behind the clock)')).toBeInTheDocument();
+    expect(screen.getByText('Everyone sees this')).toBeInTheDocument();
   });
 
   it('shows a too-big refusal from the server in plain words', async () => {
@@ -201,6 +253,24 @@ describe('ImagesScreen', () => {
       await screen.findByRole('heading', { name: 'Spanduk lebar (tablet dan komputer)' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Simpan warna dan teks' })).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /^1200 × 400, atau 1200 × 600 untuk bagian atas aplikasi iPhone · JPEG, PNG atau WebP/,
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Cara membuat gambar ini' })[1] as HTMLElement,
+    );
+    const dialog = screen.getByRole('dialog', { name: /Cara membuat: Spanduk HP/ });
+    expect(
+      within(dialog).getByText(/^Bawah 1200 × 400: banner yang dilihat semua orang/),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/^Opsional 200 px di atas \(total 1200 × 600\)/),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/^Buat area jam, kamera, dan baterai tenang/),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         /^512 × 512 px · taruh logo di tengah, 410 × 410 · persegi, .* · JPEG, PNG atau WebP · maksimal 600 KB/,

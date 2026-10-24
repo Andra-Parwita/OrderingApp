@@ -153,6 +153,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 120 | 💤 | [Instant first screen (snapshot)](120-instant-first-screen.md) | parked (owner 24 Oct): "iPhone image is enough" |
 | 121 | ✅ | [Anonymous order statistics + nudges for Remember me and notifications](121-stats-and-nudges.md) | built 24 Oct, **1.0.44 gate** (owner: in 1.0.44): nudges in My orders (Order placed unchanged); anonymous statistics in the admin app only (counts per kitchen per week, migration 0034); mock-up `uxDesign/customer/mockups/121-nudges.html` approved |
 | 122 | ✅ | [iPhone status bar: the banner runs to the top edge](122-ios-status-bar.md) | built 25 Oct for **1.0.44**: see-through status bar in the customer iPhone app; behind the clock the kitchen's banner background picture (owner "A4", `uxDesign/customer/mockups/122b-status-bar-options.html`), else a blurred copy of the banner, else the colour; always-on thin fade; no double gap. Later: taller 1200 × 570 banner |
+| 123 | 🔨 | [Taller phone banner (1200 × 600) behind the iPhone clock](123-tall-phone-banner.md) | owner 25 Oct "A": mock-up `uxDesign/customer/mockups/123-tall-banner.html` + template SVG; **1.0.44.1** built 25 Oct (scoped gate ✅: unit, e2e 16, bundle); waiting for the owner's deploy |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

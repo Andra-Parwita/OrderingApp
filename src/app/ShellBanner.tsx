@@ -117,9 +117,19 @@ export function useShellBanner(pathname: string): ShellBannerState {
   return onMenu ? { kind: 'skeleton' } : { kind: 'none' };
 }
 
-export function ShellBanner({ state }: Readonly<{ state: ShellBannerState }>) {
+export function ShellBanner({
+  state,
+  onTallInView,
+}: Readonly<{ state: ShellBannerState; onTallInView?: (inView: boolean) => void }>) {
   const lang = useLang();
   if (state.kind === 'skeleton') return <BannerSkeleton />;
   if (state.kind === 'none') return null;
-  return <KitchenBanner kitchen={state.kitchen} lang={lang} placeholder={state.kitchen.name} />;
+  return (
+    <KitchenBanner
+      kitchen={state.kitchen}
+      lang={lang}
+      placeholder={state.kitchen.name}
+      onTallInView={onTallInView}
+    />
+  );
 }

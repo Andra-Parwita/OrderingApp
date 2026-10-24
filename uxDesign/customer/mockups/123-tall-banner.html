@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tall phone banner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; --line: #e1dccf; --accent: #2f6b4f; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; --line: #2e2f29; --accent: #8cc7a8; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 32px 0 8px; }
+  .lead { color: var(--mute); margin: 0 0 16px; max-width: 75ch; }
+  /* Template */
+  .tpl { max-width: 720px; aspect-ratio: 2 / 1; position: relative; border: 1px solid var(--line); font-size: clamp(10px, 1.5vw, 14px); }
+  .tpl .top { position: absolute; left: 0; right: 0; top: 0; height: 33.333%; background: repeating-linear-gradient(135deg, #d9e4ec 0 12px, #cfdbe5 12px 24px); color: #233443; }
+  .tpl .hide { position: absolute; left: 0; right: 0; top: 0; height: 2.5%; background: rgba(160,40,40,.25); }
+  .tpl .hide2 { position: absolute; left: 0; right: 0; top: 0; height: 9.2%; border-bottom: 1px dashed #a03030; }
+  .tpl .bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 66.667%; background: #efe4cf; color: #3d2f17; border-top: 2px solid #1d1d1d; }
+  .tpl .lbl { position: absolute; left: 2.5%; right: 30%; top: 55%; transform: translateY(-50%); line-height: 1.35; }
+  .tpl .lbl b { display: block; font-size: 1.15em; }
+  .tpl .dim { position: absolute; right: 1.5%; font-size: .85em; color: #555; }
+  .tpl .seam { position: absolute; right: 1.5%; top: 33.333%; transform: translateY(-120%); font-weight: 700; font-size: .85em; }
+  .tpl .note { position: absolute; right: 1.5%; top: 0; line-height: 1; padding-top: .2em; font-size: .8em; color: #8a2020; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 20px; }
+  figure { margin: 0; }
+  figcaption { font-size: .88rem; margin-top: 8px; color: var(--mute); }
+  figcaption b { display: block; color: var(--ink); }
+  .phone { width: 100%; max-width: 300px; aspect-ratio: 440 / 330; border: 3px solid #0d0d0d; border-radius: 30px; overflow: hidden; position: relative; background: #f6f2e8; container-type: inline-size; }
+  .island { position: absolute; top: 2.6cqw; left: 50%; transform: translateX(-50%); width: 28cqw; height: 8cqw; background: #000; border-radius: 6cqw; z-index: 4; }
+  .bar { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 7cqw; color: #fff; font-weight: 600; font-size: 3.6cqw; z-index: 3; }
+  .fade { position: absolute; top: 0; left: 0; right: 0; z-index: 2; background: linear-gradient(rgba(20,17,12,.55), rgba(20,17,12,.4) 50%, rgba(20,17,12,0)); }
+  .clip { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; }
+  .pic { position: absolute; left: 0; right: 0; }
+  .pic .t { height: 33.333%; background-size: cover; background-position: center bottom; }
+  .pic .b { height: 66.667%; background-size: cover; background-position: center; }
+  .body { position: absolute; left: 0; right: 0; padding: 4cqw 4.5cqw; color: #1c1f1a; }
+  .body h3 { margin: 0; font-size: 6cqw; }
+  .body p { margin: 1cqw 0 0; color: #5d6358; font-size: 3.6cqw; }
+  .standin { position: absolute; left: 2cqw; z-index: 5; font-size: 2.6cqw; background: rgba(255,255,255,.85); color: #222; padding: .6cqw 1.6cqw; border-radius: 2cqw; }
+  .android .bar { background: #2b2b26; position: absolute; color: #fff; }
+  ul { color: var(--mute); max-width: 80ch; }
+  li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tall phone banner: 1200 × 600</h1>
+  <p class="lead">The new banner size and how it shows. Bottom 1200 × 400 is today's banner; the top 200 px fills the area behind the clock, only in the iPhone app.</p>
+
+  <h2>1 · The template (1200 × 600 px)</h2>
+  <div class="tpl">
+    <div class="top"><div class="lbl"><b>Top 200 px · background only</b>sky, wall, wood, leaves, pattern · no text, logo, faces or food</div></div>
+    <div class="hide"></div><div class="hide2"></div>
+    <div class="note">may be hidden on smaller iPhones (top ~55 px)</div>
+    <div class="seam">seam ↓ at 200 px</div>
+    <div class="bottom"><div class="lbl"><b>Bottom 1200 × 400 · the banner everyone sees</b>name, logo, faces, food · browsers, Android, tablet, iPhone</div></div>
+  </div>
+  <ul>
+    <li>iPhones show the top strip from the seam upward: about 145 px (iPhone 12–14), 165–185 px (iPhone 15 / 16 / Pro / Pro Max).</li>
+    <li>A soft dark fade sits on the strip behind the clock, so the white time stays readable. Calm colours work best.</li>
+    <li>JPEG; the app shrinks it to about 100 KB.</li>
+  </ul>
+
+  <h2>2 · How it looks (stand-in top part: the kitchen's current background picture, until the new pictures are made)</h2>
+  <div class="grid" id="frames"></div>
+</div>
+<script>
+const K = {
+  DellaVee: { b: 'https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg', t: 'https://order.shaggybobo.app/images/sellers/seller-dellavee/bannerBackgroundImage-7baa1e24ee4c1efe.jpg', date: 'Sat 31 Oct' },
+  'Onde Onde': { b: 'https://order.shaggybobo.app/images/sellers/seller-ondeonde/phoneBanner-f63d20c0447b5c83.jpg', t: 'https://order.shaggybobo.app/images/sellers/seller-ondeonde/bannerBackgroundImage-336f7cb669826ea5.jpg', date: 'Sat 31 Oct' },
+};
+// width in points, status-bar height in points, label
+const PHONES = [
+  { w: 440, sat: 62, name: 'iPhone 16 Pro Max (app)' },
+  { w: 390, sat: 47, name: 'iPhone 13 (app)' },
+  { w: 412, sat: 0, name: 'Android or any browser' },
+];
+const frames = document.getElementById('frames');
+for (const [kitchen, k] of Object.entries(K)) {
+  for (const p of PHONES) {
+    const u = 100 / p.w;               // 1 point in cqw
+    const strip = p.sat * u;           // strip height (cqw)
+    const bannerH = 100 / 3;           // bottom part height (cqw)
+    const topH = 100 / 6;              // full top part height (cqw)
+    const picTop = strip - topH;       // anchor the seam right under the strip
+    const fig = document.createElement('figure');
+    fig.innerHTML = `
+      <div class="phone ${p.sat ? '' : 'android'}">
+        ${p.sat ? `<div class="island"></div>` : ''}
+        <div class="bar" style="height:${p.sat ? strip : 6}cqw;${p.sat ? '' : 'background:#2b2b26'}"><span>9:41</span><span>●●● ▮</span></div>
+        ${p.sat ? `<div class="fade" style="height:${strip}cqw"></div>` : ''}
+        <div class="clip" style="top:${p.sat ? 0 : 6}cqw;height:${(p.sat ? strip : 0) + bannerH}cqw">
+          <div class="pic" style="top:${p.sat ? picTop : -topH}cqw;height:${topH + bannerH}cqw">
+            <div class="t" style="background-image:url('${k.t}')"></div>
+            <div class="b" style="background-image:url('${k.b}')"></div>
+          </div>
+        </div>
+        ${p.sat ? `<div class="standin" style="top:${strip - 4}cqw">stand-in top part</div>` : ''}
+        <div class="body" style="top:${(p.sat ? strip : 6) + bannerH}cqw"><h3>${kitchen}</h3><p>Menu for ${k.date}</p></div>
+      </div>
+      <figcaption><b>${kitchen} · ${p.name}</b>${p.sat ? `shows the bottom ${Math.round(p.sat / p.w * 1200)} px of the top 200 px` : 'top part hidden; the banner looks exactly as today'}</figcaption>`;
+    frames.appendChild(fig);
+  }
+}
+</script>
+</body>
+</html>

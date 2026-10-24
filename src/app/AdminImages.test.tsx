@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { pngFor } from '../../mocks/images';
+import { fakePng, pngFor } from '../../mocks/images';
 import { browserPasskeys } from '../../mocks/browserPasskeys';
 import { clearCookies, installCookieJar } from '../../mocks/cookieJar';
 import { DEV_ADMIN_SETUP_KEY, mockStores } from '../../mocks/handlers';
@@ -83,7 +83,7 @@ describe('the admin sets the images of a kitchen (plan 041)', () => {
     expect(
       within(region).getAllByRole('button', { name: 'How to make this picture' }),
     ).toHaveLength(5);
-    expect(within(region).getAllByText(/ px · /).length).toBeGreaterThanOrEqual(5);
+    expect(within(region).getAllByText(/ · JPEG, PNG or WebP/).length).toBeGreaterThanOrEqual(5);
 
     fireEvent.change(within(region).getByLabelText('Choose a picture for Phone banner'), {
       target: { files: [new File(['x'], 'p.png', { type: 'image/png' })] },
@@ -94,6 +94,51 @@ describe('the admin sets the images of a kitchen (plan 041)', () => {
     expect(
       (await (await mockStores.sellerById('seller-onde-onde'))?.getImages())?.phoneBanner,
     ).toBe(dataUrl);
+  });
+
+  it('the admin editor takes a 2:1 phone banner with no different-shape sheet, with the new hint and guide', async () => {
+    const dataUrl = fakePng(1200, 600, 9);
+    const resize = vi.fn<ResizeFn>().mockResolvedValue({
+      dataUrl,
+      offRatio: false,
+      sourceWidth: 2400,
+      sourceHeight: 1200,
+    });
+    render(
+      <AppThemeProvider>
+        <AdminHomeScreen images={(id) => <AdminKitchenImages sellerId={id} resize={resize} />} />
+      </AppThemeProvider>,
+    );
+    const sellers = await screen.findByRole('list', { name: 'Sellers' });
+    fireEvent.click(within(sellers).getByRole('button', { name: /Onde Onde/ }));
+    const region = await screen.findByRole('dialog', { name: 'Onde Onde' });
+    fireEvent.click(within(region).getByRole('tab', { name: 'Settings' }));
+    await within(region).findByRole('heading', { name: 'Phone banner' });
+    expect(
+      within(region).getByText(/^1200 × 400, or 1200 × 600 for the iPhone app top · JPEG/),
+    ).toBeInTheDocument();
+
+    fireEvent.change(within(region).getByLabelText('Choose a picture for Phone banner'), {
+      target: { files: [new File(['x'], 'p.png', { type: 'image/png' })] },
+    });
+    await waitFor(async () =>
+      expect(
+        (await (await mockStores.sellerById('seller-onde-onde'))?.getImages())?.phoneBanner,
+      ).toBe(dataUrl),
+    );
+    expect(within(region).queryByText('This picture is a different shape')).toBeNull();
+
+    fireEvent.click(
+      within(region).getAllByRole('button', { name: 'How to make this picture' })[1] as HTMLElement,
+    );
+    const guide = await screen.findByRole('dialog', { name: /How to make: Phone banner/ });
+    expect(within(guide).getByRole('img')).toHaveAttribute(
+      'src',
+      '/guides/template-phone-banner-tall.svg',
+    );
+    expect(
+      within(guide).getByText(/^Optional top 200 px \(1200 × 600 in total\)/),
+    ).toBeInTheDocument();
   });
 
   it('the real admin route puts the Images editor in the Settings tab', async () => {

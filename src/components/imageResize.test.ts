@@ -44,6 +44,47 @@ afterEach(() => {
 const photo = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
 const kbOf = (dataUrl: string) => ((dataUrl.length - dataUrl.indexOf(',') - 1) * 3) / 4 / 1024;
 
+describe('resizeImage keeps the phone banner shape (plan 123)', () => {
+  const sizes: Array<number> = [];
+  beforeEach(() => {
+    sizes.length = 0;
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockImplementation(function (
+      this: HTMLCanvasElement,
+    ) {
+      sizes.push(this.width, this.height);
+      return dataUrlOfKB(50);
+    });
+  });
+  const pictureOf = (width: number, height: number) => {
+    vi.stubGlobal(
+      'Image',
+      class extends FakeImage {
+        override naturalWidth = width;
+        override naturalHeight = height;
+      },
+    );
+  };
+
+  it('a 3:1 picture becomes 1200 x 400, a 2:1 one 1200 x 600, neither is "a different shape"', async () => {
+    pictureOf(2400, 800);
+    const wide = await resizeImage(photo, 'phoneBanner', '#ffffff');
+    expect(wide.offRatio).toBe(false);
+    expect(sizes.slice(0, 2)).toEqual([1200, 400]);
+    sizes.length = 0;
+    pictureOf(2400, 1200);
+    const tall = await resizeImage(photo, 'phoneBanner', '#ffffff');
+    expect(tall.offRatio).toBe(false);
+    expect(sizes.slice(0, 2)).toEqual([1200, 600]);
+  });
+
+  it('another shape is still fitted into 1200 x 400 and flagged', async () => {
+    pictureOf(1200, 800);
+    const result = await resizeImage(photo, 'phoneBanner', '#ffffff');
+    expect(result.offRatio).toBe(true);
+    expect(sizes.slice(0, 2)).toEqual([1200, 400]);
+  });
+});
+
 describe('resizeImage targets', () => {
   it('steps the phone banner down until it is about 100 KB, not the 600 KB cap', async () => {
     sizeAtQuality = (quality) => quality * 247.5; // 0.92 -> 227 KB (DellaVee), 0.4 -> 99 KB

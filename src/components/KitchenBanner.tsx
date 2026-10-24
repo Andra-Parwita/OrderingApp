@@ -1,16 +1,30 @@
-import { createContext, useContext, useLayoutEffect, useRef, useState } from 'react';
-import { styled } from 'styled-components';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from 'react';
+import { css, styled } from 'styled-components';
 import type { Kitchen, Language } from '../../shared/domain';
 import { bannerAlt, phoneBannerSrc } from '../../shared/kitchenImages';
 import { ImageSlot } from '../ui';
 import { bandPicture, bannerFade, blurBand, blurImage } from './statusBarFade';
 
-const BannerTop = styled.div<{ $background?: string }>`
+// A tall (2:1) banner (plan 123) has no fade: its own top part runs behind the clock, as drawn.
+const tallTop = css`
+  position: relative;
+`;
+const BannerTop = styled.div<{ $background?: string; $tall: boolean }>`
   /* The safe-area band (0 px except in an iPhone home-screen app, plan 122) carries the picture's colour,
-     and, once loaded, the kitchen's background picture or a blurred copy of the banner (BandPictures). */
+     and, once loaded, the kitchen's background picture or a blurred copy of the banner (BandPictures). A tall
+     banner's picture reaches up over it instead (plan 123). */
   padding-top: var(--sat);
   background: ${({ theme, $background }) => $background ?? theme.c.surf2};
-  ${bannerFade}
+  ${({ $tall }) => ($tall ? tallTop : bannerFade)}
 `;
 const Band = styled.div`
   ${blurBand}
@@ -112,17 +126,63 @@ function BandPictures({
  */
 export const ShellOwnsBanner = createContext(false);
 
-/** The kitchen's banner picture, on top of the customer pages (Menu, My orders, Settings). */
+/**
+ * Tells the shell whether the thin page fade (plan 122) must stay off: true while a tall banner is in view, so
+ * the fade never darkens it (plan 123). Without IntersectionObserver the banner counts as in view.
+ */
+function useTallBannerInView(
+  box: RefObject<HTMLDivElement | null>,
+  tall: boolean,
+  report: ((inView: boolean) => void) | undefined,
+) {
+  useEffect(() => {
+    if (!report || !tall) return;
+    const element = box.current;
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      report(true);
+      return () => report(false);
+    }
+    const observer = new IntersectionObserver((entries) => {
+      const last = entries[entries.length - 1];
+      if (last) report(last.isIntersecting);
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      report(false);
+    };
+  }, [box, tall, report]);
+}
+
+/**
+ * The kitchen's banner picture, on top of the customer pages (Menu, My orders, Settings).
+ *
+ * A tall (2:1, plan 123) picture shows only its bottom 3:1 here, like any banner; in the iPhone home-screen app it
+ * reaches up over the safe-area band, one image, no blur and no fade. `onTallInView` tells the shell while that
+ * tall banner is on screen.
+ */
 export function KitchenBanner({
   kitchen,
   lang,
   placeholder,
-}: Readonly<{ kitchen: Kitchen; lang: Language; placeholder: string }>) {
+  onTallInView,
+}: Readonly<{
+  kitchen: Kitchen;
+  lang: Language;
+  placeholder: string;
+  onTallInView?: (inView: boolean) => void;
+}>) {
   const shellOwns = useContext(ShellOwnsBanner);
-  if (shellOwns) return null;
   const src = phoneBannerSrc(kitchen.images) ?? kitchen.bannerImageUrl;
+  // The address of the banner found to be tall; a new picture starts again as not tall.
+  const [tallSrc, setTallSrc] = useState<string | undefined>(undefined);
+  const tall = src !== undefined && tallSrc === src;
+  const onTall = useCallback((isTall: boolean) => setTallSrc(isTall ? src : undefined), [src]);
+  const boxRef = useRef<HTMLDivElement>(null);
+  useTallBannerInView(boxRef, tall && !shellOwns, onTallInView);
+  if (shellOwns) return null;
   return (
-    <BannerTop $background={kitchen.images?.bannerBackground}>
+    <BannerTop ref={boxRef} $background={kitchen.images?.bannerBackground} $tall={tall}>
       <ImageSlot
         aspectRatio="3 / 1"
         background={kitchen.images?.bannerBackground}
@@ -131,13 +191,18 @@ export function KitchenBanner({
         placeholder={placeholder}
         eager
         reveal
+        anchorTall
+        intoSafeArea
+        onTall={onTall}
       />
       {/* After the picture in the page order (the picture comes first for readers); it paints in the safe-area band above it. */}
-      <BandPictures
-        key={kitchen.images?.bannerBackgroundImage ?? ''}
-        src={src}
-        backgroundSrc={kitchen.images?.bannerBackgroundImage}
-      />
+      {tall ? null : (
+        <BandPictures
+          key={kitchen.images?.bannerBackgroundImage ?? ''}
+          src={src}
+          backgroundSrc={kitchen.images?.bannerBackgroundImage}
+        />
+      )}
     </BannerTop>
   );
 }

@@ -9,6 +9,7 @@ import { lastKitchen } from '../api/device/lastKitchen';
 import { cssUrl } from '../components/cssUrl';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { useMediaQuery } from '../components/useMediaQuery';
+import { useTallPicture, type PictureShape } from '../ui';
 import { BrandLogo } from './BrandLogo';
 import { BrandColumn, BrandFootLine, type BrandPage } from './BrandPanel';
 import { SPLIT_QUERY } from './layout';
@@ -62,8 +63,10 @@ const Panel = styled.div<{
   $split: boolean;
   $background?: string | undefined;
   $image?: string | undefined;
+  $tall: boolean;
 }>`
   box-sizing: border-box;
+  ${({ $tall }) => ($tall ? 'container-type: size;' : '')}
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,11 +79,23 @@ const Panel = styled.div<{
       ? `background-image: ${cssUrl($image)}; background-size: cover; background-position: center;`
       : ''}
 `;
-const Picture = styled.img`
+// A tall (2:1, plan 123) banner shows only its bottom 3:1, as large as fits the panel (like `contain` does for a
+// 3:1 one): the frame is a 3:1 box of at most the panel's width and height (container units), the picture
+// cover-fitted to it from the bottom. The picture stays invisible until its shape is known.
+const PictureFrame = styled.div<{ $tall: boolean }>`
+  position: relative;
+  ${({ $tall }) =>
+    $tall
+      ? 'width: min(100cqw, 300cqh); aspect-ratio: 3 / 1; overflow: hidden;'
+      : 'width: 100%; height: 100%;'}
+`;
+const Picture = styled.img<{ $shape: PictureShape }>`
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: ${({ $shape }) => ($shape === 'tall' ? 'cover' : 'contain')};
+  ${({ $shape }) => ($shape === 'tall' ? 'object-position: center bottom;' : '')}
+  ${({ $shape }) => ($shape === 'unknown' ? 'opacity: 0;' : '')}
 `;
 const Name = styled.p`
   margin: 0;
@@ -183,6 +198,8 @@ export function SignInFrame({
   const backgroundImage = picture ? kitchen?.images?.bannerBackgroundImage : undefined;
   const name = kitchen?.name ?? kitchenName ?? '';
   const logo = kitchen?.images?.railIcon;
+  const { ref: pictureRef, shape: pictureShape, read: readShape } = useTallPicture();
+  const tall = pictureShape === 'tall';
   return (
     <Split $split={split}>
       {shown ? (
@@ -192,9 +209,18 @@ export function SignInFrame({
           </BrandSide>
         ) : null
       ) : (
-        <Panel $split={split} $background={background} $image={backgroundImage}>
+        <Panel $split={split} $background={background} $image={backgroundImage} $tall={tall}>
           {picture && kitchen ? (
-            <Picture src={picture} alt={bannerAlt(kitchen, lang)} />
+            <PictureFrame $tall={tall}>
+              <Picture
+                key={picture}
+                ref={pictureRef}
+                src={picture}
+                alt={bannerAlt(kitchen, lang)}
+                $shape={pictureShape}
+                onLoad={readShape}
+              />
+            </PictureFrame>
           ) : (
             <Name>{APP_NAME}</Name>
           )}

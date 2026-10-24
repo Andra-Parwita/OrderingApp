@@ -54,14 +54,16 @@
       "close": "Tutup",
       "download": "Unduh templat",
       "templateAlt": "Templat untuk {{name}}: area berbingkai adalah zona aman",
+      "templateAltTall": "Templat untuk {{name}}: 200 px di atas hanya untuk aplikasi iPhone, 400 px di bawah adalah banner yang dilihat semua orang",
       "desktopBanner": [
         "Templat ini adalah gambar penuh. Taruh wajah, logo, dan teks di dalam zona tengah yang berbingkai.",
         "iPad (mendatar) menampilkan tepat zona tengah. Layar lebih lebar menampilkan lebih banyak sisi, jadi isi sisi dengan pemandangan saja.",
         "Di layar tegak, banner menjadi lebih pendek, tetapi zona tengah tidak pernah terpotong."
       ],
       "phoneBanner": [
-        "Templat ini adalah gambar penuh. Taruh wajah, logo, dan teks di dalam zona tengah yang berbingkai.",
-        "Ponsel menampilkan seluruh gambar, jadi bagian tepi juga terlihat."
+        "Bawah 1200 × 400: banner yang dilihat semua orang. Taruh wajah, logo, dan teks di sini.",
+        "Opsional 200 px di atas (total 1200 × 600): hanya tampil di aplikasi iPhone, di belakang jam. Hanya latar, tajam, tanpa teks atau wajah.",
+        "Buat area jam, kamera, dan baterai tenang dan agak gelap, agar jam putih terbaca."
       ],
       "railImage": [
         "Logo memenuhi kotaknya di menu kiri sampai ke tepi, dengan nama dapur di bawahnya.",
@@ -77,6 +79,9 @@
         "Pakai pemandangan atau pola saja, tanpa teks atau wajah."
       ]
     },
+    "specPhoneBanner": "1200 × 400, atau 1200 × 600 untuk bagian atas aplikasi iPhone · JPEG, PNG atau WebP · maksimal {{kb}} KB",
+    "tallTop": "Hanya di aplikasi iPhone (di belakang jam)",
+    "tallBottom": "Dilihat semua orang",
     "specIcon": "{{width}} × {{height}} px · taruh logo di tengah, {{keepWidth}} × {{keepHeight}} · persegi, tanpa transparansi, tanpa sudut membulat · JPEG, PNG atau WebP · maksimal {{kb}} KB",
     "altOne": "Teks gambar"
   },

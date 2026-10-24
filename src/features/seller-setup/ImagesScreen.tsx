@@ -10,6 +10,7 @@ import { isHexColour, phoneBannerSrc } from '../../../shared/kitchenImages';
 import { Button, ConfirmButton, ImageSlot as Picture, TextField, Toast } from '../../ui';
 import { ImageReadError, resizeImage, type ResizeFn, type ResizeResult } from './imageResize';
 import { SETUP_NS } from './i18n/register';
+import { PhoneBannerPicture } from './PhoneBannerPicture';
 import { SlotGuide } from './SlotGuide';
 import {
   Actions,
@@ -35,9 +36,14 @@ import {
 /** The middle area (plan 040) where faces and the logo are safe; the rail logo keeps its centre. */
 const KEEP: Partial<Record<ImageSlot, { width: number; height: number }>> = {
   desktopBanner: { width: 1896, height: 328 },
-  phoneBanner: { width: 1080, height: 340 },
   railImage: { width: 1000, height: 500 },
   railIcon: { width: 410, height: 410 },
+};
+
+/** Slots with a hint of their own (the phone banner takes two shapes, plan 123). */
+const SPEC_KEY: Partial<Record<ImageSlot, string>> = {
+  railIcon: 'images.specIcon',
+  phoneBanner: 'images.specPhoneBanner',
 };
 
 const FALLBACK_COLOUR = '#ffffff';
@@ -131,6 +137,7 @@ function Preview({ images, colour }: PreviewProps) {
             alt={alt('phoneBanner')}
             placeholder={empty}
             background={colour}
+            anchorTall
           />
         </PhoneFrame>
       </div>
@@ -235,7 +242,7 @@ export function SlotCard({
     <Card>
       <CardTitle>{name}</CardTitle>
       <Hint>
-        {t(slot === 'railIcon' ? 'images.specIcon' : keep ? 'images.specKeep' : 'images.spec', {
+        {t(SPEC_KEY[slot] ?? (keep ? 'images.specKeep' : 'images.spec'), {
           width: spec.width,
           height: spec.height,
           keepWidth: keep?.width,
@@ -247,14 +254,23 @@ export function SlotCard({
         <SlotGuide slot={slot} name={name} />
       </div>
       <div>
-        <Picture
-          aspectRatio={ratio}
-          src={src}
-          alt={name}
-          placeholder={t('images.empty')}
-          background={background}
-          width={slot === 'railIcon' ? '6rem' : slot === 'railImage' ? '14rem' : undefined}
-        />
+        {slot === 'phoneBanner' ? (
+          <PhoneBannerPicture
+            src={src}
+            alt={name}
+            background={background}
+            placeholder={t('images.empty')}
+          />
+        ) : (
+          <Picture
+            aspectRatio={ratio}
+            src={src}
+            alt={name}
+            placeholder={t('images.empty')}
+            background={background}
+            width={slot === 'railIcon' ? '6rem' : slot === 'railImage' ? '14rem' : undefined}
+          />
+        )}
       </div>
 
       {pending ? (

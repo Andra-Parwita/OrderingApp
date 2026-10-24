@@ -21,7 +21,7 @@ Today's product is deliberately small (see [overview.md](overview.md) and the [c
 **Open small items:** the 6 chef permissions from the 1.0.42 role review (ask one at a time); faster tooling ([091](../plans/091-faster-tooling.md)); Help screenshots from the live app; ~~the customer app Lottie round~~ dropped (owner 24 Oct: "we don't need animation for customer app, we will keep it simple for now", D-116); kitchens in many countries → move `shared/zone.ts` to Temporal (owner A, 16 Oct; only if we go multi-country).
 
 - **iOS-style large titles (idea, after 1.0.44; owner "A" 25 Oct):** on pages without a banner (My orders, Settings, Basket, order page) a big bold title under the see-through status bar that collapses into a small sticky title on scroll, like native iPhone apps. Mock-up first.
-- **Taller phone banner (later):** 1200 × 570 so the banner's own scene continues behind the iPhone clock (plan 122 note); today the kitchen's background picture fills that strip.
+- **Taller phone banner → 1.0.44.1 (plan 123, owner 25 Oct "A"):** 1200 × 600; the top 200 px fills the iPhone clock area; mock-up first.
 - **More languages (e.g. Tagalog):** app texts only ≈ 1 day (a third i18n set + switches); kitchen content (dish names) needs a data model change from `name_en`/`name_id` columns to any number of languages — plan with v1.1.0.
 
 ## v1.1.0: store, kinds, events (analysis only, own feature branch)

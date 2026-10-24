@@ -618,6 +618,21 @@ describe('seller setup', () => {
       ]);
     });
 
+    it('takes a 1200 x 600 phone banner (plan 123) and still refuses other shapes', async () => {
+      const tall = fakePng(1200, 600, 20);
+      const reply = await upload('phoneBanner', tall, B);
+      expect(reply.status).toBe(200);
+      expect((reply.body as { images: Record<string, string> }).images['phoneBanner']).toBe(tall);
+      expect((await publicMenu(B)).kitchen.images?.phoneBanner).toBe(tall);
+      expect(await upload('phoneBanner', fakePng(1200, 800), B)).toMatchObject(
+        ERR(400, 'image_ratio'),
+      );
+      expect(await upload('desktopBanner', fakePng(1200, 600), B)).toMatchObject(
+        ERR(400, 'image_ratio'),
+      );
+      await call('DELETE', '/api/seller/images/phoneBanner', B_);
+    });
+
     it('refuses the wrong type, shape and size, and unknown slots', async () => {
       expect(await upload('railIcon', 'data:image/gif;base64,R0lGODlh')).toMatchObject(
         ERR(400, 'image_type'),

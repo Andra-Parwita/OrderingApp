@@ -74,6 +74,14 @@ Deploy on a day with **no open DellaVee menu**. `KITCHEN_SCOPE` stays "off".
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 - Wrangler auth error 10000 → `wrangler login`.
 
+## Hotfix 1.0.44.1 = plan 123, tall phone banner (built 25 Oct, uncommitted on main)
+- Phone banner upload accepts 1200 × 400 or **1200 × 600**; everywhere only the bottom 3 : 1 shows; in the iPhone customer app the top 200 px fills the clock area, sharp, no blur, no fade (owner rulings in plan 123). Same upload in seller Settings and the admin kitchen pictures. Upload help EN/ID + template `public/guides/template-phone-banner-tall.svg`.
+- Gate (scoped): typecheck, lint, format ✅; unit 1,056 ✅; e2e 16 ✅; bundle 956 KB. Client only: no migration, no Worker change. No version bump, no release note (hotfix).
+- Known: first load on an iPhone may briefly show 1.0.44's band before the tall picture is known.
+- Pictures made 25 Oct (`D:\Projects\home\assets\`): DellaVee `DapurDellaVee_banner_1200x600.jpg`, `…_magical.jpg`, `…_enchanted.jpg` (Claude recommends enchanted); Onde Onde `OndeOnde_banner_1200x600.jpg`. Comparison `uxDesign/customer/mockups/123-banner-versions.html` (images in git-ignored `temp/banner-versions/`). Prompts: `docs/architecture/images.md`.
+- Deploy: backup → `pnpm build` → no migration → `pnpm run deploy -- --tag v1.0.44.1 --message "1.0.44.1: tall phone banner"` → health → upload the new banners → tag `v1.0.44.1` + push.
+- Unused now: `public/guides/template-phone-banner.png` (ask the owner before deleting).
+
 ## Next session
 1. Owner cleanup: the duplicate Remember me account + its unnamed passkey (keep "Indra · customer"); Onde Onde phone banner re-save if not done.
 2. Optional: a Cloudflare API token in `CLOUDFLARE_API_TOKEN` (template "Edit Cloudflare Workers" + D1 Edit) so wrangler stops asking to log in (owner runs `setx` themselves; never paste the token in chat).

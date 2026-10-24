@@ -4,7 +4,9 @@ import {
   checkImageUpload,
   IMAGE_SLOTS,
   isImageSlot,
+  isTallPhoneBanner,
   readImageSize,
+  slotShapes,
   slotAimKB,
   slotSpec,
 } from './imageSlots';
@@ -56,6 +58,45 @@ describe('readImageSize', () => {
     expect(readImageSize(data, 'image/jpeg')).toBeNull();
     expect(readImageSize(data, 'image/webp')).toBeNull();
     expect(readImageSize(new Uint8Array([1, 2, 3]), 'image/png')).toBeNull();
+  });
+});
+
+describe('the phone banner shapes (plan 123)', () => {
+  it('takes 1200 x 400 or 1200 x 600, each within 5%, and refuses other shapes', () => {
+    expect(slotShapes('phoneBanner')).toEqual([
+      { width: 1200, height: 400 },
+      { width: 1200, height: 600 },
+    ]);
+    expect(slotShapes('desktopBanner')).toHaveLength(1);
+    expect(checkImageUpload('phoneBanner', fakeJpeg(1200, 400))).toMatchObject({ ok: true });
+    expect(checkImageUpload('phoneBanner', fakeJpeg(1200, 600))).toMatchObject({
+      ok: true,
+      width: 1200,
+      height: 600,
+    });
+    expect(checkImageUpload('phoneBanner', fakePng(1200, 580))).toMatchObject({ ok: true });
+    expect(checkImageUpload('phoneBanner', fakePng(1200, 800))).toEqual({
+      ok: false,
+      error: 'image_ratio',
+    });
+    expect(checkImageUpload('phoneBanner', fakePng(1000, 1000))).toEqual({
+      ok: false,
+      error: 'image_ratio',
+    });
+  });
+
+  it('keeps 2:1 for the phone banner only (the rail image is 2:1 already, the wide banner refuses it)', () => {
+    expect(checkImageUpload('desktopBanner', fakePng(1200, 600))).toEqual({
+      ok: false,
+      error: 'image_ratio',
+    });
+    expect(checkImageUpload('railImage', fakePng(1200, 600))).toMatchObject({ ok: true });
+  });
+
+  it('knows a tall picture from its pixel size', () => {
+    expect(isTallPhoneBanner(1200, 600)).toBe(true);
+    expect(isTallPhoneBanner(1200, 400)).toBe(false);
+    expect(isTallPhoneBanner(3840, 328)).toBe(false); // the wide banner used as a fallback
   });
 });
 

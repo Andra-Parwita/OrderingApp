@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { Link, NavigationType, Outlet, useLocation, useNavigationType } from 'react-router';
@@ -86,7 +86,8 @@ const MAX_WIDTH = '30rem'; // 480 px: phone width, centred on wider screens
 // Plan 122: in an iPhone home-screen app the page runs under the status bar (--sat > 0, else 0). With a
 // banner, the banner's own safe-area band covers it; without one, the shell pads the page down by --sat.
 // Either way the shell draws one fixed thin fade behind the clock, so it reads after the banner scrolls away.
-const Wrap = styled.div<{ $tabs: boolean; $banner: boolean }>`
+// Plan 123: while a tall banner is on screen the thin fade stays off, so it never darkens the picture.
+const Wrap = styled.div<{ $tabs: boolean; $banner: boolean; $fade: boolean }>`
   --customer-tabbar-height: ${({ $tabs }) => ($tabs ? TAB_BAR_HEIGHT : '0px')};
   /* The banner above the page (plan 093): pages take it off their minimum height. */
   --customer-banner-height: ${({ $banner }) => ($banner ? SHELL_BANNER_HEIGHT : 'var(--sat)')};
@@ -95,7 +96,7 @@ const Wrap = styled.div<{ $tabs: boolean; $banner: boolean }>`
   overflow-x: clip; /* the sliding page starts off-screen */
   padding-top: ${({ $banner }) => ($banner ? '0px' : 'var(--sat)')};
   padding-bottom: var(--customer-tabbar-height);
-  ${pageFade}
+  ${({ $fade }) => ($fade ? pageFade : '')}
 `;
 const slideIn = keyframes`
   from { transform: translateX(100%); }
@@ -263,10 +264,11 @@ export function CustomerShell() {
   const banner = useShellBanner(pathname);
   const hasBanner = banner.kind !== 'none';
   useKitchenTitle(pathname, banner.kind === 'kitchen' ? banner.kitchen.name : null);
+  const [tallInView, setTallInView] = useState(false);
   return (
-    <Wrap $tabs={tabs} $banner={hasBanner}>
+    <Wrap $tabs={tabs} $banner={hasBanner} $fade={!tallInView}>
       <CustomerLiveHost />
-      <ShellBanner state={banner} />
+      <ShellBanner state={banner} onTallInView={setTallInView} />
       <Slide key={pathname} $push={navigationType === NavigationType.Push && !isRootPage(pathname)}>
         <ShellOwnsBanner.Provider value={hasBanner}>
           <Outlet />

@@ -54,14 +54,16 @@
       "close": "Close",
       "download": "Download template",
       "templateAlt": "Template for {{name}}: the framed area is the safe zone",
+      "templateAltTall": "Template for {{name}}: the top 200 px is for the iPhone app only, the bottom 400 px is the banner everyone sees",
       "desktopBanner": [
         "The template is the full picture. Put faces, the logo and text inside the framed middle zone.",
         "iPad (landscape) shows exactly the middle zone. Wider screens show more of the sides, so keep the sides as scenery only.",
         "On a portrait screen the banner gets shorter, but the middle zone is never cut."
       ],
       "phoneBanner": [
-        "The template is the full picture. Put faces, the logo and text inside the framed middle zone.",
-        "Phones show the whole picture, so the edges are seen too."
+        "Bottom 1200 × 400: the banner everyone sees. Put faces, the logo and text here.",
+        "Optional top 200 px (1200 × 600 in total): shown only in the iPhone app, behind the clock. Background only, sharp, no text or faces.",
+        "Keep the area of the time, camera and battery calm and fairly dark, so the white clock reads."
       ],
       "railImage": [
         "The logo fills its block in the left menu, edge to edge, with the kitchen name below it.",
@@ -77,6 +79,9 @@
         "Use scenery or a pattern only, with no text or faces."
       ]
     },
+    "specPhoneBanner": "1200 × 400, or 1200 × 600 for the iPhone app top · JPEG, PNG or WebP · up to {{kb}} KB",
+    "tallTop": "iPhone app only (behind the clock)",
+    "tallBottom": "Everyone sees this",
     "specIcon": "{{width}} × {{height}} px · keep the mark in the middle {{keepWidth}} × {{keepHeight}} · square, no transparency, no rounded corners · JPEG, PNG or WebP · up to {{kb}} KB",
     "altOne": "Picture text"
   },

@@ -25,4 +25,5 @@ export { TextArea, type TextAreaProps } from './TextArea';
 export { TextField, type TextFieldProps } from './TextField';
 export { Toast, type ToastProps } from './Toast';
 export { ImageSlot, type ImageSlotProps } from './ImageSlot';
+export { useTallPicture, type PictureShape } from './useTallPicture';
 export * from './patterns';
