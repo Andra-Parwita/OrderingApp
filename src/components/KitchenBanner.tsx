@@ -32,6 +32,7 @@ export function KitchenBanner({
         alt={bannerAlt(kitchen, lang)}
         placeholder={placeholder}
         eager
+        reveal
       />
     </BannerTop>
   );

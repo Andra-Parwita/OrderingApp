@@ -8,6 +8,8 @@ import {
   sellerAppName,
   sellerManifestPath,
 } from './kitchenManifest';
+import type { Kitchen } from './domain';
+import { phoneBannerSrc } from './kitchenImages';
 import { isValidSlug } from './seller';
 import { THEME_BAR_COLOUR } from './themeColours';
 import type { ThemeName } from './themes';
@@ -62,6 +64,18 @@ export function kitchenHeadHtml(slug: string, name?: string, start?: string): st
       ? ''
       : `<meta name="apple-mobile-web-app-title" content="${escapeAttr(name)}">`)
   );
+}
+
+/**
+ * Starts the banner download while the HTML is still being read. The href is exactly the one the
+ * customer page's banner requests (phoneBannerSrc, else bannerImageUrl; one picture at every width,
+ * so one link), or the browser would fetch it twice. Nothing when the kitchen has no banner.
+ */
+export function bannerPreloadHtml(kitchen: Pick<Kitchen, 'images' | 'bannerImageUrl'>): string {
+  const src = phoneBannerSrc(kitchen.images) ?? kitchen.bannerImageUrl;
+  return src
+    ? `<link rel="preload" as="image" href="${escapeAttr(src)}" fetchpriority="high">`
+    : '';
 }
 
 /** The kitchen's page background in light mode: the browser bar colour until React sets the real one (plan 024). */

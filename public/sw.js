@@ -10,6 +10,7 @@
 //      Pages (plan 115 stage 2): a saved copy is shown at once and refreshed from the network in the
 //      background (the next open shows the new one). One copy per kitchen: /<slug> and /o/<token> each
 //      keep their own, '/' is the install-time copy and the offline fallback. Only 200 HTML is saved.
+//      Kitchen pictures (/images/*, content-hashed) are cache-first in their own cache img-v1, newest 60.
 //      Never cached: /version.json, /api/seller/*, /api/auth/*, /api/admin/*, /api/dev/*, /api/push/*, anything that
 //      is not a GET, and the seller and admin pages.
 //
@@ -24,7 +25,11 @@ const CACHE_VERSION = 'v3';
 const SLOW_LINK_MS = 4500;
 const SHELL_CACHE = `shell-${CACHE_VERSION}`;
 const DATA_CACHE = `data-${CACHE_VERSION}`;
-const KNOWN_CACHES = [SHELL_CACHE, DATA_CACHE];
+// Kitchen pictures (/images/...) have a content hash in their name, so they never change: kept
+// in their own cache, which is not versioned, newest 60 only.
+const IMAGE_CACHE = 'img-v1';
+const IMAGE_CACHE_MAX = 60;
+const KNOWN_CACHES = [SHELL_CACHE, DATA_CACHE, IMAGE_CACHE];
 
 const NEVER_CACHE_API = /^\/api\/(seller|auth|admin|dev|push)(\/|$)/;
 const NEVER_CACHE_PAGES = /^\/(seller|admin)(\/|$)/;
@@ -109,6 +114,26 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
+async function imageFirst(event, request) {
+  const cache = await caches.open(IMAGE_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.status === 200) {
+    await cache.put(request, response.clone());
+    event.waitUntil(trimImages(cache));
+  }
+  return response;
+}
+
+// Oldest first (a cache lists keys in insertion order): drop the oldest beyond the cap.
+async function trimImages(cache) {
+  const keys = await cache.keys();
+  await Promise.all(
+    keys.slice(0, Math.max(0, keys.length - IMAGE_CACHE_MAX)).map((k) => cache.delete(k)),
+  );
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -127,6 +152,10 @@ self.addEventListener('fetch', (event) => {
   // Built files have a content hash in their name: safe to keep.
   if (path.startsWith('/assets/')) {
     event.respondWith(cacheFirst(request, SHELL_CACHE));
+    return;
+  }
+  if (path.startsWith('/images/')) {
+    event.respondWith(imageFirst(event, request));
     return;
   }
   // The last menu and order answers.

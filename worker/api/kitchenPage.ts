@@ -1,6 +1,7 @@
 // The kitchen's manifest and icon links in the HTML itself (plan 011), so a phone adding the page to
 // the home screen finds them without waiting for React.
 import {
+  bannerPreloadHtml,
   defaultPreview,
   defaultSellerHeadHtml,
   isSellerPath,
@@ -63,6 +64,7 @@ export async function kitchenPageFor(
       head:
         kitchenHeadHtml(slug, name) +
         themeColourHtml(theme) +
+        bannerPreloadHtml(menu.kitchen) +
         linkPreviewHtml(kitchenPreview(name, menu.kitchen.images), origin, pathname),
       theme,
       splash: splashFor(slug, name, menu.kitchen.images?.railIcon),
@@ -78,6 +80,7 @@ export async function kitchenPageFor(
     head:
       kitchenHeadHtml(slug, name, `/o/${target.token}?source=homescreen`) +
       themeColourHtml(theme) +
+      bannerPreloadHtml(menu.kitchen) +
       linkPreviewHtml(kitchenPreview(name, menu.kitchen.images), origin, pathname),
     theme,
     splash: splashFor(slug, name, menu.kitchen.images?.railIcon),

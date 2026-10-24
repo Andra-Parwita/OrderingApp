@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  bannerPreloadHtml,
   defaultPreview,
   defaultSellerHeadHtml,
   isSellerPath,
@@ -105,5 +106,31 @@ describe('the default seller app links (plan 048)', () => {
     expect(isSellerPath('/seller/sign-in')).toBe(true);
     expect(isSellerPath('/sellers')).toBe(false);
     expect(sellerHeadHtml('onde-onde')).toContain('/k/onde-onde/seller.webmanifest');
+  });
+});
+
+describe('bannerPreloadHtml (hotfix 1.0.43.3)', () => {
+  it('preloads exactly the picture the banner shows: phone, else desktop, else the old banner url', () => {
+    const link = (href: string) =>
+      `<link rel="preload" as="image" href="${href}" fetchpriority="high">`;
+    expect(bannerPreloadHtml({ images: { phoneBanner: '/images/s/p-1.jpg' } })).toBe(
+      link('/images/s/p-1.jpg'),
+    );
+    expect(
+      bannerPreloadHtml({
+        images: { phoneBanner: '/images/s/p.jpg', desktopBanner: '/images/s/d.jpg' },
+      }),
+    ).toBe(link('/images/s/p.jpg'));
+    expect(bannerPreloadHtml({ images: { desktopBanner: '/images/s/d.jpg' } })).toBe(
+      link('/images/s/d.jpg'),
+    );
+    expect(bannerPreloadHtml({ bannerImageUrl: '/images/s/old.jpg' })).toBe(
+      link('/images/s/old.jpg'),
+    );
+  });
+
+  it('is empty without a banner', () => {
+    expect(bannerPreloadHtml({})).toBe('');
+    expect(bannerPreloadHtml({ images: {} })).toBe('');
   });
 });

@@ -19,4 +19,14 @@ describe('kitchen page theme', () => {
     expect(await kitchenPageFor(world.repo, '/nobody-here')).toBeNull();
     expect((await kitchenPageFor(world.repo, '/seller/orders'))?.theme).toBeUndefined();
   });
+
+  it('preloads the banner in the head only when the kitchen has one', async () => {
+    const world = await create({ now: () => new Date('2026-10-07T10:00:00Z') });
+    const head = (await kitchenPageFor(world.repo, '/onde-onde'))?.head ?? '';
+    const kitchen = (await (await world.repo.sellerBySlug('onde-onde'))!.getMenu()).kitchen;
+    const src =
+      kitchen.images?.phoneBanner ?? kitchen.images?.desktopBanner ?? kitchen.bannerImageUrl;
+    if (src) expect(head).toContain(`<link rel="preload" as="image" href="${src}"`);
+    else expect(head).not.toContain('rel="preload"');
+  });
 });
