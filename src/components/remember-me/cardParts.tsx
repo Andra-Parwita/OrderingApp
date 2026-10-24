@@ -27,10 +27,12 @@ export const Links = styled.div`
   align-items: flex-start;
   margin-top: ${({ theme }) => theme.spacing.xs};
 `;
-export const LinkHint = styled.p`
-  margin: -${({ theme }) => theme.spacing.xs} 0 ${({ theme }) => theme.spacing.xs}
-    ${({ theme }) => theme.spacing.xs};
-  color: ${({ theme }) => theme.c.muted};
+/** "Turned on Remember me before?" with its link under it. */
+export const RestoreLine = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: ${({ theme }) => theme.spacing.xs};
   font-size: ${({ theme }) => theme.type.size.md};
 `;
 
@@ -39,6 +41,24 @@ export const ActionList = styled.div`
   flex-direction: column;
   margin-top: ${({ theme }) => theme.spacing.sm};
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+`;
+/** A read-only fact in the list ("Turned on: 24 Oct 2026"): the label is muted, the value plain. */
+export const FactRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-height: ${({ theme }) => theme.size.tap}px;
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  font-size: ${({ theme }) => theme.type.size.md};
+
+  span {
+    color: ${({ theme }) => theme.c.muted};
+  }
+  b {
+    font-weight: 600;
+    text-align: right;
+  }
 `;
 /** One row of the action list; `$danger` is the muted red "Delete my saved data". */
 export const ActionRow = styled.button<{ $danger?: boolean }>`

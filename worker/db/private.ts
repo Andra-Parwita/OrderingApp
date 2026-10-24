@@ -72,6 +72,7 @@ function ok<T>(value: T): StoreResult<T> {
   return { ok: true, value };
 }
 
+/** A library dish with its parent's columns (`p_`, for a choice) and whether it has choices of its own. */
 type DishRow = {
   id: string;
   name_en: string;
@@ -81,6 +82,14 @@ type DishRow = {
   price_cents: number;
   chef_id: string | null;
   group_id: string | null;
+  p_id: string | null;
+  p_name_en: string | null;
+  p_name_id: string | null;
+  p_size_en: string | null;
+  p_size_id: string | null;
+  p_price_cents: number | null;
+  p_chef_id: string | null;
+  has_choices: number;
 };
 
 export type PrivateOps = ReturnType<typeof createPrivateOps>;
@@ -103,42 +112,34 @@ export function createPrivateOps(deps: PrivateDeps, sid: string) {
     existing: ReadonlyArray<OrderLine> = [],
   ): Promise<StoreResult<Array<OrderLine>>> {
     const ids = inputs.map((line) => line.dishId);
-    const marks = ids.map(() => '?').join(', ');
+    // Plan 113: one read: each dish with its parent (a choice) and whether it has choices (plan 111).
     const rows = await db.all<DishRow>(
-      `SELECT id, name_en, name_id, size_en, size_id, price_cents, chef_id, group_id FROM dishes
-       WHERE seller_id = ? AND id IN (${marks})`,
+      `SELECT d.id, d.name_en, d.name_id, d.size_en, d.size_id, d.price_cents, d.chef_id, d.group_id,
+         p.id AS p_id, p.name_en AS p_name_en, p.name_id AS p_name_id, p.size_en AS p_size_en,
+         p.size_id AS p_size_id, p.price_cents AS p_price_cents, p.chef_id AS p_chef_id,
+         EXISTS (SELECT 1 FROM dishes c WHERE c.seller_id = d.seller_id AND c.group_id = d.id) AS has_choices
+       FROM dishes d LEFT JOIN dishes p ON p.seller_id = d.seller_id AND p.id = d.group_id
+       WHERE d.seller_id = ? AND d.id IN (${ids.map(() => '?').join(', ')})`,
       sid,
       ...ids,
     );
     const byId = new Map(rows.map((row) => [row.id, row]));
-    // Plan 111: a choice is ordered as "<dish> · <choice>" at the dish's price; a dish that has
-    // choices cannot be ordered by itself.
-    const parentIds = [...new Set(rows.flatMap((row) => (row.group_id ? [row.group_id] : [])))];
-    const parents = new Map<string, DishRow>();
-    if (parentIds.length > 0) {
-      const found = await db.all<DishRow>(
-        `SELECT id, name_en, name_id, size_en, size_id, price_cents, chef_id, group_id FROM dishes
-         WHERE seller_id = ? AND id IN (${parentIds.map(() => '?').join(', ')})`,
-        sid,
-        ...parentIds,
-      );
-      for (const row of found) parents.set(row.id, row);
-    }
-    const withChoices = new Set(
-      (
-        await db.all<{ group_id: string }>(
-          `SELECT DISTINCT group_id FROM dishes WHERE seller_id = ? AND group_id IN (${marks})`,
-          sid,
-          ...ids,
-        )
-      ).map((row) => row.group_id),
-    );
     const lines: Array<OrderLine> = [];
     for (const input of inputs) {
       const dish = byId.get(input.dishId);
       if (!dish) return fail('unknown_item', `Unknown dish: ${input.dishId}`);
-      if (withChoices.has(dish.id)) return fail('pick_choice', `Pick a choice of ${dish.name_en}`);
-      const parent = dish.group_id ? parents.get(dish.group_id) : undefined;
+      if (dish.has_choices === 1) return fail('pick_choice', `Pick a choice of ${dish.name_en}`);
+      const parent =
+        dish.group_id && dish.p_id !== null
+          ? {
+              name_en: dish.p_name_en ?? '',
+              name_id: dish.p_name_id ?? '',
+              size_en: dish.p_size_en ?? '',
+              size_id: dish.p_size_id ?? '',
+              price_cents: dish.p_price_cents ?? 0,
+              chef_id: dish.p_chef_id,
+            }
+          : undefined;
       if (dish.group_id && !parent) return fail('unknown_item', `Unknown dish: ${input.dishId}`);
       const base = parent ?? dish;
       const ticked = existing.find((line) => line.itemId === dish.id)?.ticked === true;

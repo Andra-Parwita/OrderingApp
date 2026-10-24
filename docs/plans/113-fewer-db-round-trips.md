@@ -1,6 +1,6 @@
 # 113 · Fewer database round trips per request
 
-**Status:** items 3–7 approved for **1.0.44** (owner 24 Oct "B": all, including the backup, with a row-by-row comparison test of old vs new backup). Building.
+**Status:** items 3–7 approved for **1.0.44** (owner 24 Oct "B": all, including the backup, with a row-by-row comparison test of old vs new backup). **Built 24 Oct:** PATCH order 7→4 trips (27→18 statements), cancel 6→4, private create 7→5, dish edit 5→4, backup 15→7 (37→25). The new backup is JSON-identical to the old one (`mocks/backupCompare.test.ts` against `mocks/legacyBackup.ts`, plus a one-off against HEAD) and survives restore → backup unchanged. Budgets pinned in `mocks/roundTrips.test.ts`.
 
 ## Findings
 - The Worker already batches well (`Db.reads` / `Db.batch`, no per-item loops, no N+1). The waste is **repeated reads inside one request**, mostly from composing service calls with `Promise.all`.

@@ -1,4 +1,11 @@
-import { memo, useCallback, useState, type ChangeEvent, type FormEvent } from 'react';
+import {
+  memo,
+  useCallback,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Kitchen, Language, OrderStatus } from '../../../shared/domain';
@@ -30,7 +37,7 @@ const Page = styled.main`
 `;
 const Title = styled.h1`
   margin: 0;
-  padding: calc(var(--sat) + ${({ theme }) => theme.spacing.sm}) ${({ theme }) => theme.spacing.lg}
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg}
     ${({ theme }) => theme.spacing.md};
   font-size: 1.75rem;
   line-height: 1.2;
@@ -451,6 +458,8 @@ export type MyOrdersViewProps = Readonly<{
   /** Empty state: the last kitchen's menu, or the home page. */
   onOpenMenu: () => void;
   onRetry: () => void;
+  /** Plan 121: the quiet notifications / Remember me card under the title (the screen decides). */
+  nudge?: ReactNode;
 }>;
 
 /** My orders (my-orders, my-orders-empty). */
@@ -470,6 +479,7 @@ export function MyOrdersView({
   onOpenOrder,
   onOpenMenu,
   onRetry,
+  nudge = null,
 }: MyOrdersViewProps) {
   const { t } = useTranslation(ORDERS_NS);
   const [typed, setTyped] = useState('');
@@ -541,6 +551,7 @@ export function MyOrdersView({
     <Page>
       {kitchen ? <KitchenBanner kitchen={kitchen} lang={lang} placeholder={kitchen.name} /> : null}
       <Title>{t('list.title')}</Title>
+      {nudge}
       <CodeForm onSubmit={onSubmit}>
         <CodeInput
           type="text"

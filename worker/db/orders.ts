@@ -44,13 +44,18 @@ export function orderReadStatements(
   ];
 }
 
-export function assembleOrders(results: ReadonlyArray<Array<unknown>>): Array<SellerOrder> {
+/** `withStats`: plan 121 B, only a backup carries the anonymous facts; every other read leaves them out. */
+export function assembleOrders(
+  results: ReadonlyArray<Array<unknown>>,
+  withStats = false,
+): Array<SellerOrder> {
   const [orders, lines, audit, inbox] = results;
   return ordersOf(
     (orders ?? []) as Array<OrderRow>,
     (lines ?? []) as Array<LineRow>,
     (audit ?? []) as Array<AuditRow>,
     (inbox ?? []) as Array<InboxRow>,
+    withStats,
   );
 }
 
@@ -71,20 +76,30 @@ export async function readOrders(
   return assembleOrders(await db.batch(statements));
 }
 
+/**
+ * The four reads behind one live order by code or token. Kind-blind on purpose: a private order is
+ * read, updated and answered by code or token too. A caller can send them with other reads.
+ */
+export function liveOrderStatements(
+  db: Db,
+  sellerId: string,
+  column: 'code' | 'token',
+  value: string,
+): Array<D1Statement> {
+  return orderReadStatements(
+    db,
+    `o.seller_id = ? AND (o.past_week_id IS NULL AND o.${column} = ?)`,
+    [sellerId, value],
+  );
+}
+
 export async function readLiveOrder(
   db: Db,
   sellerId: string,
   column: 'code' | 'token',
   value: string,
 ): Promise<SellerOrder | undefined> {
-  const [order] = await readOrders(
-    db,
-    sellerId,
-    // Kind-blind on purpose: a private order is read, updated and answered by code or token too.
-    `o.past_week_id IS NULL AND o.${column} = ?`,
-    value,
-  );
-  return order;
+  return assembleOrders(await db.batch(liveOrderStatements(db, sellerId, column, value)))[0];
 }
 
 // ---- Writes ----
@@ -187,8 +202,9 @@ export function insertOrderStatements(
     db.stmt(
       `INSERT INTO orders (seller_id, id, code, token, past_week_id, first_name, language, fulfilment, note, status,
          paid, locked, wa_received, is_returning, changed, entered_by_role, entered_by_name, created_at, updated_at,
-         packed, collected_at, collected_by, pickup_place_id, customer_code, kind, event_date, event_time, deposit_cents, customer_confirmed)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         packed, collected_at, collected_by, pickup_place_id, customer_code, kind, event_date, event_time, deposit_cents, customer_confirmed,
+         src_place, src_os, src_push, src_remember)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       order.id,
       order.code,
@@ -218,6 +234,10 @@ export function insertOrderStatements(
       order.private?.eventTime ?? null,
       order.private?.depositCents ?? null,
       order.confirmed === true && !order.private,
+      order.stats?.place ?? null,
+      order.stats?.os ?? null,
+      order.stats?.push ?? null,
+      order.stats?.remember ?? null,
     ),
     ...lineStatements(db, order),
   ];

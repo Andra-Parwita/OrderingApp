@@ -100,6 +100,16 @@ export function formatDay(value: string, lang: Language, zone: string = deviceZo
   return `${part(parts, 'weekday')} ${part(parts, 'day')} ${part(parts, 'month')}`;
 }
 
+/** "24 Oct 2026" (EN) / "24 Okt 2026" (ID) for an instant, in the device's time. */
+export function formatDate(iso: string, lang: Language, zone: string = deviceZone()): string {
+  const parts = partsOf(new Date(iso), lang, zone, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  return `${part(parts, 'day')} ${part(parts, 'month')} ${part(parts, 'year')}`;
+}
+
 /** "7:12 pm" (EN) or "19.12" (ID), device time. */
 export function formatTime(iso: string, lang: Language, zone: string = deviceZone()): string {
   return new Intl.DateTimeFormat(LOCALE[lang], {

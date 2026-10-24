@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Status bar options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; --line: #e1dccf; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; --line: #2e2f29; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1500px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .lead { color: var(--mute); margin: 0 0 20px; max-width: 70ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 20px; }
+  figure { margin: 0; }
+  figcaption { font-size: 0.9rem; margin-top: 8px; }
+  figcaption b { display: block; }
+  .phone { width: 100%; max-width: 330px; aspect-ratio: 440 / 600; border: 3px solid #0d0d0d; border-radius: 34px; overflow: hidden; position: relative; background: #f6f2e8; container-type: inline-size; }
+  /* Status bar: 62pt of 440 = 14.1cqw. Banner 3:1 = 33.33cqw. */
+  .bar { position: absolute; top: 0; left: 0; right: 0; height: 14.1cqw; display: flex; align-items: center; justify-content: space-between; padding: 0 7cqw; color: #fff; font-weight: 600; font-size: 3.6cqw; z-index: 3; }
+  .bar.dark { color: #1c1f1a; }
+  .island { position: absolute; top: 2.6cqw; left: 50%; transform: translateX(-50%); width: 28cqw; height: 8cqw; background: #000; border-radius: 6cqw; z-index: 4; }
+  .band { position: absolute; top: 0; left: 0; right: 0; height: 14.1cqw; overflow: hidden; }
+  .band .blur { position: absolute; inset: -20%; background-size: cover; background-position: center top; filter: blur(5cqw) brightness(0.8); transform: scale(1.3); }
+  .band .bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .fade { position: absolute; top: 0; left: 0; right: 0; height: 13.6cqw; background: linear-gradient(rgba(20,17,12,.62), rgba(20,17,12,.6) 40%, rgba(20,17,12,.5) 67%, rgba(20,17,12,.22) 87%, rgba(20,17,12,0)); z-index: 2; }
+  .banner { position: absolute; top: 14.1cqw; left: 0; right: 0; height: 33.33cqw; background-size: cover; background-position: center; }
+  .body { position: absolute; top: 47.5cqw; left: 0; right: 0; padding: 4cqw 4.5cqw; color: #1c1f1a; }
+  .body h2 { margin: 0; font-size: 6cqw; }
+  .body p { margin: 1cqw 0 0; color: #5d6358; font-size: 3.6cqw; }
+  .row { margin-top: 4cqw; height: 9cqw; border-bottom: 1px solid #e4ded0; font-size: 3.6cqw; display: flex; align-items: center; }
+  .today .banner { top: 14.1cqw; }
+  .today .lightbar { position: absolute; top: 0; left: 0; right: 0; height: 14.1cqw; background: #f6f2e8; }
+  ul { color: var(--mute); max-width: 75ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>iPhone status bar: what goes behind the clock?</h1>
+  <p class="lead">DellaVee's real live pictures, iPhone 16 Pro Max proportions (top part of the screen only). In every option the banner picture below the clock is the same and fully visible.</p>
+  <div class="grid">
+    <figure>
+      <div class="phone today">
+        <div class="lightbar"></div>
+        <div class="island"></div>
+        <div class="bar dark"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="banner" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg')"></div>
+        <div class="body"><h2>DellaVee</h2><p>Menu for Sat 31 Oct</p><div class="row">Cooking Sat 31 Oct</div></div>
+      </div>
+      <figcaption><b>Today (live)</b>A light strip with dark time above the banner.</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="band" style="background:#3b2a20"></div>
+        <div class="fade"></div>
+        <div class="island"></div>
+        <div class="bar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="banner" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg')"></div>
+        <div class="body"><h2>DellaVee</h2><p>Menu for Sat 31 Oct</p><div class="row">Cooking Sat 31 Oct</div></div>
+      </div>
+      <figcaption><b>B · Colour band (first build)</b>The kitchen's background colour behind the clock.</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="band"><div class="blur" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg')"></div></div>
+        <div class="fade"></div>
+        <div class="island"></div>
+        <div class="bar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="banner" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg')"></div>
+        <div class="body"><h2>DellaVee</h2><p>Menu for Sat 31 Oct</p><div class="row">Cooking Sat 31 Oct</div></div>
+      </div>
+      <figcaption><b>A2 · Blurred copy of the banner (being built)</b>Same colours as the banner, no detail, so it looks like the picture continues.</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="band"><div class="bg" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/bannerBackgroundImage-7baa1e24ee4c1efe.jpg')"></div></div>
+        <div class="fade"></div>
+        <div class="island"></div>
+        <div class="bar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="banner" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg')"></div>
+        <div class="body"><h2>DellaVee</h2><p>Menu for Sat 31 Oct</p><div class="row">Cooking Sat 31 Oct</div></div>
+      </div>
+      <figcaption><b>A4 · The kitchen's own background picture</b>DellaVee's uploaded banner background (Settings → Kitchen → Pictures), trimmed to the strip.</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="band" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg');background-size:100% 900%;background-position:center top"></div>
+        <div class="fade"></div>
+        <div class="island"></div>
+        <div class="bar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="banner" style="background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg')"></div>
+        <div class="body"><h2>DellaVee</h2><p>Menu for Sat 31 Oct</p><div class="row">Cooking Sat 31 Oct</div></div>
+      </div>
+      <figcaption><b>A5 · Top edge stretched up</b>The banner's top few rows of pixels are stretched upward to fill the strip. Nothing is cut, but it can look smeared.</figcaption>
+    </figure>
+    <figure>
+      <div class="phone">
+        <div class="island"></div>
+        <div class="fade"></div>
+        <div class="bar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="banner" style="top:0;height:47.43cqw;background-image:url('https://order.shaggybobo.app/images/sellers/seller-dellavee/phoneBanner-71d10298903b127d.jpg');background-size:cover;background-position:center bottom"></div>
+        <div class="body"><h2>DellaVee</h2><p>Menu for Sat 31 Oct</p><div class="row">Cooking Sat 31 Oct</div></div>
+      </div>
+      <figcaption><b>A1 · Whole picture enlarged to the top</b>The real picture fills the clock area too, but must be enlarged about 1.4×, so about 15% is cut at each side (watch the edges).</figcaption>
+    </figure>
+  </div>
+  <ul>
+    <li>All options apply only inside the iPhone home-screen app; browsers and Android are unchanged.</li>
+    <li>The soft dark fade behind the clock is the same in B, A2 and A4 (it keeps the white time readable).</li>
+    <li>A4 needs a fallback for kitchens without a background picture (blurred copy or colour).</li>
+  </ul>
+</div>
+</body>
+</html>

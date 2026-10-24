@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>iPhone status bar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --pg-bg:#E9E4D8;--pg-surf:#FFFDF8;--pg-text:#1C1F1A;--pg-muted:#5D6358;--pg-line:#D3CDBC;--pg-accent:#2A5F30;--pg-on:#FFFFFF;
+  --ui:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --pg-bg:#0D0F0C;--pg-surf:#181A16;--pg-text:#F1EEE6;--pg-muted:#A9AFA3;--pg-line:#2A2E27;--pg-accent:#93C590;--pg-on:#0F1E10;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --pg-bg:#0D0F0C;--pg-surf:#181A16;--pg-text:#F1EEE6;--pg-muted:#A9AFA3;--pg-line:#2A2E27;--pg-accent:#93C590;--pg-on:#0F1E10;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--pg-bg);color:var(--pg-text);font:400 15px/1.5 var(--ui);-webkit-text-size-adjust:100%}
+.wrap{max-width:1200px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+h1{margin:0;font-size:1.375rem;line-height:1.25;font-weight:700}
+.sub{margin:6px 0 0;color:var(--pg-muted);max-width:46rem}
+.seg{display:inline-flex;border:1px solid var(--pg-line);border-radius:999px;overflow:hidden;background:var(--pg-surf)}
+.seg button{border:0;background:transparent;color:var(--pg-text);font:600 13px/1 var(--ui);min-height:36px;padding:0 16px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--pg-accent);color:var(--pg-on)}
+.seg button:focus-visible,.tg:focus-visible{outline:2px solid var(--pg-accent);outline-offset:-2px}
+.tg{border:1px solid var(--pg-line);border-radius:999px;background:var(--pg-surf);color:var(--pg-text);font:600 13px/1 var(--ui);min-height:36px;padding:0 16px;cursor:pointer}
+.tg[aria-pressed="true"]{background:var(--pg-accent);color:var(--pg-on);border-color:var(--pg-accent)}
+.frames{display:flex;flex-wrap:wrap;justify-content:center;gap:28px 24px;margin-top:20px}
+.cell{width:min(100%,340px);min-width:0}
+.cell h2{margin:0 0 2px;font-size:.9375rem;line-height:1.3;font-weight:700}
+.cell p{margin:0 0 10px;color:var(--pg-muted);font-size:.8125rem;line-height:1.4}
+.fw{position:relative;width:100%;overflow:hidden;border-radius:26px;box-shadow:0 0 0 1px var(--pg-line),0 6px 20px rgb(40 30 15/16%)}
+.rules{margin-top:36px;padding:18px 18px 8px;background:var(--pg-surf);border:1px solid var(--pg-line);border-radius:14px}
+.rules h2{margin:0 0 8px;font-size:1.0625rem}
+.rules ol{margin:0;padding:0;list-style:none;counter-reset:r}
+.rules li{counter-increment:r;position:relative;padding:10px 0 10px 32px;border-top:1px solid var(--pg-line);font-size:.875rem;line-height:1.5}
+.rules li:first-child{border-top:0}
+.rules li::before{content:counter(r);position:absolute;left:0;top:10px;width:22px;height:22px;border-radius:50%;background:var(--pg-bg);color:var(--pg-accent);font-weight:700;font-size:.75rem;line-height:22px;text-align:center}
+
+/* ---- inside the phone: iPhone 16 Pro Max, 440 x 956 ---- */
+.fr{
+  --bg:#F6F2E8;--surf:#FFFDF8;--surf2:#F4F0E6;--line:#E4DED0;--text:#1C1F1A;--muted:#5D6358;
+  --fill:#2F6B36;--on:#FFFFFF;--atext:#2A5F30;
+  position:relative;width:440px;height:956px;overflow:hidden;transform-origin:0 0;
+  background:var(--bg);color:var(--text);font:400 15px/1.5 var(--ui);
+}
+.fr[data-mode="dark"]{
+  --bg:#121411;--surf:#181A16;--surf2:#20231E;--line:#2A2E27;--text:#F1EEE6;--muted:#A9AFA3;
+  --fill:#8CC08A;--on:#0F1E10;--atext:#93C590;
+}
+.fr *{pointer-events:none}
+.fr svg.ic{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+
+/* the drawn iOS status bar: 62 px, clock in the left ear, island in the middle, icons in the right ear */
+.sb{position:absolute;left:0;right:0;top:0;height:62px;z-index:3;display:flex;color:#fff}
+.sb.dk{color:#1C1F1A}
+.sb .ear{width:157px;height:62px;display:flex;align-items:center;justify-content:center;padding-top:6px}
+.sb .ear.l{font:600 17px/1 var(--ui);letter-spacing:-.01em}
+.sb .ear.r{gap:6px}
+.sb .isl{width:126px;height:37px;margin-top:11px;border-radius:20px;background:#000}
+.sb svg{display:block;fill:currentColor}
+.sb .wf{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round}
+.sb .bt{fill:none;stroke:currentColor;stroke-opacity:.45}
+
+/* Today: a light strip above the page */
+.strip{position:absolute;left:0;right:0;top:0;height:62px;background:#F6F2E8;z-index:2}
+
+/* the banner (3:1 picture = 147 px) plus the 62 px safe-area band that carries its background colour */
+.ban{position:relative;height:209px;overflow:hidden}
+.ban.today{height:147px;margin-top:62px}
+.ban svg.hills{position:absolute;left:0;bottom:0;width:440px;height:80px}
+.ban.sunset{background:radial-gradient(circle at 72% 76%,#F7CE7C 0 15px,rgba(247,206,124,.38) 16px 62px,rgba(247,206,124,0) 130px),linear-gradient(180deg,#2E2A45 0,#6B3F5C 30%,#B8605A 62%,#E69A5C 100%)}
+.ban.pastel{background:radial-gradient(circle at 72% 76%,#FFF3D6 0 15px,rgba(255,243,214,.7) 16px 62px,rgba(255,243,214,0) 130px),linear-gradient(180deg,#F7ECE4 0,#F4E1D6 55%,#EDD6CA 100%)}
+.ban.today.sunset{background:radial-gradient(circle at 72% 62%,#F7CE7C 0 15px,rgba(247,206,124,.38) 16px 62px,rgba(247,206,124,0) 130px),linear-gradient(180deg,#4A3552 0,#9A4F5A 45%,#E69A5C 100%)}
+
+/* the soft dark fade behind the clock: 60 px, top to transparent */
+.fade{position:absolute;left:0;right:0;top:0;height:60px;z-index:2;
+  background:linear-gradient(180deg,rgba(20,17,12,.62) 0,rgba(20,17,12,.60) 40%,rgba(20,17,12,.50) 66.7%,rgba(20,17,12,.22) 86.7%,rgba(20,17,12,0) 100%)}
+body.showfade .fade{outline:2px dashed #7FE0FF;outline-offset:-2px}
+body.showfade .fade::after{content:"fade 60 px";position:absolute;left:50%;bottom:-24px;transform:translateX(-50%);font:700 13px/1 var(--ui);color:#fff;background:#0A5C78;padding:4px 8px;border-radius:6px;white-space:nowrap}
+
+/* page content */
+.head{padding:24px 16px 12px}
+.head .nm{margin:0;font-size:28px;line-height:1.2;font-weight:700}
+.head .sd{margin:4px 0 0;color:var(--muted)}
+.card{margin:4px 16px 0;padding:4px 16px 16px;background:var(--surf);border:1px solid var(--line);border-radius:20px}
+.rw{display:flex;align-items:center;gap:12px;min-height:48px;padding:10px 0;border-top:1px solid var(--line)}
+.rw:first-child{border-top:0}
+.rw svg.ic{color:var(--atext)}
+.rw .tx{flex:1;min-width:0}
+.rw .ch{color:var(--muted);width:16px;height:16px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:52px;margin-top:8px;border-radius:999px;background:var(--fill);color:var(--on);font-size:16px;font-weight:700}
+.tabs{position:absolute;left:0;right:0;bottom:0;display:flex;padding-bottom:34px;background:var(--bg);border-top:1px solid var(--line)}
+.tab{flex:1;position:relative;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:13px;line-height:1.5}
+.tab.on{color:var(--atext);font-weight:600}
+.tab.on::before{content:"";position:absolute;top:0;width:32px;height:3px;border-radius:0 0 3px 3px;background:var(--atext)}
+.hind{position:absolute;left:50%;bottom:8px;width:140px;height:5px;margin-left:-70px;border-radius:3px;background:var(--text);opacity:.85}
+
+/* cold start: dark-spotlight launch picture */
+.launch{position:absolute;inset:0;background:radial-gradient(circle at 50% 44%,#4A4B43 0,#2A2B26 72%)}
+.launch .lg{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:18px}
+.launch .dot{width:96px;height:96px;border-radius:50%;background:#3A3B34;box-shadow:inset 0 0 0 2px rgba(241,238,230,.28)}
+.launch .nm{font-size:26px;line-height:1.2;font-weight:700;color:#F1EEE6;letter-spacing:-.01em}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="bar">
+    <h1 data-i18n="h1">iPhone status bar</h1>
+    <div class="tools">
+      <button type="button" class="tg" id="tgFade" aria-pressed="false" data-i18n="showFade">Show fade area</button>
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-l="en" aria-pressed="true">EN</button>
+        <button type="button" data-l="id" aria-pressed="false">ID</button>
+      </div>
+    </div>
+  </div>
+  <p class="sub" data-i18n="sub"></p>
+
+  <div class="frames">
+    <div class="cell"><h2 data-i18n="f1t"></h2><p data-i18n="f1c"></p><div class="fw" data-f="1"></div></div>
+    <div class="cell"><h2 data-i18n="f2t"></h2><p data-i18n="f2c"></p><div class="fw" data-f="2"></div></div>
+    <div class="cell"><h2 data-i18n="f3t"></h2><p data-i18n="f3c"></p><div class="fw" data-f="3"></div></div>
+    <div class="cell"><h2 data-i18n="f4t"></h2><p data-i18n="f4c"></p><div class="fw" data-f="4"></div></div>
+    <div class="cell"><h2 data-i18n="f5t"></h2><p data-i18n="f5c"></p><div class="fw" data-f="5"></div></div>
+  </div>
+
+  <section class="rules">
+    <h2 data-i18n="notesH"></h2>
+    <ol>
+      <li data-i18n="n1"></li>
+      <li data-i18n="n2"></li>
+      <li data-i18n="n3"></li>
+      <li data-i18n="n4"></li>
+      <li data-i18n="n5"></li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function(){
+  var T={
+    en:{
+      h1:'iPhone status bar',
+      sub:'Plan 122 mock-up: the status bar (time, signal, battery) of the home-screen app, today and with black-translucent plus a soft dark fade. Sample data: DellaVee, Adelaide. Banners here are stand-ins for the kitchen photo.',
+      showFade:'Show fade area',
+      f1t:'1 · Today, light mode',
+      f1c:'iOS uses “default”: a light strip with dark text above the page, in dark mode too.',
+      f2t:'2 · Plan 122, dark banner',
+      f2c:'The banner runs to the top edge; the white clock sits on the picture with a soft fade.',
+      f3t:'3 · Plan 122, light banner',
+      f3c:'Worst case: a pale picture. The fade keeps the white clock at about 4.2:1 or better.',
+      f4t:'4 · Plan 122, dark mode',
+      f4c:'Dark page and dark banner; the fade is barely visible and the bar looks part of the page.',
+      f5t:'5 · Plan 122, cold start',
+      f5c:'The dark-spotlight launch picture goes edge to edge, under the white clock.',
+      notesH:'Notes',
+      n1:'<b>iOS reads this setting when the app is added.</b> Existing installs keep the light strip until the customer removes the app and adds it to the home screen again. The new look is not instant for everyone.',
+      n2:'<b>Android and browsers are unchanged.</b> They use theme-color, not this setting. Only the iPhone home-screen app changes.',
+      n3:'<b>Fade height and strength.</b> 60 px, top to transparent: 62% black (#14110C) at the top edge, 60% at 24 px, 50% at 40 px, 22% at 52 px, 0 at 60 px. Soft, but strong enough behind the clock; easy to tune.',
+      n4:'<b>Contrast of the white clock.</b> Estimated over the pale stand-in (#F2E3D8) at the glyph rows (24 to 40 px): 5.7:1 down to 4.2:1. Over pure white it is 4.9:1 down to 3.5:1. Without the fade a white clock on a pale banner is about 1.3:1. Over a dark picture the fade changes little.',
+      n5:'<b>Content stays below the clock.</b> The page already reserves the space with the safe-area inset at the top, so only the banner or page background runs under the bar. Heads up: a page with no banner (for example a sub-page) would show the same dark band on its cream background. The owner decides if those pages hide the fade.',
+      cDella:'DellaVee', cMenuFor:'Menu for Sat 31 Oct',
+      r1:'Cooking <b>Sat 31 Oct</b>', r2:'Order by <b>Thu 29 Oct, 8:00 pm</b>', r3:'<b>2 pickup places</b> and delivery',
+      see:'See dishes', menu:'Menu', orders:'My orders', settings:'Settings'
+    },
+    id:{
+      h1:'Bilah status iPhone',
+      sub:'Mock-up rencana 122: bilah status (jam, sinyal, baterai) aplikasi layar utama, sekarang dan dengan black-translucent plus pudar gelap lembut. Data contoh: DellaVee, Adelaide. Banner di sini hanya pengganti foto dapur.',
+      showFade:'Tampilkan area pudar',
+      f1t:'1 · Sekarang, mode terang',
+      f1c:'iOS memakai “default”: strip terang dengan teks gelap di atas halaman, juga di mode gelap.',
+      f2t:'2 · Rencana 122, banner gelap',
+      f2c:'Banner sampai ke tepi atas; jam putih ada di atas gambar dengan pudar lembut.',
+      f3t:'3 · Rencana 122, banner terang',
+      f3c:'Kasus terburuk: gambar pucat. Pudar menjaga jam putih sekitar 4,2:1 atau lebih.',
+      f4t:'4 · Rencana 122, mode gelap',
+      f4c:'Halaman dan banner gelap; pudar nyaris tak terlihat dan bilah terlihat menyatu dengan halaman.',
+      f5t:'5 · Rencana 122, mulai dingin',
+      f5c:'Gambar peluncuran sorotan gelap penuh sampai tepi, di bawah jam putih.',
+      notesH:'Catatan',
+      n1:'<b>iOS membaca pengaturan ini saat aplikasi ditambahkan.</b> Pemasangan yang sudah ada tetap memakai strip terang sampai pelanggan menghapus aplikasi dan menambahkannya lagi ke layar utama. Tampilan baru tidak langsung untuk semua orang.',
+      n2:'<b>Android dan browser tidak berubah.</b> Mereka memakai theme-color, bukan pengaturan ini. Hanya aplikasi layar utama iPhone yang berubah.',
+      n3:'<b>Tinggi dan kekuatan pudar.</b> 60 px, dari atas sampai transparan: hitam 62% (#14110C) di tepi atas, 60% di 24 px, 50% di 40 px, 22% di 52 px, 0 di 60 px. Lembut, tapi cukup kuat di belakang jam; mudah disetel.',
+      n4:'<b>Kontras jam putih.</b> Perkiraan di atas pengganti pucat (#F2E3D8) pada baris huruf (24 sampai 40 px): 5,7:1 turun ke 4,2:1. Di atas putih murni 4,9:1 turun ke 3,5:1. Tanpa pudar, jam putih di banner pucat sekitar 1,3:1. Di atas gambar gelap, pudar hampir tak mengubah apa pun.',
+      n5:'<b>Isi tetap di bawah jam.</b> Halaman sudah menyisakan ruang dengan safe-area inset di atas, jadi hanya banner atau latar halaman yang masuk ke bawah bilah. Perhatian: halaman tanpa banner (misalnya sub-halaman) akan menampilkan pita gelap yang sama di latar krem. Pemilik memutuskan apakah halaman itu menyembunyikan pudar.',
+      cDella:'DellaVee', cMenuFor:'Menu untuk Sabtu, 31 Okt',
+      r1:'Masak <b>Sabtu, 31 Okt</b>', r2:'Pesan sebelum <b>Kamis, 29 Okt, 20.00</b>', r3:'<b>2 tempat ambil</b> dan antar',
+      see:'Lihat hidangan', menu:'Menu', orders:'Pesanan saya', settings:'Pengaturan'
+    }
+  };
+  var lang='en';
+
+  var P={
+    menu:'M4 6h16M4 12h16M4 18h16',
+    bag:'M5 8h14l-1 12H6zM9 8a3 3 0 016 0',
+    gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z',
+    cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+    clock:'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2',
+    pin:'M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11zM12 12a2 2 0 100-4 2 2 0 000 4z',
+    chev:'M9 5l7 7-7 7'
+  };
+  function ic(n,cls){return '<svg class="ic'+(cls?' '+cls:'')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="'+P[n]+'"/></svg>';}
+  function i(k,tag){tag=tag||'span';return '<'+tag+' data-i18n="'+k+'">'+T.en[k]+'</'+tag+'>';}
+
+  function sb(dark){
+    return '<div class="sb'+(dark?' dk':'')+'" aria-hidden="true">'+
+      '<div class="ear l">9:41</div><div class="isl"></div>'+
+      '<div class="ear r">'+
+        '<svg width="19" height="12" viewBox="0 0 19 12"><rect x="0" y="7.5" width="3.2" height="4.5" rx="1"/><rect x="5" y="5" width="3.2" height="7" rx="1"/><rect x="10" y="2.5" width="3.2" height="9.5" rx="1"/><rect x="15" y="0" width="3.2" height="12" rx="1"/></svg>'+
+        '<svg width="17" height="12" viewBox="0 0 18 13"><path class="wf" d="M1.6 4.7a10.4 10.4 0 0114.8 0M4.3 7.5a6.6 6.6 0 019.4 0M7 10.2a2.8 2.8 0 014 0"/></svg>'+
+        '<svg width="28" height="13" viewBox="0 0 28 13"><rect class="bt" x=".5" y=".5" width="24" height="12" rx="3.6"/><rect x="2" y="2" width="21" height="9" rx="2.4"/><path d="M26 4.5v4c.9-.3 1.5-1.1 1.5-2s-.6-1.7-1.5-2z" opacity=".5"/></svg>'+
+      '</div></div>';
+  }
+  function hills(c1,c2){
+    return '<svg class="hills" viewBox="0 0 440 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 52C60 30 110 40 170 50S300 22 360 38 420 48 440 42V80H0z" fill="'+c2+'"/><path d="M0 66C80 52 150 62 230 66S370 52 440 64V80H0z" fill="'+c1+'"/></svg>';
+  }
+  function tabs(){
+    function tab(id,icon,on){return '<div class="tab'+(on?' on':'')+'">'+ic(icon)+i(id)+'</div>';}
+    return '<nav class="tabs">'+tab('menu','menu',1)+tab('orders','bag')+tab('settings','gear')+'</nav><div class="hind"></div>';
+  }
+  function page(){
+    return '<div class="head"><h1 class="nm" data-i18n="cDella">'+T.en.cDella+'</h1><p class="sd" data-i18n="cMenuFor">'+T.en.cMenuFor+'</p></div>'+
+      '<div class="card">'+
+        '<div class="rw">'+ic('cal')+i('r1').replace('<span','<span class="tx"')+'</div>'+
+        '<div class="rw">'+ic('clock')+i('r2').replace('<span','<span class="tx"')+'</div>'+
+        '<div class="rw">'+ic('pin')+i('r3').replace('<span','<span class="tx"')+ic('chev','ch')+'</div>'+
+        '<div class="btn">'+i('see')+ic('chev')+'</div>'+
+      '</div>';
+  }
+  var DARKBAN='<div class="ban sunset">'+hills('#241B26','#3A2634')+'<div class="fade"></div></div>';
+  var LIGHTBAN='<div class="ban pastel">'+hills('#E6CFC4','#EBD8CC')+'<div class="fade"></div></div>';
+
+  var F={
+    1:'<div class="strip"></div>'+sb(true)+'<div class="ban today sunset">'+hills('#241B26','#3A2634')+'</div>'+page()+tabs(),
+    2:sb(false)+DARKBAN+page()+tabs(),
+    3:sb(false)+LIGHTBAN+page()+tabs(),
+    4:sb(false)+DARKBAN+page()+tabs(),
+    5:'<div class="launch"><div class="lg"><div class="dot"></div><div class="nm">ShaggyBobo</div></div></div>'+sb(false)
+  };
+
+  var wraps=document.querySelectorAll('.fw'),frames=[];
+  wraps.forEach(function(w){
+    var n=w.getAttribute('data-f'),f=document.createElement('div');
+    f.className='fr';
+    if(n==='4'||n==='5')f.setAttribute('data-mode','dark');
+    f.innerHTML=F[n];
+    w.appendChild(f);frames.push([w,f]);
+  });
+
+  function apply(){
+    document.documentElement.lang=lang;
+    document.querySelectorAll('[data-i18n]').forEach(function(e){e.innerHTML=T[lang][e.getAttribute('data-i18n')];});
+    document.querySelectorAll('.seg button').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-l')===lang?'true':'false');});
+  }
+  function fit(){
+    frames.forEach(function(p){
+      var w=p[0],f=p[1],s=Math.min(1,w.clientWidth/440);
+      f.style.transform='scale('+s+')';
+      w.style.height=Math.round(956*s)+'px';
+    });
+  }
+  document.querySelectorAll('.seg button').forEach(function(b){
+    b.addEventListener('click',function(){lang=b.getAttribute('data-l');apply();});
+  });
+  var tg=document.getElementById('tgFade');
+  tg.addEventListener('click',function(){
+    var on=!document.body.classList.contains('showfade');
+    document.body.classList.toggle('showfade',on);
+    tg.setAttribute('aria-pressed',on?'true':'false');
+  });
+  window.addEventListener('resize',fit);
+  apply();fit();
+  setTimeout(fit,300);
+})();
+</script>
+
+</body>
+</html>

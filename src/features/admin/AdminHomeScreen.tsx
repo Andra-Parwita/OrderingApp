@@ -28,6 +28,7 @@ import { MaintenancePanel } from './MaintenancePanel';
 import { MessagesPanel } from './MessagesPanel';
 import { ProblemsPanel } from './ProblemsPanel';
 import { RefreshBar } from './RefreshBar';
+import { StatsPanel } from './StatsPanel';
 import { PauseLabel, SellerDetails } from './SellerDetails';
 import { DraftNotice, draftKey, useDraft } from '../../components/draft';
 import { slugProblem } from './slug';
@@ -658,6 +659,11 @@ export function AdminHomeScreen({
           </Pane>
           <Pane hidden={section !== 'settings'}>
             <BackupMinutesPanel />
+          </Pane>
+          <Pane hidden={section !== 'stats'}>
+            {section === 'stats' ? (
+              <StatsPanel refused={refusedHere} refreshKey={refreshKey} />
+            ) : null}
           </Pane>
           <Pane hidden={section !== 'problems'}>
             <ProblemsPanel slugs={slugs} refreshKey={refreshKey} onTotal={setProblemCount} />

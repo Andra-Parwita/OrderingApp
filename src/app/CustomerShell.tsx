@@ -6,12 +6,14 @@ import { css, keyframes, styled } from 'styled-components';
 import { isValidSlug } from '../../shared/seller';
 import { appKitchen, lastKitchen, rememberAppKitchen } from '../api/device/lastKitchen';
 import { ShellOwnsBanner } from '../components/KitchenBanner';
+import { pageFade } from '../components/statusBarFade';
 import { manifestTarget, readEnvironment, useManifestLinks } from '../components/install';
 import { useForcedKitchenLanguage } from '../features/customer-menu';
 import { CustomerLiveHost, selectOrderPage, useUnseenUpdate } from '../features/customer-orders';
 import { Icon, type IconName } from '../ui';
 import { customerArea } from './customerPath';
 import { SHELL_BANNER_HEIGHT, ShellBanner, useShellBanner } from './ShellBanner';
+import { useKitchenTitle } from './useKitchenTitle';
 
 // The customer app's bottom tab bar (D-039): Menu · My orders · Settings, fixed to the bottom,
 // icon above label, safe-area aware. Pages leave room for it through --customer-tabbar-height.
@@ -25,8 +27,9 @@ const TABS: ReadonlyArray<Readonly<{ id: TabId; icon: IconName }>> = [
 
 /**
  * Where a tab leads. Menu goes to the last seller menu this phone visited (D-037), else the home page
- * (`menuHref`). My orders and Settings stay inside the kitchen when the app belongs to one (plan 102:
- * `/<slug>/my-orders`, `/<slug>/settings`); in a browser tab (`slug` null) they are the all-kitchens pages.
+ * (`menuHref`). My orders and Settings stay inside the kitchen the page or app belongs to (plan 102:
+ * `/<slug>/my-orders`, `/<slug>/settings`); only on a page with no kitchen (`slug` null) are they the
+ * slug-less pages.
  */
 export function tabHref(id: TabId, menuHref: string, slug: string | null): string {
   if (id === 'menu') return menuHref;
@@ -80,14 +83,19 @@ const TAB_HEIGHT = '3.5rem';
 export const TAB_BAR_HEIGHT = `calc(${TAB_HEIGHT} + var(--sab, 0px))`;
 const MAX_WIDTH = '30rem'; // 480 px: phone width, centred on wider screens
 
+// Plan 122: in an iPhone home-screen app the page runs under the status bar (--sat > 0, else 0). With a
+// banner, the banner's own safe-area band covers it; without one, the shell pads the page down by --sat.
+// Either way the shell draws one fixed thin fade behind the clock, so it reads after the banner scrolls away.
 const Wrap = styled.div<{ $tabs: boolean; $banner: boolean }>`
   --customer-tabbar-height: ${({ $tabs }) => ($tabs ? TAB_BAR_HEIGHT : '0px')};
   /* The banner above the page (plan 093): pages take it off their minimum height. */
-  --customer-banner-height: ${({ $banner }) => ($banner ? SHELL_BANNER_HEIGHT : '0px')};
+  --customer-banner-height: ${({ $banner }) => ($banner ? SHELL_BANNER_HEIGHT : 'var(--sat)')};
   max-width: ${MAX_WIDTH};
   margin: 0 auto;
   overflow-x: clip; /* the sliding page starts off-screen */
+  padding-top: ${({ $banner }) => ($banner ? '0px' : 'var(--sat)')};
   padding-bottom: var(--customer-tabbar-height);
+  ${pageFade}
 `;
 const slideIn = keyframes`
   from { transform: translateX(100%); }
@@ -229,12 +237,15 @@ function useShellManifest(pathname: string): void {
 }
 
 /**
- * The kitchen the My orders and Settings tabs stay in: only a home-screen app belongs to one (the kitchen
- * it was launched on, else the page's). A browser tab keeps the all-kitchens pages (plan 102, owner Q3).
+ * The kitchen the My orders and Settings tabs stay in: a home-screen app belongs to one (the kitchen it
+ * was launched on, else the page's); a browser tab uses the kitchen in the address, so a link for one
+ * kitchen never lands on another's pages. My orders still lists every kitchen there (plan 102, Q3).
+ * Slug-less pages (`/my-orders`, `/settings`, `/`) have no kitchen and stay slug-less.
  */
 function tabKitchen(pathname: string): string | null {
-  if (!readEnvironment().installed) return null;
-  return appKitchen() ?? customerArea(pathname).slug;
+  const pageKitchen = customerArea(pathname).slug;
+  if (!readEnvironment().installed) return pageKitchen;
+  return appKitchen() ?? pageKitchen;
 }
 
 /** Wraps the customer pages with the tab bar. */
@@ -251,6 +262,7 @@ export function CustomerShell() {
   const tabs = hasTabBar(pathname);
   const banner = useShellBanner(pathname);
   const hasBanner = banner.kind !== 'none';
+  useKitchenTitle(pathname, banner.kind === 'kitchen' ? banner.kitchen.name : null);
   return (
     <Wrap $tabs={tabs} $banner={hasBanner}>
       <CustomerLiveHost />

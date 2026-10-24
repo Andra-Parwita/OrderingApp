@@ -34,7 +34,7 @@ const Page = styled.main`
 `;
 const Title = styled.h1`
   margin: 0;
-  padding: calc(var(--sat) + ${({ theme }) => theme.spacing.sm}) ${({ theme }) => theme.spacing.lg}
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg}
     ${({ theme }) => theme.spacing.md};
   font-size: 1.75rem;
   line-height: 1.2;

@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { customerLabel } from '../../../shared/passkeyLabels';
 import { rememberFirstName, savedFirstName } from '../../api/device/firstName';
-import { turnOnRememberMe } from '../../api/customer/rememberMe';
+import { restoreWithPasskey, turnOnRememberMe } from '../../api/customer/rememberMe';
 import { BottomSheet, Button, Icon, TextField } from '../../ui';
 import { useRememberAction } from './hooks';
 import { REMEMBER_NS } from './i18n/register';
 import { Actions, ErrorLine, Text } from './parts';
-import { HintBox, NoteLine } from './cardParts';
+import { HintBox, LinkButton, Links, NoteLine } from './cardParts';
 
 /**
  * Plan 092: "Turn on" asks for the first name before the passkey prompt (it names the passkey), says
  * why the address is kept, and where to save the passkey. Skip (only when no name is saved yet)
  * gives the generic name. The name is saved on this phone first, then the passkey is made.
+ * Below the buttons: "Turned on Remember me before? Restore your orders" (sign in with the passkey
+ * already on this phone). On an iPhone every home-screen app has its own storage, so a second
+ * kitchen's app must not make a second account.
  */
 export function TurnOnSheet({ onClose }: Readonly<{ onClose: () => void }>) {
   const { t } = useTranslation(REMEMBER_NS);
@@ -22,6 +25,11 @@ export function TurnOnSheet({ onClose }: Readonly<{ onClose: () => void }>) {
   const go = (withName: boolean) => {
     if (withName) rememberFirstName(name);
     void run(turnOnRememberMe).then((outcome) => {
+      if (outcome.ok) onClose();
+    });
+  };
+  const restore = () => {
+    void run(restoreWithPasskey).then((outcome) => {
       if (outcome.ok) onClose();
     });
   };
@@ -74,6 +82,12 @@ export function TurnOnSheet({ onClose }: Readonly<{ onClose: () => void }>) {
           </>
         )}
       </Actions>
+      <Links>
+        <Text>{t('restoreQ')}</Text>
+        <LinkButton type="button" disabled={busy} onClick={restore}>
+          {t('restoreDo')}
+        </LinkButton>
+      </Links>
     </BottomSheet>
   );
 }

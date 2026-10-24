@@ -1,5 +1,4 @@
-import { RATIO_TOLERANCE, slotSpec, type UploadSlot } from '../../shared/imageSlots';
-import { DISH_PICTURE_TARGET_KB } from '../../shared/limits';
+import { RATIO_TOLERANCE, slotAimKB, slotSpec, type UploadSlot } from '../../shared/imageSlots';
 
 export type ResizeResult = {
   /** Exactly the slot's size, already small enough to upload. */
@@ -54,7 +53,8 @@ function hasTransparency(context: CanvasRenderingContext2D, width: number, heigh
  * Draws the picture at the slot's exact size and encodes it under the size limit: JPEG with the
  * quality stepped down, or PNG for a small icon that has see-through parts. A picture whose shape
  * is more than 5% off is fitted whole inside (never cropped), on `background`. A dish picture
- * (plan 067) is the exception: it is centre-cropped to a square and aimed at about 100 KB.
+ * (plan 067) is the exception: it is centre-cropped to a square and aimed at about 100 KB. The
+ * phone banner is also aimed at about 100 KB (`slotAimKB`), the server's cap stays 600 KB.
  */
 export const resizeImage: ResizeFn = async (file, slot, background) => {
   if (!file.type.startsWith('image/')) throw new ImageReadError('image_type');
@@ -123,7 +123,7 @@ export const resizeImage: ResizeFn = async (file, slot, background) => {
   }
 
   draw(true);
-  const aimKB = cropSquare ? DISH_PICTURE_TARGET_KB : spec.maxKB;
+  const aimKB = slotAimKB(slot);
   for (const quality of QUALITIES) {
     const jpeg = canvas.toDataURL('image/jpeg', quality);
     if (bytesOf(jpeg) <= aimKB * 1024) {

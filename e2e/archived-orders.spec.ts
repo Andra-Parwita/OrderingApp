@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { pushSampleCutoffsAt } from './sampleCutoff';
 import { collectErrors } from './sellerHelpers';
 
 // D-044: an order of a finished menu stays readable by its link, read-only. Finishing the menu changes
@@ -47,6 +48,8 @@ test('an order of a finished menu opens read-only from its link', async ({
     await page.screenshot({ path: 'captures/archived-order-desktop.png', fullPage: true });
   } finally {
     await request.post('/api/dev/reset');
+    // The reset seeds the cut-offs from the clock again: move them a week later (see sampleCutoff.ts).
+    await pushSampleCutoffsAt(testInfo.project.use.baseURL ?? '');
   }
 
   expect(errors).toEqual([]);

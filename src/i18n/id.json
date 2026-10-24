@@ -126,6 +126,7 @@
     "orders": "Pesanan saya",
     "settings": "Pengaturan",
     "newUpdate": "ada pembaruan",
+    "orderTitle": "Pesanan",
     "back": "Kembali",
     "backTo": "Kembali ke {{page}}",
     "notBuilt": "Belum dibuat: {{id}}"
@@ -177,6 +178,7 @@
     "step4": "Jika aplikasi bermasalah, <b>hapus data situs</b>. Chrome: ⋮ → Setelan → Setelan situs → Semua situs → order.shaggybobo.app → Hapus & reset. Samsung Internet: ≡ → Setelan → Situs dan unduhan → Kelola data situs → situsnya → Hapus. iPhone Safari: Pengaturan → App → Safari → Lanjutan → Data Situs Web → cari \"shaggybobo\" → Hapus (nama menu berbeda menurut versi iOS).",
     "step5": "<b>Hapus passkey Remember me.</b> Google Password Manager: Setelan → Google → Pengelola Sandi → Passkey → order.shaggybobo.app → Hapus. Samsung Pass: Passkey → pilih situsnya → Hapus. Apple Passwords: app Passwords → order.shaggybobo.app → Hapus. Keeper: buka catatan order.shaggybobo.app → Hapus.",
     "step6": "<b>Pasang dapur yang benar lagi.</b> Buka tautan dapur dari pemilik, ketuk Pasang aplikasi, periksa ikon dan namanya.",
+    "step7": "<b>Untuk tampilan pembuka yang baru di iPhone:</b> hapus aplikasinya, buka tautan dapur di Safari, tarik ke bawah untuk memuat ulang, lalu Tambahkan ke Layar Utama.",
     "reset": "Atur ulang HP ini",
     "resetting": "Mengatur ulang…",
     "deleteLink": "Hapus data tersimpanku (di Pengaturan)"

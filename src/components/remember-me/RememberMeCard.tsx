@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { formatDate } from '../../../shared/dates';
 import { lastKitchen } from '../../api/device/lastKitchen';
 import {
   addThisPhonePasskey,
   deleteMySavedData,
-  kitchenCode,
+  rememberMeAccount,
+  type RememberMeAccount,
   rememberMeSupported,
   restoreWithPasskey,
   signOutHere,
@@ -17,11 +19,12 @@ import {
   ActionList,
   ActionRow,
   CodeBlock,
+  FactRow,
   HintBox,
   LinkButton,
-  LinkHint,
   Links,
   NoteLine,
+  RestoreLine,
 } from './cardParts';
 import { Actions, ErrorLine, Text } from './parts';
 import { AddPhoneSheet, JoinSheet } from './PhoneSheets';
@@ -55,21 +58,21 @@ type Ask = 'signOut' | 'delete' | null;
 type Sheet = 'explain' | 'turnOn' | 'addPhone' | 'join' | null;
 
 /**
- * The Settings card (plan 087). Off: what it is, with Turn on / I already use it. On: this phone, the
+ * The Settings card (plan 087). Off: what it is, with Turn on and "Turned on before? Restore your orders". On: the name and date it was turned on, the
  * customer code for the current kitchen, Add another phone, Sign out (asks), Delete my saved data (asks).
  */
 export function RememberMeCard({ kitchenName }: Readonly<{ kitchenName?: string }>) {
-  const { t } = useTranslation(REMEMBER_NS);
+  const { t, i18n } = useTranslation(REMEMBER_NS);
   const local = useRememberMeLocal();
   const { busy, error, run } = useRememberAction();
   const [sheet, setSheet] = useState<Sheet>(null);
   const [ask, setAsk] = useState<Ask>(null);
-  const [code, setCode] = useState<string | null>(null);
+  const [account, setAccount] = useState<RememberMeAccount | null>(null);
   const [removed, setRemoved] = useState<'signalled' | 'byHand' | null>(null);
   const on = local !== null;
   useEffect(() => {
     if (!on) return;
-    void kitchenCode(lastKitchen()).then(setCode);
+    void rememberMeAccount(lastKitchen()).then(setAccount);
   }, [on]);
 
   if (!rememberMeSupported() && !on) return null;
@@ -107,16 +110,18 @@ export function RememberMeCard({ kitchenName }: Readonly<{ kitchenName?: string 
             </Button>
           </Actions>
           <Links>
-            <LinkButton
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                void run(restoreWithPasskey);
-              }}
-            >
-              {busy ? t('working') : t('already')}
-            </LinkButton>
-            <LinkHint>{t('alreadyHint')}</LinkHint>
+            <RestoreLine>
+              <b>{t('restoreQ')}</b>
+              <LinkButton
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  void run(restoreWithPasskey);
+                }}
+              >
+                {busy ? t('working') : t('restoreDo')}
+              </LinkButton>
+            </RestoreLine>
             <LinkButton
               type="button"
               onClick={() => {
@@ -153,10 +158,10 @@ export function RememberMeCard({ kitchenName }: Readonly<{ kitchenName?: string 
         </>
       ) : (
         <>
-          {code ? (
+          {account?.code ? (
             <CodeBlock>
               <b>{kitchenName ? t('codeAt', { kitchen: kitchenName }) : t('codeHere')}</b>
-              <output>{code}</output>
+              <output>{account.code}</output>
               <Text>{t('codeHint')}</Text>
             </CodeBlock>
           ) : null}
@@ -166,6 +171,18 @@ export function RememberMeCard({ kitchenName }: Readonly<{ kitchenName?: string 
           </NoteLine>
           {local.sealing ? null : <HintBox>{t('keeperHint')}</HintBox>}
           <ActionList>
+            {account?.firstName ? (
+              <FactRow>
+                <span>{t('factName')}</span>
+                <b>{account.firstName}</b>
+              </FactRow>
+            ) : null}
+            {account?.createdAt ? (
+              <FactRow>
+                <span>{t('factSince')}</span>
+                <b>{formatDate(account.createdAt, i18n.language.startsWith('id') ? 'id' : 'en')}</b>
+              </FactRow>
+            ) : null}
             <ActionRow
               type="button"
               onClick={() => {

@@ -9,8 +9,9 @@ import { DEFAULT_SELLER_SLUG } from '../../../shared/seller';
 import { MyOrdersScreen } from './MyOrdersScreen';
 import { renderWithStore, setupI18n } from './testSupport';
 
-// Plan 102 Q3 (A1): inside a kitchen's installed app, My orders lists that kitchen's orders only; the
-// browser tab lists every kitchen. An old saved entry (no sellerSlug) is matched by its loaded order.
+// D-120 (amends plan 102 Q3 A1): under `/<slug>/my-orders`, in the browser and the installed app alike,
+// My orders lists that kitchen's orders only. An old saved entry (no sellerSlug) is matched by its
+// loaded order. Only the kitchen-less fallback (no kitchen known) lists every kitchen.
 
 const noop = () => undefined;
 beforeAll(() => setupI18n('en'));
@@ -41,21 +42,24 @@ async function twoKitchens() {
 }
 
 describe('My orders per kitchen (plan 102 stage 6)', () => {
-  it('in the kitchen app lists only that kitchen, matching an old entry without a slug', async () => {
+  it('under a kitchen lists only that kitchen, matching an old entry without a slug', async () => {
     await twoKitchens();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} onlyKitchen="onde-onde" />);
     expect(await screen.findByRole('button', { name: /AAA-AAA/ })).toBeVisible();
     expect(screen.queryByRole('button', { name: /BBB-BBB/ })).toBeNull();
   });
 
-  it('in the kitchen app, an order of another kitchen never shows, and none left shows the empty state', async () => {
+  it('under a kitchen, an order of another kitchen never shows, and none left shows the empty state', async () => {
     await twoKitchens();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} onlyKitchen="nobody" />);
     await waitFor(() => expect(screen.queryByRole('button', { name: /AAA-AAA/ })).toBeNull());
     expect(screen.queryByRole('button', { name: /BBB-BBB/ })).toBeNull();
+    // The existing empty text only: no link to the other kitchens' orders.
+    expect(await screen.findByText('Your orders will appear here')).toBeVisible();
+    expect(screen.queryByText(/Della Vee/)).toBeNull();
   });
 
-  it('in a browser tab lists every kitchen, old entries included', async () => {
+  it('without a kitchen (the fallback) still lists every kitchen, old entries included', async () => {
     await twoKitchens();
     renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
     expect(await screen.findByRole('button', { name: /AAA-AAA/ })).toBeVisible();

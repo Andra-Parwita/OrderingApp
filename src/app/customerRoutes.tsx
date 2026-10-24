@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, Outlet, Route, useLocation, useNavigate, useParams } from 'react-router';
 import { orderPath, parseOrderPath, unresolvedOrderPath } from '../../shared/orderPath';
@@ -27,7 +27,6 @@ import {
   OrderScreen,
   selectOrderPage,
 } from '../features/customer-orders';
-import { readEnvironment } from '../components/install';
 import { CustomerSettingsScreen, StartFreshScreen } from '../features/customer-settings';
 import { CustomerShell } from './CustomerShell';
 import { KitchenNotFoundPage, NotFoundPage } from './pages';
@@ -148,9 +147,9 @@ function OrderScope() {
   return <Outlet />;
 }
 
-/** My orders: inside a kitchen's app it stays under `/<slug>`; in a browser tab it is the all-kitchens page. */
+/** My orders stays under its kitchen, in the browser and the installed app alike (D-120). */
 function useMyOrdersPath(slug: string | undefined): string {
-  return slug !== undefined && readEnvironment().installed ? `/${slug}/my-orders` : '/my-orders';
+  return slug !== undefined ? `/${slug}/my-orders` : '/my-orders';
 }
 
 /** "Order placed": the confirmation straight after ordering. Its only exit is the order page. */
@@ -320,9 +319,20 @@ function MyOrdersRoute() {
     [navigate, slug],
   );
   if (!valid) return <KitchenNotFoundPage />;
-  // Inside a kitchen's installed app, only that kitchen's orders; the browser tab lists all (plan 102 Q3).
-  const onlyKitchen = slug !== undefined && readEnvironment().installed ? slug : null;
-  return <MyOrdersScreen onBack={back} onOpenOrder={open} onlyKitchen={onlyKitchen} />;
+  // Under a kitchen, only that kitchen's orders, in the browser and the installed app alike (D-120).
+  // The slug-less page (no kitchen known) keeps the all-kitchens list.
+  return <MyOrdersScreen onBack={back} onOpenOrder={open} onlyKitchen={slug ?? null} />;
+}
+
+/**
+ * The slug-less `/my-orders`, `/settings` and `/settings/start-fresh` (old links, the welcome page) go to
+ * the same page under the last kitchen this phone visited (D-120). With none known they render as they are.
+ */
+function LastKitchenPage({ page, children }: Readonly<{ page: string; children: ReactNode }>) {
+  const { search, hash } = useLocation();
+  const last = lastKitchen();
+  if (last === null) return children;
+  return <Navigate replace to={`/${last}/${page}${search}${hash}`} />;
 }
 
 /** Customer pages share the bottom tab bar (D-039). */
@@ -348,9 +358,30 @@ export function customerRoutes() {
       <Route path="/:slug/settings/start-fresh" element={<StartFreshRoute />} />
       {/* The old addresses stay: links already sent, bookmarks, and the browser tab's all-kitchens pages. */}
       <Route path="/o/:token/*" element={<LegacyOrderRoute />} />
-      <Route path="/my-orders" element={<MyOrdersRoute />} />
-      <Route path="/settings" element={<CustomerSettingsRoute />} />
-      <Route path="/settings/start-fresh" element={<StartFreshRoute />} />
+      <Route
+        path="/my-orders"
+        element={
+          <LastKitchenPage page="my-orders">
+            <MyOrdersRoute />
+          </LastKitchenPage>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <LastKitchenPage page="settings">
+            <CustomerSettingsRoute />
+          </LastKitchenPage>
+        }
+      />
+      <Route
+        path="/settings/start-fresh"
+        element={
+          <LastKitchenPage page="settings/start-fresh">
+            <StartFreshRoute />
+          </LastKitchenPage>
+        }
+      />
     </Route>
   );
 }

@@ -17,10 +17,15 @@ export async function customerResult(
   repo: SellerRepository,
   context: RouteContext,
   status = 200,
+  /** What `storeAddress` just wrote (`null` = no address): known, so it is not read back. */
+  justStored?: string | null,
 ): Promise<Response> {
   if (!result.ok) return refusal(result);
   const order = toCustomerOrder(result.value, repo.seller);
-  const stored = (await repo.orderAddresses([result.value.code])).get(result.value.code);
+  const stored =
+    justStored !== undefined
+      ? (justStored ?? undefined)
+      : (await repo.orderAddresses([result.value.code])).get(result.value.code);
   let addressState: CustomerOrder['addressState'];
   if (stored !== undefined) {
     addressState =
@@ -40,7 +45,9 @@ export async function customerResult(
 
 /**
  * Plan 071: keeps (or clears) an order's encrypted delivery address after a write. Only a delivery
- * order has one; without the key nothing is stored. An empty string deletes it.
+ * order has one; without the key nothing is stored. An empty string deletes it. Answers what it
+ * wrote: `stored` is the address now held (null = none), `edited` is true when it marked the order
+ * as changed by the customer; nothing is answered when nothing was written.
  */
 export async function storeAddress(
   repo: SellerRepository,
@@ -48,16 +55,22 @@ export async function storeAddress(
   result: StoreResult<SellerOrder>,
   address: DeliveryAddress | null | undefined,
   customerEdit = false,
-): Promise<void> {
-  if (!result.ok) return;
+): Promise<{ stored: string | null; edited: boolean } | undefined> {
+  if (!result.ok) return undefined;
   const order = result.value;
   if (order.fulfilment !== 'delivery') {
-    if (address !== undefined || order.changed) await repo.setOrderAddress(order.id, null);
-    return;
+    if (address !== undefined || order.changed) {
+      await repo.setOrderAddress(order.id, null);
+      return { stored: null, edited: false };
+    }
+    return undefined;
   }
-  if (address === undefined) return;
-  if (address === null) await repo.setOrderAddress(order.id, null);
-  else if (context.addressKey) {
+  if (address === undefined) return undefined;
+  if (address === null) {
+    await repo.setOrderAddress(order.id, null);
+    return { stored: null, edited: false };
+  }
+  if (context.addressKey) {
     // A customer's change shows the seller "Address changed", but only when it really differs. The old
     // address is compared and dropped, never kept (D-099).
     let edited = false;
@@ -68,12 +81,11 @@ export async function storeAddress(
         old !== null &&
         JSON.stringify(parseDeliveryAddress(safeParse(old))) !== JSON.stringify(address);
     }
-    await repo.setOrderAddress(
-      order.id,
-      await encryptAddress(context.addressKey, JSON.stringify(address)),
-      edited,
-    );
+    const cipher = await encryptAddress(context.addressKey, JSON.stringify(address));
+    await repo.setOrderAddress(order.id, cipher, edited);
+    return { stored: cipher, edited };
   }
+  return undefined;
 }
 
 /** Plan 071: the team's view of a stored address, decrypted; an unreadable one says so. */

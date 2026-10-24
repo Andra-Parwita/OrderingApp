@@ -9,6 +9,15 @@
     "myOrders": "My orders",
     "errorBody": "Please try again."
   },
+  "nudge": {
+    "notify": "Get a message when your order is ready",
+    "home": "Add to your home screen to get a message when your order is ready",
+    "remember": "Keep your orders on all your phones",
+    "turnOn": "Turn on",
+    "turnOnOrRestore": "Turn on or restore",
+    "how": "How",
+    "hide": "Hide this"
+  },
   "list": {
     "title": "My orders",
     "loadError": "Could not load your orders. Check your connection and try again.",

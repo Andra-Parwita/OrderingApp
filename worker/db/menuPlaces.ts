@@ -4,6 +4,7 @@ import { MAX_PICKUP_PLACES } from '../../shared/limits';
 import { type Preferences } from '../../shared/menusContract';
 import { type ChefSummaryRow } from '../../shared/chefSummaryContract';
 import type { SellerRepository } from '../repo/Repository';
+import { PICKUP_PLACES_SQL } from './menuView';
 import { pickupOf, type PickupRow } from './rows';
 import { fail, ok, type MenuContext } from './menuContext';
 import { parseSnapshot, readChefRows } from './menuFinish';
@@ -26,10 +27,7 @@ export function placesPart(
     // ---- Pickup places (D-061) ----
 
     async listPickupPlaces() {
-      const rows = await db.all<PickupRow>(
-        'SELECT * FROM pickup_places WHERE seller_id = ? ORDER BY position',
-        sid,
-      );
+      const rows = await db.all<PickupRow>(PICKUP_PLACES_SQL, sid);
       return rows.map(pickupOf);
     },
 

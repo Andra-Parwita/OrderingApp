@@ -31,6 +31,7 @@ import {
 } from '../../shared/authContract';
 import type { LiveNotifier } from '../live/hub';
 import { expiryOf, parseMessageRequest, type MessagesResponse } from '../../shared/shortMessage';
+import type { StatsResponse } from '../../shared/orderStats';
 import { bustMaintenanceCache } from './maintenanceGuard';
 import { parseBackupMinutesPatch, parseMaintenancePatch } from '../../shared/maintenance';
 import { isImageSlot } from '../../shared/imageSlots';
@@ -359,6 +360,11 @@ export async function handleAdmin(
       bustMaintenanceCache();
       return Response.json(saved);
     }
+  }
+
+  // Plan 121 B: anonymous order counts per kitchen and week (admin only; counts, never orders).
+  if (a === 'stats' && !b && method === 'GET') {
+    return Response.json((await store.orderStats()) satisfies StatsResponse);
   }
 
   // Plan 086: the short message (admin only). Sending nudges the open pages of the chosen kitchens.

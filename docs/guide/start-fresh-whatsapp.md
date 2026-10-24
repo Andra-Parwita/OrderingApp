@@ -1,6 +1,6 @@
 # Start fresh: WhatsApp text for beta testers (EN / ID)
 
-Plan 102, stage 3. The same six steps are in the app: Settings, Help, Start fresh (Mulai dari awal). Copy and paste the text below. Menu names on phones differ by version: check them on a Samsung, a Pixel and an iPhone before sending.
+Plan 102, stage 3. The same seven steps are in the app: Settings, Help, Start fresh (Mulai dari awal). Copy and paste the text below. Menu names on phones differ by version: check them on a Samsung, a Pixel and an iPhone before sending.
 
 ## English
 
@@ -13,6 +13,7 @@ Start fresh (beta)
 4. If the app misbehaves, clear the site's data. Chrome: menu > Settings > Site settings > All sites > order.shaggybobo.app > Delete & reset. Samsung Internet: menu > Settings > Sites and downloads > Manage website data > the site > Delete. iPhone Safari: Settings > Apps > Safari > Advanced > Website Data > search "shaggybobo" > Remove.
 5. Remove the Remember me passkey. Google Password Manager: Settings > Google > Password Manager > Passkeys > order.shaggybobo.app > Delete. Samsung Pass: Passkeys > pick the site > Delete. Apple Passwords: Passwords app > order.shaggybobo.app > Delete. Keeper: open the record order.shaggybobo.app > Delete.
 6. Install the right kitchen again: open the kitchen's link from me, tap "Install app", check the icon and name.
+7. To get the new start screen on iPhone: remove the app, open the kitchen link in Safari, pull down to refresh, then Add to Home Screen.
 ```
 
 ## Bahasa Indonesia
@@ -26,4 +27,5 @@ Mulai dari awal (beta)
 4. Jika aplikasi bermasalah, hapus data situs. Chrome: menu > Setelan > Setelan situs > Semua situs > order.shaggybobo.app > Hapus & reset. Samsung Internet: menu > Setelan > Situs dan unduhan > Kelola data situs > situsnya > Hapus. iPhone Safari: Pengaturan > App > Safari > Lanjutan > Data Situs Web > cari "shaggybobo" > Hapus.
 5. Hapus passkey Remember me. Google Password Manager: Setelan > Google > Pengelola Sandi > Passkey > order.shaggybobo.app > Hapus. Samsung Pass: Passkey > pilih situsnya > Hapus. Apple Passwords: app Passwords > order.shaggybobo.app > Hapus. Keeper: buka catatan order.shaggybobo.app > Hapus.
 6. Pasang dapur yang benar lagi: buka tautan dapur dari saya, ketuk "Pasang aplikasi", periksa ikon dan namanya.
+7. Untuk tampilan pembuka yang baru di iPhone: hapus aplikasinya, buka tautan dapur di Safari, tarik ke bawah untuk memuat ulang, lalu Tambahkan ke Layar Utama.
 ```

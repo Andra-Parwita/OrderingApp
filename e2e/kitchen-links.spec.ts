@@ -8,11 +8,19 @@ test('the served HTML of a kitchen page has the manifest and icon links', async 
   expect(html).toContain('rel="apple-touch-icon" href="/k/onde-onde/apple-touch-icon.png"');
   expect(html.match(/rel="manifest"/g)).toHaveLength(1);
   expect(html).toContain('apple-mobile-web-app-title" content="Onde Onde"');
+  // 1.0.44: the tab title names the kitchen (one title only), so two kitchens' bookmarks differ.
+  expect(html).toContain('<title>Onde Onde</title>');
+  expect(html.match(/<title>/g)).toHaveLength(1);
+  expect(await (await request.get('/dapur-demo')).text()).toContain('<title>Dapur Demo</title>');
   expect((await request.get('/seller')).ok()).toBe(true);
   // Plan 048: every /seller page links the one ShaggyBobo seller manifest, never a kitchen's.
   const sellerHtml = await (await request.get('/seller')).text();
   expect(sellerHtml).toContain('rel="manifest" href="/seller.webmanifest"');
   expect(sellerHtml).not.toContain('/k/');
+  // Plan 122: the customer pages ask for the translucent iPhone status bar; the seller page keeps the default.
+  const bar = 'apple-mobile-web-app-status-bar-style" content="black-translucent"';
+  expect(html).toContain(bar);
+  expect(sellerHtml).not.toContain('apple-mobile-web-app-status-bar-style');
   const icon = await request.get('/k/dapur-demo/apple-touch-icon.png');
   expect(icon.ok()).toBe(true);
   expect(icon.headers()['content-type']).toContain('image/');

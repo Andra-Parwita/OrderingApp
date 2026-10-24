@@ -1,5 +1,10 @@
 import type { ApiErrorCode } from './apiError';
-import { DISH_PICTURE_MAX_KB, IMAGE_MAX_KB } from './limits';
+import {
+  DISH_PICTURE_MAX_KB,
+  DISH_PICTURE_TARGET_KB,
+  IMAGE_MAX_KB,
+  PHONE_BANNER_TARGET_KB,
+} from './limits';
 
 /** The five picture slots of a seller (D-038, D-040). */
 export const IMAGE_SLOTS = [
@@ -45,6 +50,13 @@ export function slotSpec(slot: UploadSlot): SlotSpec {
     ratio: width / height,
     maxKB: slot === 'dishPicture' ? DISH_PICTURE_MAX_KB : IMAGE_MAX_KB,
   };
+}
+
+/** What the device aims for when it shrinks a picture: smaller than the server's cap for two slots. */
+export function slotAimKB(slot: UploadSlot): number {
+  if (slot === 'dishPicture') return DISH_PICTURE_TARGET_KB;
+  if (slot === 'phoneBanner') return PHONE_BANNER_TARGET_KB;
+  return slotSpec(slot).maxKB;
 }
 
 /** The ratio may be off by this much (5%). */

@@ -127,6 +127,28 @@ describe('customer saga', () => {
     expect(ids[1]).toBe(ids[0]);
   });
 
+  it('plan 121 B: sends only the anonymous facts with the order, the same on the quiet retry', async () => {
+    const sent: Array<Record<string, unknown>> = [];
+    let calls = 0;
+    server.use(
+      http.post('*/api/s/onde-onde/orders', async ({ request: req }) => {
+        calls += 1;
+        const body = (await req.clone().json()) as { stats?: Record<string, unknown> };
+        sent.push(body.stats ?? {});
+        return calls === 1 ? HttpResponse.error() : undefined;
+      }),
+    );
+    const store = await storeWithMenu();
+    store.dispatch(quantitySet({ itemId: 'tempe-mendoan', qty: 1 }));
+    store.dispatch(placeRequested(request));
+    await vi.waitFor(() => expect(store.getState().customer.place.status).toBe('placed'));
+    expect(sent).toHaveLength(2);
+    const allowed = ['place', 'os', 'push', 'remember'];
+    expect(Object.keys(sent[0] ?? {}).every((key) => allowed.includes(key))).toBe(true);
+    expect(Object.keys(sent[0] ?? {}).length).toBeGreaterThan(0);
+    expect(sent[1]).toEqual(sent[0]);
+  });
+
   it('shows the failure after two network failures in a row', async () => {
     let calls = 0;
     server.use(

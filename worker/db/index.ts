@@ -12,6 +12,7 @@ import { createShortMessageRepository } from './shortMessages';
 import { createClientLogRepository } from './clientLog';
 import { Db, marks, type D1Like } from './d1';
 import { assembleOrders, orderReadStatements } from './orders';
+import { readOrderStats } from './orderStats';
 import { dropExpiredDetails } from './retention';
 import { newSellerStatements, wipeAndSeed } from './seed';
 import { createSellerInternal, type Deps, type SampleState, type SellerInternal } from './seller';
@@ -84,6 +85,8 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
     dates: Map<string, string>;
     gone: Map<string, { sellerId: string; cookingDate: string }>;
     sellers: Map<string, Seller>;
+    /** The encrypted delivery address of each order that has one. */
+    addresses: Map<string, string>;
   };
 
   /** One round trip for up to 40 tokens: their orders, closed-week dates, stubs and sellers. */
@@ -121,6 +124,11 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
         ),
       ),
       sellers: new Map((results[6] as Array<SellerRow>).map((row) => [row.id, toSeller(row)])),
+      addresses: new Map(
+        (results[0] as Array<{ token: string; address_enc: string | null }>).flatMap((row) =>
+          row.address_enc === null ? [] : [[row.token, row.address_enc] as const],
+        ),
+      ),
     };
   }
 
@@ -146,7 +154,14 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
           found.set(
             token,
             cookingDate === undefined
-              ? { kind: 'live', sellerRepo, order }
+              ? {
+                  kind: 'live',
+                  sellerRepo,
+                  order,
+                  ...(rows.addresses.has(token)
+                    ? { storedAddress: rows.addresses.get(token) }
+                    : {}),
+                }
               : { kind: 'archived', sellerRepo, order, cookingDate },
           );
           continue;
@@ -180,6 +195,10 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
         const summary = summaries.get(row.id);
         return { ...toSeller(row), createdAt: row.created_at, ...(summary ? { summary } : {}) };
       });
+    },
+
+    async orderStats() {
+      return readOrderStats(db, options.now());
     },
 
     async sellerBySlug(slug) {

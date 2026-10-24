@@ -16,7 +16,7 @@ const Back = styled.button`
   display: inline-flex;
   align-items: center;
   min-height: ${({ theme }) => theme.size.tap}px;
-  margin-top: calc(var(--sat) + ${({ theme }) => theme.spacing.sm});
+  margin-top: ${({ theme }) => theme.spacing.sm};
   padding: 0;
   border: 0;
   background: none;
@@ -86,7 +86,7 @@ const TextLink = styled.button`
   cursor: pointer;
 `;
 
-const STEPS = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6'] as const;
+const STEPS = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6', 'step7'] as const;
 
 type Props = Readonly<{
   onBack: () => void;

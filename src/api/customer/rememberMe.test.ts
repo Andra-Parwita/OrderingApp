@@ -14,7 +14,13 @@ import { storedCustomerCode } from '../device/customerCode';
 import { readMyOrders } from '../device/myOrders';
 import { toB64Url, keyFromPrf, sealAddress } from './crypto';
 import { setKeyStoreForTests, type KeyStore } from './keyStore';
-import { deleteMySavedData, restoreWithPasskey, signOutHere, turnOnRememberMe } from './rememberMe';
+import {
+  deleteMySavedData,
+  rememberMeAccount,
+  restoreWithPasskey,
+  signOutHere,
+  turnOnRememberMe,
+} from './rememberMe';
 import { rememberMeLocal } from './state';
 import { resetSyncForTests } from './sync';
 
@@ -191,6 +197,36 @@ describe('restore on a new phone', () => {
     expect(savedAddress()).toMatchObject({ street: '9 Norwood Pde' });
     const signIn = calls.find((c) => c.url === '/api/customer/passkey');
     expect(JSON.stringify(signIn?.body)).not.toContain('"prf"');
+  });
+});
+
+describe('the account facts for the Settings card', () => {
+  const on = () => {
+    localStorage.setItem('rememberMe', JSON.stringify({ credentialId: 'cred-1', sealing: true }));
+  };
+
+  it('reads createdAt and the first name from the session answer', async () => {
+    on();
+    standardRoutes(true);
+    routes['GET /api/customer/me'] = () => ({
+      json: me({ code: 'C-7K3M', createdAt: '2026-10-24T02:00:00.000Z' }),
+    });
+    expect(await rememberMeAccount('onde')).toEqual({
+      code: 'C-7K3M',
+      firstName: 'Putu',
+      createdAt: '2026-10-24T02:00:00.000Z',
+    });
+  });
+
+  it('tolerates a missing or broken createdAt (the row is hidden)', async () => {
+    on();
+    standardRoutes(true);
+    routes['GET /api/customer/me'] = () => ({ json: me({ code: 'C-7K3M' }) });
+    expect((await rememberMeAccount('onde'))?.createdAt).toBeNull();
+    routes['GET /api/customer/me'] = () => ({ json: me({ createdAt: 'not a date' }) });
+    expect((await rememberMeAccount('onde'))?.createdAt).toBeNull();
+    routes['GET /api/customer/me'] = () => ({ json: me({ createdAt: 42 }) });
+    expect((await rememberMeAccount('onde'))?.createdAt).toBeNull();
   });
 });
 

@@ -5,6 +5,7 @@ import {
   menuFinishesAt,
   formatCookingDate,
   formatCutoff,
+  formatDate,
   formatDay,
   formatDayTime,
   formatTime,
@@ -29,6 +30,15 @@ describe('date helpers (device zone: Australia/Adelaide)', () => {
     expect(formatCutoff('2026-10-09T10:30:00Z', 'en')).toBe('Fri 9 Oct, 9 pm');
     expect(formatCutoff('2026-10-09T10:30:00Z', 'en', 'Asia/Jakarta')).toBe('Fri 9 Oct, 5:30 pm');
     expect(formatTime('2026-10-09T10:30:00Z', 'id', 'Asia/Jakarta')).toBe('17.30');
+  });
+
+  it('formats a full date with the year in both languages', () => {
+    expect(formatDate('2026-10-24T02:00:00Z', 'en')).toBe('24 Oct 2026');
+    expect(formatDate('2026-10-24T02:00:00Z', 'id')).toBe('24 Okt 2026');
+    expect(formatDate('2026-05-03T02:00:00Z', 'id')).toBe('3 Mei 2026');
+    // 2026-10-23T16:00Z is 24 Oct 02:30 in Adelaide (UTC+10:30) but 23 Oct 23:00 in Jakarta.
+    expect(formatDate('2026-10-23T16:00:00Z', 'en')).toBe('24 Oct 2026');
+    expect(formatDate('2026-10-23T16:00:00Z', 'en', 'Asia/Jakarta')).toBe('23 Oct 2026');
   });
 
   it('formats the compact seller day and time', () => {

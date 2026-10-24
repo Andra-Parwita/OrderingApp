@@ -7,7 +7,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 const api = vi.hoisted(() => ({
   signOutHere: vi.fn(() => Promise.resolve()),
   deleteMySavedData: vi.fn(() => Promise.resolve({ ok: true as const, signalled: false })),
-  kitchenCode: vi.fn(() => Promise.resolve('C-7K3M')),
+  rememberMeAccount: vi.fn(
+    (): Promise<{ code: string | null; firstName: string; createdAt: string | null }> =>
+      Promise.resolve({
+        code: 'C-7K3M',
+        firstName: 'Indra',
+        createdAt: '2026-10-24T02:00:00.000Z',
+      }),
+  ),
   turnOnRememberMe: vi.fn(() => Promise.resolve({ ok: true as const, sealing: true, restored: 0 })),
   restoreWithPasskey: vi.fn(() =>
     Promise.resolve({ ok: true as const, sealing: true, restored: 3 }),
@@ -120,6 +127,17 @@ describe('the turn-on sheet (plan 092)', () => {
     expect(localStorage.getItem('firstName')).toBe('Indra');
   });
 
+  it('offers "Turned on before? Restore your orders", which signs in instead of making an account', async () => {
+    open();
+    const sheet = screen.getByRole('dialog');
+    expect(within(sheet).getByText('Turned on Remember me before?')).toBeVisible();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Restore your orders' }));
+    await waitFor(() => {
+      expect(api.restoreWithPasskey).toHaveBeenCalledTimes(1);
+    });
+    expect(api.turnOnRememberMe).not.toHaveBeenCalled();
+  });
+
   it('Skip turns it on with the generic name and saves no name', async () => {
     open();
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
@@ -147,7 +165,7 @@ describe('the turn-on sheet (plan 092)', () => {
 });
 
 describe('the Settings card', () => {
-  it('off: one Turn on, then quiet links with a hint', () => {
+  it('off: one Turn on, then the restore line and quiet links', () => {
     render(wrap(<RememberMeCard kitchenName="Onde Onde" />));
     expect(
       screen.getByText(
@@ -155,13 +173,46 @@ describe('the Settings card', () => {
       ),
     ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Turn on' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'I already use Remember me' })).toBeVisible();
-    expect(
-      screen.getByText("Use this if you turned it on in another kitchen's app."),
-    ).toBeVisible();
+    expect(screen.getByText('Turned on Remember me before?')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Restore your orders' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Use a 6-digit code instead' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Learn more' }));
     expect(screen.getByRole('dialog')).toBeVisible();
+  });
+
+  it('off: tapping Restore your orders runs the passkey restore', async () => {
+    render(wrap(<RememberMeCard kitchenName="Onde Onde" />));
+    fireEvent.click(screen.getByRole('button', { name: 'Restore your orders' }));
+    await waitFor(() => {
+      expect(api.restoreWithPasskey).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('on: shows the name and when it was turned on, in English', async () => {
+    setRememberMeLocal({ credentialId: 'c', sealing: true, setup: false });
+    render(wrap(<RememberMeCard kitchenName="Onde Onde" />));
+    expect(await screen.findByText('24 Oct 2026')).toBeVisible();
+    expect(screen.getByText('Turned on')).toBeVisible();
+    expect(screen.getByText('Name')).toBeVisible();
+    expect(screen.getByText('Indra')).toBeVisible();
+  });
+
+  it('on: shows the same date in Indonesian', async () => {
+    await act(() => i18n.changeLanguage('id'));
+    setRememberMeLocal({ credentialId: 'c', sealing: true, setup: false });
+    render(wrap(<RememberMeCard />));
+    expect(await screen.findByText('24 Okt 2026')).toBeVisible();
+    expect(screen.getByText('Dinyalakan')).toBeVisible();
+    expect(screen.getByText('Nama')).toBeVisible();
+  });
+
+  it('on: hides the date and name rows when the server sends neither', async () => {
+    api.rememberMeAccount.mockResolvedValueOnce({ code: 'C-7K3M', firstName: '', createdAt: null });
+    setRememberMeLocal({ credentialId: 'c', sealing: true, setup: false });
+    render(wrap(<RememberMeCard />));
+    expect(await screen.findByText('C-7K3M')).toBeVisible();
+    expect(screen.queryByText('Turned on')).toBeNull();
+    expect(screen.queryByText('Name')).toBeNull();
   });
 
   it('on: the kitchen code, sign out and delete both ask first', async () => {

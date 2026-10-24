@@ -122,12 +122,12 @@ describe('Admin sections (plan 078)', () => {
     renderScreen();
     const pick = screen.getByRole('combobox', { name: 'Section' });
     expect(pick).toHaveValue('sellers');
-    await waitFor(() =>
-      expect(
-        within(pick).getByRole('option', { name: /^Your devices \(1\)$/ }),
-      ).toBeInTheDocument(),
-    );
-    expect(within(pick).getByRole('option', { name: /^Sellers \(\d+\)$/ })).toBeInTheDocument();
+    expect(
+      await within(pick).findByRole('option', { name: /^Your devices \(1\)$/ }),
+    ).toBeInTheDocument();
+    expect(
+      await within(pick).findByRole('option', { name: /^Sellers \(\d+\)$/ }),
+    ).toBeInTheDocument();
     fireEvent.change(pick, { target: { value: 'devices' } });
     expect(window.location.search).toBe('?s=devices');
     expect(await screen.findByRole('list', { name: 'Your admin devices' })).toBeInTheDocument();

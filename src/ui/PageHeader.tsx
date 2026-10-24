@@ -14,16 +14,19 @@ export type PageHeaderProps = Readonly<{
   titleHidden?: boolean;
 }>;
 
+// The safe area (the iPhone notch under black-translucent, plan 122) is the header's stick offset, not its
+// padding: in flow (under the customer banner, or below the shell's own padding) it adds no gap, and once
+// stuck it sits just under the clock. `--sat` is 0 everywhere but an iPhone home-screen app with that bar
+// style (never the seller app), so there the header is exactly as before.
 const Bar = styled.header`
   position: sticky;
-  top: ${TOP_BARS};
+  top: calc(${TOP_BARS} + var(--sat, 0rem));
   z-index: 5;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
-  padding: calc(env(safe-area-inset-top) + ${({ theme }) => theme.spacing.xs})
-    ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colour.bg};
   border-bottom: ${({ theme }) => theme.border.hairline} solid
     ${({ theme }) => theme.colour.hairline};

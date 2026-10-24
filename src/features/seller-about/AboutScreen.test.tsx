@@ -1,9 +1,11 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { RELEASE_VERSION } from '../../../shared/release';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { AboutScreen } from './AboutScreen';
+import { RELEASES } from './releaseNotes';
 
 // Plan 075: the player is mocked, so no real Lottie runs in jsdom.
 const loadAnimation = vi.fn<(options: unknown) => unknown>();
@@ -85,7 +87,7 @@ describe('AboutScreen', () => {
 
   it('names the release number only', () => {
     setUp();
-    expect(screen.getByText('Release 1.0.43')).toBeInTheDocument();
+    expect(screen.getByText(`Release ${RELEASE_VERSION}`)).toBeInTheDocument();
     expect(screen.queryByText(/build/)).toBeNull();
   });
 
@@ -104,7 +106,8 @@ describe('AboutScreen', () => {
 
   it('opens the releases with the newest marked New when it comes from the pill', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
-    vi.setSystemTime(new Date('2026-10-21T10:00:00'));
+    // The day the newest release came out, so "New" shows whatever that release is.
+    vi.setSystemTime(new Date(`${RELEASES[0]?.date ?? ''}T10:00:00`));
     loadAnimation.mockReturnValue({ destroy, goToAndStop: vi.fn(), addEventListener: vi.fn() });
     render(
       <AppThemeProvider>

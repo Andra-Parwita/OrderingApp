@@ -53,6 +53,13 @@ export function kitchenPageTarget(pathname: string): KitchenPageTarget | null {
   return isValidSlug(first) ? { slug: first } : null;
 }
 
+/**
+ * The tab and bookmark title of a kitchen page: the kitchen's name, so two kitchens' bookmarks differ;
+ * an order page adds the word for "Order" (`orderWord`: English from the Worker, the customer's language in the app).
+ */
+export const kitchenPageTitle = (name: string, orderWord?: string): string =>
+  orderWord === undefined ? name : `${name} · ${orderWord}`;
+
 const escapeAttr = (text: string): string =>
   text
     .replace(/&/g, '&amp;')
@@ -61,9 +68,17 @@ const escapeAttr = (text: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+/**
+ * The iPhone home-screen app's status bar (plan 122): the page draws under the clock, which is white.
+ * Customer pages only: seller and admin keep the light strip (index.html has no such meta).
+ */
+export const STATUS_BAR_META =
+  '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">';
+
 /** The links for the head. `name` (the kitchen name) is left out when unknown, as in dev. */
 export function kitchenHeadHtml(slug: string, name?: string, start?: string): string {
   return (
+    STATUS_BAR_META +
     `<link rel="manifest" href="${escapeAttr(manifestHref(slug, start))}">` +
     `<link rel="apple-touch-icon" href="${escapeAttr(appleTouchIconPath(slug))}">` +
     (name === undefined

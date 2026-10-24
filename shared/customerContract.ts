@@ -74,6 +74,8 @@ export type CustomerMe = {
   customerCode?: string;
   /** The same, as a seller sees it: "C-7K3M". */
   code?: string;
+  /** When this Remember me account was made (ISO). Absent from an older server: the card hides the row. */
+  createdAt?: string;
 };
 export type CustomerMeResponse = { me: CustomerMe };
 export type CustomerOrdersResponse = { orders: Array<{ token: string; slug: string }> };

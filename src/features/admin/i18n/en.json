@@ -169,6 +169,23 @@
       "renameDevice": "Rename {{name}}",
       "signOutDevice": "Sign out {{name}}"
     },
+    "stats": {
+      "title": "Statistics",
+      "text": "Anonymous counts of the orders placed from customers' phones, by week, for the last {{count}} weeks. Never per order or per person. Sample orders and orders a team member entered are left out.",
+      "none": "No orders in the last {{count}} weeks.",
+      "tableLabel": "Statistics for {{name}}",
+      "week": "Week of",
+      "app": "App",
+      "browser": "Browser",
+      "inapp": "WhatsApp",
+      "ios": "iPhone",
+      "android": "Android",
+      "other": "Other",
+      "push": "Notifications on",
+      "remember": "Remember me on",
+      "orders": "Orders",
+      "note": "WhatsApp means any in-app browser. The percentages count the orders whose phone said; orders from older versions of the app are in the total only. Orders go after 4 weeks, so older weeks fill with fewer."
+    },
     "problems": {
       "title": "Problems ({{count}})",
       "none": "No problems reported.",
@@ -233,6 +250,7 @@
       "sellers": "Sellers",
       "announce": "Announce update",
       "settings": "Platform settings",
+      "stats": "Statistics",
       "problems": "Problems",
       "devices": "Your devices",
       "noticeSet": "notice set or maintenance on",

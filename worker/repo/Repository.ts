@@ -31,6 +31,7 @@ import type {
   DayUndoRequest,
 } from '../../shared/daySalesContract';
 import type { AddMadeRequest } from '../../shared/madeContract';
+import type { StatsResponse } from '../../shared/orderStats';
 import type {
   Chef,
   KitchenImages,
@@ -264,8 +265,13 @@ export type SellerRepository = {
 
   // Orders: customer side
   createOrder(input: CreateOrderRequest): Promise<StoreResult<SellerOrder>>;
-  updateOrder(token: string, patch: UpdateOrderRequest): Promise<StoreResult<SellerOrder>>;
-  cancelOrder(token: string): Promise<StoreResult<SellerOrder>>;
+  /** `known`: the order the token lookup just read (plan 113), so it is not read again. */
+  updateOrder(
+    token: string,
+    patch: UpdateOrderRequest,
+    known?: SellerOrder,
+  ): Promise<StoreResult<SellerOrder>>;
+  cancelOrder(token: string, known?: SellerOrder): Promise<StoreResult<SellerOrder>>;
 
   // Orders: seller and chef side
   createSellerOrder(
@@ -395,7 +401,13 @@ export type SellerRepository = {
 
 /** Where an order token leads (D-044): a live order, an archived one, or just its week's date. */
 export type TokenLookup =
-  | { kind: 'live'; sellerRepo: SellerRepository; order: SellerOrder }
+  | {
+      kind: 'live';
+      sellerRepo: SellerRepository;
+      order: SellerOrder;
+      /** The encrypted delivery address the order row held when it was read (plan 113: saves a read). */
+      storedAddress?: string;
+    }
   | { kind: 'archived'; sellerRepo: SellerRepository; order: SellerOrder; cookingDate: string }
   | { kind: 'expired'; sellerRepo: SellerRepository; cookingDate: string };
 
@@ -636,6 +648,8 @@ export type Repository = {
   // Sellers (the admin's list, and the customer link `/<slug>`)
   listSellers(): Promise<Array<Seller>>;
   adminSellers(): Promise<Array<AdminSeller>>;
+  /** Plan 121 B (admin only): anonymous counts per kitchen and week; no order, name or code. */
+  orderStats(): Promise<StatsResponse>;
   /** Undefined for an unknown slug / id. */
   sellerBySlug(slug: string): Promise<SellerRepository | undefined>;
   sellerById(id: string): Promise<SellerRepository | undefined>;

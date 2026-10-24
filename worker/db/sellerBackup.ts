@@ -9,7 +9,18 @@ import type { SavedSet } from '../../shared/setupContract';
 import { isOwnImageRef } from '../images/r2';
 import type { SellerRepository } from '../repo/Repository';
 import { marks, type D1Statement } from './d1';
-import { insertOrderStatements, LIVE_MENU, readOrders } from './orders';
+import { dishListOf, DISHES_AND_CHOICES_SQL } from './menuDishes';
+import { menuViewOf } from './menuContext';
+import { MENU_USES_SQL, PICKUP_PLACES_SQL } from './menuView';
+import { entryOf, MESSAGE_LOG_SQL, type LogRow } from './handover';
+import {
+  assembleOrders,
+  insertOrderStatements,
+  LIVE_MENU,
+  orderReadStatements,
+  readOrders,
+} from './orders';
+import { pickupOf, preferencesOf, type DishRow, type MenuPlaceRow, type PickupRow } from './rows';
 import {
   dishStatement,
   itemStatement,
@@ -20,6 +31,7 @@ import {
   settingsStatement,
   type StoredSet,
 } from './write';
+import { dropExpiredDetails } from './retention';
 import { defaultPreferences, without } from './sellerShared';
 import { type SellerContext } from './sellerContext';
 
@@ -27,36 +39,65 @@ import { type SellerContext } from './sellerContext';
 export function backupPart(
   c: SellerContext,
 ): Pick<SellerRepository, 'exportBackup' | 'restoreBackup' | 'ordersCsv'> {
-  const { deps, db, seller, sid, nowIso, menuOps, handover, loadState, readSets, readPastWeeks } =
+  const { deps, db, seller, sid, nowIso, loadStateRaw, readSets, pastWeekStatements, pastWeeksOf } =
     c;
   return {
     // ---- Backup and CSV ----
 
+    /**
+     * Plan 113: built from the state, the saved sets and two batches of reads (four round trips,
+     * after the retention sweep), not from twelve service calls. mocks/legacyBackup.ts is the old
+     * way; mocks/backupCompare.test.ts proves both give the same file.
+     */
     async exportBackup(): Promise<BackupFile> {
-      const [s, sets, live, past, archived, pastRows, view, places, dishes, links, prefs, log] =
-        await Promise.all([
-          loadState(),
-          readSets(),
-          readOrders(db, sid, LIVE_MENU),
-          readPastWeeks(),
-          readOrders(db, sid, 'o.past_week_id IS NOT NULL'),
-          db.all<{ id: string; past_week_id: string }>(
-            'SELECT id, past_week_id FROM orders WHERE seller_id = ? AND past_week_id IS NOT NULL',
-            sid,
+      // Closed weeks past their keep date are archived first, so the reads below see them gone.
+      await dropExpiredDetails(db, deps.now(), sid);
+      const [{ state: s, raw }, sets, history, rest] = await Promise.all([
+        loadStateRaw(),
+        readSets(),
+        // Live menu orders and closed-week orders together (told apart by `past_week_id`), then the history.
+        db.reads([
+          ...orderReadStatements(
+            db,
+            `o.seller_id = ? AND (${LIVE_MENU} OR o.past_week_id IS NOT NULL)`,
+            [sid],
           ),
-          menuOps.getCurrentMenu(),
-          menuOps.listPickupPlaces(),
-          menuOps.listDishes(),
-          db.all<{ id: string; dish_id: string | null }>(
-            'SELECT id, dish_id FROM menu_items WHERE seller_id = ?',
-            sid,
-          ),
-          menuOps.getPreferences(),
-          handover.listMessages(),
-        ]);
-      const weekOfOrder = new Map(pastRows.map((row) => [row.id, row.past_week_id]));
+          ...pastWeekStatements(),
+        ]),
+        db.reads([
+          db.stmt(MENU_USES_SQL, sid),
+          db.stmt(PICKUP_PLACES_SQL, sid),
+          db.stmt(DISHES_AND_CHOICES_SQL, sid),
+          db.stmt(MESSAGE_LOG_SQL, sid, sid),
+        ]),
+      ]);
+      const [orderRows, , , , weeks, weekItems] = history;
+      const [uses, placeRows, dishRows, logRows] = rest;
+      const everyOrder = assembleOrders(history.slice(0, 4), true);
+      const live: Array<SellerOrder> = [];
+      const archived: Array<SellerOrder> = [];
+      const weekOfOrder = new Map<string, string>();
+      (orderRows as Array<{ id: string; past_week_id: string | null }>).forEach((row, index) => {
+        const order = everyOrder[index];
+        if (!order) return;
+        if (row.past_week_id === null) live.push(order);
+        else {
+          archived.push(order);
+          weekOfOrder.set(row.id, row.past_week_id);
+        }
+      });
+      const view = menuViewOf(
+        raw.menu,
+        uses as Array<MenuPlaceRow>,
+        raw.points,
+        raw.items,
+        raw.used,
+      );
       const itemDishIds: Record<string, string> = {};
-      for (const link of links) if (link.dish_id !== null) itemDishIds[link.id] = link.dish_id;
+      // The items come in menu order, the order the old `SELECT id, dish_id FROM menu_items` read them.
+      for (const item of raw.items) if (item.dish_id !== null) itemDishIds[item.id] = item.dish_id;
+      const dishes = dishRows as Array<DishRow>;
+      const log = (logRows as Array<LogRow>).map(entryOf);
       return structuredClone({
         version: BACKUP_VERSION,
         exportedAt: nowIso(),
@@ -68,8 +109,11 @@ export function backupPart(
         chefs: s.chefs,
         sets: sets.map(({ id, name, items, images }): SavedSet => ({ id, name, items, images })),
         menu: view.menu,
-        pickupPlaces: places,
-        dishes,
+        pickupPlaces: (placeRows as Array<PickupRow>).map(pickupOf),
+        dishes: dishListOf(
+          dishes.filter((row) => row.group_id === null),
+          dishes.filter((row) => row.group_id !== null),
+        ),
         itemDishIds,
         dishSets: sets.map(({ id, name, dishIds, timesUsed }) => ({
           id,
@@ -77,14 +121,14 @@ export function backupPart(
           dishIds,
           timesUsed,
         })),
-        preferences: prefs,
+        preferences: preferencesOf(raw.settings),
         ...(log.length > 0 ? { messageLog: log } : {}),
         orders: live,
-        pastWeeks: past.map(({ hasOrders, ...rest }): PastWeek => {
-          if (!hasOrders) return rest;
+        pastWeeks: pastWeeksOf(weeks, weekItems).map(({ hasOrders, ...week }): PastWeek => {
+          if (!hasOrders) return week;
           return {
-            ...rest,
-            orders: archived.filter((order) => weekOfOrder.get(order.id) === rest.id),
+            ...week,
+            orders: archived.filter((order) => weekOfOrder.get(order.id) === week.id),
           };
         }),
       });

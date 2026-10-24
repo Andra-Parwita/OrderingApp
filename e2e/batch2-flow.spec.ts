@@ -149,14 +149,14 @@ test('seller desktop: list and panel, kitchen, empty state; tablet and phone lay
     await page.goto('/seller/orders');
     await expect(page.getByRole('status').filter({ hasText: 'Live' })).toBeVisible();
 
-    // Left panel: current page marked, the one language switch in its footer.
+    // Left panel: current page marked; no language switch in the rail (plan 118: it is in Settings).
     const rail = page.getByRole('navigation', { name: 'Seller' });
     await expect(rail.getByRole('link', { name: 'Orders' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-    await expect(rail.getByRole('radiogroup', { name: 'Language' })).toBeVisible();
-    await expect(page.getByRole('radiogroup', { name: 'Language' })).toHaveCount(1);
+    await expect(rail.getByRole('radiogroup', { name: 'Language' })).toHaveCount(0);
+    await expect(page.getByRole('radiogroup', { name: 'Language' })).toHaveCount(0);
     await expect(page.getByRole('main')).toHaveCount(1);
 
     // The list: a heading, search, the Changed / Not paid toggles and the status tabs.

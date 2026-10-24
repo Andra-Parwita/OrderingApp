@@ -68,8 +68,13 @@ export async function withKitchenLinks(
     const repo = readOnlyRepo(env);
     const found = await kitchenPageFor(repo, pathname, origin, search);
     if (found === null) return fallback();
-    const { head: html, theme, splash } = found;
+    const { head: html, title, theme, splash } = found;
     const rewritten = new HTMLRewriter()
+      .on('title', {
+        element(el) {
+          if (title !== undefined) el.setInnerContent(title); // text: HTMLRewriter escapes it
+        },
+      })
       .on('head', {
         element(head) {
           head.append(html, { html: true });

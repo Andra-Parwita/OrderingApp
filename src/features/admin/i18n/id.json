@@ -165,6 +165,23 @@
       "renameDevice": "Ubah nama {{name}}",
       "signOutDevice": "Keluarkan {{name}}"
     },
+    "stats": {
+      "title": "Statistik",
+      "text": "Jumlah pesanan dari ponsel pelanggan tanpa identitas, per minggu, untuk {{count}} minggu terakhir. Tidak pernah per pesanan atau per orang. Pesanan contoh dan pesanan yang dimasukkan tim tidak dihitung.",
+      "none": "Tidak ada pesanan dalam {{count}} minggu terakhir.",
+      "tableLabel": "Statistik untuk {{name}}",
+      "week": "Minggu",
+      "app": "Aplikasi",
+      "browser": "Peramban",
+      "inapp": "WhatsApp",
+      "ios": "iPhone",
+      "android": "Android",
+      "other": "Lainnya",
+      "push": "Notifikasi aktif",
+      "remember": "Ingat saya aktif",
+      "orders": "Pesanan",
+      "note": "WhatsApp berarti peramban dalam aplikasi apa pun. Persentase menghitung pesanan yang ponselnya menjawab; pesanan dari aplikasi versi lama hanya masuk ke jumlah total. Pesanan dihapus setelah 4 minggu, jadi minggu lama lebih sedikit."
+    },
     "problems": {
       "title": "Masalah ({{count}})",
       "none": "Belum ada masalah dilaporkan.",
@@ -227,6 +244,7 @@
       "sellers": "Penjual",
       "announce": "Umumkan pembaruan",
       "settings": "Pengaturan platform",
+      "stats": "Statistik",
       "problems": "Masalah",
       "devices": "Perangkat Anda",
       "noticeSet": "pengumuman diatur atau pemeliharaan aktif",

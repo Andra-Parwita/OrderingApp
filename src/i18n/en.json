@@ -126,6 +126,7 @@
     "orders": "My orders",
     "settings": "Settings",
     "newUpdate": "new update",
+    "orderTitle": "Order",
     "back": "Back",
     "backTo": "Back to {{page}}",
     "notBuilt": "Not built yet: {{id}}"
@@ -177,6 +178,7 @@
     "step4": "If the app misbehaves, <b>clear the site's data</b>. Chrome: ⋮ → Settings → Site settings → All sites → order.shaggybobo.app → Delete & reset. Samsung Internet: ≡ → Settings → Sites and downloads → Manage website data → the site → Delete. iPhone Safari: Settings → Apps → Safari → Advanced → Website Data → search \"shaggybobo\" → Remove (menu names differ by iOS version).",
     "step5": "<b>Remove the Remember me passkey.</b> Google Password Manager: Settings → Google → Password Manager → Passkeys → order.shaggybobo.app → Delete. Samsung Pass: Passkeys → pick the site → Delete. Apple Passwords: Passwords app → order.shaggybobo.app → Delete. Keeper: open the record order.shaggybobo.app → Delete.",
     "step6": "<b>Install the right kitchen again.</b> Open the kitchen's link from the owner, tap Install app, check the icon and name.",
+    "step7": "<b>To get the new start screen on iPhone:</b> remove the app, open the kitchen link in Safari, pull down to refresh, then Add to Home Screen.",
     "reset": "Reset this phone",
     "resetting": "Resetting…",
     "deleteLink": "Delete my saved data (in Settings)"

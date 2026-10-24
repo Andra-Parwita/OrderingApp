@@ -143,7 +143,7 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 110 | ✅ | [WhatsApp numbers from any country](110-international-whatsapp-numbers.md) | D-111; live in 1.0.42.1, help in 1.0.42.2 |
 | 111 | ✅ | [Dish choices and a note per order line](111-dish-choices-line-notes.md) | live in 1.0.43 (D-112) |
 | 112 | ✅ | [Tell customers when a new menu is published](112-new-menu-notices.md) | live in 1.0.43 (D-113) |
-| 113 | 🔨 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | 2 fixes live in 1.0.43; items 3–7 in **1.0.44** (owner 24 Oct "B", backup with a comparison test) |
+| 113 | 🔨 | [Fewer database round trips per request](113-fewer-db-round-trips.md) | 2 fixes live in 1.0.43; items 3–7 built, **1.0.44 gate** (owner 24 Oct "B"): PATCH order 7→4 trips, cancel 6→4, private create 7→5, dish edit 5→4, backup 15→7 (backup file unchanged, proven by a comparison test) |
 | 114 | ✅ | [Slow networks: timeouts, no double orders, clear feedback](114-slow-network.md) | items 1–5 live in hotfix 1.0.43.1 |
 | 115 | ✅ | [No blank screen while the app loads](115-loading-splash.md) | stage 1 live in 1.0.43.1; stage 2 (saved page at once) live as 1.0.43.2 (24 Oct; a brief rollback was a VPN false alarm); iPhone check ✅ (owner 24 Oct "A") |
 | 116 | 💤 | [Seller "Send a problem report"](116-seller-problem-report.md) | owner 20 Oct: plan it, after 1.0.44 |
@@ -151,7 +151,8 @@ From a read-only analysis of the unfinished plans. **The owner took over all of 
 | 118 | 🔨 | [Join another kitchen, switch by the kitchen name, language in Settings](118-join-kitchen-switcher.md) | owner 24 Oct: mock-up approved; building for 1.0.44 |
 | 119 | ✅ | [Customers load only the customer app (bundle split)](119-customer-bundle-split.md) | live in hotfix 1.0.43.3 (24 Oct): light split, iOS launch pictures (dark spotlight), dark splash + Android colour, splash cache rule, phone message sheet fix, banner preload |
 | 120 | 💤 | [Instant first screen (snapshot)](120-instant-first-screen.md) | parked (owner 24 Oct): "iPhone image is enough" |
-| 121 | ⬜ | Anonymous order statistics + nudges for Remember me and notifications | owner 24 Oct: in **1.0.44**; mock-up and plan first |
+| 121 | 🔨 | [Anonymous order statistics + nudges for Remember me and notifications](121-stats-and-nudges.md) | built 24 Oct, **1.0.44 gate** (owner: in 1.0.44): nudges in My orders (Order placed unchanged); anonymous statistics in the admin app only (counts per kitchen per week, migration 0034); mock-up `uxDesign/customer/mockups/121-nudges.html` approved |
+| 122 | 🔨 | [iPhone status bar: the banner runs to the top edge](122-ios-status-bar.md) | built 25 Oct for **1.0.44**: see-through status bar in the customer iPhone app; behind the clock the kitchen's banner background picture (owner "A4", `uxDesign/customer/mockups/122b-status-bar-options.html`), else a blurred copy of the banner, else the colour; always-on thin fade; no double gap. Later: taller 1200 × 570 banner |
 
 **Later, when the builder says so:** Cloudflare security insights: add `/.well-known/security.txt` (needs a public contact email), try Bot Fight Mode (check that WhatsApp link previews still work), AI Labyrinth (optional).
 

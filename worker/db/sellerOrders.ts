@@ -60,6 +60,7 @@ export function ordersPart(
     nowIso,
     notify,
     loadState,
+    readOrderWithState,
     closedError,
     draft,
     addAudit,
@@ -116,10 +117,12 @@ export function ordersPart(
     },
 
     /** Customer change: not when closed, locked or final. */
-    async updateOrder(token: string, patch: UpdateOrderRequest) {
-      const order = await readLiveOrder(db, sid, 'token', token);
+    async updateOrder(token: string, patch: UpdateOrderRequest, known?: SellerOrder) {
+      // `known` is the order the token lookup just read; without it the order and state come in one trip.
+      const { order, state: s } = known
+        ? { order: known, state: await loadState(known.id) }
+        : await readOrderWithState('token', token);
       if (!order) return fail('not_found', 'Order not found');
-      const s = await loadState(order.id);
       const closed = closedError<SellerOrder>(s);
       if (closed) return closed;
       if (order.locked) return fail('order_locked', 'The seller has locked this order');
@@ -141,10 +144,11 @@ export function ordersPart(
     },
 
     /** Customer cancel (a change, so refused when closed or locked). */
-    async cancelOrder(token: string) {
-      const order = await readLiveOrder(db, sid, 'token', token);
+    async cancelOrder(token: string, known?: SellerOrder) {
+      const { order, state: s } = known
+        ? { order: known, state: await loadState(known.id) }
+        : await readOrderWithState('token', token);
       if (!order) return fail('not_found', 'Order not found');
-      const s = await loadState(order.id);
       const closed = closedError<SellerOrder>(s);
       if (closed) return closed;
       if (order.locked) return fail('order_locked', 'The seller has locked this order');
@@ -323,13 +327,17 @@ export function ordersPart(
      * entry (so a push) with the diff in the order's language.
      */
     async editOrder(code: string, input: EditSellerOrderRequest, actor: StaffActor) {
-      const order = await readLiveOrder(db, sid, 'code', code);
+      // Dishes to check: the order and the state come in one trip.
+      const read = input.lines
+        ? await readOrderWithState('code', code)
+        : { order: await readLiveOrder(db, sid, 'code', code), state: undefined };
+      const order = read.order;
       if (!order) return fail('not_found', 'Order not found');
       if (order.private) return fail('private_order', 'This is a private order');
       const reactivate = order.status === 'cancelled' && input.reactivate === true;
       let next: SellerOrder = order;
-      if (input.lines) {
-        const s = await loadState(order.id);
+      if (input.lines && read.state) {
+        const s = read.state;
         // A cancelled order that stays cancelled holds no portions, so nothing to warn about.
         const over = input.force === true || (order.status === 'cancelled' && !reactivate);
         const lines = c.buildLines(s, input.lines, order.lines, over ? 'allow' : 'warn', true);

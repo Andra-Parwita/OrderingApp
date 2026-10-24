@@ -417,8 +417,8 @@ export function createCustomerRepository(deps: CustomerDeps): CustomerRepository
     },
 
     async me(caller, sellerId) {
-      const account = await db.first<{ first_name: string; code_salt: string }>(
-        'SELECT first_name, code_salt FROM customer_accounts WHERE id = ?',
+      const account = await db.first<{ first_name: string; code_salt: string; created_at: string }>(
+        'SELECT first_name, code_salt, created_at FROM customer_accounts WHERE id = ?',
         caller.accountId,
       );
       const key = caller.credentialId;
@@ -440,6 +440,7 @@ export function createCustomerRepository(deps: CustomerDeps): CustomerRepository
         prf: passkey?.prf === 1,
         setup: caller.setup,
         sealed: sealed ? { v: sealed.v, iv: sealed.iv, ct: sealed.ct } : null,
+        ...(account ? { createdAt: account.created_at } : {}),
       };
       if (sellerId && account) {
         const adopted = await db.first<{ code: string }>(

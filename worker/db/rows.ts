@@ -16,6 +16,7 @@ import type {
   Week,
 } from '../../shared/domain';
 import { IMAGE_SLOTS, type ImageSlot } from '../../shared/imageSlots';
+import type { OrderStats, StatPlace, StatSystem } from '../../shared/orderStats';
 import type { Dish, Menu, MenuState, Preferences, ThemeName } from '../../shared/menusContract';
 import type { SavedSetItem } from '../../shared/setupContract';
 
@@ -151,6 +152,10 @@ export type OrderRow = {
   pickup_place_id: string | null;
   customer_code: string | null;
   customer_confirmed: number;
+  src_place: StatPlace | null;
+  src_os: StatSystem | null;
+  src_push: number | null;
+  src_remember: number | null;
   kind: 'menu' | 'private';
   event_date: string | null;
   event_time: string | null;
@@ -363,12 +368,27 @@ export function chefOf(sellerId: string, row: ChefRow): Chef {
   return { id: row.id, sellerId, name: row.name };
 }
 
-/** Assembles full orders from their rows. Audit and inbox rows must come newest first. */
+/** Plan 121 B: the anonymous facts of a row, only when something was sent (else nothing). */
+function statsOf(row: OrderRow): { stats?: OrderStats } {
+  const stats: OrderStats = {
+    ...(row.src_place !== null ? { place: row.src_place } : {}),
+    ...(row.src_os !== null ? { os: row.src_os } : {}),
+    ...(row.src_push !== null ? { push: row.src_push === 1 } : {}),
+    ...(row.src_remember !== null ? { remember: row.src_remember === 1 } : {}),
+  };
+  return Object.keys(stats).length > 0 ? { stats } : {};
+}
+
+/**
+ * Assembles full orders from their rows. The stats stay out unless `withStats` (only a backup
+ * reads them). Audit and inbox rows must come newest first.
+ */
 export function ordersOf(
   rows: ReadonlyArray<OrderRow>,
   lines: ReadonlyArray<LineRow>,
   audit: ReadonlyArray<AuditRow>,
   inbox: ReadonlyArray<InboxRow>,
+  withStats = false,
 ): Array<SellerOrder> {
   const group = <T extends { order_id: string }>(list: ReadonlyArray<T>) => {
     const map = new Map<string, Array<T>>();
@@ -430,6 +450,7 @@ export function ordersOf(
     })),
     ...(row.pickup_place_id !== null ? { pickupPlaceId: row.pickup_place_id } : {}),
     ...(row.customer_code !== null ? { customerCode: row.customer_code } : {}),
+    ...(withStats ? statsOf(row) : {}),
     ...(row.customer_confirmed === 1 ? { confirmed: true as const } : {}),
     ...(row.packed === 1 ? { packed: true } : {}),
     ...(row.collected_at !== null && row.collected_by !== null

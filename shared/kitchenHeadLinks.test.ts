@@ -43,6 +43,14 @@ describe('kitchenHeadHtml', () => {
     expect(html).not.toContain('<Co>');
     expect(kitchenHeadHtml('k-1')).not.toContain('apple-mobile-web-app-title');
   });
+
+  it('asks for the translucent iPhone status bar (plan 122); the seller head does not', () => {
+    const meta = 'name="apple-mobile-web-app-status-bar-style" content="black-translucent"';
+    expect(kitchenHeadHtml('k-1', 'Onde Onde')).toContain(meta);
+    expect(kitchenHeadHtml('k-1', 'Onde Onde', '/k-1/o/tok?source=homescreen')).toContain(meta);
+    expect(sellerHeadHtml('k-1', 'Onde Onde')).not.toContain('status-bar-style');
+    expect(defaultSellerHeadHtml()).not.toContain('status-bar-style');
+  });
 });
 
 describe('themeColourHtml', () => {

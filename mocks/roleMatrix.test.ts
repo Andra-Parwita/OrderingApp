@@ -65,6 +65,7 @@ function probes(): Array<Probe> {
     p('GET', '/api/customer/me'),
     p('GET', '/api/admin/sellers'),
     p('GET', '/api/admin/log'),
+    p('GET', '/api/admin/stats'),
     p('GET', '/api/seller/live'),
     p('GET', '/api/seller/live', undefined, true),
     p('POST', '/api/seller/live'),
@@ -390,6 +391,7 @@ describe('role matrix (plan 098 C2)', () => {
       GET /api/customer/me | none 401 | customer 401 | helper 401 | chef 401 | owner 401 | admin 401 | dev 401
       GET /api/admin/sellers | none 401 | customer 401 | helper 403 | chef 403 | owner 403 | admin 200 | dev 401
       GET /api/admin/log | none 401 | customer 401 | helper 403 | chef 403 | owner 403 | admin 200 | dev 401
+      GET /api/admin/stats | none 401 | customer 401 | helper 403 | chef 403 | owner 403 | admin 200 | dev 401
       GET /api/seller/live | none 426 | customer 426 | helper 426 | chef 426 | owner 426 | admin 426 | dev 426
       GET /api/seller/live (ws) | none 401 | customer 401 | helper 200 | chef 200 | owner 200 | admin 403 | dev 200
       POST /api/seller/live | none null | customer null | helper null | chef null | owner null | admin null | dev null

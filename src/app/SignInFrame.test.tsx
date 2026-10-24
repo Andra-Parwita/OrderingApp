@@ -3,6 +3,7 @@ import i18n from 'i18next';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { APP_NAME } from '../../shared/appName';
+import { RELEASE_VERSION } from '../../shared/release';
 import { initI18n } from '../i18n/init';
 import { brandPill } from '../theme/brandTokens';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
@@ -109,7 +110,7 @@ describe('SignInFrame (D-051)', () => {
       else expect(screen.queryByText('Seller setup')).toBeNull();
       expect(screen.getAllByRole('img', { name: 'ShaggyBobo' }).length).toBeGreaterThan(0);
       expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
-      expect(screen.getByText('v1.0.43')).toBeInTheDocument();
+      expect(screen.getByText(`v${RELEASE_VERSION}`)).toBeInTheDocument();
     },
   );
 
@@ -139,7 +140,7 @@ describe('SignInFrame (D-051)', () => {
     renderFrame('admin');
     expect(screen.queryByRole('banner')).toBeNull();
     expect(screen.getAllByRole('img', { name: 'ShaggyBobo' })).toHaveLength(1);
-    expect(screen.getByText('v1.0.43')).toBeInTheDocument();
+    expect(screen.getByText(`v${RELEASE_VERSION}`)).toBeInTheDocument();
     expect(screen.getByText(/© \d{4} ShaggyBobo/)).toBeInTheDocument();
   });
 });

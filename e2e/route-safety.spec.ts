@@ -75,7 +75,7 @@ test.describe('route safety', () => {
     await expect(page).toHaveURL(new RegExp(`/onde-onde/o/${token}/qr$`));
     await expect(page.locator('svg, canvas, img').first()).toBeVisible();
 
-    // My orders lists the order, inside the kitchen and as the all-kitchens page.
+    // My orders lists the order under its kitchen; the slug-less address goes there (D-120).
     for (const path of ['/onde-onde/my-orders', '/my-orders']) {
       await page.goto(path);
       await expect(page.getByRole('button', { name: new RegExp(orderCode) })).toBeVisible();
@@ -139,12 +139,24 @@ test.describe('route safety', () => {
     await expect(page.getByRole('button', { name: 'Change order' })).toBeVisible();
   });
 
-  test('102: /<slug>/my-orders and /<slug>/settings open; /my-orders and /settings still live', async ({
+  test('102/D-120: /<slug>/my-orders and /<slug>/settings open; /my-orders and /settings go to the last kitchen', async ({
     page,
   }) => {
-    for (const path of ['/onde-onde/my-orders', '/onde-onde/settings', '/my-orders', '/settings']) {
+    // Nothing visited yet: the slug-less pages stay as they are.
+    for (const path of ['/my-orders', '/settings']) {
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`^[^?#]*${path}$`));
+      await expect(page.locator('#root')).not.toBeEmpty();
+    }
+    for (const path of ['/onde-onde/my-orders', '/onde-onde/settings']) {
       await page.goto(path);
       await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(page.locator('#root')).not.toBeEmpty();
+    }
+    // The kitchen is now the last one visited.
+    for (const path of ['/my-orders', '/settings']) {
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`/onde-onde${path}$`));
       await expect(page.locator('#root')).not.toBeEmpty();
     }
   });

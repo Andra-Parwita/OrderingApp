@@ -3,6 +3,7 @@ import { TOKENS_MAX } from '../../../shared/limits';
 import type { FetchedOrderResponse } from '../../../shared/orderContract';
 import { markCollected } from '../../api/customer';
 import { cancelOrder, fetchMenu, fetchMyOrders, fetchOrderOrExpired } from '../../api/client';
+import { rememberKitchen } from '../../api/device/lastKitchen';
 import { markOrderClosed, readMyOrders, rememberStatus } from '../../api/device/myOrders';
 import { noteLiveUpdate } from '../../api/customerLiveState';
 import {
@@ -69,6 +70,8 @@ function* showFetched(data: FetchedOrderResponse) {
     return;
   }
   yield call(rememberStatus, data.order);
+  // Opening a kitchen's order page makes it the kitchen this phone is in (slug-less pages follow it).
+  yield call(rememberKitchen, data.order.seller.slug);
   yield put(orderLoaded(data.order));
   // A closed week has no use for the menu: the order page is read-only.
   if (data.order.archived !== true) yield call(loadMenu, menuRequested(data.order.seller.slug));

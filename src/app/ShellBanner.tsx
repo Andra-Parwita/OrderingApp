@@ -7,6 +7,7 @@ import { readMyOrders } from '../api/device/myOrders';
 import { lastKitchen } from '../api/device/lastKitchen';
 import { KitchenBanner } from '../components/KitchenBanner';
 import { ownKitchen } from '../components/install';
+import { bannerFade } from '../components/statusBarFade';
 import {
   selectKitchenMissing,
   selectMenu,
@@ -40,6 +41,7 @@ const NONE: Wanted = { kind: 'none' };
 const BannerSkeleton = styled.div`
   height: ${SHELL_BANNER_HEIGHT};
   background: ${({ theme }) => theme.c.surf2};
+  ${bannerFade}
 `;
 
 /** The kitchen's slug for the order page at `/<slug>/o/:token…` (or the old `/o/:token…`): the loaded order's, else the saved one's. */

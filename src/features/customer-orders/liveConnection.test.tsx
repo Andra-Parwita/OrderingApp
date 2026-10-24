@@ -352,7 +352,8 @@ describe('one connection for the whole app', () => {
 
   it('a pushed change updates the order page and My orders from one fetch', async () => {
     vi.useRealTimers();
-    setOrders([entry({ token: 'tok-a', code: 'AAA111' })]);
+    // Real clock here, so the order must be placed "now" to stay inside the active window.
+    setOrders([entry({ token: 'tok-a', code: 'AAA111', placedAt: new Date().toISOString() })]);
     const fetched: Array<string> = [];
     vi.stubGlobal(
       'fetch',

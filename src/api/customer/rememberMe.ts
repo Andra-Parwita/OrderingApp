@@ -205,18 +205,29 @@ export async function deleteMySavedData(): Promise<
   return { ok: true, signalled };
 }
 
+/** What the Settings card shows about the account (the session answer, nothing more). */
+export type RememberMeAccount = Readonly<{
+  /** The customer code at the kitchen as a seller sees it ("C-7K3M"), or null. */
+  code: string | null;
+  /** The first name the account carries (matches the passkey label); empty when none. */
+  firstName: string;
+  /** ISO time the account was made; null from an older server. */
+  createdAt: string | null;
+}>;
+
 /**
- * Looks at the session (this also renews it) and returns the customer code for a kitchen as a seller
- * sees it ("C-7K3M"). A refused session turns Remember me off on this phone.
+ * Looks at the session (this also renews it) and returns the account facts for the Settings card,
+ * with the customer code for a kitchen as a seller sees it. A refused session turns Remember me off
+ * on this phone.
  */
-export async function kitchenCode(slug: string | null): Promise<string | null> {
+export async function rememberMeAccount(slug: string | null): Promise<RememberMeAccount | null> {
   if (!rememberMeLocal()) return null;
   const result = await server.fetchCustomerMe(slug ?? undefined);
   if (!result.ok) {
     if (result.status === 401) clearRememberMeLocal();
     return null;
   }
-  const { customerCode, code } = result.data.me;
+  const { customerCode, code, firstName, createdAt } = result.data.me;
   if (slug && customerCode) setCustomerCode(slug, customerCode);
-  return code ?? null;
+  return { code: code ?? null, firstName, createdAt: createdAt ?? null };
 }

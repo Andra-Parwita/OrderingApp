@@ -102,6 +102,7 @@ describe('Remember me (plan 087), server', () => {
     sealed: unknown;
     customerCode?: string;
     code?: string;
+    createdAt?: string;
   };
   const meOf = (reply: Reply) => (reply.body as { me: Me }).me;
 
@@ -221,6 +222,15 @@ describe('Remember me (plan 087), server', () => {
     expect(done.text).not.toContain(customerCookie(done)); // the token is in the header only
     expect(meOf(done)).toMatchObject({ firstName: 'Rina', prf: true, setup: false, sealed: null });
     const cookie = customerCookie(done);
+
+    // The session answer carries when this account was made (the injected clock), nothing else new.
+    const madeAt =
+      meOf(await call('GET', '/api/customer/me', { customer: cookie })).createdAt ?? '';
+    expect(madeAt).toBe('2026-10-07T10:00:00.000Z');
+    expect(meOf(done).createdAt).toBe(madeAt);
+    expect(Object.keys(meOf(done)).sort()).toEqual(
+      ['createdAt', 'credentialId', 'firstName', 'prf', 'sealed', 'setup'].sort(),
+    );
 
     const orders = await call('GET', '/api/customer/orders', { customer: cookie });
     const list = (orders.body as { orders: Array<{ token: string; slug: string }> }).orders;

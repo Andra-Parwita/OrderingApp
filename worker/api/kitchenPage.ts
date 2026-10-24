@@ -6,6 +6,7 @@ import {
   defaultSellerHeadHtml,
   isSellerPath,
   kitchenHeadHtml,
+  kitchenPageTitle,
   kitchenPreview,
   sellerHeadHtml,
   linkPreviewHtml,
@@ -22,6 +23,8 @@ import { iconTypeOfRef } from './kitchenRoutes';
 /** What the Worker adds to a page: head HTML and, on kitchen and order pages, the kitchen's theme (plan 024). */
 export interface KitchenPage {
   head: string;
+  /** The page's `<title>`: the kitchen's name, "<Kitchen> · Order" on an order page. Absent on other pages. */
+  title?: string;
   theme?: ThemeName;
   /** The loading splash's kitchen name and logo (plan 115): the uploaded icon, else the initials. */
   splash?: { name: string; logo: string | null; initials: string };
@@ -89,6 +92,7 @@ export async function kitchenPageFor(
         themeColourHtml(theme) +
         bannerPreloadHtml(menu.kitchen) +
         linkPreviewHtml(kitchenPreview(name, menu.kitchen.images), origin, pathname),
+      title: kitchenPageTitle(name),
       theme,
       splash: splashFor(slug, name, menu.kitchen.images?.railIcon),
     };
@@ -105,6 +109,7 @@ export async function kitchenPageFor(
       themeColourHtml(theme) +
       bannerPreloadHtml(menu.kitchen) +
       linkPreviewHtml(kitchenPreview(name, menu.kitchen.images), origin, pathname),
+    title: kitchenPageTitle(name, 'Order'),
     theme,
     splash: splashFor(slug, name, menu.kitchen.images?.railIcon),
   };

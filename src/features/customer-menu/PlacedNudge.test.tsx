@@ -88,7 +88,7 @@ describe('the home-screen pill', () => {
     await act(() => i18n.changeLanguage('id'));
     show();
     expect(screen.getByText('Tambahkan ke layar utama')).toBeVisible();
-    expect(screen.getByText('Caranya')).toBeVisible();
+    expect(screen.getByText('Pasang aplikasi')).toBeVisible();
   });
 
   it('does not show inside the installed app, nor on a desktop browser that cannot install', () => {
@@ -217,5 +217,15 @@ describe('the ticked box on the name step', () => {
     one.unmount();
     show({ install: installed });
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+describe('plan 121: Order placed gets no new nudge line', () => {
+  it('the My orders cards never show here, and no "Get a message" line is added', () => {
+    orders(2);
+    show({ install: desktop });
+    expect(screen.queryByTestId('orders-nudge-notify')).toBeNull();
+    expect(screen.queryByTestId('orders-nudge-remember')).toBeNull();
+    expect(screen.queryByText(/Get a message/)).toBeNull();
   });
 });

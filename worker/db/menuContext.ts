@@ -6,7 +6,7 @@ import { type MenuView, type Preferences } from '../../shared/menusContract';
 import type { ApiErrorCode } from '../../shared/apiError';
 import type { StoreResult } from '../repo/Repository';
 import { marks, type D1Statement, type Db } from './d1';
-import { itemFromDish, MENU_PLACES_SQL, sellerViews, USED_SQL } from './menuView';
+import { itemFromDish, MENU_PLACES_SQL, MENU_USES_SQL, sellerViews, USED_SQL } from './menuView';
 import {
   dishOf,
   itemOf,
@@ -43,6 +43,26 @@ export function ok<T>(value: T): StoreResult<T> {
   return { ok: true, value };
 }
 
+/** The seller's view of the current menu from its rows (the backup builds it from rows it already holds). */
+export function menuViewOf(
+  row: MenuRow,
+  uses: Array<MenuPlaceRow>,
+  points: Array<PickupRow>,
+  itemRows: Array<ItemRow>,
+  used: Array<{ item_id: string; used: number }>,
+): MenuView {
+  const usedMap = new Map(used.map((r) => [r.item_id, r.used]));
+  const views = sellerViews(itemRows.map(itemOf), usedMap);
+  return {
+    menu: menuOf(row, uses),
+    dishes: views.map((view, index) => {
+      const dishId = itemRows[index]?.dish_id;
+      return { ...view, ...(dishId ? { dishId } : {}) };
+    }),
+    pickupPoints: points.map(pickupOf),
+  };
+}
+
 export function createMenuContext(deps: MenuDeps, sid: string) {
   const { db } = deps;
   const nowIso = () => deps.now().toISOString();
@@ -58,29 +78,20 @@ export function createMenuContext(deps: MenuDeps, sid: string) {
   async function readView(): Promise<MenuView> {
     const [menus, uses, points, items, used] = await db.reads([
       db.stmt('SELECT * FROM menus WHERE seller_id = ?', sid),
-      db.stmt(
-        'SELECT place_id, window_start, window_end FROM menu_pickup_places WHERE seller_id = ? ORDER BY position',
-        sid,
-      ),
+      db.stmt(MENU_USES_SQL, sid),
       db.stmt(MENU_PLACES_SQL, sid),
       db.stmt('SELECT * FROM menu_items WHERE seller_id = ? ORDER BY position', sid),
       db.stmt(`${USED_SQL} GROUP BY l.item_id`, sid),
     ]);
     const row = menus[0] as MenuRow | undefined;
     if (!row) throw new Error(`Seller ${sid} has no menu`);
-    const usedMap = new Map(
-      (used as Array<{ item_id: string; used: number }>).map((r) => [r.item_id, r.used]),
+    return menuViewOf(
+      row,
+      uses as Array<MenuPlaceRow>,
+      points as Array<PickupRow>,
+      items as Array<ItemRow>,
+      used as Array<{ item_id: string; used: number }>,
     );
-    const itemRows = items as Array<ItemRow>;
-    const views = sellerViews(itemRows.map(itemOf), usedMap);
-    return {
-      menu: menuOf(row, uses as Array<MenuPlaceRow>),
-      dishes: views.map((view, index) => {
-        const dishId = itemRows[index]?.dish_id;
-        return { ...view, ...(dishId ? { dishId } : {}) };
-      }),
-      pickupPoints: (points as Array<PickupRow>).map(pickupOf),
-    };
   }
 
   async function readPreferences(): Promise<Preferences> {

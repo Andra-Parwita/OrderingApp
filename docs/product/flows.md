@@ -4,7 +4,7 @@ Written 2026-10-13 (plan 070) from the routes in `src/app/AppRoutes.tsx` and the
 
 ## Customer: from the link to the updates
 
-The customer opens the kitchen's link (`/:slug`), in English or Indonesian. There is no account and no payment. The order is confirmed on the **Order placed** page, where one button opens WhatsApp with the order already written; the customer sends it to the seller. The private link `/:slug/o/:token` is the way back to the order (old `/o/:token` links still work: they redirect to the kitchen path), and **My orders** (`/:slug/my-orders`, or `/my-orders` in the browser) lists the orders this phone has placed.
+The customer opens the kitchen's link (`/:slug`), in English or Indonesian. There is no account and no payment. The order is confirmed on the **Order placed** page, where one button opens WhatsApp with the order already written; the customer sends it to the seller. The private link `/:slug/o/:token` is the way back to the order (old `/o/:token` links still work: they redirect to the kitchen path), and **My orders** (`/:slug/my-orders`, browser and installed app alike) lists the orders this phone has placed with that kitchen only (D-120); the slug-less `/my-orders` and `/settings` go to the last kitchen's page, and keep the all-kitchens list only when no kitchen is known.
 
 ```mermaid
 flowchart TD
@@ -48,6 +48,8 @@ flowchart TD
 - Notice pills (one at a time, 40 px, ShaggyBobo icon): new version is green and the whole pill refreshes on tap; announcements and maintenance are amber. Home-screen and Remember me nudges use the same pill in a neutral colour.
 - First visit: no nudges, only the menu. The name step has a quiet "Remember me on all my phones (?)" tick (the ? opens the explanation sheet; ticked, the turn-on runs after the order). After the first order a home-screen pill shows (browser only); the Remember me pill shows on the order-placed page only when it is off, 30 days after a dismiss, at most 3 times, then only the Settings card.
 - The root page `/` is a standalone welcome page (About hero, logo, "Welcome to ShaggyBobo", a neutral hint to open the link you were sent): no tab bar, no jump in a browser; inside an installed app it jumps to the last kitchen. `noindex` and a neutral link preview.
+- **My orders nudges (plan 121 A):** one quiet card at the top of My orders. It asks to turn on notifications while an order is open and notifications are off; otherwise it offers Remember me when that is off. On an iPhone in a browser the notifications card says "Add to your home screen to get a message when your order is ready". One card at a time, and none while a top bar (update, maintenance, announcement, offline) shows. The cross (✕) keeps the card quiet until a kitchen's cooking date changes or a new order is saved on the phone; after 4 dismissals the card stops for good (Settings still turns each on). The state is on the phone only (localStorage `nudge:orders:notify`, `nudge:orders:remember`). **Order placed is unchanged** (owner ruling).
+- **Phone banner size (1.0.44):** the seller's phone banner upload now aims at about 100 KB (was about 227 KB for DellaVee). A kitchen re-saves its banner once after the deploy: Settings → Kitchen → Pictures → Phone banner → Change.
 - Everything is optional; ordering, links and My orders on one phone work without it. Offered by the chip (dismissable for good), the Settings card, one line after the second order and an empty My orders.
 - A phone without the passkey PRF feature keeps the address on the phone only (a note says so). The passkey is named by role (customer, seller, admin); with no first name it falls back to "Remember me · ShaggyBobo's Order" (APP_NAME). Customer Settings shows Language, Appearance and Text size as value rows that open a choice sheet; bottom sheets slide up (not with Reduce Motion).
 - "Delete my saved data" removes everything on our side at once; the phone keeps its own My orders; orders already placed are untouched.
@@ -112,7 +114,7 @@ Each app remembers its own kitchen and switches back when it becomes visible aga
 
 ## Admin: kitchens and the first sign-in
 
-The admin is the developer, a separate login (`/admin/sign-in`, first created at `/admin/setup`). The admin sees kitchens, people, devices, keys and the error log, and **never order data**. To open a kitchen, the admin adds it and invites its first owner, who then follows [invite and setup](../architecture/sequences.md#4-invite-then-setup-with-the-key).
+The admin is the developer, a separate login (`/admin/sign-in`, first created at `/admin/setup`). The admin sees kitchens, people, devices, keys and the error log, and **never order data** (the Statistics section shows anonymous counts only). To open a kitchen, the admin adds it and invites its first owner, who then follows [invite and setup](../architecture/sequences.md#4-invite-then-setup-with-the-key).
 
 ```mermaid
 flowchart TD
@@ -126,4 +128,7 @@ flowchart TD
     D --> H["Pause or resume<br/>customers only, or full"]
     E --> I["Owner sets up at /seller/setup"]
     B --> J["Error log"]
+    B --> L["Statistics<br/>anonymous counts"]
 ```
+
+**Statistics (plan 121 B):** a section in the admin app. Per kitchen and per week (Monday UTC), for the last 8 weeks, it counts orders by where the order was placed (app, browser, in-app browser shown as "WhatsApp"), phone system (iPhone, Android, other), notifications on or off, and Remember me on or off, each with "unknown" for older apps. It counts only; it never shows an order, a name or a link. Sample, private and staff-entered orders are left out. Orders are deleted about 4 weeks after the cooking day, so only about 4–5 weeks have data.

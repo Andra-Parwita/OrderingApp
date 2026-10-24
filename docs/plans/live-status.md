@@ -32,6 +32,30 @@ The plan work in progress, one row per stage or check, kept current by the coord
 | H11 · customer multi-kitchen check on the phone emulator (no app, bookmark, both installed) | general-purpose · sonnet | 16:34 | 40 min | | | | — | ⏳ |
 | 2 · 102 st. 2–3: one Install button, Start fresh help | general-purpose · sonnet | 10:53 | 20 min | 11:00 | 7 min | −13 min | ~20 files, +293 −104 tracked + 5 new; route /settings/start-fresh | ✅ typecheck, own tests 132 |
 
+## Release 1.0.44 (continued after hotfix 1.0.43.3)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| R1 · merge main → 1.0.44, resolve 2 code conflicts, checks; then rebased as one commit 369c660 | general-purpose · sonnet + coordinator | 17:48 | 15 min | 18:03 | 15 min | 0 | kitchenHeadLinks.ts, routeSafety.test.ts | ✅ 941 tests, entry 904 KB; force-pushed |
+| 113 · fewer DB trips, items 3–7 + backup comparison test | general-purpose · sonnet | 18:04 | 60 min | 18:47 | 43 min | −17 min | 15 worker files, 3 new mocks | ✅ PATCH 7→4, cancel 6→4, private 7→5, dish 5→4, backup 15→7 trips; old = new backup (JSON-identical, + against HEAD); 704 mocks |
+| 121 B · anonymous stats (migration 0034, Worker, client facts, admin card) | general-purpose · sonnet | 18:49 | 45 min | 19:22 | 33 min | −12 min | 9 new files, ~16 edited | ✅ 21 new tests; POST order trips unchanged; backup old = new |
+| G1 · gate prep: 2 stale tests, admin flake, split sellerContext.ts (830 lines) | general-purpose · sonnet | 19:23 | 20 min | 20:03 | 40 min | +20 min | 3 tests, sellerContext 830 → 682 + sellerReads 173 | ✅ lint whole project, 713 mocks |
+| G2 · full gate 1.0.44: typecheck, lint, format, all unit, check:bundle, full Playwright | coordinator | 20:04 | 60 min | 20:56 | 52 min | −8 min | — | ⚠ typecheck/lint/format ✅; unit 2,959/2,960 (liveConnection test fails, also alone); entry 909.5 KB; **full e2e 130 passed, 0 failed**; 105 captures, 0 console errors |
+| G3 · fix liveConnection unit test failure | general-purpose · sonnet | 20:58 | 20 min | 21:03 | 5 min | −15 min | 1 test line | ✅ time bomb in the test (fixed date vs real clock, 10-day window); 272 tests |
+| G4 · emulator customer check 1.0.44 (two kitchens; no app, bookmark, installed; new + old links; nudges) | general-purpose · sonnet | 21:04 | 40 min | 22:25 | 81 min | +41 min | — | ✅ A/B/C pass; 2 confusion findings (browser Settings shows the last kitchen; every page title "ShaggyBobo") |
+| G5 · fix kitchen confusion: browser Settings per kitchen + page title = kitchen name | general-purpose · sonnet | 22:39 | 30 min | 22:58 | 19 min | −11 min | 9 changed, 2 new | ✅ 946 unit, e2e 25 passed + title e2e |
+| G6 · D-120 My orders per kitchen in the browser too; kitchen-less pages go to the last kitchen | general-purpose · sonnet | 23:06 | 30 min | 23:44 | 38 min | +8 min | 2 src, 2 new tests, 3 tests on purpose | ✅ 951 unit (sellerHelp fails → G7); e2e 25 passed on re-run |
+| G7 · sellerHelp.test failure: diagnose + fix | general-purpose · sonnet | 23:44 | 20 min | 23:51 | 7 min | −13 min | 1 test file | ✅ test timing (cold staff-chunk import 7.8 s under load); preload in beforeAll; 15/15 ×3 |
+| 122 · iPhone status bar (banner to the top edge, fades) + Start fresh re-add line | general-purpose · sonnet | 23:44 | 40 min | 00:05 | 21 min | −19 min | 10 files, 2 new | ✅ 948 unit, e2e 12; ⏸ owner: picture behind the clock? |
+| 121 fix · no duplicate Remember me accounts (restore choice, iPhone wording, safeguard check) | general-purpose · sonnet | 00:00 | 20 min | 00:06 | 6 min | −14 min | TurnOnSheet, OrdersNudge, i18n, 4 tests | ✅ safeguard (auto-detect) not built: WebAPI cannot list passkeys; UI choice only |
+| RM date · Settings Remember me: restore line + "Turned on: date" (+ API createdAt) | general-purpose · sonnet | 00:08 | 25 min | 00:19 | 11 min | −14 min | 10 changed, 4 tests | ✅ 60/60 touched files; old "I already use Remember me" link replaced by the restore line |
+| TB · defuse time bombs 1–5 (demo.test, e2e cut-off, About test, version pins, sampleDay) | general-purpose · sonnet | 00:08 | 30 min | 00:17 | 9 min | −21 min | 8 changed, 1 new | ✅ 33 unit, e2e 8 passed; demo.test reproduced at Fri 22:00 then fixed |
+| 122 b · blurred banner copy behind the clock, always-on thin fade, PageHeader double gap | general-purpose · sonnet | 00:09 | 30 min | 00:33 | 24 min | −6 min | 4 changed, 1 new test | ✅ 608 tests; captures checked |
+| 122 c · A4: banner background picture behind the clock first, blur as fallback | general-purpose · sonnet | 00:34 | 15 min | 00:45 | 11 min | −4 min | 3 changed | ✅ 614 tests; background picture fetched only in the iPhone app (checked in a real browser); capture checked |
+| 118 e2e · seller-batch1 + batch2-flow to Settings → Language | general-purpose · sonnet | 18:05 | 15 min | 18:06 | 2 min | −13 min | 2 specs | ✅ 3 passed (3 skipped by design) |
+| 121 mock-up · nudges (local HTML) | general-purpose · sonnet | 18:05 | 20 min | 18:10 | 5 min | −15 min | uxDesign/customer/mockups/121-nudges.html | ✅ owner: "mock is good" |
+| 121 A · nudges in My orders only (restarted after the owner dropped the placed line) | general-purpose · sonnet | 18:12 | 30 min | 18:26 | 14 min | −16 min | 4 new files, 6 edited; 16 + 1 tests | ✅ typecheck/lint/format; 2 stale tests elsewhere to fix at the gate |
+| banner · phoneBanner upload ≈ 100 KB | general-purpose · sonnet | 18:27 | 15 min | 18:36 | 9 min | −6 min | limits, imageSlots, imageResize + 2 tests | ✅ 602 tests |
+
 ## Plan 115 stage 2 (hotfix 1.0.43.2)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|

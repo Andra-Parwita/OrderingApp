@@ -1,4 +1,5 @@
 import type { DeliveryAddress } from './address';
+import type { OrderStats } from './orderStats';
 export type Language = 'en' | 'id';
 export type LocalText = { en: string; id: string };
 
@@ -141,6 +142,11 @@ export type SellerOrder = {
    * reads only (never in a customer view); lets the seller's device link repeat orders.
    */
   customerCode?: string;
+  /**
+   * Plan 121 B: the anonymous facts the customer's phone sent (see shared/orderStats.ts). Read for
+   * the admin's counts and carried by a backup only; no seller or customer view ever has it.
+   */
+  stats?: OrderStats;
   /** Plan 087: placed by a customer with a full Remember me session; set only by the server. */
   confirmed?: true;
   /** Kitchen · Pack (D-066): a flag only. Never changes the status, never shown to the customer. */

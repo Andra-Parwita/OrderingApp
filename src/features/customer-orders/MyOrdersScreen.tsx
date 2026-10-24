@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { findOrder } from '../../api/customer';
 import { lastKitchen } from '../../api/device/lastKitchen';
 import { readMyOrders } from '../../api/device/myOrders';
 import { ownKitchen } from '../../components/install';
 import { ScreenBoundary, isOffline, useLang } from './layout';
+import { isFinalStatus } from '../../../shared/status';
 import { buildMyOrders } from './myOrdersModel';
+import { OrdersNudge } from './OrdersNudge';
 import { MyOrdersView, type FindOutcome } from './MyOrdersView';
 import { selectList, selectMenus } from './selectors';
 import { listRequested, menuRequested } from './slice';
@@ -15,7 +18,7 @@ type Props = Readonly<{
   onBack: () => void;
   /** Open the order page for this private token. */
   onOpenOrder: (token: string) => void;
-  /** Plan 102 Q3 (A1): inside a kitchen's installed app, only this kitchen's orders are listed. */
+  /** D-120: under `/<slug>/my-orders`, only this kitchen's orders are listed (browser and installed app). */
   onlyKitchen?: string | null;
 }>;
 
@@ -26,11 +29,14 @@ const findToken = (code: string) => readMyOrders().find((entry) => entry.code ==
 
 function MyOrdersContent({ onBack, onOpenOrder, onlyKitchen = null }: Props) {
   const lang = useLang();
+  const { t } = useTranslation();
+  // The kitchen in the address, else the last one this phone visited.
+  const kitchenSlug = onlyKitchen ?? lastKitchen();
   // D-075: ask the kitchen the customer is in (the last one visited). The order opens by its token
   // and is saved in My orders when its page loads.
   const onFind = useCallback(
     async (code: string, firstName: string): Promise<FindOutcome> => {
-      const slug = lastKitchen();
+      const slug = kitchenSlug;
       // The form isn't shown without a kitchen; never claim "not found" without asking.
       if (slug === null) return 'error';
       const result = await findOrder(slug, code, firstName);
@@ -44,12 +50,11 @@ function MyOrdersContent({ onBack, onOpenOrder, onlyKitchen = null }: Props) {
           ? 'not_found'
           : 'error';
     },
-    [onOpenOrder],
+    [onOpenOrder, kitchenSlug],
   );
   const dispatch = useDispatch();
   const list = useSelector(selectList);
   const menus = useSelector(selectMenus);
-  const kitchenSlug = lastKitchen();
   // The name comes from what this side already has: that kitchen's menu, else one of its orders.
   const kitchenName =
     kitchenSlug === null
@@ -102,6 +107,17 @@ function MyOrdersContent({ onBack, onOpenOrder, onlyKitchen = null }: Props) {
     };
   }, [list, menus, lang, onlyKitchen]);
   const stale = list.status === 'ready' ? list.stale : undefined;
+  // Plan 121: the card needs to know if an order is open and which menu each kitchen is on.
+  const hasOpenOrder = rows.current.some((row) => !isFinalStatus(row.status));
+  const menuDates = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(menus).flatMap(([slug, menu]) =>
+          menu ? [[slug, menu.week.cookingDate] as const] : [],
+        ),
+      ),
+    [menus],
+  );
 
   return (
     <MyOrdersView
@@ -120,6 +136,15 @@ function MyOrdersContent({ onBack, onOpenOrder, onlyKitchen = null }: Props) {
       onOpenOrder={onOpenOrder}
       onOpenMenu={onBack}
       onRetry={load}
+      nudge={
+        list.status === 'ready' ? (
+          <OrdersNudge
+            hasOpenOrder={hasOpenOrder}
+            menus={menuDates}
+            kitchenName={kitchenName ?? t('app.name')}
+          />
+        ) : null
+      }
     />
   );
 }

@@ -6,7 +6,6 @@ import type {
   Actor,
   AuditEntry,
   InboxEntry,
-  KitchenImages,
   MenuItem,
   MenuItemView,
   SellerMenuItemView,
@@ -17,7 +16,6 @@ import type {
   SellerOrder,
   StaffActor,
 } from '../../shared/domain';
-import { IMAGE_SLOTS } from '../../shared/imageSlots';
 import { AUDIT_MAX, INBOX_MAX } from '../../shared/limits';
 import type { MenuResponse } from '../../shared/menuContract';
 import type {
@@ -26,8 +24,6 @@ import type {
   RequestedLine,
   UpdateOrderRequest,
 } from '../../shared/orderContract';
-import { type PastWeekSummary } from '../../shared/pastWeeks';
-import type { SavedSet } from '../../shared/setupContract';
 import type { StoreResult } from '../repo/Repository';
 import { type D1Statement } from './d1';
 import { MENU_PLACES_SQL, sellerViews, USED_SQL } from './menuView';
@@ -38,31 +34,27 @@ import {
   lineNotesChanged,
   LIVE_MENU,
   liveMenu,
+  liveOrderStatements,
+  assembleOrders,
   readLiveOrder,
 } from './orders';
 import { createDayOps } from './daySales';
 import { createPrivateOps } from './private';
 import { createHandoverOps } from './handover';
 import { createPushOps } from './push';
-import { dropExpiredDetails } from './retention';
+import { createSellerReads } from './sellerReads';
 import {
   chefOf,
-  imagesOf,
   itemOf,
   kitchenOf,
-  setItemOf,
   settingsOf,
   weekOf,
   type ChefRow,
-  type DishRow,
   type ImageRow,
   type ItemRow,
   type KitchenRow,
   type MenuRow,
   type PickupRow,
-  type SetDishRow,
-  type SetImageRow,
-  type SetRow,
   type SettingsRow,
 } from './rows';
 import {
@@ -115,120 +107,95 @@ export function createSellerContext(deps: Deps, seller: Seller) {
   );
   const pushOps = createPushOps(db, deps.now, sid);
 
+  const { readImages, imageStatements, readSets, readPastWeeks, pastWeekStatements, pastWeeksOf } =
+    createSellerReads(db, deps.now, sid);
+
   // ---- Reading ----
 
-  function usedStatement(exceptOrderId?: string): D1Statement {
-    return exceptOrderId === undefined
-      ? db.stmt(`${USED_SQL} GROUP BY l.item_id`, sid)
-      : db.stmt(`${USED_SQL} AND o.id <> ? GROUP BY l.item_id`, sid, exceptOrderId);
+  /** `except` leaves one live order out of the count: by its id, or by its code or token. */
+  type Except = { id: string } | { code: string } | { token: string };
+  function usedStatement(except?: string | Except): D1Statement {
+    if (except === undefined) return db.stmt(`${USED_SQL} GROUP BY l.item_id`, sid);
+    const by: Except = typeof except === 'string' ? { id: except } : except;
+    const [column, value] = Object.entries(by)[0] as [string, string];
+    return db.stmt(`${USED_SQL} AND o.${column} <> ? GROUP BY l.item_id`, sid, value);
   }
 
-  async function loadState(exceptOrderId?: string): Promise<State> {
-    const [kitchens, images, settings, menus, points, items, used, chefs] = await db.reads([
+  /** The eight reads behind a `State`, in the order `stateFrom` expects. */
+  function stateStatements(except?: string | Except): Array<D1Statement> {
+    return [
       db.stmt('SELECT * FROM kitchens WHERE seller_id = ?', sid),
       db.stmt('SELECT slot, ref FROM kitchen_images WHERE seller_id = ?', sid),
       db.stmt('SELECT * FROM kitchen_settings WHERE seller_id = ?', sid),
       db.stmt('SELECT * FROM menus WHERE seller_id = ?', sid),
       db.stmt(MENU_PLACES_SQL, sid),
       db.stmt('SELECT * FROM menu_items WHERE seller_id = ? ORDER BY position', sid),
-      usedStatement(exceptOrderId),
+      usedStatement(except),
       db.stmt('SELECT id, name FROM chefs WHERE seller_id = ? ORDER BY position', sid),
-    ]);
-    const kitchen = kitchens[0] as KitchenRow | undefined;
-    const settingsRow = settings[0] as SettingsRow | undefined;
-    const menuRow = menus[0] as MenuRow | undefined;
+    ];
+  }
+
+  /** The rows a `State` was made from (the backup builds the menu view and preferences from them). */
+  type StateRaw = {
+    menu: MenuRow;
+    settings: SettingsRow;
+    points: Array<PickupRow>;
+    items: Array<ItemRow>;
+    used: Array<{ item_id: string; used: number }>;
+  };
+
+  function stateFrom(results: ReadonlyArray<Array<unknown>>): { state: State; raw: StateRaw } {
+    const [kitchens, images, settings, menus, points, items, used, chefs] = results;
+    const kitchen = kitchens?.[0] as KitchenRow | undefined;
+    const settingsRow = settings?.[0] as SettingsRow | undefined;
+    const menuRow = menus?.[0] as MenuRow | undefined;
     if (!kitchen || !settingsRow || !menuRow) throw new Error(`Seller ${sid} has no kitchen rows`);
+    const raw: StateRaw = {
+      menu: menuRow,
+      settings: settingsRow,
+      points: (points ?? []) as Array<PickupRow>,
+      items: (items ?? []) as Array<ItemRow>,
+      used: (used ?? []) as Array<{ item_id: string; used: number }>,
+    };
     return {
-      kitchen: kitchenOf(sid, kitchen, images as Array<ImageRow>),
-      settings: settingsOf(settingsRow, menuRow.taking_orders === 1),
-      week: weekOf(menuRow, points as Array<PickupRow>),
-      items: (items as Array<ItemRow>).map(itemOf),
-      used: new Map(
-        (used as Array<{ item_id: string; used: number }>).map((row) => [row.item_id, row.used]),
-      ),
-      chefs: (chefs as Array<ChefRow>).map((row) => chefOf(sid, row)),
-      theme: settingsRow.theme,
-      ...(menuRow.picture_ref !== null ? { pictureUrl: menuRow.picture_ref } : {}),
+      raw,
+      state: {
+        kitchen: kitchenOf(sid, kitchen, (images ?? []) as Array<ImageRow>),
+        settings: settingsOf(settingsRow, menuRow.taking_orders === 1),
+        week: weekOf(menuRow, raw.points),
+        items: raw.items.map(itemOf),
+        used: new Map(raw.used.map((row) => [row.item_id, row.used])),
+        chefs: ((chefs ?? []) as Array<ChefRow>).map((row) => chefOf(sid, row)),
+        theme: settingsRow.theme,
+        ...(menuRow.picture_ref !== null ? { pictureUrl: menuRow.picture_ref } : {}),
+      },
     };
   }
 
-  async function readImages(): Promise<KitchenImages> {
-    const [kitchens, images] = await db.reads([
-      db.stmt('SELECT * FROM kitchens WHERE seller_id = ?', sid),
-      db.stmt('SELECT slot, ref FROM kitchen_images WHERE seller_id = ?', sid),
-    ]);
-    const row = kitchens[0] as KitchenRow;
-    return imagesOf(
-      images as Array<ImageRow>,
-      row.banner_background,
-      row.image_alt_en,
-      row.image_alt_id,
-    );
+  async function loadStateRaw(except?: string | Except) {
+    return stateFrom(await db.reads(stateStatements(except)));
   }
 
-  /** Replaces the kitchen's image slots, colour and alt text with `next`. */
-  function imageStatements(next: KitchenImages): Array<D1Statement> {
-    const statements = [
-      db.stmt(
-        'UPDATE kitchens SET banner_background = ?, image_alt_en = ?, image_alt_id = ? WHERE seller_id = ?',
-        next.bannerBackground ?? null,
-        next.alt?.en ?? '',
-        next.alt?.id ?? '',
-        sid,
-      ),
-      db.stmt('DELETE FROM kitchen_images WHERE seller_id = ?', sid),
-    ];
-    for (const slot of IMAGE_SLOTS) {
-      const ref = next[slot];
-      if (ref === undefined) continue;
-      statements.push(
-        db.stmt(
-          'INSERT INTO kitchen_images (seller_id, slot, ref, updated_at) VALUES (?, ?, ?, ?)',
-          sid,
-          slot,
-          ref,
-          nowIso(),
-        ),
-      );
-    }
-    return statements;
+  async function loadState(exceptOrderId?: string): Promise<State> {
+    return (await loadStateRaw(exceptOrderId)).state;
   }
 
-  /** plan 001: a saved set is a list of library dishes; `items` is the legacy item-copy view of them. */
-  type FullSet = SavedSet & { dishIds: Array<string>; timesUsed: number };
-
-  async function readSets(): Promise<Array<FullSet>> {
-    const [sets, links, dishes, images] = await db.reads([
-      db.stmt('SELECT * FROM saved_sets WHERE seller_id = ? ORDER BY position', sid),
-      db.stmt(
-        'SELECT set_id, dish_id FROM saved_set_dishes WHERE seller_id = ? ORDER BY set_id, position',
-        sid,
-      ),
-      db.stmt('SELECT * FROM dishes WHERE seller_id = ?', sid),
-      db.stmt('SELECT set_id, slot, ref FROM saved_set_images WHERE seller_id = ?', sid),
+  /**
+   * A live order (menu or private) and the state with that order's own portions left out of the
+   * count, in one round trip. Used where the order is not known yet and the state is always needed.
+   */
+  async function readOrderWithState(
+    column: 'code' | 'token',
+    value: string,
+  ): Promise<{ order: SellerOrder | undefined; state: State }> {
+    const results = await db.reads([
+      ...liveOrderStatements(db, sid, column, value),
+      ...stateStatements({ [column]: value } as Except),
     ]);
-    const dishById = new Map((dishes as Array<DishRow>).map((dish) => [dish.id, dish]));
-    return (sets as Array<SetRow>).map((set) => {
-      const dishIds = (links as Array<SetDishRow>)
-        .filter((link) => link.set_id === set.id)
-        .map((link) => link.dish_id);
-      return {
-        id: set.id,
-        name: set.name,
-        dishIds,
-        timesUsed: set.times_used,
-        items: dishIds.flatMap((dishId) => {
-          const dish = dishById.get(dishId);
-          return dish ? [setItemOf(dish)] : [];
-        }),
-        images: imagesOf(
-          (images as Array<SetImageRow>).filter((i) => i.set_id === set.id),
-          set.banner_background,
-          set.image_alt_en,
-          set.image_alt_id,
-        ),
-      };
-    });
+    return {
+      order: assembleOrders(results.slice(0, 4))[0],
+      state: stateFrom(results.slice(4)).state,
+    };
   }
 
   // ---- Menu rules ----
@@ -564,6 +531,7 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     // old row holding this id that a customer would not want back (cancelled, archived, private, over
     // 24 h) lets go of it in the same batch, so the unique index can never stop a real order.
     const clientId = 'clientOrderId' in input ? input.clientOrderId : undefined;
+    const stats = 'stats' in input ? input.stats : undefined; // plan 121 B: stored, never returned
     const since = new Date(new Date(nowIso()).getTime() - 24 * 3600 * 1000);
     const withId = (id: string) => [
       db.stmt(
@@ -585,7 +553,7 @@ export function createSellerContext(deps: Deps, seller: Seller) {
       db.batch([
         ...(guard ? [guard] : []),
         ...(id !== undefined ? withId(id) : []),
-        ...insertOrderStatements(db, order, null),
+        ...insertOrderStatements(db, stats ? { ...order, stats } : order, null),
         ...(id !== undefined ? remember(id) : []),
       ]);
     try {
@@ -662,59 +630,6 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     return ok(committed);
   }
 
-  // ---- Past weeks ----
-
-  type PastRow = {
-    id: string;
-    cooking_date: string;
-    closed_at: string;
-    orders_count: number;
-    cancelled_count: number;
-    income_cents: number;
-    paid_cents: number;
-    unpaid_cents: number;
-    details_dropped_at: string | null;
-    picture_ref: string | null;
-  };
-  type PastItemRow = {
-    past_week_id: string;
-    item_id: string;
-    name_en: string;
-    name_id: string;
-    qty: number;
-  };
-
-  async function readPastWeeks(): Promise<Array<PastWeekSummary>> {
-    await dropExpiredDetails(db, deps.now(), sid);
-    const [weeks, items] = await db.reads([
-      db.stmt('SELECT * FROM past_weeks WHERE seller_id = ? ORDER BY rowid DESC', sid),
-      db.stmt(
-        'SELECT * FROM past_week_items WHERE seller_id = ? ORDER BY past_week_id, position',
-        sid,
-      ),
-    ]);
-    return (weeks as Array<PastRow>).map((week) => ({
-      id: week.id,
-      cookingDate: week.cooking_date,
-      closedAt: week.closed_at,
-      totals: {
-        orders: week.orders_count,
-        cancelled: week.cancelled_count,
-        incomeCents: week.income_cents,
-        paidCents: week.paid_cents,
-        unpaidCents: week.unpaid_cents,
-        items: (items as Array<PastItemRow>)
-          .filter((item) => item.past_week_id === week.id)
-          .map((item) => ({
-            itemId: item.item_id,
-            name: { en: item.name_en, id: item.name_id },
-            qty: item.qty,
-          })),
-      },
-      hasOrders: week.details_dropped_at === null,
-      ...(week.picture_ref !== null ? { pictureUrl: week.picture_ref } : {}),
-    }));
-  }
   return {
     deps,
     db,
@@ -731,6 +646,8 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     pushOps,
     usedStatement,
     loadState,
+    loadStateRaw,
+    readOrderWithState,
     readImages,
     imageStatements,
     readSets,
@@ -757,6 +674,8 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     editDraft,
     changeByCode,
     readPastWeeks,
+    pastWeekStatements,
+    pastWeeksOf,
   };
 }
 

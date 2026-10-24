@@ -31,15 +31,22 @@ function show(onDone = vi.fn(), onOpenSettings = vi.fn()) {
 }
 
 describe('StartFreshScreen', () => {
-  it('shows the six steps in English and in Indonesian', async () => {
+  it('shows the seven steps in English and in Indonesian', async () => {
     show();
     expect(screen.getByRole('heading', { name: 'Start fresh' })).toBeVisible();
-    expect(screen.getAllByRole('listitem')).toHaveLength(6);
+    expect(screen.getAllByRole('listitem')).toHaveLength(7);
     expect(screen.getByRole('button', { name: 'Reset this phone' })).toBeVisible();
+    // Plan 122: the last step, for the iPhone start screen.
+    expect(screen.getAllByRole('listitem')[6]).toHaveTextContent(
+      'To get the new start screen on iPhone: remove the app, open the kitchen link in Safari, pull down to refresh, then Add to Home Screen.',
+    );
     await i18n.changeLanguage('id');
     expect(screen.getByRole('heading', { name: 'Mulai dari awal' })).toBeVisible();
-    expect(screen.getAllByRole('listitem')).toHaveLength(6);
+    expect(screen.getAllByRole('listitem')).toHaveLength(7);
     expect(screen.getByRole('button', { name: 'Atur ulang HP ini' })).toBeVisible();
+    expect(screen.getAllByRole('listitem')[6]).toHaveTextContent(
+      'Untuk tampilan pembuka yang baru di iPhone: hapus aplikasinya, buka tautan dapur di Safari, tarik ke bawah untuk memuat ulang, lalu Tambahkan ke Layar Utama.',
+    );
     await i18n.changeLanguage('en');
   });
 

@@ -2,7 +2,7 @@
 // Plan 013 (D-076): the demo kitchen. Every call goes through `handleWorkerRequest` with DEV_TOOLS
 // off, the way production runs: the Origin check is at the door and the sample routes depend only
 // on the signed-in kitchen being a demo one. Runs against a local D1; see mocks/impl.ts.
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseApiError } from '../shared/apiError';
 import { parseMeResponse, parseSellerResponse } from '../shared/authContract';
 import { parseClearSamplesResponse, parseSampleOrdersResponse } from '../shared/devContract';
@@ -15,6 +15,9 @@ const B = 'dapur-demo';
 const A_ID = 'seller-onde-onde';
 const B_ID = 'seller-dapur-demo';
 const PASSWORD = 'correct horse battery';
+// A fixed clock (Wed 7 Oct 2026): the sample menu closes Friday 21:00 Adelaide, so the real clock fails
+// on Friday nights. `handleWorkerRequest` reads the system clock itself, so that is frozen too.
+const NOW = new Date('2026-10-07T10:00:00.000Z');
 
 describe('demo kitchen', () => {
   const create = useWorld('demo');
@@ -85,9 +88,15 @@ describe('demo kitchen', () => {
   const setDemo = (slug: string, demo: boolean) =>
     call('PATCH', `/api/admin/sellers/seller-${slug}`, { token: admin, body: { demo } });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
     tokenCounter = 0;
-    world = await create({ now: () => new Date() });
+    world = await create({ now: () => NOW });
     env = {
       DB: world.db.d1,
       IMAGES: {} as ApiEnv['IMAGES'],

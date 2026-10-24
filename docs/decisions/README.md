@@ -761,3 +761,9 @@ Format for each entry:
 **Decision:** hotfix 1.0.43.3: seller/admin load as a lazy `StaffArea` chunk (customer entry 1,861 → 891 KB raw), store unchanged, `check:bundle` in the gate; iPhone 14+ launch pictures (dark spotlight, 7 sizes, ~130–147 KB, `scripts/startup-images/<kind>.json`); `_headers` keeps `splash.js`, `/brand/*`, `/startup/*` a day.
 **Trade-off:** sellers make one extra download on a cold start; older iPhones and iPads keep the black launch screen; a changed `splash.js` can be a day old on a phone.
 **Revisit when:** a store or events app needs its own pictures (add a kind), or plan 120 (instant first screen) lands.
+
+## D-120 · My orders is per kitchen in the browser too (2026-10-24; owner; amends plan 102 Q3 "A1")
+**Ruling:** "B" (only that kitchen's orders on `/{kitchen}/my-orders`, browser and installed app alike) — "maybe customers later can combine but should not, since notification also per kitchen."
+**Decision:** `/<slug>/my-orders` lists only that kitchen's orders everywhere. The kitchen-less `/my-orders` (old links, the welcome page) goes to the last kitchen's My orders; with no known kitchen it keeps the all-kitchens list as a fallback. No combined view is offered.
+**Trade-off:** a customer of two kitchens sees each kitchen's orders on its own page; orders are found through that kitchen's link.
+**Revisit when:** customers ask for one combined list.

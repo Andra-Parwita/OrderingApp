@@ -62,17 +62,25 @@ export async function tokenOrderRoutes(call: ApiCall): Promise<Response | null> 
       if (!hit) return error('not_found', 'Order not found');
       if (hit.kind !== 'live') return weekClosed();
       if (hit.order.private) return privateRefusal();
-      const updated = await hit.sellerRepo.updateOrder(a, patch);
-      await storeAddress(hit.sellerRepo, context, updated, patch.address, true);
+      const updated = await hit.sellerRepo.updateOrder(a, patch, hit.order);
+      const written = await storeAddress(hit.sellerRepo, context, updated, patch.address, true);
       const result = await afterOrderWrite(
         context,
         hit.sellerRepo.seller.id,
         'order.changed',
         updated,
       );
-      // Re-read: the address write above may have marked the order.
-      const fresh = result.ok ? await hit.sellerRepo.getByCode(result.value.code) : null;
-      return customerResult(fresh ? { ok: true, value: fresh } : result, hit.sellerRepo, context);
+      // Re-read only when the address write marked the order (changed, "address changed"). The
+      // address now stored is known (just written, or as the lookup read it): no read for it either.
+      const fresh =
+        result.ok && written?.edited ? await hit.sellerRepo.getByCode(result.value.code) : null;
+      return customerResult(
+        fresh ? { ok: true, value: fresh } : result,
+        hit.sellerRepo,
+        context,
+        200,
+        written ? written.stored : (hit.storedAddress ?? null),
+      );
     }
   }
   // plan 001 stage 4: "I've collected it". The token is the auth, as on the order page. Idempotent.
@@ -113,9 +121,10 @@ export async function tokenOrderRoutes(call: ApiCall): Promise<Response | null> 
       context,
       hit.sellerRepo.seller.id,
       'order.changed',
-      await hit.sellerRepo.cancelOrder(a),
+      await hit.sellerRepo.cancelOrder(a, hit.order),
     );
-    return customerResult(result, hit.sellerRepo, context);
+    // Cancelling leaves the address as the lookup read it.
+    return customerResult(result, hit.sellerRepo, context, 200, hit.storedAddress ?? null);
   }
   return null;
 }

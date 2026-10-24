@@ -79,12 +79,22 @@ describe('menu home', () => {
 
   it('shows the phone banner with its alt text in the current language', async () => {
     renderHome();
-    const banner = await screen.findByRole('img', { name: 'Onde Onde — Indonesian homemade food' });
+    const banner = await screen.findByRole('img', {
+      name: 'Onde Onde — Indonesian homemade food',
+      hidden: true,
+    });
     expect(banner).toHaveAttribute('src', '/samples/banner-phone-3x1.jpg');
     await act(() => i18n.changeLanguage('id'));
-    expect(
-      await screen.findByRole('img', { name: 'Onde Onde — masakan rumahan Indonesia' }),
-    ).toBeVisible();
+    // Hotfix 1.0.43.3: the picture stays hidden until it has loaded; jsdom never loads images,
+    // so check the alt text and src, then fire a load and check it becomes shown.
+    const banner2 = await screen.findByRole('img', {
+      name: 'Onde Onde — masakan rumahan Indonesia',
+      hidden: true,
+    });
+    expect(banner2).toHaveAttribute('src', '/samples/banner-phone-3x1.jpg');
+    expect(banner2).toHaveAttribute('data-reveal', 'hidden');
+    fireEvent.load(banner2);
+    await waitFor(() => expect(banner2).toHaveAttribute('data-reveal', 'fade'));
   });
 
   it('has no EN / ID switch (it lives in Settings) and speaks Indonesian when the language is ID', async () => {

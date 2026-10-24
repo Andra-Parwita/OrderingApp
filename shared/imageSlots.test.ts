@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { fakeJpeg, fakePng, fakeWebp, pngFor } from '../mocks/images';
-import { checkImageUpload, IMAGE_SLOTS, isImageSlot, readImageSize, slotSpec } from './imageSlots';
+import {
+  checkImageUpload,
+  IMAGE_SLOTS,
+  isImageSlot,
+  readImageSize,
+  slotAimKB,
+  slotSpec,
+} from './imageSlots';
 
 describe('slotSpec', () => {
   it('gives the D-038 / D-040 sizes, ratios and 600 KB cap', () => {
@@ -107,6 +114,23 @@ describe('checkImageUpload', () => {
       ok: false,
       error: 'image_too_big',
     });
+  });
+});
+
+describe('slotAimKB', () => {
+  it('aims the phone banner and the dish picture at 100 KB and every other slot at the 600 KB cap', () => {
+    expect(slotAimKB('phoneBanner')).toBe(100);
+    expect(slotAimKB('dishPicture')).toBe(100);
+    for (const slot of [
+      'desktopBanner',
+      'railImage',
+      'railIcon',
+      'bannerBackgroundImage',
+      'menuPicture',
+    ] as const) {
+      expect(slotAimKB(slot)).toBe(600);
+    }
+    expect(slotSpec('phoneBanner').maxKB).toBe(600);
   });
 });
 

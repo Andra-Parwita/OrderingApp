@@ -310,6 +310,39 @@ describe('route safety: Worker pages, manifests and icons (plans 101/102)', () =
     expect(page?.head).not.toContain('/k/dapur-demo/');
   });
 
+  it('122: kitchen and order pages ask for the translucent iPhone status bar; seller pages keep theirs', async () => {
+    const { token } = await placeOrder();
+    const meta = '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">';
+    for (const path of [
+      '/onde-onde',
+      '/onde-onde/basket',
+      `/onde-onde/o/${token}`,
+      `/onde-onde/o/${token}/qr`,
+      `/o/${token}`,
+    ]) {
+      expect((await kitchenPageFor(world.repo, path, origin))?.head, path).toContain(meta);
+    }
+    for (const path of ['/seller', '/seller/orders']) {
+      const head = (await kitchenPageFor(world.repo, path, origin))?.head ?? '';
+      expect(head, path).not.toContain('apple-mobile-web-app-status-bar-style');
+    }
+  });
+
+  it('page titles: the kitchen name on its pages, "<Kitchen> · Order" on order pages (even under a wrong slug)', async () => {
+    const { token } = await placeOrder();
+    expect((await kitchenPageFor(world.repo, '/onde-onde', origin))?.title).toBe('Onde Onde');
+    expect((await kitchenPageFor(world.repo, '/dapur-demo/basket', origin))?.title).toBe(
+      'Dapur Demo',
+    );
+    for (const path of [`/onde-onde/o/${token}`, `/dapur-demo/o/${token}/qr`, `/o/${token}`]) {
+      expect((await kitchenPageFor(world.repo, path, origin))?.title, path).toBe(
+        'Onde Onde · Order',
+      );
+    }
+    // Pages with no kitchen keep the file's own title.
+    expect((await kitchenPageFor(world.repo, '/seller', origin))?.title).toBeUndefined();
+  });
+
   it('102: an unknown token under a kitchen gets no order head (the app shows not found)', async () => {
     expect(
       await kitchenPageFor(world.repo, '/onde-onde/o/no-such-token-at-all', origin),

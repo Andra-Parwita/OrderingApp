@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { SoftAuthenticator, type ExportedCredential } from '../mocks/softAuthenticator';
 import { ADMIN_FILE, ADMIN_LABELS, DEV_ADMIN_SETUP_KEY, originHeaders } from './adminSession';
+import { pushSampleCutoffsAt } from './sampleCutoff';
 
 // Registers the dev admin once per run (the database holds a single admin), then adds one more admin
 // device per label: signing in on a device ends that device's other session, so each spec gets
@@ -108,6 +109,10 @@ export default async function globalSetup(): Promise<void> {
   await assertScratchDatabase(baseURL);
   await warmUp(baseURL);
   await waitForRoundTrip(baseURL);
+  // The scratch database is verified above. Move the sample cut-offs a week later (a run on Friday
+  // between 21:00 and midnight would find ordering closed) and hand the cooking date to the specs,
+  // which are separate processes that inherit this environment (sampleDay in sellerHelpers.ts).
+  process.env['E2E_SAMPLE_COOKING_DATE'] = await pushSampleCutoffsAt(baseURL);
   const contexts: Array<APIRequestContext> = [];
   const open = async () => {
     const context = await request.newContext({ baseURL, ignoreHTTPSErrors: true });

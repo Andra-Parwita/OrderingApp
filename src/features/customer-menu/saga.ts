@@ -12,6 +12,7 @@ import { customerCodeFor } from '../../api/device/customerCode';
 import { rememberFirstName } from '../../api/device/firstName';
 import { isReturningCustomer, saveMyOrder } from '../../api/device/myOrders';
 import { refreshMenuNotice } from '../../components/install/menuNoticeDevice';
+import { readOrderStats } from '../../components/install/orderStats';
 import {
   editFailed,
   editLoaded,
@@ -91,13 +92,15 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
   // Plan 114: the same order sent again (its answer was lost) must not become a second order.
   const key = (yield select((state: CustomerRootState) => basketKeyOf(state))) as string | null;
   const clientOrderId = clientOrderIdFor(key, JSON.stringify(input));
-  let result = (yield call(placeOrderRequest, slug, { ...input, clientOrderId })) as Awaited<
+  // Plan 121 B: anonymous facts, read once (the quiet retry sends the same). Not in the id's signature.
+  const stats = (yield call(readOrderStats)) as Awaited<ReturnType<typeof readOrderStats>>;
+  let result = (yield call(placeOrderRequest, slug, { ...input, clientOrderId, stats })) as Awaited<
     ReturnType<typeof placeOrderRequest>
   >;
   // Quiet retry: no answer (timeout, dropped link) is sent once more with the same id, which the server
   // answers with the first order if it did get through.
   if (!result.ok && result.error === 'network') {
-    result = (yield call(placeOrderRequest, slug, { ...input, clientOrderId })) as Awaited<
+    result = (yield call(placeOrderRequest, slug, { ...input, clientOrderId, stats })) as Awaited<
       ReturnType<typeof placeOrderRequest>
     >;
   }

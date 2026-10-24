@@ -32,7 +32,10 @@ beforeAll(async () => {
   registerSellerSetupI18n();
   registerSellerHelpI18n();
   await i18n.changeLanguage('en');
-});
+  // Help, sign-in and setup live in the lazy staff chunk (plan 119). Its first import (the whole
+  // seller app, transformed cold) can take 8 s on a busy PC, so load it here, not inside a test.
+  await import('./StaffArea');
+}, 30_000);
 afterEach(async () => {
   vi.unstubAllGlobals();
   localStorage.clear();
@@ -173,28 +176,31 @@ describe('ways to Help', () => {
     );
   };
 
+  // Rendering the loaded chunk is slower than the 1 s default of findBy: 5 s, as in AppRoutes.test.tsx.
+  const slow = { timeout: 5000 };
+
   it('opens signed out at the constant, with its public frame (language switch, footer)', async () => {
     routes(SELLER_HELP_PATH);
-    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Seller help');
+    expect(await screen.findByRole('heading', { level: 1 }, slow)).toHaveTextContent('Seller help');
     expect(screen.getByRole('group', { name: 'Language' })).toBeInTheDocument();
   });
 
   it('/seller/help is inside the seller layout: the menu stays and there is no language switch', async () => {
     routes('/seller/help');
-    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent('Seller help');
+    expect(await screen.findByRole('heading', { level: 1 }, slow)).toHaveTextContent('Seller help');
     expect(screen.getByRole('link', { name: 'Orders' })).toHaveAttribute('href', '/seller/orders');
     expect(screen.queryByRole('group', { name: 'Language' })).toBeNull();
   });
 
   it('the sign-in page links to it ("Need help?")', async () => {
     routes('/seller/sign-in?kitchen=onde-onde');
-    const link = await screen.findByRole('link', { name: 'Need help?' });
+    const link = await screen.findByRole('link', { name: 'Need help?' }, slow);
     expect(link).toHaveAttribute('href', SELLER_HELP_PATH);
   });
 
   it('the first-setup page links to topic 3 ("Help with your invite key")', async () => {
     routes('/seller/setup');
-    const link = await screen.findByRole('link', { name: 'Help with your invite key' });
+    const link = await screen.findByRole('link', { name: 'Help with your invite key' }, slow);
     expect(link).toHaveAttribute('href', `${SELLER_HELP_PATH}?topic=3`);
   });
 

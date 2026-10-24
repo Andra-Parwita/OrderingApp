@@ -6,7 +6,7 @@ import { collectErrors, orderRow, searchFor } from './sellerHelpers';
 // My orders spans both, and the seller side (dev picker) only ever shows the chosen seller's
 // orders. The store is shared with the other specs: nothing here resets it or counts globally;
 // orders are found by unique names. Only unlimited items are ordered (pesmol, Iced sweet tea).
-test('two sellers: orders at each link, My orders across both, the seller side per seller', async ({
+test('two sellers: orders at each link, My orders per kitchen, the seller side per seller', async ({
   page,
   context,
   browser,
@@ -46,13 +46,17 @@ test('two sellers: orders at each link, My orders across both, the seller side p
     page.getByRole('navigation', { name: 'Customer' }).getByRole('link', { name: 'Menu' }),
   ).toHaveAttribute('href', '/dapur-demo');
 
-  // My orders: one list, each card names its seller.
+  // My orders is per kitchen (D-120): each kitchen's page lists its own orders only. The slug-less
+  // /my-orders goes to the last kitchen visited (Dapur Demo).
   await page.goto('/my-orders');
-  await expect(page.getByText('Current', { exact: true }).first()).toBeVisible();
+  await expect(page).toHaveURL(/\/dapur-demo\/my-orders$/);
   const ondeCard = page.getByRole('button', { name: /Onde Onde/ }).filter({ hasText: 'pesmol' });
   const demoCard = page.getByRole('button', { name: /Dapur Demo/ }).filter({ hasText: 'tea' });
-  await expect(ondeCard.first()).toBeVisible();
   await expect(demoCard.first()).toBeVisible();
+  await expect(ondeCard).toHaveCount(0);
+  await page.goto('/onde-onde/my-orders');
+  await expect(ondeCard.first()).toBeVisible();
+  await expect(demoCard).toHaveCount(0);
   await page.screenshot({ path: 'captures/multi-seller-my-orders.png', fullPage: true });
 
   expect(errors).toEqual([]);

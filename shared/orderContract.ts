@@ -29,6 +29,7 @@ import { parseDeliveryAddress, type DeliveryAddress } from './address';
 import { isEventDate, isEventTime, PRIVATE_MAX_DEPOSIT_CENTS } from './privateContract';
 import { parseCustomerCode } from './customerCode';
 import { parseOrderCode } from './orderCode';
+import { parseOrderStats, type OrderStats } from './orderStats';
 import { isValidSlug } from './seller';
 import { ORDER_STATUSES } from './status';
 
@@ -77,10 +78,19 @@ export type CreateOrderRequest = {
    * (old apps send none). Customer requests only.
    */
   clientOrderId?: string;
+  /**
+   * plan 121 B: four anonymous facts for the admin's counts (where the app was opened, the phone's
+   * system, notifications on, Remember me on). Optional; invalid values are dropped, never a reason
+   * to refuse the order. Customer requests only.
+   */
+  stats?: OrderStats;
 };
 
 /** POST /api/seller/orders (seller or chef, in the X-Seller seller; D-027 row 8). Defaults: confirmNow true, paid false. */
-export type CreateSellerOrderRequest = Omit<CreateOrderRequest, 'returning' | 'clientOrderId'> & {
+export type CreateSellerOrderRequest = Omit<
+  CreateOrderRequest,
+  'returning' | 'clientOrderId' | 'stats'
+> & {
   confirmNow?: boolean;
   paid?: boolean;
   /** D-062: go ahead although the order takes more portions than are left (`over_limit`). */
@@ -268,7 +278,7 @@ function withoutAddress(input: Record<string, unknown>): Record<string, unknown>
   return rest;
 }
 
-type CreateCore = Omit<CreateOrderRequest, 'returning' | 'clientOrderId'>;
+type CreateCore = Omit<CreateOrderRequest, 'returning' | 'clientOrderId' | 'stats'>;
 
 function parseCreateCore(input: unknown): CreateCore | null {
   if (!isRecord(input) || hasPersonalData(withoutAddress(input))) return null;
@@ -327,11 +337,14 @@ export function parseCreateOrderRequest(input: unknown): CreateOrderRequest | nu
   const returning = input['returning'];
   if (returning !== undefined && typeof returning !== 'boolean') return null;
   const clientOrderId = input['clientOrderId'];
+  const stats = parseOrderStats(input['stats']);
   return {
     ...core,
     ...(returning !== undefined ? { returning } : {}),
     // A malformed id is ignored, never a reason to refuse the order (plan 114).
     ...(isClientOrderId(clientOrderId) ? { clientOrderId } : {}),
+    // Plan 121 B: bad facts are dropped one by one, never a reason to refuse the order.
+    ...(stats ? { stats } : {}),
   };
 }
 
@@ -672,6 +685,8 @@ export function parseOrder(input: unknown): SellerOrder | null {
     if (parsed === null) return null;
     customerCode = parsed;
   }
+  // Plan 121 B: a backup made before it has none; bad values are dropped, never a reason to refuse it.
+  const stats = parseOrderStats(input['stats']);
   let address: OrderAddress | undefined;
   if (input['address'] !== undefined) {
     const raw = input['address'];
@@ -694,6 +709,7 @@ export function parseOrder(input: unknown): SellerOrder | null {
     ...(privateInfo ? { private: privateInfo } : {}),
     ...(address ? { address } : {}),
     ...(customerCode !== undefined ? { customerCode } : {}),
+    ...(stats ? { stats } : {}),
     ...(input['confirmed'] === true ? { confirmed: true as const } : {}),
     sellerId,
     paid,

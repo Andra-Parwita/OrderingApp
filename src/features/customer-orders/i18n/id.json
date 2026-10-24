@@ -9,6 +9,15 @@
     "myOrders": "Pesanan saya",
     "errorBody": "Silakan coba lagi."
   },
+  "nudge": {
+    "notify": "Dapat pesan saat pesanan siap",
+    "home": "Tambahkan ke layar utama agar dapat pesan saat pesanan siap",
+    "remember": "Simpan pesananmu di semua HP-mu",
+    "turnOn": "Nyalakan",
+    "turnOnOrRestore": "Nyalakan atau pulihkan",
+    "how": "Caranya",
+    "hide": "Sembunyikan"
+  },
   "list": {
     "title": "Pesanan saya",
     "loadError": "Pesanan tidak dapat dimuat. Periksa koneksi Anda lalu coba lagi.",

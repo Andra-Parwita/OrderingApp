@@ -1,120 +1,78 @@
 # Hand-over
 
-**Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs are in git history.
+**Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs (1.0.39 → 1.0.43.3 detail) are in git history.
 
-**Last session:** 24 Oct (Sat morning), the owner's PC (Adelaide), Claude as coordinator. 1.0.43.1 live checks, built hotfix **1.0.43.2** (plan 115 stage 2), decided 1.0.44, roadmap brought current (D-115). **1.0.43.2 deployed 10:30 (Worker `a936cf65…`) and rolled back by 10:35 by the owner** (iPhone: black screen longer than before). Then the owner found the cause: **they were on a VPN**. **1.0.43.2 redeployed** (rollback to `a936cf65-cac3-4a79-8008-e110f692d887`) by 10:36. **Live check ✅ (VPN off):** about 0.3 s black (iOS's own launch screen), then DellaVee's icon + name, quickly replaced by the menu. Tag `v1.0.43.2` on `023cc25`.
-**Live:** hotfix **1.0.43.3** (24 Oct 17:43; Worker `68dd13cb-0e8d-4c70-8f42-6d1f7277e486`; `1.0.121 · 41b6981`; tag `v1.0.43.3` on `main`, pushed). It holds: plan 119 light split (customer entry 1.86 MB → 891 KB, staff chunk lazy), dark-spotlight start everywhere (iOS launch pictures iPhone 14+, splash, Android manifest colour), `_headers` cache for splash/brand/startup, phone message sheet fix, banner preload + reveal + SW picture cache. Before: 1.0.43.2 (`aeb0d22a…` was the first 1.0.43.3 deploy; `a936cf65…` = 1.0.43.2). Backups: `backups/shaggybobo-2026-10-24-b.sql` (16:53, 910 rows).
+**Last session:** 24 → 25 Oct (Sat–Sun night), the owner's PC (Adelaide), Claude as coordinator. Hotfixes 1.0.43.2 and 1.0.43.3 shipped; **1.0.44 fully built, waiting for the final gate result and the owner's deploy** (owner, 25 Oct ~00:50: "we will deploy tomorrow").
+**Live:** hotfix **1.0.43.3** (24 Oct 17:43; Worker `68dd13cb-0e8d-4c70-8f42-6d1f7277e486`; tag `v1.0.43.3` on `main` = `41b6981`, pushed). Latest backup: `backups/shaggybobo-2026-10-24-b.sql` (16:53).
+**Branch:** `indra/brand_logo_ux` = `369c660` (1.0.44 WIP, rebased on main, pushed) **plus a large uncommitted working tree** (everything below). The owner has not yet said whether to commit it.
 
 ## House rules (binding)
-- **No git writes (commit, push, merge, tag) unless the owner says so for that step; ask first every time.** Stage only your own files, by path; never `git commit -a` while a builder edits the tree.
+- **No git writes (commit, push, merge, tag, force push) unless the owner says so for that step; ask first every time.** Stage by path; never `git commit -a` while a builder edits the tree. No Claude attribution in commit text.
+- **Rebase, not merge** (owner 24 Oct); **build, deploy and tag from `main`** (fast-forward `main` to the release commit first).
 - **Owner decides; one question at a time** (A/B/C with a recommendation), status marker on every message (🔴 / 🟡 / 🟢), plain words.
-- **Mock-up before any UI build;** open mock-ups in the owner's browser (`Start-Process <url>`; viewer `python -m http.server 8765 --bind 127.0.0.1`, use the **127.0.0.1** address).
-- **AUD and Adelaide only** in mock-ups and samples.
-- **Real clock times only** in `docs/plans/live-status.md` and to the owner (read the clock with `Get-Date`; this session first gave guessed times and had to correct them).
-- **Gate scope for small changes** (owner, 17 Oct: "run also only selected test if needed"): typecheck + lint/format on changed files + the unit tests of the touched areas + the e2e specs of every touched screen; the full suite only when the owner asks.
-- Files under ~750 lines (soft); don't grow routes.ts, seller.ts, menus.ts, auth.ts, AppRoutes.tsx.
-- Agents never deploy, never run `--remote` / `wrangler secret`, never reseed; back up before migrations.
-- **Plan list and roadmap stay current (D-115, owner 24 Oct):** update `docs/plans/README.md` + `docs/product/roadmap.md` when a plan starts or gets its mock-up, when it is done, and **before every deploy** (step 0 of the deploy order), then `pnpm run docs`.
+- **Mock-up before any UI build,** as local HTML in `uxDesign/*/mockups/`, opened with `Start-Process http://127.0.0.1:8765/…` (viewer: `python -m http.server 8765 --bind 127.0.0.1`). AUD and Adelaide only. Artifacts only when asked.
+- **Real clock times only** in `docs/plans/live-status.md` and to the owner (read the clock first).
+- Agents never deploy, never run `--remote` / `wrangler secret`, never reseed the owner's local DB (migrate-only is fine); back up before migrations. No Fable unless the owner asks.
+- **Plan list and roadmap current (D-115)** at plan start/mock-up, plan done, and **before every deploy** (step 0), then `pnpm run docs`.
+- **Customer multi-kitchen emulator check before every customer-facing deploy:** phone emulator against the local build, two kitchens, three starting points (browser only; a Chrome bookmark; both installed as apps). Check: the right kitchen opens, splash, menu, ordering, My orders, old and new order links.
+- Files under ~750 lines (soft).
 
-## 1.0.39 (plan 092, D-108): what's in it
-Source: the owner's first real-phone use of Remember me (iPhone home-screen app, passkey saved in Keeper → no address lock; after switching to Apple Passwords the lock worked).
-1. First name asked before the passkey prompt, with Skip.
-2. "We keep your address so it's filled in for you next time."
-3. No app lock (Face ID only for the saved address).
-4. Remember me card calmer (one Turn on, quiet links; on-state as a tidy list).
-5. Privacy note with headings + bullets.
-6. "lock/locked" instead of "seal/sealed" (ID "dikunci/terkunci"); intro "We remember your orders, name and address on this phone and on any other phone you use."
-7. Hint: choose Passwords (iPhone) or Google Password Manager (Android); other password apps can't lock the address.
-8. Passkey names by role: "<name> · customer (Remember me)", "<name> · seller", "<name> · admin"; no name: "Remember me · ShaggyBobo's Order" etc. Only new passkeys.
-9. Every bottom sheet slides up (none with Reduce Motion).
-10. Customer Settings: value rows ("Appearance  Dark ›") open a choice sheet (option D of `uxDesign/customer/mockups/092-settings-align.html`).
-Release notes: "Small fixes and polish." / "Perbaikan kecil dan penyempurnaan." (owner "B").
-**Gate (scoped, 17 Oct 23:06):** typecheck, lint, format ✅; unit 105/105; e2e 14/14 over p087-remember-me, customer-batch1/2, native-customer, pickup-map, p083-change-fulfilment, seller-saturday, seller-list-scroll (mobile-chromium + iphone-chromium). Captures at 390 px checked.
-**Deploy impact 1.0.39:** no migration, no new secret; client + worker labels only. Existing passkeys keep their old names. Low risk. Deploy order: `pnpm build` → `pnpm exec wrangler deploy` → live check (Settings rows + sheets, Remember me turn-on with first name on a real iPhone, privacy note) → merge `main` + tag `v1.0.39` (ask first).
+## 1.0.44: what's in it (all built, uncommitted on `indra/brand_logo_ux`)
+- **101** seller app per kitchen (`/seller?k=<slug>` manifest, own name and icon per kitchen). **102** customer pages under the kitchen (`/<slug>/o/<token>`; old `/o/<token>` links get a 302), one install button. `KITCHEN_SCOPE` var stays **"off"** at deploy.
+- **118** join another kitchen (Settings), switch by the kitchen name at the top of the left menu (tablet only; no arrow with one kitchen), language in Settings on the tablet.
+- **D-120** My orders per kitchen; kitchen-confusion fixes from the emulator (titles per kitchen instead of "ShaggyBobo", Settings shows the current kitchen, last-kitchen redirects).
+- **113** fewer DB round trips (items 3–7; backup file unchanged, comparison test).
+- **121** nudges in My orders (Remember me / notifications, one card at a time, dismiss rules) + anonymous order statistics (migration **0034**, admin "Statistics" card only).
+- **Smaller phone banner** (aim ~100 KB, `PHONE_BANNER_TARGET_KB`).
+- **122 iPhone status bar** (customer pages only, iOS home-screen app only): see-through status bar; behind the clock the kitchen's **banner background picture** (owner "A4"), else a blurred copy of the banner, else the colour; an always-on thin fade; no double gap under the banner. The background picture is fetched only inside the iPhone app. Later option (owner "A for now"): taller 1200 × 570 banner.
+- **No duplicate Remember me accounts:** the turn-on sheet and Settings (off) offer "Turned on Remember me before? Restore your orders"; iPhone card "Turn on or restore"; Settings (on) shows "Name" and "Turned on: <date>" (`createdAt` on `/api/customer/me`). Auto-detecting an existing passkey is not possible on the web (recorded in plan 121).
+- **Time bombs defused** (5): `mocks/demo.test.ts` frozen clock (failed Fri 21:00–24:00), e2e global setup pushes sample cut-offs a week out (`e2e/sampleCutoff.ts`), About "New" test follows `RELEASES[0]`, version pins read `RELEASE_VERSION`, e2e `sampleDay` read from the server.
 
-## 1.0.40 (plan 093): banner doesn't flash
-Owner, 17 Oct: "changing page make the image banner on top flashing and kept reloading" (older bug, since `key={pathname}` on the page slide, 10 Oct). Fix: the banner is drawn once in `CustomerShell` (`src/app/ShellBanner.tsx`) above the sliding page; pages' own `KitchenBanner` renders nothing inside the shell (context `ShellOwnsBanner`), still renders in seller preview; the last loaded banner stays while the same kitchen reloads; the skeleton is now banner-sized (3:1). Release note reuses "Small fixes and polish." **Gate (scoped, 23:31):** typecheck, lint, format ✅; unit 370 + 99; e2e customer-batch1/2, native-customer, p087, pickup-map 12/12; capture: banner stays across My orders ↔ Settings. **Deploy impact:** client only, no migration, no secret. Live check: switch Menu ↔ My orders ↔ Settings on the iPhone; the banner must not flash.
+## Not done yet (before the deploy)
+1. ~~Final gate~~ **✅ 25 Oct 00:46–01:30:** typecheck, lint (needs `NODE_OPTIONS=--max-old-space-size=8192`), format ✅; unit 2,939 passed + 22 load failures (EADDRINUSE / timeouts) that all pass alone, 193/193 (`scratch/gate-044*.log`); build ✅, customer entry 914 KB (limit 1,100); full e2e **130 passed, 0 failed, 46 skipped by project** with `--workers=2` (`scratch/e2e-044b.log`; the default-workers run had 2 load flakes). Re-run only if code changes (release note + version bump: run the About/version unit tests).
+2. **Release note + version bump** (owner picks the text, one question): `RELEASE_VERSION = '1.0.44'` in `shared/release.ts` and a new first entry in `src/features/seller-about/releaseNotes.ts` (EN/ID). The tests now follow these automatically.
+3. Quick emulator re-check of the customer multi-kitchen steps (rule above), if time allows.
+4. `pnpm run docs`; plan list (101, 102, 113, 118, 121, 122 → ✅ at deploy) and roadmap (D-115).
+5. **Owner OK to commit**, then fast-forward `main`.
 
-## 1.0.41: banner everywhere, sheets, notice pills, nudges, root page
-Release note (owner "B"): "A fresher look for customers and clearer messages." / "Tampilan pelanggan lebih segar dan pesan lebih jelas."
-- **094** one big kitchen banner on every customer page (shell, never remounted; small logo bar gone; closed-menu picture below the banner); seller tablet/phone banners stay mounted; bottom sheets lock the page behind (iOS-safe) and **swipe down to close**; stale `AppRoutes.test` from 092 fixed.
-- **095** notice pills (option E2, `uxDesign/seller/mockups/095-notice-bars.html`): floating 40 px pills with the ShaggyBobo icon; new version = green, tap anywhere to refresh, ✕ only hides; announcement/maintenance = amber (`src/components/notice/NoticePill.tsx`, tokens `notice.*`). Admin's short-message *preview* still shows the old bubble (follow-up).
-- **096** nudges (`uxDesign/customer/mockups/096-install-nudge.html`): first visit no nudge (menu chip removed); name step "☐ Remember me on all my phones (?)" with an info sheet (tick → turn-on sheet after placing, one tap "Continue"); after the first order "Add to your home screen · How" (stone N1 pill, browser only, ✕ 14 days); Remember me pill after first/delivery order (30 days, max 3, one nudge at a time); empty My orders "Turned on Remember me before? Restore your orders".
-- **Root page "/"** (option B of `uxDesign/customer/mockups/097-main-page.html`): standalone page, About hero animation, logo, "Welcome to ShaggyBobo", "Looking for something here? Open the link from the person or group who invited you."; no tab bar, no jump in a browser; inside an installed app it jumps to the last kitchen; `noindex`; neutral link preview "ShaggyBobo · By invitation"; kitchen-not-found clears the saved kitchen (no loop).
-**Gate (scoped, 18 Oct):** typecheck, lint, format ✅; **all** unit tests 1905/1905; e2e customer 11 specs ✅ (p087 fixed: spec opened Settings before any kitchen was remembered), seller 5 specs 7/7, short-message + maintenance 2/2. Captures checked: closed menu, dishes, My orders, order page, root page.
-**Deploy impact 1.0.41:** client + one head-tag/meta change; no migration, no secret. Installed home-screen apps still start at their kitchen (manifest start_url unchanged). Live check on the iPhone: banner on every page incl. dishes/order, swipe a sheet down, privacy sheet doesn't scroll the page, the green "new version" pill appears after deploy (tap it), send one short message (amber pill), a first test order shows the home-screen pill, the name-step tick, "/" in Safari shows the welcome page.
+## Deploy steps 1.0.44 (owner runs them, one at a time; Claude shows the full numbered table)
+| # | step |
+|---|---|
+| 0 | docs current: plan list + roadmap + `pnpm run docs` |
+| 1 | commit on `indra/brand_logo_ux` (owner OK), fast-forward `main` to it (rebase first if `main` moved), check out `main` |
+| 2 | backup: `pnpm exec wrangler d1 export shaggybobo-order --remote --output backups/shaggybobo-2026-10-2X.sql` (then Claude gives the backup summary) |
+| 3 | `pnpm build` (from `main`) |
+| 4 | **migration 0034 first:** `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` |
+| 5 | `pnpm run deploy` |
+| 6 | health: `curl https://order.shaggybobo.app/api/health` + site code number |
+| 7 | live checks (below) |
+| 8 | tag `v1.0.44` on `main` + push (ask first) |
+Deploy on a day with **no open DellaVee menu**. `KITCHEN_SCOPE` stays "off".
 
-## 1.0.42 live (19 Oct)
-Committed 18 Oct afternoon: **stages 0–2** (no behaviour change, no migration).
-- **0** docs: `docs/architecture/data-model.md` "One model, many kinds", **D-109**, 082 note, 088/090 merged into 098.
-- **1a** `worker/api/routes.ts` 1,709 → 89 (dispatcher) + 13 area files; 82 seller routes carry `roles` (allow-list; `chefMayNot`/`helperMay` gone). `mocks/roleMatrix.test.ts` (129 probes × 7 callers) identical before/after, except chef/helper get 403 (was 404) on seller paths with no route. **6 suspicious chef permissions reported, kept as today** (delete-address, all order edits, translate/updates/demo, settings reads, cancel a normal order, private reads rely on handlers): ask the owner one at a time.
-- **1b** `worker/db/{seller,menus,auth}.ts` → 21 files by group, move-only, import paths unchanged.
-- **2** `AppRoutes.tsx` 997 → 30 + customer/seller/admin/More route files; `src/ui/Notice.tsx` (2 sites converted; SellerLayout had 1 notice, not 3); `orderRowCells.tsx` (only `NewTag` is truly shared); Help topics/Help/Install/OrdersTable/CheckoutViews split (all < 500), kit buttons kept where looks differ; **Cook/Pack read the Orders slice** (one counted live loop, `src/api/kitchenOrders.ts` contract, saga tests moved to `src/app/`).
-- **Q3 changed to C** (owner, 18 Oct): checkout stays in `customer-menu` until the store (one shared customer slice/saga/parts; the move needs a neutral shared core first). Only the in-place split (`CheckoutForms.tsx`).
-- Stale specs fixed: `mocks/rememberMe.test.ts` (1.0.41 passkey label), `e2e/p089-order-limit.spec.ts` (Language is a sheet since 1.0.39).
-- **Gate (18 Oct ~15:40):** typecheck, lint, format ✅; unit **2,528/2,528**; mocks+shared 928; e2e touched screens 76 ✅ + 4 re-run alone ✅ (load flakes: Windows port exhaustion → run `mocks` with `--no-file-parallelism`, one Playwright run at a time).
-- **All of 1.0.42 built (18→19 Oct, uncommitted after 572a5df):** 100 compact Cook (B2); 103 fixes 1–8 (echo skip, fewer reloads, chef edit, menu loaded once, optimistic Confirm/Paid, Paid / Not paid sheet, menu edit session); 104 (Orders "Active", print "Which orders", rail Home · Menu · Orders · Private · Kitchen · Pickup & delivery · Dishes · Settings · Help · About, delivery rows + All/Delivery/Pickup filter, admin short-message preview, scroll fixes, customer address map buttons visible, small maps view-only); **105** seller edits any order (`PATCH /api/seller/orders/:code`, D-110); **106** link window A + Customers list (A–Z, device-only phone/address); **107** On the day (Menu tabs Pre-orders | On the day, Sell as per dish, Home line, customer one list "On the day only · at the stall"); **108** compact Home/Menu/Orders, order panel raised as a card; **109** kitchen print (per dish, per chef pages option, private orders option, notes); **098 stage 3** (C10 expired-code sweep, C12 live tokens in `Sec-WebSocket-Protocol` with `?tokens=` fallback). Release note "A" in `releaseNotes.ts`, `RELEASE_VERSION = '1.0.42'`.
-- **Gate 2 (18 Oct 22:07 → 19 Oct):** typecheck, lint, format ✅; unit **2,594/2,594** ✅; e2e 96 passed, 1 failed (helper-flow: test mistook the device's Customer details "Backup" button for the hidden Backup screen; test fixed, re-run).
-- **Deploy order (owner rule):** backup → `pnpm build` → migration (if any) → `pnpm run deploy` (Worker + app together; C12 keeps the `?tokens=` fallback) → health check → live checks. 1.0.42: no migration, no secret.
-- **Live checks 1.0.42:** seller Orders (Active tab, edit an order, Paid sheet), Edit menu → Save, Menu tabs + Sell as + Home "On the day" line, kitchen print, Customers list, a chef and a helper sign-in, customer order end to end incl. On the day group and address map on the iPhone, customer live updates (C12).
-- **Phone numbers (20 Oct, owner):** accepted rule stays as D-111 (C: a 0 typed after the country code is not fixed); no specific error messages ("not worth it"), Help explains instead.
-- **Build time (analysis only):** `tsc -b` re-checks everything every run (~30 s; `noEmit` without `incremental`, "output file src/main.js does not exist"); `pnpm run deploy` builds again after `pnpm build`. Possible fix `"incremental": true` in the 3 tsconfigs, under plan 091; not done.
-- **1.0.43 = 101 + 102 together** (owner's choice; Fable advised splitting routes).
-- **Rules from 18 Oct:** ask the next question only after the owner says "go next question"; mock-ups never invent features; button labels never wrap (`docs/design/README.md`).
-- **Deploy impact:** medium (size). Server: new edit-order route, live-socket token header (old tabs use the fallback), retention sweep. Client: many seller screens. No migration.
+**Deploy impact 1.0.44:** medium (size). One add-only migration (4 nullable columns), applied **before** the Worker; old clients send no `stats` (NULL, never fails an order). Old `/o/<token>` links keep working (302). New fields (`createdAt`) are ignored by old clients. iPhone status bar and launch picture change only after the app is re-added.
 
-## 1.0.43 live (plans 111, 112, 117, 20 Oct)
-- **111 dish choices + line notes (D-112):** a choice is a grouped dish (name EN/ID + limit; price, chef, pre-order/on-the-day from the dish); Sold out per choice; customer bottom sheet; basket pencil + note sheet; Cook/kitchen print/labels/order detail/WhatsApp text/edit order/private orders show choices and notes; backup/restore carries choices. Choices added to a dish apply from the next menu.
-- **112 new-menu notices (D-113):** quiet customer Settings option with explanation; seller bell (owner only) on Home + Menu (tablet), Orders header (phone), only while orders are open; sends recorded per menu, 3rd send warns; 500 phones per kitchen; phones dropped 183 days after their last order.
-- **Also:** new ShaggyBobo seller app icon (192/512/maskable, `public/brand/`), seller splash stays cream; 2 query savings (plan 113): backup 15 trips, dish list 2; 57-trip menu save fixed (choices loaded once).
-- **Migrations:** `0031_dish_choices.sql` (3 add-only columns), `0032_menu_notices.sql` (2 new tables). Run both **before** the Worker deploy (the new routes read the tables).
-- **Deploy order:** backup → `pnpm build` → `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` → `pnpm run deploy` → health check → live checks (dish with choices end to end, line note on Cook/print, bell + Settings option, chef sign-in sees no bell).
-- **117 "What's new" pill:** shown once per release per seller device (floating pill, `src/components/whats-new`); See opens About with the releases, newest marked New for 14 days.
-- **Release note (owner "A"):** "Dishes with choices, a note on each dish, and send customers a notice when a new menu is out."
-- **Live checks 1.0.43:** ✅ all good (owner, 20 Oct evening).
-- **Backup summary:** after each backup give the owner the counts (Remember me, passkeys, order notifications, new-menu notices, orders per day per kitchen, order counts per menu; never income), read locally from the backup file (python sqlite3 in memory), never `--remote`.
-- **Next: hotfix 1.0.43.1 = plans 114 + 115** (owner 20 Oct "A": "just perf and not too visible"; no version bump, no release note, tag `v1.0.43.1`). **1.0.44** is kept for 101/102, decided later, after Fable's risk review (must not break existing installs or links; DellaVee has live customers). Plan 114 items 1–5; plan 115 needs a mock-up first.
+**Live checks 1.0.44:** customer order end to end on the iPhone (DellaVee); old order link opens; My orders shows only this kitchen inside the app; nudge card shows and ✕ hides it; Settings → Remember me shows Name + "Turned on"; re-add the iPhone app (Safari → pull to refresh → Add to Home Screen) and check the status bar (background picture behind the clock, white time readable, also after scrolling); seller tablet name switcher + join; admin Statistics card; one seller order edit; console has no CSP errors.
 
-## Hotfix 1.0.43.1 live (21 Oct)
-- **Plan 114 slow networks:** request time limits (10 s reads, **45 s writes**, owner "A"; 60 s backup/CSV; feature-checked); **no double orders**: `clientOrderId` (migration `0033_client_order_id.sql`), fail-open (only a live, uncancelled menu order < 24 h is returned; any problem places the order; malformed id ignored), quiet automatic re-send once after a lost answer, off switch `ORDER_DEDUPE` in `wrangler.jsonc` vars ("on"); Sell −1 / set-count disabled while saving; Taking orders / Sold out disabled while saving + "That did not save" toast; `sw.js` serves the cache after 4.5 s on a slow link (cache v2).
-- **Seller "possible repeat" note** (client-only): same device code + same dishes within 2 min → amber note on the later order, "Repeat?" tag on rows.
-- **Plan 115 splash:** `index.html` first-paint colours + `public/splash.js` (no inline scripts, CSP-safe, `data-cfasync="false"`), kitchen logo/initials + name (sellers: Bobo + ShaggyBobo), woven texture + soft light, CSS fallback hides it once the app renders.
-- **Customer flashes:** dish/hero pictures `loading="eager"` + `decoding="sync"`; no second menu fetch within 30 s on back; forward page moves scroll to the top (D-114, window scrolling kept).
-- **Route safety tests** for future 101/102 (`docs/plans/102-route-safety-checklist.md`, 13 pending cases).
-- **Gate (21 Oct):** server 1,010 · app 1,751 · full Playwright 120 passed / 0 failed; p114 order-safety 6/6 with the 45 s limit.
-- **Deploy:** backup → build → `wrangler d1 migrations apply shaggybobo-order --remote` (0033) → `pnpm run deploy` → health → live checks (order on the iPhone; dark mode in Settings; splash on a cold start; swipe back from Dishes and Basket; seller Taking orders switch; browser console has no CSP errors). Tag `v1.0.43.1`.
-- **Lessons 32–38** added (CSP testing, index.html styles, repeat failures, full-suite runs, fail-open, timing tests, shell `&`).
-- **Live checks 1.0.43.1: not done yet** (owner stopped for the day): splash + dark mode on a cold start (iPhone), swipe back from Dishes and Basket (no flash), Basket opens at the top, one order on a normal network, seller Taking orders switch, no CSP errors in the console.
-- **1.0.44:** plans 101 + 102 (decide after `docs/reports/2026-10-20-101-102-risk.html`).
+**After the deploy (owner):**
+- DellaVee and Onde Onde re-save their phone banner once (seller app → Settings → Kitchen → Pictures → Phone banner → Change → the original file), so it is ~100 KB.
+- Duplicate Remember me: keep "Indra · customer" (DellaVee), delete the other account (Settings → Remember me → Delete my saved data, in the app where it is active) and its unnamed passkey in Passwords.
 
-## 24 Oct session
-- **1.0.43.1 live checks:** 2–6 ✅ (owner "all good"). Check 1 (splash): on the iPhone home-screen app it is black ~1 s, then the full menu, no splash. Cause: the black is iOS's own launch screen while the page is fetched (service worker asked the network first); the app then rendered within 250 ms, so the splash stayed hidden.
-- **Hotfix 1.0.43.2 = plan 115 stage 2** (owner "A" ×3): saved page per kitchen shown at once and refreshed in the background (`public/sw.js`, cache `v3`, keys `/`, `/<slug>`, `/o/<token>`); splash icon + name at once (`index.html`); after a deploy a failed script load drops the `shell-*` caches before its one reload (`updateCheck.ts`). Gate (scoped) ✅: typecheck, lint, format, unit 109/109, e2e 11/11 (p115-splash, customer-batch1, native-customer × mobile + iPhone). e2e runs without the service worker: sw.js is proven by unit tests only.
-- **Deploy impact 1.0.43.2:** client only, no migration, no secret; low. First open after a deploy shows the old version once, then the green pill.
-- **1.0.44 = 101 + 102 together with all of Fable's safeguards** (owner "A"), no migration, on a day with no open DellaVee menu. Android proof: the owner has **no Android device**; the PC has the Android emulator (`D:\Android\sdk\emulator`, v35.4.9; AVDs Pixel_9 Android 15 + Pixel_8a Android 16, both with Play Store; Chrome 136, update via Play Store). **Tablet_11** added 24 Oct (owner "A", hand-made AVD: 2560×1600 landscape, 320 dpi, 4 GB, Android 15 Play Store) for the seller app; start with `emulator -avd Tablet_11`. Phone runs better with `-memory 4096`. Cloudflare preview versions are **not** possible (Durable Object, `workers_dev: false`). Plan: build with the kitchen-only scope switched **off** after deploy, switch on, test in the emulator against order.shaggybobo.app, switch off if wrong (owner to confirm this as Q2 = A).
-- **Owner away (24 Oct ~10:45, "A"):** after the emulator proof, build 1.0.44 stages 1–4 with builders + scoped gate; no deploy, commit or push; stop if the proof changes the plan; results + next questions here; stop the emulator at the end.
-- **Customer multi-kitchen emulator check (owner, 24 Oct, "especially on customer"), before every customer-facing deploy (1.0.43.3 and 1.0.44):** on the phone emulator against the local build, two kitchens, three starting points: (1) no app, browser only; (2) a Chrome bookmark of a kitchen page, opened from the bookmark; (3) both kitchens already installed as home-screen apps. Check: the right kitchen opens, the splash, menu, ordering, My orders (all kitchens in the browser, own kitchen inside an app in 1.0.44), old and new order links.
-- **Open finding (1.0.43.3 live, 24 Oct ~17:00):** on 1–2 iPhone cold starts the DellaVee customer app showed the Menu tab but the kitchen banner/logo at the top was blank. Owner could not reproduce it: "leave it for now". Screenshot `temp/bug/img_1.png` (iPhone 16 Pro Max, right after removing and re-adding the app for the launch-picture check): the banner's top strip drawn, the rest still the dark placeholder, i.e. caught mid-download; after kill and reopen it recovered (cached). Not a 1.0.43.3 regression. Owner: fix it in 1.0.43.3 (preload link in the Worker head, placeholder until fully loaded then a short fade, SW cache-first `img-v1` for `/images/*`). **Smaller customer banner → 1.0.44** (owner "A"): the seller's browser makes a second, customer-sized copy (~1,440 px wide, ~80–120 KB) at upload; existing kitchens re-save their banner once (the Worker cannot resize pictures). Suspects: the banner picture (227 KB) evicted from the iOS HTTP cache and re-downloaded (fix: SW keeps `/images/` + smaller banner), or `ShellBanner` drawn before the kitchen data and not updated. Watch for it.
-- **D-115:** plan list + roadmap current at plan start/mock-up, plan done, and before every deploy (step 0).
-- **Wrangler login** had only 3 narrow scopes → "Authentication error 10000" on the export; fixed by `wrangler login`. Option for later: a Cloudflare API token (Workers + D1 edit) in `CLOUDFLARE_API_TOKEN`.
-- **Commit permission:** the auto-mode check blocked a commit after a bare "A"; it went through once the owner said so explicitly.
-
-## Next session
-1. **1.0.43.2 was rolled back** (owner, 24 Oct: "its actually worse, the black screen is so long"). PC measurements of the live 1.0.43.2 (iPhone-sized Chrome / WebKit): 1st open 1.4 s / 1.0 s, 2nd open from the saved page 0.3 s / 0.5 s, 3rd 0.2 s / 0.35 s; the owner's iPhone opens right after the deploy were also the cache v2 → v3 reset (full app + pictures downloaded again). Not known: whether later opens on the iPhone were fast. Pictures are cached a year (`immutable`, 30–90 KB). Investigate on the iPhone before trying again; do not redeploy 023cc25 unchanged. Old deploy steps kept for reference: **Finish the 1.0.43.2 deploy** (owner runs; `!` prefix): 3 `pnpm build` → 4 migration: skip → 5 `pnpm run deploy` → 6 health `curl https://order.shaggybobo.app/api/health` + site code number `023cc25` → 7 iPhone live check (DellaVee app, Dark: close fully, open twice; the 2nd open shows DellaVee's icon + name almost at once, no "ShaggyBobo", only a blink of black; then Light) → 8 push + tag `v1.0.43.2` (ask first). The backup of 24 Oct is valid if nothing was ordered since; else back up again.
-2. Confirm Q2 (Android proof via the emulator + scope switch), then start 1.0.44: plan 101 stage 0 / 102 stage 0 adapted to the emulator; update plan list + roadmap (D-115).
-3. Then the 6 chef permissions, one at a time. Older open owner checks: 1.0.42 live checks (edit an order, Edit menu → Save, Menu tabs, kitchen print, Customers list, chef + helper sign-in, On the day order, iPhone address map); 1.0.38 pickup map + QR scan, short message, About animation; a real label print.
+## Open findings
+- 1.0.43.3: one-off blank banner on an iPhone cold start (`temp/bug/img_1.png`), not reproduced; the preload/reveal/SW cache fix is live. Watch for it.
+- Time-bomb audit leftovers (low): `e2e/p039-captures.spec.ts` resets data without pushing the cut-off (capture spec only); p039 captures use the UTC day (cosmetic); passkey counter ~2033; seed-local dev data goes stale.
+- The empty, locked folder `D:\Projects\home\OrderingApp-hotfix` can be deleted after a reboot.
 
 ## Later (owner rulings recorded)
-- **Overnight work:** plan **090** clean-up and plan **088** split large files; plan **091** faster tooling (measure first).
-- **v1.1.0 (analysis only, own feature branch later):** plan **082** small store ("Sandra's Store"), plan **098** kinds (kitchen/shop/events/community, menu = event, order = ticket), shared seller frame + per-kind UI, plan **099** bigger grocery store / separate deployments. Owner: "we don't have to implement yet … for now it is analysis, maybe for v1.1.0"; "we will then do a feature branch later". Store must keep the no-flash rule (lesson 31).
-- Code health report: `docs/reports/2026-10-17-code-health.html`.
-- Older open items: Help screenshots from the live app; ~~customer app Lottie round~~ dropped (D-116); 077 leftover (Settings "default cut-off time" in the kitchen's clock); Dellavee feedback; the owner's wife's iPad.
+- **After 1.0.44:** iOS-style large titles on pages without a banner (idea, mock-up first; roadmap); taller 1200 × 570 phone banner (plan 122 note); 116 seller problem report; the 6 chef permissions, one at a time; 120 parked (app-store analysis in `docs/product/app-store-roadmap.md`).
+- **v1.1.0 (analysis only):** plans 082/098/099 (store, kinds, separate deployments), own feature branch later.
+- Older open owner checks: 1.0.42 live checks, 1.0.38 pickup map + QR scan, a real label print.
 
 ## Local tips
-- Playwright needs `NODE_EXTRA_CA_CERTS="C:/Users/Indra/AppData/Local/mkcert/rootCA.pem"`. Lint needs `NODE_OPTIONS=--max-old-space-size=8192`.
-- After big edits, the running Vite dev server can serve a stale module ("does not provide an export named …"): restart it (only your own PID).
-- iPhone: a home-screen app has its own storage, separate from Safari (it starts with no orders/name).
+- Playwright needs `NODE_EXTRA_CA_CERTS="C:/Users/Indra/AppData/Local/mkcert/rootCA.pem"`; one Playwright run at a time. Lint needs `NODE_OPTIONS=--max-old-space-size=8192`. `mocks` tests: `--no-file-parallelism` (Windows port exhaustion).
+- Android emulator: `D:\Android\sdk\emulator`; AVDs Pixel_9 (`-memory 4096`), Pixel_8a, Tablet_11 (seller); `adb reverse` + mkcert CA installed; phone PIN 1234.
+- iPhone: a home-screen app has its own storage; iOS reads the head (launch picture, status bar) only at "Add to Home Screen" (lesson 44).
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
+- Wrangler auth error 10000 → `wrangler login`.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is hotfix 1.0.43.1; hotfix 1.0.43.2 is committed (023cc25) but not deployed: continue its deploy from step 3 (build), one step at a time. Then 1.0.44 (plans 101 + 102, owner "A") with the Android emulator proof. Ask the owner before any git write.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is hotfix 1.0.43.3. 1.0.44 is built (uncommitted on indra/brand_logo_ux): check the gate logs in scratch/, ask the owner for the release note, then walk the owner through the 1.0.44 deploy steps one at a time (migration 0034 before the Worker). Ask the owner before any git write.

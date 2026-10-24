@@ -50,7 +50,7 @@ function warn<T>(error: ApiErrorCode, warning: ApiWarning, message: string): Sto
   return { ok: false, error, message, warning };
 }
 
-type LogRow = {
+export type LogRow = {
   id: string;
   menu_id: string;
   group_key: string;
@@ -62,7 +62,7 @@ type LogRow = {
   sent_count: number;
 };
 
-function entryOf(row: LogRow): MessageLogEntry {
+export function entryOf(row: LogRow): MessageLogEntry {
   const text: MessageText = {};
   if (row.text_en !== null) text.en = row.text_en;
   if (row.text_id !== null) text.id = row.text_id;
@@ -77,6 +77,10 @@ function entryOf(row: LogRow): MessageLogEntry {
     sentCount: row.sent_count,
   };
 }
+
+/** The current menu's send log, newest first (plan 113: shared with the backup). */
+export const MESSAGE_LOG_SQL = `SELECT * FROM message_log WHERE seller_id = ?
+           AND menu_id = (SELECT id FROM menus WHERE seller_id = ?) ORDER BY at DESC, rowid DESC`;
 
 /** About 5 statements an order: 50 orders a batch keeps each batch modest (as sendUpdates does). */
 const BATCH_ORDERS = 50;
@@ -363,12 +367,7 @@ export function createHandoverOps(deps: MenuDeps, sid: string): HandoverOps {
     },
 
     async listMessages() {
-      const rows = await db.all<LogRow>(
-        `SELECT * FROM message_log WHERE seller_id = ?
-           AND menu_id = (SELECT id FROM menus WHERE seller_id = ?) ORDER BY at DESC, rowid DESC`,
-        sid,
-        sid,
-      );
+      const rows = await db.all<LogRow>(MESSAGE_LOG_SQL, sid, sid);
       return rows.map(entryOf);
     },
 

@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nudges for customers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --pg-bg:#E9E4D8;--pg-surf:#FFFDF8;--pg-text:#1C1F1A;--pg-muted:#5D6358;--pg-line:#D3CDBC;--pg-accent:#2A5F30;--pg-on:#FFFFFF;
+  --logo:url(data:image/webp;base64,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);
+  --ui:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --pg-bg:#0D0F0C;--pg-surf:#181A16;--pg-text:#F1EEE6;--pg-muted:#A9AFA3;--pg-line:#2A2E27;--pg-accent:#93C590;--pg-on:#0F1E10;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --pg-bg:#0D0F0C;--pg-surf:#181A16;--pg-text:#F1EEE6;--pg-muted:#A9AFA3;--pg-line:#2A2E27;--pg-accent:#93C590;--pg-on:#0F1E10;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--pg-bg);color:var(--pg-text);font:400 15px/1.5 var(--ui);-webkit-text-size-adjust:100%}
+.wrap{max-width:960px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+h1{margin:0;font-size:1.375rem;line-height:1.25;font-weight:700}
+.sub{margin:6px 0 0;color:var(--pg-muted);max-width:44rem}
+.seg{display:inline-flex;border:1px solid var(--pg-line);border-radius:999px;overflow:hidden;background:var(--pg-surf)}
+.seg button{border:0;background:transparent;color:var(--pg-text);font:600 13px/1 var(--ui);min-height:36px;padding:0 16px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--pg-accent);color:var(--pg-on)}
+.seg button:focus-visible{outline:2px solid var(--pg-accent);outline-offset:-2px}
+.frames{display:flex;flex-wrap:wrap;justify-content:center;gap:28px 24px;margin-top:20px}
+.cell{width:min(100%,390px);min-width:0}
+.cell h2{margin:0 0 2px;font-size:.9375rem;line-height:1.3;font-weight:700}
+.cell p{margin:0 0 10px;color:var(--pg-muted);font-size:.8125rem;line-height:1.4}
+.fw{position:relative;width:100%;overflow:hidden;border-radius:18px;box-shadow:0 0 0 1px var(--pg-line),0 6px 20px rgb(40 30 15/16%)}
+.rules{margin-top:36px;padding:18px 18px 8px;background:var(--pg-surf);border:1px solid var(--pg-line);border-radius:14px}
+.rules h2{margin:0 0 8px;font-size:1.0625rem}
+.rules ol{margin:0;padding:0;list-style:none;counter-reset:r}
+.rules li{counter-increment:r;position:relative;padding:10px 0 10px 32px;border-top:1px solid var(--pg-line);font-size:.875rem;line-height:1.5}
+.rules li:first-child{border-top:0}
+.rules li::before{content:counter(r);position:absolute;left:0;top:10px;width:22px;height:22px;border-radius:50%;background:var(--pg-bg);color:var(--pg-accent);font-weight:700;font-size:.75rem;line-height:22px;text-align:center}
+
+/* ---- inside the phone: the real customer app, Onde brand, light ---- */
+.fr{
+  --bg:#F6F2E8;--surf:#FFFDF8;--surf2:#F4F0E6;--line:#E4DED0;--ctrl:#7F857A;--text:#1C1F1A;--muted:#5D6358;
+  --fill:#2F6B36;--on:#FFFFFF;--atext:#2A5F30;--conf:#1F6B5C;--confbg:#1F6B5C24;
+  --tipbg:#ECE8DF;--tipfg:#1C1F1A;--tipxc:#5D6358;--shadow:rgb(40 30 15/22%);
+  position:relative;width:390px;height:844px;overflow:hidden;transform-origin:0 0;
+  background:var(--bg);color:var(--text);font:400 15px/1.5 var(--ui);font-variant-numeric:tabular-nums;
+}
+.fr[data-mode="dark"]{
+  --bg:#121411;--surf:#181A16;--surf2:#20231E;--line:#2A2E27;--ctrl:#6B7266;--text:#F1EEE6;--muted:#A9AFA3;
+  --fill:#8CC08A;--on:#0F1E10;--atext:#93C590;--conf:#7EC4B0;--confbg:#7EC4B024;
+  --tipbg:#2A2C27;--tipfg:#F1EEE6;--tipxc:#A9AFA3;--shadow:rgb(0 0 0/45%);
+}
+.fr *{pointer-events:none;box-sizing:border-box}
+.fr button{font:inherit;color:inherit}
+.fr svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.sbar{height:47px;padding:14px 28px 0;font-weight:700;font-size:15px;line-height:1;display:flex;justify-content:space-between}
+.sbar.over{position:absolute;left:0;right:0;top:0;z-index:2}
+.ban{height:130px;background:var(--surf2);display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700;font-size:18px}
+.ban.sat{height:177px;padding-top:47px}
+.title{margin:0;padding:8px 16px 12px;font-size:1.75rem;line-height:1.2;font-weight:700}
+.nudge{display:flex;align-items:center;min-height:44px;margin:0 16px 12px;padding:2px 0 2px 12px;border-radius:20px;background:var(--tipbg);color:var(--tipfg);box-shadow:inset 0 0 0 1px var(--line);font-size:13px;line-height:1.2}
+.nudge .lg{flex:none;width:24px;height:24px;margin-right:8px;background:var(--logo) center/contain no-repeat}
+.nudge .nt{flex:1;min-width:0}
+.nudge .nb{flex:none;margin:0 4px 0 12px;padding:0;border:0;background:none;font-weight:700;text-decoration:underline;text-underline-offset:3px;min-height:40px}
+.nudge .nx{flex:none;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--tipxc);display:flex;align-items:center;justify-content:center}
+.nudge .nx svg{width:16px;height:16px}
+.codef{display:flex;gap:12px;padding:0 16px 12px}
+.codef .in{flex:1;min-width:0;min-height:48px;display:flex;align-items:center;padding:0 16px;border:1px solid var(--ctrl);border-radius:999px;background:var(--surf);color:var(--muted);font:inherit;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.codef .op{min-height:48px;padding:0 16px;border:1px solid var(--ctrl);border-radius:999px;background:transparent;font-weight:700;font-size:16px}
+.sec{margin:0;padding:16px 16px 8px;color:var(--muted);font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.5}
+.list{margin:0;padding:0;list-style:none;border-top:1px solid var(--line);background:var(--surf)}
+.row{display:flex;align-items:center;gap:12px;min-height:44px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.row .bd{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.row .tp{display:flex;align-items:baseline;gap:0 8px}
+.row .cd{font-family:var(--mono);font-size:17px;font-weight:600;letter-spacing:.06em;flex:none}
+.row .cd.sm{font-size:15px}
+.row .kp{display:inline-flex;align-items:center;flex:0 1 auto;min-width:0;margin:0 auto;padding:2px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surf2);font-size:15px;line-height:1.3}
+.row .tot{margin-left:auto;flex:none;font-weight:700}
+.row .dim{color:var(--muted);font-size:15px}
+.row .chev{color:var(--muted)}
+.pills{display:flex;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:999px;font-size:15px;font-weight:700;line-height:1.3;background:var(--surf2);color:var(--muted)}
+.chip svg{width:16px;height:16px}
+.res{display:inline-flex;align-items:center;gap:4px;font-size:15px;font-weight:600;color:var(--conf)}
+.res svg{width:16px;height:16px}
+.foot{margin:0;padding:16px;color:var(--muted);font-size:13px;text-align:center}
+.tabs{position:absolute;left:0;right:0;bottom:0;display:flex;background:var(--bg);border-top:1px solid var(--line)}
+.tabs.sab{padding-bottom:34px}
+.tab{flex:1;position:relative;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);font-size:13px;line-height:1.5}
+.tab.on{color:var(--atext);font-weight:600}
+.tab.on::before{content:"";position:absolute;top:0;width:32px;height:3px;border-radius:0 0 3px 3px;background:var(--atext)}
+.saf{position:absolute;left:0;right:0;bottom:0;height:84px;padding:10px 16px 0;background:var(--surf2);border-top:1px solid var(--line)}
+.saf .u{height:44px;border-radius:14px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px;font-weight:600}
+.saf .u svg{width:14px;height:14px;color:var(--muted)}
+/* order placed */
+.pbody{display:flex;flex-direction:column;gap:16px;padding:4px 16px 0}
+.phead{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.phead h3{display:flex;align-items:center;gap:8px;margin:0;font-size:1.5rem;line-height:1.2;font-weight:700;color:var(--conf)}
+.phead .tick{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:2px solid currentColor;border-radius:50%}
+.phead p{margin:0;color:var(--muted)}
+.codecard{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--surf)}
+.codecard .ct{display:flex;flex-direction:column;gap:4px}
+.codecard small{color:var(--muted);font-size:13px;letter-spacing:.05em;text-transform:uppercase;line-height:1.3}
+.codecard b{font-family:var(--mono);font-size:32px;font-weight:600;letter-spacing:.06em;line-height:1.1}
+.codecard .ct span{color:var(--atext);font-weight:700}
+.codecard .qr{width:88px;height:88px;border-radius:4px;background:#fff}
+.codecard .qr svg{width:88px;height:88px;fill:#111;stroke:none;border-radius:4px}
+.pline{display:flex;align-items:center;justify-content:center;gap:6px;min-height:36px;margin:-8px 0 -2px;font-size:13px;color:var(--muted)}
+.pline svg{width:16px;height:16px}
+.pline .dot{opacity:.7}
+.pline .go{font-weight:700;color:var(--atext);text-decoration:underline;text-underline-offset:3px;border:0;background:none;padding:0}
+.main{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;padding:0 16px;border:0;border-radius:999px;background:var(--fill);color:var(--on);font-size:16px;font-weight:700}
+.help{margin:0;text-align:center;color:var(--muted)}
+.upd{display:grid;grid-template-columns:auto 1fr;column-gap:12px;row-gap:4px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--surf)}
+.upd .disc{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--surf2);color:var(--muted)}
+.upd h4{margin:0;font-size:18px;line-height:1.25;font-weight:700}
+.upd p{grid-column:2;margin:0;color:var(--muted)}
+.upd .ob{grid-column:1/-1;margin-top:8px;min-height:52px;border:1px solid var(--ctrl);border-radius:999px;background:transparent;font-weight:700;font-size:15px}
+.links{display:flex;justify-content:space-between}
+.links button{min-height:44px;padding:0;border:0;background:none;font-weight:600;color:var(--atext)}
+.links button.q{color:var(--muted)}
+@media (max-width:420px){.sub{font-size:.875rem}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="bar">
+    <h1 data-i18n="h1">Nudges for customers</h1>
+    <div class="seg" role="group" aria-label="Language">
+      <button type="button" data-l="en" aria-pressed="true">EN</button>
+      <button type="button" data-l="id" aria-pressed="false">ID</button>
+    </div>
+  </div>
+  <p class="sub" data-i18n="sub"></p>
+
+  <div class="frames" id="frames">
+    <div class="cell"><h2 data-i18n="f1t"></h2><p data-i18n="f1c"></p><div class="fw" data-f="1"></div></div>
+    <div class="cell"><h2 data-i18n="f2t"></h2><p data-i18n="f2c"></p><div class="fw" data-f="2"></div></div>
+    <div class="cell"><h2 data-i18n="f3t"></h2><p data-i18n="f3c"></p><div class="fw" data-f="3"></div></div>
+    <div class="cell"><h2 data-i18n="f4t"></h2><p data-i18n="f4c"></p><div class="fw" data-f="4"></div></div>
+    <div class="cell"><h2 data-i18n="f5t"></h2><p data-i18n="f5c"></p><div class="fw" data-f="5"></div></div>
+  </div>
+
+  <section class="rules">
+    <h2 data-i18n="rulesH"></h2>
+    <ol>
+      <li data-i18n="r1"></li>
+      <li data-i18n="r2"></li>
+      <li data-i18n="r3"></li>
+      <li data-i18n="r4"></li>
+      <li data-i18n="r5"></li>
+      <li data-i18n="r6"></li>
+    </ol>
+  </section>
+</div>
+
+<script>
+(function(){
+  var T={
+    en:{
+      h1:'Nudges for customers',
+      sub:'Plan 121 mock-up: one quiet card at the top of My orders, and one line on the Order placed page. Sample data: DellaVee, Adelaide, AUD.',
+      f1t:'1 · Open order: notifications card',
+      f1c:'Installed app (or Android). An order is open and notifications are off.',
+      f2t:'2 · No open order: Remember me card',
+      f2c:'Only earlier orders are left. Remember me is off.',
+      f3t:'3 · iPhone in Safari: add to home screen first',
+      f3c:'Not installed, so notifications cannot work yet. How opens the existing install steps.',
+      f4t:'4 · Order placed: one line under the order number',
+      f4c:'Shown while notifications are off. The updates card below already exists; the owner decides if the line replaces it.',
+      f5t:'5 · Dark mode',
+      f5c:'Same as 1, in the dark theme.',
+      rulesH:'When a card shows',
+      r1:'<b>One at a time.</b> Only one card, at the top of My orders. While an order is open (not yet collected or delivered) it is the notifications card; otherwise it is the Remember me card.',
+      r2:'<b>Only when it can help.</b> Not shown if notifications or Remember me are already on, or if this browser cannot do it.',
+      r3:'<b>iPhone in a browser.</b> Notifications need the home-screen app, so the card says to add it to the home screen first. How opens the existing install steps.',
+      r4:'<b>Dismiss (the cross).</b> The card goes quiet until the kitchen’s next new menu or the customer’s next order. Then it can show again.',
+      r5:'<b>Four dismissals, then stop.</b> After the 4th dismissal the card never comes back. Both stay available in Settings.',
+      r6:'<b>Order placed page.</b> One line under the order number while notifications are off. It has no cross, so it never counts as a dismissal.',
+      menu:'Menu', orders:'My orders', settings:'Settings',
+      title:'My orders',
+      ph:'Have an order code? e.g. K7F-2QX', open:'Open',
+      cur:'Current', ear:'Earlier',
+      stConf:'Confirmed', stCol:'Collected',
+      pick:'Pickup, Norwood',
+      d1:'Sat 31 Oct', d2:'Sat 17 Oct', d3:'Sat 10 Oct',
+      foot:'Saved on this phone only. No account. Details are kept for 4 weeks.',
+      nNotify:'Get a message when your order is ready',
+      nTurn:'Turn on',
+      nRem:'Keep your orders on all your phones',
+      nHome:'Add to your home screen to get a message when your order is ready',
+      nHow:'How',
+      nHide:'Hide this',
+      nPlaced:'Get a message when it’s ready',
+      pTitle:'Order placed',
+      pThanks:'Thanks, Maya. Now send it to DellaVee.',
+      pNum:'Order number', pQr:'Show QR code',
+      pWa:'Send to DellaVee on WhatsApp',
+      pWaH:'Opens WhatsApp with your order already written.',
+      uTitle:'Get a message when your order is ready',
+      uBody:'Takes a minute. Or skip it and check this order page.',
+      uBtn:'Turn on updates',
+      pView:'View order details', pChg:'Change or cancel',
+      pSaved:'Saved in My orders on this phone.'
+    },
+    id:{
+      h1:'Pengingat untuk pelanggan',
+      sub:'Mock-up rencana 121: satu kartu kecil yang tenang di atas Pesanan saya, dan satu baris di halaman Pesanan terkirim. Data contoh: DellaVee, Adelaide, AUD.',
+      f1t:'1 · Ada pesanan terbuka: kartu pemberitahuan',
+      f1c:'Aplikasi terpasang (atau Android). Ada pesanan terbuka dan pemberitahuan mati.',
+      f2t:'2 · Tidak ada pesanan terbuka: kartu Ingat aku',
+      f2c:'Tinggal pesanan sebelumnya. Ingat aku mati.',
+      f3t:'3 · iPhone di Safari: tambahkan ke layar utama dulu',
+      f3c:'Belum terpasang, jadi pemberitahuan belum bisa. Caranya membuka langkah pemasangan yang sudah ada.',
+      f4t:'4 · Pesanan terkirim: satu baris di bawah nomor pesanan',
+      f4c:'Tampil selama pemberitahuan mati. Kartu kabar di bawahnya sudah ada; pemilik memutuskan apakah baris ini menggantikannya.',
+      f5t:'5 · Mode gelap',
+      f5c:'Sama seperti 1, dengan tema gelap.',
+      rulesH:'Kapan kartu tampil',
+      r1:'<b>Satu per satu.</b> Hanya satu kartu, di atas Pesanan saya. Selama ada pesanan terbuka (belum diambil atau diantar) kartunya soal pemberitahuan; kalau tidak, kartu Ingat aku.',
+      r2:'<b>Hanya kalau berguna.</b> Tidak tampil kalau pemberitahuan atau Ingat aku sudah menyala, atau kalau browser ini tidak bisa.',
+      r3:'<b>iPhone di browser.</b> Pemberitahuan butuh aplikasi di layar utama, jadi kartu minta ditambahkan ke layar utama dulu. Caranya membuka langkah pemasangan yang sudah ada.',
+      r4:'<b>Tutup (tanda silang).</b> Kartu diam sampai menu baru berikutnya dari dapur atau pesanan berikutnya pelanggan. Lalu bisa tampil lagi.',
+      r5:'<b>Empat kali ditutup, lalu berhenti.</b> Setelah ditutup 4 kali, kartu tidak muncul lagi. Keduanya tetap ada di Pengaturan.',
+      r6:'<b>Halaman Pesanan terkirim.</b> Satu baris di bawah nomor pesanan selama pemberitahuan mati. Tanpa tanda silang, jadi tidak pernah dihitung sebagai ditutup.',
+      menu:'Menu', orders:'Pesanan saya', settings:'Pengaturan',
+      title:'Pesanan saya',
+      ph:'Punya kode pesanan? mis. K7F-2QX', open:'Buka',
+      cur:'Sekarang', ear:'Sebelumnya',
+      stConf:'Dikonfirmasi', stCol:'Sudah diambil',
+      pick:'Ambil sendiri, Norwood',
+      d1:'Sabtu, 31 Okt', d2:'Sabtu, 17 Okt', d3:'Sabtu, 10 Okt',
+      foot:'Hanya tersimpan di ponsel ini. Tanpa akun. Detail disimpan selama 4 minggu.',
+      nNotify:'Dapat pesan saat pesanan siap',
+      nTurn:'Nyalakan',
+      nRem:'Simpan pesananmu di semua HP-mu',
+      nHome:'Tambahkan ke layar utama agar dapat pesan saat pesanan siap',
+      nHow:'Caranya',
+      nHide:'Sembunyikan',
+      nPlaced:'Dapat pesan saat pesanan siap',
+      pTitle:'Pesanan terkirim',
+      pThanks:'Terima kasih, Maya. Sekarang kirim ke DellaVee.',
+      pNum:'Nomor pesanan', pQr:'Tampilkan kode QR',
+      pWa:'Kirim ke DellaVee lewat WhatsApp',
+      pWaH:'WhatsApp terbuka dengan pesanan sudah tertulis.',
+      uTitle:'Dapat pesan saat pesanan siap',
+      uBody:'Hanya semenit. Atau lewati dan cek halaman pesanan ini.',
+      uBtn:'Nyalakan pemberitahuan',
+      pView:'Lihat rincian pesanan', pChg:'Ubah atau batalkan',
+      pSaved:'Tersimpan di Pesanan saya di ponsel ini.'
+    }
+  };
+  var lang='en';
+
+  var P={
+    menu:'M4 6h16M4 12h16M4 18h16',
+    bag:'M5 8h14l-1 12H6zM9 8a3 3 0 016 0',
+    gear:'M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z',
+    fwd:'M9 5l7 7-7 7',
+    check:'M5 12l5 5L20 6',
+    clock:'M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2',
+    chat:'M4 20l1.3-4.2A8 8 0 1112 20a8 8 0 01-3.8-1z',
+    bell:'M6 17V11a6 6 0 0112 0v6l2 2H4zM10 21h4',
+    x:'M6 6l12 12M18 6L6 18',
+    lock:'M5 11h14v10H5zM8 11V8a4 4 0 018 0v3'
+  };
+  function ic(n,cls){return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"'+(cls?' class="'+cls+'"':'')+'><path d="'+P[n]+'"/></svg>';}
+  function i(k,tag){tag=tag||'span';return '<'+tag+' data-i18n="'+k+'">'+T.en[k]+'</'+tag+'>';}
+
+  function qr(){
+    var n=21,s=7,r='',x,y;
+    function finder(ox,oy){
+      var a,b;
+      for(a=0;a<7;a++)for(b=0;b<7;b++){
+        var edge=a===0||b===0||a===6||b===6,core=a>=2&&a<=4&&b>=2&&b<=4;
+        if(edge||core)r+='M'+(ox+a)+' '+(oy+b)+'h1v1h-1z';
+      }
+    }
+    var seed=11;
+    for(x=0;x<n;x++)for(y=0;y<n;y++){
+      var inF=(x<8&&y<8)||(x>n-9&&y<8)||(x<8&&y>n-9);
+      if(inF)continue;
+      seed=(seed*1103515245+12345)&0x7fffffff;
+      if((seed>>16)%2)r+='M'+x+' '+y+'h1v1h-1z';
+    }
+    finder(0,0);finder(n-7,0);finder(0,n-7);
+    return '<svg viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" aria-hidden="true"><path d="'+r+'"/></svg>';
+  }
+
+  function nudge(text,btn){
+    return '<div class="nudge" role="status"><span class="lg"></span>'+i(text,'span').replace('<span','<span class="nt"')+
+      '<button type="button" class="nb" data-i18n="'+btn+'">'+T.en[btn]+'</button>'+
+      '<button type="button" class="nx" data-aria="nHide" aria-label="'+T.en.nHide+'">'+ic('x')+'</button></div>';
+  }
+  function tabs(sab){
+    function tab(id,icon,on){return '<div class="tab'+(on?' on':'')+'">'+ic(icon)+i(id)+'</div>';}
+    return '<nav class="tabs'+(sab===1?' sab':'')+'" style="'+(sab===2?'bottom:84px':'')+'">'+tab('menu','menu')+tab('orders','bag',1)+tab('settings','gear')+'</nav>';
+  }
+  function codeForm(){
+    return '<div class="codef"><div class="in" data-i18n="ph">'+T.en.ph+'</div><button type="button" class="op" data-i18n="open">'+T.en.open+'</button></div>';
+  }
+  function cur(){
+    return '<h2 class="sec" data-i18n="cur">'+T.en.cur+'</h2><ul class="list"><li class="row"><div class="bd">'+
+      '<div class="tp"><span class="cd">M4T-8WR</span><span class="kp">DellaVee</span><span class="tot">$34.50</span></div>'+
+      '<span>Lasagne ×2, Tiramisu</span>'+
+      '<span class="dim">'+i('d1')+' · '+i('pick')+'</span>'+
+      '<div class="pills"><span class="chip">'+ic('check')+i('stConf')+'</span></div></div>'+ic('fwd','chev')+'</li></ul>';
+  }
+  function earRow(code,total,d,items){
+    return '<li class="row"><div class="bd"><div class="tp"><span class="cd sm">'+code+'</span><span class="kp">DellaVee</span><span class="tot">'+total+'</span></div>'+
+      '<span class="dim">'+i(d)+'</span><span class="res">'+ic('check')+i('stCol')+'</span></div>'+ic('fwd','chev')+'</li>';
+  }
+  function earlier(two){
+    return '<h2 class="sec" data-i18n="ear">'+T.en.ear+'</h2><ul class="list">'+
+      earRow('F9K-3HD','$18.00','d2')+(two?earRow('B2Q-7LM','$42.50','d3'):'')+'</ul>';
+  }
+  function status(over){return '<div class="sbar'+(over?' over':'')+'"><span>9:41</span></div>';}
+
+  function orders(o){
+    var h='';
+    if(o.safari){
+      h+=status()+'<div class="ban">DellaVee</div>';
+    }else{
+      h+=status(true)+'<div class="ban sat">DellaVee</div>';
+    }
+    h+='<h1 class="title" data-i18n="title">'+T.en.title+'</h1>';
+    h+=nudge(o.text,o.btn);
+    h+=codeForm();
+    h+=o.open?cur()+(o.safari?'':earlier(false)):earlier(true);
+    h+='<p class="foot">'+i('foot')+'</p>';
+    h+=tabs(o.safari?2:1);
+    if(o.safari)h+='<div class="saf"><div class="u">'+ic('lock')+'order.shaggybobo.app</div></div>';
+    return h;
+  }
+  function placed(){
+    return status()+'<div class="pbody">'+
+      '<div class="phead"><h3><span class="tick">'+ic('check')+'</span>'+i('pTitle')+'</h3><p data-i18n="pThanks">'+T.en.pThanks+'</p></div>'+
+      '<div class="codecard"><div class="ct"><small data-i18n="pNum">'+T.en.pNum+'</small><b>M4T-8WR</b><span>'+i('pQr')+' ›</span></div><div class="qr">'+qr()+'</div></div>'+
+      '<div class="pline">'+ic('bell')+i('nPlaced')+'<span class="dot">·</span><button type="button" class="go" data-i18n="nTurn">'+T.en.nTurn+'</button></div>'+
+      '<div><button type="button" class="main">'+ic('chat')+i('pWa')+'</button><p class="help" style="margin-top:4px">'+i('pWaH')+'</p></div>'+
+      '<section class="upd"><span class="disc">'+ic('bell')+'</span><h4 data-i18n="uTitle">'+T.en.uTitle+'</h4><p data-i18n="uBody">'+T.en.uBody+'</p><button type="button" class="ob" data-i18n="uBtn">'+T.en.uBtn+'</button></section>'+
+      '<div class="links"><button type="button">'+i('pView')+'</button><button type="button" class="q">'+i('pChg')+'</button></div>'+
+      '<p class="help">'+i('pSaved')+'</p></div>'+tabs(1);
+  }
+
+  var F={
+    1:orders({open:1,text:'nNotify',btn:'nTurn'}),
+    2:orders({open:0,text:'nRem',btn:'nTurn'}),
+    3:orders({open:1,text:'nHome',btn:'nHow',safari:1}),
+    4:placed(),
+    5:orders({open:1,text:'nNotify',btn:'nTurn'})
+  };
+  var wraps=document.querySelectorAll('.fw'),frames=[];
+  wraps.forEach(function(w){
+    var n=w.getAttribute('data-f'),f=document.createElement('div');
+    f.className='fr';
+    if(n==='5')f.setAttribute('data-mode','dark');
+    f.innerHTML=F[n];
+    w.appendChild(f);frames.push([w,f]);
+  });
+
+  function apply(){
+    document.documentElement.lang=lang;
+    document.querySelectorAll('[data-i18n]').forEach(function(e){e.innerHTML=T[lang][e.getAttribute('data-i18n')];});
+    document.querySelectorAll('[data-aria]').forEach(function(e){e.setAttribute('aria-label',T[lang][e.getAttribute('data-aria')]);});
+    document.querySelectorAll('.seg button').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-l')===lang?'true':'false');});
+  }
+  function fit(){
+    frames.forEach(function(p){
+      var w=p[0],f=p[1],s=Math.min(1,w.clientWidth/390);
+      f.style.transform='scale('+s+')';
+      w.style.height=Math.round(844*s)+'px';
+    });
+  }
+  document.querySelectorAll('.seg button').forEach(function(b){
+    b.addEventListener('click',function(){lang=b.getAttribute('data-l');apply();});
+  });
+  window.addEventListener('resize',fit);
+  apply();fit();
+  setTimeout(fit,300);
+})();
+</script>
+
+</body>
+</html>

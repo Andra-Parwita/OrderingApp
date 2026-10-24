@@ -22,7 +22,7 @@ const BASE = '/api/customer';
 
 function parseMe(input: unknown): CustomerMe | null {
   if (!isRecord(input)) return null;
-  const { firstName, credentialId, prf, setup, sealed, customerCode, code } = input;
+  const { firstName, credentialId, prf, setup, sealed, customerCode, code, createdAt } = input;
   if (typeof firstName !== 'string' || typeof prf !== 'boolean' || typeof setup !== 'boolean') {
     return null;
   }
@@ -35,6 +35,7 @@ function parseMe(input: unknown): CustomerMe | null {
     sealed: parseSealedAddress(sealed),
     ...(kitchenCode !== null ? { customerCode: kitchenCode } : {}),
     ...(typeof code === 'string' ? { code } : {}),
+    ...(typeof createdAt === 'string' && !Number.isNaN(Date.parse(createdAt)) ? { createdAt } : {}),
   };
 }
 

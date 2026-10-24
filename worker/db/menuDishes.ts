@@ -9,10 +9,46 @@ import {
 } from '../../shared/menusContract';
 import { checkImageUpload } from '../../shared/imageSlots';
 import type { SellerRepository } from '../repo/Repository';
-import { marks, type D1Statement } from './d1';
+import { marks, type D1Statement, type Db } from './d1';
 import { dishOf, type DishRow, type ItemRow, type SetDishRow, type SetRow } from './rows';
 import { dishStatement, setStatements } from './write';
 import { fail, ok, type MenuContext } from './menuContext';
+
+/** The two reads behind the dish library: dishes (most recently used first) and their choices. */
+export function dishListStatements(db: Db, sid: string): Array<D1Statement> {
+  return [
+    db.stmt(
+      `SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NULL
+           ORDER BY last_used_at IS NULL, last_used_at DESC, name_en COLLATE NOCASE, id`,
+      sid,
+    ),
+    db.stmt(
+      'SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NOT NULL ORDER BY rowid',
+      sid,
+    ),
+  ];
+}
+
+/**
+ * The same two reads as one statement (plan 113, for the backup): dishes first in the order above,
+ * then the choices by `rowid`. `dishListOf` takes them apart again by `group_id`.
+ */
+export const DISHES_AND_CHOICES_SQL = `SELECT * FROM dishes WHERE seller_id = ?
+  ORDER BY group_id IS NOT NULL,
+    CASE WHEN group_id IS NULL THEN last_used_at IS NULL END,
+    CASE WHEN group_id IS NULL THEN last_used_at END DESC,
+    CASE WHEN group_id IS NULL THEN name_en END COLLATE NOCASE,
+    CASE WHEN group_id IS NULL THEN id ELSE rowid END`;
+
+export function dishListOf(parents: Array<unknown>, children: Array<unknown>): Array<Dish> {
+  const choices = children as Array<DishRow>;
+  return (parents as Array<DishRow>).map((row) =>
+    dishOf(
+      row,
+      choices.filter((choice) => choice.group_id === row.id),
+    ),
+  );
+}
 
 /** Your dishes and saved sets of dishes. */
 export function dishesPart(
@@ -78,25 +114,8 @@ export function dishesPart(
     // ---- Your dishes ----
 
     async listDishes() {
-      const [parents, children] = await db.reads([
-        db.stmt(
-          `SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NULL
-           ORDER BY last_used_at IS NULL, last_used_at DESC, name_en COLLATE NOCASE, id`,
-          sid,
-        ),
-        db.stmt(
-          'SELECT * FROM dishes WHERE seller_id = ? AND group_id IS NOT NULL ORDER BY rowid',
-          sid,
-        ),
-      ]);
-      const rows = parents as Array<DishRow>;
-      const choices = children as Array<DishRow>;
-      return rows.map((row) =>
-        dishOf(
-          row,
-          choices.filter((choice) => choice.group_id === row.id),
-        ),
-      );
+      const [parents, children] = await db.reads(dishListStatements(db, sid));
+      return dishListOf(parents, children);
     },
 
     async createDish(input) {
@@ -260,29 +279,28 @@ export function dishesPart(
       if (next.preorder === false && next.dayStock === undefined) {
         return fail('invalid_request', 'On the day only needs a day stock');
       }
-      await db
-        .stmt(
-          `UPDATE dishes SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
+      const update = db.stmt(
+        `UPDATE dishes SET name_en = ?, name_id = ?, description_en = ?, description_id = ?, size_en = ?, size_id = ?,
              price_cents = ?, portion_limit = ?, chef_id = ?, preorder = ?, day_stock = ?
            WHERE seller_id = ? AND id = ?`,
-          next.name.en,
-          next.name.id,
-          next.description.en,
-          next.description.id,
-          next.size.en,
-          next.size.id,
-          next.priceCents,
-          next.limit ?? null,
-          next.chefId ?? null,
-          next.preorder !== false,
-          next.dayStock ?? null,
-          sid,
-          id,
-        )
-        .run();
+        next.name.en,
+        next.name.id,
+        next.description.en,
+        next.description.id,
+        next.size.en,
+        next.size.id,
+        next.priceCents,
+        next.limit ?? null,
+        next.chefId ?? null,
+        next.preorder !== false,
+        next.dayStock ?? null,
+        sid,
+        id,
+      );
       // Plan 111: the choices follow the dish; a new list replaces them (one left out is deleted).
       if (patch.choices === undefined) {
-        await syncChoices(next).run();
+        // Plan 113: the dish and its choices change together, in one trip.
+        await db.batch([update, syncChoices(next)]);
         return ok(
           withChoices(
             next,
@@ -290,6 +308,7 @@ export function dishesPart(
           ),
         );
       }
+      await update.run();
       const had = new Set(before.map((choice) => choice.id));
       const choices = patch.choices.map((choice) =>
         choiceDish(

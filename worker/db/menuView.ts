@@ -16,6 +16,14 @@ export const MENU_PLACES_SQL = `SELECT p.id AS id, p.place AS place, p.direction
   FROM menu_pickup_places m JOIN pickup_places p ON p.seller_id = m.seller_id AND p.id = m.place_id
   WHERE m.seller_id = ? ORDER BY m.position`;
 
+/** The kitchen's pickup places, in their order (plan 113: shared with the backup). */
+export const PICKUP_PLACES_SQL =
+  'SELECT * FROM pickup_places WHERE seller_id = ? ORDER BY position';
+
+/** The places the current menu uses, with its own times (plan 113: shared with the backup). */
+export const MENU_USES_SQL =
+  'SELECT place_id, window_start, window_end FROM menu_pickup_places WHERE seller_id = ? ORDER BY position';
+
 /** A menu item as the seller sees it: what is left of the limit, and whether it is sold out. */
 export function sellerView(item: MenuItem, used: Map<string, number>): SellerMenuItemView {
   const { soldOut: manual, ...rest } = item;

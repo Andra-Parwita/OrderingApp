@@ -6,6 +6,7 @@ export const SECTIONS = [
   'maintenance',
   'message',
   'settings',
+  'stats',
   'problems',
   'devices',
 ] as const;

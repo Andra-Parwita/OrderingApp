@@ -39,6 +39,8 @@ export const MAX_DISH_PICTURES = 300;
 export const DISH_PICTURE_MAX_KB = 200;
 /** Plan 067: what the device aims for when it shrinks a dish picture. */
 export const DISH_PICTURE_TARGET_KB = 100;
+/** What the device aims for when it shrinks the customer (phone) banner; the server still accepts IMAGE_MAX_KB. */
+export const PHONE_BANNER_TARGET_KB = 100;
 /** Plan 064: how many past menus keep their menu picture (the newest ones; older pictures are deleted). */
 export const PAST_MENU_PICTURES_KEPT = 10;
 export const PLACE_NAME_MAX = 80;

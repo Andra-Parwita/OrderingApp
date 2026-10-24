@@ -15,7 +15,7 @@ export type D1Like = {
 };
 
 type Rows = Array<unknown>;
-export type ReadResults = [Rows, Rows, Rows, Rows, Rows, Rows, Rows, Rows];
+export type ReadResults = [Rows, Rows, Rows, Rows, Rows, Rows, Rows, Rows, Rows, Rows, Rows, Rows];
 
 type Param = string | number | boolean | null | undefined;
 
@@ -53,7 +53,7 @@ export class Db {
 
   /**
    * Several reads in one round trip. Typed as a tuple so a caller can destructure as many results
-   * as it sent statements (never more than 8).
+   * as it sent statements (never more than 12).
    */
   async reads(statements: Array<D1Statement>): Promise<ReadResults> {
     return (await this.batch(statements)) as ReadResults;

@@ -75,13 +75,19 @@ test('seller finds an order, confirms it, marks it ready and paid, and sees the 
   });
 
   if (desktop) {
-    // Close the panel, switch language, open the order again: the search is still in the URL.
+    // Close the panel, switch language in Settings → Language (plan 118: no switch in the rail),
+    // come back to the list: the search is still in the URL. Open the order again.
     await page
       .getByRole('complementary', { name: /^Order / })
       .getByRole('button', { name: 'Close' })
       .click();
     await expect(page).toHaveURL(/\/seller\/orders\?q=/);
+    const listUrl = page.url();
+    await page.goto('/seller/settings/language');
     await page.getByRole('radio', { name: 'ID', exact: true }).click();
+    await expect(page.getByRole('radio', { name: 'ID', exact: true })).toBeChecked();
+    await page.goto(listUrl);
+    await expect(page).toHaveURL(/\/seller\/orders\?q=/);
     await orderRow(page, new RegExp(firstName)).click();
     // Cancel now sits in the panel's ⋯ menu (Lainnya).
     await page
