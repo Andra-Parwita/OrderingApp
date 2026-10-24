@@ -3,7 +3,7 @@
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs (1.0.39 → 1.0.43.3 detail) are in git history.
 
 **Last session:** 24 → 25 Oct (Sat–Sun night), the owner's PC (Adelaide), Claude as coordinator. Hotfixes 1.0.43.2 and 1.0.43.3 shipped; **1.0.44 fully built, waiting for the final gate result and the owner's deploy** (owner, 25 Oct ~00:50: "we will deploy tomorrow").
-**Live:** hotfix **1.0.43.3** (24 Oct 17:43; Worker `68dd13cb-0e8d-4c70-8f42-6d1f7277e486`; tag `v1.0.43.3` on `main` = `41b6981`, pushed). Latest backup: `backups/shaggybobo-2026-10-24-b.sql` (16:53).
+**Live:** **1.0.44** (25 Oct 07:02; Worker `5c5ee9c4-919a-4dfd-906a-6100ac3de537`; `1.0.124 · 42bc62f` on `main`; migration 0034 applied first). Rollback point 1.0.43.3: `68dd13cb-0e8d-4c70-8f42-6d1f7277e486` (`pnpm exec wrangler rollback <id>`; 0034 stays, old code ignores it). Backup before deploy: `backups/shaggybobo-2026-10-25.sql` (975 rows). **Live checks ✅ all 6** (owner, 25 Oct: customer app + old links, iPhone status bar after re-adding, Remember me restore + "Turned on", seller tablet + What's new + order edit, admin Statistics, phone banner re-save).
 **Branch:** `indra/brand_logo_ux` = `369c660` (1.0.44 WIP, rebased on main, pushed) **plus a large uncommitted working tree** (everything below). The owner has not yet said whether to commit it.
 
 ## House rules (binding)
@@ -43,7 +43,7 @@
 | 2 | backup: `pnpm exec wrangler d1 export shaggybobo-order --remote --output backups/shaggybobo-2026-10-2X.sql` (then Claude gives the backup summary) |
 | 3 | `pnpm build` (from `main`) |
 | 4 | **migration 0034 first:** `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` |
-| 5 | `pnpm run deploy` |
+| 5 | `pnpm run deploy -- --tag v<version> --message "<version>: <short description>"` (tag + message on every Worker version from 1.0.45, owner 25 Oct "A"; 1.0.44 was deployed without) |
 | 6 | health: `curl https://order.shaggybobo.app/api/health` + site code number |
 | 7 | live checks (below) |
 | 8 | tag `v1.0.44` on `main` + push (ask first) |
@@ -74,5 +74,11 @@ Deploy on a day with **no open DellaVee menu**. `KITCHEN_SCOPE` stays "off".
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`.
 - Wrangler auth error 10000 → `wrangler login`.
 
+## Next session
+1. Owner cleanup: the duplicate Remember me account + its unnamed passkey (keep "Indra · customer"); Onde Onde phone banner re-save if not done.
+2. Optional: a Cloudflare API token in `CLOUDFLARE_API_TOKEN` (template "Edit Cloudflare Workers" + D1 Edit) so wrangler stops asking to log in (owner runs `setx` themselves; never paste the token in chat).
+3. Watch real phones for the one-off long splash seen on the emulator, and the first Statistics numbers after the next menu.
+4. Then pick from "Later": iOS large titles (mock-up first), 116, the 6 chef permissions.
+
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is hotfix 1.0.43.3. 1.0.44 is built (uncommitted on indra/brand_logo_ux): check the gate logs in scratch/, ask the owner for the release note, then walk the owner through the 1.0.44 deploy steps one at a time (migration 0034 before the Worker). Ask the owner before any git write.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.44 (tag v1.0.44, Worker 5c5ee9c4). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.
