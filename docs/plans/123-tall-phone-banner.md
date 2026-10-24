@@ -46,3 +46,6 @@
 - **Deploy impact:** one add-only migration, applied before the Worker deploy.
 - **Soft blur strength (owner "C", 25 Oct):** **12 px** (was 20 px), brightness 0.85, the soft dark gradient on top as today; compared at 20 / 12 / 8 / 4 px in the mock-up. Applies to the "Soft blur" choice for tall banners; the 1.0.44 fallback blur for 3 : 1 banners without a background picture stays 20 px unless decided otherwise.
 - Owner: "I have to try it live on my phone whether 8 or 12 px blur … we can change quickly." Ship 12 px as one constant (`statusBarFade.ts`); after the live check a switch to 8 px is a one-line change + quick deploy (no database change).
+
+## Outcome (25 Oct)
+- 1.0.44.2 (Worker `70e17010…`) removed the fixed page fade over a tall banner; the owner's iPhone (iOS 26) **still shows a soft blur behind the clock**: iOS 26's own scroll edge effect, not our code (lesson 45). Owner: "I do like it, so we may not do the other setting." **Stage 5 (the setting) is dropped**; mock-up kept for reference. `BLUR_TALL_BANNER` stays false (our own blur on top would double it).
