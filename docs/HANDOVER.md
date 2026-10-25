@@ -3,7 +3,7 @@
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs (1.0.39 → 1.0.43.3 detail) are in git history.
 
 **Last session:** 24 → 25 Oct (Sat–Sun night), the owner's PC (Adelaide), Claude as coordinator. Hotfixes 1.0.43.2 and 1.0.43.3 shipped; **1.0.44 fully built, waiting for the final gate result and the owner's deploy** (owner, 25 Oct ~00:50: "we will deploy tomorrow").
-**Live:** **hotfix 1.0.44.2** (25 Oct; Worker `70e17010-73d3-46d3-8dc1-6a79efad33a6`; `main` = `3590b3c`; tall banner blur fix, no migration). Before: 1.0.44.1 (`8e7bca61-bae9-4c76-bc3b-91beff03c0d3`), 1.0.44 (`5c5ee9c4-919a-4dfd-906a-6100ac3de537`, live checks ✅). Backups: `backups/shaggybobo-2026-10-25.sql`, `…-25-b.sql`.
+**Live:** **hotfix 1.0.44.3** (25 Oct; Worker `15ad732a-132e-4503-b70d-5214d820b3d1`; `main` = `b1a2a0a`; order lines on one line, no migration). Before: 1.0.44.2 (`70e17010-73d3-46d3-8dc1-6a79efad33a6`), 1.0.44.1 (`8e7bca61…`), 1.0.44 (`5c5ee9c4…`, live checks ✅). Backups: `backups/shaggybobo-2026-10-25.sql`, `…-25-b.sql`.
 **Branch:** `indra/brand_logo_ux` = `369c660` (1.0.44 WIP, rebased on main, pushed) **plus a large uncommitted working tree** (everything below). The owner has not yet said whether to commit it.
 
 ## House rules (binding)
@@ -86,7 +86,7 @@ Deploy on a day with **no open DellaVee menu**. `KITCHEN_SCOPE` stays "off".
 - Owner's iPhone (iOS 26) showed the top of the tall DellaVee banner blurred and dim at rest, sharp when pulled down. Not reproducible in WebKit on Windows; likely the fixed thin page fade at first paint plus an iOS 26 blur under fixed top elements (unverified). Fix: the fade stays off until the banner shape is known and, for a tall banner, until it has scrolled away (`useFadeHold`); constant `BLUR_TALL_BANNER` (false) brings back the soft look. Client only, no migration.
 - **Result:** still blurred on the owner's iPhone → iOS 26's own effect (lesson 45); the owner likes it, the setting is dropped. (Was: if still blurred, the planned setting (Clear / Light 8 px / Soft 12 px / Strong 20 px, mock-up `uxDesign/customer/mockups/123-clock-area-setting.html`, plan 123 stage 5) offers blur strengths only.)
 
-## Hotfix 1.0.44.3 = order page lines (25 Oct, uncommitted until the owner's OK)
+## Hotfix 1.0.44.3 = order page lines (25 Oct, live)
 - Owner's iPhone: on an order page with a long note every order line broke one word per line. Cause: the details list was one shared grid (`1fr auto`); a long note widened the value column and squeezed all names to 0 px. Not a 1.0.44.x regression (older bug, any order with a long note). Fix: each row is its own grid, the value column at most 65% (`OrderPageView.tsx`); e2e archived-orders asserts it at 390 px. CSS only, no migration.
 - The "Delivered" chip scrolling under the clock is left as is (owner: fine while scrolling).
 
