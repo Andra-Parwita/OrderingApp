@@ -653,7 +653,14 @@ export function Details({
   );
 }
 
-/** A `<dl>` row: the grid is on the list, so the row itself adds no box. */
+// The value column of a row never takes more than this share, so a long note (a `dd` with a huge
+// max-content) cannot squeeze the label or dish name to one word per line.
+const VALUE_COLUMN_MAX = '65%';
+
+/** A `<dl>` row: its own two columns (name | value), spanning the list's grid, so one row's long value does not resize the others. */
 const Row = styled.div`
-  display: contents;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(${VALUE_COLUMN_MAX});
+  column-gap: ${({ theme }) => theme.spacing.lg};
 `;

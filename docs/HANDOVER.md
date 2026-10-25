@@ -86,6 +86,10 @@ Deploy on a day with **no open DellaVee menu**. `KITCHEN_SCOPE` stays "off".
 - Owner's iPhone (iOS 26) showed the top of the tall DellaVee banner blurred and dim at rest, sharp when pulled down. Not reproducible in WebKit on Windows; likely the fixed thin page fade at first paint plus an iOS 26 blur under fixed top elements (unverified). Fix: the fade stays off until the banner shape is known and, for a tall banner, until it has scrolled away (`useFadeHold`); constant `BLUR_TALL_BANNER` (false) brings back the soft look. Client only, no migration.
 - **Result:** still blurred on the owner's iPhone → iOS 26's own effect (lesson 45); the owner likes it, the setting is dropped. (Was: if still blurred, the planned setting (Clear / Light 8 px / Soft 12 px / Strong 20 px, mock-up `uxDesign/customer/mockups/123-clock-area-setting.html`, plan 123 stage 5) offers blur strengths only.)
 
+## Hotfix 1.0.44.3 = order page lines (25 Oct, uncommitted until the owner's OK)
+- Owner's iPhone: on an order page with a long note every order line broke one word per line. Cause: the details list was one shared grid (`1fr auto`); a long note widened the value column and squeezed all names to 0 px. Not a 1.0.44.x regression (older bug, any order with a long note). Fix: each row is its own grid, the value column at most 65% (`OrderPageView.tsx`); e2e archived-orders asserts it at 390 px. CSS only, no migration.
+- The "Delivered" chip scrolling under the clock is left as is (owner: fine while scrolling).
+
 ## Next session
 1. Owner cleanup: the duplicate Remember me account + its unnamed passkey (keep "Indra · customer"); Onde Onde phone banner re-save if not done.
 2. Optional: a Cloudflare API token in `CLOUDFLARE_API_TOKEN` (template "Edit Cloudflare Workers" + D1 Edit) so wrangler stops asking to log in (owner runs `setx` themselves; never paste the token in chat).

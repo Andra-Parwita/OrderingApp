@@ -19,6 +19,7 @@ test('an order of a finished menu opens read-only from its link', async ({
       language: 'en',
       lines: [{ itemId: 'nasi-campur', qty: 2 }],
       fulfilment: 'pickup',
+      note: 'Ini delivery aja ya? Kalo pesen dibawah $25 bisa? Makasih, terima kasih banyak',
     },
   });
   expect(created.ok()).toBe(true);
@@ -33,6 +34,12 @@ test('an order of a finished menu opens read-only from its link', async ({
     await page.goto(`/o/${order.token}`);
     await expect(page.getByText(/This menu is closed/)).toBeVisible();
     await expect(page.getByText(/2 × Lime-leaf mixed rice/)).toBeVisible();
+    // A long note must not squeeze the order lines to one word per line (390 px, the narrow phone).
+    await page.setViewportSize({ width: 390, height: 844 });
+    const line = page.locator('dt', { hasText: /2 × Lime-leaf mixed rice/ });
+    const box = await line.boundingBox();
+    expect(box?.height ?? 999).toBeLessThan(30);
+    expect(box?.width ?? 0).toBeGreaterThan(200);
     // Finishing the menu closes the order that was still open (D-069 Q4) as collected.
     await expect(page.getByText(/^Collected/).first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change order' })).toHaveCount(0);
