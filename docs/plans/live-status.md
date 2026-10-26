@@ -428,3 +428,4 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | gate · typecheck, lint, format, full unit, full e2e (workers 2) | coordinator | 23:17 | 60 min | 00:24 | | | 2 e2e specs updated (About 'Version', phone banner size text from 1.0.44.1) | ✅ lint 0, format ok, unit 3065 (flakes pass serially, 760/760), e2e 130 passed / 46 skipped by project |
 | 4 · Android emulator: phone More, About, Devices, sign-in wording | general-purpose · sonnet | 00:24 | 25 min | 00:31 | | | none (check only; scratch copy) | ✅ More, About, Devices, sign-in EN/ID; ⚠️ About version block cramped on phone (fixing); tablet step skipped |
 | 4b · About version block on its own line on phones | general-purpose · sonnet | 00:31 | 10 min | 00:33 | | | AboutScreen.tsx | ✅ unit 14, About e2e 4, phone capture checked |
+| deploy · backup, build, deploy v1.0.45.1, health, live smoke | coordinator | 00:34 | 15 min | 00:37 | | | — | ✅ Worker 7f46d6fc, build 1.0.134 · e68760e |

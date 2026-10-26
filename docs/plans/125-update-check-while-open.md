@@ -1,6 +1,6 @@
 # 125 · Version with the hotfix number, "Check for update" in About, fewer automatic checks
 
-**Target: hotfix 1.0.45.1** (client + Worker, no migration). **Status:** built and checked 27 Oct (gate + emulator), deploying. Owner 26 Oct: first "check every few minutes", then (same evening) **"don't check every 5 minutes … keep a local state of last check … every 10 minutes … in About have 'Check for update' like in Chrome, so we don't keep polling the server"** → Q "A": About checks by itself when opened, plus the button.
+**Target: hotfix 1.0.45.1** (client + Worker, no migration). **Status:** built and checked 27 Oct (gate + emulator); live 27 Oct 00:35, Worker `7f46d6fc`. Owner 26 Oct: first "check every few minutes", then (same evening) **"don't check every 5 minutes … keep a local state of last check … every 10 minutes … in About have 'Check for update' like in Chrome, so we don't keep polling the server"** → Q "A": About checks by itself when opened, plus the button.
 
 ## Why
 After 1.0.45 went live, Rina asked how to refresh the seller app on her Android phone. The app shows "A new version is ready · Refresh" (plan 059), but it only checks `/version.json` when the app is opened or comes back to the screen (at most every 5 minutes). An app left open on screen, like a seller tablet all day, never checks, so the bar never appears.

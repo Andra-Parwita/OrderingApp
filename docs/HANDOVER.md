@@ -2,9 +2,9 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs (1.0.39 → 1.0.44.3 detail) are in git history.
 
-**Last session:** 25 → 26 Oct, the owner's PC (Adelaide), Claude as coordinator. 1.0.44 and hotfixes 1.0.44.1–.3 shipped (25 Oct). **1.0.45 = plan 124 (seller phone menu card) deployed 26 Oct, owner live check ✅.**
-**Live:** **1.0.45** (26 Oct; Worker `e711941c-15be-4e78-ba20-8c1430562942`; commit `addc394`; health ok). Before: 1.0.44.3 (`15ad732a-132e-4503-b70d-5214d820b3d1`), 1.0.44.2 (`70e17010…`), 1.0.44.1 (`8e7bca61…`), 1.0.44 (`5c5ee9c4…`). Backups: `backups/shaggybobo-2026-10-26.sql` (before 1.0.45), `…-25.sql`, `…-25-b.sql`.
-**Branch:** `main` (clean after the hand-over commit); tag `v1.0.45`.
+**Last session:** 25 → 26 Oct, the owner's PC (Adelaide), Claude as coordinator. 1.0.44 and hotfixes 1.0.44.1–.3 shipped (25 Oct). **1.0.45 = plan 124 (seller phone menu card) deployed 26 Oct, owner live check ✅. Hotfix 1.0.45.1 = plan 125 (version + Check for update + sign-out fixes) deployed 27 Oct 00:35 by Claude (owner's one-time OK for this hotfix only).**
+**Live:** **1.0.45.1** (27 Oct 00:35; Worker `7f46d6fc-6877-48a5-bd11-ddf3ce44db76`; commit `e68760e`, build `1.0.134 · e68760e`; health ok, live sign-in shows the new wording, no console errors). Before: 1.0.45 (`e711941c-15be-4e78-ba20-8c1430562942`), 1.0.44.3 (`15ad732a-132e-4503-b70d-5214d820b3d1`), 1.0.44.2 (`70e17010…`), 1.0.44.1 (`8e7bca61…`), 1.0.44 (`5c5ee9c4…`). Backups: `backups/shaggybobo-2026-10-27.sql` (before 1.0.45.1; 90 orders, DellaVee: Rina = 1 owner, 2 devices, both passkey), `…-26.sql` (before 1.0.45), `…-25.sql`, `…-25-b.sql`.
+**Branch:** `main`; tags `v1.0.45`, `v1.0.45.1`.
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag, force push) unless the owner says so for that step; ask first every time.** Stage by path; never `git commit -a` while a builder edits the tree. No Claude attribution in commit text.
@@ -28,7 +28,7 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 - **Checks:** two Android emulator rounds (`scratch/emu-124/`, `scratch/emu-124b/`): round 2 all 9 ✅ incl. Back in Chrome and the installed app. Gate: lint 0, format ✅, unit 3,049 ✅ (30 EADDRINUSE flakes pass with `--no-file-parallelism`), e2e 10 ✅ (order-flow, batch2-flow, banners, customer-live, multi-seller, helper-flow), docs built.
 - **Deploy impact: low.** Client only: no migration, no Worker or API change, no secret. Old seller apps keep working; the new card shows after the app updates.
 
-## Hotfix 1.0.45.1 = plan 125 (27 Oct, deployed by Claude with the owner's one-time OK for this hotfix only)
+## Hotfix 1.0.45.1 = plan 125 (live 27 Oct 00:35, Worker `7f46d6fc`, deployed by Claude with the owner's one-time OK for this hotfix only)
 Why: Rina could not see the refresh bar (the app only checked on open), and later both her devices were signed out: she had only a forgotten password, most likely after tapping **Switch person** (one tap, no question). Back in through a recovery key (= a new owner account, D-090) and the 6-digit code; the owner removed her old accounts. Details and all rulings: `docs/plans/125-update-check-while-open.md`.
 - **Version with the hotfix number:** `RELEASE_HOTFIX = 1` in `shared/release.ts`, `versionLabel()` → "Version 1.0.45.1" in About, Settings, the tablet rail (also sign-in and admin footers) and a muted line at the bottom of the phone More screen. `RELEASE_VERSION` stays 1.0.45, so What's new does not pop again. **Next hotfix: bump `RELEASE_HOTFIX`; next release: set it back to `null`.**
 - **Update check:** no timer; automatic check on open / return to the screen at most every **10 minutes**, last check saved in localStorage (`updateLastCheck`). About checks by itself when opened (like Chrome) + **Check for update** (newer → reload; same → "You have the newest version"; error → "Could not check").
@@ -73,10 +73,11 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`. Wrangler auth error 10000 → `wrangler login` (or set a `CLOUDFLARE_API_TOKEN`).
 
 ## Next session
-1. Watch DellaVee's seller use the phone Menu card on this week's menu (Sat 31 Oct); ask how sharing went.
+1. **Owner live check of 1.0.45.1** on a phone: About → "Version 1.0.45.1" → Check for update → "You have the newest version"; More: no Switch person, Sign out asks "Tap again"; admin → DellaVee → People shows "Rina · Owner · 2 devices (screen lock, screen lock)".
+2. Watch DellaVee's seller use the phone Menu card on this week's menu (Sat 31 Oct); ask how sharing went.
 2. Owner cleanup: the duplicate Remember me account + its unnamed passkey (keep "Indra · customer"); re-add the old Onde Onde app.
 3. Optional: a Cloudflare API token in `CLOUDFLARE_API_TOKEN` (owner runs `setx`; never paste the token in chat).
 4. Then pick 1.0.46 from "Later", one question at a time.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.45 (tag v1.0.45, Worker e711941c). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.45.1 (tag v1.0.45.1, Worker 7f46d6fc). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.
