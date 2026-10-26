@@ -2,9 +2,9 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs (1.0.39 → 1.0.44.3 detail) are in git history.
 
-**Last session:** 25 → 26 Oct, the owner's PC (Adelaide), Claude as coordinator. 1.0.44 and hotfixes 1.0.44.1–.3 shipped (25 Oct). **1.0.45 = plan 124 (seller phone menu card) built and checked, waiting for the owner's commit and deploy.**
-**Live:** **hotfix 1.0.44.3** (25 Oct; Worker `15ad732a-132e-4503-b70d-5214d820b3d1`; `main` = `bb53c97`). Before: 1.0.44.2 (`70e17010…`), 1.0.44.1 (`8e7bca61…`), 1.0.44 (`5c5ee9c4…`). Backups: `backups/shaggybobo-2026-10-25.sql`, `…-25-b.sql`.
-**Branch:** `main`, with 1.0.45 **uncommitted** in the working tree (owner to say "commit").
+**Last session:** 25 → 26 Oct, the owner's PC (Adelaide), Claude as coordinator. 1.0.44 and hotfixes 1.0.44.1–.3 shipped (25 Oct). **1.0.45 = plan 124 (seller phone menu card) deployed 26 Oct, owner live check ✅.**
+**Live:** **1.0.45** (26 Oct; Worker `e711941c-15be-4e78-ba20-8c1430562942`; commit `addc394`; health ok). Before: 1.0.44.3 (`15ad732a-132e-4503-b70d-5214d820b3d1`), 1.0.44.2 (`70e17010…`), 1.0.44.1 (`8e7bca61…`), 1.0.44 (`5c5ee9c4…`). Backups: `backups/shaggybobo-2026-10-26.sql` (before 1.0.45), `…-25.sql`, `…-25-b.sql`.
+**Branch:** `main` (clean after the hand-over commit); tag `v1.0.45`.
 
 ## House rules (binding)
 - **No git writes (commit, push, merge, tag, force push) unless the owner says so for that step; ask first every time.** Stage by path; never `git commit -a` while a builder edits the tree. No Claude attribution in commit text.
@@ -18,7 +18,7 @@
 - **Android phone emulator check** for seller-phone or customer-facing changes (Pixel_9); the agent shuts it down at the end (owner: no need to leave it running).
 - Files under ~750 lines (soft).
 
-## 1.0.45 = plan 124, seller phone menu card (built 26 Oct, uncommitted)
+## 1.0.45 = plan 124, seller phone menu card (live 26 Oct)
 Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp and sent the link to her phone by Bluetooth. Owner rulings Q1–Q8 in `docs/plans/124-phone-menu-share.md`; mock-up `uxDesign/seller/mockups/124-phone-menu-card.html`.
 - **Owner only, phone layout only** (chefs, helpers and the tablet unchanged). A **Menu card** inside the Orders list: *Ready to publish* → publish sheet → "Menu is live ✓" (Share + notice); *Not ready* (amber, "Finish on the tablet: …", no button); *Live* (**Share menu** + **🔔 Notice**, any number of times); after the cut-off status only (Q7 B, `SHARE_AFTER_CUTOFF = false`).
 - **Share menu**: full-screen layer, Share in the top bar (keyboard-safe, follows `visualViewport`), language ID/EN/Both remembered on the phone, the ready-made post in an editable text box kept for the next person ("Back? Your text is still here…"), Reset text, Copy text; Close forgets. Share opens the phone's own share list (WhatsApp, SMS, email…); WhatsApp link only where a browser has none.
@@ -28,7 +28,7 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 - **Checks:** two Android emulator rounds (`scratch/emu-124/`, `scratch/emu-124b/`): round 2 all 9 ✅ incl. Back in Chrome and the installed app. Gate: lint 0, format ✅, unit 3,049 ✅ (30 EADDRINUSE flakes pass with `--no-file-parallelism`), e2e 10 ✅ (order-flow, batch2-flow, banners, customer-live, multi-seller, helper-flow), docs built.
 - **Deploy impact: low.** Client only: no migration, no Worker or API change, no secret. Old seller apps keep working; the new card shows after the app updates.
 
-## Deploy steps 1.0.45 (owner runs them, one at a time)
+## Deploy 1.0.45 (done 26 Oct: backup, build, deploy, health, live check ✅)
 0. Docs current (done: plan list, roadmap, `pnpm run docs`).
 1. Commit on `main` (owner OK), push.
 2. Backup (optional for a client-only release): `pnpm exec wrangler d1 export shaggybobo-order --remote --output backups/shaggybobo-2026-10-26.sql`
@@ -60,10 +60,10 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`. Wrangler auth error 10000 → `wrangler login` (or set a `CLOUDFLARE_API_TOKEN`).
 
 ## Next session
-1. If 1.0.45 is not deployed yet: the deploy steps above.
+1. Watch DellaVee's seller use the phone Menu card on this week's menu (Sat 31 Oct); ask how sharing went.
 2. Owner cleanup: the duplicate Remember me account + its unnamed passkey (keep "Indra · customer"); re-add the old Onde Onde app.
 3. Optional: a Cloudflare API token in `CLOUDFLARE_API_TOKEN` (owner runs `setx`; never paste the token in chat).
 4. Then pick 1.0.46 from "Later", one question at a time.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.44.3 (or 1.0.45 if deployed: tag v1.0.45). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.45 (tag v1.0.45, Worker e711941c). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.

@@ -1,6 +1,6 @@
 # 124 · Seller phone: see the menu, publish it, send the notice, share on WhatsApp
 
-**Target: 1.0.45** (owner A, 26 Oct: alone, as soon as the emulator test passes; large titles, 116 and the chef permissions move to 1.0.46). **Status:** mock-up `uxDesign/seller/mockups/124-phone-menu-card.html` approved (owner A, 26 Oct); built, two Android emulator rounds passed (incl. Back in Chrome and the installed app), closing gate green.
+**Target: 1.0.45 — live 26 Oct (Worker `e711941c`, owner live check ✅)** (owner A, 26 Oct: alone, as soon as the emulator test passes; large titles, 116 and the chef permissions move to 1.0.46). **Status:** mock-up `uxDesign/seller/mockups/124-phone-menu-card.html` approved (owner A, 26 Oct); built, two Android emulator rounds passed (incl. Back in Chrome and the installed app), closing gate green.
 
 ## Why (DellaVee's seller, 25 Oct, in Indonesian)
 "Menu dibuat di tablet dan tablet gak punya no WA customer … aku harus share link nya dari tablet ke hpku via bluetooth dulu (aku gak mau WA-ku di tablet, tabletnya buat umum di rumah) … baru aku bisa share ke langgananku. Klo aku bisa lihat menu dan share lebih cepat sih."
