@@ -1,8 +1,9 @@
-import { useCallback, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useCallback, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import { formatDay, formatDayTime } from '../../../shared/dates';
+import type { MenuView } from '../../../shared/menusContract';
 import { Button, BottomSheet, EmptyState, Icon, SheetRow } from '../../ui';
 import { HomeScreenCard } from '../../components/install';
 import { LiveDot } from '../../components/LiveDot';
@@ -50,6 +51,18 @@ export type PhoneOrdersScreenProps = OrdersScreenProps &
     onToggle?: (key: 'changed' | 'unpaid') => void;
     /** Plan 112: the Notify customers bell, given by the app (this feature imports no other). */
     headerExtra?: ReactNode;
+    /**
+     * Plan 124: the owner's Menu card above the list, given by the app (this feature imports no other).
+     * Without it (a chef, a helper) the empty state keeps its own Share button.
+     */
+    menuCard?: Readonly<{
+      /** Holds the open sheets and layers; wraps the whole screen so they outlive the list changing. */
+      Provider: ComponentType<
+        Readonly<{ view: MenuView | null; reload: () => void; children: ReactNode }>
+      >;
+      /** The card itself: goes first in the scrolling list. */
+      Card: ComponentType;
+    }>;
   }>;
 
 // Plan 008: the layout gives the page the height between the banner and the bottom bar; the header
@@ -279,6 +292,7 @@ function PhoneOrdersContent({
   toggles = { changed: false, unpaid: false },
   onToggle,
   headerExtra,
+  menuCard,
   onFilterChange,
   onQueryChange,
   onOpenOrder,
@@ -333,6 +347,7 @@ function PhoneOrdersContent({
     ? homeKindOf(view, past.status === 'ready' ? past.weeks : readOnly ? [] : null, orders)
     : 'checking';
   const live = kind === 'live';
+  const Card = menuCard?.Card;
   const noOrdersAtAll = list.status === 'ready' && counts.all + counts.cancelled === 0;
 
   const filterLabel = filter === 'all' ? t('phone.allOrders') : t(`filter.${filter}`);
@@ -396,6 +411,7 @@ function PhoneOrdersContent({
         </SearchRow>
       ) : null}
       <ListScroll>
+        {Card ? <Card /> : null}
         <PrivateToday />
         {list.status === 'loading' ? <Message role="status">{t('orders.loading')}</Message> : null}
         {list.status === 'error' ? (
@@ -410,7 +426,7 @@ function PhoneOrdersContent({
             title={t('orders.emptyTitle')}
             why={t('orders.emptyHint')}
             action={
-              onShare && live ? (
+              onShare && live && !menuCard ? (
                 <Button variant="primary" onClick={onShare}>
                   <Icon name="chat" />
                   {t('orders.shareOnWhatsApp')}
@@ -466,7 +482,7 @@ function PhoneOrdersContent({
     body = board;
   }
 
-  return (
+  const page = (
     <Page>
       <FeedbackHost />
       <Head>
@@ -510,7 +526,14 @@ function PhoneOrdersContent({
         {!live && view ? <NoLive>{t('home.noLive')}</NoLive> : null}
       </Head>
       <HomeScreenCard who="seller" />
-      {kind === 'live' ? body : <Scroll>{body}</Scroll>}
+      {kind === 'live' ? (
+        body
+      ) : (
+        <Scroll>
+          {Card ? <Card /> : null}
+          {body}
+        </Scroll>
+      )}
       {dishes && live ? <DishesSlideOver width="100%" onClose={() => setDishes(false)} /> : null}
       {sheet ? (
         <BottomSheet title={t('phone.filterTitle')} onClose={() => setSheet(false)}>
@@ -558,6 +581,14 @@ function PhoneOrdersContent({
       ) : null}
       {showDev ? <DevTools /> : null}
     </Page>
+  );
+  const Provider = menuCard?.Provider;
+  return Provider ? (
+    <Provider view={view} reload={retryCurrent}>
+      {page}
+    </Provider>
+  ) : (
+    page
   );
 }
 

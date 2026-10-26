@@ -8,7 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { keyframes, styled } from 'styled-components';
 import { Button } from '../Button';
-import { useModalFocus } from './modal';
+import { OVERLAY_Z, useModalFocus } from './modal';
 
 export type BottomSheetProps = Readonly<{
   title: string;
@@ -54,7 +54,7 @@ export function unlockPageScroll() {
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: ${OVERLAY_Z};
   display: flex;
   align-items: flex-end;
   background: ${({ theme }) => theme.colour.scrim};

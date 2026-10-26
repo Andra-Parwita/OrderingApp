@@ -1,5 +1,7 @@
 export { MenuScreen } from './MenuScreen';
 export { NotifyBell } from './NotifyBell';
+// Plan 124: the owner's Menu card on the phone's Orders screen.
+export { PhoneMenuCard, PhoneMenuProvider } from './phone/PhoneMenuCard';
 export { MakeMenuScreen } from './MakeMenuScreen';
 export { DishesScreen, SavedSetsScreen } from './LibraryScreens';
 export type { MenuSlots } from './slots';

@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone menu card</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .lead { color: var(--mute); margin: 0 0 20px; max-width: 85ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 22px; }
+  figure { margin: 0; }
+  figcaption { font-size: .86rem; color: var(--mute); margin-top: 8px; }
+  figcaption b { color: var(--ink); display: block; }
+  /* the phone (Android, seller app, light) */
+  .phone { --bg: #f6f2e8; --surf: #fbf8f1; --ink2: #1f2a22; --mute2: #5d6358; --line: #e4ded0; --green: #2f6b4f; --soft: #e6efe7; --amber: #8a5a12; --amberbg: #f7ecd6;
+    width: 100%; max-width: 360px; height: 720px; border: 6px solid #111; border-radius: 30px; overflow: hidden; position: relative; background: var(--bg); color: var(--ink2); font-size: 14px; }
+  .status { height: 24px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 12px; color: #333; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+  .bar .k { font-weight: 700; font-size: 17px; flex: 1; }
+  .bar .ic { width: 28px; height: 28px; border-radius: 50%; background: var(--surf); display: grid; place-items: center; font-size: 14px; }
+  .banner { height: 110px; background: url('../../../temp/banner-versions/enchanted.jpg') center bottom / cover; }
+  .card { margin: 12px 12px 6px; background: var(--surf); border-radius: 14px; padding: 12px 14px; border: 1px solid var(--line); }
+  .card .top { display: flex; align-items: center; gap: 8px; }
+  .pill { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--green); white-space: nowrap; }
+  .pill.amber { background: var(--amberbg); color: var(--amber); }
+  .pill.grey { background: #ece8de; color: var(--mute2); }
+  .card .t { font-weight: 700; }
+  .card .sub { color: var(--mute2); font-size: 13px; margin-top: 4px; }
+  .card .chev { margin-left: auto; color: var(--mute2); }
+  .btns { display: flex; gap: 8px; margin-top: 10px; }
+  .b { flex: 1; border-radius: 10px; padding: 9px 6px; font-weight: 700; font-size: 13px; text-align: center; border: 1px solid var(--line); background: transparent; color: var(--ink2); white-space: nowrap; }
+  .b.primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .tabs { display: flex; gap: 16px; padding: 8px 14px 0; font-size: 13px; color: var(--mute2); border-bottom: 1px solid var(--line); }
+  .tabs b { color: var(--ink2); border-bottom: 2px solid var(--green); padding-bottom: 6px; }
+  .row { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .row .code { font-family: ui-monospace, monospace; font-weight: 700; }
+  .row .who { flex: 1; }
+  .row .who small { display: block; color: var(--mute2); }
+  .row .amt { font-weight: 700; }
+  .nav { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; background: var(--surf); border-top: 1px solid var(--line); display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--mute2); }
+  .nav b { color: var(--green); }
+  /* sheet */
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surf); border-radius: 18px 18px 0 0; padding: 10px 16px 18px; }
+  .grab { width: 40px; height: 4px; border-radius: 2px; background: #cfc8b8; margin: 0 auto 12px; }
+  .sheet h3 { margin: 0 0 4px; font-size: 18px; }
+  .sheet p { margin: 0 0 10px; color: var(--mute2); font-size: 13px; }
+  .kv { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .kv span:first-child { color: var(--mute2); }
+  .miss { background: var(--amberbg); color: var(--amber); border-radius: 10px; padding: 10px 12px; font-size: 13px; margin: 6px 0 10px; }
+  .big { box-sizing: border-box; display: block; width: 100%; margin-top: 12px; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 15px; text-align: center; border: 0; background: var(--green); color: #fff; }
+  .big.ghost { background: transparent; color: var(--ink2); border: 1px solid var(--line); }
+  /* read-only menu */
+  .head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .head .back { color: var(--green); font-weight: 700; }
+  .dish { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .dish .pic { width: 46px; height: 46px; border-radius: 8px; background: #d9cdb5; flex: none; }
+  .dish .n { flex: 1; }
+  .dish .n small { display: block; color: var(--mute2); }
+  .dish .p { font-weight: 700; }
+  .tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: #ece8de; color: var(--mute2); margin-left: 4px; }
+  .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 12px 14px; background: var(--surf); border-top: 1px solid var(--line); display: flex; gap: 8px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 4px 0 10px; }
+  .seg span { flex: 1; text-align: center; padding: 7px 4px; font-weight: 600; font-size: 13px; }
+  .seg .on { background: var(--green); color: #fff; }
+  .ta { box-sizing: border-box; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 10px; font-size: 12.5px; line-height: 1.4; white-space: pre-wrap; height: 250px; overflow: hidden; position: relative; }
+  .ta.focus { border: 2px solid var(--green); }
+  .ta mark { background: #fff3c4; color: inherit; }
+  .ta::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 28px; background: linear-gradient(transparent, #fff); }
+  .caret { display: inline-block; width: 1.5px; height: 14px; background: var(--green); vertical-align: -2px; }
+  .hint { font-size: 12px; color: var(--mute2); margin: 6px 0 0; display: flex; justify-content: space-between; gap: 8px; }
+  .hint a { color: var(--green); font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .duo { display: flex; gap: 8px; } .duo .big { flex: 1; }
+  .note { background: var(--soft); color: var(--green); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; margin: 0 0 10px; }
+  /* WhatsApp's own screen (not ours) */
+  .wa { position: absolute; inset: 24px 0 0; background: #efeae2; }
+  .wa .wh { background: #fff; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid #ddd; font-weight: 700; }
+  .wa .av { width: 32px; height: 32px; border-radius: 50%; background: #c9d6cf; }
+  .wa .box { position: absolute; left: 8px; right: 56px; bottom: 12px; background: #fff; border-radius: 18px; padding: 10px 12px; font-size: 12.5px; line-height: 1.4; white-space: pre-wrap; max-height: 300px; overflow: hidden; }
+  .wa .send { position: absolute; right: 8px; bottom: 12px; width: 42px; height: 42px; border-radius: 50%; background: #25d366; color: #fff; display: grid; place-items: center; font-size: 18px; }
+  ul { color: var(--mute); max-width: 85ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>124 · Seller phone: see, publish, notify, share</h1>
+  <p class="lead">DellaVee seller app on an Android phone, owner signed in. The menu is still made on the tablet; the phone gets a Menu card at the top of Orders. Chefs and helpers see nothing new. AUD, Adelaide.</p>
+  <div class="grid">
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="k">DellaVee</span><span class="ic">🔔</span><span class="ic">⋯</span></div>
+      <div class="card">
+        <div class="top"><span class="pill amber">Ready to publish</span><span class="chev">›</span></div>
+        <div class="t" style="margin-top:6px">Menu for Sat 31 Oct</div>
+        <div class="sub">12 dishes · orders close Fri 30 Oct, 9 pm</div>
+        <div class="btns"><span class="b primary">Publish menu</span></div>
+      </div>
+      <div class="tabs"><b>Active</b><span>All</span></div>
+      <div class="row"><span class="who" style="color:var(--mute2)">No orders yet. Publish the menu, then share it.</span></div>
+      <div class="nav"><b>Orders</b><span>Pickup &amp; delivery</span><span>More</span></div>
+    </div><figcaption><b>1 · Made on the tablet, not published yet</b>Tap the card for the read-only menu; Publish opens the confirm sheet.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="k">DellaVee</span><span class="ic">🔔</span><span class="ic">⋯</span></div>
+      <div class="card" style="opacity:.55">
+        <div class="top"><span class="pill amber">Ready to publish</span></div>
+        <div class="t" style="margin-top:6px">Menu for Sat 31 Oct</div>
+      </div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Publish this menu?</h3>
+        <p>Customers can order as soon as it is published.</p>
+        <div class="kv"><span>Cooking day</span><span>Sat 31 Oct</span></div>
+        <div class="kv"><span>Orders close</span><span>Fri 30 Oct, 9 pm</span></div>
+        <div class="kv"><span>Pickup / delivery</span><span>1 place · delivery</span></div>
+        <div class="kv"><span>Dishes</span><span>12</span></div>
+        <span class="big">Publish menu</span>
+        <span class="big ghost">Cancel</span>
+      </div>
+    </div><figcaption><b>2 · Publish sheet</b>Short summary of what the tablet prepared, one button.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="k">DellaVee</span><span class="ic">🔔</span><span class="ic">⋯</span></div>
+      <div class="card" style="opacity:.55">
+        <div class="top"><span class="pill amber">Not ready</span></div>
+        <div class="t" style="margin-top:6px">Menu for Sat 31 Oct</div>
+      </div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Not ready to publish</h3>
+        <div class="miss">Missing: no dishes yet · no order cut-off</div>
+        <p>Finish this menu on the tablet, then publish it here or there.</p>
+        <span class="big ghost">OK</span>
+      </div>
+    </div><figcaption><b>3 · Something missing</b>No publishing; says what to finish on the tablet.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="k">DellaVee</span><span class="ic">🔔</span><span class="ic">⋯</span></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Menu is live ✓</h3>
+        <p>Let your customers know.</p>
+        <span class="big">Share on WhatsApp</span>
+        <span class="big ghost">🔔 Send new-menu notice · 14 phones</span>
+        <span class="big ghost">Done</span>
+      </div>
+    </div><figcaption><b>4 · Just published</b>Share and the notice right away. "14 phones" = customers who turned on new-menu notices (plan 112).</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="k">DellaVee</span><span class="ic">🔔</span><span class="ic">⋯</span></div>
+      <div class="card">
+        <div class="top"><span class="pill">Live</span><span class="sub" style="margin:0">until Fri 30 Oct, 9 pm</span><span class="chev">›</span></div>
+        <div class="t" style="margin-top:6px">Menu for Sat 31 Oct</div>
+        <div class="btns"><span class="b primary">Share on WhatsApp</span><span class="b">🔔 Notice</span></div>
+      </div>
+      <div class="tabs"><b>Active</b><span>All</span></div>
+      <div class="row"><span class="code">D3D-E5C</span><span class="who">Lenny<small>Delivery · 3 dishes</small></span><span class="amt">$24.00</span></div>
+      <div class="row"><span class="code">MXP-AZR</span><span class="who">Ayu<small>Pickup · 2 dishes</small></span><span class="amt">$18.00</span></div>
+      <div class="row"><span class="code">K7Q-2LB</span><span class="who">Wayan<small>Delivery · 5 dishes</small></span><span class="amt">$41.50</span></div>
+      <div class="nav"><b>Orders</b><span>Pickup &amp; delivery</span><span>More</span></div>
+    </div><figcaption><b>5 · Live (published here or on the tablet)</b>Share is always there, any number of times, also after orders come in. 🔔 Notice follows plan 112 (orders open only; warns from the 3rd send).</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Share on WhatsApp</h3>
+        <div class="seg"><span class="on">Indonesian</span><span>English</span><span>Both</span></div>
+        <div class="ta">Halo semua! 🌸 Menu minggu ini sudah siap.
+
+Menu Sab 31 Okt
+
+1. Nasi Ayam Bali, 1 box – $15
+2. Rendang, 1 box – $18
+3. Kacang Bali Awatara, 1 toples – $6
+4. Sambal Matah, 1 botol – $5
+… (12 dishes)
+
+Pesan sebelum Jum 30 Okt, 21.00
+Ambil Sab 31 Okt, 11.00–13.00 di Glenelg, bisa diantar
+
+Pesan di sini: https://order.shaggybobo.app/dellavee
+
+Terima kasih! WA 0412 345 678</div>
+        <div class="hint"><span>You can change the text. It is for this share only.</span></div>
+        <div class="duo"><span class="big">Share</span><span class="big ghost">Copy text</span></div>
+        <span class="big ghost">Close</span>
+      </div>
+    </div><figcaption><b>6 · Share on WhatsApp (our sheet)</b>Opened from the card, the "Menu is live" sheet or the read-only menu. The ready-made post (greeting and closing from Settings → WhatsApp post), language remembered. The text box can be typed in.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Share on WhatsApp</h3>
+        <div class="seg"><span class="on">Indonesian</span><span>English</span><span>Both</span></div>
+        <div class="ta focus"><mark>Halo Tante Rina! 🌸 Ini menu Sabtu, ada rendang kesukaan Tante.</mark><span class="caret"></span>
+
+Menu Sab 31 Okt
+
+1. Nasi Ayam Bali, 1 box – $15
+2. Rendang, 1 box – $18
+3. Kacang Bali Awatara, 1 toples – $6
+4. Sambal Matah, 1 botol – $5
+… (12 dishes)
+
+Pesan sebelum Jum 30 Okt, 21.00
+Ambil Sab 31 Okt, 11.00–13.00 di Glenelg, bisa diantar
+
+Pesan di sini: https://order.shaggybobo.app/dellavee
+
+Terima kasih! WA 0412 345 678</div>
+        <div class="hint"><span>Changed for this share.</span><a>Reset text</a></div>
+        <div class="duo"><span class="big">Share</span><span class="big ghost">Copy text</span></div>
+        <span class="big ghost">Close</span>
+      </div>
+    </div><figcaption><b>7 · She changes the text</b>Types a personal first line. "Reset text" brings back the ready-made post. Nothing is saved to Settings.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="scrim" style="background:rgba(0,0,0,.25)"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3 style="font-size:15px">Share</h3>
+        <p style="margin-bottom:12px">Halo Tante Rina! 🌸 Ini menu Sabtu, ada rendang kesukaan Tante. Menu Sab 31 Okt …</p>
+        <div style="display:flex;gap:18px;font-size:12px;text-align:center">
+          <span><span style="display:block;width:44px;height:44px;border-radius:50%;background:#25d366;margin:0 auto 4px"></span>WhatsApp</span>
+          <span><span style="display:block;width:44px;height:44px;border-radius:50%;background:#d6d1c4;margin:0 auto 4px"></span>Messages</span>
+          <span><span style="display:block;width:44px;height:44px;border-radius:50%;background:#d6d1c4;margin:0 auto 4px"></span>Copy</span>
+        </div>
+      </div>
+    </div><figcaption><b>8 · Share → Android's own share list</b>She taps WhatsApp, then picks Tante Rina (a person or a group).</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="wa">
+        <div class="wh"><span>‹</span><span class="av"></span><span>Tante Rina</span></div>
+        <div class="box">Halo Tante Rina! 🌸 Ini menu Sabtu, ada rendang kesukaan Tante.
+
+Menu Sab 31 Okt
+
+1. Nasi Ayam Bali, 1 box – $15
+2. Rendang, 1 box – $18
+…
+
+Pesan di sini: https://order.shaggybobo.app/dellavee</div>
+        <span class="send">➤</span>
+      </div>
+    </div><figcaption><b>9 · WhatsApp (its own screen, not ours)</b>The text waits in the message box; she can still change it here, then send. Back button returns to the seller app.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Share on WhatsApp</h3>
+        <p class="note">Back from WhatsApp: your text is still here. Change it for the next person and share again.</p>
+        <div class="seg"><span class="on">Indonesian</span><span>English</span><span>Both</span></div>
+        <div class="ta focus"><mark>Halo Bu Ayu! 🌸 Ini menu Sabtu, ada rendang kesukaan Ibu.</mark><span class="caret"></span>
+
+Menu Sab 31 Okt
+
+1. Nasi Ayam Bali, 1 box – $15
+2. Rendang, 1 box – $18
+3. Kacang Bali Awatara, 1 toples – $6
+4. Sambal Matah, 1 botol – $5
+… (12 dishes)
+
+Pesan sebelum Jum 30 Okt, 21.00
+Ambil Sab 31 Okt, 11.00–13.00 di Glenelg, bisa diantar
+
+Pesan di sini: https://order.shaggybobo.app/dellavee
+
+Terima kasih! WA 0412 345 678</div>
+        <div class="hint"><span>Changed for this share.</span><a>Reset text</a></div>
+        <div class="duo"><span class="big">Share</span><span class="big ghost">Copy text</span></div>
+        <span class="big ghost">Close</span>
+      </div>
+    </div><figcaption><b>10 · Next person</b>Back in the app the sheet and her text are still there. She changes the name and taps Share again: steps 8–9 for Bu Ayu, then a group, as often as she likes. Close (or leaving the screen) forgets the changes.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head"><span class="back">‹ Orders</span><b style="flex:1">Menu · Sat 31 Oct</b><span class="pill">Live</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Nasi Ayam Bali<small>Pre-order</small></span><span class="p">$15.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Rendang<small>Pre-order · 2 choices: Mild, Spicy</small></span><span class="p">$18.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Aneka Snack Kering<span class="tag">Sold out</span><small>Pre-order</small></span><span class="p">$6.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Kacang Bali Awatara<small>On the day</small></span><span class="p">$6.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Sambal Matah<small>Pre-order</small></span><span class="p">$5.00</span></div>
+      <div class="foot"><span class="b primary">Share on WhatsApp</span><span class="b">🔔 Notice</span></div>
+    </div><figcaption><b>11 · Read-only menu</b>Tap the card. Dishes, prices, choices, sold out, pre-order / on the day. No editing (that stays on the tablet).</figcaption></figure>
+
+  </div>
+  <ul>
+    <li>Owner only. Chefs and helpers on a phone see the Orders screen as today.</li>
+    <li>The tablet is unchanged (its Share screen keeps the read-only preview).</li>
+    <li>Switching the language in the sheet replaces the text with the ready-made post in that language (her changes go).</li>
+    <li>Open question: after the order cut-off (Orders closed), should the card still offer Share? (Mock-up shows only the live case.)</li>
+  </ul>
+</div>
+</body>
+</html>

@@ -12,6 +12,19 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // Picked by the owner (26 Oct, "A"); plan 124
+  {
+    version: '1.0.45',
+    date: '2026-10-26',
+    lines: {
+      en: [
+        'On your phone, Orders now shows your menu: publish it, send the new-menu notice, and share it on WhatsApp, SMS or email as often as you like, changing the text for each person.',
+      ],
+      id: [
+        'Di ponsel, layar Pesanan kini menampilkan menu Anda: terbitkan, kirim pemberitahuan menu baru, dan bagikan lewat WhatsApp, SMS, atau email sesering Anda mau, dengan teks yang bisa diubah untuk tiap orang.',
+      ],
+    },
+  },
   // Picked by the owner (25 Oct, "A"); plans 101, 102, 113, 118, 121, 122, D-120
   {
     version: '1.0.44',

@@ -1,0 +1,84 @@
+{
+  "card": {
+    "pill": {
+      "ready": "Siap diterbitkan",
+      "notReady": "Belum siap",
+      "live": "Dibuka",
+      "closed": "Pesanan ditutup",
+      "finished": "Selesai"
+    },
+    "until": "sampai {{when}}",
+    "menuFor": "Menu untuk {{date}}",
+    "dishes_one": "{{count}} hidangan",
+    "dishes_other": "{{count}} hidangan",
+    "summary": "{{dishes}} · pesanan ditutup {{when}}",
+    "open": "Buka menu",
+    "publish": "Terbitkan menu",
+    "share": "Bagikan menu",
+    "notice": "🔔 Kabari",
+    "finishOnTablet": "Selesaikan di tablet: {{missing}}",
+    "missing": {
+      "noDishes": "belum ada hidangan",
+      "noPlace": "belum ada tempat ambil atau antar",
+      "dayPast": "hari masak sudah lewat",
+      "cutoffPast": "batas pesanan sudah lewat",
+      "cutoffAfterDay": "batas pesanan setelah hari masak"
+    }
+  },
+  "publish": {
+    "title": "Terbitkan menu ini?",
+    "help": "Pelanggan bisa memesan begitu menu terbit.",
+    "day": "Hari masak",
+    "closes": "Pesanan ditutup",
+    "how": "Ambil / antar",
+    "places_one": "{{count}} tempat",
+    "places_other": "{{count}} tempat",
+    "delivery": "antar",
+    "dishes": "Hidangan",
+    "confirm": "Terbitkan menu",
+    "publishing": "Menerbitkan…",
+    "cancel": "Batal",
+    "error": "Menu belum bisa diterbitkan. Periksa koneksi lalu coba lagi.",
+    "errorConflict": "Menu ini belum bisa diterbitkan sekarang. Buka di tablet untuk memeriksanya."
+  },
+  "live": {
+    "title": "Menu sudah terbit ✓",
+    "help": "Beri tahu pelanggan Anda.",
+    "notice_one": "🔔 Kirim kabar menu baru · {{count}} ponsel",
+    "notice_other": "🔔 Kirim kabar menu baru · {{count}} ponsel",
+    "done": "Selesai"
+  },
+  "share": {
+    "title": "Bagikan menu",
+    "close": "Tutup",
+    "share": "Bagikan",
+    "language": "Bahasa pesan",
+    "textLabel": "Teks pesan",
+    "hint": "Teks bisa diubah. Hanya untuk pembagian ini.",
+    "changed": "Diubah untuk pembagian ini.",
+    "reset": "Kembalikan teks",
+    "copy": "Salin teks",
+    "copied": "Tersalin",
+    "copyFailed": "Tidak bisa menyalin. Pilih teksnya saja.",
+    "back": "Sudah kembali? Teks Anda masih di sini. Ubah untuk orang berikutnya lalu bagikan lagi.",
+    "loading": "Memuat menu…",
+    "error": "Menu tidak bisa dimuat.",
+    "retry": "Coba lagi"
+  },
+  "language": {
+    "id": "Indonesia",
+    "en": "Inggris",
+    "both": "Keduanya"
+  },
+  "menu": {
+    "back": "Pesanan",
+    "backLabel": "Kembali ke Pesanan",
+    "title": "Menu · {{date}}",
+    "preorder": "Pesan dulu",
+    "onTheDay": "Di hari H",
+    "soldOut": "Habis",
+    "choices_one": "{{count}} pilihan: {{names}}",
+    "choices_other": "{{count}} pilihan: {{names}}",
+    "empty": "Belum ada hidangan."
+  }
+}

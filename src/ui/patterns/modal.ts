@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, type KeyboardEvent } from 'react';
 
+/**
+ * Above every app banner (update 1000, offline 999, what's new 996, ...): a sheet or a full-screen layer
+ * must never sit under one, or its own buttons cannot be tapped.
+ */
+export const OVERLAY_Z = 1100;
+
 const FOCUSABLE =
   'a[href], button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), summary, [tabindex]:not([tabindex="-1"])';
 

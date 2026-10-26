@@ -25,9 +25,11 @@ const Count = styled.span`
   font-variant-numeric: tabular-nums;
 `;
 
-export function NotifyBell({ now }: Readonly<{ now?: Date }>) {
-  const { t } = useTranslation(MENU_NS);
-  const lang = useLang();
+/**
+ * The notice's state and calls, shared by the bell and the phone menu card (plan 124): the status,
+ * the send window, and the send with its 409 handling. `again` is decided by the sheet.
+ */
+export function useMenuNotice() {
   const [status, setStatus] = useState<MenuNoticeStatus | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -62,6 +64,18 @@ export function NotifyBell({ now }: Readonly<{ now?: Date }>) {
     },
     [load],
   );
+  const show = useCallback(() => {
+    setFailed(false);
+    setOpen(true);
+  }, []);
+  const close = useCallback(() => setOpen(false), []);
+  return { status, open, saving, failed, send, show, close, reload: load };
+}
+
+export function NotifyBell({ now }: Readonly<{ now?: Date }>) {
+  const { t } = useTranslation(MENU_NS);
+  const lang = useLang();
+  const { status, open, saving, failed, send, show, close } = useMenuNotice();
 
   if (!status?.canSend) return null;
   const { phones, sends } = status;
@@ -78,13 +92,7 @@ export function NotifyBell({ now }: Readonly<{ now?: Date }>) {
     <>
       <Tooltip text={notified ?? label}>
         <Wrap>
-          <IconButton
-            label={notified ? `${label} · ${notified}` : label}
-            onClick={() => {
-              setFailed(false);
-              setOpen(true);
-            }}
-          >
+          <IconButton label={notified ? `${label} · ${notified}` : label} onClick={show}>
             <Icon name="bell" />
           </IconButton>
           {sends.length > 0 ? <Count aria-hidden="true">{sends.length}×</Count> : null}
@@ -96,9 +104,7 @@ export function NotifyBell({ now }: Readonly<{ now?: Date }>) {
           saving={saving}
           failed={failed}
           onSend={(again) => void send(again)}
-          onClose={() => {
-            setOpen(false);
-          }}
+          onClose={close}
           {...(now ? { now } : {})}
         />
       ) : null}

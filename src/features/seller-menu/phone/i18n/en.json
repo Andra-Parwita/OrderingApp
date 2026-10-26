@@ -1,0 +1,84 @@
+{
+  "card": {
+    "pill": {
+      "ready": "Ready to publish",
+      "notReady": "Not ready",
+      "live": "Live",
+      "closed": "Orders closed",
+      "finished": "Finished"
+    },
+    "until": "until {{when}}",
+    "menuFor": "Menu for {{date}}",
+    "dishes_one": "{{count}} dish",
+    "dishes_other": "{{count}} dishes",
+    "summary": "{{dishes}} · orders close {{when}}",
+    "open": "Open the menu",
+    "publish": "Publish menu",
+    "share": "Share menu",
+    "notice": "🔔 Notice",
+    "finishOnTablet": "Finish on the tablet: {{missing}}",
+    "missing": {
+      "noDishes": "no dishes",
+      "noPlace": "no pickup place or delivery",
+      "dayPast": "cooking day has passed",
+      "cutoffPast": "order cut-off has passed",
+      "cutoffAfterDay": "cut-off is after the cooking day"
+    }
+  },
+  "publish": {
+    "title": "Publish this menu?",
+    "help": "Customers can order as soon as it is published.",
+    "day": "Cooking day",
+    "closes": "Orders close",
+    "how": "Pickup / delivery",
+    "places_one": "{{count}} place",
+    "places_other": "{{count}} places",
+    "delivery": "delivery",
+    "dishes": "Dishes",
+    "confirm": "Publish menu",
+    "publishing": "Publishing…",
+    "cancel": "Cancel",
+    "error": "The menu could not be published. Check the connection and try again.",
+    "errorConflict": "This menu can't be published right now. Open it on the tablet to check."
+  },
+  "live": {
+    "title": "Menu is live ✓",
+    "help": "Let your customers know.",
+    "notice_one": "🔔 Send new-menu notice · {{count}} phone",
+    "notice_other": "🔔 Send new-menu notice · {{count}} phones",
+    "done": "Done"
+  },
+  "share": {
+    "title": "Share menu",
+    "close": "Close",
+    "share": "Share",
+    "language": "Language of the post",
+    "textLabel": "Post text",
+    "hint": "You can change the text. It is for this share only.",
+    "changed": "Changed for this share.",
+    "reset": "Reset text",
+    "copy": "Copy text",
+    "copied": "Copied",
+    "copyFailed": "Could not copy. Select the text instead.",
+    "back": "Back? Your text is still here. Change it for the next person and share again.",
+    "loading": "Loading the menu…",
+    "error": "Could not load the menu.",
+    "retry": "Try again"
+  },
+  "language": {
+    "id": "Indonesian",
+    "en": "English",
+    "both": "Both"
+  },
+  "menu": {
+    "back": "Orders",
+    "backLabel": "Back to Orders",
+    "title": "Menu · {{date}}",
+    "preorder": "Pre-order",
+    "onTheDay": "On the day",
+    "soldOut": "Sold out",
+    "choices_one": "{{count}} choice: {{names}}",
+    "choices_other": "{{count}} choices: {{names}}",
+    "empty": "No dishes yet."
+  }
+}

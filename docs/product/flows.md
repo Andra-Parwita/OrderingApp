@@ -79,6 +79,8 @@ flowchart TD
     N --> B
 ```
 
+**On the phone (plan 124, 1.0.45):** the menu is made on the tablet, but the owner's phone Orders screen has a **Menu card** on top: *Ready to publish* (Publish sheet with a short summary → "Menu is live ✓"), *Not ready* (what is missing, from the tablet's own check; finish it on the tablet), *Live* (**Share menu** and **🔔 Notice**, any number of times) and, after the cut-off, *Orders closed* with no buttons. Tapping the card opens the read-only menu. **Share menu** opens a full-screen layer with the ready-made post (language ID / EN / Both) in a text box the owner can change for this share; the text stays for the next person until the layer closes, and Share hands it to the phone's own share list (WhatsApp, SMS, email…), or to WhatsApp's link where a browser has none. Chefs and helpers see no card.
+
 **Changing pickup or delivery (plan 083, D-105):** on an order's detail an owner or chef taps the quiet **Change** link next to the Pickup / Delivery line (menu and private orders; also after the cut-off). A sheet switches between a pickup place and a delivery address, with "Check on map" and a "Tell <name>" tick (on by default): ticked, the customer gets an inbox update and a push in their language; either way the order page shows the new way and Cook, Pack, labels and Pickup & delivery follow.
 
 ## Seller: a private order (Khusus)

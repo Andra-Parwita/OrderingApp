@@ -29,6 +29,8 @@ import {
   DishesScreen,
   MakeMenuScreen,
   NotifyBell,
+  PhoneMenuCard,
+  PhoneMenuProvider,
   type MenuSlots,
   SavedSetsScreen,
   isWizardPath,
@@ -154,9 +156,13 @@ function SellerListRoute({
       toggles={toggles}
       onToggle={onToggle}
       headerExtra={mayNotify(me) ? <NotifyBell /> : undefined}
+      {...(mayNotify(me) ? { menuCard: PHONE_MENU_CARD } : {})}
     />
   );
 }
+
+/** Plan 124: the owner's Menu card on the phone's Orders list (not given on a tablet or to a chef or helper). */
+const PHONE_MENU_CARD = { Provider: PhoneMenuProvider, Card: PhoneMenuCard };
 
 function DeliveriesRoute() {
   const navigate = useNavigate();

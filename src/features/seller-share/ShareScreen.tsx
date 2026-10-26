@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
-import { whatsAppUrl } from '../../api/device/whatsapp';
+import { shareToWhatsApp } from '../../components/shareText/shareAction';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Segmented, Toast, type SegmentedOption } from '../../ui';
 import { SHARE_NS } from './i18n/register';
@@ -71,16 +71,6 @@ const Centered = styled.p`
 
 const POSTS: ReadonlyArray<PostLanguage> = ['id', 'en', 'both'];
 
-/** Hands the text to the phone's share sheet, or to WhatsApp's own link where there is none. */
-function shareText(text: string): void {
-  if (typeof navigator.share === 'function') {
-    // Closing the sheet rejects the promise; that is not an error.
-    void navigator.share({ text }).catch(() => undefined);
-    return;
-  }
-  window.open(whatsAppUrl(text), '_blank', 'noopener');
-}
-
 /**
  * The post to share: language, the exact text, Share to WhatsApp and Copy text (and, in the wizard,
  * Copy order link and Go to orders). Route-agnostic.
@@ -114,7 +104,7 @@ export function ShareComposer({
   }));
 
   const retry = useCallback(() => dispatch(loadRequested()), [dispatch]);
-  const share = useCallback(() => shareText(text), [text]);
+  const share = useCallback(() => void shareToWhatsApp(text), [text]);
   const copy = useCallback(() => {
     navigator.clipboard.writeText(text).then(
       () => setToast(t('copied')),
