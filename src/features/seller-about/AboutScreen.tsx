@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
-import { RELEASE_VERSION } from '../../../shared/release';
+import { versionLabel } from '../../../shared/release';
+import { checkForUpdateNow } from '../../components/update';
 import { useMediaQuery } from '../../components/useMediaQuery';
 import { Icon, PageHeader } from '../../ui';
 import { AboutHero } from './AboutHero';
@@ -35,19 +36,54 @@ const Pin = styled.div<{ $wide: boolean }>`
 `;
 const IdRow = styled.div<{ $wide: boolean }>`
   display: flex;
+  flex-wrap: ${({ $wide }) => ($wide ? 'nowrap' : 'wrap')};
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ $wide, theme }) =>
     `${theme.spacing.lg} ${$wide ? '0' : theme.spacing.lg} ${theme.spacing.md}`};
 `;
-const Versions = styled.div`
+// Narrow screens: the version block takes its own full-width line under the logo and What's new.
+const Versions = styled.div<{ $wide: boolean }>`
   display: flex;
   min-width: 0;
   flex-direction: column;
+  ${({ $wide }) => ($wide ? '' : 'order: 1; flex: 1 0 100%;')}
 `;
 const Release = styled.span`
+  white-space: nowrap;
   font-size: ${({ theme }) => theme.type.size.md};
   font-weight: 700;
+`;
+const CheckRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: ${({ theme }) => theme.spacing.md};
+`;
+const CheckButton = styled.button`
+  padding: 0;
+  border: 0;
+  background: none;
+  color: ${({ theme }) => theme.c.atext};
+  font: inherit;
+  font-size: ${({ theme }) => theme.type.size.sm};
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:disabled {
+    color: ${({ theme }) => theme.c.muted};
+    cursor: default;
+    text-decoration: none;
+  }
+  &:focus-visible {
+    outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.atext};
+    outline-offset: ${({ theme }) => theme.border.focus};
+  }
+`;
+const CheckStatus = styled.span`
+  font-size: ${({ theme }) => theme.type.size.sm};
+  color: ${({ theme }) => theme.c.muted};
 `;
 const WhatsNew = styled.button`
   display: inline-flex;
@@ -170,9 +206,21 @@ export type AboutScreenProps = Readonly<{
   logo: ReactNode;
   /** The media query for a tablet or wider (DESKTOP_QUERY, passed in: features may not import src/app). */
   wideQuery: string;
+  /** The manual version check (tests inject one). */
+  check?: () => Promise<'newer' | 'same' | 'error'>;
+  /** Reloads into the new version (tests inject one). */
+  reload?: () => void;
 }>;
 
-export function AboutScreen({ logo, wideQuery }: AboutScreenProps) {
+type CheckState = 'checking' | 'newer' | 'same' | 'error';
+const reloadApp = (): void => window.location.reload();
+
+export function AboutScreen({
+  logo,
+  wideQuery,
+  check = checkForUpdateNow,
+  reload = reloadApp,
+}: AboutScreenProps) {
   const { t } = useTranslation(ABOUT_NS);
   const navigate = useNavigate();
   const wide = useMediaQuery(wideQuery);
@@ -182,6 +230,30 @@ export function AboutScreen({ logo, wideQuery }: AboutScreenProps) {
   const opener = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
   const back = useCallback(() => void navigate('/seller/more'), [navigate]);
+  // Plan 125: checks when About opens and on each tap; a newer version reloads like the update bar.
+  const [checkState, setCheckState] = useState<CheckState>('checking');
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const apply = useCallback(
+    (result: CheckState) => {
+      if (!mounted.current) return;
+      setCheckState(result);
+      if (result === 'newer') reload();
+    },
+    [reload],
+  );
+  useEffect(() => {
+    void check().then(apply);
+  }, [check, apply]);
+  const checkAgain = (): void => {
+    setCheckState('checking');
+    void check().then(apply);
+  };
   const safe = t('safe', { returnObjects: true }) as ReadonlyArray<string>;
 
   return (
@@ -195,8 +267,22 @@ export function AboutScreen({ logo, wideQuery }: AboutScreenProps) {
         <AboutHero wideQuery={wideQuery} />
         <IdRow $wide={wide}>
           {logo}
-          <Versions>
-            <Release>{t('release', { version: RELEASE_VERSION })}</Release>
+          <Versions $wide={wide}>
+            <Release>{t('release', { version: versionLabel() })}</Release>
+            <CheckRow>
+              <CheckButton type="button" disabled={checkState === 'checking'} onClick={checkAgain}>
+                {t('checkUpdate')}
+              </CheckButton>
+              <CheckStatus role="status" aria-live="polite">
+                {checkState === 'checking'
+                  ? t('checking')
+                  : checkState === 'newer'
+                    ? t('updating')
+                    : checkState === 'same'
+                      ? t('newest')
+                      : t('checkFailed')}
+              </CheckStatus>
+            </CheckRow>
           </Versions>
           <WhatsNew type="button" ref={opener} aria-haspopup="dialog" onClick={() => setOpen(true)}>
             {t('whatsNew')}

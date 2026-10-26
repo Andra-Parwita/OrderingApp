@@ -89,6 +89,8 @@ export type Me = {
   /** Setup sessions only (plan 025): the account already has a password / a passkey. */
   hasPassword?: boolean;
   hasPasskey?: boolean;
+  /** Full sessions of a kitchen: how many people (accounts with a membership) it has. Plan 125. */
+  people?: number;
 };
 
 export type DeviceView = {
@@ -101,6 +103,8 @@ export type DeviceView = {
   lastUsedAt: string;
   /** Set on the caller's own device in their own list. */
   current?: true;
+  /** How this device signs in: a passkey (screen lock) or a password. Plan 125. */
+  signIn?: 'passkey' | 'password';
 };
 
 // ---- Requests ----
@@ -178,6 +182,10 @@ export type TeamMember = {
   chefId?: string;
   chefName?: string;
   devices: number;
+  /** Plan 125: how many of those devices sign in with a passkey (screen lock); the rest use a password. */
+  passkeys?: number;
+  /** Plan 125: the account has no device at all (never finished setting up). */
+  unfinished?: true;
   createdAt: string;
   /** True on the caller's own row. */
   you?: true;
@@ -407,6 +415,7 @@ export function parseMe(input: unknown): Me | null {
     ...(typeof deviceName === 'string' ? { deviceName } : {}),
     ...(typeof input['hasPassword'] === 'boolean' ? { hasPassword: input['hasPassword'] } : {}),
     ...(typeof input['hasPasskey'] === 'boolean' ? { hasPasskey: input['hasPasskey'] } : {}),
+    ...(isInt(input['people'], 0, 100000) ? { people: input['people'] } : {}),
   };
 }
 
@@ -432,7 +441,7 @@ export function parseMeResponse(input: unknown): MeResponse | null {
 
 function parseDevice(input: unknown): DeviceView | null {
   if (!isRecord(input)) return null;
-  const { id, name, role, chefId, chefName, createdAt, lastUsedAt, current } = input;
+  const { id, name, role, chefId, chefName, createdAt, lastUsedAt, current, signIn } = input;
   if (typeof id !== 'string' || typeof name !== 'string' || !isOneOf(ROLES, role)) return null;
   if (!isIsoDate(createdAt) || !isIsoDate(lastUsedAt)) return null;
   if (chefId !== undefined && typeof chefId !== 'string') return null;
@@ -446,6 +455,7 @@ function parseDevice(input: unknown): DeviceView | null {
     ...(typeof chefId === 'string' ? { chefId } : {}),
     ...(typeof chefName === 'string' ? { chefName } : {}),
     ...(current === true ? { current: true as const } : {}),
+    ...(signIn === 'passkey' || signIn === 'password' ? { signIn } : {}),
   };
 }
 
@@ -568,6 +578,7 @@ export function parseTeamNamesResponse(input: unknown): TeamNamesResponse | null
 function parseTeamMember(input: unknown): TeamMember | null {
   if (!isRecord(input)) return null;
   const { accountId, displayName, role, chefId, chefName, devices, createdAt, you } = input;
+  const { passkeys, unfinished } = input;
   if (typeof accountId !== 'string' || typeof displayName !== 'string') return null;
   if (!isOneOf(MEMBERSHIP_ROLES, role) || !isInt(devices, 0, 1000) || !isIsoDate(createdAt)) {
     return null;
@@ -582,6 +593,8 @@ function parseTeamMember(input: unknown): TeamMember | null {
     createdAt,
     ...(typeof chefId === 'string' ? { chefId } : {}),
     ...(typeof chefName === 'string' ? { chefName } : {}),
+    ...(isInt(passkeys, 0, 1000) ? { passkeys } : {}),
+    ...(unfinished === true ? { unfinished: true as const } : {}),
     ...(you === true ? { you: true as const } : {}),
   };
 }

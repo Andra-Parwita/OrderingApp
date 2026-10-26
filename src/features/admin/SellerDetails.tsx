@@ -139,9 +139,14 @@ export function SellerDetails({
     [tab],
   );
 
+  // Plan 125: only the newest ask may set the list. An older answer that arrives late (the page was
+  // refreshed, then a person removed) must not bring a removed person back.
+  const newestAsk = useRef(0);
   const loadMembers = useCallback(async () => {
+    newestAsk.current += 1;
+    const ask = newestAsk.current;
     const result = await fetchSellerMembers(sellerId);
-    if (!result.ok) return;
+    if (!result.ok || ask !== newestAsk.current) return;
     setMembers(result.data.members);
     onDevices(
       sellerId,
@@ -156,8 +161,8 @@ export function SellerDetails({
 
   useEffect(() => {
     // A call that sets state after a network round trip, started once when the row opens.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMembers();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadInvites();
   }, [loadMembers, loadInvites, refreshKey]);
 
@@ -176,6 +181,22 @@ export function SellerDetails({
     },
     [sellerId, refused, loadInvites],
   );
+
+  /** "Owner · 2 devices (screen lock, password)"; the old line when the server sends no sign-in counts. */
+  const memberLine = (member: TeamMember): string => {
+    const role = t(`home.seller.role.${member.role}`);
+    if (member.unfinished) return t('home.seller.memberUnfinished', { role });
+    if (member.passkeys === undefined) {
+      return t('home.seller.memberLine', { role, count: member.devices });
+    }
+    const methods = [
+      ...Array<string>(member.passkeys).fill(t('home.seller.signInPasskey')),
+      ...Array<string>(Math.max(0, member.devices - member.passkeys)).fill(
+        t('home.seller.signInPassword'),
+      ),
+    ].join(', ');
+    return t('home.seller.memberHow', { role, count: member.devices, methods });
+  };
 
   const removeMember = useCallback(
     async (accountId: string) => {
@@ -248,12 +269,7 @@ export function SellerDetails({
             <DeviceItem key={member.accountId}>
               <span>
                 <strong>{member.displayName}</strong>
-                <Muted>
-                  {t('home.seller.memberLine', {
-                    role: t(`home.seller.role.${member.role}`),
-                    count: member.devices,
-                  })}
-                </Muted>
+                <Muted>{memberLine(member)}</Muted>
               </span>
               <ConfirmButton
                 label={t('home.seller.remove')}

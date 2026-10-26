@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import i18n from 'i18next';
 import { Provider } from 'react-redux';
 import { MemoryRouter, useLocation } from 'react-router';
-import { RELEASE_VERSION } from '../../shared/release';
+import { RELEASE_VERSION, versionLabel } from '../../shared/release';
 import { WHATS_NEW_KEY_PREFIX } from '../components/whats-new/WhatsNewPill';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { registerCustomerI18n } from '../features/customer-menu';
@@ -250,6 +250,7 @@ describe('AppRoutes', () => {
     expect(entries.getByText('Kitchen')).toBeInTheDocument();
     expect(entries.getByText('Labels')).toBeInTheDocument();
     expect(screen.getAllByRole('radiogroup', { name: /language/i })).toHaveLength(1);
+    expect(screen.getByText(`Version ${versionLabel()}`)).toBeInTheDocument();
     phone.unmount();
 
     wide = true;

@@ -9,7 +9,7 @@ import { virtualAuthenticator } from './virtualAuthenticator';
 // Menu, Settings and New order. Runs alone in the "helper-mobile-chromium" project, after
 // session-flow (it shares Dapur Demo's account and the admin passkey `seller-auth-mobile-chromium`).
 
-const createPasskeyName = /^(Face or fingerprint|Add a new passkey)/;
+const createPasskeyName = /^(Screen lock|Add a new passkey)/;
 const HELPER = `Helper ${Date.now().toString(36)}`;
 
 async function setUpWithPasskey(page: import('@playwright/test').Page, key: string) {

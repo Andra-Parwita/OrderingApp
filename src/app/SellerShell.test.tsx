@@ -43,7 +43,7 @@ afterEach(async () => {
   await i18n.changeLanguage('en');
 });
 
-const SELLER: Me = { role: 'seller', stage: 'full', sellerName: 'Delave' };
+const SELLER: Me = { role: 'seller', stage: 'full', sellerName: 'Delave', people: 2 };
 const CHEF: Me = { role: 'chef', stage: 'full', sellerName: 'Delave', chefName: 'Rina' };
 
 function renderAt(path: string) {

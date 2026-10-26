@@ -28,6 +28,16 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 - **Checks:** two Android emulator rounds (`scratch/emu-124/`, `scratch/emu-124b/`): round 2 all 9 ✅ incl. Back in Chrome and the installed app. Gate: lint 0, format ✅, unit 3,049 ✅ (30 EADDRINUSE flakes pass with `--no-file-parallelism`), e2e 10 ✅ (order-flow, batch2-flow, banners, customer-live, multi-seller, helper-flow), docs built.
 - **Deploy impact: low.** Client only: no migration, no Worker or API change, no secret. Old seller apps keep working; the new card shows after the app updates.
 
+## Hotfix 1.0.45.1 = plan 125 (27 Oct, deployed by Claude with the owner's one-time OK for this hotfix only)
+Why: Rina could not see the refresh bar (the app only checked on open), and later both her devices were signed out: she had only a forgotten password, most likely after tapping **Switch person** (one tap, no question). Back in through a recovery key (= a new owner account, D-090) and the 6-digit code; the owner removed her old accounts. Details and all rulings: `docs/plans/125-update-check-while-open.md`.
+- **Version with the hotfix number:** `RELEASE_HOTFIX = 1` in `shared/release.ts`, `versionLabel()` → "Version 1.0.45.1" in About, Settings, the tablet rail (also sign-in and admin footers) and a muted line at the bottom of the phone More screen. `RELEASE_VERSION` stays 1.0.45, so What's new does not pop again. **Next hotfix: bump `RELEASE_HOTFIX`; next release: set it back to `null`.**
+- **Update check:** no timer; automatic check on open / return to the screen at most every **10 minutes**, last check saved in localStorage (`updateLastCheck`). About checks by itself when opened (like Chrome) + **Check for update** (newer → reload; same → "You have the newest version"; error → "Could not check").
+- **Sign-out fixes:** Switch person only on the tablet and only when the kitchen has **2+ people** (`Me.people`, one COUNT on memberships), with "Tap again"; phone Sign out "Tap again"; "Signed in as" kept on the phone; wording "Sign in with your screen lock (fingerprint, face or PIN)"; Devices: "Remove device" + warning; Devices and admin People show screen lock / password per device and "never finished setting up".
+- **Admin People bug:** a members list asked earlier arrived after the post-remove reload and overwrote it; fixed with a newest-ask-wins counter (`SellerDetails.tsx`).
+- **Checks:** lint 0, format ✅, unit 3,065 (Miniflare `fetch failed` / EADDRINUSE flakes pass serially: 760/760), full e2e **130 passed / 46 skipped by project** (2 stale specs updated: About "Version", phone banner size text from 1.0.44.1), Android emulator (`scratch/emu-125/`): More, About, Devices, sign-in EN/ID ✅; About layout fixed for phones after the emulator round; tablet Switch person checked by unit tests only.
+- **Deploy impact: low.** Client + Worker, no migration. New optional API fields (`people`, `signIn`, `passkeys`, `unfinished`); old clients ignore them.
+- **Owner live check:** on a phone open About → "Version 1.0.45.1" → Check for update → "You have the newest version". More: no Switch person, Sign out asks "Tap again".
+
 ## Deploy 1.0.45 (done 26 Oct: backup, build, deploy, health, live check ✅)
 0. Docs current (done: plan list, roadmap, `pnpm run docs`).
 1. Commit on `main` (owner OK), push.
@@ -41,6 +51,8 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 
 ## Open findings
 - **"Orders" title clipped to "Orde"** in English on the phone when the camera, New order and bell buttons show (seen on the emulator; older than plan 124). Also "● Li…" pill clipped right after publishing. Fix later.
+- ID text "…ponsel ini ini" on the phone More (contacts block): `seller-orders` id.json `"phone": "ponsel ini"` is put into a sentence that already ends in "ini". Older than 1.0.45.1; fix later.
+- Admin "Pause the kitchen" signs everyone out; worth a stronger warning one day.
 - 1.0.43.3: one-off blank banner on an iPhone cold start, not reproduced. Watch.
 - Time-bomb leftovers (low): `e2e/p039-captures.spec.ts` resets data without pushing the cut-off; passkey counter ~2033; seed-local data goes stale.
 - The empty, locked folder `D:\Projects\home\OrderingApp-hotfix` can be deleted after a reboot.
@@ -50,6 +62,7 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 ## Later (owner rulings recorded)
 - **1.0.46 candidates:** iOS-style large titles on pages without a banner (mock-up first); plan 116 "Send a problem report" (device log + "What happened?" to the admin); the 6 chef permissions, one at a time.
 - Maybe: the tablet Share screen remembers the language like the phone does.
+- **Change role** (owner ↔ chef ↔ helper) in seller Settings → Team and/or the admin page (owner 26 Oct: "leave change role later in future plan"; today: remove, then re-invite with the new role). Mock-up first.
 - **v1.1.0 (analysis only):** plans 082/098/099 (store, kinds, separate deployments).
 - Older open owner checks: 1.0.42 live checks, 1.0.38 pickup map + QR scan, a real label print.
 

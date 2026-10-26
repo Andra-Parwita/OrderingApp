@@ -464,13 +464,50 @@ describe('AdminHomeScreen', () => {
     fireEvent.click(within(sellers).getByRole('button', { name: /Onde Onde/ }));
     const list = await screen.findByRole('list', { name: 'People' });
     expect(await within(list).findByText('Bu Ani')).toBeInTheDocument();
-    expect(within(list).getByText('Owner · 1 device')).toBeInTheDocument();
+    expect(within(list).getByText('Owner · 1 device (password)')).toBeInTheDocument();
 
     fireEvent.click(within(list).getByRole('button', { name: 'Remove' }));
     // First tap only asks again.
     expect(within(list).getByText('Bu Ani')).toBeInTheDocument();
     fireEvent.click(within(list).getByRole('button', { name: 'Tap again to remove' }));
     expect(await screen.findByText('Nobody has joined yet.')).toBeInTheDocument();
+  });
+
+  it('plan 125: the People line says how each device signs in, and flags an account that never finished', async () => {
+    await signInAsAdmin();
+    await addPerson({ role: 'owner', sellerId: 'seller-onde-onde' }, 'iPad', 'Bu Ani');
+    // A key redeemed but never registered: an account with no device.
+    const issued = await mockStores.auth.createKey({
+      role: 'owner',
+      sellerId: 'seller-onde-onde',
+      displayName: 'Pak Budi',
+    });
+    await mockStores.auth.redeemKey(issued.key, 'dev-1-abcd-efgh');
+    renderThemed(<AdminHomeScreen />);
+    const sellers = await screen.findByRole('list', { name: 'Sellers' });
+    fireEvent.click(within(sellers).getByRole('button', { name: /Onde Onde/ }));
+    const list = await screen.findByRole('list', { name: 'People' });
+    expect(await within(list).findByText('Owner · 1 device (password)')).toBeInTheDocument();
+    expect(within(list).getByText('Owner · never finished setting up')).toBeInTheDocument();
+    await i18n.changeLanguage('id');
+    expect(await within(list).findByText('Pemilik · 1 perangkat (kata sandi)')).toBeInTheDocument();
+    expect(within(list).getByText('Pemilik · belum selesai diatur')).toBeInTheDocument();
+  });
+
+  it('plan 125: removing one of several people makes that row go away and keeps the others', async () => {
+    await signInAsAdmin();
+    await addPerson({ role: 'owner', sellerId: 'seller-onde-onde' }, 'iPad', 'Bu Ani');
+    await addPerson({ role: 'owner', sellerId: 'seller-onde-onde' }, 'iPhone', 'Pak Budi');
+    renderThemed(<AdminHomeScreen />);
+    const sellers = await screen.findByRole('list', { name: 'Sellers' });
+    fireEvent.click(within(sellers).getByRole('button', { name: /Onde Onde/ }));
+    const list = await screen.findByRole('list', { name: 'People' });
+    expect(await within(list).findByText('Bu Ani')).toBeInTheDocument();
+    const row = within(list).getByText('Bu Ani').closest('li') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'Remove' }));
+    fireEvent.click(within(row).getByRole('button', { name: 'Tap again to remove' }));
+    await waitFor(() => expect(within(list).queryByText('Bu Ani')).not.toBeInTheDocument());
+    expect(within(list).getByText('Pak Budi')).toBeInTheDocument();
   });
 
   it('switches a kitchen into and out of demo mode (plan 013), in both languages', async () => {
@@ -540,7 +577,7 @@ describe('AdminHomeScreen', () => {
     expect(row).toHaveTextContent('Dibuat');
     fireEvent.click(row);
     const list = await screen.findByRole('list', { name: 'Orang' });
-    expect(await within(list).findByText('Koki · 1 perangkat')).toBeInTheDocument();
+    expect(await within(list).findByText('Koki · 1 perangkat (kata sandi)')).toBeInTheDocument();
     expect(within(list).getByRole('button', { name: 'Hapus' })).toBeInTheDocument();
   });
 });

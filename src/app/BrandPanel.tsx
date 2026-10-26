@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import { RELEASE_VERSION } from '../../shared/release';
+import { versionLabel } from '../../shared/release';
 import { brandColour, brandSize } from '../theme/brandTokens';
 import { BrandLogo } from './BrandLogo';
 import { WalkingMascot } from './BrandMascot';
@@ -157,7 +157,7 @@ function BrandFooterParts() {
   return (
     <>
       <Build>
-        <Version>v{RELEASE_VERSION}</Version>
+        <Version>v{versionLabel()}</Version>
         <span>{env}</span>
       </Build>
       <span>{t('app.brand.copyright', { year: new Date().getFullYear() })}</span>

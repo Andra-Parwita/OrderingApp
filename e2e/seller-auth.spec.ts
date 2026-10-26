@@ -49,6 +49,7 @@ async function signOutThisDevice(page: Page) {
   } else {
     await page.getByRole('link', { name: 'More' }).click();
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+    await page.getByRole('button', { name: 'Tap again to sign out' }).click();
   }
   await expect(page.getByRole('heading', { name: 'Sign in', exact: true })).toBeVisible();
 }
@@ -97,7 +98,7 @@ test('a real passkey: create it, sign out, sign back in with it', async ({
   expect(session).toMatchObject({ httpOnly: true, secure: true, sameSite: 'Strict', path: '/' });
 
   await signOutThisDevice(page);
-  await page.getByRole('button', { name: 'Sign in with face or fingerprint' }).click();
+  await page.getByRole('button', { name: 'Sign in with your screen lock' }).click();
   await expect(page).toHaveURL(/\/seller$/);
   if (isWide(page)) {
     await page.goto('/seller/settings/devices');
@@ -196,8 +197,8 @@ test('an invite link fills the key and clears it from the address', async ({
   expect(errors).toEqual([]);
 });
 
-/** The create button: "Face or fingerprint" first time, "Add a new passkey" once the account has one (not "Sign in with ..."). */
-const createPasskeyName = /^(Face or fingerprint|Add a new passkey)/;
+/** The create button: "Screen lock" first time, "Add a new passkey" once the account has one (not "Sign in with ..."). */
+const createPasskeyName = /^(Screen lock|Add a new passkey)/;
 
 /** Setup with a key and a real passkey, on the real route; lands on the seller home. */
 async function setUpWithPasskey(page: Page, key: string) {
@@ -218,10 +219,11 @@ async function switchPerson(page: Page) {
       .getByRole('navigation', { name: 'Seller' })
       .getByRole('button', { name: /Switch person/ })
       .click();
+    await page.getByRole('button', { name: 'Tap again to switch person' }).click();
   } else {
-    await page.getByRole('link', { name: 'More' }).click();
-    await page.waitForTimeout(600);
-    await page.getByRole('button', { name: /Switch person/ }).click();
+    // Plan 125: a phone has no Switch person; signing out and opening the picker is the same path.
+    await signOutThisDevice(page);
+    await page.goto('/seller/sign-in?switch=1');
   }
   // Sign out, then the passkey picker opens by itself and signs the chosen person in. A chef
   // lands on Orders (AppRoutes sends a chef from /seller to /seller/orders), an owner on Home.

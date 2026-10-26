@@ -2,6 +2,7 @@ import { useCallback, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
+import { versionLabel } from '../../shared/release';
 import { useMediaQuery } from '../components/useMediaQuery';
 import { useSellerInstall } from '../components/install';
 import { ABOUT_NS } from '../features/seller-about';
@@ -9,11 +10,11 @@ import { HELP_NS } from '../features/seller-help';
 import { ContactsBackup, PhoneLanguageRow, PhoneMoreNote } from '../features/seller-orders';
 import { PRIVATE_NS, usePrivateDue } from '../features/seller-private';
 import { paneHref, type PaneId } from '../features/seller-settings';
-import { Button, ListRow, PageHeader } from '../ui';
+import { Button, ConfirmButton, ListRow, PageHeader } from '../ui';
 import { DESKTOP_QUERY } from './layout';
 import { KitchenSelect } from './KitchenSelect';
 import { useSession } from './session';
-import { MoreSwitchPerson } from './SwitchPerson';
+import { MoreSignedInAs } from './SwitchPerson';
 
 const MoreBlock = styled.div`
   display: flex;
@@ -27,6 +28,16 @@ const MoreBlock = styled.div`
 const SignOutBlock = styled(MoreBlock)`
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg}
     ${({ theme }) => theme.spacing.xl};
+`;
+const VersionLine = styled.p`
+  margin: 0;
+  font-size: ${({ theme }) => theme.type.size.sm};
+  color: ${({ theme }) => theme.c.muted};
+`;
+const SignOutConfirm = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 const PhoneBlocks = styled.div`
   display: flex;
@@ -160,15 +171,22 @@ export function MoreRoute() {
         {sellerInstall.overlay}
         <PhoneBlocks>
           <KitchenSelect />
-          <MoreSwitchPerson />
+          <MoreSignedInAs />
           <PhoneLanguageRow />
           {me === null ? null : (
-            <Button fullWidth onClick={() => void signOutNow()}>
-              {t('sellerNav.signOut')}
-            </Button>
+            <SignOutConfirm>
+              <ConfirmButton
+                fullWidth
+                label={t('sellerNav.signOut')}
+                confirmLabel={t('sellerNav.signOutConfirm')}
+                onConfirm={() => void signOutNow()}
+              />
+              <VersionLine>{t('sellerNav.signOutHint')}</VersionLine>
+            </SignOutConfirm>
           )}
           <PhoneMoreNote />
           <ContactsBackup />
+          <VersionLine>{t('sellerNav.version', { version: versionLabel() })}</VersionLine>
         </PhoneBlocks>
       </>
     );

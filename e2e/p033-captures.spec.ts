@@ -16,7 +16,7 @@ test.describe.configure({ mode: 'serial' });
 
 const DIR = 'captures/p033';
 const PASSWORD = 'capture long enough password';
-const createPasskey = /^(Face or fingerprint|Add a new passkey)/;
+const createPasskey = /^(Screen lock|Add a new passkey)/;
 const notes: Array<string> = [];
 const allErrors: Array<string> = [];
 

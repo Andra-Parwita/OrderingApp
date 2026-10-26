@@ -5,7 +5,12 @@ import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { UpdateBar } from './UpdateBar';
 import { registerUpdateI18n } from './i18n/register';
-import { CHECK_GAP_MS, reloadOnPreloadError } from './updateCheck';
+import {
+  CHECK_GAP_MS,
+  checkForUpdateNow,
+  reloadOnPreloadError,
+  watchForUpdate,
+} from './updateCheck';
 
 beforeAll(async () => {
   window.matchMedia = (query: string) =>
@@ -41,6 +46,8 @@ async function mount(
 }
 
 describe('UpdateBar', () => {
+  beforeEach(() => localStorage.clear());
+
   it('shows the bar when the deployed version differs', async () => {
     await mount(answer('1.0.2'));
     expect(screen.getByText(/A new version is ready/)).toBeInTheDocument();
@@ -90,7 +97,7 @@ describe('UpdateBar', () => {
     await mount(fetchImpl, { now: () => time });
     fireEvent.click(screen.getByRole('button', { name: 'Hide' }));
     expect(screen.queryByRole('status')).toBeNull();
-    // back to the front within 5 minutes: no new check
+    // back to the front within 10 minutes: no new check
     fireEvent(document, new Event('visibilitychange'));
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     time = CHECK_GAP_MS + 1;
@@ -101,6 +108,79 @@ describe('UpdateBar', () => {
     });
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  describe('gap and saved check time (plan 125)', () => {
+    afterEach(() => vi.restoreAllMocks());
+    const settle = () =>
+      act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+    const watcher = (fetchImpl: typeof fetch, now?: () => number) => () =>
+      watchForUpdate(() => undefined, {
+        current: '1.0.1',
+        enabled: true,
+        fetchImpl,
+        ...(now ? { now } : {}),
+      });
+
+    it('does not fetch again within 10 minutes across a remount, and fetches after 10 minutes', async () => {
+      let time = 1_000;
+      const fetchImpl = answer('1.0.1');
+      const start = watcher(fetchImpl, () => time);
+      start()();
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      time += CHECK_GAP_MS - 1;
+      const stop = start(); // a reload within the gap
+      fireEvent(document, new Event('visibilitychange'));
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      stop();
+      time += 1;
+      start();
+      await settle();
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+    });
+
+    it('still works when storage throws', () => {
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('blocked');
+      });
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('blocked');
+      });
+      let time = Date.now() + 100 * CHECK_GAP_MS; // later than any time memory kept from other tests
+      const fetchImpl = answer('1.0.1');
+      const start = watcher(fetchImpl, () => time);
+      start()();
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      start()();
+      expect(fetchImpl).toHaveBeenCalledTimes(1); // remembered in memory
+      time += CHECK_GAP_MS;
+      start()();
+      expect(fetchImpl).toHaveBeenCalledTimes(2);
+    });
+
+    it('sets no timer', () => {
+      const interval = vi.spyOn(globalThis, 'setInterval');
+      watcher(answer('1.0.1'))()();
+      expect(interval).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkForUpdateNow', () => {
+    it('ignores the gap and says newer, same or error', async () => {
+      const current = '1.0.1';
+      await expect(checkForUpdateNow({ current, fetchImpl: answer('1.0.2') })).resolves.toBe(
+        'newer',
+      );
+      await expect(checkForUpdateNow({ current, fetchImpl: answer('1.0.1') })).resolves.toBe(
+        'same',
+      );
+      await expect(
+        checkForUpdateNow({ current, fetchImpl: vi.fn(() => Promise.reject(new Error('x'))) }),
+      ).resolves.toBe('error');
+    });
   });
 
   it('does not fetch when not enabled (dev)', async () => {

@@ -46,7 +46,7 @@ test('menu, then Settings: pictures and backup, and Kitchen: print labels', asyn
   );
   const sizes: Record<string, string> = {
     'Wide banner (tablet and computer)': '3840 × 328 px',
-    'Phone banner': '1200 × 400 px',
+    'Phone banner': '1200 × 400, or 1200 × 600 for the iPhone app top',
     'Menu image (left menu)': '1200 × 600 px',
     'App icon (phone home screen and closed menu)': '512 × 512 px',
     'Background (wide screens)': '1280 × 256 px',

@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { Provider } from 'react-redux';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { server } from '../../../mocks/server';
-import { RELEASE_VERSION } from '../../../shared/release';
+import { versionLabel } from '../../../shared/release';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { SettingsPanes } from './SettingsPanes';
 import type { PaneId } from './panes';
@@ -92,7 +92,7 @@ describe('SettingsPanes', () => {
     renderPane('pickup');
     const nav = screen.getByRole('navigation', { name: 'Settings sections' });
     expect(nav.querySelectorAll('a')).toHaveLength(11);
-    expect(screen.getByText(`Version ${RELEASE_VERSION}`)).toBeInTheDocument();
+    expect(screen.getByText(`Version ${versionLabel()}`)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Pickup locations/ })).toHaveAttribute(
       'aria-current',
       'page',

@@ -274,6 +274,16 @@ export function createAuthHelpers(deps: AuthDeps) {
           account.id,
         )) !== null
       : false;
+    // Plan 125: the people count lets the tablet show "Switch person" only when there is someone to switch to.
+    const people =
+      row && !setup
+        ? (
+            await db.first<{ n: number }>(
+              'SELECT COUNT(*) AS n FROM memberships WHERE seller_id = ?',
+              row.id,
+            )
+          )?.n
+        : undefined;
     return {
       role:
         account.role === 'admin' ? 'admin' : membership ? callerRoleOf(membership.role) : 'chef',
@@ -286,6 +296,7 @@ export function createAuthHelpers(deps: AuthDeps) {
       ...(membership?.chef_id ? { chefId: membership.chef_id } : {}),
       ...(row?.chef_name ? { chefName: row.chef_name } : {}),
       ...(device ? { deviceId: device.id, deviceName: device.name } : {}),
+      ...(people === undefined ? {} : { people }),
     };
   }
 
@@ -396,6 +407,7 @@ export function createAuthHelpers(deps: AuthDeps) {
       createdAt: device.created_at,
       lastUsedAt: device.last_used_at,
       ...(device.id === currentId ? { current: true as const } : {}),
+      signIn: device.credential_id ? ('passkey' as const) : ('password' as const),
     };
   }
 

@@ -3,7 +3,8 @@
 
 import { appVersion } from '../../../shared/buildInfo';
 
-export const CHECK_GAP_MS = 5 * 60 * 1000;
+export const CHECK_GAP_MS = 10 * 60 * 1000;
+const LAST_CHECK_KEY = 'updateLastCheck';
 const RELOAD_FLAG = 'updateReloaded';
 
 export type WatchOptions = Readonly<{
@@ -27,9 +28,31 @@ export async function fetchLatestVersion(fetchImpl: typeof fetch = fetch): Promi
   }
 }
 
+// The time of the last check is kept on the phone, so reopening the app does not ask the server
+// again within the gap. Storage can be blocked: then the time lives in memory for this session.
+let lastInMemory = -Infinity;
+function readLastCheck(): number {
+  try {
+    const saved = localStorage.getItem(LAST_CHECK_KEY);
+    const value = saved === null ? NaN : Number(saved);
+    return Number.isFinite(value) ? value : -Infinity;
+  } catch {
+    return lastInMemory;
+  }
+}
+function writeLastCheck(time: number): void {
+  lastInMemory = time;
+  try {
+    localStorage.setItem(LAST_CHECK_KEY, String(time));
+  } catch {
+    // memory only
+  }
+}
+
 /**
- * Checks on start and whenever the app comes back to the front, at most once every 5 minutes.
- * `onResult(true)` means a newer version is out; it is called after every check. Returns a stop function.
+ * Checks when the app opens and whenever it comes back to the front, at most once every 10 minutes
+ * (also across reloads: the last check time is saved). No timer (plan 125). `onResult(true)` means a
+ * newer version is out; it is called after every check. Returns a stop function.
  */
 export function watchForUpdate(
   onResult: (newer: boolean) => void,
@@ -39,11 +62,10 @@ export function watchForUpdate(
   if (!enabled) return () => undefined;
   const current = options.current ?? appVersion();
   const now = options.now ?? Date.now;
-  let last = -Infinity;
   let stopped = false;
   const check = (): void => {
-    if (now() - last < CHECK_GAP_MS) return;
-    last = now();
+    if (now() - readLastCheck() < CHECK_GAP_MS) return;
+    writeLastCheck(now());
     void fetchLatestVersion(options.fetchImpl).then((latest) => {
       if (!stopped && latest !== null) onResult(latest !== current);
     });
@@ -57,6 +79,16 @@ export function watchForUpdate(
     stopped = true;
     document.removeEventListener('visibilitychange', onVisible);
   };
+}
+
+/** A check the user asked for (About): ignores the gap, records the time, and says what it found. */
+export async function checkForUpdateNow(
+  options: Pick<WatchOptions, 'current' | 'fetchImpl' | 'now'> = {},
+): Promise<'newer' | 'same' | 'error'> {
+  writeLastCheck((options.now ?? Date.now)());
+  const latest = await fetchLatestVersion(options.fetchImpl);
+  if (latest === null) return 'error';
+  return latest !== (options.current ?? appVersion()) ? 'newer' : 'same';
 }
 
 /**

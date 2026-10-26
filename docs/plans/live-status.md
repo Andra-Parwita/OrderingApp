@@ -411,10 +411,20 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 ## Plan 124 (seller phone: publish, notice, share)
 | stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
 |---|---|---|---|---|---|---|---|---|
-| 1 · Menu card, publish, share layer (editable text), read-only menu, owner + phone, EN/ID | general-purpose · sonnet | 08:14 | 45 min | 08:25 | | | new seller-phone-menu (~900 lines, 14 files) + 7 edited | ✅ typecheck, own tests 41 |
-| 1b · lint (feature boundaries) + rename to "Share menu" | general-purpose · sonnet | 08:31 | 20 min | 08:39 | | | phone code → seller-menu/phone, share text → components/shareText | ✅ lint 0, unit 692 |
-| 2 · Android phone emulator check (owner card: publish, notice, share twice with edited text, keyboard, Back, read-only menu) | general-purpose · sonnet | 08:44 | 45 min | 08:55 | | | none (check only; scratch copy of local state) | ⚠️ publish, notice, share ×2, keyboard OK; bugs: read-only menu rows, banner over layer, not-ready button, card fixed above list; Back leaves Orders |
-| 1c · fix emulator findings (card scrolls, z-index over banners, menu rows, not-ready card, safe area, note/textbox, Live pill) | general-purpose · sonnet | 08:55 | 25 min | 09:03 | | | 9 phone files + PhoneOrdersScreen, sellerRoutes, ui/patterns modal + BottomSheet (OVERLAY_Z 1100) | ✅ lint 0, unit 722 |
-| 1d · Android Back closes layer/sheet first (owner Q8 A) | general-purpose · sonnet | 09:44 | 20 min | 09:53 | | | useLayerStack.ts new (~70), PhoneMenuCard, tests | ✅ lint 0, unit 511 (seller-menu, app, ui) |
-| 2b · Android phone emulator round 2 (fixes + Back) | general-purpose · sonnet | 09:53 | 40 min | 10:02 | | | none (check only; scratch copy) | ✅ all 9 steps incl. Back in Chrome and the installed app; no bugs |
-| gate · lint, format, unit (full), e2e phone/banners/customers/multi-seller/helper | coordinator | | | 10:27 | | | — | ✅ lint 0, format ok, unit 3049 (30 EADDRINUSE flakes pass serially), e2e 10 passed (NODE_EXTRA_CA_CERTS needed with --no-deps) |
+| 1 · Menu card, publish, share layer (editable text), read-only menu, owner + phone, EN/ID | general-purpose · sonnet | 18:44 | 45 min | 18:55 | | | new seller-phone-menu (~900 lines, 14 files) + 7 edited | ✅ typecheck, own tests 41 |
+| 1b · lint (feature boundaries) + rename to "Share menu" | general-purpose · sonnet | 19:01 | 20 min | 19:09 | | | phone code → seller-menu/phone, share text → components/shareText | ✅ lint 0, unit 692 |
+| 2 · Android phone emulator check (owner card: publish, notice, share twice with edited text, keyboard, Back, read-only menu) | general-purpose · sonnet | 19:14 | 45 min | 19:25 | | | none (check only; scratch copy of local state) | ⚠️ publish, notice, share ×2, keyboard OK; bugs: read-only menu rows, banner over layer, not-ready button, card fixed above list; Back leaves Orders |
+| 1c · fix emulator findings (card scrolls, z-index over banners, menu rows, not-ready card, safe area, note/textbox, Live pill) | general-purpose · sonnet | 19:25 | 25 min | 19:33 | | | 9 phone files + PhoneOrdersScreen, sellerRoutes, ui/patterns modal + BottomSheet (OVERLAY_Z 1100) | ✅ lint 0, unit 722 |
+| 1d · Android Back closes layer/sheet first (owner Q8 A) | general-purpose · sonnet | 20:14 | 20 min | 20:23 | | | useLayerStack.ts new (~70), PhoneMenuCard, tests | ✅ lint 0, unit 511 (seller-menu, app, ui) |
+| 2b · Android phone emulator round 2 (fixes + Back) | general-purpose · sonnet | 20:23 | 40 min | 20:32 | | | none (check only; scratch copy) | ✅ all 9 steps incl. Back in Chrome and the installed app; no bugs |
+| gate · lint, format, unit (full), e2e phone/banners/customers/multi-seller/helper | coordinator | | | 20:57 | | | — | ✅ lint 0, format ok, unit 3049 (30 EADDRINUSE flakes pass serially), e2e 10 passed (NODE_EXTRA_CA_CERTS needed with --no-deps) |
+
+## Plan 125 (hotfix 1.0.45.1: update check while open)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 1 · timer in watchForUpdate + tests | general-purpose · sonnet | 21:34 | 10 min | 21:36 | | | 2 files (+3, +~40) | ✅ typecheck, unit 36 |
+| 1+1b · owner redesign: no timer, 10-min gap remembered on the phone, version label with hotfix, About "Check for update" | general-purpose · sonnet | 21:40 | 25 min | 21:49 | | | update check, shared/release, About, Settings, BrandPanel, MoreRoute, i18n, tests | ✅ typecheck, lint 0, unit 794 |
+| 3 · sign-out fixes: Switch person rules, phone Sign out confirm, screen-lock wording, Remove device, sign-in per device, admin remove-row bug | general-purpose · sonnet | 22:33 | 40 min | 23:17 | | | ~45 files incl. worker meOf/viewOf, shared authContract, admin, seller-auth, app, 3 e2e specs | ✅ unit 915 (builder) |
+| gate · typecheck, lint, format, full unit, full e2e (workers 2) | coordinator | 23:17 | 60 min | 00:24 | | | 2 e2e specs updated (About 'Version', phone banner size text from 1.0.44.1) | ✅ lint 0, format ok, unit 3065 (flakes pass serially, 760/760), e2e 130 passed / 46 skipped by project |
+| 4 · Android emulator: phone More, About, Devices, sign-in wording | general-purpose · sonnet | 00:24 | 25 min | 00:31 | | | none (check only; scratch copy) | ✅ More, About, Devices, sign-in EN/ID; ⚠️ About version block cramped on phone (fixing); tablet step skipped |
+| 4b · About version block on its own line on phones | general-purpose · sonnet | 00:31 | 10 min | 00:33 | | | AboutScreen.tsx | ✅ unit 14, About e2e 4, phone capture checked |

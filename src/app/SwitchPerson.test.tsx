@@ -5,7 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { Me } from '../../shared/authContract';
 import { initI18n } from '../i18n/init';
 import { AppThemeProvider } from '../theme/AppThemeProvider';
-import { MoreSwitchPerson, RailSwitchPerson } from './SwitchPerson';
+import { RailSwitchPerson } from './SwitchPerson';
 
 let me: Me | null = null;
 const end = vi.fn(() => Promise.resolve());
@@ -32,8 +32,9 @@ const CHEF: Me = {
   stage: 'full',
   sellerName: 'Onde Onde',
   chefName: 'Rina',
+  people: 2,
 };
-const SELLER: Me = { role: 'seller', stage: 'full', sellerName: 'Onde Onde' };
+const SELLER: Me = { role: 'seller', stage: 'full', sellerName: 'Onde Onde', people: 3 };
 
 function Where() {
   const { pathname, search } = useLocation();
@@ -59,6 +60,12 @@ describe('Switch person in the rail', () => {
     renderAt(<RailSwitchPerson collapsed={false} />);
     expect(screen.getByText('Rina · chef')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Switch person/ }));
+    expect(end).not.toHaveBeenCalled(); // the first tap only asks
+    expect(screen.getByRole('button', { name: 'Tap again to switch person' })).toBeInTheDocument();
+    expect(
+      screen.getByText('You will need your screen lock or password to sign in again.'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tap again to switch person' }));
     await waitFor(() =>
       expect(screen.getByTestId('where')).toHaveTextContent('/seller/sign-in?switch=1'),
     );
@@ -87,7 +94,6 @@ describe('Switch person in the rail', () => {
       <>
         <RailSwitchPerson collapsed={false} />
         <RailSwitchPerson collapsed />
-        <MoreSwitchPerson />
       </>,
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
@@ -101,15 +107,21 @@ describe('Switch person in the rail', () => {
   });
 });
 
-describe('Switch person on the More tab', () => {
-  it('shows "Signed in as", the person and the button', async () => {
-    me = CHEF;
-    renderAt(<MoreSwitchPerson />);
-    expect(screen.getByText('Signed in as')).toBeInTheDocument();
-    expect(screen.getByText('Rina · chef')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Switch person/ }));
-    await waitFor(() =>
-      expect(screen.getByTestId('where')).toHaveTextContent('/seller/sign-in?switch=1'),
-    );
+describe('Switch person needs more than one person (plan 125)', () => {
+  it('is hidden when the kitchen has one person, or the count is unknown', () => {
+    me = { ...CHEF, people: 1 };
+    const view = renderAt(<RailSwitchPerson collapsed={false} />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    view.unmount();
+    me = { ...CHEF };
+    delete me.people;
+    renderAt(<RailSwitchPerson collapsed />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('is shown with two or more people', () => {
+    me = { ...CHEF, people: 2 };
+    renderAt(<RailSwitchPerson collapsed={false} />);
+    expect(screen.getByRole('button', { name: 'Switch person' })).toBeInTheDocument();
   });
 });

@@ -113,7 +113,11 @@
       },
       "remove": "Hapus",
       "removeConfirm": "Ketuk lagi untuk menghapus",
-      "memberLine_other": "{{role}} · {{count}} perangkat"
+      "memberLine_other": "{{role}} · {{count}} perangkat",
+      "memberHow_other": "{{role}} · {{count}} perangkat ({{methods}})",
+      "memberUnfinished": "{{role}} · belum selesai diatur",
+      "signInPasskey": "kunci layar",
+      "signInPassword": "kata sandi"
     },
     "pause": {
       "title": "Jeda dapur ini",

@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { RELEASE_VERSION } from '../../shared/release';
+import { versionLabel } from '../../shared/release';
 import { AdminHomeScreen, registerAdminI18n } from '../features/admin';
 import { initI18n } from '../i18n/init';
 import { brandColour } from '../theme/brandTokens';
@@ -31,7 +31,7 @@ describe('the admin page frame (plan 038)', () => {
     expect(screen.getByRole('img', { name: 'ShaggyBobo' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Admin' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
-    expect(screen.getByText(`v${RELEASE_VERSION}`)).toBeInTheDocument();
+    expect(screen.getByText(`v${versionLabel()}`)).toBeInTheDocument();
   });
 
   it('shows the unselected language option in the brand ink on the beige bar', () => {

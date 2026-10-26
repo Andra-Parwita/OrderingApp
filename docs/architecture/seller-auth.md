@@ -25,6 +25,8 @@ What each role may call is in [api.md](api.md#role-limits).
 6. **Password sign-in.** Open the kitchen's sign-in page, pick your name from the team list (`GET /api/s/:slug/team-names`), type the password. Passkey sign-in works from anywhere.
 7. **Recovery.** If every device is lost, the owner re-invites the person; the admin re-invites an owner. There is no email or self-service reset (D-090).
 8. **Pausing.** The admin can close a kitchen to customers, or pause it fully, which deletes its sessions and blocks every key, code and sign-in (`kitchen_paused`, D-086).
+   - **Switch person** (plan 125): shown only on a tablet's left rail, only when `/api/auth/me` says the kitchen has more than one **person** (an account with a membership in it, any role; one person with a tablet and a phone is one person), and it asks for a second tap ("Tap again to switch person") with the hint that the screen lock or password is needed to sign in again. The phone's More screen never has it.
+   - **Sign out** asks twice: the phone's More "Sign out", the Devices "Sign out of this device", and for another device "Remove device" (then "Tap again to remove"; that device needs a new 6-digit code to come back). Devices and the admin's People list show how each device signs in (screen lock or password) and flag an account that never finished setting up.
 9. **Protection.** State-changing calls check `Origin`; sign-in requests are limited to 30 a minute per browser id; 5 wrong tries lock a key or person for 15 minutes; WebAuthn challenges last 5 minutes and work once; the live socket opens only with a valid session; limiters keep a hash of an address, never the address.
 
 | number | value | constant |

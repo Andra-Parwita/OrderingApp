@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { RELEASE_VERSION } from '../../../shared/release';
+import { versionLabel } from '../../../shared/release';
 import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { AboutScreen } from './AboutScreen';
@@ -35,7 +35,10 @@ afterEach(() => {
   destroy.mockClear();
 });
 
-function setUp() {
+function setUp(
+  check: () => Promise<'newer' | 'same' | 'error'> = () => Promise.resolve('same'),
+  reload: () => void = () => undefined,
+) {
   const listeners: Record<string, () => void> = {};
   const goToAndStop = vi.fn();
   loadAnimation.mockReturnValue({
@@ -48,7 +51,12 @@ function setUp() {
   const view = render(
     <AppThemeProvider>
       <MemoryRouter>
-        <AboutScreen logo={<span>logo</span>} wideQuery="(min-width: 600px)" />
+        <AboutScreen
+          logo={<span>logo</span>}
+          wideQuery="(min-width: 600px)"
+          check={check}
+          reload={reload}
+        />
       </MemoryRouter>
     </AppThemeProvider>,
   );
@@ -85,10 +93,47 @@ describe('AboutScreen', () => {
     expect(screen.getByTestId('about-mascot')).toBeInTheDocument();
   });
 
-  it('names the release number only', () => {
+  it('names the version with the hotfix number only', () => {
     setUp();
-    expect(screen.getByText(`Release ${RELEASE_VERSION}`)).toBeInTheDocument();
+    expect(screen.getByText(`Version ${versionLabel()}`)).toBeInTheDocument();
     expect(screen.queryByText(/build/)).toBeNull();
+  });
+
+  describe('check for update (plan 125)', () => {
+    it('checks when it opens and says the newest version is in use', async () => {
+      const check = vi.fn(() => Promise.resolve('same' as const));
+      setUp(check);
+      expect(screen.getByRole('status')).toHaveTextContent('Checking…');
+      expect(screen.getByRole('button', { name: 'Check for update' })).toBeDisabled();
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent('You have the newest version'),
+      );
+      expect(check).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: 'Check for update' })).toBeEnabled();
+    });
+
+    it('reloads when a newer version is out', async () => {
+      const reload = vi.fn();
+      setUp(() => Promise.resolve('newer'), reload);
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Updating…'));
+      expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('says it could not check, and the button checks again', async () => {
+      const check = vi
+        .fn<() => Promise<'newer' | 'same' | 'error'>>()
+        .mockResolvedValueOnce('error')
+        .mockResolvedValueOnce('same');
+      setUp(check);
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent('Could not check. Try again later.'),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Check for update' }));
+      await waitFor(() =>
+        expect(screen.getByRole('status')).toHaveTextContent('You have the newest version'),
+      );
+      expect(check).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('opens the releases panel (current release open) and closes it with Escape', () => {
@@ -114,7 +159,12 @@ describe('AboutScreen', () => {
         <MemoryRouter
           initialEntries={[{ pathname: '/seller/about', state: { showReleases: true } }]}
         >
-          <AboutScreen logo={<span>logo</span>} wideQuery="(min-width: 600px)" />
+          <AboutScreen
+            logo={<span>logo</span>}
+            wideQuery="(min-width: 600px)"
+            check={() => Promise.resolve('same')}
+            reload={() => undefined}
+          />
         </MemoryRouter>
       </AppThemeProvider>,
     );

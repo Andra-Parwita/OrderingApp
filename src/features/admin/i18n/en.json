@@ -117,7 +117,12 @@
       "remove": "Remove",
       "removeConfirm": "Tap again to remove",
       "memberLine_other": "{{role}} · {{count}} devices",
-      "memberLine_one": "{{role}} · {{count}} device"
+      "memberLine_one": "{{role}} · {{count}} device",
+      "memberHow_one": "{{role}} · {{count}} device ({{methods}})",
+      "memberHow_other": "{{role}} · {{count}} devices ({{methods}})",
+      "memberUnfinished": "{{role}} · never finished setting up",
+      "signInPasskey": "screen lock",
+      "signInPassword": "password"
     },
     "pause": {
       "title": "Pause this kitchen",

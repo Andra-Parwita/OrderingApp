@@ -21,7 +21,7 @@ test('About opens from the menu, shows the card, and the releases panel opens an
   await expect(page).toHaveURL(/\/seller\/about$/);
   await expect(page.getByRole('heading', { level: 1, name: 'About' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Hey, we're ShaggyBobo/ })).toBeVisible();
-  await expect(page.getByText(/^Release \d/)).toBeVisible();
+  await expect(page.getByText(/^Version \d/)).toBeVisible();
 
   // The releases panel: current release open, Escape closes, focus returns to the button.
   const open = page.getByRole('button', { name: "What's new", exact: true });

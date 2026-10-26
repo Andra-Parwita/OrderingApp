@@ -191,7 +191,7 @@ describe('DeviceCodeScreen', () => {
   });
 });
 
-const FACE = /^Face or fingerprint/;
+const FACE = /^Screen lock/;
 const SET_PASSWORD = /^Set a password/;
 
 describe('PasskeyHelpScreen (Create)', () => {
@@ -285,7 +285,7 @@ describe('add a device when the account already has a login (plan 025)', () => {
     renderScreen(<PasskeyHelpScreen setup={setup} onDone={onDone} onUsePassword={vi.fn()} />);
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Add a new passkey/ })).toBeInTheDocument();
-    press(/^Sign in with face or fingerprint/);
+    press(/^Sign in with your screen lock/);
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
     expect(onDone.mock.calls[0]?.[0]).toMatchObject({ role: 'seller', stage: 'full' });
   });
@@ -312,7 +312,7 @@ describe('add a device when the account already has a login (plan 025)', () => {
     renderScreen(
       <PasskeyHelpScreen setup={started.data.me} onDone={onDone} onUsePassword={vi.fn()} />,
     );
-    press(/^Sign in with face or fingerprint/);
+    press(/^Sign in with your screen lock/);
     expect(
       await screen.findByText(
         'That passkey belongs to a different account. Pick the passkey for this kitchen.',
@@ -329,7 +329,7 @@ describe('add a device when the account already has a login (plan 025)', () => {
       <PasskeyHelpScreen setup={setup} onDone={vi.fn()} onUsePassword={onUsePassword} />,
     );
     expect(screen.queryByRole('button', { name: SET_PASSWORD })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^Sign in with face or fingerprint/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Sign in with your screen lock/ })).toBeNull();
     press(/^Use your password/);
     expect(onUsePassword).toHaveBeenCalled();
   });
@@ -412,7 +412,7 @@ describe('PasswordSetupScreen', () => {
   it('tells the person a passkey can come later', () => {
     renderScreen(<PasswordSetupScreen onDone={vi.fn()} />);
     expect(
-      screen.getByText('You can switch to face or fingerprint later from a newer device.'),
+      screen.getByText('You can switch to screen lock later from a newer device.'),
     ).toBeInTheDocument();
   });
 });
@@ -426,7 +426,7 @@ describe('SignInScreen', () => {
       <SignInScreen slug="dapur-demo" kitchenName="Dapur Demo" onSignedIn={onSignedIn} />,
     );
     expect(screen.getByText('Lost access? Ask the owner for a new invite.')).toBeInTheDocument();
-    press('Sign in with face or fingerprint');
+    press('Sign in with your screen lock');
     await waitFor(() => expect(onSignedIn).toHaveBeenCalledTimes(1));
     expect(sessionCookie()).toBeTruthy();
   });
@@ -473,13 +473,13 @@ describe('SignInScreen', () => {
     press('Back');
     expect(screen.getByText('First time on this device? Use your invite key')).toBeInTheDocument();
     expect(screen.getByText('Lost access? Ask the owner for a new invite.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign in with face or fingerprint' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Sign in with your screen lock' })).toBeEnabled();
     expect(screen.queryByText(/The passkey prompt was closed/)).not.toBeInTheDocument();
   });
 
   it('opens the password box when the browser has no passkey to offer', async () => {
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
-    press('Sign in with face or fingerprint');
+    press('Sign in with your screen lock');
     expect(await screen.findByText(/The passkey prompt was closed/)).toBeInTheDocument();
     expect(screen.getByText(/Nobody in this kitchen uses a password/)).toBeInTheDocument();
   });
@@ -490,7 +490,7 @@ describe('SignInScreen', () => {
     localStorage.clear();
     const onSignedIn = vi.fn();
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={onSignedIn} />);
-    press('Sign in with face or fingerprint');
+    press('Sign in with your screen lock');
     await waitFor(() => expect(onSignedIn).toHaveBeenCalledTimes(1));
     await signOut();
 
@@ -499,7 +499,7 @@ describe('SignInScreen', () => {
     await signOut();
     localStorage.removeItem('passkeyCredential.staff'); // no hint: the browser offers all, newest first
     onSignedIn.mockClear();
-    press('Sign in with face or fingerprint');
+    press('Sign in with your screen lock');
     expect(await screen.findByText(/belongs to the admin/)).toBeInTheDocument();
     expect(onSignedIn).not.toHaveBeenCalled();
     expect(sessionCookie()).toBeNull();
@@ -512,7 +512,7 @@ describe('SignInScreen', () => {
     vi.stubGlobal('location', { ...window.location, hostname: '192.168.1.20' });
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
     expect(
-      screen.queryByRole('button', { name: 'Sign in with face or fingerprint' }),
+      screen.queryByRole('button', { name: 'Sign in with your screen lock' }),
     ).not.toBeInTheDocument();
     expect(screen.getByText(/does not work on this web address/)).toBeInTheDocument();
     expect(await screen.findByLabelText('Who are you?')).toHaveDisplayValue('Bu Ani');
@@ -524,7 +524,7 @@ describe('SignInScreen', () => {
     await signOut();
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
     browserPasskeys.failNext('cancel');
-    press('Sign in with face or fingerprint');
+    press('Sign in with your screen lock');
     expect(
       await screen.findByText('The passkey prompt was closed. Try again, or use a password.'),
     ).toBeInTheDocument();
@@ -635,7 +635,7 @@ describe('DevicesScreen', () => {
     renderScreen(<DevicesScreen onSignedOut={vi.fn()} />);
     expect(await screen.findByText('Phone A')).toBeInTheDocument();
     expect(screen.getByText('Laptop B')).toBeInTheDocument();
-    expect(screen.getByText('Active now')).toBeInTheDocument();
+    expect(screen.getByText(/^Active now/)).toBeInTheDocument();
     expect(screen.getByText(/^Last used /)).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Rename' })[0] as HTMLElement);
@@ -657,14 +657,19 @@ describe('DevicesScreen', () => {
     expect(await screen.findByRole('button', { name: 'Join another kitchen' })).toBeInTheDocument();
   });
 
-  it('signs another device out on the second tap', async () => {
+  it('removes another device on the second tap, says how each signs in, and warns what happens', async () => {
     await signInAsSeller('password', 'Phone A');
     await otherDevice('Laptop B');
     renderScreen(<DevicesScreen onSignedOut={vi.fn()} />);
     await screen.findByText('Laptop B');
-    press('Sign out');
+    expect(screen.getByText(/^Active now · Password$/)).toBeInTheDocument();
+    expect(screen.getAllByText(/· Password$/)).toHaveLength(2);
+    expect(
+      screen.getByText('This device will be signed out and needs a new 6-digit code to come back.'),
+    ).toBeInTheDocument();
+    press('Remove device');
     expect(screen.getByText('Laptop B')).toBeInTheDocument();
-    press('Tap again to sign out');
+    press('Tap again to remove');
     await waitFor(() => expect(screen.queryByText('Laptop B')).not.toBeInTheDocument());
     expect(screen.getByText('No other devices yet.')).toBeInTheDocument();
   });
@@ -673,7 +678,7 @@ describe('DevicesScreen', () => {
     await signInAsSeller('password');
     const onSignedOut = vi.fn();
     renderScreen(<DevicesScreen onSignedOut={onSignedOut} />);
-    await screen.findByText('Active now');
+    await screen.findByText(/^Active now/);
     press('Sign out of this device');
     expect(onSignedOut).not.toHaveBeenCalled();
     press('Tap again to sign out');
@@ -685,7 +690,7 @@ describe('DevicesScreen', () => {
     vi.useFakeTimers({ toFake: ['Date'], now: MOCK_NOW });
     await signInAsSeller('password');
     renderScreen(<DevicesScreen onSignedOut={vi.fn()} />);
-    await screen.findByText('Active now');
+    await screen.findByText(/^Active now/);
     press('Add a device');
     const code = await screen.findByLabelText('Your code');
     expect(code.textContent).toMatch(/^\d{6}$/);
@@ -744,12 +749,10 @@ describe('Indonesian', () => {
       <PasskeyHelpScreen name="Sari" onDone={vi.fn()} onUsePassword={vi.fn()} />,
     );
     expect(screen.getByRole('heading', { name: 'Selamat datang, Sari' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^Wajah atau sidik jari/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Kunci layar/ })).toBeInTheDocument();
     view.unmount();
     renderScreen(<SignInScreen slug="dapur-demo" onSignedIn={vi.fn()} />);
-    expect(
-      screen.getByRole('button', { name: 'Masuk dengan wajah atau sidik jari' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Masuk dengan kunci layar' })).toBeInTheDocument();
   });
 });
 

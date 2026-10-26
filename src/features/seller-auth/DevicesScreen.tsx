@@ -141,6 +141,9 @@ function DeviceRow({ device, onChanged, onError }: RowProps) {
         {device.current
           ? t('devices.activeNow')
           : t('devices.lastUsed', { when: whenText(device.lastUsedAt, i18n.language) })}
+        {device.signIn
+          ? ` · ${t(device.signIn === 'passkey' ? 'devices.signInPasskey' : 'devices.signInPassword')}`
+          : ''}
       </Hint>
       <Actions>
         <Button onClick={() => setName(device.name)}>{t('devices.rename')}</Button>
@@ -152,6 +155,7 @@ function DeviceRow({ device, onChanged, onError }: RowProps) {
           />
         )}
       </Actions>
+      {device.current ? null : <Hint>{t('devices.signOutDeviceHint')}</Hint>}
     </Item>
   );
 }

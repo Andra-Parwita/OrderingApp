@@ -664,6 +664,44 @@ describe('sign-in', () => {
         'Kitchen phone',
         'Tablet',
       ]);
+      // Plan 125: each device says how it signs in.
+      const how = Object.fromEntries(
+        (devices?.devices ?? []).map((device) => [device.name, device.signIn]),
+      );
+      expect(how).toEqual({ 'Kitchen phone': 'password', Tablet: 'passkey' });
+    });
+  });
+
+  describe('people of a kitchen (plan 125)', () => {
+    it('tells a full session how many people the kitchen has, and the admin who signs in how', async () => {
+      const { admin, full } = await sellerSignedIn(A_ID);
+      const meOf = async (login: Login) =>
+        parseMeResponse((await call('GET', '/api/auth/me', login)).body)?.me;
+      expect((await meOf(full))?.people).toBe(1);
+      // A second person joins by a key and finishes with a password; an unfinished third waits.
+      const second = key(await call('POST', `/api/admin/sellers/${A_ID}/invite-key`, admin));
+      const setup = session(
+        await call('POST', '/api/auth/invite', { body: { key: second.key, deviceId: DEVICE } }),
+      );
+      expect((await meOf(setup))?.people).toBeUndefined(); // a setup session has no count
+      await call('POST', '/api/auth/register', {
+        token: setup.token,
+        body: { kind: 'password', password: 'another long password', deviceName: 'Tablet' },
+      });
+      const third = key(await call('POST', `/api/admin/sellers/${A_ID}/invite-key`, admin));
+      await call('POST', '/api/auth/invite', {
+        body: { key: third.key, deviceId: 'device-cccc-0003' },
+      });
+      expect((await meOf(full))?.people).toBe(3);
+
+      const members = parseMembersResponse(
+        (await call('GET', `/api/admin/sellers/${A_ID}/members`, admin)).body,
+      )?.members;
+      expect(members?.map((m) => [m.devices, m.passkeys, m.unfinished])).toEqual([
+        [1, 0, undefined],
+        [1, 0, undefined],
+        [0, 0, true],
+      ]);
     });
   });
 

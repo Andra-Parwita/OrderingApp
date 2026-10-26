@@ -7,6 +7,7 @@ import { reloadOnPreloadError } from './updateCheck';
 
 export { UpdateBar } from './UpdateBar';
 export { registerUpdateI18n } from './i18n/register';
+export { checkForUpdateNow } from './updateCheck';
 
 /** Plan 059: mounts the "new version" bar in its own root and reloads once on a stale-chunk error. */
 export function mountUpdateBar(): void {

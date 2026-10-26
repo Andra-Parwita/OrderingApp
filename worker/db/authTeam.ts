@@ -76,9 +76,11 @@ export function teamPart(
         chef_name: string | null;
         created_at: string;
         devices: number;
+        passkeys: number;
       }>(
         `SELECT a.id, a.display_name, m.role, m.chef_id, c.name AS chef_name, m.created_at,
-           (SELECT COUNT(*) FROM devices d WHERE d.account_id = a.id) AS devices
+           (SELECT COUNT(*) FROM devices d WHERE d.account_id = a.id) AS devices,
+           (SELECT COUNT(*) FROM devices d WHERE d.account_id = a.id AND d.credential_id IS NOT NULL) AS passkeys
          FROM memberships m JOIN accounts a ON a.id = m.account_id
          LEFT JOIN chefs c ON c.seller_id = m.seller_id AND c.id = m.chef_id
          WHERE m.seller_id = ? ORDER BY m.created_at, m.rowid`,
@@ -91,6 +93,8 @@ export function teamPart(
         ...(row.chef_id ? { chefId: row.chef_id } : {}),
         ...(row.chef_name ? { chefName: row.chef_name } : {}),
         devices: row.devices,
+        passkeys: row.passkeys,
+        ...(row.devices === 0 ? { unfinished: true as const } : {}),
         createdAt: row.created_at,
         ...(row.id === youAccountId ? { you: true as const } : {}),
       }));
