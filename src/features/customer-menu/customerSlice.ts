@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { ApiFailure } from '../../api/http';
+import { deliveryPlan } from '../../../shared/deliveryDays';
 import type { DeliveryAddress } from '../../../shared/address';
 import type { Fulfilment, Language, CustomerOrder, LocalText } from '../../../shared/domain';
 import { MAX_QTY, NOTE_MAX } from '../../../shared/limits';
@@ -55,6 +56,8 @@ export type CheckoutState = {
   note: string | null;
   /** Plan 071: the delivery address typed (or chosen) at checkout; null = none typed yet. */
   address: DeliveryAddress | null;
+  /** Plan 126: the delivery day chosen when it is not the cooking day; null = the cooking day. */
+  handoverDate: string | null;
 };
 
 /** A basket line the new stock could not cover: it was removed (`sold_out`) or lowered (`fewer`). */
@@ -93,6 +96,8 @@ export type PlaceRequest = {
   pickupPlaceId?: string;
   /** Plan 071: a complete delivery address, only for a delivery order. */
   address?: DeliveryAddress;
+  /** Plan 126: the delivery day, only when it is not the cooking day. */
+  handoverDate?: string;
 };
 
 export type UpdateRequest = {
@@ -108,6 +113,7 @@ const emptyCheckout: CheckoutState = {
   firstName: '',
   note: null,
   address: null,
+  handoverDate: null,
 };
 
 const initialState: CustomerState = {
@@ -242,6 +248,12 @@ const customerSlice = createSlice({
         firstName: state.checkout.firstName !== '' ? state.checkout.firstName : saved.firstName,
         note: state.checkout.note ?? saved.note,
         address: state.checkout.address ?? saved.address ?? null,
+        // Plan 126: a saved day counts only while the menu still offers it.
+        handoverDate:
+          saved.handoverDate != null &&
+          deliveryPlan(data.week.cookingDate, data.week.delivery).days.includes(saved.handoverDate)
+            ? saved.handoverDate
+            : null,
       };
       if (notices.length > 0) state.notices = notices;
     },

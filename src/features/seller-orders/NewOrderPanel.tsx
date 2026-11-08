@@ -26,6 +26,7 @@ import { useLang } from './orderText';
 import { pickableItems } from './pickItems';
 import { useOrderDraft, type YesNo } from './useOrderDraft';
 import { openOrderLink } from './whatsappLink';
+import { NewOrderDayRow, newOrderDays } from './NewOrderDayRow';
 import { selectCreate, selectCurrent, selectMenu } from './sellerOrdersSelectors';
 import { createOrderRequested, createReset, menuRequested } from './sellerOrdersSlice';
 
@@ -36,6 +37,9 @@ const Form = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xl};
+  /* The panel body has no padding of its own: same inner padding as the order detail panel. */
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadTablet}px
+    ${({ theme }) => theme.size.pagePadTablet}px;
 `;
 const Total = styled(Row)`
   border-bottom: 0;
@@ -81,6 +85,11 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
   const view = current.status === 'ready' ? current.view : null;
   const places = view?.pickupPoints ?? [];
   const deliveryOn = view?.menu.delivery.available === true;
+  // Plan 126: the delivery day (null = the menu's default), only when the menu has more than the event day.
+  const [pickedDay, setPickedDay] = useState<string | null>(null);
+  const offered = newOrderDays(view?.menu.cookingDate, view?.menu.delivery, how === 'delivery');
+  const dayValue =
+    pickedDay !== null && offered.days.includes(pickedDay) ? pickedDay : offered.defaultDay;
   const items = useMemo(() => (menu.status === 'ready' ? pickableItems(menu.items) : []), [menu]);
   const { lineNotes } = form.values;
   const lines = useMemo(
@@ -143,6 +152,9 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
           language: customerLang,
           lines,
           fulfilment,
+          ...(offered.days.length > 0 && dayValue !== offered.defaultDay
+            ? { handoverDate: dayValue }
+            : {}),
           ...(placeId ? { pickupPlaceId: placeId } : {}),
           ...(trimmedNote !== '' ? { note: trimmedNote } : {}),
           confirmNow: confirmNow === 'yes',
@@ -150,7 +162,20 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
         }),
       );
     },
-    [dispatch, nameMissing, noItems, how, note, firstName, customerLang, lines, confirmNow, paid],
+    [
+      dispatch,
+      nameMissing,
+      noItems,
+      how,
+      note,
+      firstName,
+      customerLang,
+      lines,
+      confirmNow,
+      paid,
+      offered,
+      dayValue,
+    ],
   );
   const onSend = useCallback(() => submit(true), [submit]);
   const onOnly = useCallback(() => submit(false), [submit]);
@@ -265,6 +290,14 @@ export function NewOrderPanel({ onClose }: NewOrderPanelProps) {
             {deliveryOn ? <option value="delivery">{t('fulfilment.delivery')}</option> : null}
           </Select>
         </Field>
+        {offered.days.length > 0 ? (
+          <NewOrderDayRow
+            days={offered.days}
+            value={dayValue}
+            lang={lang}
+            onChange={setPickedDay}
+          />
+        ) : null}
         <NoteField value={note} onChange={setNote} />
         <Field>
           <Row>

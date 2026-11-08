@@ -131,9 +131,15 @@ export function orderEditedPushBody(language: Language, code: string, kitchen: s
 /** The sentence the customer gets, in the order's language. Delivery never names the street (D-105: the inbox text outlives the address). */
 export function fulfilmentChangedText(
   language: Language,
-  to: { delivery: true } | { pickup: string; times: string },
+  to: { delivery: true; day?: string } | { pickup: string; times: string },
 ): string {
   if ('delivery' in to) {
+    // Plan 126: only the delivery day changed: name the new day (already written in the order's language).
+    if (to.day) {
+      return language === 'id'
+        ? `Hari antar pesananmu sekarang ${to.day}.`
+        : `Your delivery day is now ${to.day}.`;
+    }
     return language === 'id' ? 'Pesananmu sekarang diantar.' : 'Your order is now for delivery.';
   }
   return language === 'id'

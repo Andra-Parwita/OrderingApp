@@ -1,5 +1,6 @@
 // Shared pieces of one seller's repository: the dependencies, result helpers, the reads and the
 // order rules every group uses (split out of seller.ts, plan 098 C3; the code is unchanged).
+import { deliveryPlan } from '../../shared/deliveryDays';
 import type { ApiErrorCode } from '../../shared/apiError';
 import { diffOrder } from '../../shared/auditDiff';
 import type {
@@ -460,6 +461,9 @@ export function createSellerContext(deps: Deps, seller: Seller) {
       language: input.language,
       lines,
       fulfilment: input.fulfilment,
+      ...(input.fulfilment === 'delivery' && input.handoverDate !== undefined
+        ? { handoverDate: input.handoverDate }
+        : {}),
       ...(input.note !== undefined ? { note: input.note } : {}),
       status,
       paid: extra.paid ?? false,
@@ -515,13 +519,40 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     ) {
       return fail('invalid_request', 'Unknown pickup place');
     }
+    // Plan 126: a chosen delivery day must be one of the menu's delivery days (delivery orders only).
+    if (input.handoverDate !== undefined) {
+      if (
+        input.fulfilment !== 'delivery' ||
+        !s.week.delivery.available ||
+        !deliveryPlan(s.week.cookingDate, s.week.delivery).days.includes(input.handoverDate)
+      ) {
+        return fail('invalid_request', 'That delivery day is not offered');
+      }
+    }
     const over: OverLimit = !enteredBy ? 'refuse' : extra.force === true ? 'allow' : 'warn';
     const lines = buildLines(s, input.lines, [], over);
     if (!lines.ok) return lines;
     const id = deps.newId();
     const code = await uniqueCode(deps.newCode);
     const token = deps.newToken();
-    const built = buildOrder(input, lines.value, by, enteredBy, { id, code, token }, extra);
+    // Plan 126: no day sent = the menu's default day; NULL (absent) only means the cooking day.
+    const plan = deliveryPlan(s.week.cookingDate, s.week.delivery);
+    const day =
+      input.fulfilment === 'delivery' && s.week.delivery.available
+        ? (input.handoverDate ?? plan.defaultDay)
+        : undefined;
+    const built = buildOrder(
+      {
+        ...input,
+        ...(day !== undefined && day !== s.week.cookingDate ? { handoverDate: day } : {}),
+      },
+      lines.value,
+      by,
+      enteredBy,
+      { id, code, token },
+      extra,
+    );
+    if (day === s.week.cookingDate) delete built.handoverDate;
     // Plan 056: a one-language kitchen's orders (and so its push and WhatsApp texts) use it.
     const only = s.settings.languages;
     const order = only === 'en' || only === 'id' ? { ...built, language: only } : built;
@@ -594,7 +625,10 @@ export function createSellerContext(deps: Deps, seller: Seller) {
       if (!lines.ok) return lines;
       next = { ...next, lines: lines.value };
     }
-    if (patch.fulfilment) next = { ...next, fulfilment: patch.fulfilment };
+    if (patch.fulfilment) {
+      next = { ...next, fulfilment: patch.fulfilment };
+      if (patch.fulfilment === 'pickup') delete next.handoverDate;
+    }
     if (patch.note !== undefined) {
       next = { ...next };
       if (patch.note === '') delete next.note;

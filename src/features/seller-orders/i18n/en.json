@@ -166,7 +166,8 @@
     "send": "Send order link on WhatsApp",
     "done": "Done",
     "status": "Starts as {{status}}",
-    "addLineNote": "Add a note"
+    "addLineNote": "Add a note",
+    "deliveryDay": "Delivery day"
   },
   "linkMsg": "Hi {{name}}, here is your order {{code}}: {{items}}. Total {{total}}. {{how}}. Track it and get updates here: {{link}}",
   "attention": {

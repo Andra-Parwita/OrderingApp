@@ -28,6 +28,10 @@ import {
 } from '../../../shared/zone';
 import { ErrorText, GroupLabel, Muted, useOpWatch, useRunOp } from './menuShared';
 import type { MenuData } from './menuSlice';
+import { PlaceEditor, TIME, type PlaceDraft } from './PlaceEditor';
+import { DeliveryDaysField, type DaysChange } from './DeliveryDaysField';
+import { buildDelivery, deliveryForMovedDay, lastOpenDay } from './deliveryDaysModel';
+import { KeepOpenRow } from './KeepOpenRow';
 
 // Step 2 and the Details tab: when, delivery, pickup places and the menu picture. Everything is
 // saved as it changes, so there is no Save button (and no Back that loses input).
@@ -45,14 +49,14 @@ const HowRow = styled.div`
     font-size: 1.0625rem;
   }
 `;
+// Two columns (When + delivery | Pickup places) and the picture as a full-width row under them; one
+// column on a narrow screen (a tablet held upright). Plan 126: the layer is wider, so nothing is squeezed.
 const Columns = styled.div`
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-height: 0;
 
-  @media (max-width: 62.5rem) {
-    grid-auto-flow: row;
+  @media (max-width: 60rem) {
     grid-template-columns: minmax(0, 1fr);
   }
 `;
@@ -91,10 +95,31 @@ const Col = styled.section`
   & + & {
     border-left: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   }
+  @media (max-width: 60rem) {
+    & + & {
+      border-left: 0;
+      border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+    }
+  }
   h2 {
     margin: 0;
     font-size: 1.0625rem;
   }
+`;
+/** The menu picture: a full-width row under the columns, its content kept to a sensible width. */
+const PictureCol = styled(Col)`
+  grid-column: 1 / -1;
+  border-left: 0;
+  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+
+  > * {
+    max-width: 36rem;
+  }
+`;
+const Stack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 const Two = styled.div`
   display: grid;
@@ -115,15 +140,21 @@ const Head = styled.div`
 `;
 const PlaceRow = styled.div`
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto 2.75rem;
+  grid-template-columns: 2rem minmax(0, 1fr) max-content 2.75rem;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.sm} 0;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   font-variant-numeric: tabular-nums;
 
-  strong {
-    display: block;
+  /* Name and directions stack on the left; the time (never wrapped) sits on the right. */
+  > span:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  > span:nth-child(3) {
+    white-space: nowrap;
   }
 `;
 const Tick = styled.input`
@@ -141,14 +172,6 @@ const Pencil = styled.button`
   background: transparent;
   color: ${({ theme }) => theme.c.muted};
   cursor: pointer;
-`;
-const Inline = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.size.radiusControl}px;
-  background: ${({ theme }) => theme.c.surf2};
 `;
 const Override = styled.div`
   display: flex;
@@ -221,95 +244,12 @@ function SyncedField({
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function daysBetween(from: string, to: string): number {
   return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 }
 
 type HowChoice = 'pickup' | 'delivery' | 'both';
-
-type PlaceDraft = {
-  id: string | null;
-  place: string;
-  start: string;
-  end: string;
-  en: string;
-  id_: string;
-};
-
-function PlaceEditor({
-  draft,
-  onChange,
-  onCancel,
-  onSave,
-  onDelete,
-}: Readonly<{
-  draft: PlaceDraft;
-  onChange: (next: PlaceDraft) => void;
-  onCancel: () => void;
-  onSave: () => void;
-  onDelete?: () => void;
-}>) {
-  const { t } = useTranslation(MENU_NS);
-  const valid = draft.place.trim() !== '' && TIME.test(draft.start) && TIME.test(draft.end);
-  return (
-    <Inline>
-      <Two>
-        <TextField
-          label={t('details.placeName')}
-          value={draft.place}
-          maxLength={80}
-          onChange={(event) => onChange({ ...draft, place: event.target.value })}
-        />
-        <Two>
-          <TextField
-            label={t('details.from')}
-            type="time"
-            value={draft.start}
-            onChange={(event) => onChange({ ...draft, start: event.target.value })}
-          />
-          <TextField
-            label={t('details.to')}
-            type="time"
-            value={draft.end}
-            onChange={(event) => onChange({ ...draft, end: event.target.value })}
-          />
-        </Two>
-      </Two>
-      <Two>
-        <TextField
-          label={t('details.directionsEn')}
-          value={draft.en}
-          maxLength={200}
-          onChange={(event) => onChange({ ...draft, en: event.target.value })}
-        />
-        <TextField
-          label={t('details.directionsId')}
-          value={draft.id_}
-          maxLength={200}
-          onChange={(event) => onChange({ ...draft, id_: event.target.value })}
-        />
-      </Two>
-      <Head>
-        {onDelete ? (
-          <Button variant="destructive" onClick={onDelete}>
-            {t('details.deletePlace')}
-          </Button>
-        ) : (
-          <span />
-        )}
-        <Actions>
-          <Button onClick={onCancel}>{t('cancel')}</Button>
-          <Button variant="primary" disabled={!valid} onClick={onSave}>
-            {t('details.savePlace')}
-          </Button>
-        </Actions>
-      </Head>
-      <Muted>{t('details.placeSaved')}</Muted>
-    </Inline>
-  );
-}
 
 export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Language }>) {
   const { t } = useTranslation(MENU_NS);
@@ -345,6 +285,10 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
   const [placeError, setPlaceError] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
   const days = daysBetween(cutoff.date, menu.cookingDate);
+  // Plan 126: the delivery days and the finish time live in deliveryDaysModel.ts.
+  const keepOpen = menu.finishExtraDay === true;
+  const deliveryWith = (available: boolean, next?: DaysChange) =>
+    buildDelivery(menu, note, available, next);
 
   useOpWatch(['createPlace', 'updatePlace', 'deletePlace'], {
     onDone: () => {
@@ -370,7 +314,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
   const saveNote = () => {
     run({
       kind: 'updateMenu',
-      request: { delivery: { available: menu.delivery.available, note } },
+      request: { delivery: deliveryWith(menu.delivery.available) },
     });
     noteDraft.clear();
   };
@@ -383,7 +327,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
     setPicked(next);
     const available = next !== 'pickup';
     if (available !== menu.delivery.available) {
-      run({ kind: 'updateMenu', request: { delivery: { available, note } } });
+      run({ kind: 'updateMenu', request: { delivery: deliveryWith(available) } });
     }
   };
   const confirmRemove = () => {
@@ -391,7 +335,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
     setPicked('delivery');
     run({
       kind: 'updateMenu',
-      request: { places: [], delivery: { available: true, note } },
+      request: { places: [], delivery: deliveryWith(true) },
     });
   };
   const howOptions: ReadonlyArray<SegmentedOption<HowChoice>> = [
@@ -483,7 +427,14 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
             value={menu.cookingDate}
             helper={t('details.cookingHelper')}
             valid={(next) => DATE.test(next)}
-            onCommit={(next) => run({ kind: 'updateMenu', request: { cookingDate: next } })}
+            onCommit={(next) => {
+              // Days that fall out of range for the new cooking day are dropped with it.
+              const delivery = deliveryForMovedDay(menu, note, next);
+              run({
+                kind: 'updateMenu',
+                request: { cookingDate: next, ...(delivery ? { delivery } : {}) },
+              });
+            }}
           />
           <Two>
             <SyncedField
@@ -504,12 +455,19 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
           <Muted>
             {days >= 0 ? t('details.cutoffHelper', { count: days }) : t('details.cutoffAfter')}
           </Muted>
+          <KeepOpenRow
+            on={keepOpen}
+            busy={busy}
+            lastDay={lastOpenDay(menu)}
+            lang={lang}
+            onToggle={() => run({ kind: 'updateMenu', request: { finishExtraDay: !keepOpen } })}
+          />
           {how === 'pickup' ? null : (
             <>
               <Divider />
               <h2>{t('details.delivery')}</h2>
               <GroupLabel>{t('details.noteFor')}</GroupLabel>
-              <Two>
+              <Stack>
                 <TextArea
                   label={t('dish.english')}
                   value={note.en}
@@ -524,7 +482,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
                   onChange={(event) => setNote({ ...note, id: event.target.value })}
                   onBlur={saveNote}
                 />
-              </Two>
+              </Stack>
               <DraftNotice draft={noteDraft} />
               <Muted>{t('details.addressNote')}</Muted>
             </>
@@ -626,7 +584,20 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
             <Muted>{t('details.placesFoot')}</Muted>
           </Col>
         )}
-        <Col aria-label={t('details.picture.title')}>
+        {how === 'pickup' ? null : (
+          <DeliveryDaysField
+            cookingDate={menu.cookingDate}
+            delivery={menu.delivery}
+            lang={lang}
+            onChange={(next) =>
+              run({
+                kind: 'updateMenu',
+                request: { delivery: deliveryWith(menu.delivery.available, next) },
+              })
+            }
+          />
+        )}
+        <PictureCol aria-label={t('details.picture.title')}>
           <Head>
             <h2>{t('details.picture.title')}</h2>
             <Muted>{t('details.picture.optional')}</Muted>
@@ -700,7 +671,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
           ) : null}
           {pictureError ? <ErrorText role="alert">{pictureError}</ErrorText> : null}
           <Muted>{t('details.picture.foot')}</Muted>
-        </Col>
+        </PictureCol>
         {askRemove ? (
           <WarningDialog
             title={t('details.how.removeTitle')}

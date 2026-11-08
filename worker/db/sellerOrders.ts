@@ -1,4 +1,6 @@
 // Orders: the customer side and the seller and chef side (split out of seller.ts, plan 098 C3; the code is unchanged).
+import { formatCookingDate } from '../../shared/dates';
+import { deliveryPlan } from '../../shared/deliveryDays';
 import { isAddressReadable } from '../../shared/address';
 import { diffOrder, formatAuditDiff } from '../../shared/auditDiff';
 import {
@@ -287,8 +289,31 @@ export function ordersPart(
       } else if (!isAddressReadable(input.address)) {
         return fail('invalid_request', 'A delivery address needs a street');
       }
+      let newDay: string | undefined;
       const next: SellerOrder = { ...order, fulfilment: input.fulfilment };
       delete next.pickupPlaceId;
+      // Plan 126: the delivery day only belongs to a delivery order.
+      if (input.fulfilment === 'pickup') delete next.handoverDate;
+      else if (!order.private) {
+        // The day: the one sent (a menu day, or the order's own), else the order's own, else the menu's default.
+        const week = (await loadState(order.id)).week;
+        const plan = deliveryPlan(
+          week.cookingDate,
+          week.delivery.available ? week.delivery : undefined,
+        );
+        const own =
+          order.fulfilment === 'delivery' ? (order.handoverDate ?? week.cookingDate) : undefined;
+        const chosen = input.handoverDate ?? own ?? plan.defaultDay;
+        if (input.handoverDate !== undefined && chosen !== own && !plan.days.includes(chosen)) {
+          return fail('invalid_request', 'That delivery day is not offered');
+        }
+        if (chosen === week.cookingDate) delete next.handoverDate;
+        else next.handoverDate = chosen;
+        // Plan 126: an order that was already delivery and only moved day gets a message naming the day.
+        if (order.fulfilment === 'delivery' && chosen !== own) {
+          newDay = formatCookingDate(chosen, order.language);
+        }
+      }
       if (input.fulfilment === 'pickup' && input.pickupPlaceId !== undefined) {
         next.pickupPlaceId = input.pickupPlaceId;
       }
@@ -302,7 +327,9 @@ export function ordersPart(
       if (input.notify) {
         const text = fulfilmentChangedText(
           order.language,
-          place ? { pickup: place.name, times: place.times } : { delivery: true },
+          place
+            ? { pickup: place.name, times: place.times }
+            : { delivery: true, ...(newDay ? { day: newDay } : {}) },
         );
         d = addInbox(d, { kind: 'message', textKey: FULFILMENT_CHANGED_KEY, text });
       }

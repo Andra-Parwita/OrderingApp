@@ -1,3 +1,4 @@
+import { OrderDayTag } from '../../components/dayChips/OrderDayTag';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
@@ -319,6 +320,7 @@ function DeliveryRow({ order, step, lang, busy, address, onOpen, onStep }: RowPr
       <Sub>
         <span>{itemsShort(order.lines, lang)}</span>
         <StatusMark status={order.status} />
+        <OrderDayTag order={order} lang={lang} />
         {order.packed === true ? <PackedTag>{t('common.packed')}</PackedTag> : null}
       </Sub>
       {shown ? (

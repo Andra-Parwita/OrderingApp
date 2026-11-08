@@ -188,6 +188,9 @@ export function OrderPlacedView({
             {t('placed.title')}
           </h1>
           <p>{t('placed.thanks', { name: order.firstName, cook })}</p>
+          {order.fulfilment === 'delivery' && order.handoverDate ? (
+            <p>{t('placed.deliveryDay', { day: formatCookingDate(order.handoverDate, lang) })}</p>
+          ) : null}
         </Heading>
         <PickupMapLine info={pickupMap} />
         <CodeCard type="button" onClick={onShowQr} data-testid="code-card">

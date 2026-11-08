@@ -107,6 +107,8 @@ export type SellerOrder = {
   language: Language;
   lines: Array<OrderLine>;
   fulfilment: Fulfilment;
+  /** Plan 126: the delivery day the customer chose when it is not the cooking day (absent = the cooking day). */
+  handoverDate?: string;
   note?: string;
   status: OrderStatus;
   /** The seller's own reference; no payments in the app. */
@@ -181,6 +183,7 @@ export type CustomerOrder = Pick<
   | 'language'
   | 'lines'
   | 'fulfilment'
+  | 'handoverDate'
   | 'note'
   | 'status'
   | 'locked'
@@ -295,7 +298,17 @@ export type PickupPoint = {
   lng?: number;
 };
 
-export type Delivery = { available: boolean; note: LocalText };
+export type Delivery = {
+  available: boolean;
+  note: LocalText;
+  /**
+   * Plan 126: the delivery days the seller ticked (YYYY-MM-DD, sorted; 2 days before to 1 day after
+   * the cooking day, the cooking day included only while ticked). Absent = only the cooking day.
+   */
+  days?: Array<string>;
+  /** Plan 126: the day customers see selected first, one of `days`. Absent = the cooking day. */
+  defaultDay?: string;
+};
 
 export type Week = {
   /** Local date, YYYY-MM-DD. */

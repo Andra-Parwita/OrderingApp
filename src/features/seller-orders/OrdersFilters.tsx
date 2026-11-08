@@ -150,11 +150,20 @@ export const IconButton = styled.button`
     background: ${({ theme }) => theme.c.fill};
   }
 `;
+/* One row that scrolls sideways when the list is narrow (a tablet held upright with an order open). */
 export const Tabs = styled.div`
   display: flex;
   flex: none;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scrollbar-width: none;
   gap: 0 ${({ theme }) => theme.spacing.lg};
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  > * {
+    flex: none;
+  }
   padding: 0 ${({ theme }) => theme.size.pagePadTablet}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 `;

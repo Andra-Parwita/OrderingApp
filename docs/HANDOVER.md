@@ -28,6 +28,27 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 - **Checks:** two Android emulator rounds (`scratch/emu-124/`, `scratch/emu-124b/`): round 2 all 9 ✅ incl. Back in Chrome and the installed app. Gate: lint 0, format ✅, unit 3,049 ✅ (30 EADDRINUSE flakes pass with `--no-file-parallelism`), e2e 10 ✅ (order-flow, batch2-flow, banners, customer-live, multi-seller, helper-flow), docs built.
 - **Deploy impact: low.** Client only: no migration, no Worker or API change, no secret. Old seller apps keep working; the new card shows after the app updates.
 
+## 1.0.46 = plan 126, delivery on another day (built 8 Nov, ready to deploy, NOT committed)
+For DellaVee's event **Sun 15 Nov**. Plan + all owner rulings: `docs/plans/126-delivery-another-day.md`; mock-up `uxDesign/seller/mockups/126-delivery-another-day.html`.
+- **Seller (tablet, menu Details, also while live):** "Delivery days" band: 2 days before, the event day (soft blue), 1 day after; tick any; 🔒 = the default customers see first, tap it for the "Default delivery day" sheet; the event day can be unticked once another day is the default; amber warning for the day 2 before. "Keep the menu open 1 more day" switch for every menu (finish = midnight after the latest delivery day, +1 day when on).
+- **Customer:** "Delivery day" chips directly under Pickup/Delivery (default pre-selected); the day on Order placed, the order page, My orders, the checkout summary and the WhatsApp message.
+- **Seller:** day tag on orders not on the event day (rows, panel, labels, printed orders, delivery run); Pickup & delivery sorted by day; Delivery day chips in New order and the Change pickup/delivery sheet (orders keep their day if the menu's days change); phone read-only menu lists the days; share post line "Delivery also …".
+- **Tidy-ups found on the way (older than 126, fixed):** New order panel padding; wider Details layer in rows (notes stacked, pickup row grid); order rows on shared column tracks (no overlap at larger text); "Orders" title no longer clipped on phones; portrait tablet header/tabs.
+- **Migrations (add-only, before the Worker):** `0035_delivery_days.sql` (`menus.extra_delivery_days`, `orders.handover_date`), `0036_default_delivery_day.sql`, `0037_finish_extra_day.sql`. Applied locally. Old clients send no day (= default), old menus have none (= today).
+- **Version:** `RELEASE_VERSION = '1.0.46'`, `RELEASE_HOTFIX = null`; release note approved by the owner with "rentang" in the Indonesian text (8 Nov).
+- **Checks (final, 8 Nov):** typecheck, lint, format, docs ✅; unit 2,384 + server 733 ✅; 16 directed e2e runs ✅ (p126-delivery-day 7, p126-layout 20, p083, seller-menu, label-print, seller-saturday, order-flow, p071-address, p105, archived-orders, seller-batch1 + seller-batch2 on desktop and phone, batch2-flow, seller-about); Android emulator 2 rounds (Tablet_11 + Pixel_9, `scratch/emu-126/`, `scratch/emu-126b/`) ✅ with the found tidy-ups fixed; captures `scratch/cap-126/final-*`.
+- **Deploy impact: medium-low.** Three add-only migrations, applied before the Worker. A menu without delivery days behaves exactly as today.
+
+**Deploy steps 1.0.46 (owner runs them, one at a time):**
+1. Owner approves the release note text, then commit on `main` + push.
+2. Backup: `pnpm exec wrangler d1 export shaggybobo-order --remote --output backups/shaggybobo-2026-11-08.sql`
+3. `pnpm build` (version 1.0.46, no "draft")
+4. **Migrations first:** `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` (0035, 0036, 0037)
+5. `pnpm run deploy -- --tag v1.0.46 --message "1.0.46: delivery on another day"`
+6. Health: `curl https://order.shaggybobo.app/api/health`
+7. Live check: DellaVee tablet → edit the 15 Nov menu → Delivery days → tick the days → Save; customer phone → basket → Delivery → pick a day → order; seller sees the day tag and the label.
+8. Tag `v1.0.46` + push.
+
 ## Hotfix 1.0.45.1 = plan 125 (live 27 Oct 00:35, Worker `7f46d6fc`, deployed by Claude with the owner's one-time OK for this hotfix only)
 Why: Rina could not see the refresh bar (the app only checked on open), and later both her devices were signed out: she had only a forgotten password, most likely after tapping **Switch person** (one tap, no question). Back in through a recovery key (= a new owner account, D-090) and the 6-digit code; the owner removed her old accounts. Details and all rulings: `docs/plans/125-update-check-while-open.md`.
 - **Version with the hotfix number:** `RELEASE_HOTFIX = 1` in `shared/release.ts`, `versionLabel()` → "Version 1.0.45.1" in About, Settings, the tablet rail (also sign-in and admin footers) and a muted line at the bottom of the phone More screen. `RELEASE_VERSION` stays 1.0.45, so What's new does not pop again. **Next hotfix: bump `RELEASE_HOTFIX`; next release: set it back to `null`.**
@@ -80,4 +101,4 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 4. Then pick 1.0.46 from "Later", one question at a time.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.45.1 (tag v1.0.45.1, Worker 7f46d6fc). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.45.1 (tag v1.0.45.1, Worker 7f46d6fc); 1.0.46 (plan 126) is built and ready to deploy, uncommitted. Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.

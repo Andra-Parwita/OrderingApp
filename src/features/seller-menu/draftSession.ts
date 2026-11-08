@@ -10,7 +10,7 @@ import type { MenuData } from './menuSlice';
 /** The menu-level fields a session can hold (the dish list is `dishIds`). */
 export type MenuPatch = Pick<
   UpdateMenuRequest,
-  'cookingDate' | 'cutoffAt' | 'delivery' | 'takingOrders' | 'places'
+  'cookingDate' | 'cutoffAt' | 'delivery' | 'takingOrders' | 'finishExtraDay' | 'places'
 >;
 /** A change to one dish on the menu; `alsoDishId` keeps the library dish in step (name, size ...). */
 export type ItemEdit = { request: Omit<UpdateItemRequest, 'soldOut'>; alsoDishId?: string };
@@ -110,7 +110,14 @@ function isEmpty(state: SessionState): boolean {
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 
-const MENU_KEYS = ['cookingDate', 'cutoffAt', 'delivery', 'takingOrders', 'places'] as const;
+const MENU_KEYS = [
+  'cookingDate',
+  'cutoffAt',
+  'delivery',
+  'takingOrders',
+  'finishExtraDay',
+  'places',
+] as const;
 
 /** What a menu field holds now (the patch's `places` is the menu's `placeUses`). */
 function menuValue(menu: MenuData['view']['menu'], key: (typeof MENU_KEYS)[number]): unknown {

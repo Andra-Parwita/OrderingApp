@@ -12,6 +12,7 @@ import type {
   Week,
 } from './domain';
 import { DAY_STOCK_MAX } from './daySalesContract';
+import { parseDeliveryExtras } from './deliveryDays';
 import { FIRST_LANGUAGES, LANGUAGES } from './languages';
 import { isHexColour } from './kitchenImages';
 import { MAX_MENU_ROWS } from './limits';
@@ -135,12 +136,18 @@ export function parseWeek(input: unknown): Week | null {
   if (!pickupPoints || !isRecord(delivery)) return null;
   const note = parseLocalText(delivery['note']);
   if (typeof delivery['available'] !== 'boolean' || !note) return null;
+  const extras = parseDeliveryExtras(delivery);
+  if (extras === null) return null;
   return {
     cookingDate,
     cutoffAt,
     status,
     pickupPoints,
-    delivery: { available: delivery['available'], note },
+    delivery: {
+      available: delivery['available'],
+      note,
+      ...(extras.days !== undefined && extras.days.length > 0 ? extras : {}),
+    },
   };
 }
 

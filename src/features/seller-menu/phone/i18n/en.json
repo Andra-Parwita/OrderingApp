@@ -79,6 +79,7 @@
     "soldOut": "Sold out",
     "choices_one": "{{count}} choice: {{names}}",
     "choices_other": "{{count}} choices: {{names}}",
-    "empty": "No dishes yet."
+    "empty": "No dishes yet.",
+    "deliveryDays": "Delivery days: {{days}}"
   }
 }

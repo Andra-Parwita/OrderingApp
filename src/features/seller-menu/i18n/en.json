@@ -276,7 +276,7 @@
   "details": {
     "when": "When",
     "cookingDay": "Cooking day",
-    "cookingHelper": "Pickup and delivery happen on this day.",
+    "cookingHelper": "Pickup happens on this day. Delivery too, unless you choose other delivery days below.",
     "ordersClose": "Orders close",
     "closeTime": "Time",
     "cutoffHelper_one": "{{count}} day before the cooking day. You can still add orders by hand after this.",
@@ -335,6 +335,23 @@
       "removeBody": "Delivery only means customers can't choose a pickup place. Your saved places stay in Settings.",
       "keep": "Keep the places",
       "remove": "Remove them"
+    },
+    "deliveryDays": {
+      "title": "Delivery days",
+      "eventDay": "event day",
+      "default": "default",
+      "warnBefore": "{{day}} is {{count}} days before cooking. That's fine if you plan for it.",
+      "hint": "The 🔒 day is the default customers see first. Tap a day to add or remove it."
+    },
+    "defaultDay": {
+      "title": "Default delivery day",
+      "help": "Customers see this day selected first. Pick the default from the days you ticked.",
+      "tickFirst": "Tick another delivery day first to choose a different default.",
+      "save": "Set default"
+    },
+    "keepOpen": {
+      "label": "Keep the menu open 1 more day",
+      "hint": "Finishes automatically at midnight after {{day}}."
     }
   },
   "check": {

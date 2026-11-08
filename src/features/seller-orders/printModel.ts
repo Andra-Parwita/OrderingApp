@@ -1,3 +1,4 @@
+import { compareDeliveryDay } from '../../../shared/deliveryDays';
 import type { Language, Order, OrderLine } from '../../../shared/domain';
 import type { MenuView } from '../../../shared/menusContract';
 import { pickText } from '../../../shared/text';
@@ -93,7 +94,10 @@ export function buildPrintPlan(
       (o) => o.fulfilment === 'pickup' && !known.has(o.pickupPlaceId ?? first ?? ''),
     );
     if (unknown.length > 0) groups.push({ key: 'unknown', kind: 'unknown', orders: unknown });
-    const delivery = chosen.filter((o) => o.fulfilment === 'delivery');
+    // Plan 126: the delivery group goes by delivery day (stable: the same day stays by code).
+    const delivery = chosen
+      .filter((o) => o.fulfilment === 'delivery')
+      .sort(compareDeliveryDay(view?.menu.cookingDate ?? null));
     if (delivery.length > 0) groups.push({ key: 'delivery', kind: 'delivery', orders: delivery });
   }
   return { groups, totals: totalsOf(chosen, lang) };

@@ -69,6 +69,7 @@ describe('basket draft', () => {
           firstName: '',
           note: null,
           address: null,
+          handoverDate: null,
         },
       } satisfies BasketDraft,
       '',

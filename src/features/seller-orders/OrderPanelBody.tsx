@@ -181,10 +181,11 @@ const Details = styled.dl`
     overflow-wrap: anywhere;
   }
 `;
+/* Baseline: the day text and the Change link stay on one line even when "Saved" appears under the link. */
 const HowLine = styled.div`
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
 `;
 const Recent = styled.ul`
   display: flex;
@@ -271,7 +272,12 @@ export function OrderPanelBody({
     current.status === 'ready'
       ? current.view.pickupPoints.find((point) => point.id === order.pickupPlaceId)
       : undefined;
-  const when = cookingDate !== null ? formatDay(cookingDate, lang) : '';
+  // Plan 126: a delivery on another day shows that day.
+  const dayOfOrder =
+    order.fulfilment === 'delivery' && order.handoverDate !== undefined
+      ? order.handoverDate
+      : cookingDate;
+  const when = dayOfOrder !== null ? formatDay(dayOfOrder, lang) : '';
   const pickupText = [
     place ? `${place.place} · ${when}, ${place.window.start}–${place.window.end}` : when,
   ]
@@ -375,6 +381,14 @@ export function OrderPanelBody({
               <ChangeFulfilment
                 order={order}
                 {...(current.status === 'ready' ? { windows: current.view.pickupPoints } : {})}
+                {...(current.status === 'ready'
+                  ? {
+                      days: {
+                        cookingDate: current.view.menu.cookingDate,
+                        delivery: current.view.menu.delivery,
+                      },
+                    }
+                  : {})}
                 onChanged={() => dispatch(refreshRequested())}
               />
             )}

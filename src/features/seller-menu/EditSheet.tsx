@@ -30,7 +30,7 @@ const Sheet = styled.div`
   }
   @media (min-width: 48rem) {
     inset: 1rem auto 1rem 50%;
-    width: min(47.5rem, calc(100% - 2rem));
+    width: min(64rem, calc(100% - 2rem));
     transform: translateX(-50%);
     border: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
     border-radius: ${({ theme }) => theme.size.radiusSheet}px;

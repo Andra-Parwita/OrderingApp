@@ -4,11 +4,13 @@ import { styled } from 'styled-components';
 import type { Order } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
+import { OrderDayTag } from '../../components/dayChips/OrderDayTag';
 import { Icon, type IconName } from '../../ui';
 import { ConfirmedPill } from './ConfirmedMark';
 import { RepeatTag } from './RepeatNote';
 import { SELLER_NS } from './i18n/register';
 import { NewTag } from './orderRowCells';
+
 import { StatusMark } from './StatusMark';
 import { customerKind } from './customerKind';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
@@ -16,12 +18,40 @@ import { itemsSummary, orderTotalCents, useLang } from './orderText';
 // One order in the live list (handoff, Home): code, first name, Changed flag, small icons, total,
 // items, pickup or delivery, status, Paid. The whole row is one button. Plan 108: on a wide list
 // (no order open) it is one line and shows the customer's note; otherwise two lines.
+//
+// Plan 126: every row is a subgrid of RowsGrid, so the fulfilment label, the day tag, the status and
+// the price share one set of column tracks and line up at any text size (a track is as wide as its
+// widest cell, nothing has a fixed width). With no day tag in the list the tag track is left out.
+// Wide (no order open, 70 rem and up): one line [code name flags | items | note | how | tag | status |
+// price]. Otherwise two lines: the code line and, above the status, the price; then how, tag, items and
+// status, with the second line starting at the same x as the first.
+
+const WIDE = '70rem';
+
+const tracks = (wide: boolean, daySlot: boolean): string => {
+  const tag = daySlot ? '[how-end tag-start] max-content [tag-end' : '[how-end';
+  return wide
+    ? `[line-start] minmax(0, 15rem) [line-end items-start] minmax(0, 1fr) [items-end note-start] minmax(0, 1fr) [note-end how-start] max-content ${tag} status-start] max-content [status-end total-start] max-content [total-end]`
+    : `[line-start how-start] max-content ${tag} items-start] minmax(0, 1fr) [items-end status-start total-start] max-content [status-end total-end]`;
+};
+
+/** The list's rows. `$wide`: no order is open beside the list. */
+export const RowsGrid = styled.div<{ $wide: boolean; $daySlot: boolean }>`
+  display: grid;
+  column-gap: ${({ theme }) => theme.spacing.sm};
+  grid-template-columns: ${({ $daySlot }) => tracks(false, $daySlot)};
+
+  ${({ $wide, $daySlot, theme }) =>
+    $wide
+      ? `@media (min-width: ${WIDE}) { column-gap: ${theme.spacing.md}; grid-template-columns: ${tracks(true, $daySlot)}; }`
+      : ''}
+`;
 
 const Row = styled.button<{ $selected: boolean; $fresh: boolean; $wide: boolean }>`
   display: grid;
-  grid-template-areas: 'line total' 'items right';
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.125rem ${({ theme }) => theme.spacing.lg};
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  row-gap: 0.125rem;
   align-items: center;
   width: 100%;
   min-height: ${({ theme }) => theme.size.rowOrder + 8}px;
@@ -43,27 +73,31 @@ const Row = styled.button<{ $selected: boolean; $fresh: boolean; $wide: boolean 
   &:hover {
     background: ${({ theme, $selected }) => ($selected ? theme.c.tint : theme.c.surf2)};
   }
-
   ${({ $wide, theme }) =>
     $wide
-      ? `@media (min-width: 70rem) {
-    grid-template-areas: 'line items note right total';
-    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) minmax(0, 1fr) 14rem 4.5rem;
-    gap: 0 ${theme.spacing.md};
-    min-height: ${theme.size.tap + 4}px;
-  }`
+      ? `@media (min-width: ${WIDE}) { row-gap: 0; min-height: ${String(theme.size.tap + 4)}px; }`
       : ''}
 `;
-const Line = styled.div`
-  grid-area: line;
+
+/** On a wide list every cell is on the one line. */
+const wideRow = (wide: boolean): string =>
+  wide ? `@media (min-width: ${WIDE}) { grid-row: 1; }` : '';
+
+const Line = styled.div<{ $wide: boolean }>`
+  grid-column: line-start / items-end;
+  grid-row: 1;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   min-width: 0;
+
+  ${({ $wide }) =>
+    $wide ? `@media (min-width: ${WIDE}) { grid-column: line-start / line-end; }` : ''}
 `;
 const NoteCell = styled.span`
   display: none;
-  grid-area: note;
+  grid-column: note-start / note-end;
+  grid-row: 1;
   overflow: hidden;
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.8125rem;
@@ -71,15 +105,9 @@ const NoteCell = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  @media (min-width: 70rem) {
+  @media (min-width: ${WIDE}) {
     display: block;
   }
-`;
-const RightLine = styled(Line)`
-  grid-area: right;
-  justify-content: flex-end;
-  color: ${({ theme }) => theme.c.muted};
-  font-size: 0.875rem;
 `;
 const Code = styled.span`
   font-family: ${({ theme }) => theme.font.mono};
@@ -118,31 +146,57 @@ const Small = styled.span`
     height: 0.9375rem;
   }
 `;
-const Items = styled.span`
-  grid-area: items;
+const Items = styled.span<{ $wide: boolean }>`
+  grid-column: items-start / items-end;
+  grid-row: 2;
   overflow: hidden;
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  ${({ $wide }) => wideRow($wide)}
 `;
 const Total = styled.span`
-  grid-area: total;
+  grid-column: total-start / total-end;
+  grid-row: 1;
   font-size: 0.9375rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  text-align: end;
+  justify-self: end;
 `;
-const How = styled.span`
+const How = styled.span<{ $wide: boolean }>`
+  grid-column: how-start / how-end;
+  grid-row: 2;
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
   white-space: nowrap;
 
   svg {
     width: 0.9375rem;
     height: 0.9375rem;
   }
+  ${({ $wide }) => wideRow($wide)}
+`;
+const TagCell = styled.span<{ $wide: boolean }>`
+  grid-column: tag-start / tag-end;
+  grid-row: 2;
+  display: inline-flex;
+  ${({ $wide }) => wideRow($wide)}
+`;
+const StatusCell = styled.span<{ $wide: boolean }>`
+  grid-column: status-start / status-end;
+  grid-row: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
+  white-space: nowrap;
+  ${({ $wide }) => wideRow($wide)}
 `;
 const Paid = styled.span`
   display: inline-flex;
@@ -173,6 +227,8 @@ export type LiveOrderRowProps = Readonly<{
   isNew?: boolean;
   /** An order is open beside the list: the row has no room for the note. */
   panelOpen?: boolean;
+  /** Plan 126: some order in the list has a delivery day, so the list has a day tag track. */
+  daySlot?: boolean;
   onOpen: (code: string) => void;
 }>;
 
@@ -181,23 +237,26 @@ export const LiveOrderRow = memo(function LiveOrderRow({
   selected,
   isNew = false,
   panelOpen = false,
+  daySlot = false,
   onOpen,
 }: LiveOrderRowProps) {
   const { t } = useTranslation(SELLER_NS);
   const lang = useLang();
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
   const kind = customerKind(order);
+  const wide = !panelOpen;
+  const hasTag = order.fulfilment === 'delivery' && order.handoverDate !== undefined;
   return (
     <Row
       type="button"
       $selected={selected}
       $fresh={isNew}
-      $wide={!panelOpen}
+      $wide={wide}
       aria-current={selected ? 'true' : undefined}
       data-row-id={order.code}
       onClick={open}
     >
-      <Line>
+      <Line $wide={wide}>
         <Code>{formatOrderCode(order.code)}</Code>
         <Name>{order.firstName}</Name>
         <ConfirmedPill order={order} />
@@ -218,13 +277,18 @@ export const LiveOrderRow = memo(function LiveOrderRow({
         {order.locked ? <SmallIcon icon="lock" label={t('live.locked')} /> : null}
       </Line>
       <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
-      <Items>{itemsSummary(order, lang)}</Items>
-      {!panelOpen && order.note ? <NoteCell title={order.note}>{order.note}</NoteCell> : null}
-      <RightLine>
-        <How>
-          <Icon name={order.fulfilment === 'delivery' ? 'truck' : 'bag'} />
-          {t(`fulfilment.${order.fulfilment}`)}
-        </How>
+      <Items $wide={wide}>{itemsSummary(order, lang)}</Items>
+      {wide && order.note ? <NoteCell title={order.note}>{order.note}</NoteCell> : null}
+      <How $wide={wide}>
+        <Icon name={order.fulfilment === 'delivery' ? 'truck' : 'bag'} />
+        {t(`fulfilment.${order.fulfilment}`)}
+      </How>
+      {daySlot && hasTag ? (
+        <TagCell $wide={wide}>
+          <OrderDayTag order={order} lang={lang} />
+        </TagCell>
+      ) : null}
+      <StatusCell $wide={wide}>
         <StatusMark status={order.status} />
         {order.paid ? (
           <Paid>
@@ -232,7 +296,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
             {t('live.paid')}
           </Paid>
         ) : null}
-      </RightLine>
+      </StatusCell>
     </Row>
   );
 });

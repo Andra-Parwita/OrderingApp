@@ -23,6 +23,12 @@ Not written yet. Holds the UI design once planning starts:
    - Support light and dark mode with the same rules, and respect `prefers-reduced-motion`.
    - **Button labels never wrap to two lines** (owner, 18 Oct: Samsung phones with larger zoom/text make buttons big; "button text if possible need to be adaptable instead of becoming 2 lines"). A label stays on one line; when space runs out it switches to a shorter label, then to icon-only (with the full label as the accessible name and tooltip). Toolbars wrap as a row, never inside a button. Check every toolbar at 360 px and with Android font size one step up.
 
+4. **Tidy and aligned** (owner, 8 Nov 2026: "it's very important in our rules to have UX or UI that's tidy and has alignment")
+   - Rows of a list share column tracks (a grid sized by the widest cell), so labels, tags, statuses and prices line up on every row, also at larger text sizes; no fixed widths that text can outgrow.
+   - Equal inner padding on every panel, sheet and layer; equal gaps between fields.
+   - No text squeezed one word per line, nothing overlapping or clipped (titles included); give a block full width or stack it rather than cram three narrow columns.
+   - Proof for every UI change: captures at phone 412×915 and tablet 1280×800, 1126×800 and 800×1280 (plus 125–150% text where rows carry tags), looked at by the coordinator before "done"; seller screens also on the Android emulator, tablet (Tablet_11) and phone (Pixel_9).
+
 All colours, spacing and type come from design tokens, with no literal values in components (see [the planning skill](../../.claude/skills/react-ts-app-plan/SKILL.md), "Styling principles").
 
 Mock-ups come before any UI build. The images in [briefs/mock](../../briefs/mock/) are for the owner's eye only, never a build source.

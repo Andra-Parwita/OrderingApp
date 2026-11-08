@@ -135,7 +135,7 @@ export function localDate(now: Date, zone: string): string {
   return `${parts.year ?? ''}-${parts.month ?? ''}-${parts.day ?? ''}`;
 }
 
-function addDays(date: string, days: number): string {
+export function addDays(date: string, days: number): string {
   return new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 }
 
@@ -163,8 +163,15 @@ export function cutoffAtFor(
 
 /**
  * When a menu finishes by itself (D-069 Q5): the midnight that ends its cooking day in the kitchen's
- * zone, as an instant with offset.
+ * zone, as an instant with offset. Plan 126: the midnight after the latest of the cooking day and the
+ * delivery days, one day later when "Keep the menu open 1 more day" is on.
  */
-export function menuFinishesAt(cookingDate: string, zone: string): string {
-  return toInstant(addDays(cookingDate, 1), '00:00', zone);
+export function menuFinishesAt(
+  cookingDate: string,
+  zone: string,
+  deliveryDays: ReadonlyArray<string> = [],
+  keepOpenExtraDay = false,
+): string {
+  const last = deliveryDays.reduce((latest, day) => (day > latest ? day : latest), cookingDate);
+  return toInstant(addDays(last, keepOpenExtraDay ? 2 : 1), '00:00', zone);
 }

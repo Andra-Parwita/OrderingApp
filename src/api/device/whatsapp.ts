@@ -1,4 +1,5 @@
 import type { TFunction } from 'i18next';
+import { formatCookingDate } from '../../../shared/dates';
 import type { CustomerOrder } from '../../../shared/domain';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
@@ -16,7 +17,10 @@ export function buildWhatsAppText(order: CustomerOrder, t: TFunction, when: stri
   const total = order.lines.reduce((sum, line) => sum + line.priceCents * line.qty, 0);
   const how =
     order.fulfilment === 'delivery'
-      ? t('wa.delivery')
+      ? // Plan 126: a delivery on a day other than the cooking day names it.
+        order.handoverDate
+        ? t('wa.deliveryOn', { when: formatCookingDate(order.handoverDate, lang) })
+        : t('wa.delivery')
       : when
         ? t('wa.pickupWhen', { when })
         : t('wa.pickup');

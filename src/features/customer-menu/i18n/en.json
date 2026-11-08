@@ -141,7 +141,8 @@
     "updating": "Updating your order…",
     "editTitle": "Change your order",
     "editCutoff": "You can change or cancel until {{when}}",
-    "editOnly": "Your first name stays as it was."
+    "editOnly": "Your first name stays as it was.",
+    "deliveryDay": "Delivery day"
   },
   "checkout": {
     "remove": "Remove {{name}}",
@@ -172,7 +173,8 @@
     "stockLead": "Something changed.",
     "stockRest": "An item sold out or fewer are left than you asked for. Check your basket and try again.",
     "deliveryTo": "Delivery to {{address}}",
-    "noteHelpAddress": "Allergies or requests. Put your address in Delivery address above. Please don't write your phone number here."
+    "noteHelpAddress": "Allergies or requests. Put your address in Delivery address above. Please don't write your phone number here.",
+    "deliveryDayTo": "Delivery {{day}} to {{address}}"
   },
   "placed": {
     "title": "Order placed",
@@ -186,7 +188,8 @@
     "optional": "You have ordered before, so sending this on WhatsApp is optional.",
     "viewOrder": "View order details",
     "change": "Change or cancel",
-    "saved": "Saved in My orders on this phone."
+    "saved": "Saved in My orders on this phone.",
+    "deliveryDay": "Delivery on {{day}}"
   },
   "status": {
     "ordered": "Ordered",
@@ -203,7 +206,8 @@
     "pickupWhen": "Pickup {{when}}",
     "delivery": "Delivery",
     "link": "My order: {{link}}",
-    "addAddress": "My address:"
+    "addAddress": "My address:",
+    "deliveryOn": "Delivery {{when}}"
   },
   "address": {
     "title": "Delivery address",

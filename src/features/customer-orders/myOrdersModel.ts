@@ -97,8 +97,14 @@ export function buildMyOrders({
         kitchen: order.seller.name,
         kitchenLogo: menu?.kitchen.images?.railImage ?? undefined,
         summary: order.lines.map((line) => `${line.qty} × ${pickText(line.name, lang)}`).join(', '),
+        // Plan 126: a delivery on an extra day shows that day.
         dayText:
-          cooking !== null ? formatCookingDate(cooking, lang) : formatDay(order.createdAt, lang),
+          cooking !== null
+            ? formatCookingDate(
+                (order.fulfilment === 'delivery' ? order.handoverDate : undefined) ?? cooking,
+                lang,
+              )
+            : formatDay(order.createdAt, lang),
         fulfilment: order.fulfilment,
         place: info.place,
         ...(info.pickupMap ? { pickupMap: info.pickupMap } : {}),

@@ -39,6 +39,7 @@ A home cook publishes a menu whenever they like, for pickup or delivery on its c
 1. **Professional and subtle.** Muted colours, no saturated backgrounds, no heavy borders. Separate things with spacing or a 1px hairline.
 2. **Maximise information density** while staying readable and clean.
 3. **WCAG AA minimum:** 4.5:1 for text, 3:1 for large text and UI elements, and a visible focus ring.
+4. **Tidy and aligned (owner, 8 Nov 2026: "very important").** Rows line up in shared columns, equal padding and gaps, no text squeezed one word per line, nothing overlapping or clipped, at phone (~412 px) and tablet (1280×800 and 800×1280) sizes and at larger text. Every UI change is captured at those sizes and the pictures are looked at before it is called done; seller screens also get the Android emulator (tablet + phone).
 
 Details are in [docs/design/README.md](docs/design/README.md).
 

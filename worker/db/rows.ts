@@ -55,6 +55,9 @@ export type MenuRow = {
   delivery_available: number;
   delivery_note_en: string;
   delivery_note_id: string;
+  extra_delivery_days: string | null;
+  default_delivery_day: string | null;
+  finish_extra_day: number;
   picture_ref: string | null;
   wizard_step: number;
   taking_orders: number;
@@ -150,6 +153,7 @@ export type OrderRow = {
   collected_at: string | null;
   collected_by: 'customer' | 'seller' | null;
   pickup_place_id: string | null;
+  handover_date: string | null;
   customer_code: string | null;
   customer_confirmed: number;
   src_place: StatPlace | null;
@@ -266,10 +270,12 @@ export function menuOf(row: MenuRow, uses: ReadonlyArray<MenuPlaceRow>): Menu {
     delivery: {
       available: row.delivery_available === 1,
       note: text(row.delivery_note_en, row.delivery_note_id),
+      ...deliveryExtrasOf(row),
     },
     ...(row.picture_ref !== null ? { pictureRef: row.picture_ref } : {}),
     wizardStep: row.wizard_step,
     takingOrders: row.taking_orders === 1,
+    ...(row.finish_extra_day === 1 ? { finishExtraDay: true } : {}),
     placeUses: uses.map((use) => ({
       placeId: use.place_id,
       ...(use.window_start !== null && use.window_end !== null
@@ -318,7 +324,21 @@ export function weekOf(row: MenuRow, points: ReadonlyArray<PickupRow>): Week {
     delivery: {
       available: row.delivery_available === 1,
       note: text(row.delivery_note_en, row.delivery_note_id),
+      ...deliveryExtrasOf(row),
     },
+  };
+}
+
+/** Plan 126: the menu's ticked delivery days and default, only while delivery is on (and there are some). */
+export function deliveryExtrasOf(
+  row: Pick<MenuRow, 'delivery_available' | 'extra_delivery_days' | 'default_delivery_day'>,
+): { days?: Array<string>; defaultDay?: string } {
+  if (row.delivery_available !== 1 || row.extra_delivery_days === null) return {};
+  const days = JSON.parse(row.extra_delivery_days) as Array<string>;
+  if (days.length === 0) return {};
+  return {
+    days,
+    ...(row.default_delivery_day !== null ? { defaultDay: row.default_delivery_day } : {}),
   };
 }
 
@@ -449,6 +469,7 @@ export function ordersOf(
       at: entry.at,
     })),
     ...(row.pickup_place_id !== null ? { pickupPlaceId: row.pickup_place_id } : {}),
+    ...(row.handover_date !== null ? { handoverDate: row.handover_date } : {}),
     ...(row.customer_code !== null ? { customerCode: row.customer_code } : {}),
     ...(withStats ? statsOf(row) : {}),
     ...(row.customer_confirmed === 1 ? { confirmed: true as const } : {}),

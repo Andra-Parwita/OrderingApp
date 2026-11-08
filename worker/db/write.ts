@@ -82,8 +82,8 @@ export function menuStatements(db: Db, sellerId: string, menu: Menu): Array<D1St
   return [
     db.stmt(
       `INSERT INTO menus (seller_id, id, state, cooking_date, cutoff_at, delivery_available, delivery_note_en, delivery_note_id,
-         picture_ref, wizard_step, taking_orders, published_at, finished_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         picture_ref, wizard_step, taking_orders, published_at, finished_at, extra_delivery_days, default_delivery_day, finish_extra_day)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       menu.id,
       menu.state,
@@ -97,6 +97,13 @@ export function menuStatements(db: Db, sellerId: string, menu: Menu): Array<D1St
       menu.takingOrders,
       menu.publishedAt ?? null,
       menu.finishedAt ?? null,
+      menu.delivery.available && menu.delivery.days?.length
+        ? JSON.stringify(menu.delivery.days)
+        : null,
+      menu.delivery.available && menu.delivery.days?.length
+        ? (menu.delivery.defaultDay ?? null)
+        : null,
+      menu.finishExtraDay === true,
     ),
     ...menu.placeUses.map((use, position) =>
       db.stmt(

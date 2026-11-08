@@ -106,26 +106,27 @@ const IncomeLine = styled.div`
 `;
 const TitleLine = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
 `;
+/* The title never shrinks or clips: when the buttons do not fit beside it they wrap under it. */
 const TitleGroup = styled.div`
   display: flex;
   align-items: baseline;
   gap: ${({ theme }) => theme.spacing.md};
-  flex: 1 1 0;
-  min-width: 0;
-  overflow: hidden;
+  flex: 1 0 auto;
 `;
 const Actions = styled.div`
   display: flex;
   flex: none;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
+  margin-inline-start: auto;
 
-  /* Button labels never wrap: the short label, then the icon alone on a very narrow phone. */
-  @container (max-width: 21rem) {
+  /* Button labels never wrap: the short label, then the icon alone on a narrow phone. */
+  @container (max-width: 26rem) {
     button b {
       display: none;
     }

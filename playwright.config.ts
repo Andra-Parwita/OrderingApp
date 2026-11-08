@@ -17,7 +17,7 @@ const ORIGIN = `https://localhost:${PORT}`;
 // for today (and cancels it), which Cook counts, so it is here too.
 // label-print makes one too (and cancels it).
 const ISOLATED =
-  /(seller-settings.*|seller-menu|seller-batch3|seller-setup|dish-pictures|p081-private-orders|label-print)\.spec\.ts$/;
+  /(seller-settings.*|seller-menu|seller-batch3|seller-setup|dish-pictures|p081-private-orders|label-print|p126-delivery-day|p126-layout)\.spec\.ts$/;
 // Plan 029: changes Onde Onde's stock of one dish (and puts it back); the order specs read it, so it
 // runs alone, after limits, on the Android phone project.
 const DAY_SELLING = /\/day-selling\.spec\.ts$/;

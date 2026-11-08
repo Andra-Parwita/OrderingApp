@@ -166,7 +166,8 @@
     "send": "Kirim tautan pesanan lewat WhatsApp",
     "done": "Selesai",
     "status": "Dimulai sebagai {{status}}",
-    "addLineNote": "Tambah catatan"
+    "addLineNote": "Tambah catatan",
+    "deliveryDay": "Hari antar"
   },
   "linkMsg": "Halo {{name}}, ini pesanan Anda {{code}}: {{items}}. Total {{total}}. {{how}}. Pantau dan terima kabar terbaru di sini: {{link}}",
   "attention": {

@@ -12,6 +12,19 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // DRAFT for the owner to approve (8 Nov); plan 126
+  {
+    version: '1.0.46',
+    date: '2026-11-08',
+    lines: {
+      en: [
+        'Offer delivery on other days: tick up to 3 days around the menu day and choose the default; customers pick their delivery day, and you can keep a menu open one more day.',
+      ],
+      id: [
+        'Tawarkan pengantaran di hari lain: rentang hingga 3 hari di sekitar hari menu dan pilih hari utama; pelanggan memilih hari antar, dan menu bisa dibiarkan terbuka satu hari lagi.',
+      ],
+    },
+  },
   // Picked by the owner (26 Oct, "A"); plan 124
   {
     version: '1.0.45',

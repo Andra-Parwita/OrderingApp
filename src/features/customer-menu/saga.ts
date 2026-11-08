@@ -67,7 +67,8 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     string,
     number
   >;
-  const { firstName, language, fulfilment, note, pickupPlaceId, address } = action.payload;
+  const { firstName, language, fulfilment, note, pickupPlaceId, address, handoverDate } =
+    action.payload;
   const trimmedNote = note.trim();
   // A phone that already has a collected or delivered order is a returning customer (D-027).
   const slug = (yield select((state: CustomerRootState) => state.customer.slug)) as string | null;
@@ -87,6 +88,7 @@ export function* placeOrder(action: ReturnType<typeof placeRequested>) {
     ...(fulfilment === 'pickup' && pickupPlaceId !== undefined ? { pickupPlaceId } : {}),
     ...(returning ? { returning: true } : {}),
     ...(fulfilment === 'delivery' && address ? { address } : {}),
+    ...(fulfilment === 'delivery' && handoverDate !== undefined ? { handoverDate } : {}),
     ...(customerCode !== null ? { customerCode } : {}),
   };
   // Plan 114: the same order sent again (its answer was lost) must not become a second order.

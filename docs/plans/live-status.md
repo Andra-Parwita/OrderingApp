@@ -429,3 +429,14 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 4 · Android emulator: phone More, About, Devices, sign-in wording | general-purpose · sonnet | 00:24 | 25 min | 00:31 | | | none (check only; scratch copy) | ✅ More, About, Devices, sign-in EN/ID; ⚠️ About version block cramped on phone (fixing); tablet step skipped |
 | 4b · About version block on its own line on phones | general-purpose · sonnet | 00:31 | 10 min | 00:33 | | | AboutScreen.tsx | ✅ unit 14, About e2e 4, phone capture checked |
 | deploy · backup, build, deploy v1.0.45.1, health, live smoke | coordinator | 00:34 | 15 min | 00:37 | | | — | ✅ Worker 7f46d6fc, build 1.0.134 · e68760e |
+
+## Plan 126 (delivery on another day)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 1 · migration 0035 + server + client (Details chips, checkout day, order page, tags, labels, sort, share line) + owner updates | general-purpose · sonnet | 11:02 | 40 min | 12:08 | | | ~70 files, 3 add-only migrations (0035–0037), 10 new files, 7 new test files, 1 new e2e spec | ✅ unit 2384 + mocks 733, new e2e 5/5, lint 0 |
+| 1b · layout fixes after my capture review (Details full-width band, checkout day row above address, aligned order rows, address wording, re-captures) + 9 directed e2e specs | general-purpose · sonnet | 12:10 | 20 min | 12:31 | | | DeliveryDaysField, deliveryDaysModel.ts, KeepOpenRow.tsx, order rows | ✅ 9 specs pass, unit 2384 |
+| 2 · Android emulator Tablet_11 + Pixel_9 | general-purpose · sonnet | 12:31 | 30 min | | | | | ⏳ |
+| 1c · owner layout: New order padding, wider Details layer in rows, pickup row grid, order rows shared column grid (tablet text size), + p126-layout spec | general-purpose · sonnet | 12:50 | 30 min | 13:07 | | | EditSheet, DetailsStep (706), PlaceEditor.tsx, LiveOrderRow RowsGrid, NewOrderPanel | ✅ p126 7 + layout 13 + seller-menu 2 + p105 2; unit 675 |
+| 2b · Android emulator Tablet_11 + Pixel_9 (round 2) | general-purpose · sonnet | 13:07 | 30 min | 13:32 | | | none (check only) | ✅ all 10 steps; ⚠️ 7 tidy-ups (portrait panel list, band position, gaps, texts, 'Orde') |
+| 1d · last tidy-ups (band position, portrait list, gaps, texts, phone title, tabs one row) | general-purpose · sonnet | 13:32 | 30 min | 14:38 | | | ~12 files | ✅ |
+| gate · typecheck, lint, format, unit 2384, server 733, 16 directed e2e runs, docs | coordinator | 14:38 | 30 min | 14:38 | | | — | ✅ all green |

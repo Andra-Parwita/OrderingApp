@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
+import { compareDeliveryDay } from '../../../shared/deliveryDays';
 import type { PickupPoint, SellerOrder } from '../../../shared/domain';
 import type { DeliveryStep, MessagePlaceResponse } from '../../../shared/handoverContract';
 import { setOrderStatus } from '../../api/client';
@@ -31,13 +32,17 @@ export function mergeOrders(
   menu: ReadonlyArray<SellerOrder>,
   privateToday: ReadonlyArray<SellerOrder>,
   fulfilment: SellerOrder['fulfilment'],
+  cookingDate: string | null = null,
 ): ReadonlyArray<SellerOrder> {
   const mine = privateToday
     .filter((o) => o.fulfilment === fulfilment)
     .sort((a, b) =>
       (a.private?.eventTime ?? '99:99').localeCompare(b.private?.eventTime ?? '99:99'),
     );
-  return [...menu.filter((o) => o.fulfilment === fulfilment), ...mine];
+  const own = menu.filter((o) => o.fulfilment === fulfilment);
+  // Plan 126: deliveries go by delivery day, earliest first; the same day keeps today's order.
+  if (fulfilment === 'delivery') own.sort(compareDeliveryDay(cookingDate));
+  return [...own, ...mine];
 }
 
 const Page = styled.main`
@@ -167,7 +172,7 @@ export function HandOverScreen({
     [ready, privateToday],
   );
   const delivery = useMemo<ReadonlyArray<SellerOrder>>(
-    () => mergeOrders(ready?.orders ?? [], privateToday, 'delivery'),
+    () => mergeOrders(ready?.orders ?? [], privateToday, 'delivery', ready?.cookingDate ?? null),
     [ready, privateToday],
   );
   const [busyCode, setBusyCode] = useState<string | null>(null);

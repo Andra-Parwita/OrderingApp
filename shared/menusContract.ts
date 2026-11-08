@@ -30,6 +30,7 @@ import {
   type CreateItemRequest,
   type UpdateItemRequest,
 } from './setupContract';
+import { parseDeliveryExtras } from './deliveryDays';
 
 // ---- Theme and menu defaults (D-064) ---------------------------------------------------------
 
@@ -582,6 +583,8 @@ export type Menu = {
   /** Furthest wizard step reached, 0 to WIZARD_STEP_MAX. */
   wizardStep: number;
   takingOrders: boolean;
+  /** Plan 126: "Keep the menu open 1 more day": the automatic finish waits one more day. Absent = off. */
+  finishExtraDay?: boolean;
   placeUses: Array<MenuPlaceUse>;
   publishedAt?: string;
   finishedAt?: string;
@@ -621,6 +624,7 @@ export type UpdateMenuRequest = {
   delivery?: Delivery;
   wizardStep?: number;
   takingOrders?: boolean;
+  finishExtraDay?: boolean;
   places?: Array<MenuPlaceUse>;
   dishIds?: Array<string>;
 };
@@ -688,7 +692,13 @@ export function parseUpdateMenuRequest(input: unknown): UpdateMenuRequest | null
     if (!isRecord(delivery) || typeof delivery['available'] !== 'boolean') return null;
     const note = parseTrimmedText(delivery['note'], 200);
     if (!note) return null;
-    out.delivery = { available: delivery['available'], note };
+    const extras = parseDeliveryExtras(delivery);
+    if (extras === null) return null;
+    out.delivery = {
+      available: delivery['available'],
+      note,
+      ...extras,
+    };
   }
   if (input['wizardStep'] !== undefined) {
     if (!isInt(input['wizardStep'], 0, WIZARD_STEP_MAX)) return null;
@@ -697,6 +707,10 @@ export function parseUpdateMenuRequest(input: unknown): UpdateMenuRequest | null
   if (input['takingOrders'] !== undefined) {
     if (typeof input['takingOrders'] !== 'boolean') return null;
     out.takingOrders = input['takingOrders'];
+  }
+  if (input['finishExtraDay'] !== undefined) {
+    if (typeof input['finishExtraDay'] !== 'boolean') return null;
+    out.finishExtraDay = input['finishExtraDay'];
   }
   if (input['places'] !== undefined) {
     const places = parseArray(input['places'], parsePlaceUse);
@@ -721,8 +735,13 @@ export function parseMenu(input: unknown): Menu | null {
   if (!isRecord(delivery) || typeof delivery['available'] !== 'boolean') return null;
   const note = parseLocalText(delivery['note']);
   const placeUses = parseArray(input['placeUses'], parsePlaceUse);
+  const extras = parseDeliveryExtras(delivery);
+  if (extras === null) return null;
   if (!note || !placeUses || !isInt(wizardStep, 0, WIZARD_STEP_MAX)) return null;
   if (typeof takingOrders !== 'boolean') return null;
+  if (input['finishExtraDay'] !== undefined && typeof input['finishExtraDay'] !== 'boolean') {
+    return null;
+  }
   if (pictureRef !== undefined && typeof pictureRef !== 'string') return null;
   if (publishedAt !== undefined && !isIsoDate(publishedAt)) return null;
   if (finishedAt !== undefined && !isIsoDate(finishedAt)) return null;
@@ -731,10 +750,15 @@ export function parseMenu(input: unknown): Menu | null {
     state,
     cookingDate,
     cutoffAt,
-    delivery: { available: delivery['available'], note },
+    delivery: {
+      available: delivery['available'],
+      note,
+      ...(extras.days !== undefined && extras.days.length > 0 ? extras : {}),
+    },
     ...(pictureRef !== undefined ? { pictureRef } : {}),
     wizardStep,
     takingOrders,
+    ...(input['finishExtraDay'] === true ? { finishExtraDay: true } : {}),
     placeUses,
     ...(publishedAt !== undefined ? { publishedAt } : {}),
     ...(finishedAt !== undefined ? { finishedAt } : {}),

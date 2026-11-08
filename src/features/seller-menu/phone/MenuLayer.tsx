@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { formatDay } from '../../../../shared/dates';
+import { deliveryPlan, formatDayList } from '../../../../shared/deliveryDays';
 import type { Language } from '../../../../shared/domain';
 import type { MenuDishView, MenuView } from '../../../../shared/menusContract';
 import { formatMoney } from '../../../../shared/money';
@@ -13,6 +14,11 @@ import { PHONE_MENU_NS } from './i18n/register';
 
 // Plan 124 (Q3 A): the read-only menu, opened from the Menu card. No editing; that stays on the tablet.
 
+const DeliveryDays = styled.p`
+  margin: ${({ theme }) => theme.spacing.md} 0 0;
+  color: ${({ theme }) => theme.c.muted};
+  font-size: 0.875rem;
+`;
 const Dish = styled.li`
   display: flex;
   align-items: center;
@@ -105,6 +111,10 @@ export function MenuLayer({
   const { t } = useTranslation(PHONE_MENU_NS);
   const title = t('menu.title', { date: formatDay(view.menu.cookingDate, lang) });
   const top = view.dishes.filter((dish) => dish.groupId === undefined);
+  const plan = view.menu.delivery.available
+    ? deliveryPlan(view.menu.cookingDate, view.menu.delivery)
+    : undefined;
+  const extraDays = plan?.custom ? plan.days : [];
   return (
     <LayerShell label={title} onClose={onClose}>
       <LayerBar>
@@ -127,6 +137,11 @@ export function MenuLayer({
             />
           ))}
         </List>
+        {extraDays.length > 0 ? (
+          <DeliveryDays>
+            {t('menu.deliveryDays', { days: formatDayList(extraDays, lang) })}
+          </DeliveryDays>
+        ) : null}
       </LayerBody>
       {onShare ? (
         <Foot>

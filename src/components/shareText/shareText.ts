@@ -6,6 +6,7 @@ import type {
   PickupPoint,
 } from '../../../shared/domain';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
+import { deliveryPlan, formatDayList } from '../../../shared/deliveryDays';
 import { formatMoney } from '../../../shared/money';
 import { formatPhone } from '../../../shared/phone';
 import { pickText } from '../../../shared/text';
@@ -43,6 +44,8 @@ const WORDS: Record<
     pickup: string;
     at: string;
     delivery: string;
+    deliveryAlso: string;
+    deliveryOn: string;
     orderHere: string;
     more: (count: number) => string;
   }
@@ -53,6 +56,8 @@ const WORDS: Record<
     pickup: 'Pickup',
     at: 'at',
     delivery: 'delivery available',
+    deliveryAlso: 'Delivery also',
+    deliveryOn: 'Delivery on',
     orderHere: 'Order here',
     more: (count) => `+ ${String(count)} more on the menu`,
   },
@@ -62,6 +67,8 @@ const WORDS: Record<
     pickup: 'Ambil',
     at: 'di',
     delivery: 'bisa diantar',
+    deliveryAlso: 'Antar juga',
+    deliveryOn: 'Antar pada',
     orderHere: 'Pesan di sini',
     more: (count) => `+ ${String(count)} lainnya di menu`,
   },
@@ -133,6 +140,18 @@ function pickupLines(menu: ShareMenu, lang: Language): Array<string> {
   });
 }
 
+/** Plan 126: one line naming the extra delivery days; nothing when there are none. */
+function extraDaysLines(menu: ShareMenu, lang: Language): Array<string> {
+  const plan = menu.delivery.available ? deliveryPlan(menu.cookingDate, menu.delivery) : undefined;
+  if (!plan?.custom) return [];
+  // "Delivery also Sat 14, Mon 16 Nov" names the other days; with the cooking day itself unticked,
+  // "Delivery on ..." names all of them.
+  const withCookingDay = plan.days.includes(menu.cookingDate);
+  const days = withCookingDay ? plan.days.filter((day) => day !== menu.cookingDate) : plan.days;
+  const lead = withCookingDay ? WORDS[lang].deliveryAlso : WORDS[lang].deliveryOn;
+  return days.length > 0 ? [`${lead} ${formatDayList(days, lang)}`] : [];
+}
+
 function oneLanguage(
   menu: ShareMenu,
   settings: ShareSettings,
@@ -145,9 +164,11 @@ function oneLanguage(
     settings.postGreeting[lang].trim(),
     `${words.menu} ${formatCookingDate(menu.cookingDate, lang)}`,
     dishList(menu.items, lang),
-    [`${words.orderBefore} ${formatCutoff(menu.cutoffAt, lang)}`, ...pickupLines(menu, lang)].join(
-      '\n',
-    ),
+    [
+      `${words.orderBefore} ${formatCutoff(menu.cutoffAt, lang)}`,
+      ...pickupLines(menu, lang),
+      ...extraDaysLines(menu, lang),
+    ].join('\n'),
     `${words.orderHere}: ${origin}/${slug}`,
     fillPhone(settings.postClosing[lang], settings.whatsappNumber),
   ];

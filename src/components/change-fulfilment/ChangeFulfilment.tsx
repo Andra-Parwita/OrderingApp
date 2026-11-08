@@ -2,7 +2,9 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { checkOnMapUrl, isAddressReadable, type DeliveryAddress } from '../../../shared/address';
-import type { Fulfilment, Order } from '../../../shared/domain';
+import { formatCookingDate } from '../../../shared/dates';
+import { deliveryPlan } from '../../../shared/deliveryDays';
+import type { Delivery, Fulfilment, Order } from '../../../shared/domain';
 import {
   ADDRESS_NOTES_MAX,
   ADDRESS_POSTCODE_MAX,
@@ -16,6 +18,7 @@ import { currentSellerSlug } from '../../api/device/sellerContext';
 import { fetchPickupPlaces } from '../../api/menus';
 import { Button, Icon, Segmented, TextField } from '../../ui';
 import { useModalFocus } from '../../ui/patterns/modal';
+import { ChipRow, DayChip } from '../dayChips/DayChips';
 import { QuietMapLinks } from '../QuietMapLinks';
 import { CHANGE_FULFILMENT_NS } from './i18n/register';
 
@@ -26,20 +29,21 @@ import { CHANGE_FULFILMENT_NS } from './i18n/register';
 
 type OrderLike = Pick<
   Order,
-  'code' | 'firstName' | 'language' | 'fulfilment' | 'pickupPlaceId' | 'address'
+  'code' | 'firstName' | 'language' | 'fulfilment' | 'pickupPlaceId' | 'address' | 'handoverDate'
 >;
 
 export type ChangeFulfilmentProps = Readonly<{
   order: OrderLike;
   /** This menu's own pickup times, when they differ from the place's usual ones (menu orders). */
   windows?: ReadonlyArray<Pick<PickupPlace, 'id' | 'window'>>;
+  /** Plan 126: the menu's cooking day and delivery days (menu orders); the Delivery day row needs them. */
+  days?: Readonly<{ cookingDate: string; delivery: Delivery }>;
   onChanged: () => void;
 }>;
 
+/* No box of its own: the link joins the host's line (beside the day text), and the "Saved" note takes a full line under them. */
 const Wrap = styled.span`
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: contents;
 `;
 const LinkButton = styled.button`
   margin: -0.625rem 0 -0.625rem 0.125rem;
@@ -56,6 +60,8 @@ const LinkButton = styled.button`
   cursor: pointer;
 `;
 const Saved = styled.span`
+  display: block;
+  flex: 0 0 100%;
   color: ${({ theme }) => theme.c.conf};
   font-size: 0.8125rem;
 `;
@@ -103,6 +109,11 @@ const Stack = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
   margin-top: ${({ theme }) => theme.spacing.md};
+`;
+const DayField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 const Muted = styled.p`
   margin: 0;
@@ -243,14 +254,35 @@ function readableOf(order: OrderLike): DeliveryAddress | null {
   return a && 'address' in a ? a.address : null;
 }
 
+/**
+ * Plan 126: the days to offer for a delivery: the menu's delivery days plus the order's own day (it may
+ * have been removed from the menu since). Empty = no row (only the event day, and the order is on it).
+ */
+function dayChoices(
+  order: OrderLike,
+  days: ChangeFulfilmentProps['days'],
+): { options: Array<string>; current: string } {
+  if (!days) return { options: [], current: '' };
+  const plan = deliveryPlan(days.cookingDate, days.delivery.available ? days.delivery : undefined);
+  const own =
+    order.fulfilment === 'delivery' ? (order.handoverDate ?? days.cookingDate) : undefined;
+  if (!plan.custom && (own === undefined || own === days.cookingDate)) {
+    return { options: [], current: '' };
+  }
+  const options = [...new Set([...plan.days, ...(own ? [own] : [])])].sort();
+  return { options, current: own ?? plan.defaultDay };
+}
+
 function Sheet083({
   order,
   windows,
+  days,
   onClose,
   onSaved,
 }: Readonly<{
   order: OrderLike;
   windows: ChangeFulfilmentProps['windows'];
+  days: ChangeFulfilmentProps['days'];
   onClose: () => void;
   onSaved: (told: boolean) => void;
 }>) {
@@ -260,6 +292,8 @@ function Sheet083({
   const [places, setPlaces] = useState<ReadonlyArray<PickupPlace> | null>(null);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
+  const choices = dayChoices(order, days);
+  const [day, setDay] = useState(choices.current);
   const known = readableOf(order);
   const [form, setForm] = useState<FormState>({
     mode: order.fulfilment,
@@ -307,9 +341,18 @@ function Sheet083({
     [street, suburb, postcode, notes],
   );
   const ready = form.mode === 'pickup' ? chosen !== undefined : isAddressReadable(address);
+  // Plan 126: an order already on delivery that only moves day names the new day.
+  const dayMoved =
+    form.mode === 'delivery' &&
+    order.fulfilment === 'delivery' &&
+    choices.options.length > 0 &&
+    day !== choices.current;
   const message =
     form.mode === 'delivery'
-      ? fulfilmentChangedText(order.language, { delivery: true })
+      ? fulfilmentChangedText(order.language, {
+          delivery: true,
+          ...(dayMoved ? { day: formatCookingDate(day, order.language) } : {}),
+        })
       : chosen
         ? fulfilmentChangedText(order.language, { pickup: chosen.place, times: times(chosen) })
         : '';
@@ -322,14 +365,19 @@ function Sheet083({
       order.code,
       form.mode === 'pickup'
         ? { fulfilment: 'pickup', pickupPlaceId: form.placeId, notify: form.tell }
-        : { fulfilment: 'delivery', address, notify: form.tell },
+        : {
+            fulfilment: 'delivery',
+            address,
+            notify: form.tell,
+            ...(choices.options.length > 0 ? { handoverDate: day } : {}),
+          },
       undefined,
       currentSellerSlug(),
     );
     setSaving(false);
     if (result.ok) onSaved(form.tell);
     else setFailed(true);
-  }, [ready, saving, order.code, form, address, onSaved]);
+  }, [ready, saving, order.code, form, address, onSaved, choices.options.length, day]);
 
   return (
     <Overlay onClick={onClose}>
@@ -421,10 +469,30 @@ function Sheet083({
               ) : null}
               <Hint>
                 <Icon name="lock" />
-                <span>{t('private')}</span>
+                <span>{t(days ? 'private' : 'privateEvent')}</span>
               </Hint>
             </>
           )}
+
+          {form.mode === 'delivery' && choices.options.length > 0 ? (
+            <DayField>
+              <Muted as="span">{t('deliveryDay')}</Muted>
+              <ChipRow role="radiogroup" aria-label={t('deliveryDay')}>
+                {choices.options.map((option) => (
+                  <DayChip
+                    key={option}
+                    type="button"
+                    role="radio"
+                    aria-checked={option === day}
+                    $on={option === day}
+                    onClick={() => setDay(option)}
+                  >
+                    {formatCookingDate(option, order.language)}
+                  </DayChip>
+                ))}
+              </ChipRow>
+            </DayField>
+          ) : null}
 
           <Tick>
             <input
@@ -461,7 +529,7 @@ function Sheet083({
 }
 
 /** The quiet "Change" link, its sheet, and the "Saved" line after it. Owners and chefs only: the host decides. */
-export function ChangeFulfilment({ order, windows, onChanged }: ChangeFulfilmentProps) {
+export function ChangeFulfilment({ order, windows, days, onChanged }: ChangeFulfilmentProps) {
   const { t } = useTranslation(CHANGE_FULFILMENT_NS);
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState<'told' | 'quiet' | null>(null);
@@ -487,6 +555,7 @@ export function ChangeFulfilment({ order, windows, onChanged }: ChangeFulfilment
         <Sheet083
           order={order}
           windows={windows}
+          days={days}
           onClose={() => setOpen(false)}
           onSaved={onSaved}
         />

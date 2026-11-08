@@ -351,7 +351,11 @@ export function PrintOrdersScreen({ onBack }: Readonly<{ onBack?: () => void }>)
         : t('print.otherPlace');
   /** Only the code-sorted list names the place on each row. */
   const placeOf = (order: Order) => {
-    if (order.fulfilment === 'delivery') return t('fulfilment.delivery');
+    if (order.fulfilment === 'delivery') {
+      return order.handoverDate
+        ? `${t('fulfilment.delivery')} · ${formatDay(order.handoverDate, lang)}`
+        : t('fulfilment.delivery');
+    }
     const id = order.pickupPlaceId ?? view?.pickupPoints[0]?.id;
     return view?.pickupPoints.find((p) => p.id === id)?.place ?? t('print.otherPlace');
   };

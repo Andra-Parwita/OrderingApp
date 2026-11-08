@@ -12,6 +12,7 @@ import { getContactDigits } from './contacts';
 import { SELLER_NS } from './i18n/register';
 import { NewTag } from './orderRowCells';
 import { StatusMark } from './StatusMark';
+import { OrderDayTag } from '../../components/dayChips/OrderDayTag';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
 import { openOrderLink } from './whatsappLink';
 
@@ -162,6 +163,7 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
           <Mark $tone="muted">
             <Icon name={order.fulfilment === 'delivery' ? 'truck' : 'bag'} />
             {t(`fulfilment.${order.fulfilment}`)}
+            <OrderDayTag order={order} lang={lang} />
           </Mark>
           {order.paid ? (
             <Mark $tone="conf">

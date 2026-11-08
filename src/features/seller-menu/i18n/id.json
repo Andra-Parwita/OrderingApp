@@ -269,7 +269,7 @@
   "details": {
     "when": "Kapan",
     "cookingDay": "Hari memasak",
-    "cookingHelper": "Ambil dan antar terjadi pada hari ini.",
+    "cookingHelper": "Ambil terjadi pada hari ini. Antar juga, kecuali Anda memilih hari antar lain di bawah.",
     "ordersClose": "Pesanan ditutup",
     "closeTime": "Jam",
     "cutoffHelper_other": "{{count}} hari sebelum hari memasak. Anda tetap bisa menambah pesanan manual setelah itu.",
@@ -326,6 +326,23 @@
       "removeBody": "Hanya diantar berarti pelanggan tidak bisa memilih tempat ambil. Tempat tersimpan tetap ada di Pengaturan.",
       "keep": "Pertahankan tempat",
       "remove": "Hapus"
+    },
+    "deliveryDays": {
+      "title": "Hari antar",
+      "eventDay": "hari acara",
+      "default": "utama",
+      "warnBefore": "{{day}} adalah {{count}} hari sebelum hari masak. Tidak masalah kalau sudah direncanakan.",
+      "hint": "Hari 🔒 adalah hari utama yang dilihat pelanggan lebih dulu. Ketuk satu hari untuk menambah atau menghapusnya."
+    },
+    "defaultDay": {
+      "title": "Hari antar utama",
+      "help": "Pelanggan melihat hari ini terpilih lebih dulu. Pilih hari utama dari hari yang kamu centang.",
+      "tickFirst": "Centang hari antar lain dulu untuk memilih hari utama yang berbeda.",
+      "save": "Jadikan utama"
+    },
+    "keepOpen": {
+      "label": "Biarkan menu terbuka 1 hari lagi",
+      "hint": "Selesai otomatis tengah malam setelah {{day}}."
     }
   },
   "check": {

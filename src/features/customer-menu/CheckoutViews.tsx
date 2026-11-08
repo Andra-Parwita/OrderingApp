@@ -12,6 +12,7 @@ import { Notice } from '../../ui/Notice';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
 import { Group, MainButton, Qty, Round } from './menuParts';
+import { DeliveryDayRow } from './DeliveryDayRow';
 import { NoteSheet } from './NoteSheet';
 import type { BasketNotice } from './customerSlice';
 import type { BasketLine } from './selectors';
@@ -356,6 +357,10 @@ type BasketProps = Readonly<{
   onQty: (itemId: string, qty: number) => void;
   onNote?: (itemId: string, note: string) => void;
   onFulfilment: (value: Fulfilment) => void;
+  /** Plan 126: the delivery days to choose from (empty or one = no row) and the chosen one. */
+  deliveryDays?: ReadonlyArray<string>;
+  handoverDay?: string;
+  onHandover?: (day: string) => void;
   onChangePlace: () => void;
   onNext: () => void;
   onBack: () => void;
@@ -363,6 +368,8 @@ type BasketProps = Readonly<{
   addressSlot?: ReactNode;
   addressBlocked?: boolean;
 }>;
+
+const NO_DAYS: ReadonlyArray<string> = [];
 
 export function BasketView({
   data,
@@ -379,6 +386,9 @@ export function BasketView({
   onQty,
   onNote = noNote,
   onFulfilment,
+  deliveryDays = NO_DAYS,
+  handoverDay,
+  onHandover,
   onChangePlace,
   onNext,
   onBack,
@@ -455,6 +465,14 @@ export function BasketView({
             </Segment>
           ))}
         </Track>
+        {fulfilment === 'delivery' && deliveryDays.length > 0 && onHandover ? (
+          <DeliveryDayRow
+            days={deliveryDays}
+            value={handoverDay ?? deliveryDays[0] ?? ''}
+            lang={lang}
+            onChange={onHandover}
+          />
+        ) : null}
         {addressSlot ? (
           addressSlot
         ) : fulfilment === 'delivery' ? (

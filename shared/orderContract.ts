@@ -28,6 +28,7 @@ import {
 import { parseDeliveryAddress, type DeliveryAddress } from './address';
 import { isEventDate, isEventTime, PRIVATE_MAX_DEPOSIT_CENTS } from './privateContract';
 import { parseCustomerCode } from './customerCode';
+import { isDeliveryDate } from './deliveryDays';
 import { parseOrderCode } from './orderCode';
 import { parseOrderStats, type OrderStats } from './orderStats';
 import { isValidSlug } from './seller';
@@ -51,6 +52,11 @@ export type CreateOrderRequest = {
   language: Language;
   lines: Array<RequestedLine>;
   fulfilment: Fulfilment;
+  /**
+   * Plan 126: the delivery day when it is not the cooking day; one of the menu's extra delivery days.
+   * Delivery orders only; omitted = the cooking day.
+   */
+  handoverDate?: string;
   note?: string;
   /** Customer only: the phone's own My orders history holds a collected/delivered order. */
   returning?: boolean;
@@ -114,6 +120,8 @@ export type ChangeFulfilmentRequest = {
   fulfilment: Fulfilment;
   pickupPlaceId?: string;
   address?: DeliveryAddress;
+  /** Plan 126: the delivery day (one of the menu's days, or the order's own); delivery only. */
+  handoverDate?: string;
   notify: boolean;
 };
 
@@ -197,6 +205,7 @@ export function toCustomerOrder(order: SellerOrder, seller: SellerRef): Customer
       ...(line.note !== undefined ? { note: line.note } : {}),
     })),
     fulfilment: order.fulfilment,
+    ...(order.handoverDate !== undefined ? { handoverDate: order.handoverDate } : {}),
     ...(order.note !== undefined ? { note: order.note } : {}),
     status: order.status,
     locked: order.locked,
@@ -280,6 +289,10 @@ function withoutAddress(input: Record<string, unknown>): Record<string, unknown>
 
 type CreateCore = Omit<CreateOrderRequest, 'returning' | 'clientOrderId' | 'stats'>;
 
+function isHandoverDate(value: unknown): value is string {
+  return isDeliveryDate(value);
+}
+
 function parseCreateCore(input: unknown): CreateCore | null {
   if (!isRecord(input) || hasPersonalData(withoutAddress(input))) return null;
   const { firstName, language, fulfilment } = input;
@@ -307,6 +320,8 @@ function parseCreateCore(input: unknown): CreateCore | null {
     if (parsed === null) return null;
     customerCode = parsed;
   }
+  const handoverDate = input['handoverDate'];
+  if (handoverDate !== undefined && !isHandoverDate(handoverDate)) return null;
   const placeId = input['pickupPlaceId'];
   if (
     placeId !== undefined &&
@@ -319,6 +334,7 @@ function parseCreateCore(input: unknown): CreateCore | null {
     language,
     lines,
     fulfilment,
+    ...(handoverDate !== undefined ? { handoverDate } : {}),
     ...(note !== undefined ? { note } : {}),
     ...(placeId !== undefined ? { pickupPlaceId: placeId } : {}),
     ...(address !== undefined ? { address } : {}),
@@ -402,7 +418,11 @@ export function parseChangeFulfilmentRequest(input: unknown): ChangeFulfilmentRe
     return { fulfilment, pickupPlaceId, notify };
   }
   const address = parseDeliveryAddress(input['address']);
-  return address ? { fulfilment, address, notify } : null;
+  const handoverDate = input['handoverDate'];
+  if (handoverDate !== undefined && !isHandoverDate(handoverDate)) return null;
+  return address
+    ? { fulfilment, address, notify, ...(handoverDate !== undefined ? { handoverDate } : {}) }
+    : null;
 }
 
 export function parseEditSellerOrderRequest(input: unknown): EditSellerOrderRequest | null {
@@ -560,6 +580,8 @@ function parseCoreFields(input: Record<string, unknown>): CoreOrder | null {
   if (typeof firstName !== 'string' || !isLanguage(language)) return null;
   if (!isOneOf(FULFILMENTS, fulfilment) || !isOneOf(ORDER_STATUSES, status)) return null;
   if (note !== undefined && typeof note !== 'string') return null;
+  const handoverDate = input['handoverDate'];
+  if (handoverDate !== undefined && !isHandoverDate(handoverDate)) return null;
   if (typeof locked !== 'boolean' || !isIsoDate(createdAt) || !isIsoDate(updatedAt)) return null;
   if (!lines || !inbox || inbox.length > INBOX_MAX) return null;
   return {
@@ -570,6 +592,7 @@ function parseCoreFields(input: Record<string, unknown>): CoreOrder | null {
     language,
     lines,
     fulfilment,
+    ...(handoverDate !== undefined ? { handoverDate } : {}),
     ...(note !== undefined ? { note } : {}),
     status,
     locked,

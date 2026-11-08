@@ -203,8 +203,8 @@ export function insertOrderStatements(
       `INSERT INTO orders (seller_id, id, code, token, past_week_id, first_name, language, fulfilment, note, status,
          paid, locked, wa_received, is_returning, changed, entered_by_role, entered_by_name, created_at, updated_at,
          packed, collected_at, collected_by, pickup_place_id, customer_code, kind, event_date, event_time, deposit_cents, customer_confirmed,
-         src_place, src_os, src_push, src_remember)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         src_place, src_os, src_push, src_remember, handover_date)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       sellerId,
       order.id,
       order.code,
@@ -238,6 +238,7 @@ export function insertOrderStatements(
       order.stats?.os ?? null,
       order.stats?.push ?? null,
       order.stats?.remember ?? null,
+      order.handoverDate ?? null,
     ),
     ...lineStatements(db, order),
   ];
@@ -266,7 +267,7 @@ export function changeStatements(db: Db, change: OrderChange): Array<D1Statement
       // `packed` and the ticks are not written here: only the pack call changes them (D-066), so a
       // status change read a moment earlier can never undo a tick.
       `UPDATE orders SET first_name = ?, status = ?, paid = ?, locked = ?, wa_received = ?, changed = ?, fulfilment = ?,
-         note = ?, collected_at = ?, collected_by = ?, updated_at = ?,
+         note = ?, collected_at = ?, collected_by = ?, updated_at = ?, handover_date = ?,
          address_enc = CASE WHEN ? = 'cancelled' THEN NULL ELSE address_enc END
        WHERE seller_id = ? AND id = ?`,
       order.firstName,
@@ -280,6 +281,7 @@ export function changeStatements(db: Db, change: OrderChange): Array<D1Statement
       order.collectedAt ?? null,
       order.collectedBy ?? null,
       order.updatedAt,
+      order.handoverDate ?? null,
       // Plan 071: a cancelled order keeps no address.
       order.status,
       sellerId,

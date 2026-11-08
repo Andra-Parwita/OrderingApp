@@ -14,7 +14,7 @@
   "postcode": "Postcode",
   "notes": "Gate code, landmark",
   "optional": "(optional)",
-  "private": "The address is kept private and deleted one day after the cooking day.",
+  "private": "The address is kept private and deleted one day after the menu finishes.",
   "checkOnMap": "Check on map",
   "tell": "Tell {{name}} about this change",
   "tellHint": "They get a notification and see it on their order page.",
@@ -25,5 +25,7 @@
   "cancel": "Cancel",
   "saved": "Saved. {{name}} was told.",
   "savedQuiet": "Saved.",
-  "error": "Couldn't save. Try again."
+  "error": "Couldn't save. Try again.",
+  "deliveryDay": "Delivery day",
+  "privateEvent": "The address is kept private and deleted one day after the event."
 }

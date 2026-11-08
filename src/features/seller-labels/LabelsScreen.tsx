@@ -197,7 +197,11 @@ export function LabelsScreen({ orderCode }: Readonly<{ orderCode?: string }>) {
   const text: LabelText = {
     qrName: t('label.qrName'),
     where: (fulfilment, order) => {
-      const own = order.private ? formatDay(order.private.eventDate, lang) : day;
+      const own = order.private
+        ? formatDay(order.private.eventDate, lang)
+        : fulfilment === 'delivery' && order.handoverDate
+          ? formatDay(order.handoverDate, lang)
+          : day;
       const text = t(fulfilment === 'pickup' ? 'label.pickup' : 'label.delivery', { day: own });
       return order.private ? `${t('privateTag')} · ${text}` : text;
     },

@@ -5,7 +5,7 @@ import { styled } from 'styled-components';
 import { parseOrderCode } from '../../../shared/orderCode';
 import { Button, EmptyState, Icon, ListWithPanel } from '../../ui';
 import { SELLER_NS } from './i18n/register';
-import { LiveOrderRow } from './LiveOrderRow';
+import { LiveOrderRow, RowsGrid } from './LiveOrderRow';
 import { OrderPanelActions, OrderPanelBody, OrderPanelHeader } from './OrderPanelBody';
 import {
   ChipGroup,
@@ -72,6 +72,10 @@ export function OrdersBoard({
   const list = useSelector(selectList);
   const counts = useSelector(selectCounts);
   const visible = useVisibleOrders(filter, query, toggles);
+  // Plan 126: with any delivery day in the list, every row keeps a slot for the day tag.
+  const daySlot = visible.some(
+    (order) => order.fulfilment === 'delivery' && order.handoverDate !== undefined,
+  );
   const fresh = useFreshIds();
   const selected = useSelector((state: SellerOrdersRootState) =>
     selectedCode ? selectOrderByCode(state, selectedCode) : undefined,
@@ -162,18 +166,21 @@ export function OrdersBoard({
       {list.status === 'ready' && counts.all + counts.cancelled > 0 && visible.length === 0 ? (
         <Message>{t('orders.empty')}</Message>
       ) : null}
-      {list.status === 'ready'
-        ? visible.map((order) => (
+      {list.status === 'ready' ? (
+        <RowsGrid $wide={!selectedCode} $daySlot={daySlot}>
+          {visible.map((order) => (
             <LiveOrderRow
               key={order.id}
               order={order}
               selected={order.code === raw}
               isNew={fresh.has(order.id)}
               panelOpen={Boolean(selectedCode)}
+              daySlot={daySlot}
               onOpen={onOpenOrder}
             />
-          ))
-        : null}
+          ))}
+        </RowsGrid>
+      ) : null}
     </>
   );
 

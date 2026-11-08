@@ -74,6 +74,8 @@ export type HandoverData =
       places: ReadonlyArray<PickupPoint>;
       messages: ReadonlyArray<MessageLogEntry>;
       date: string | null;
+      /** Plan 126: the cooking day as a plain date (for sorting deliveries by day). */
+      cookingDate: string | null;
     }>;
 
 /**
@@ -113,6 +115,7 @@ export function useHandoverData(): { data: HandoverData; reload: () => Promise<v
           date: menu?.ok
             ? formatCookingDate(menu.data.menu.menu.cookingDate, lang)
             : (was?.date ?? null),
+          cookingDate: menu?.ok ? menu.data.menu.menu.cookingDate : (was?.cookingDate ?? null),
         };
       });
       if (orders?.ok) ready.current = true;

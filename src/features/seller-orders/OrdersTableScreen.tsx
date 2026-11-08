@@ -68,6 +68,15 @@ const Head = styled.header`
       display: none;
     }
   }
+  /* A tablet held upright (a container cannot restyle itself, so a media query): tighter gaps keep
+     the collapse button on the title's row. */
+  @media (max-width: 56rem) {
+    column-gap: ${({ theme }) => theme.spacing.xs};
+
+    > div {
+      gap: ${({ theme }) => theme.spacing.xs};
+    }
+  }
 `;
 const TitleLine = styled.div`
   display: flex;

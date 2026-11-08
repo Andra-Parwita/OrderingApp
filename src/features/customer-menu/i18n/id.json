@@ -138,7 +138,8 @@
     "updating": "Mengubah pesanan…",
     "editTitle": "Ubah pesanan Anda",
     "editCutoff": "Anda bisa mengubah atau membatalkan sampai {{when}}",
-    "editOnly": "Nama depan Anda tidak berubah."
+    "editOnly": "Nama depan Anda tidak berubah.",
+    "deliveryDay": "Hari antar"
   },
   "checkout": {
     "remove": "Hapus {{name}}",
@@ -169,7 +170,8 @@
     "stockLead": "Ada yang berubah.",
     "stockRest": "Ada item yang habis atau sisanya kurang dari yang Anda minta. Cek keranjang lalu coba lagi.",
     "deliveryTo": "Diantar ke {{address}}",
-    "noteHelpAddress": "Alergi atau permintaan khusus. Tulis alamat Anda di Alamat pengantaran di atas. Jangan tulis nomor telepon di sini."
+    "noteHelpAddress": "Alergi atau permintaan khusus. Tulis alamat Anda di Alamat pengantaran di atas. Jangan tulis nomor telepon di sini.",
+    "deliveryDayTo": "Diantar {{day}} ke {{address}}"
   },
   "placed": {
     "title": "Pesanan terkirim",
@@ -183,7 +185,8 @@
     "optional": "Anda pernah memesan sebelumnya, jadi mengirim ini lewat WhatsApp bersifat opsional.",
     "viewOrder": "Lihat rincian pesanan",
     "change": "Ubah atau batalkan",
-    "saved": "Tersimpan di Pesanan saya di ponsel ini."
+    "saved": "Tersimpan di Pesanan saya di ponsel ini.",
+    "deliveryDay": "Diantar pada {{day}}"
   },
   "status": {
     "ordered": "Dipesan",
@@ -200,7 +203,8 @@
     "pickupWhen": "Ambil sendiri {{when}}",
     "delivery": "Diantar",
     "link": "Pesanan saya: {{link}}",
-    "addAddress": "Alamat saya:"
+    "addAddress": "Alamat saya:",
+    "deliveryOn": "Antar {{when}}"
   },
   "address": {
     "title": "Alamat pengantaran",

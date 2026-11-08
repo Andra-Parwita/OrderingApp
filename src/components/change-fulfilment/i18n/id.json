@@ -14,7 +14,7 @@
   "postcode": "Kode pos",
   "notes": "Kode pagar, patokan",
   "optional": "(opsional)",
-  "private": "Alamat dirahasiakan dan dihapus sehari setelah hari masak.",
+  "private": "Alamat dirahasiakan dan dihapus sehari setelah menu selesai.",
   "checkOnMap": "Cek di peta",
   "tell": "Kabari {{name}} soal perubahan ini",
   "tellHint": "Dia dapat notifikasi dan melihatnya di halaman pesanannya.",
@@ -25,5 +25,7 @@
   "cancel": "Batal",
   "saved": "Tersimpan. {{name}} sudah dikabari.",
   "savedQuiet": "Tersimpan.",
-  "error": "Gagal menyimpan. Coba lagi."
+  "error": "Gagal menyimpan. Coba lagi.",
+  "deliveryDay": "Hari antar",
+  "privateEvent": "Alamat dirahasiakan dan dihapus sehari setelah acara."
 }

@@ -9,7 +9,7 @@ import { deleteImageRefs, type ImageBucket } from '../images/r2';
 import { isFinalStatus } from '../../shared/status';
 import { marks, type D1Statement, type Db } from './d1';
 import { LIVE_MENU, liveMenu, readOrders } from './orders';
-import { type MenuRow } from './rows';
+import { deliveryExtrasOf, type MenuRow } from './rows';
 
 // ---- Per-chef summary (plan 069) ------------------------------------------------------------
 
@@ -295,8 +295,16 @@ export async function finishDueMenus(
   /** Plan 064: pictures pruned from past menus, per seller; delete them with deleteUnusedPictures. */
   pruned: Array<{ sellerId: string; refs: Array<string> }>;
 }> {
-  const live = await db.all<{ seller_id: string; cooking_date: string; time_zone: string | null }>(
-    `SELECT m.seller_id, m.cooking_date, k.time_zone FROM menus m
+  const live = await db.all<{
+    seller_id: string;
+    cooking_date: string;
+    time_zone: string | null;
+    delivery_available: number;
+    extra_delivery_days: string | null;
+    default_delivery_day: string | null;
+    finish_extra_day: number;
+  }>(
+    `SELECT m.seller_id, m.cooking_date, m.delivery_available, m.extra_delivery_days, m.default_delivery_day, m.finish_extra_day, k.time_zone FROM menus m
      LEFT JOIN kitchens k ON k.seller_id = m.seller_id WHERE m.state = 'live'`,
   );
   // At most MAX_FINISH_PER_RUN a run: the free plan allows 50 D1 queries per invocation, and a
@@ -304,8 +312,14 @@ export async function finishDueMenus(
   const due = live
     .filter(
       (menu) =>
-        Date.parse(menuFinishesAt(menu.cooking_date, menu.time_zone ?? DEFAULT_ZONE)) <=
-        now.getTime(),
+        Date.parse(
+          menuFinishesAt(
+            menu.cooking_date,
+            menu.time_zone ?? DEFAULT_ZONE,
+            deliveryExtrasOf(menu).days,
+            menu.finish_extra_day === 1,
+          ),
+        ) <= now.getTime(),
     )
     .slice(0, MAX_FINISH_PER_RUN);
   let menus = 0;

@@ -9,7 +9,8 @@ import { DeliveryRow } from './DeliveryRow';
 import { usePrivateToday } from './usePrivateToday';
 import { SELLER_NS } from './i18n/register';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
-import { selectOrders } from './sellerOrdersSelectors';
+import { selectCookingDate, selectOrders } from './sellerOrdersSelectors';
+import { compareDeliveryDay } from '../../../shared/deliveryDays';
 import { pollingStarted, pollingStopped, statusChangeRequested } from './sellerOrdersSlice';
 import { SCREEN_HEIGHT } from '../../theme/screen';
 
@@ -48,6 +49,8 @@ function DeliveriesContent({ onBack }: Readonly<{ onBack: () => void }>) {
   const { t } = useTranslation(SELLER_NS);
   const dispatch = useDispatch();
   const orders = useSelector(selectOrders);
+  const cookingDate = useSelector(selectCookingDate);
+  const byDay = useMemo(() => compareDeliveryDay(cookingDate), [cookingDate]);
   useEffect(() => {
     dispatch(pollingStarted());
     return () => {
@@ -63,10 +66,12 @@ function DeliveriesContent({ onBack }: Readonly<{ onBack: () => void }>) {
         .sort(
           (a, b) =>
             Number(a.status === 'delivered') - Number(b.status === 'delivered') ||
+            // Plan 126: by delivery day, earliest first (the same day keeps the order below).
+            byDay(a, b) ||
             (a.private?.eventTime ?? '').localeCompare(b.private?.eventTime ?? '') ||
             a.createdAt.localeCompare(b.createdAt),
         ),
-    [orders, privateToday],
+    [orders, privateToday, byDay],
   );
   const open = deliveries.filter((order) => order.status !== 'delivered').length;
   const done = useCallback(

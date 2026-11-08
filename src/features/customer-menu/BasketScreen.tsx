@@ -7,6 +7,8 @@ import {
   isAddressComplete,
   type DeliveryAddress,
 } from '../../../shared/address';
+import { formatCookingDate } from '../../../shared/dates';
+import { deliveryPlan } from '../../../shared/deliveryDays';
 import type { Fulfilment } from '../../../shared/domain';
 import { savedAddress } from '../../api/device/address';
 import { savedFirstName } from '../../api/device/firstName';
@@ -120,6 +122,8 @@ export function EditOrderFlow({
   }, [dispatch, store, token]);
   return children;
 }
+
+const NO_DAYS: ReadonlyArray<string> = [];
 
 function BasketContent({
   slug,
@@ -271,6 +275,25 @@ function BasketContent({
   const nameError =
     submitted && !editing && firstName.trim() === '' ? t('basket.firstNameRequired') : undefined;
 
+  // Plan 126: the menu's delivery days (only when the seller set some); the default is pre-selected.
+  const dayPlan =
+    menu.status === 'ready' && fulfilment === 'delivery' && !editing
+      ? deliveryPlan(menu.data.week.cookingDate, menu.data.week.delivery)
+      : null;
+  const deliveryDays = dayPlan?.custom ? dayPlan.days : NO_DAYS;
+  const defaultDay = dayPlan?.defaultDay ?? '';
+  const handoverDay =
+    checkout.handoverDate !== null && deliveryDays.includes(checkout.handoverDate)
+      ? checkout.handoverDate
+      : defaultDay;
+  // The server gives an order with no day the default, so only another choice is sent.
+  const handoverToSend =
+    deliveryDays.length > 0 && handoverDay !== defaultDay ? handoverDay : undefined;
+  const onHandover = useCallback(
+    (value: string) => dispatch(checkoutSet({ handoverDate: value === defaultDay ? null : value })),
+    [dispatch, defaultDay],
+  );
+
   const submit = useCallback(() => {
     if (editing) {
       if (addressBlocked) return;
@@ -289,6 +312,7 @@ function BasketContent({
         note,
         ...(fulfilment === 'pickup' && pickupId !== undefined ? { pickupPlaceId: pickupId } : {}),
         ...(addressToSend ? { address: addressToSend } : {}),
+        ...(handoverToSend !== undefined ? { handoverDate: handoverToSend } : {}),
       }),
     );
   }, [
@@ -301,6 +325,7 @@ function BasketContent({
     pickupId,
     addressBlocked,
     addressToSend,
+    handoverToSend,
   ]);
 
   const header = (
@@ -366,7 +391,12 @@ function BasketContent({
         addressBlocked={addressBlocked}
         addressLine={
           needsAddress && addressToSend
-            ? t('checkout.deliveryTo', { address: addressLine(addressToSend) })
+            ? deliveryDays.length > 0 && handoverDay !== data.week.cookingDate
+              ? t('checkout.deliveryDayTo', {
+                  day: formatCookingDate(handoverDay, lang),
+                  address: addressLine(addressToSend),
+                })
+              : t('checkout.deliveryTo', { address: addressLine(addressToSend) })
             : keepsAddress
               ? t('address.kept')
               : undefined
@@ -405,6 +435,9 @@ function BasketContent({
       onQty={onQty}
       onNote={onLineNote}
       onFulfilment={onFulfilment}
+      deliveryDays={deliveryDays}
+      handoverDay={handoverDay}
+      onHandover={onHandover}
       onChangePlace={onChangePlace}
       onNext={goNext}
       onBack={onBack}

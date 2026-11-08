@@ -79,6 +79,7 @@
     "soldOut": "Habis",
     "choices_one": "{{count}} pilihan: {{names}}",
     "choices_other": "{{count}} pilihan: {{names}}",
-    "empty": "Belum ada hidangan."
+    "empty": "Belum ada hidangan.",
+    "deliveryDays": "Hari antar: {{days}}"
   }
 }

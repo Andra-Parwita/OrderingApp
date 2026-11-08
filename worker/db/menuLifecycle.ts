@@ -1,5 +1,6 @@
 // The menu and its picture, publishing and finishing (split out of menus.ts, plan 098 C3; the code is unchanged).
 import { comingSaturday, cutoffAtFor } from '../../shared/dates';
+import { checkDeliveryDays, keepInRange } from '../../shared/deliveryDays';
 import { type FinishMenuResponse } from '../../shared/menusContract';
 import type { ApiWarning } from '../../shared/apiError';
 import { checkImageUpload } from '../../shared/imageSlots';
@@ -109,17 +110,40 @@ export function lifecyclePart(
               defaults.cutoffTime,
               await zoneOf(),
             ));
+      // Plan 126: the delivery days. A request with days is checked (distinct, 2 days before to 1 day
+      // after the cooking day, the default among them); delivery off clears them; without days in the
+      // request the stored ones stay, minus any that a moved cooking day puts out of range.
+      const deliveryOn = request.delivery?.available ?? row.delivery_available === 1;
+      const stored =
+        row.extra_delivery_days === null
+          ? []
+          : (JSON.parse(row.extra_delivery_days) as Array<string>);
+      const plan =
+        request.delivery?.days !== undefined
+          ? checkDeliveryDays(
+              cookingDate,
+              request.delivery.days,
+              request.delivery.defaultDay,
+              deliveryOn,
+            )
+          : deliveryOn
+            ? keepInRange(cookingDate, stored, row.default_delivery_day ?? undefined)
+            : { days: [] };
+      if (plan === null) return fail('invalid_request', 'Those delivery days are not allowed');
       const statements: Array<D1Statement> = [
         db.stmt(
           `UPDATE menus SET cooking_date = ?, cutoff_at = ?, delivery_available = ?, delivery_note_en = ?,
-             delivery_note_id = ?, wizard_step = ?, taking_orders = ? WHERE seller_id = ?`,
+             delivery_note_id = ?, wizard_step = ?, taking_orders = ?, extra_delivery_days = ?, default_delivery_day = ?, finish_extra_day = ? WHERE seller_id = ?`,
           cookingDate,
           cutoffAt,
-          request.delivery?.available ?? row.delivery_available === 1,
+          deliveryOn,
           request.delivery?.note.en ?? row.delivery_note_en,
           request.delivery?.note.id ?? row.delivery_note_id,
           Math.max(row.wizard_step, request.wizardStep ?? 0),
           request.takingOrders ?? row.taking_orders === 1,
+          plan.days.length > 0 ? JSON.stringify(plan.days) : null,
+          plan.days.length > 0 ? (plan.defaultDay ?? null) : null,
+          request.finishExtraDay ?? row.finish_extra_day === 1,
           sid,
         ),
       ];

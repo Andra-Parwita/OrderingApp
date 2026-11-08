@@ -42,7 +42,9 @@ export function orderInfo(
   // Plan 081: a private order has its own event date and time (the kitchen's wall clock, shown in
   // the device's zone like a pickup window); it is not tied to the weekly menu's date.
   const event = order.private;
-  const date = event?.eventDate ?? order.cookingDate ?? week?.cookingDate;
+  // Plan 126: a delivery order on one of the menu's extra days shows that day instead of the cooking day.
+  const handover = order.fulfilment === 'delivery' ? order.handoverDate : undefined;
+  const date = event?.eventDate ?? handover ?? order.cookingDate ?? week?.cookingDate;
   const dateText = date ? formatCookingDate(date, lang) : null;
   const windowText = event
     ? event.eventTime
