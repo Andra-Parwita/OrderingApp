@@ -440,3 +440,4 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 2b · Android emulator Tablet_11 + Pixel_9 (round 2) | general-purpose · sonnet | 13:07 | 30 min | 13:32 | | | none (check only) | ✅ all 10 steps; ⚠️ 7 tidy-ups (portrait panel list, band position, gaps, texts, 'Orde') |
 | 1d · last tidy-ups (band position, portrait list, gaps, texts, phone title, tabs one row) | general-purpose · sonnet | 13:32 | 30 min | 14:38 | | | ~12 files | ✅ |
 | gate · typecheck, lint, format, unit 2384, server 733, 16 directed e2e runs, docs | coordinator | 14:38 | 30 min | 14:38 | | | — | ✅ all green |
+| deploy · backup, build, migrations 0035-0037, deploy v1.0.46, health, live smoke | owner + coordinator | 14:57 | 20 min | 15:04 | | | — | ✅ Worker 050816b7 |

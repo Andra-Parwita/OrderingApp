@@ -1,6 +1,6 @@
 # 126 · Delivery on another day (customer picks from 1–3 days the seller offers)
 
-**Target: 1.0.46.** **Status:** built and checked 8 Nov (directed e2e, 2 emulator rounds on tablet + phone), ready to deploy; mock-up approved (owner 8 Nov: "with label should be good enough"). First use: DellaVee event **Sun 15 Nov**.
+**Target: 1.0.46.** **Status:** built and checked 8 Nov (directed e2e, 2 emulator rounds on tablet + phone), live 8 Nov (Worker `050816b7`); mock-up approved (owner 8 Nov: "with label should be good enough"). First use: DellaVee event **Sun 15 Nov**.
 
 ## Why (owner, 8 Nov)
 "Ability for a delivery to be delivered on a different day … we don't have to worry about kitchen or cook, on when they will do the cook, just like a normal app. It's just ability for a customer to set a different delivery day, and ability for the seller to then set 'can be different day', which say give 1–3 different day options."
