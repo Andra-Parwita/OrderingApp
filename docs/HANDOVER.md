@@ -55,7 +55,6 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 - Admin "Pause the kitchen" signs everyone out; worth a stronger warning one day.
 - 1.0.43.3: one-off blank banner on an iPhone cold start, not reproduced. Watch.
 - Time-bomb leftovers (low): `e2e/p039-captures.spec.ts` resets data without pushing the cut-off; passkey counter ~2033; seed-local data goes stale.
-- The empty, locked folder `D:\Projects\home\OrderingApp-hotfix` can be deleted after a reboot.
 - Unused: `public/guides/template-phone-banner.png` (ask before deleting).
 - Scratch copies `scratch/emu-124/state`, `scratch/emu-124b/state` can be deleted.
 
@@ -67,6 +66,7 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 - Older open owner checks: 1.0.42 live checks, 1.0.38 pickup map + QR scan, a real label print.
 
 ## Local tips
+- **Node 24.22.2** (nvm-windows; was 22.23.3, missing the Oct 2026 security fixes) and pnpm 12.10.1, since 8 Nov. Dev tools updated the same day; `pnpm audit`: 1 moderate left (minimatch inside eslint, dev-only; forcing minimatch 11 breaks eslint). Pins in `pnpm-workspace.yaml`: undici ^8.12.2, zod ^4.6.6.
 - Playwright with `--no-deps` needs `NODE_EXTRA_CA_CERTS="C:/Users/Indra/AppData/Local/mkcert/rootCA.pem"` (else "unable to verify the first certificate"); specs pick their own project (`order-flow`/`batch2-flow` on `iphone-chromium`, desktop parts on `desktop-chromium`); one Playwright run at a time. Lint needs `NODE_OPTIONS=--max-old-space-size=8192`. `mocks` and `sellerAuth` tests: `--no-file-parallelism` (Windows port exhaustion).
 - Android emulator: `D:\Android\sdk\emulator`; AVDs Pixel_9 (`-memory 4096`), Pixel_8a, Tablet_11; `adb reverse` + mkcert CA installed; PIN 1234. Dev API writes from scripts need an `Origin: https://localhost:<port>` header.
 - iPhone: a home-screen app reads the head only at "Add to Home Screen" (lesson 44); iOS 26 blurs under the status bar (lesson 45).

@@ -2,3 +2,6 @@ allowBuilds:
   esbuild: true
   unrs-resolver: true
   workerd: true
+overrides:
+  undici@>=8.0.0 <8.12.2: ^8.12.2
+  zod@<4.6.6: ^4.6.6
