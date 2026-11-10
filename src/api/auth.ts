@@ -237,6 +237,11 @@ export function signOutDevice(id: string): Promise<ApiResult<OkResponse>> {
   return request(`/api/auth/devices/${enc(id)}`, parseOkResponse, { method: 'DELETE' });
 }
 
+/** Plan 128: sets or replaces this person's own backup password (no old one asked). */
+export function setMyPassword(password: string): Promise<ApiResult<OkResponse>> {
+  return request('/api/auth/password', parseOkResponse, { method: 'PUT', body: { password } });
+}
+
 /** A one-time code (6 digits, 10 minutes) to set up another device. */
 export function createDeviceCode(): Promise<ApiResult<CodeResponse>> {
   return request('/api/auth/device-codes', parseCodeResponse, { method: 'POST' });

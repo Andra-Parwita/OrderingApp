@@ -61,7 +61,8 @@ State-changing calls (POST, PUT, PATCH, DELETE) to `/api/seller/*`, `/api/admin/
 | POST | `/api/auth/device-codes` | signed in | make a 6-digit code to add another device |
 | GET | `/api/auth/me` | signed in | who am I, which kitchen, which role (clears a cookie the server no longer knows). Plan 125: a full session also carries `people`, the number of accounts with a membership in the active kitchen (one COUNT; for every role, so a chef's tablet gets it too) |
 | GET | `/api/auth/memberships` | signed in | my kitchens and roles |
-| GET | `/api/auth/devices` | signed in | my devices; each has `signIn`: `passkey` (screen lock) when `devices.credential_id` is set, else `password` (plan 125) |
+| GET | `/api/auth/devices` | signed in | my devices; each has `signIn`: `passkey` (screen lock) when `devices.credential_id` is set, else `password` (plan 125); the answer also has `hasPassword` for my own account (plan 128) |
+| PUT | `/api/auth/password` | signed in (full session) | plan 128: set or replace **my own** password (body `{ password }`, 8 to 200 characters, same PBKDF2 as setup, no old password asked); 400 too short/long, 401 setup session or none, 403 the admin (passkey only), 429-style `locked_out` from the auth rate limit |
 | PATCH, DELETE | `/api/auth/devices/:id` | signed in | rename, or sign out and remove, one of my devices |
 
 Sign-in calls are rate limited per browser id (30 per minute). The few limiters that look at a network address (find my order, log intake, phone codes) keep only an HMAC of it with a random per-day salt (kept two days); no IP is stored. Five wrong tries lock a key or person for 15 minutes (`locked_out` with `retryAfterSeconds`). A paused kitchen answers `kitchen_paused`.

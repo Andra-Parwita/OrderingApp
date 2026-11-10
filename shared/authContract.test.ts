@@ -72,9 +72,9 @@ describe('admin responses', () => {
 });
 
 describe('auth contract', () => {
-  it('checks the password length (10 to 200)', () => {
-    expect(checkPassword('123456789')).toBe('too_short');
-    expect(checkPassword('1234567890')).toBe('ok');
+  it('checks the password length (8 to 200)', () => {
+    expect(checkPassword('1234567')).toBe('too_short');
+    expect(checkPassword('12345678')).toBe('ok');
     expect(checkPassword('x'.repeat(201))).toBe('too_long');
   });
 

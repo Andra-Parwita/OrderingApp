@@ -67,8 +67,8 @@
     "title": "Atur kata sandi",
     "label": "Kata sandi baru",
     "confirm": "Ulangi kata sandi",
-    "helper": "Minimal 10 karakter",
-    "tooShort": "Pakai minimal 10 karakter.",
+    "helper": "Minimal 8 karakter",
+    "tooShort": "Pakai minimal 8 karakter.",
     "tooLong": "Pakai maksimal 200 karakter.",
     "mismatch": "Kedua kata sandi tidak sama.",
     "show": "Tampilkan",
@@ -83,6 +83,7 @@
     "passwordTitle": "Masuk dengan kata sandi",
     "back": "Kembali",
     "passkey": "Masuk dengan kunci layar",
+    "passkeyHint": "Tablet atau HP akan meminta sidik jari, wajah, atau PIN yang Anda pakai untuk membuka perangkat itu.",
     "noPasskey": "Perangkat ini belum punya passkey. Pakai kata sandi, atau minta undangan baru ke pemilik.",
     "adminPasskey": "Passkey itu milik admin. Admin masuk lewat halaman admin. Pilih passkey milikmu, atau pakai kata sandi.",
     "usePassword": "Pakai kata sandi saja",
@@ -139,5 +140,22 @@
     "submit": "Gabung",
     "signInToJoin": "Sudah punya login? Masuk untuk bergabung",
     "thisKitchen": "dapur ini"
+  },
+  "backup": {
+    "title": "Kata sandi cadangan",
+    "row": "Kata sandi · {{state}}",
+    "notSet": "Belum diatur",
+    "set": "Sudah diatur",
+    "notSetHelp": "Tambahkan kata sandi yang bisa dipakai kalau kunci layar tidak berfungsi.",
+    "setHelp": "Di layar masuk, ketuk 'Pakai kata sandi saja'.",
+    "add": "Tambah",
+    "change": "Ubah",
+    "formTitle": "Kata sandi cadangan",
+    "save": "Simpan kata sandi",
+    "saving": "Menyimpan…",
+    "saved": "Tersimpan. Catat di tempat yang aman.",
+    "formHelp": "Bisa dipakai di layar masuk pada perangkat mana pun.",
+    "layerTitle": "Kata sandi",
+    "saveShort": "Simpan"
   }
 }

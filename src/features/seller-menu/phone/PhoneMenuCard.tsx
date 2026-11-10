@@ -99,6 +99,7 @@ export function PhoneMenuProvider({
   view,
   reload,
   now,
+  canEditDays = true,
   children,
 }: Readonly<{
   view: MenuView | null;
@@ -106,6 +107,8 @@ export function PhoneMenuProvider({
   reload: () => void;
   /** "Now", for tests. */
   now?: Date;
+  /** Plan 127: the owner may change the delivery days from the menu view (the app mounts this only for the owner). */
+  canEditDays?: boolean;
   children: ReactNode;
 }>) {
   const { i18n } = useTranslation(PHONE_MENU_NS);
@@ -166,6 +169,8 @@ export function PhoneMenuProvider({
               view={view}
               state={state}
               lang={lang}
+              canEditDays={canEditDays}
+              reload={reload}
               onClose={close}
               onShare={buttons ? share : undefined}
               onNotice={onNotice}

@@ -441,3 +441,10 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 1d · last tidy-ups (band position, portrait list, gaps, texts, phone title, tabs one row) | general-purpose · sonnet | 13:32 | 30 min | 14:38 | | | ~12 files | ✅ |
 | gate · typecheck, lint, format, unit 2384, server 733, 16 directed e2e runs, docs | coordinator | 14:38 | 30 min | 14:38 | | | — | ✅ all green |
 | deploy · backup, build, migrations 0035-0037, deploy v1.0.46, health, live smoke | owner + coordinator | 14:57 | 20 min | 15:04 | | | — | ✅ Worker 050816b7 |
+
+## Plan 127 (hotfix 1.0.46.1: delivery days from the seller phone)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 1 · phone menu view: day grid 2×2, default sheet, keep-open switch, Save/Discard, owner only + collapsed rail kitchen switch, no Switch person collapsed, sign-in hint, plan 128 backup password | general-purpose · sonnet | 21:26 | 60 min | 22:18 | | | ~45 files, new PUT /api/auth/password, LayerShell → components/layer | ✅ unit 816 + auth 117; specs p127/p126 36, seller-auth 10, session-flow, helper-flow |
+| 2 · Android emulator Pixel_9 + Tablet_11 for 1.0.46.1 | general-purpose · sonnet | 22:18 | 30 min | 22:40 | | | none (check only; scratch copy) | ✅ all steps on phone + tablet; 3 cosmetic notes (title centring being fixed) |
+| gate · typecheck, lint, format, unit 2400, server 737, specs (p127/p126 36, seller-auth 10, session-flow, helper-flow), docs; title centring | coordinator + sonnet | 22:20 | 30 min | 22:51 | | | — | ✅ |

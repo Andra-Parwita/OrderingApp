@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { styled } from 'styled-components';
-import { lockPageScroll, unlockPageScroll } from '../../../ui/patterns/BottomSheet';
-import { OVERLAY_Z, useModalFocus } from '../../../ui/patterns/modal';
+import { lockPageScroll, unlockPageScroll } from '../../ui/patterns/BottomSheet';
+import { OVERLAY_Z, useModalFocus } from '../../ui/patterns/modal';
 
 // A full-screen layer for the phone (plan 124). Not a bottom sheet: it holds a text box, and the
 // on-screen keyboard must never cover its top bar. iOS keeps the layout viewport at full height when
@@ -69,15 +69,25 @@ export function LayerShell({
 
 /** The bar every layer starts with: it never scrolls. */
 export const LayerBar = styled.header`
-  display: flex;
+  display: grid;
   flex: none;
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(max-content, 1fr);
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadPhone}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 
+  /* Left control at the start, title truly centred, right control at the end; buttons never wrap. */
+  > :first-child {
+    justify-self: start;
+  }
+  > :last-child {
+    justify-self: end;
+  }
+  > button {
+    white-space: nowrap;
+  }
   h2 {
-    flex: 1;
     min-width: 0;
     margin: 0;
     overflow: hidden;

@@ -321,3 +321,117 @@ test('two staff passkeys on one device: Switch person goes between them', async 
 
   expect(errors).toEqual([]);
 });
+
+// Plan 128: a person who signed up with a screen lock adds a backup password in Devices, signs out and
+// signs back in with "Use password instead". Captures go to scratch/cap-128.
+test('a backup password added in Devices signs in with "Use password instead"', async ({
+  page,
+  request,
+}, testInfo) => {
+  const errors = collectErrors(page);
+  const project = testInfo.project.name;
+  const personName = `Backup ${project} ${Date.now().toString(36)}`;
+  const wide = isWide(page);
+  const shots = `scratch/cap-128/${wide ? 'tablet' : 'phone'}`;
+  await virtualAuthenticator(page);
+  await setUpWithPasskey(page, await inviteKeyFor(request, project, personName));
+
+  await page.goto(wide ? '/seller/settings/devices' : '/seller/devices');
+  await expect(page.getByText('Password · Not set')).toBeVisible();
+  await page.screenshot({ path: `${shots}-devices.png`, fullPage: true });
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(page.getByLabel('New password', { exact: true })).toBeVisible();
+  await page.waitForTimeout(500); // the panel slides in
+  await page.screenshot({ path: `${shots}-form.png` });
+
+  // Too short, then not the same, then fine.
+  await page.getByLabel('New password', { exact: true }).fill('short');
+  await page.getByLabel('Confirm password', { exact: true }).fill('short');
+  await page.getByRole('button', { name: 'Save password' }).click();
+  await expect(page.getByText('Use at least 8 characters.')).toBeVisible();
+  await page.screenshot({ path: `${shots}-form-error.png` });
+  await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
+  await page.getByLabel('Confirm password', { exact: true }).fill(`${PASSWORD}x`);
+  await page.getByRole('button', { name: 'Save password' }).click();
+  await expect(page.getByText('The two passwords are not the same.')).toBeVisible();
+  if (!wide) {
+    // The on-screen keyboard takes most of the height: Save stays in the top bar.
+    await page.setViewportSize({ width: 412, height: 420 });
+    await page.waitForTimeout(300);
+    await expect(page.getByRole('button', { name: 'Save password' })).toBeInViewport();
+    await page.screenshot({ path: `${shots}-form-keyboard.png` });
+    await page.setViewportSize({ width: 412, height: 915 });
+  }
+  await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD);
+  await page.getByRole('button', { name: 'Save password' }).click();
+  await expect(page.getByText('Saved. Write it down somewhere safe.')).toBeVisible();
+  await expect(page.getByText('Password · Set')).toBeVisible();
+  await page.screenshot({ path: `${shots}-saved.png`, fullPage: true });
+
+  if (wide) {
+    // Tablet captures once the row is really there (not the "Loading…" state), at both tablet sizes.
+    for (const size of [
+      { name: '1280x800', width: 1280, height: 800 },
+      { name: '800x1280', width: 800, height: 1280 },
+    ]) {
+      await page.setViewportSize({ width: size.width, height: size.height });
+      await page.goto('/seller/settings/devices');
+      await expect(page.getByText('Password · Set')).toBeVisible();
+      await page.screenshot({ path: `scratch/cap-128/tablet-devices-${size.name}.png` });
+      await page.getByRole('button', { name: 'Change', exact: true }).click();
+      await expect(page.getByLabel('New password', { exact: true })).toBeVisible();
+      await page.waitForTimeout(500); // the panel slides in
+      await page.screenshot({ path: `scratch/cap-128/tablet-form-${size.name}.png` });
+      await page.getByLabel('New password', { exact: true }).fill(PASSWORD);
+      await page.getByLabel('Confirm password', { exact: true }).fill(PASSWORD);
+      await page.getByRole('button', { name: 'Save password' }).click();
+      await expect(page.getByText('Saved. Write it down somewhere safe.')).toBeVisible();
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: `scratch/cap-128/tablet-saved-${size.name}.png` });
+    }
+  }
+
+  await signOutThisDevice(page);
+  await page.goto('/seller/sign-in?kitchen=dapur-demo');
+  await page.getByRole('button', { name: 'Use password instead' }).click();
+  await page.getByLabel('Who are you?').selectOption({ label: personName });
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(/\/seller$/);
+  expect(errors).toEqual([]);
+});
+
+// The phone layer's top bar keeps its title centred in EN and ID (captures in scratch/cap-128/center-*).
+test('phone layer top bar: the title is centred in English and Indonesian', async ({
+  page,
+  request,
+}, testInfo) => {
+  test.skip(isWide(page), 'phone layer only');
+  const project = testInfo.project.name;
+  await virtualAuthenticator(page);
+  await setUpWithPasskey(page, await inviteKeyFor(request, project, `Centre ${project}`));
+  for (const lang of ['en', 'id']) {
+    for (const size of [
+      { width: 412, height: 915 },
+      { width: 360, height: 780 },
+    ]) {
+      await page.evaluate((value) => localStorage.setItem('lang', value), lang);
+      await page.setViewportSize(size);
+      await page.goto('/seller/devices');
+      await page.locator('section[aria-label]').first().getByRole('button').click();
+      const bar = page.getByRole('dialog').locator('header');
+      await expect(bar).toBeVisible();
+      const parts = await bar.evaluate((el) => {
+        const [left, title, right] = [...el.children].map((c) => c.getBoundingClientRect());
+        return { left, title, right, bar: el.getBoundingClientRect() };
+      });
+      const middle = (parts.title?.x ?? 0) + (parts.title?.width ?? 0) / 2;
+      const barMiddle = parts.bar.x + parts.bar.width / 2;
+      expect(Math.abs(middle - barMiddle)).toBeLessThan(2);
+      await page.screenshot({
+        path: `scratch/cap-128/center-form-${lang}-${String(size.width)}x${String(size.height)}.png`,
+        clip: { x: 0, y: 0, width: size.width, height: 200 },
+      });
+    }
+  }
+});

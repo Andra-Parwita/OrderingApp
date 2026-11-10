@@ -67,8 +67,8 @@
     "title": "Set a password",
     "label": "New password",
     "confirm": "Confirm password",
-    "helper": "At least 10 characters",
-    "tooShort": "Use at least 10 characters.",
+    "helper": "At least 8 characters",
+    "tooShort": "Use at least 8 characters.",
     "tooLong": "Use at most 200 characters.",
     "mismatch": "The two passwords are not the same.",
     "show": "Show",
@@ -83,6 +83,7 @@
     "passwordTitle": "Sign in with password",
     "back": "Back",
     "passkey": "Sign in with your screen lock",
+    "passkeyHint": "Your tablet or phone asks for its own fingerprint, face or the PIN you unlock it with.",
     "noPasskey": "This device has no passkey yet. Use your password, or ask the owner for a new invite.",
     "adminPasskey": "That passkey belongs to the admin. Admins sign in on the admin page. Pick your own passkey, or use your password.",
     "usePassword": "Use password instead",
@@ -139,5 +140,22 @@
     "submit": "Join",
     "signInToJoin": "Already have a login? Sign in to join",
     "thisKitchen": "this kitchen"
+  },
+  "backup": {
+    "title": "Backup password",
+    "row": "Password · {{state}}",
+    "notSet": "Not set",
+    "set": "Set",
+    "notSetHelp": "Add a password you can use if your screen lock doesn't work.",
+    "setHelp": "On the sign-in screen tap 'Use password instead'.",
+    "add": "Add",
+    "change": "Change",
+    "formTitle": "Backup password",
+    "save": "Save password",
+    "saving": "Saving…",
+    "saved": "Saved. Write it down somewhere safe.",
+    "formHelp": "You can use it on the sign-in screen on any device.",
+    "layerTitle": "Password",
+    "saveShort": "Save"
   }
 }

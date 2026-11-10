@@ -43,7 +43,7 @@ export const AUTH_RATE_MAX = 30;
 export const AUTH_RATE_WINDOW_SECONDS = 60;
 /** The name passkeys show to the person (the browser's own prompt). */
 export const RP_NAME = APP_NAME;
-export const PASSWORD_MIN = 10;
+export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 200;
 export const DEVICE_NAME_MAX = 40;
 export const SELLER_NAME_MAX = 60;
@@ -159,7 +159,10 @@ export type SessionResponse = { me: Me; credentialId?: string };
 /** The options JSON for `startRegistration` / `startAuthentication` (SimpleWebAuthn's shapes). */
 export type PasskeyOptionsResponse = { options: Record<string, unknown> };
 export type MeResponse = { me: Me };
-export type DevicesResponse = { devices: Array<DeviceView> };
+/** `hasPassword`: the caller's own account has a backup password (plan 128). */
+export type DevicesResponse = { devices: Array<DeviceView>; hasPassword?: boolean };
+/** PUT /api/auth/password: a signed-in person sets or replaces their own password (plan 128). */
+export type SetPasswordRequest = { password: string };
 export type KeyResponse = { key: string; expiresAt: string; maxDevices: number };
 /** One kitchen a person belongs to. */
 export type Membership = {
@@ -313,6 +316,13 @@ export function parsePasswordSignInRequest(input: unknown): PasswordSignInReques
   return { deviceId, slug, accountId, password, deviceName };
 }
 
+/** The same length rules as setup. */
+export function parseSetPasswordRequest(input: unknown): SetPasswordRequest | null {
+  if (!isRecord(input)) return null;
+  const { password } = input;
+  return typeof password === 'string' && checkPassword(password) === 'ok' ? { password } : null;
+}
+
 /** A password shorter than PASSWORD_MIN is rejected here (400 `invalid_request`). */
 export function parseRegisterRequest(input: unknown): RegisterRequest | null {
   if (!isRecord(input)) return null;
@@ -462,7 +472,10 @@ function parseDevice(input: unknown): DeviceView | null {
 export function parseDevicesResponse(input: unknown): DevicesResponse | null {
   if (!isRecord(input)) return null;
   const devices = parseArray(input['devices'], parseDevice);
-  return devices ? { devices } : null;
+  if (!devices) return null;
+  return typeof input['hasPassword'] === 'boolean'
+    ? { devices, hasPassword: input['hasPassword'] }
+    : { devices };
 }
 
 export function parseKeyResponse(input: unknown): KeyResponse | null {

@@ -162,7 +162,7 @@ export function PasskeyHelpScreen({ name, setup, onDone, onUsePassword }: Passke
           <ChoiceCard
             icon={<FaceIcon />}
             title={busy ? t('passkey.working') : t('passkey.signInTitle')}
-            text={t('passkey.signInText')}
+            text={`${t('passkey.signInText')} ${t('signIn.passkeyHint')}`}
             recommended
             disabled={busy}
             onClick={() => void signIn()}

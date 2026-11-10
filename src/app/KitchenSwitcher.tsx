@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Me, Membership } from '../../shared/authContract';
 import { fetchMemberships, switchKitchen } from '../api/auth';
 import { Icon } from '../ui';
+import { OVERLAY_Z } from '../ui/patterns/modal';
 import { useSession } from './session';
 
 // Plan 118 (was plan 033 stage 4), tablet rail only: the kitchen name is the switcher. A person in more than one
@@ -118,6 +127,45 @@ const Entry = styled.button`
     font-weight: ${({ theme }) => theme.type.weight.strong};
   }
 `;
+// Plan 127: the collapsed rail. The kitchen's logo or initial is the button; the list opens to the
+// right of the narrow rail (fixed, so the rail's own clipping cannot cut it).
+const IconWrap = styled(Wrap)`
+  flex: 1;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+`;
+const IconTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: ${({ theme }) => theme.c.surf2};
+  }
+  &:focus-visible {
+    outline: ${({ theme }) => theme.border.focus} solid ${({ theme }) => theme.c.fill};
+    outline-offset: -${({ theme }) => theme.border.focus};
+  }
+`;
+const FloatPopup = styled(Popup)<{ $left: number; $top: number }>`
+  position: fixed;
+  z-index: ${OVERLAY_Z};
+  top: ${({ $top }) => $top}px;
+  left: ${({ $left }) => $left}px;
+  right: auto;
+  width: max-content;
+  min-width: 14rem;
+  max-width: calc(100vw - ${({ $left }) => $left}px - 1rem);
+`;
 const Failure = styled.p`
   margin: 0;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
@@ -146,15 +194,19 @@ export type KitchenSwitcherProps = Readonly<{
   /** The active kitchen's name. */
   name: string;
   onSwitched?: () => void;
+  /** The collapsed rail: the logo or initial, which becomes the switch button (nothing else is drawn). */
+  icon?: ReactNode;
 }>;
 
-export function KitchenSwitcher({ name, onSwitched = goToSeller }: KitchenSwitcherProps) {
+export function KitchenSwitcher({ name, onSwitched = goToSeller, icon }: KitchenSwitcherProps) {
   const { t } = useTranslation();
   const { me, adopt } = useSession();
   const [memberships, setMemberships] = useState<ReadonlyArray<Membership>>([]);
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [at, setAt] = useState({ left: 0, top: 0 });
   const wrap = useRef<HTMLDivElement>(null);
+  const pop = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const staff = me?.stage === 'full';
   const active = me?.sellerId;
@@ -172,9 +224,10 @@ export function KitchenSwitcher({ name, onSwitched = goToSeller }: KitchenSwitch
 
   useEffect(() => {
     if (!open) return undefined;
-    wrap.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+    (pop.current ?? wrap.current)?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
     const away = (event: PointerEvent) => {
-      if (!wrap.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!wrap.current?.contains(target) && !pop.current?.contains(target)) setOpen(false);
     };
     document.addEventListener('pointerdown', away);
     return () => document.removeEventListener('pointerdown', away);
@@ -212,7 +265,9 @@ export function KitchenSwitcher({ name, onSwitched = goToSeller }: KitchenSwitch
     } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       const all = [
-        ...(wrap.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]') ?? []),
+        ...((pop.current ?? wrap.current)?.querySelectorAll<HTMLElement>(
+          '[role="menuitemradio"]',
+        ) ?? []),
       ];
       const at = all.indexOf(document.activeElement as HTMLElement);
       const step = event.key === 'ArrowDown' ? 1 : -1;
@@ -220,6 +275,65 @@ export function KitchenSwitcher({ name, onSwitched = goToSeller }: KitchenSwitch
     }
   };
 
+  const items = (
+    <>
+      <div role="menu" aria-label={t('sellerNav.kitchenSwitch')}>
+        {memberships.map((m) => (
+          <Entry
+            key={m.sellerId}
+            type="button"
+            role="menuitemradio"
+            aria-checked={m.sellerId === active}
+            onClick={() => void choose(m.sellerId)}
+          >
+            <Label>
+              {m.sellerName} ·{' '}
+              {t(
+                m.role === 'owner'
+                  ? 'sellerNav.roleOwner'
+                  : m.role === 'helper'
+                    ? 'sellerNav.roleHelper'
+                    : 'sellerNav.roleChef',
+              )}
+            </Label>
+            {m.sellerId === active ? <Icon name="check" /> : null}
+          </Entry>
+        ))}
+      </div>
+      {failed ? <Failure role="alert">{t('sellerNav.kitchenSwitchFailed')}</Failure> : null}
+    </>
+  );
+  if (icon !== undefined) {
+    if (!staff || memberships.length < 2) return <>{icon}</>;
+    const gap = 8;
+    return (
+      <IconWrap ref={wrap} onKeyDown={onKeyDown}>
+        <IconTrigger
+          ref={trigger}
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-label={`${t('sellerNav.kitchenSwitch')}: ${name}`}
+          onClick={() => {
+            const box = trigger.current?.getBoundingClientRect();
+            if (box) setAt({ left: box.right + gap, top: Math.max(gap, box.top) });
+            setOpen((on) => !on);
+          }}
+        >
+          {icon}
+        </IconTrigger>
+        {open
+          ? // In the page body: the rail is its own stacking layer and would sit under the banner.
+            createPortal(
+              <FloatPopup ref={pop} $left={at.left} $top={at.top}>
+                {items}
+              </FloatPopup>,
+              document.body,
+            )
+          : null}
+      </IconWrap>
+    );
+  }
   if (!staff || memberships.length < 2) {
     return (
       <Plain>
@@ -242,34 +356,7 @@ export function KitchenSwitcher({ name, onSwitched = goToSeller }: KitchenSwitch
           <path d="M6 9l6 6 6-6" />
         </Chevron>
       </Trigger>
-      {open ? (
-        <Popup>
-          <div role="menu" aria-label={t('sellerNav.kitchenSwitch')}>
-            {memberships.map((m) => (
-              <Entry
-                key={m.sellerId}
-                type="button"
-                role="menuitemradio"
-                aria-checked={m.sellerId === active}
-                onClick={() => void choose(m.sellerId)}
-              >
-                <Label>
-                  {m.sellerName} ·{' '}
-                  {t(
-                    m.role === 'owner'
-                      ? 'sellerNav.roleOwner'
-                      : m.role === 'helper'
-                        ? 'sellerNav.roleHelper'
-                        : 'sellerNav.roleChef',
-                  )}
-                </Label>
-                {m.sellerId === active ? <Icon name="check" /> : null}
-              </Entry>
-            ))}
-          </div>
-          {failed ? <Failure role="alert">{t('sellerNav.kitchenSwitchFailed')}</Failure> : null}
-        </Popup>
-      ) : null}
+      {open ? <Popup>{items}</Popup> : null}
     </Wrap>
   );
 }

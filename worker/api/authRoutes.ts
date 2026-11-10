@@ -18,6 +18,7 @@ import {
   parseRenameDeviceRequest,
   parsePauseRequest,
   parseSetDemoRequest,
+  parseSetPasswordRequest,
   type ChefAccessResponse,
   type DevicesResponse,
   type InvitesResponse,
@@ -276,12 +277,29 @@ export async function handleAuth(
     } satisfies MembershipsResponse);
   }
 
+  // Plan 128: a signed-in person (full session) sets or replaces their own password, rate-limited like sign-in.
+  if (a === 'password' && !b && method === 'PUT') {
+    const session = await requireSession(store, request);
+    if ('response' in session) return session.response;
+    const { caller } = session;
+    const slowDown = await limited(store, `password:${caller.accountId}`);
+    if (slowDown) return slowDown;
+    const input = parseSetPasswordRequest(await readJson(request));
+    if (!input) return bad();
+    return (await auth.setPassword(caller, input.password))
+      ? Response.json({ ok: true } satisfies OkResponse)
+      : error('forbidden', 'This account uses a passkey');
+  }
+
   if (a === 'devices') {
     const session = await requireSession(store, request);
     if ('response' in session) return session.response;
     const { caller } = session;
     if (!b && method === 'GET') {
-      return Response.json({ devices: await auth.devicesOf(caller) } satisfies DevicesResponse);
+      return Response.json({
+        devices: await auth.devicesOf(caller),
+        hasPassword: await auth.hasPassword(caller),
+      } satisfies DevicesResponse);
     }
     if (b && method === 'PATCH') {
       const input = parseRenameDeviceRequest(await readJson(request));

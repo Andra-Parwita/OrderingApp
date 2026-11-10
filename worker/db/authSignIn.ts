@@ -1,6 +1,6 @@
 // Finishing setup and signing in (split out of auth.ts, plan 098 C3; the code is unchanged).
 import { type PasswordSignInRequest } from '../../shared/authContract';
-import type { AuthRepository, RegisterInput } from '../repo/Repository';
+import type { AuthRepository, Caller, RegisterInput } from '../repo/Repository';
 import { type D1Statement } from './d1';
 import { fromHex, hex, pbkdf2Hex, PBKDF2_ITERATIONS, sha256Hex } from './crypto';
 import {
@@ -16,7 +16,10 @@ import {
 /** Finishing setup and signing in. */
 export function signInPart(
   h: AuthHelpers,
-): Pick<AuthRepository, 'register' | 'signInPassword' | 'signInPasskey'> {
+): Pick<
+  AuthRepository,
+  'register' | 'signInPassword' | 'signInPasskey' | 'setPassword' | 'hasPassword'
+> {
   const {
     db,
     now,
@@ -135,6 +138,28 @@ export function signInPart(
         token: full.token,
         me: await meOf(result.value, sellerId, { id: deviceId, name: request.deviceName }, false),
       });
+    },
+
+    /** Plan 128: the caller's own account only; not the admin (a passkey account). Same PBKDF2 as setup. */
+    async setPassword(caller: Caller, password: string) {
+      const account = await getAccount(caller.accountId);
+      if (!account || account.role === 'admin') return false;
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      await db
+        .stmt(
+          'UPDATE accounts SET password_salt = ?, password_hash = ?, password_iterations = ? WHERE id = ?',
+          hex(salt),
+          await pbkdf2Hex(password, salt, PBKDF2_ITERATIONS),
+          PBKDF2_ITERATIONS,
+          account.id,
+        )
+        .run();
+      return true;
+    },
+
+    async hasPassword(caller: Caller) {
+      const account = await getAccount(caller.accountId);
+      return account?.password_hash != null;
     },
 
     /** Passkey sign-in: `verify` checks the signature; the new counter is kept on success. */

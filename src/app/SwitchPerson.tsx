@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { styled } from 'styled-components';
-import { Tooltip } from '../ui';
 import { useSession } from './session';
 
 // D-050: on a shared kitchen tablet, switching person is one step. The control signs out, then opens
@@ -98,14 +97,7 @@ const RailSwitch = styled.button`
     background: ${({ theme }) => theme.colour.surfaceAlt};
   }
 `;
-const CompactSwitch = styled(RailSwitch)`
-  width: 2.75rem;
-  padding: 0;
-  justify-content: center;
-  border-color: transparent;
-`;
-
-/** The bottom of the desktop rail, above the EN / ID switch. Collapsed: the icon only. */
+/** The bottom of the desktop rail, above the EN / ID switch. Collapsed: nothing (plan 127). */
 export function RailSwitchPerson({ collapsed }: Readonly<{ collapsed: boolean }>) {
   const { t } = useTranslation();
   const person = usePerson();
@@ -113,20 +105,9 @@ export function RailSwitchPerson({ collapsed }: Readonly<{ collapsed: boolean }>
   // Nobody to switch to on a one-person kitchen.
   if (person === null || person.people < 2) return null;
   const action = twoTap.armed ? t('sellerNav.switchPersonConfirm') : t('sellerNav.switchPerson');
-  if (collapsed) {
-    return (
-      <Tooltip text={`${person.label} — ${action}`}>
-        <CompactSwitch
-          type="button"
-          onClick={twoTap.tap}
-          onBlur={twoTap.reset}
-          aria-label={`${action} (${person.label})`}
-        >
-          <Glyph aria-hidden="true">⇄</Glyph>
-        </CompactSwitch>
-      </Tooltip>
-    );
-  }
+  // Plan 127: not in the collapsed rail. Its second-tap warning was only a tooltip, which a touch
+  // tablet never shows, so a stray tap signed people out. The open rail keeps the visible two-tap.
+  if (collapsed) return null;
   return (
     <RailBlock>
       <Name title={person.label}>{person.label}</Name>

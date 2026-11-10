@@ -6,7 +6,7 @@ import { shareToWhatsApp } from '../../../components/shareText/shareAction';
 import { loadShareData, type ShareData } from '../../../components/shareText/loadShareData';
 import { buildShareText, type PostLanguage } from '../../../components/shareText/shareText';
 import { Button, Icon, Segmented, TextArea, Toast, type SegmentedOption } from '../../../ui';
-import { LayerBar, LayerBody, LayerShell } from './LayerShell';
+import { LayerBar, LayerBody, LayerShell } from '../../../components/layer/LayerShell';
 import { PHONE_MENU_NS } from './i18n/register';
 
 // Plan 124 (Q4 A, Q5 A): "Share on WhatsApp" on the phone. The ready-made post is a text box she may

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone delivery days</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .lead { color: var(--mute); margin: 0 0 20px; max-width: 85ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 22px; align-items: start; }
+  figure { margin: 0; }
+  figcaption { font-size: .86rem; color: var(--mute); margin-top: 8px; max-width: 60ch; }
+  figcaption b { color: var(--ink); display: block; }
+  .phone { --bg: #f6f2e8; --surf: #fbf8f1; --ink2: #1f2a22; --mute2: #5d6358; --line: #e4ded0; --green: #2f6b4f; --soft: #e6efe7; --amber: #8a5a12; --amberbg: #f7ecd6;
+    width: 100%; max-width: 360px; height: 720px; border: 6px solid #111; border-radius: 30px; overflow: hidden; position: relative; background: var(--bg); color: var(--ink2); font-size: 14px; }
+  .status { height: 22px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 12px; color: #333; }
+  .head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .head .back { color: var(--green); font-weight: 700; } .head b { flex: 1; }
+  .pill { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--green); }
+  .dish { display: flex; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+  .dish .pic { width: 40px; height: 40px; border-radius: 8px; background: #d9cdb5; flex: none; }
+  .dish .n { flex: 1; } .dish .n small { display: block; color: var(--mute2); } .dish .p { font-weight: 700; }
+  .sect { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .lbl { font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--mute2); margin-bottom: 8px; }
+  .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .chip { box-sizing: border-box; display: flex; align-items: center; gap: 6px; min-height: 44px; border-radius: 12px; padding: 6px 12px; white-space: nowrap; text-align: center; font-weight: 700; font-size: 13px; line-height: 1.15; border: 1px solid transparent; }
+  .chip small { font-weight: 400; font-size: 12px; opacity: .9; margin-left: auto; }
+  .chip .ic { width: 1.2em; text-align: center; }
+  .chip.sel { background: var(--green); color: #fff; }
+  .chip.off { background: transparent; border: 2px dotted #9a9483; color: var(--mute2); }
+  .chip.event { background: #dbe8f6; border-color: #8fb0d6; color: #1d3c5e; }
+  .chip.event.def { box-shadow: inset 0 0 0 2px #f3f8fd, 0 0 0 1px #5f87b3; }
+  .hint { color: var(--mute2); font-size: 12.5px; margin-top: 8px; }
+  .warn { background: var(--amberbg); color: var(--amber); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; margin-top: 8px; }
+  .foot { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 12px 14px; background: var(--surf); border-top: 1px solid var(--line); display: flex; gap: 8px; }
+  .b { flex: 1; border-radius: 10px; padding: 11px 6px; font-weight: 700; font-size: 14px; text-align: center; border: 1px solid var(--line); color: var(--ink2); white-space: nowrap; }
+  .b.primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .savebar { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 12px 14px; background: var(--surf); border-top: 1px solid var(--line); }
+  .savebar .note { font-size: 12.5px; color: var(--mute2); margin-bottom: 8px; }
+  .scrim { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surf); border-radius: 18px 18px 0 0; padding: 10px 16px 18px; }
+  .grab { width: 40px; height: 4px; border-radius: 2px; background: #cfc8b8; margin: 0 auto 12px; }
+  .sheet h3 { margin: 0 0 4px; font-size: 17px; } .sheet p { margin: 0 0 8px; color: var(--mute2); font-size: 13px; }
+  .radio { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .radio span { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #9a9483; box-sizing: border-box; }
+  .radio.on span { border: 6px solid var(--green); }
+  .row2 { display: flex; gap: 8px; margin-top: 12px; }
+  .sumrow { display: flex; align-items: center; gap: 10px; }
+  .sumrow .t { flex: 1; } .sumrow .t small { display: block; color: var(--mute2); font-size: 12.5px; margin-top: 2px; }
+  .link { color: var(--green); font-weight: 700; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+  .drow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .box { width: 20px; height: 20px; border-radius: 5px; border: 2px solid #9a9483; box-sizing: border-box; display: grid; place-items: center; font-size: 13px; color: #fff; }
+  .box.on { background: var(--green); border-color: var(--green); }
+  .drow .d small { display: block; color: var(--amber); font-size: 12px; }
+  .drow .d small.ev { color: #1d3c5e; }
+  .def { font-size: 12.5px; color: var(--mute2); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .def span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #9a9483; box-sizing: border-box; }
+  .def.on { color: var(--ink2); font-weight: 700; } .def.on span { border: 5px solid var(--green); }
+  .optlabel { grid-column: 1 / -1; font-weight: 700; margin: 14px 0 -8px; }
+  ul { color: var(--mute); max-width: 85ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>127 · Delivery days from the seller phone</h1>
+  <p class="lead">DellaVee seller app on Rina's Android phone, owner signed in. Orders → tap the Menu card → the read-only menu now has the same Delivery days band as the tablet. Event Sun 15 Nov. AUD, Adelaide.</p>
+  <div class="grid">
+    <div class="optlabel" style="margin-top:0">Option A · the days right on the menu (two rows of two)</div>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head"><span class="back">‹ Orders</span><b>Menu · Sun 15 Nov</b><span class="pill">Live</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Nasi Ayam Bali<small>Pre-order</small></span><span class="p">$15.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Rendang<small>Pre-order</small></span><span class="p">$18.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Sambal Matah<small>Pre-order</small></span><span class="p">$5.00</span></div>
+      <div class="sect">
+        <div class="lbl">Delivery days</div>
+        <div class="chips">
+          <span class="chip off"><span class="ic">＋</span>Fri 13 Nov</span>
+          <span class="chip sel"><span class="ic">✓</span>Sat 14 Nov</span>
+          <span class="chip event def"><span class="ic">🔒</span>Sun 15 Nov<small>default</small></span>
+          <span class="chip sel"><span class="ic">✓</span>Mon 16 Nov</span>
+        </div>
+        <div class="hint">The 🔒 day is the default customers see first. Tap a day to add or remove it.</div>
+      </div>
+      <div class="foot"><span class="b primary">Share menu</span><span class="b">🔔 Notice</span></div>
+    </div><figcaption><b>1 · Phone read-only menu, Delivery days</b>The same 4 days as the tablet, as two rows of two (full dates, nothing squeezed): dotted with ＋ = not a delivery day (tap to add), ✓ = a delivery day, blue = the event day (Sun 15), 🔒 = default. Dishes and prices stay read-only.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head"><span class="back">‹ Orders</span><b>Menu · Sun 15 Nov</b><span class="pill">Live</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Nasi Ayam Bali<small>Pre-order</small></span><span class="p">$15.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Rendang<small>Pre-order</small></span><span class="p">$18.00</span></div>
+      <div class="sect">
+        <div class="lbl">Delivery days</div>
+        <div class="chips">
+          <span class="chip sel"><span class="ic">✓</span>Fri 13 Nov</span>
+          <span class="chip sel"><span class="ic">✓</span>Sat 14 Nov</span>
+          <span class="chip event def"><span class="ic">🔒</span>Sun 15 Nov<small>default</small></span>
+          <span class="chip sel"><span class="ic">✓</span>Mon 16 Nov</span>
+        </div>
+        <div class="warn">Fri 13 Nov is 2 days before cooking. That's fine if you plan for it.</div>
+      </div>
+      <div class="savebar">
+        <div class="note">Orders already placed keep their day.</div>
+        <div class="row2" style="margin-top:0"><span class="b">Discard</span><span class="b primary">Save delivery days</span></div>
+      </div>
+    </div><figcaption><b>2 · After she taps Fri 13</b>The warning shows for the day 2 before. A Save bar replaces Share / Notice until she saves or discards, so nothing changes by accident.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head"><span class="back">‹ Orders</span><b>Menu · Sun 15 Nov</b><span class="pill">Live</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Nasi Ayam Bali<small>Pre-order</small></span><span class="p">$15.00</span></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Default delivery day</h3>
+        <p>Customers see this day selected first. Pick the default from the days you ticked.</p>
+        <div class="radio"><span></span>Fri 13 Nov</div>
+        <div class="radio"><span></span>Sat 14 Nov</div>
+        <div class="radio on"><span></span>Sun 15 Nov · event day</div>
+        <div class="radio"><span></span>Mon 16 Nov</div>
+        <div class="row2"><span class="b">Cancel</span><span class="b primary">Set default</span></div>
+      </div>
+    </div><figcaption><b>3 · Tap 🔒 → Default delivery day</b>The same choice as on the tablet, as a bottom sheet. After Set default, the Save bar appears.</figcaption></figure>
+
+    <div class="optlabel">Option B · a summary row on the menu, the days in a bottom sheet</div>
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head"><span class="back">‹ Orders</span><b>Menu · Sun 15 Nov</b><span class="pill">Live</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Nasi Ayam Bali<small>Pre-order</small></span><span class="p">$15.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Rendang<small>Pre-order</small></span><span class="p">$18.00</span></div>
+      <div class="dish"><span class="pic"></span><span class="n">Sambal Matah<small>Pre-order</small></span><span class="p">$5.00</span></div>
+      <div class="sect">
+        <div class="sumrow"><span class="t"><b>Delivery days</b><small>Sat 14, Sun 15 (default), Mon 16 Nov</small></span><span class="link">Change</span></div>
+      </div>
+      <div class="foot"><span class="b primary">Share menu</span><span class="b">🔔 Notice</span></div>
+    </div><figcaption><b>B1 · Menu: one summary row</b>The days as one short line and a Change button. The menu itself stays as quiet as today.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head"><span class="back">‹ Orders</span><b>Menu · Sun 15 Nov</b><span class="pill">Live</span></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h3>Delivery days</h3>
+        <p>Tick the days you deliver. Customers see the default day selected first.</p>
+        <div class="drow"><span class="box on">✓</span><span class="d">Fri 13 Nov<small>2 days before cooking</small></span><span class="def"><span></span>Default</span></div>
+        <div class="drow"><span class="box on">✓</span><span class="d">Sat 14 Nov</span><span class="def"><span></span>Default</span></div>
+        <div class="drow"><span class="box on">✓</span><span class="d">Sun 15 Nov<small class="ev">event day</small></span><span class="def on"><span></span>Default</span></div>
+        <div class="drow"><span class="box"></span><span class="d">Mon 16 Nov</span><span class="def"><span></span>Default</span></div>
+        <div class="hint">Orders already placed keep their day.</div>
+        <div class="row2"><span class="b">Cancel</span><span class="b primary">Save</span></div>
+      </div>
+    </div><figcaption><b>B2 · Change → bottom sheet</b>One row per day: a tick box, the date (with "2 days before cooking" or "event day" under it), and a Default choice on the right. The default day can't be unticked. One Save for everything; no separate default sheet.</figcaption></figure>
+
+  </div>
+  <ul>
+    <li>Owner only; chefs and helpers see the days as a line, as today. Finished menus: read-only line.</li>
+    <li>Delivery off for this menu: "Delivery is off for this menu. Turn it on on the tablet." and no chips.</li>
+    <li>Saving uses the same rules as the tablet; orders already placed keep their day.</li>
+    <li>Open question: also put "Keep the menu open 1 more day" here?</li>
+  </ul>
+</div>
+</body>
+</html>

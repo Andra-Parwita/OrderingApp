@@ -19,6 +19,7 @@ import { DEVICE_NAME_MAX, type DeviceView, type Me } from '../../../shared/authC
 import { Button, ConfirmButton, TextField } from '../../ui';
 import { failureMessage, formatCountdown } from './authText';
 import { AUTH_NS } from './i18n/register';
+import { BackupPassword } from './BackupPassword';
 import { JoinKitchenSheet } from './JoinKitchenSheet';
 import {
   Actions,
@@ -261,6 +262,7 @@ export function DevicesScreen({
   const [loadFailed, setLoadFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
 
   // Bumping `round` loads the list again (after a rename, a sign-out or "Try again").
   const [round, setRound] = useState(0);
@@ -271,6 +273,7 @@ export function DevicesScreen({
       if (!live) return;
       if (result.ok) {
         setDevices(result.data.devices);
+        setHasPassword(result.data.hasPassword ?? null);
         setLoadFailed(false);
       } else setLoadFailed(true);
     });
@@ -318,6 +321,9 @@ export function DevicesScreen({
       {embedded ? null : <Title>{t('devices.title')}</Title>}
       <Body>
         {error ? <Failure role="alert">{error}</Failure> : null}
+        {hasPassword !== null && here[0]?.role !== 'admin' ? (
+          <BackupPassword has={hasPassword} onChanged={load} />
+        ) : null}
         <Section>
           <SectionTitle>{t('devices.thisDevice')}</SectionTitle>
           <List>{here.map(row)}</List>

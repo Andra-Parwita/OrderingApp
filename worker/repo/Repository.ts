@@ -587,6 +587,10 @@ export type AuthRepository = {
   /** A setup session becomes a device with a full session. */
   register(token: string, request: RegisterInput): Promise<AuthResult<SessionGrant>>;
   signInPassword(request: PasswordSignInRequest): Promise<AuthResult<SessionGrant>>;
+  /** Plan 128: a signed-in person sets or replaces their own password (no old one asked). */
+  setPassword(caller: Caller, password: string): Promise<boolean>;
+  /** Whether the caller's own account has a password. */
+  hasPassword(caller: Caller): Promise<boolean>;
   /**
    * Passkey sign-in for the device that owns `credentialId`, counted toward the lockout of
    * `clientDeviceId`. `verify` does the WebAuthn check on the stored passkey and answers the new

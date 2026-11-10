@@ -28,6 +28,17 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 - **Checks:** two Android emulator rounds (`scratch/emu-124/`, `scratch/emu-124b/`): round 2 all 9 ✅ incl. Back in Chrome and the installed app. Gate: lint 0, format ✅, unit 3,049 ✅ (30 EADDRINUSE flakes pass with `--no-file-parallelism`), e2e 10 ✅ (order-flow, batch2-flow, banners, customer-live, multi-seller, helper-flow), docs built.
 - **Deploy impact: low.** Client only: no migration, no Worker or API change, no secret. Old seller apps keep working; the new card shows after the app updates.
 
+## Hotfix 1.0.46.1 = plans 127 + 128 + 3 small items (built and checked 10 Nov, ready to deploy)
+- **Plan 127, delivery days from the seller phone:** the phone read-only menu (owner, menu not finished, Delivery on) gets a **Delivery days** 2×2 grid (full dates, ＋ dotted / ✓ green / blue + 🔒 default), the default bottom sheet, "Keep the menu open 1 more day", and a Save / Discard bar (nothing saves on tap). Same route as the tablet.
+- **Collapsed tablet menu:** tapping the logo opens the kitchen list when the person has 2+ kitchens (Rina could not switch back from Onde Onde); **no ⇄ Switch person in the collapsed menu** (its warning was a tooltip, a second tap signed Rina and the owner out).
+- **Sign-in hint** under "Sign in with your screen lock": "Your tablet or phone asks for its own fingerprint, face or the PIN you unlock it with." (Rina did not know "Use PIN" means the tablet's PIN.)
+- **Plan 128, backup password:** Settings → Devices → "Backup password · Not set / Set" → Add / Change (phone: full-screen form, Save in the top bar); new `PUT /api/auth/password` (full session, rate-limited, no old password needed); `PASSWORD_MIN` 10 → **8** everywhere.
+- Version label **1.0.46.1** (`RELEASE_HOTFIX = 1`); no new release note (hotfix).
+- **Checks:** typecheck, lint, format, docs ✅; unit 2,400 + server 737 ✅; directed e2e: p127 + p126 (36), seller-auth (10, both auth projects), session-flow, helper-flow ✅; Android emulator Pixel_9 + Tablet_11 (`scratch/emu-1461/`) ✅; captures `scratch/cap-127/`, `scratch/cap-128/`.
+- **Deploy impact: low.** Worker + client, **no migration**. Old clients ignore `hasPassword`.
+- **Deploy steps:** backup → `pnpm build` (version label 1.0.46.1) → no migration → `pnpm run deploy -- --tag v1.0.46.1 --message "1.0.46.1: phone delivery days, backup password, collapsed-menu fixes"` → health → tag `v1.0.46.1` + push.
+- Findings (not fixed): on a brand-new browser the sign-in screen has no "Use password instead" until the kitchen is known (open the kitchen link first); after switching kitchens the collapsed-rail logo may still show the old kitchen's picture; phone More "Sign out" sits under the tab bar until scrolled. With the tablet menu **open** and a one-person kitchen, no "Signed in as …" shows anywhere (`SellerLayout.tsx` `nameShownElsewhere` assumes the rail shows it).
+
 ## 1.0.46 = plan 126, delivery on another day (live 8 Nov, Worker `050816b7`)
 For DellaVee's event **Sun 15 Nov**. Plan + all owner rulings: `docs/plans/126-delivery-another-day.md`; mock-up `uxDesign/seller/mockups/126-delivery-another-day.html`.
 - **Seller (tablet, menu Details, also while live):** "Delivery days" band: 2 days before, the event day (soft blue), 1 day after; tick any; 🔒 = the default customers see first, tap it for the "Default delivery day" sheet; the event day can be unticked once another day is the default; amber warning for the day 2 before. "Keep the menu open 1 more day" switch for every menu (finish = midnight after the latest delivery day, +1 day when on).
@@ -80,9 +91,11 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 - Scratch copies `scratch/emu-124/state`, `scratch/emu-124b/state` can be deleted.
 
 ## Later (owner rulings recorded)
-- **1.0.46 candidates:** iOS-style large titles on pages without a banner (mock-up first); plan 116 "Send a problem report" (device log + "What happened?" to the admin); the 6 chef permissions, one at a time.
+- **1.0.47 candidates:** iOS-style large titles on pages without a banner (mock-up first); plan 116 "Send a problem report" (device log + "What happened?" to the admin); the 6 chef permissions, one at a time.
 - Maybe: the tablet Share screen remembers the language like the phone does.
 - **Change role** (owner ↔ chef ↔ helper) in seller Settings → Team and/or the admin page (owner 26 Oct: "leave change role later in future plan"; today: remove, then re-invite with the new role). Mock-up first.
+- **From plan 126 (owner 8 Nov):** an admin setting per kitchen for the delivery-day range (how many days before/after); a choice of automatic finish time beyond "keep open 1 more day".
+- **Small fixes:** Indonesian "…ponsel ini ini" (doubled word) on the phone More contacts block; a stronger warning on admin "Pause the kitchen" (it signs everyone out).
 - **v1.1.0 (analysis only):** plans 082/098/099 (store, kinds, separate deployments).
 - Older open owner checks: 1.0.42 live checks, 1.0.38 pickup map + QR scan, a real label print.
 
@@ -95,11 +108,8 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 
 ## Next session
 1. **Ask how Rina's test of 1.0.46 went** (8 Nov evening, DellaVee 15 Nov event): Delivery days on the tablet, a customer order on another day, day tag / label / sorted list. Fix anything she finds as a hotfix.
-2. **Owner live check of 1.0.45.1** on a phone: About → "Version 1.0.45.1" → Check for update → "You have the newest version"; More: no Switch person, Sign out asks "Tap again"; admin → DellaVee → People shows "Rina · Owner · 2 devices (screen lock, screen lock)".
-2. Watch DellaVee's seller use the phone Menu card on this week's menu (Sat 31 Oct); ask how sharing went.
-2. Owner cleanup: the duplicate Remember me account + its unnamed passkey (keep "Indra · customer"); re-add the old Onde Onde app.
-3. Optional: a Cloudflare API token in `CLOUDFLARE_API_TOKEN` (owner runs `setx`; never paste the token in chat).
-4. Then pick 1.0.46 from "Later", one question at a time.
+2. Owner live check of 1.0.45.1 if not done: About → "Version …" → Check for update; More: no Switch person, Sign out asks "Tap again".
+3. Then pick from "Later" with the owner, one question at a time.
 
 ## Ready prompt for the next session
 > Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.46 (tag v1.0.46, Worker 050816b7). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.

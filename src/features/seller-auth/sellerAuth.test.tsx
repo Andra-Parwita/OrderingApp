@@ -389,7 +389,7 @@ describe('PasswordSetupScreen', () => {
     renderScreen(<PasswordSetupScreen onDone={onDone} />);
     type('New password', 'short');
     press('Save password');
-    expect(screen.getByText('Use at least 10 characters.')).toBeInTheDocument();
+    expect(screen.getByText('Use at least 8 characters.')).toBeInTheDocument();
 
     type('New password', PASSWORD);
     type('Confirm password', 'something else entirely');
@@ -727,7 +727,7 @@ describe('Indonesian', () => {
     renderScreen(<PasswordSetupScreen onDone={vi.fn()} />);
     expect(screen.getByRole('heading', { name: 'Atur kata sandi' })).toBeInTheDocument();
     press('Simpan kata sandi');
-    expect(screen.getByText('Pakai minimal 10 karakter.')).toBeInTheDocument();
+    expect(screen.getByText('Pakai minimal 8 karakter.')).toBeInTheDocument();
   });
 
   it('says the lockout in minutes in Indonesian', async () => {

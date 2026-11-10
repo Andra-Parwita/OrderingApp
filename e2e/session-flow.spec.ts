@@ -7,6 +7,20 @@ import { collectErrors } from './sellerHelpers';
 // and in again (picking their name); then a chef is invited as a new person and has no Menu (D-013).
 // Desktop only. Runs in its own project after the other sign-in specs (same Dapur Demo account).
 
+/**
+ * Who is signed in, asked of the server. The name label is no longer always on screen (the collapsed
+ * rail has no Switch person, and a one-person kitchen has none either), so the label is not a proof.
+ */
+async function expectSignedIn(page: Page, role: 'seller' | 'chef', name: string): Promise<void> {
+  const reply = await page.request.get('/api/auth/me');
+  expect(reply.ok()).toBe(true);
+  const { me } = (await reply.json()) as {
+    me: { role: string; sellerName?: string; displayName?: string; chefName?: string };
+  };
+  expect(me.role).toBe(role);
+  expect(role === 'seller' ? me.sellerName : (me.chefName ?? me.displayName)).toContain(name);
+}
+
 const PASSWORD = 'session flow long password';
 const CHEF_PASSWORD = 'chef flow long password';
 const PERSON = `Bu Flow ${Date.now().toString(36)}`;
@@ -44,9 +58,7 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
 
   // Seller: the key, then a password; lands in the seller area as Dapur Demo, no picker.
   await setUpWithKey(page, key, PASSWORD, 'E2E session flow');
-  await expect(
-    page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
-  ).toBeVisible();
+  await expectSignedIn(page, 'seller', 'Dapur Demo');
   await expect(page.getByLabel('Seller (dev only)')).toHaveCount(0);
   await page.screenshot({ path: 'captures/session-flow-seller.png', fullPage: true });
 
@@ -86,9 +98,7 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/seller$/);
-  await expect(
-    page.getByText('Signed in as Dapur Demo').or(page.getByText('Dapur Demo · seller')),
-  ).toBeVisible();
+  await expectSignedIn(page, 'seller', 'Dapur Demo');
 
   // Settings > Devices > Sign out of this device, then the chef sets up.
   await page.goto('/seller/settings/devices');
@@ -96,9 +106,7 @@ test('admin invites, seller sets up and signs in again, chef has no menu', async
   await page.getByRole('button', { name: 'Tap again to sign out' }).click();
   await expect(page).toHaveURL(/\/seller\/sign-in$/);
   await setUpWithKey(page, chefKey, CHEF_PASSWORD, 'E2E chef flow');
-  await expect(
-    page.getByText('Signed in as Chef Rudi').or(page.getByText('Rudi · chef')),
-  ).toBeVisible();
+  await expectSignedIn(page, 'chef', 'Rudi');
   await expect(rail.getByRole('link', { name: 'Orders' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Kitchen' })).toBeVisible();
   await expect(rail.getByRole('link', { name: 'Pickup & delivery' })).toBeVisible();

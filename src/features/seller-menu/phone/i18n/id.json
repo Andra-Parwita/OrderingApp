@@ -81,5 +81,14 @@
     "choices_other": "{{count}} pilihan: {{names}}",
     "empty": "Belum ada hidangan.",
     "deliveryDays": "Hari antar: {{days}}"
+  },
+  "days": {
+    "off": "Antar mati untuk menu ini. Nyalakan di tablet.",
+    "keep": "Pesanan yang sudah masuk tetap di harinya.",
+    "discard": "Batalkan",
+    "save": "Simpan hari antar",
+    "saving": "Menyimpan…",
+    "saved": "Tersimpan",
+    "error": "Hari antar belum bisa disimpan. Periksa koneksi lalu coba lagi."
   }
 }

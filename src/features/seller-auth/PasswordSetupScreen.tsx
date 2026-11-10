@@ -52,7 +52,7 @@ function ExistingPasswordSignIn({
   );
 }
 
-/** A2b: a password of at least 10 characters, typed twice (or the existing one, plan 025). */
+/** A2b: a password of at least 8 characters, typed twice (or the existing one, plan 025). */
 export function PasswordSetupScreen({ setup, ...rest }: PasswordSetupScreenProps) {
   return setup?.hasPassword === true && setup.slug ? (
     <ExistingPasswordSignIn slug={setup.slug} name={setup.displayName} {...rest} />

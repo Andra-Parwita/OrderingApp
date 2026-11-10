@@ -9,8 +9,10 @@ import { pickText } from '../../../../shared/text';
 import { Button, Icon, Pill } from '../../../ui';
 import { ShareButtons, StatusPill } from './CardParts';
 import type { CardState } from './cardState';
-import { LayerBar, LayerBody, LayerShell } from './LayerShell';
+import { DeliveryDaysSaveBar, DeliveryDaysSaved, DeliveryDaysSection } from './DeliveryDaysSection';
+import { LayerBar, LayerBody, LayerShell } from '../../../components/layer/LayerShell';
 import { PHONE_MENU_NS } from './i18n/register';
+import { useDeliveryDaysDraft } from './useDeliveryDaysDraft';
 
 // Plan 124 (Q3 A): the read-only menu, opened from the Menu card. No editing; that stays on the tablet.
 
@@ -97,6 +99,8 @@ export function MenuLayer({
   view,
   state,
   lang,
+  canEditDays,
+  reload,
   onClose,
   onShare,
   onNotice,
@@ -104,6 +108,10 @@ export function MenuLayer({
   view: MenuView;
   state: CardState;
   lang: Language;
+  /** Plan 127: the owner changes the delivery days here (never a chef or helper). */
+  canEditDays: boolean;
+  /** Reloads the current menu after the days are saved. */
+  reload: () => void;
   onClose: () => void;
   onShare: (() => void) | undefined;
   onNotice: (() => void) | undefined;
@@ -115,6 +123,8 @@ export function MenuLayer({
     ? deliveryPlan(view.menu.cookingDate, view.menu.delivery)
     : undefined;
   const extraDays = plan?.custom ? plan.days : [];
+  const draft = useDeliveryDaysDraft(view, reload);
+  const editable = canEditDays && view.menu.state !== 'finished';
   return (
     <LayerShell label={title} onClose={onClose}>
       <LayerBar>
@@ -137,17 +147,28 @@ export function MenuLayer({
             />
           ))}
         </List>
-        {extraDays.length > 0 ? (
+        {editable && plan ? (
+          <DeliveryDaysSection cookingDate={view.menu.cookingDate} lang={lang} draft={draft} />
+        ) : editable && !view.menu.delivery.available ? (
+          <DeliveryDays>{t('days.off')}</DeliveryDays>
+        ) : extraDays.length > 0 ? (
           <DeliveryDays>
             {t('menu.deliveryDays', { days: formatDayList(extraDays, lang) })}
           </DeliveryDays>
         ) : null}
       </LayerBody>
-      {onShare ? (
-        <Foot>
-          <ShareButtons onShare={onShare} onNotice={onNotice} />
-        </Foot>
-      ) : null}
+      {editable && draft.dirty ? (
+        <DeliveryDaysSaveBar draft={draft} />
+      ) : (
+        <>
+          {editable && draft.saved ? <DeliveryDaysSaved /> : null}
+          {onShare ? (
+            <Foot>
+              <ShareButtons onShare={onShare} onNotice={onNotice} />
+            </Foot>
+          ) : null}
+        </>
+      )}
     </LayerShell>
   );
 }

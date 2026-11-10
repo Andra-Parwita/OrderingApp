@@ -521,7 +521,7 @@ describe('sign-in', () => {
   });
 
   describe('password', () => {
-    it('needs 10 characters, is hashed with PBKDF2 and signs in on a new device', async () => {
+    it('needs 8 characters, is hashed with PBKDF2 and signs in on a new device', async () => {
       const admin = await adminSignedIn();
       const invite = key(await call('POST', `/api/admin/sellers/${A_ID}/invite-key`, admin));
       const setup = session(
@@ -529,7 +529,7 @@ describe('sign-in', () => {
       );
       const short = await call('POST', '/api/auth/register', {
         token: setup.token,
-        body: { kind: 'password', password: '123456789', deviceName: 'Phone' },
+        body: { kind: 'password', password: '1234567', deviceName: 'Phone' },
       });
       expect(short.status).toBe(400);
       const password = 'my kitchen secret';
@@ -565,6 +565,58 @@ describe('sign-in', () => {
         body: { slug: 'nobody', accountId, password, deviceId: DEVICE_2, deviceName: 'Tablet' },
       });
       expect(errorOf(unknown)?.error).toBe('invalid_credentials');
+    });
+  });
+
+  describe('backup password while signed in (plan 128)', () => {
+    const put = (token: string, password: unknown) =>
+      call('PUT', '/api/auth/password', { token, body: { password } });
+    const signInWith = async (password: string) =>
+      call('POST', '/api/auth/password', {
+        body: {
+          slug: A,
+          accountId: await personId(A, OWNER_A),
+          password,
+          deviceId: DEVICE_2,
+          deviceName: 'Tablet',
+        },
+      });
+
+    it('sets a password, then signs in with it; replacing it kills the old one', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      expect((await put(full.token, 'first secret')).status).toBe(200);
+      const after = parseDevicesResponse((await call('GET', '/api/auth/devices', full)).body);
+      expect(after?.hasPassword).toBe(true);
+      expect(session(await signInWith('first secret')).me).toMatchObject({ slug: A });
+      expect((await put(full.token, 'second secret')).status).toBe(200);
+      expect(errorOf(await signInWith('first secret'))?.error).toBe('invalid_credentials');
+      expect(session(await signInWith('second secret')).me).toMatchObject({ slug: A });
+      expect(await world.dumpSecrets()).not.toContain('second secret');
+    });
+
+    it('refuses a password that is too short or too long, and a missing one', async () => {
+      const { full } = await sellerSignedIn(A_ID);
+      expect((await put(full.token, '1234567')).status).toBe(400);
+      expect((await put(full.token, 'x'.repeat(201))).status).toBe(400);
+      expect((await put(full.token, undefined)).status).toBe(400);
+      expect((await put(full.token, '12345678')).status).toBe(200);
+    });
+
+    it('refuses a setup session and no session', async () => {
+      const admin = await adminSignedIn();
+      const invite = key(await call('POST', `/api/admin/sellers/${A_ID}/invite-key`, admin));
+      const setup = session(
+        await call('POST', '/api/auth/invite', { body: { key: invite.key, deviceId: DEVICE } }),
+      );
+      expect((await put(setup.token, 'long enough')).status).toBe(401);
+      expect(
+        (await call('PUT', '/api/auth/password', { body: { password: 'long enough' } })).status,
+      ).toBe(401);
+    });
+
+    it('refuses the admin, whose way in is the passkey', async () => {
+      const admin = await adminSignedIn();
+      expect((await put(admin.token, 'long enough')).status).toBe(403);
     });
   });
 

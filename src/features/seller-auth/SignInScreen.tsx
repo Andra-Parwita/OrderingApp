@@ -142,6 +142,7 @@ export function SignInScreen({
               {t('signIn.passkey')}
             </Button>
           </BigAction>
+          <AuthNote>{t('signIn.passkeyHint')}</AuthNote>
           {error ? <ErrorText>{error}</ErrorText> : null}
           {canUsePassword ? (
             <Button fullWidth onClick={() => goTo('password')}>

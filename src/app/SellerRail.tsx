@@ -277,20 +277,25 @@ export function SellerRail({
         <TopBlock $collapsed={collapsed}>
           <LogoBox $collapsed={collapsed}>
             {collapsed ? (
-              kitchen?.images?.railIcon ? (
-                <ImageSlot
-                  fill
-                  fit="cover"
-                  aspectRatio="1 / 1"
-                  src={kitchen.images.railIcon}
-                  alt={kitchenName}
-                  placeholder=""
-                />
-              ) : (
-                <Initial role="img" aria-label={kitchenName}>
-                  <span aria-hidden="true">{initialOf(kitchenName)}</span>
-                </Initial>
-              )
+              <KitchenSwitcher
+                name={kitchenName}
+                icon={
+                  kitchen?.images?.railIcon ? (
+                    <ImageSlot
+                      fill
+                      fit="cover"
+                      aspectRatio="1 / 1"
+                      src={kitchen.images.railIcon}
+                      alt={kitchenName}
+                      placeholder=""
+                    />
+                  ) : (
+                    <Initial role="img" aria-label={kitchenName}>
+                      <span aria-hidden="true">{initialOf(kitchenName)}</span>
+                    </Initial>
+                  )
+                }
+              />
             ) : (
               <ImageSlot
                 fill

@@ -96,3 +96,29 @@ describe('KitchenSwitcher', () => {
     expect(onSwitched).not.toHaveBeenCalled();
   });
 });
+
+describe('KitchenSwitcher in the collapsed rail (plan 127)', () => {
+  const renderIcon = () =>
+    render(
+      <AppThemeProvider>
+        <KitchenSwitcher name="Onde" icon={<span>O</span>} onSwitched={vi.fn()} />
+      </AppThemeProvider>,
+    );
+
+  it('with 2 kitchens the icon is a button that opens the same list', async () => {
+    memberships = two;
+    renderIcon();
+    const button = await screen.findByRole('button', { name: 'Kitchen: Onde' });
+    expect(button).toHaveTextContent('O');
+    fireEvent.click(button);
+    expect(screen.getByRole('menuitemradio', { name: 'Demo · Chef' })).toBeInTheDocument();
+  });
+
+  it('with one kitchen the icon is not a button', async () => {
+    memberships = [two[0]!];
+    renderIcon();
+    await waitFor(() => expect(fetchMemberships).toHaveBeenCalled());
+    expect(screen.getByText('O')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+});

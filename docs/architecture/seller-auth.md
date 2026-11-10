@@ -114,3 +114,7 @@ Owner's question (2026-10-07): "what happens if seller does not have passkey? is
 - **Phases 2–3 (wireframes, prototype):** the setup, login, add-device and devices screens are wireframed and clicked through on mock data; no real auth.
 - **Phase 4 (local backend):** the real flow on the local Worker + D1, with tests; the admin setup key comes from `.dev.vars`.
 - **Phase 5:** the owner sets `ADMIN_SETUP_KEY` on Cloudflare and registers the admin device (owner steps); seller invites then come from the admin page.
+
+## Backup password while signed in (plan 128)
+
+A person who is signed in (full session, any role except the admin) can add or replace **their own** password from Settings → Devices → Backup password (`PUT /api/auth/password`, `AuthRepository.setPassword`). It uses the same PBKDF2 hashing and the same length rule as setup (`PASSWORD_MIN` 8, max 200, owner ruling 10 Nov 2026); no old password is asked, being signed in is enough. The request is rate-limited like the other auth calls. `GET /api/auth/devices` returns `hasPassword`. After that, "Use password instead" on the sign-in screen works for this person on any device. On the phone the form is a full-screen layer with Save in the top bar; on the tablet a side panel.

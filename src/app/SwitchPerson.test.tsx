@@ -78,15 +78,12 @@ describe('Switch person in the rail', () => {
     expect(screen.getByText('Onde Onde · seller')).toBeInTheDocument();
   });
 
-  it('collapsed: only the icon shows, the name and label come on focus', () => {
-    me = CHEF;
+  it('collapsed: nothing at all (plan 127: its second-tap warning was only a tooltip)', () => {
+    me = { ...CHEF, people: 2 };
     renderAt(<RailSwitchPerson collapsed />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByText('Rina · chef')).not.toBeInTheDocument();
-    const button = screen.getByRole('button', { name: 'Switch person (Rina · chef)' });
-    fireEvent.focus(button);
-    expect(
-      screen.getByText('Rina · chef — Switch person', { selector: 'span[aria-hidden]' }),
-    ).toBeInTheDocument();
+    expect(end).not.toHaveBeenCalled();
   });
 
   it('is hidden when nobody is signed in', () => {

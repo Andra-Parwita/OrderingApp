@@ -81,5 +81,14 @@
     "choices_other": "{{count}} choices: {{names}}",
     "empty": "No dishes yet.",
     "deliveryDays": "Delivery days: {{days}}"
+  },
+  "days": {
+    "off": "Delivery is off for this menu. Turn it on on the tablet.",
+    "keep": "Orders already placed keep their day.",
+    "discard": "Discard",
+    "save": "Save delivery days",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "error": "The delivery days could not be saved. Check the connection and try again."
   }
 }
