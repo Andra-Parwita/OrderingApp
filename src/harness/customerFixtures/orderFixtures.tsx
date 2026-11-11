@@ -155,7 +155,6 @@ function Placed(props: FixtureProps) {
     <OrderPlacedView
       order={{ ...order, status: 'ordered', inbox: [] }}
       menu={menu}
-      returning={false}
       onWhatsApp={noop}
       onShowQr={noop}
       onViewOrder={noop}

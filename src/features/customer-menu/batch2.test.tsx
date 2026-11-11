@@ -87,14 +87,13 @@ describe('returning customer', () => {
     expect('returning' in (await placeAndCaptureBody())).toBe(false);
   });
 
-  it('marks WhatsApp as optional on the order-placed screen', async () => {
+  it('no longer calls WhatsApp optional for a returning customer (plan 129)', async () => {
     const earlier = await placeSample();
     saveMyOrder({ ...earlier, status: 'delivered' });
     const current = await placeSample();
     renderWithStore(<OrderPlacedScreen token={current.token} onChange={noop} />);
-    expect(
-      await screen.findByText('You have ordered before, so sending this on WhatsApp is optional.'),
-    ).toBeVisible();
+    await screen.findByRole('button', { name: /Send to .* on WhatsApp/ });
+    expect(screen.queryByText(/is optional/)).not.toBeInTheDocument();
   });
 
   it('does not say optional to a first-time customer', async () => {
@@ -125,6 +124,7 @@ describe('basket edit mode', () => {
   it('loads the order lines, offers Update order, and saves a changed quantity', async () => {
     const placed = await placeSample(1);
     const onUpdated = vi.fn();
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
     renderEdit(placed.token, onUpdated);
     expect(await screen.findByRole('heading', { name: 'Change your order' })).toBeVisible();
     fireEvent.click(await screen.findByRole('button', { name: 'Add one Chicken lemper' }));
@@ -134,8 +134,11 @@ describe('basket edit mode', () => {
     expect(screen.getByLabelText('First name')).toHaveAttribute('readonly');
     expect(screen.getByLabelText('First name')).toHaveValue('Rina');
     expect(screen.getByLabelText(/^Note/)).toHaveValue('No chilli');
+    // Plan 129: changing an order keeps its own button and the amber line and WhatsApp stay out of it.
+    expect(screen.queryByTestId('send-next')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^Update order · / }));
     await waitFor(() => expect(onUpdated).toHaveBeenCalledWith(placed.token));
+    expect(open).not.toHaveBeenCalled();
     const after = await fetchOrder(placed.token);
     expect(after.ok && after.data.order.lines[0]?.qty).toBe(2);
     expect(after.ok && after.data.order.note).toBe('No chilli');

@@ -52,3 +52,11 @@ export function nextStatuses(order: {
       return assertNever(order.status);
   }
 }
+
+/**
+ * Plan 129: an order the kitchen cannot confirm yet because the customer's WhatsApp message has not
+ * reached it: still the first "Ordered" state and the seller has not ticked "WhatsApp received".
+ */
+export function isUnconfirmed(order: { status: OrderStatus; waReceived?: boolean }): boolean {
+  return order.status === 'ordered' && order.waReceived !== true;
+}

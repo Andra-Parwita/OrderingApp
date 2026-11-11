@@ -1,6 +1,7 @@
 // The Repository on Cloudflare D1 (stage 8.1b, D-046/D-047). The Worker serves every route from it (stage 8.4a).
 import type { AdminSeller } from '../../shared/authContract';
 import type { Seller, SellerOrder } from '../../shared/domain';
+import { AUTO_CANCEL_HOURS, AUTO_CANCEL_SINCE, autoCancelAt } from '../../shared/autoCancel';
 import { keepsOrderDetails } from '../../shared/pastWeeks';
 import { generateOrderCode, generateToken } from '../../shared/orderCode';
 import type { Repository, SellerRepository, TokenLookup } from '../repo/Repository';
@@ -11,7 +12,7 @@ import { createAppSettingsRepository } from './appSettings';
 import { createShortMessageRepository } from './shortMessages';
 import { createClientLogRepository } from './clientLog';
 import { Db, marks, type D1Like } from './d1';
-import { assembleOrders, orderReadStatements } from './orders';
+import { assembleOrders, liveMenu, orderReadStatements } from './orders';
 import { readOrderStats } from './orderStats';
 import { dropExpiredDetails } from './retention';
 import { newSellerStatements, wipeAndSeed } from './seed';
@@ -71,6 +72,25 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
   const internal = (row: Seller | undefined): SellerInternal | undefined =>
     row ? createSellerInternal(deps, row) : undefined;
   const handle = (row: Seller | undefined): SellerRepository | undefined => internal(row)?.repo;
+  /** Plan 130: the hourly auto-cancel, for every kitchen that has an old unconfirmed customer order. */
+  async function autoCancelUnconfirmed(): Promise<number> {
+    const now = options.now().getTime();
+    if (now < Date.parse(autoCancelAt(AUTO_CANCEL_SINCE))) return 0;
+    const before = new Date(now - AUTO_CANCEL_HOURS * 3_600_000).toISOString();
+    const rows = await db.all<SellerRow>(
+      `SELECT id, slug, name, demo, paused FROM sellers WHERE id IN (
+         SELECT seller_id FROM orders WHERE status = 'ordered' AND wa_received = 0 AND ${liveMenu('')}
+           AND entered_by_role IS NULL AND sample = 0 AND created_at <= ?)`,
+      before,
+    );
+    let total = 0;
+    for (const row of rows) {
+      const repo = handle(toSeller(row));
+      if (repo) total += await repo.autoCancelUnconfirmed();
+    }
+    return total;
+  }
+
   const byId = (id: string) =>
     db
       .first<SellerRow>('SELECT id, slug, name, demo, paused FROM sellers WHERE id = ?', id)
@@ -208,6 +228,8 @@ export function createD1Repository(d1: D1Like, options: D1RepositoryOptions): Re
       );
       return handle(row ? toSeller(row) : undefined);
     },
+
+    autoCancelUnconfirmed,
 
     async sellerById(id) {
       return handle(await byId(id));

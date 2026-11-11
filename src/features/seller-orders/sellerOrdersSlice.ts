@@ -15,6 +15,7 @@ export type FailedChange =
   | { kind: 'paid'; code: string; paid: boolean }
   | { kind: 'lock'; code: string; locked: boolean }
   | { kind: 'wa'; code: string; received: boolean }
+  | { kind: 'restore'; code: string }
   | { kind: 'nudge'; code: string }
   | { kind: 'seen'; code: string };
 
@@ -261,6 +262,12 @@ const sellerOrdersSlice = createSlice({
       },
       prepare: (payload: { code: string; received: boolean }) => ({ payload }),
     },
+    restoreRequested: {
+      reducer(state) {
+        state.change = { status: 'saving' };
+      },
+      prepare: (payload: { code: string }) => ({ payload }),
+    },
     nudgeRequested: {
       reducer(state) {
         state.change = { status: 'saving' };
@@ -423,6 +430,7 @@ export const {
   paidChangeRequested,
   lockChangeRequested,
   waReceivedRequested,
+  restoreRequested,
   nudgeRequested,
   seenRequested,
   collectedRequested,

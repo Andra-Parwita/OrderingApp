@@ -13,6 +13,8 @@ export const API_ERROR_CODES = [
   'exceeds_remaining',
   'invalid_status',
   'order_locked',
+  /** Plan 129: past the customer's change-or-cancel deadline (the evening before the cooking day). */
+  'changes_closed',
   'ordering_closed',
   'item_has_orders',
   'limit_reached',

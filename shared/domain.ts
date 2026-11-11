@@ -194,6 +194,8 @@ export type CustomerOrder = Pick<
   | 'collectedAt'
   | 'paid'
 > & {
+  /** Plan 129: the seller ticked "WhatsApp received". Optional: an older server does not send it. */
+  waReceived?: boolean;
   /** Plan 081: a private order's event and what is still to pay (total minus deposit, or 0 when paid). */
   private?: PrivateInfo & { toPayCents: number };
   /** Customers are not seller-scoped: each order says whose it is (My orders spans sellers). */

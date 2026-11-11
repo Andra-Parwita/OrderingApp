@@ -3,6 +3,7 @@
 //   - Hourly: finish every live menu whose cooking day has ended, i.e. at midnight in the kitchen's own zone
 //     after it (plan 001, D-069 Q5). Hourly is only the polling step; the menu finishes at the
 //     first run after its midnight.
+//   - Hourly too (plan 130): cancel customer orders not confirmed within 24 hours.
 //   - Weekly (Mondays 03:00 UTC): retention (stage 8.4b, D-027 row 6, D-044). Order details of a
 //     closed week are dropped 4 weeks after its cooking date; totals stay, and each dropped order
 //     leaves a stub so its old link says "archived". The day-sales log (plan 029) is cut to 10 weeks.
@@ -11,7 +12,10 @@ import { wipeOldAddresses } from '../db/address';
 import { sweepCustomerHourly, sweepCustomerWeekly } from '../db/customerAuth';
 import { Db, type D1Like } from '../db/d1';
 import { dropOldDaySales } from '../db/daySales';
+import { createD1Repository } from '../db';
 import { deleteUnusedPictures, finishDueMenus } from '../db/menus';
+import { createPushDispatcher } from '../push/dispatch';
+import { createWebPushSender, vapidFromEnv } from '../push/sender';
 import type { ImageBucket } from '../images/r2';
 import {
   dropExpiredAuthRows,
@@ -20,6 +24,39 @@ import {
   dropStaleMenuNotices,
   type RetentionCounts,
 } from '../db/retention';
+
+/**
+ * Hourly (plan 130): cancels the customer orders that are still Ordered, with no "WhatsApp received",
+ * 24 hours after they were placed (the cancel goes through the normal path: audit by the app,
+ * the customer's inbox and push, the delivery address wiped). Returns how many; logs a count only.
+ */
+export async function runAutoCancel(
+  env: {
+    DB: D1Like;
+    VAPID_PUBLIC_KEY?: string | undefined;
+    VAPID_PRIVATE_KEY?: string | undefined;
+    VAPID_SUBJECT?: string | undefined;
+  },
+  now: Date,
+  log: (line: string) => void = (line) => {
+    console.log(line);
+  },
+): Promise<number> {
+  const vapid = vapidFromEnv(env);
+  const dispatcher = createPushDispatcher({
+    db: new Db(env.DB),
+    sender: vapid ? createWebPushSender(vapid) : undefined,
+  });
+  const repo = createD1Repository(env.DB, {
+    now: () => now,
+    adminSetupKey: crypto.randomUUID(),
+    onCustomerChange: dispatcher.collect,
+  });
+  const count = await repo.autoCancelUnconfirmed();
+  await dispatcher.flush();
+  if (count > 0) log(`auto-cancel: ${String(count)} unconfirmed order(s) cancelled`);
+  return count;
+}
 
 /** Hourly: forgets old wrong tries of "find my order" (D-075). Returns how many rows went. */
 export async function runAttemptSweep(env: { DB: D1Like }, now: Date): Promise<number> {

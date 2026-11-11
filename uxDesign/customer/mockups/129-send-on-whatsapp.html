@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Send on WhatsApp</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  .lead { color: var(--mute); margin: 0 0 20px; max-width: 85ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 22px; align-items: start; }
+  figure { margin: 0; }
+  figcaption { font-size: .86rem; color: var(--mute); margin-top: 8px; max-width: 60ch; }
+  figcaption b { color: var(--ink); display: block; }
+  .phone { --bg: #f6f2e8; --surf: #fbf8f1; --ink2: #1f2a22; --mute2: #5d6358; --line: #e4ded0; --green: #2f6b4f; --soft: #e6efe7; --amber: #7a4f0e; --amberbg: #f7ecd6;
+    width: 100%; max-width: 360px; height: 700px; border: 6px solid #111; border-radius: 30px; overflow: hidden; position: relative; background: var(--bg); color: var(--ink2); font-size: 14px; }
+  .status { height: 22px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 12px; color: #333; }
+  .banner { height: 86px; background: linear-gradient(120deg, #7a1f1f, #c47a2c); }
+  .body { padding: 14px 16px; }
+  .title { text-align: center; font-size: 22px; font-weight: 700; margin: 4px 0 2px; }
+  .title.amber { color: var(--amber); }
+  .sub { text-align: center; color: var(--mute2); margin: 0 0 12px; }
+  .warn { background: var(--amberbg); color: var(--amber); border-radius: 12px; padding: 11px 12px; font-size: 13.5px; line-height: 1.4; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+  .warn b { color: #5c3a08; }
+  .code { border: 1px solid var(--line); border-radius: 14px; background: var(--surf); padding: 12px 14px; margin: 12px 0; display: flex; justify-content: space-between; align-items: center; }
+  .code small { color: var(--mute2); display: block; font-size: 11px; letter-spacing: .06em; }
+  .code b { font-size: 26px; letter-spacing: .04em; } .qr { width: 52px; height: 52px; background: repeating-linear-gradient(45deg, #222 0 4px, #fff 4px 8px); border-radius: 4px; }
+  .big { display: block; box-sizing: border-box; text-align: center; padding: 13px; border-radius: 999px; background: var(--green); color: #fff; font-weight: 700; font-size: 15px; }
+  .help { text-align: center; color: var(--mute2); font-size: 12.5px; margin-top: 6px; }
+  .links { display: flex; justify-content: space-between; margin-top: 16px; font-weight: 700; color: var(--green); font-size: 13.5px; }
+  .links span:last-child { color: var(--mute2); }
+  .head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .kv span:first-child { color: var(--mute2); }
+  .pill { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #ece8de; color: var(--mute2); }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 11px 0; border-bottom: 1px solid var(--line); align-items: center; }
+  .row small { display: block; color: var(--mute2); font-size: 12.5px; }
+  .tag { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: var(--amberbg); color: var(--amber); white-space: nowrap; }
+  .card { border: 1px solid #e8d6b0; background: #fdf6e8; border-radius: 12px; padding: 12px; margin: 12px 0; }
+  .card p { margin: 0 0 10px; color: var(--amber); font-size: 13.5px; }
+  .tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 54px; border-top: 1px solid var(--line); background: var(--surf); display: flex; justify-content: space-around; align-items: center; font-size: 12px; color: var(--mute2); }
+  .tabbar b { color: var(--green); }
+  .mhead { padding: 12px 16px 4px; }
+  .mhead h2 { margin: 0; font-size: 20px; } .mhead p { margin: 2px 0 0; color: var(--mute2); font-size: 13px; }
+  .topwarn { margin: 10px 16px; border: 1px solid #e8d6b0; background: #fdf6e8; border-radius: 12px; padding: 11px 12px; }
+  .topwarn p { margin: 0 0 9px; color: var(--amber); font-size: 13.5px; line-height: 1.4; }
+  .smallbtn { display: inline-block; padding: 9px 14px; border-radius: 999px; background: var(--green); color: #fff; font-weight: 700; font-size: 13.5px; }
+  .note { margin: 4px 16px 8px; color: var(--mute2); font-size: 12.5px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; }
+  .dish { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 16px; border-top: 1px solid var(--line); }
+  .dish .pic { width: 44px; height: 44px; border-radius: 8px; background: #d9cdb5; } .dish small { display: block; color: var(--mute2); }
+  .fld { margin: 10px 0; } .fld label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .fld .box { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 11px 12px; }
+  .stick { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 16px 16px; background: var(--surf); border-top: 1px solid var(--line); }
+  .stick .warn { margin-bottom: 10px; }
+  ul { color: var(--mute); max-width: 85ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>129 · Make "send it on WhatsApp" impossible to miss</h1>
+  <p class="lead">Customers place an order but never send it on WhatsApp, and the seller has no number to reach them, so she can't confirm it. DellaVee, event Sun 15 Nov. Also: the "You can change or cancel until …" line is hidden (the Change or cancel link stays). AUD, Adelaide.</p>
+  <div class="grid">
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head">‹ Your basket</div>
+      <div class="body">
+        <div class="kv"><span>2 Nasi Ayam Bali</span><span>$30.00</span></div>
+        <div class="kv"><span>Delivery · Sun 15 Nov</span><span>12 Jetty Rd</span></div>
+        <div class="kv"><b>Total</b><b>$30.00</b></div>
+        <div class="fld"><label>Your first name</label><div class="box">Effi</div></div>
+      </div>
+      <div class="stick">
+        <div class="warn"><span>⚠</span><span><b>Next you send your order on WhatsApp.</b> Without your message, DellaVee can't confirm it.</span></div>
+        <span class="big">Place order &amp; send on WhatsApp</span>
+      </div>
+    </div><figcaption><b>A · Last checkout step</b>The amber line sits right above the button. One tap saves the order and opens WhatsApp with the order already written; the customer only presses send there. Coming back to the app shows "Almost done" (frame 1) in case it wasn't sent.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="banner"></div>
+      <div class="mhead"><h2>DellaVee</h2><p>Menu Sun 15 Nov · orders close Sat 14 Nov, 9 pm</p></div>
+      <div class="topwarn"><p>⚠ <b>Your order K7Q-2LB isn't confirmed yet.</b> Send it to DellaVee on WhatsApp to get it confirmed.</p><span class="smallbtn">Send on WhatsApp</span></div>
+      <div class="note"><span>ⓘ</span><span>After ordering, send your order on WhatsApp so DellaVee can confirm it.</span></div>
+      <div class="dish"><span class="pic"></span><span>Ayam Bakar Padang<small>2 in box</small></span><b>$12.50</b></div>
+      <div class="dish"><span class="pic"></span><span>Empek-empek<small>1 box</small></span><b>$10.00</b></div>
+      <div class="dish"><span class="pic"></span><span>Nasi Ayam Bali<small>1 box</small></span><b>$15.00</b></div>
+      <div class="tabbar"><b>Menu</b><span>My orders</span><span>Settings</span></div>
+    </div><figcaption><b>0 · The menu's first page</b>On a phone with an order that is still not confirmed: the amber card at the top with the button (one card per unconfirmed order of this kitchen). For everyone: a small line under "orders close": "After ordering, send your order on WhatsApp so DellaVee can confirm it."</figcaption></figure>
+
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="banner"></div>
+      <div class="body">
+        <div class="title amber">Almost done</div>
+        <p class="sub">Your order is saved, but not sent yet.</p>
+        <div class="warn"><span>⚠</span><span><b>Send it to DellaVee on WhatsApp.</b> She doesn't have your number, so she can only confirm your order after your message.</span></div>
+        <div class="code"><span><small>ORDER NUMBER</small><b>K7Q-2LB</b></span><span class="qr"></span></div>
+        <span class="big">Send to DellaVee on WhatsApp</span>
+        <div class="help">Opens WhatsApp with your order already written.</div>
+        <div class="links"><span>View order details</span><span>Change or cancel</span></div>
+      </div>
+    </div><figcaption><b>1 · Order placed (new wording)</b>Title "Almost done" instead of "Order placed", an amber line saying why the message matters. The "sending is optional" line for returning customers is removed, and so is "You can change or cancel until …".</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head">Order K7Q-2LB <span class="pill" style="margin-left:auto">Ordered</span></div>
+      <div class="body">
+        <div class="card"><p><b>Not sent to DellaVee yet?</b> She can only confirm your order after your WhatsApp message.</p><span class="big">Send on WhatsApp</span></div>
+        <div class="kv"><span>Delivery</span><span>Sun 15 Nov</span></div>
+        <div class="kv"><span>2 Nasi Ayam Bali</span><span>$30.00</span></div>
+        <div class="kv"><b>Total</b><b>$30.00</b></div>
+      </div>
+      <div class="tabbar"><span>Menu</span><b>My orders</b><span>Settings</span></div>
+    </div><figcaption><b>2 · Order page while it is still "Ordered"</b>The reminder card stays on top until the seller confirms the order (or marks "WhatsApp received"). After that it disappears.</figcaption></figure>
+
+    <figure><div class="phone">
+      <div class="status"><span>9:41</span><span>▂▄▆ ▮</span></div>
+      <div class="head">My orders</div>
+      <div class="body">
+        <div class="row"><span><b>K7Q-2LB · DellaVee</b><small>Sun 15 Nov · Delivery · $30.00</small></span><span class="tag">⚠ Send on WhatsApp</span></div>
+        <div class="row"><span><b>MXP-AZR · DellaVee</b><small>Sat 31 Oct · Pickup · $18.00</small></span><span class="pill" style="background:var(--soft);color:var(--green)">Collected</span></div>
+      </div>
+      <div class="tabbar"><span>Menu</span><b>My orders</b><span>Settings</span></div>
+    </div><figcaption><b>3 · My orders</b>An order not yet confirmed carries a small amber "⚠ Send on WhatsApp" tag; tapping the row opens the order page with the button.</figcaption></figure>
+
+  </div>
+  <ul>
+    <li>Hidden everywhere: "You can change or cancel until …" (checkout, Order placed, order page). The Change or cancel link stays.</li>
+    <li>The reminder goes away when the seller confirms the order or ticks "WhatsApp received" on it (both already exist on the seller side).</li>
+    <li>The reminders stay until the seller confirms the order or ticks "WhatsApp received" (owner, 11 Nov), also for orders placed before this update that are still unconfirmed.</li>
+  </ul>
+</div>
+</body>
+</html>

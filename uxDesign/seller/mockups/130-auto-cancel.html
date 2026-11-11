@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto-cancel unconfirmed</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; } .lead { color: var(--mute); margin: 0 0 20px; max-width: 85ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 22px; align-items: start; }
+  figure { margin: 0; } figcaption { font-size: .86rem; color: var(--mute); margin-top: 8px; max-width: 60ch; } figcaption b { color: var(--ink); display: block; }
+  .dev { --bg: #f6f2e8; --surf: #fbf8f1; --ink2: #1f2a22; --mute2: #5d6358; --line: #e4ded0; --green: #2f6b4f; --soft: #e6efe7; --amber: #7a4f0e; --amberbg: #f7ecd6; --red: #8b2c22; --redbg: #f6e3df;
+    background: var(--bg); color: var(--ink2); font-size: 14px; border: 6px solid #111; overflow: hidden; position: relative; }
+  .phone { width: 100%; max-width: 360px; height: 620px; border-radius: 30px; }
+  .status { height: 22px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 12px; color: #333; }
+  .head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .tabs { display: flex; gap: 14px; padding: 8px 14px 0; font-size: 13px; color: var(--mute2); border-bottom: 1px solid var(--line); }
+  .tabs b { color: var(--ink2); border-bottom: 2px solid var(--green); padding-bottom: 6px; }
+  .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .row .n b { font-size: 15px; } .row .n code { color: var(--mute2); margin-left: 6px; }
+  .row .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; color: var(--mute2); font-size: 13px; }
+  .tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+  .tag.amber { background: var(--amberbg); color: var(--amber); } .tag.red { background: var(--redbg); color: var(--red); }
+  .body { padding: 12px 14px; }
+  .reason { background: var(--redbg); color: var(--red); border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 10px; }
+  .kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); } .kv span:first-child { color: var(--mute2); }
+  .b { box-sizing: border-box; display: block; text-align: center; border-radius: 10px; padding: 11px; font-weight: 700; border: 1px solid var(--line); margin-top: 12px; }
+  .b.primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .pill { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+  ul { color: var(--mute); max-width: 85ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>130 · Cancel customer orders not confirmed within 24 hours</h1>
+  <p class="lead">DellaVee, event Sun 15 Nov. A customer order that is still "Ordered" 24 hours after it was placed, with no "WhatsApp received" tick, is cancelled by the app with a reason. Seller-entered and private orders are never touched. AUD, Adelaide.</p>
+  <div class="grid">
+
+    <figure><div class="dev phone">
+      <div class="status"><span>5:30 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="head">Orders</div>
+      <div class="tabs"><b>Active 3</b><span>Confirmed</span><span>Cancelled</span></div>
+      <div class="row"><span class="n"><b>Bshsh</b><code>ECN-VZ7</code></span><b>$22.50</b><span class="meta">○ Ordered · Delivery <span class="tag amber">⚠ Cancels at 7:22 pm</span></span></div>
+      <div class="row"><span class="n"><b>Effi</b><code>HRV-EDY</code></span><b>$30.00</b><span class="meta">✓ Confirmed · Delivery</span></div>
+      <div class="row"><span class="n"><b>Lenny</b><code>AN8-CB7</code></span><b>$15.00</b><span class="meta">✓ Confirmed · Pickup</span></div>
+    </div><figcaption><b>1 · Seller: 2 hours before</b>An unconfirmed customer order gets an amber tag "⚠ Cancels at 7:22 pm" for its last 2 hours, so the seller can still confirm it (or tick WhatsApp received).</figcaption></figure>
+
+    <figure><div class="dev phone">
+      <div class="status"><span>8:00 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="head">Order ECN-VZ7 <span class="pill tag red" style="margin-left:auto">Cancelled</span></div>
+      <div class="body">
+        <div class="reason"><b>Cancelled by the app at 7:22 pm.</b> Not confirmed within 24 hours (no WhatsApp message).</div>
+        <div class="kv"><span>Name</span><span>Bshsh</span></div>
+        <div class="kv"><span>Delivery</span><span>Sun 15 Nov</span></div>
+        <div class="kv"><b>Total</b><b>$22.50</b></div>
+        <span class="b primary">Restore order</span>
+      </div>
+    </div><figcaption><b>2 · Seller: the cancelled order</b>The reason is on the order and in the Cancelled list. "Restore order" puts it back to Ordered if it was a mistake; a restored order is never auto-cancelled again.</figcaption></figure>
+
+    <figure><div class="dev phone">
+      <div class="status"><span>8:00 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="head">Order ECN-VZ7 <span class="pill tag red" style="margin-left:auto">Cancelled</span></div>
+      <div class="body">
+        <div class="reason">This order was cancelled because DellaVee didn't get your WhatsApp message within 24 hours. Want it after all? Order again, or message DellaVee on WhatsApp.</div>
+        <div class="kv"><span>Delivery</span><span>Sun 15 Nov</span></div>
+        <div class="kv"><b>Total</b><b>$22.50</b></div>
+      </div>
+    </div><figcaption><b>3 · Customer: order page</b>The reason in plain words (EN/ID); My orders shows it as Cancelled.</figcaption></figure>
+
+  </div>
+  <ul>
+    <li>Checked every hour by the app; the 24 hours count from when the order was placed.</li>
+    <li>Never touched: orders the seller entered herself, private orders, confirmed orders, orders with "WhatsApp received" ticked, and restored orders.</li>
+    <li>Cancelling deletes the delivery address as today; a restored order needs the address again on WhatsApp.</li>
+  </ul>
+</div>
+</body>
+</html>

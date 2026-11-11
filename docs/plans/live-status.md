@@ -449,3 +449,10 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 2 · Android emulator Pixel_9 + Tablet_11 for 1.0.46.1 | general-purpose · sonnet | 22:18 | 30 min | 22:40 | | | none (check only; scratch copy) | ✅ all steps on phone + tablet; 3 cosmetic notes (title centring being fixed) |
 | gate · typecheck, lint, format, unit 2400, server 737, specs (p127/p126 36, seller-auth 10, session-flow, helper-flow), docs; title centring | coordinator + sonnet | 22:20 | 30 min | 22:51 | | | — | ✅ |
 | deploy · backup, build, deploy v1.0.46.1, health, live smoke | owner + coordinator | 23:14 | 20 min | 23:18 | | | — | ✅ Worker 1eed7a08 |
+
+## Plan 129 (hotfix 1.0.46.2: send-on-WhatsApp reminders)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 1 · reminders (first page, Order placed, order page, My orders), hide change-or-cancel line, EN/ID | general-purpose · sonnet | 21:21 | 25 min | | | | | ⏳ |
+| 1b · safety: AUTO_CANCEL_SINCE, restore sets WA received; Can change row | general-purpose · sonnet | 22:38 | 10 min | 22:43 | | | 6 files | ✅ autoCancel mocks 6, unit 5, e2e 2 |
+| 2 · Android emulator Pixel_9: customer reminders, name check, confirm clears the card | general-purpose · haiku | 22:43 | 25 min | 22:56 | | | none (check only; scratch copy) | ✅ all steps; Haiku worked (first try on Haiku) |

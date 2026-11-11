@@ -46,6 +46,7 @@
     "notPaid": "Not paid",
     "archived": "Archived",
     "locked": "Locked",
+    "sendTag": "Send on WhatsApp",
     "newUpdate": "New update",
     "archivedLine": "Archived · {{date}}",
     "pickup": "Pickup",
@@ -76,7 +77,9 @@
     "whatsapp": "Message {{cook}} on WhatsApp",
     "change": "Change order",
     "cancel": "Cancel order",
-    "changeUntil": "Until {{when}}",
+    "unsentTitle": "Not sent to {{cook}} yet?",
+    "unsentBody": "They can only confirm your order after your WhatsApp message.",
+    "sendWhatsApp": "Send on WhatsApp",
     "closed": "Changes closed at the cut-off.",
     "lockedBanner": "The seller has locked this order. Message them on WhatsApp to change it.",
     "readyTitle": "Ready! Pick up at {{place}}",
@@ -87,6 +90,7 @@
     "delivery_arriving": "Arriving soon",
     "delivery_delivered": "Delivered",
     "cancelled": "This order was cancelled.",
+    "autoCancelled": "This order was cancelled because {{cook}} didn't get your WhatsApp message within 24 hours. Want it after all? Order again, or message {{cook}} on WhatsApp.",
     "updates": "Updates from the seller",
     "noUpdates": "No updates yet.",
     "collect": "I've collected my order",
@@ -115,6 +119,7 @@
     "errors": {
       "week_closed": "This menu is closed, so the order can no longer be changed.",
       "order_locked": "The seller has locked this order. Message them on WhatsApp to change it.",
+      "changes_closed": "Changes are closed. Message {{cook}} on WhatsApp.",
       "ordering_closed": "Sorry, ordering is closed right now.",
       "cutoff_passed": "Sorry, the cut-off has passed.",
       "other": "Could not cancel your order. Check your connection and try again."
@@ -146,6 +151,7 @@
     "cancelled": "Cancelled"
   },
   "inbox": {
+    "autoCancelled": "Cancelled: not confirmed within 24 hours.",
     "nudge": "The seller is waiting for your order number on WhatsApp.",
     "nudgeReturning": "Your order is in. Sending it on WhatsApp is optional, but it helps the seller confirm faster.",
     "readyIn": "Ready in {{minutes}} min",

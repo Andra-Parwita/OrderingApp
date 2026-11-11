@@ -67,6 +67,20 @@ describe('MyOrdersScreen', () => {
     expect(onBack).toHaveBeenCalled();
   });
 
+  it('tags an unconfirmed order "Send on WhatsApp" and drops the tag once confirmed (plan 129)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: MOCK_NOW });
+    const placed = await place();
+    const first = renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    const row = await screen.findByRole('button', { name: new RegExp(placed.code.slice(0, 3)) });
+    expect(row).toHaveTextContent('Send on WhatsApp');
+    first.unmount();
+    await setOrderStatus(placed.code, 'confirmed');
+    renderWithStore(<MyOrdersScreen onBack={noop} onOpenOrder={noop} />);
+    const again = await screen.findByRole('button', { name: new RegExp(placed.code.slice(0, 3)) });
+    await waitFor(() => expect(again).toHaveTextContent('Confirmed'));
+    expect(again).not.toHaveTextContent('Send on WhatsApp');
+  });
+
   it('lists a saved order in "Current" with status, summary, fulfilment and total', async () => {
     // "Current" depends on today's date: pin it to the mock menu's week (cooking date Sat 10 Oct).
     vi.useFakeTimers({ toFake: ['Date'], now: MOCK_NOW });
@@ -285,6 +299,7 @@ describe('MyOrdersScreen', () => {
 
 describe('OrderScreen', () => {
   it('shows the code, timeline, lines, total, pickup details and note', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: MOCK_NOW });
     await useMenu({ whatsappNumber: NUMBER });
     const placed = await place();
     renderOrder(placed.token);
@@ -462,8 +477,16 @@ describe('OrderScreen', () => {
     expect(screen.getByRole('button', { name: /Message .* on WhatsApp/ })).toBeVisible();
   });
 
-  it('shows "Changes closed at the cut-off" instead of Change and Cancel when ordering is closed', async () => {
+  it('still offers Change after the cut-off, until the evening before the cooking day (plan 129)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: MOCK_NOW });
     await useMenu({ ordering: { open: false, reason: 'cutoff_passed' } });
+    const placed = await place();
+    renderOrder(placed.token);
+    expect(await screen.findByRole('button', { name: 'Change order' })).toBeVisible();
+  });
+
+  it('shows "Changes closed at the cut-off" instead of Change and Cancel when ordering is closed', async () => {
+    await useMenu({ ordering: { open: false, reason: 'closed_by_seller' } });
     const placed = await place();
     renderOrder(placed.token);
     expect(await screen.findByText('Changes closed at the cut-off.')).toBeVisible();
@@ -499,6 +522,53 @@ describe('OrderScreen', () => {
       ).not.toBeInTheDocument(),
     );
     expect(screen.getAllByText(/Collected/).length).toBeGreaterThan(0);
+  });
+
+  it('shows the amber send-on-WhatsApp card while unconfirmed, and not once confirmed (plan 129)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: MOCK_NOW });
+    const placed = await place();
+    renderOrder(placed.token);
+    const card = await screen.findByTestId('wa-reminder');
+    expect(card).toHaveTextContent('Not sent to');
+    expect(card).toHaveTextContent('They can only confirm your order after your WhatsApp message.');
+    expect(within(card).getByRole('button', { name: 'Send on WhatsApp' })).toBeVisible();
+    expect(screen.queryByText(/Until /)).not.toBeInTheDocument();
+    cleanup();
+    await setOrderStatus(placed.code, 'confirmed');
+    renderOrder(placed.token);
+    await screen.findByTestId('timeline');
+    await waitFor(() => expect(screen.getAllByText('Confirmed').length).toBeGreaterThan(0));
+    expect(screen.queryByTestId('wa-reminder')).not.toBeInTheDocument();
+  });
+
+  it('hides the Change and Cancel buttons from 6 pm the day before the cooking day (plan 129)', async () => {
+    // Cooking day Sat 10 Oct (Adelaide): changes close Fri 9 Oct, 6 pm = 07:30 UTC.
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-10-09T07:31:00Z') });
+    const placed = await place();
+    renderOrder(placed.token);
+    await screen.findByTestId('timeline');
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Change order' })).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Cancel order' })).toBeNull();
+  });
+
+  it('says why an order the app cancelled was cancelled, with no WhatsApp reminder (plan 130)', async () => {
+    const placed = await place();
+    const cancelled: CustomerOrder = {
+      ...placed,
+      status: 'cancelled',
+      inbox: [
+        ...placed.inbox,
+        { at: placed.createdAt, kind: 'status', status: 'cancelled' },
+        { at: placed.createdAt, kind: 'message', textKey: 'autoCancelled' },
+      ],
+    };
+    server.use(http.get('*/api/orders/:token', () => HttpResponse.json({ order: cancelled })));
+    renderOrder(placed.token);
+    const reason = await screen.findByTestId('auto-cancelled');
+    expect(reason).toHaveTextContent("didn't get your WhatsApp message within 24 hours");
+    expect(reason).toHaveTextContent('Order again, or message');
+    expect(screen.queryByTestId('wa-reminder')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Change order' })).not.toBeInTheDocument();
   });
 
   it('hands the token to the Change callback', async () => {

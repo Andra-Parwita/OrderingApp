@@ -140,7 +140,7 @@ describe('seller rules', () => {
   });
 
   describe('cut-off (injected clock)', () => {
-    it('refuses create, update and cancel after the cut-off', async () => {
+    it('refuses create after the cut-off, and update and cancel after the change deadline (plan 129)', async () => {
       const order = expectOk(await store.createOrder(one('pesmol')));
       clock = AFTER;
       expect(await store.createOrder(one('pesmol'))).toMatchObject({
@@ -149,11 +149,11 @@ describe('seller rules', () => {
       });
       expect(await store.updateOrder(order.token, { note: 'x' })).toMatchObject({
         ok: false,
-        error: 'cutoff_passed',
+        error: 'changes_closed',
       });
       expect(await store.cancelOrder(order.token)).toMatchObject({
         ok: false,
-        error: 'cutoff_passed',
+        error: 'changes_closed',
       });
     });
 

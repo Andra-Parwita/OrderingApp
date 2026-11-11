@@ -17,6 +17,7 @@ import { cancelRequested, collectRequested, orderRequested, type FailureCode } f
 function cancelErrorKey(code: FailureCode): string {
   switch (code) {
     case 'order_locked':
+    case 'changes_closed':
     case 'ordering_closed':
     case 'cutoff_passed':
     case 'week_closed':
@@ -110,7 +111,9 @@ function OrderBody({ order, onBack, onChange, onShowQr, onOpenMenu }: BodyProps)
       cancelOpen={cancelOpen}
       cancelling={cancel.status === 'submitting'}
       collecting={collect.status === 'submitting'}
-      cancelError={cancel.status === 'failed' ? t(cancelErrorKey(cancel.code)) : undefined}
+      cancelError={
+        cancel.status === 'failed' ? t(cancelErrorKey(cancel.code), { cook: info.cook }) : undefined
+      }
       collectError={collect.status === 'failed'}
       onBack={onBack}
       onShowQr={() => onShowQr(token)}

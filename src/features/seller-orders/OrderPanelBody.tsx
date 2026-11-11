@@ -4,7 +4,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Order } from '../../../shared/domain';
 import { formatAuditDiff } from '../../../shared/auditDiff';
-import { formatDay, formatDayTime } from '../../../shared/dates';
+import { autoCancelEntry } from '../../../shared/autoCancel';
+import { DEFAULT_ZONE } from '../../../shared/zone';
+import { useMinuteNow } from './useMinuteNow';
+import { customerChangeDeadline, formatDay, formatDayTime } from '../../../shared/dates';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
@@ -278,6 +281,11 @@ export function OrderPanelBody({
       ? order.handoverDate
       : cookingDate;
   const when = dayOfOrder !== null ? formatDay(dayOfOrder, lang) : '';
+  const autoEntry = autoCancelEntry(order);
+  // Plan 129: a customer may change until 6 pm the day before the cooking day (kitchen time).
+  const changeDeadline =
+    cookingDate !== null ? customerChangeDeadline(cookingDate, DEFAULT_ZONE) : null;
+  const now = useMinuteNow(changeDeadline !== null);
   const pickupText = [
     place ? `${place.place} · ${when}, ${place.window.start}–${place.window.end}` : when,
   ]
@@ -299,6 +307,22 @@ export function OrderPanelBody({
 
       <RepeatNote code={order.code} />
       <EditedNote order={order} />
+      {autoEntry ? (
+        <Notice>
+          <Icon name="warning" />
+          <div>
+            <strong>{t('panel.autoCancelled', { time: formatDayTime(autoEntry.at, lang) })}</strong>
+            <span>{t('panel.autoCancelledWhy')}</span>
+            {order.private ? null : (
+              <div>
+                <Button variant="primary" disabled={a.saving} onClick={a.onRestore}>
+                  {t('panel.restore')}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Notice>
+      ) : null}
       {order.changed ? (
         <Notice>
           <Icon name="pencil" />
@@ -406,8 +430,20 @@ export function OrderPanelBody({
         </dd>
         <dt>{t('panel.customer')}</dt>
         <dd>{order.returning ? t('panel.custReturning') : t('panel.custNew')}</dd>
-        <dt>{t('panel.canChange')}</dt>
-        <dd>{order.locked ? t('panel.canNo') : t('panel.canYes')}</dd>
+        {order.status === 'cancelled' ? null : (
+          <>
+            <dt>{t('panel.canChange')}</dt>
+            <dd>
+              {order.locked
+                ? t('panel.canNo')
+                : changeDeadline === null
+                  ? t('panel.canYesLock')
+                  : now >= Date.parse(changeDeadline)
+                    ? t('panel.canClosed', { when: formatDayTime(changeDeadline, lang) })
+                    : t('panel.canYes', { when: formatDayTime(changeDeadline, lang) })}
+            </dd>
+          </>
+        )}
         {order.collectedAt ? (
           <>
             <dt>{t('status.collected')}</dt>

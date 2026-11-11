@@ -5,6 +5,7 @@ import {
   RETENTION_CRON,
   runAddressSweep,
   runAttemptSweep,
+  runAutoCancel,
   runAutoFinish,
   runCustomerSweep,
   runRetention,
@@ -49,6 +50,7 @@ export default {
   scheduled: async (controller: ScheduledController, env: Env): Promise<void> => {
     const now = new Date();
     await runAutoFinish(env, now);
+    await runAutoCancel(env, now);
     await runAttemptSweep(env, now);
     await runAddressSweep(env, now);
     await runCustomerSweep(env, now);

@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { CustomerOrder, Language } from '../../../shared/domain';
 import type { MenuResponse } from '../../../shared/menuContract';
-import { formatCookingDate, formatWindow } from '../../../shared/dates';
+import { customerChangesClosed, formatCookingDate, formatWindow } from '../../../shared/dates';
 import { formatOrderCode } from '../../../shared/orderCode';
-import { isReturningCustomer } from '../../api/device/myOrders';
+import { DEFAULT_ZONE } from '../../../shared/zone';
+import { isUnconfirmed } from '../../../shared/status';
 import { buildWhatsAppText, whatsAppUrl } from '../../api/device/whatsapp';
 import { PageTopBar } from '../../components/CustomerPage';
 import { PickupMapLine, pickupMapInfoForOrder } from '../../components/pickup-map';
@@ -39,7 +40,7 @@ const Body = styled.div`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.lg}
     calc(var(--customer-tabbar-height, 0rem) + var(--sab) + ${({ theme }) => theme.spacing.xl});
 `;
-const Heading = styled.div`
+const Heading = styled.div<{ $pending: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -54,11 +55,25 @@ const Heading = styled.div`
     font-size: ${({ theme }) => theme.type.size.xl};
     line-height: 1.2;
     font-weight: 700;
-    color: ${({ theme }) => theme.c.conf};
+    color: ${({ theme, $pending }) => ($pending ? theme.c.warn : theme.c.conf)};
   }
   p {
     margin: 0;
     color: ${({ theme }) => theme.c.muted};
+  }
+`;
+const SendNote = styled.p`
+  margin: 0;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  border-radius: ${({ theme }) => theme.size.radiusSheet}px;
+  background: ${({ theme }) => theme.c.warnTint};
+  color: ${({ theme }) => theme.c.text};
+  font-size: ${({ theme }) => theme.type.size.md};
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+
+  b {
+    color: ${({ theme }) => theme.c.warn};
   }
 `;
 const Tick = styled.span`
@@ -139,8 +154,6 @@ type ViewProps = Readonly<{
   order: CustomerOrder;
   /** The kitchen's menu once loaded; the page works without it. */
   menu: MenuResponse | undefined;
-  /** A customer who has ordered before can skip the WhatsApp message (D-027). */
-  returning: boolean;
   onWhatsApp: () => void;
   onShowQr: () => void;
   onViewOrder: () => void;
@@ -152,7 +165,6 @@ type ViewProps = Readonly<{
 export function OrderPlacedView({
   order,
   menu,
-  returning,
   onWhatsApp,
   onShowQr,
   onViewOrder,
@@ -164,6 +176,8 @@ export function OrderPlacedView({
   const cook = menu?.seller.name ?? order.seller.name;
   const code = formatOrderCode(order.code);
   const lang: Language = useLang();
+  // Plan 129: until the kitchen confirms it (or has the WhatsApp message) the order is not done.
+  const pending = isUnconfirmed(order);
   // Plan 076: one line under the thanks, only for a pickup place that has an address.
   const pickupMap = pickupMapInfoForOrder(
     order,
@@ -180,18 +194,27 @@ export function OrderPlacedView({
         install={installOverride}
       />
       <Body>
-        <Heading>
+        <Heading $pending={pending}>
           <h1>
-            <Tick>
-              <Icon name="check" />
-            </Tick>
-            {t('placed.title')}
+            {pending ? null : (
+              <Tick>
+                <Icon name="check" />
+              </Tick>
+            )}
+            {pending ? t('placed.almostTitle') : t('placed.title')}
           </h1>
-          <p>{t('placed.thanks', { name: order.firstName, cook })}</p>
+          <p>
+            {pending ? t('placed.almostSub') : t('placed.thanks', { name: order.firstName, cook })}
+          </p>
           {order.fulfilment === 'delivery' && order.handoverDate ? (
             <p>{t('placed.deliveryDay', { day: formatCookingDate(order.handoverDate, lang) })}</p>
           ) : null}
         </Heading>
+        {pending ? (
+          <SendNote role="status" data-testid="send-note">
+            <b>{t('placed.sendLead', { cook })}</b> {t('placed.sendRest', { cook })}
+          </SendNote>
+        ) : null}
         <PickupMapLine info={pickupMap} />
         <CodeCard type="button" onClick={onShowQr} data-testid="code-card">
           <CodeText>
@@ -208,16 +231,19 @@ export function OrderPlacedView({
             <MenuIcon name="chat" />
             {t('placed.whatsapp', { cook })}
           </MainButton>
-          <Help>{returning ? t('placed.optional') : t('placed.whatsappHelp')}</Help>
+          <Help>{t('placed.whatsappHelp')}</Help>
         </div>
         <UpdatesCard controller={install} />
         <Links>
           <LinkButton type="button" onClick={onViewOrder}>
             {t('placed.viewOrder')}
           </LinkButton>
-          <LinkButton type="button" $quiet onClick={onChange}>
-            {t('placed.change')}
-          </LinkButton>
+          {menu &&
+          customerChangesClosed(menu.week, menu.kitchen.timeZone ?? DEFAULT_ZONE) ? null : (
+            <LinkButton type="button" $quiet onClick={onChange}>
+              {t('placed.change')}
+            </LinkButton>
+          )}
         </Links>
         <Help>{t('placed.saved')}</Help>
       </Body>
@@ -285,13 +311,11 @@ function PlacedBody({
   const openWhatsApp = useCallback(() => {
     window.open(whatsAppUrl(waText, whatsappNumber), '_blank', 'noopener,noreferrer');
   }, [waText, whatsappNumber]);
-  const [returning] = useState(() => isReturningCustomer(order.seller.slug));
 
   return (
     <OrderPlacedView
       order={order}
       menu={menu}
-      returning={returning}
       onWhatsApp={openWhatsApp}
       onShowQr={onShowQr}
       onViewOrder={onViewOrder}

@@ -21,6 +21,7 @@ const current = (token: string, slug: string, kitchen: string): CurrentRow => ({
   locked: false,
   paid: undefined,
   unseen: false,
+  unsent: false,
 });
 const earlier = (token: string, slug: string, kitchen: string): EarlierRow => ({
   token,

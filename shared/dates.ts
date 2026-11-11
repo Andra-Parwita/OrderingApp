@@ -162,6 +162,30 @@ export function cutoffAtFor(
 }
 
 /**
+ * Plan 129: customers may change or cancel their own order until this hour (kitchen time) on the day
+ * before the cooking day. The same for every kitchen for now; a kitchen setting can replace it.
+ */
+export const CUSTOMER_CHANGE_HOUR = 18;
+
+/**
+ * The last moment a customer may change or cancel an order: CUSTOMER_CHANGE_HOUR on the day before
+ * the cooking day in the kitchen's zone (daylight saving included), whatever the order cut-off is
+ * (the cut-off only stops new orders). As an ISO instant with offset.
+ */
+export function customerChangeDeadline(cookingDate: string, zone: string): string {
+  return toInstant(addDays(cookingDate, -1), `${CUSTOMER_CHANGE_HOUR}:00`, zone);
+}
+
+/** Plan 129: whether the customer's change-or-cancel time has passed (the link hides, the server refuses). */
+export function customerChangesClosed(
+  week: Readonly<{ cookingDate: string }>,
+  zone: string,
+  now: Date = new Date(),
+): boolean {
+  return now.getTime() >= Date.parse(customerChangeDeadline(week.cookingDate, zone));
+}
+
+/**
  * When a menu finishes by itself (D-069 Q5): the midnight that ends its cooking day in the kitchen's
  * zone, as an instant with offset. Plan 126: the midnight after the latest of the cooking day and the
  * delivery days, one day later when "Keep the menu open 1 more day" is on.

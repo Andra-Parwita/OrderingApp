@@ -198,28 +198,28 @@ describe('anonymous order statistics (plan 121 B)', () => {
         return code;
       };
       // Week of Mon 5 Oct 2026 (Wed 7 Oct): three said something, one said nothing.
-      await placedAt('2026-10-07T10:00', 'A', {
+      await placedAt('2026-10-07T10:00', 'Aaa', {
         place: 'app',
         os: 'ios',
         push: true,
         remember: true,
       });
-      await placedAt('2026-10-07T10:00', 'B', {
+      await placedAt('2026-10-07T10:00', 'Bobo', {
         place: 'browser',
         os: 'android',
         push: false,
         remember: false,
       });
-      await placedAt('2026-10-07T10:00', 'C', { place: 'inapp', os: 'other', push: true });
-      await placedAt('2026-10-07T10:00', 'D');
+      await placedAt('2026-10-07T10:00', 'Cici', { place: 'inapp', os: 'other', push: true });
+      await placedAt('2026-10-07T10:00', 'Dede');
       // The Sunday of that week still belongs to it; the next Monday starts a new one.
-      await placedAt('2026-10-11T23:30', 'E', {
+      await placedAt('2026-10-11T23:30', 'Eli', {
         place: 'app',
         os: 'ios',
         push: false,
         remember: false,
       });
-      await placedAt('2026-10-12T00:10', 'F', {
+      await placedAt('2026-10-12T00:10', 'Fifi', {
         place: 'app',
         os: 'ios',
         push: true,

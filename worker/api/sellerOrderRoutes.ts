@@ -349,6 +349,19 @@ export const SELLER_ORDER_ROUTES: ReadonlyArray<SellerRoute> = [
     },
     { addresses: true },
   ),
+  // Plan 130: put an order the app (or the customer) cancelled back to Ordered.
+  route(
+    'POST',
+    'orders/:code/restore',
+    OWNER_CHEF,
+    (call) => {
+      const { store, actor, changed } = call;
+      return withCode(call, async (code) =>
+        sellerResult(await changed(await store.restoreOrder(code, actor))),
+      );
+    },
+    { addresses: true },
+  ),
   route(
     'POST',
     'orders/:code/wa-received',

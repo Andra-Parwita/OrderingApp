@@ -13,6 +13,7 @@ import { hasSeenHowItWorks, markHowItWorksSeen } from './howItWorksSeen';
 import { CUSTOMER_NS } from './i18n/register';
 import { useLang } from './layout';
 import { MenuErrorView, MenuLoadingView } from './MenuLoadStates';
+import { useWhatsAppReminders } from './useWhatsAppReminders';
 import { MenuHomeView, NotPublishedView } from './MenuHomeView';
 import { ScreenBoundary } from './ScreenBoundary';
 import {
@@ -136,6 +137,8 @@ function HomeContent({ slug, onSeeDishes, onHowItWorks, preview }: HomeProps) {
   const { menu, load } = useMenuData(slug, preview);
   const ready = menu.status === 'ready' ? menu.data : null;
   const showHow = ready?.ordering.open === true && !preview;
+  // Plan 129: orders of this kitchen on this phone that still wait for the WhatsApp message.
+  const reminders = useWhatsAppReminders(slug, ready, lang, !preview);
 
   // A first-timer sees "How ordering works" once, by itself; Back returns to the menu.
   useEffect(() => {
@@ -161,6 +164,8 @@ function HomeContent({ slug, onSeeDishes, onHowItWorks, preview }: HomeProps) {
               onSeeDishes={preview ? undefined : onSeeDishes}
               onHowItWorks={preview ? undefined : onHowItWorks}
               onMessageSeller={() => openWhatsApp(data.kitchen.whatsappNumber)}
+              reminders={reminders}
+              showAfterOrdering={!preview}
             />
           </>
         )}

@@ -6,6 +6,9 @@ import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Icon } from '../../ui';
+import { autoCancelAt, isAutoCancelCandidate, isAutoCancelSoon } from '../../../shared/autoCancel';
+import { useMinuteNow } from './useMinuteNow';
+import { formatTime } from '../../../shared/dates';
 import { ConfirmedPill } from './ConfirmedMark';
 import { RepeatTag } from './RepeatNote';
 import { getContactDigits } from './contacts';
@@ -131,6 +134,7 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
   const { t, i18n } = useTranslation(SELLER_NS);
   const lang = useLang();
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
+  const now = useMinuteNow(isAutoCancelCandidate(order));
   const send = useCallback(
     () =>
       openOrderLink(
@@ -158,6 +162,12 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
             <Mark $tone="warn">
               <Icon name="pencil" />
               {t('live.changed')}
+            </Mark>
+          ) : null}
+          {isAutoCancelSoon(order, now) ? (
+            <Mark $tone="warn">
+              <Icon name="warning" />
+              {t('live.cancelsAt', { time: formatTime(autoCancelAt(order.createdAt), lang) })}
             </Mark>
           ) : null}
           <Mark $tone="muted">

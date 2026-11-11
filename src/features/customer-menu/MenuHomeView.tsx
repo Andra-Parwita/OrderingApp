@@ -3,6 +3,8 @@ import { Trans, useTranslation } from 'react-i18next';
 import { css, styled } from 'styled-components';
 import type { Kitchen, Language } from '../../../shared/domain';
 import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
+import { formatOrderCode } from '../../../shared/orderCode';
+import { WhatsAppReminder } from '../../components/WhatsAppReminder';
 import { YourTime } from '../../components/YourTime';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { pickText } from '../../../shared/text';
@@ -24,6 +26,21 @@ const Screen = styled.main`
   flex-direction: column;
   background: ${({ theme }) => theme.c.bg};
   color: ${({ theme }) => theme.c.text};
+`;
+const NO_REMINDERS: ReadonlyArray<never> = [];
+const Reminders = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.c.bg};
+`;
+const AfterOrdering = styled.small`
+  display: block;
+  margin-top: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.c.muted};
+  font-size: ${({ theme }) => theme.type.size.sm};
+  font-weight: normal;
 `;
 const BannerBox = styled.div`
   position: relative;
@@ -257,6 +274,10 @@ type HomeProps = Readonly<{
   onSeeDishes?: () => void;
   onHowItWorks?: () => void;
   onMessageSeller: () => void;
+  /** Plan 129: one amber card per order of this kitchen that still waits for the WhatsApp message. */
+  reminders?: ReadonlyArray<Readonly<{ code: string; token: string; send: () => void }>>;
+  /** Plan 129: the small "send your order on WhatsApp" line near the cut-off (not in the preview). */
+  showAfterOrdering?: boolean;
 }>;
 
 export function MenuHomeView({
@@ -265,6 +286,8 @@ export function MenuHomeView({
   onSeeDishes,
   onHowItWorks,
   onMessageSeller,
+  reminders = NO_REMINDERS,
+  showAfterOrdering = false,
 }: HomeProps) {
   const { t } = useTranslation(CUSTOMER_NS);
   const [viewing, setViewing] = useState(false);
@@ -283,6 +306,22 @@ export function MenuHomeView({
   const tagline = pickText(kitchen.tagline, lang);
   const withCook = cook !== kitchen.name && data.seller.name !== '';
 
+  const reminderCards =
+    reminders.length > 0 ? (
+      <Reminders>
+        {reminders.map((reminder) => (
+          <WhatsAppReminder
+            key={reminder.token}
+            testId="menu-reminder"
+            lead={`⚠ ${t('home.unconfirmedLead', { code: formatOrderCode(reminder.code) })}`}
+            rest={t('home.unconfirmedRest', { cook })}
+            buttonLabel={t('home.sendWhatsApp')}
+            onSend={reminder.send}
+          />
+        ))}
+      </Reminders>
+    ) : null;
+
   const viewer =
     viewing && pictureUrl ? (
       <FullPictureViewer
@@ -299,6 +338,7 @@ export function MenuHomeView({
     return (
       <Screen>
         <Banner kitchen={kitchen} lang={lang} />
+        {reminderCards}
         <Heading>
           <Name>{kitchen.name}</Name>
           <Sub>{t('home.menuFor', { date })}</Sub>
@@ -367,6 +407,11 @@ export function MenuHomeView({
         <RowText>
           <Trans t={t} i18nKey="home.orderBy" values={{ dateTime: cutoff }} components={bold} />
           <YourTime label={t('home.yourTime')} kitchenZone={kitchen.timeZone} />
+          {showAfterOrdering ? (
+            <AfterOrdering data-testid="after-ordering">
+              {t('home.afterOrdering', { cook })}
+            </AfterOrdering>
+          ) : null}
         </RowText>
       </Row>
       {places > 0 ? (
@@ -440,6 +485,7 @@ export function MenuHomeView({
     return (
       <Screen>
         <Banner kitchen={kitchen} lang={lang} />
+        {reminderCards}
         <PlainSheet $glass={false}>{sheetBody}</PlainSheet>
       </Screen>
     );
@@ -447,6 +493,7 @@ export function MenuHomeView({
   return (
     <Screen>
       <Banner kitchen={kitchen} lang={lang} />
+      {reminderCards}
       <Hero>
         <HeroImage
           decoding="sync"

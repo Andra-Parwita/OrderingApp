@@ -13,6 +13,9 @@ import { NewTag } from './orderRowCells';
 
 import { StatusMark } from './StatusMark';
 import { customerKind } from './customerKind';
+import { formatTime } from '../../../shared/dates';
+import { autoCancelAt, isAutoCancelCandidate, isAutoCancelSoon } from '../../../shared/autoCancel';
+import { useMinuteNow } from './useMinuteNow';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
 
 // One order in the live list (handoff, Home): code, first name, Changed flag, small icons, total,
@@ -31,7 +34,7 @@ const WIDE = '70rem';
 const tracks = (wide: boolean, daySlot: boolean): string => {
   const tag = daySlot ? '[how-end tag-start] max-content [tag-end' : '[how-end';
   return wide
-    ? `[line-start] minmax(0, 15rem) [line-end items-start] minmax(0, 1fr) [items-end note-start] minmax(0, 1fr) [note-end how-start] max-content ${tag} status-start] max-content [status-end total-start] max-content [total-end]`
+    ? `[line-start] minmax(0, 20rem) [line-end items-start] minmax(0, 1fr) [items-end note-start] minmax(0, 1fr) [note-end how-start] max-content ${tag} status-start] max-content [status-end total-start] max-content [total-end]`
     : `[line-start how-start] max-content ${tag} items-start] minmax(0, 1fr) [items-end status-start total-start] max-content [status-end total-end]`;
 };
 
@@ -117,6 +120,8 @@ const Code = styled.span`
   white-space: nowrap;
 `;
 const Name = styled.span`
+  /* Plan 130: a tag after the name never squeezes it away. */
+  min-width: 3.5rem;
   overflow: hidden;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -244,6 +249,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
   const lang = useLang();
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
   const kind = customerKind(order);
+  const now = useMinuteNow(isAutoCancelCandidate(order));
   const wide = !panelOpen;
   const hasTag = order.fulfilment === 'delivery' && order.handoverDate !== undefined;
   return (
@@ -266,6 +272,12 @@ export const LiveOrderRow = memo(function LiveOrderRow({
           <Flag>
             <Icon name="pencil" />
             {order.addressChanged === 'new' ? t('live.addressChanged') : t('live.changed')}
+          </Flag>
+        ) : null}
+        {isAutoCancelSoon(order, now) ? (
+          <Flag>
+            <Icon name="warning" />
+            {t('live.cancelsAt', { time: formatTime(autoCancelAt(order.createdAt), lang) })}
           </Flag>
         ) : null}
         {order.note ? <SmallIcon icon="note" label={t('live.note')} /> : null}

@@ -49,12 +49,12 @@ describe('BasketScreen', () => {
     expect(screen.getByText(/send your address to the seller on WhatsApp/)).toBeInTheDocument();
   });
 
-  it('shows the cut-off line and the helpers on the name page', async () => {
+  it('shows the helpers on the name page, without the change-or-cancel line (plan 129)', async () => {
     await basketStore();
     toName();
     expect(screen.getByRole('heading', { name: 'Your name' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Place order · $20.00' })).toBeInTheDocument();
-    expect(screen.getByText('You can change or cancel until Fri 9 Oct, 9 pm.')).toBeInTheDocument();
+    expect(screen.getByText('Place order & send on WhatsApp')).toBeInTheDocument();
+    expect(screen.queryByText(/You can change or cancel until/)).not.toBeInTheDocument();
     expect(screen.getByText('Only your first name or a nickname')).toBeInTheDocument();
     expect(
       screen.getByText("Allergies or requests. Please don't write your phone number here."),
@@ -186,6 +186,37 @@ describe('OrderPlacedScreen', () => {
     expect(text).toContain('Total $30.00');
     expect(text).toContain('Name: Rina');
     expect(text).not.toContain('No chilli');
+  });
+
+  it('says "Almost done" and asks to send it on WhatsApp while unconfirmed (plan 129)', async () => {
+    const order = await placedOrder('en', 'pickup');
+    renderWithStore(<OrderPlacedScreen token={order.token} onChange={noop} />);
+    expect(await screen.findByRole('heading', { name: 'Almost done' })).toBeVisible();
+    expect(screen.getByText('Your order is saved, but not sent yet.')).toBeVisible();
+    const note = screen.getByTestId('send-note');
+    expect(note).toHaveTextContent(
+      /^Send it to .* on WhatsApp\. .* doesn't have your number, so they can only confirm your order after your message\.$/,
+    );
+    expect(note).not.toHaveTextContent('she');
+    expect(screen.getByRole('button', { name: /Send to .* on WhatsApp/ })).toBeVisible();
+    expect(screen.queryByText(/is optional/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/You can change or cancel until/)).not.toBeInTheDocument();
+  });
+
+  it('has no "optional" line even for a returning customer, and is in Indonesian (plan 129)', async () => {
+    localStorage.setItem(
+      'myOrders',
+      JSON.stringify([
+        { code: 'AAAAAA', token: 'old', placedAt: '2026-09-01T00:00:00Z', lastStatus: 'collected' },
+      ]),
+    );
+    const order = await placedOrder('id', 'pickup');
+    await i18n.changeLanguage('id');
+    renderWithStore(<OrderPlacedScreen token={order.token} onChange={noop} />);
+    expect(await screen.findByRole('heading', { name: 'Hampir selesai' })).toBeVisible();
+    expect(screen.getByText('Pesanan Anda sudah tersimpan, tetapi belum terkirim.')).toBeVisible();
+    expect(screen.queryByText(/opsional/)).not.toBeInTheDocument();
+    localStorage.removeItem('myOrders');
   });
 
   it('shows an error with retry for an unknown token', async () => {

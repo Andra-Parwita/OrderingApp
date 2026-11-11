@@ -1,5 +1,5 @@
 import type { CustomerOrder, OrderStatus } from '../../../shared/domain';
-import { isFinalStatus } from '../../../shared/status';
+import { isFinalStatus, isUnconfirmed } from '../../../shared/status';
 import { rememberKitchen } from './lastKitchen';
 
 // "My orders" lives on this phone only (D-007/D-010): the code, the private token and a little
@@ -18,6 +18,8 @@ export type SavedOrder = Readonly<{
   sellerSlug?: string;
   /** The last status this phone saw; collected/delivered marks a returning customer. */
   lastStatus?: OrderStatus;
+  /** Plan 129: the seller ticked "WhatsApp received" (last time this phone saw the order). */
+  waReceived?: true;
   /** ISO time of the newest inbox entry the customer has seen. */
   lastSeenInboxAt?: string;
   /** Plan 074: the server said the week is closed or the details are gone; never live again. */
@@ -26,7 +28,7 @@ export type SavedOrder = Readonly<{
 
 function isSavedOrder(entry: unknown): entry is SavedOrder {
   if (typeof entry !== 'object' || entry === null) return false;
-  const { code, token, placedAt, sellerSlug, lastStatus, lastSeenInboxAt, closed } =
+  const { code, token, placedAt, sellerSlug, lastStatus, lastSeenInboxAt, closed, waReceived } =
     entry as Record<string, unknown>;
   return (
     typeof code === 'string' &&
@@ -35,7 +37,8 @@ function isSavedOrder(entry: unknown): entry is SavedOrder {
     (sellerSlug === undefined || typeof sellerSlug === 'string') &&
     (lastStatus === undefined || typeof lastStatus === 'string') &&
     (lastSeenInboxAt === undefined || typeof lastSeenInboxAt === 'string') &&
-    (closed === undefined || closed === true)
+    (closed === undefined || closed === true) &&
+    (waReceived === undefined || waReceived === true)
   );
 }
 
@@ -86,6 +89,7 @@ export function saveMyOrder(order: CustomerOrder): void {
     placedAt: existing?.placedAt ?? order.createdAt,
     sellerSlug: order.seller.slug,
     lastStatus: order.status,
+    ...(order.waReceived === true ? { waReceived: true as const } : {}),
     ...(seen !== undefined ? { lastSeenInboxAt: seen } : {}),
   };
   const others = entries.filter((entry) => entry.token !== order.token);
@@ -93,6 +97,12 @@ export function saveMyOrder(order: CustomerOrder): void {
   writeMyOrders(
     existing ? entries.map((e) => (e.token === order.token ? saved : e)) : [saved, ...others],
   );
+}
+
+function withoutWaReceived(entry: SavedOrder): SavedOrder {
+  const copy = { ...entry };
+  delete copy.waReceived;
+  return copy;
 }
 
 /** Remembers the latest status (for the returning check) without touching the seen marker. */
@@ -108,6 +118,7 @@ export function rememberStatus(order: CustomerOrder): void {
         placedAt: order.createdAt,
         sellerSlug: order.seller.slug,
         lastStatus: order.status,
+        ...(order.waReceived === true ? { waReceived: true as const } : {}),
         ...(order.archived === true ? { closed: true as const } : {}),
       },
       ...entries,
@@ -119,9 +130,10 @@ export function rememberStatus(order: CustomerOrder): void {
     entries.map((entry) =>
       entry.token === order.token
         ? {
-            ...entry,
+            ...withoutWaReceived(entry),
             sellerSlug: order.seller.slug,
             lastStatus: order.status,
+            ...(order.waReceived === true ? { waReceived: true as const } : {}),
             ...(order.archived === true ? { closed: true as const } : {}),
           }
         : entry,
@@ -189,5 +201,22 @@ export function isReturningCustomer(
     (entry) =>
       (entry.lastStatus === 'collected' || entry.lastStatus === 'delivered') &&
       (entry.sellerSlug === undefined || entry.sellerSlug === sellerSlug),
+  );
+}
+
+/**
+ * Plan 129: this phone's orders at one kitchen that the kitchen cannot confirm yet (still Ordered,
+ * "WhatsApp received" not ticked), as last seen. Newest first, like the list.
+ */
+export function unconfirmedOrders(
+  sellerSlug: string,
+  entries: ReadonlyArray<SavedOrder> = readMyOrders(),
+  now: number = Date.now(),
+): Array<SavedOrder> {
+  return activeOrders(entries, now).filter(
+    (entry) =>
+      entry.sellerSlug === sellerSlug &&
+      entry.lastStatus !== undefined &&
+      isUnconfirmed({ status: entry.lastStatus, waReceived: entry.waReceived === true }),
   );
 }

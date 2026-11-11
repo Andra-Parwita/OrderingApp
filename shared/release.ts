@@ -4,7 +4,7 @@
 export const RELEASE_VERSION = '1.0.46';
 // The hotfix number on top of the release ("1.0.45.1"), or null when there is none. The What's new pill and
 // the release notes stay keyed by RELEASE_VERSION, so a hotfix does not pop "What's new" (plan 125).
-export const RELEASE_HOTFIX: number | null = 1;
+export const RELEASE_HOTFIX: number | null = 2;
 
 /** What users see as the app version: "1.0.45.1", or "1.0.45" without a hotfix. */
 export function versionLabel(

@@ -14,6 +14,7 @@ const STATUS: Record<ApiErrorCode, number> = {
   exceeds_remaining: 409,
   invalid_status: 409,
   order_locked: 409,
+  changes_closed: 409,
   ordering_closed: 409,
   item_has_orders: 409,
   limit_reached: 409,

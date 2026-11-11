@@ -205,6 +205,15 @@ export function setOrderLocked(
   return sellerPost(code, 'lock', { locked }, actor, seller);
 }
 
+/** Plan 130: put a cancelled order (by the app, or the customer) back to Ordered. */
+export function restoreOrder(
+  code: string,
+  actor?: StaffActor,
+  seller?: string,
+): Promise<ApiResult<SellerOrderResponse>> {
+  return sellerPost(code, 'restore', {}, actor, seller);
+}
+
 export function setOrderWaReceived(
   code: string,
   received: boolean,

@@ -457,7 +457,7 @@ describe('customer sub-page headers', () => {
   it('order placed: no back arrow; View order details goes to the order page', async () => {
     const token = await savedToken();
     renderAt(`/onde-onde/o/${token}/placed`);
-    expect(await screen.findByRole('heading', { name: 'Order placed' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Almost done' })).toBeVisible();
     expect(screen.queryByRole('button', { name: /^Back/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'View order details' }));
     await waitFor(() => expect(where()).toHaveTextContent(`/onde-onde/o/${token}`));

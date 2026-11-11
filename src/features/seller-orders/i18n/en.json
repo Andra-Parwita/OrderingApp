@@ -112,6 +112,8 @@
     "chef": "Chef {{name}}"
   },
   "audit": {
+    "autoCancelled": "Cancelled: not confirmed within 24 hours",
+    "restored": "Order restored",
     "created": "Placed",
     "edited": "Edited",
     "status": "Status → {{status}}",
@@ -209,6 +211,7 @@
     "makeMenu": "Make a menu"
   },
   "live": {
+    "cancelsAt": "Cancels at {{time}}",
     "search": "Name or code",
     "new": "New",
     "changed": "Changed",
@@ -233,6 +236,9 @@
     "hint": "Placed by a customer signed in with Remember me"
   },
   "panel": {
+    "autoCancelled": "Cancelled by the app at {{time}}.",
+    "autoCancelledWhy": "Not confirmed within 24 hours (no WhatsApp message).",
+    "restore": "Restore order",
     "changedBy": "{{name}} changed this order · {{when}}",
     "items": "Items",
     "noteFrom": "Note from {{name}}",
@@ -250,7 +256,9 @@
     "custNew": "First order",
     "custReturning": "Ordered before",
     "canChange": "Can change",
-    "canYes": "Yes, until you lock it",
+    "canYes": "Yes, until {{when}} or until you lock it",
+    "canYesLock": "Yes, until you lock it",
+    "canClosed": "No (closed {{when}})",
     "canNo": "No, locked",
     "recent": "Recent changes",
     "collected": "Collected {{when}}",

@@ -34,6 +34,7 @@ import {
   setOrderPaid,
   setOrderStatus,
   setOrderWaReceived,
+  restoreOrder,
 } from '../../api/client';
 import { sellerBackupMs } from '../../api/backupMinutes';
 import { soldRequested } from '../../api/soldOrders';
@@ -98,6 +99,7 @@ import {
   statusChangeRequested,
   linkPromptShown,
   waReceivedRequested,
+  restoreRequested,
 } from './sellerOrdersSlice';
 import { isLinked } from './contacts/addressBook';
 import { staffSignedOut } from '../../api/staffSignedOut';
@@ -326,6 +328,18 @@ export function* changeWaReceived(action: ReturnType<typeof waReceivedRequested>
   )) as ApiResult<SellerOrderResponse>;
   if (result.ok) yield put(orderSaved({ order: result.data.order }));
   else yield put(changeFailed({ failed: { kind: 'wa', code, received } }));
+}
+
+export function* restore(action: ReturnType<typeof restoreRequested>) {
+  const { code } = action.payload;
+  const result = (yield call(
+    restoreOrder,
+    code,
+    undefined,
+    currentSellerSlug(),
+  )) as ApiResult<SellerOrderResponse>;
+  if (result.ok) yield put(orderSaved({ order: result.data.order }));
+  else yield put(changeFailed({ failed: { kind: 'restore', code } }));
 }
 
 export function* nudge(action: ReturnType<typeof nudgeRequested>) {
@@ -583,6 +597,7 @@ export function* sellerOrdersSaga(
   yield takeEvery(paidChangeRequested.type, changePaid);
   yield takeEvery(lockChangeRequested.type, changeLock);
   yield takeEvery(waReceivedRequested.type, changeWaReceived);
+  yield takeEvery(restoreRequested.type, restore);
   yield takeEvery(nudgeRequested.type, nudge);
   yield takeEvery(seenRequested.type, markSeen);
   yield takeEvery(collectedRequested.type, markCollected);

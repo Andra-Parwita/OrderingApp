@@ -112,6 +112,8 @@
     "chef": "Chef {{name}}"
   },
   "audit": {
+    "autoCancelled": "Dibatalkan: tidak dikonfirmasi dalam 24 jam",
+    "restored": "Pesanan dipulihkan",
     "created": "Dipesan",
     "edited": "Diubah",
     "status": "Status → {{status}}",
@@ -209,6 +211,7 @@
     "makeMenu": "Buat menu"
   },
   "live": {
+    "cancelsAt": "Dibatalkan pukul {{time}}",
     "search": "Nama atau kode",
     "new": "Baru",
     "changed": "Diubah",
@@ -233,6 +236,9 @@
     "hint": "Dipesan pelanggan yang masuk dengan Ingat aku"
   },
   "panel": {
+    "autoCancelled": "Dibatalkan otomatis oleh aplikasi pada {{time}}.",
+    "autoCancelledWhy": "Tidak dikonfirmasi dalam 24 jam (tidak ada pesan WhatsApp).",
+    "restore": "Pulihkan pesanan",
     "changedBy": "{{name}} mengubah pesanan ini · {{when}}",
     "items": "Pesanan",
     "noteFrom": "Catatan dari {{name}}",
@@ -250,7 +256,9 @@
     "custNew": "Pesanan pertama",
     "custReturning": "Pernah memesan",
     "canChange": "Bisa diubah",
-    "canYes": "Ya, sampai Anda kunci",
+    "canYes": "Ya, sampai {{when}} atau sampai Anda kunci",
+    "canYesLock": "Ya, sampai Anda kunci",
+    "canClosed": "Tidak (ditutup {{when}})",
     "canNo": "Tidak, terkunci",
     "recent": "Perubahan terakhir",
     "collected": "Diambil {{when}}",

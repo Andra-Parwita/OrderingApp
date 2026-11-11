@@ -2,12 +2,15 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { CustomerOrder, Language, OrderStatus } from '../../../shared/domain';
-import { formatCutoff, formatDayTime } from '../../../shared/dates';
-import { YourTime } from '../../components/YourTime';
+import { customerChangesClosed, formatDayTime } from '../../../shared/dates';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { pickText } from '../../../shared/text';
+import { DEFAULT_ZONE } from '../../../shared/zone';
+import { AUTO_CANCEL_INBOX_KEY } from '../../../shared/autoCancel';
+import { isUnconfirmed } from '../../../shared/status';
+import { WhatsAppReminder } from '../../components/WhatsAppReminder';
 import { PageTopBar } from '../../components/CustomerPage';
 import { PickupMapLine } from '../../components/pickup-map';
 import {
@@ -51,6 +54,10 @@ const Page = styled.div`
   padding-bottom: calc(
     var(--customer-tabbar-height, 0rem) + var(--sab) + ${({ theme }) => theme.spacing.xl}
   );
+`;
+
+const ReminderBox = styled.div`
+  margin: 0 ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.lg};
 `;
 
 // ---- Banners ----
@@ -328,13 +335,17 @@ export function OrderPageView(props: OrderPageViewProps) {
   const install = useOrderInstall(order.token, props.install);
   const info = orderInfo(order, menu, lang);
   const final = isFinal(order.status);
-  const orderingOpen = menu?.ordering.open ?? true;
+  // Plan 129: the cut-off stops new orders only; a change has its own deadline (changesClosed).
+  const orderingOpen =
+    menu === undefined || menu.ordering.open || menu.ordering.reason === 'cutoff_passed';
   // Change and Cancel only while the order is Ordered or Confirmed (spec §4.4): not once it is
   // ready or out for delivery.
   const stillOpen = order.status === 'ordered' || order.status === 'confirmed';
   // Plan 081: a private order is changed by the kitchen only (the customer asks on WhatsApp).
-  const canChange = !order.private && !order.locked && stillOpen && orderingOpen;
-  const cutoffAt = menu?.week.cutoffAt;
+  // Plan 129: and not after the evening before the cooking day (the server refuses it too).
+  const changesClosed =
+    menu !== undefined && customerChangesClosed(menu.week, menu.kitchen.timeZone ?? DEFAULT_ZONE);
+  const canChange = !order.private && !order.locked && stillOpen && orderingOpen && !changesClosed;
   const step = deliveryStep(order);
   const readyPickup = order.fulfilment === 'pickup' && order.status === 'ready_for_pickup';
   const chip = statusChip(order.status);
@@ -354,12 +365,29 @@ export function OrderPageView(props: OrderPageViewProps) {
         </ChipRow>
       ) : null}
 
+      {isUnconfirmed(order) ? (
+        <ReminderBox>
+          <WhatsAppReminder
+            lead={t('order.unsentTitle', { cook: info.cook })}
+            rest={t('order.unsentBody')}
+            buttonLabel={t('order.sendWhatsApp')}
+            onSend={props.onWhatsApp}
+          />
+        </ReminderBox>
+      ) : null}
+
       {order.status === 'cancelled' ? (
         <Banner $tone="danger" role="status">
           <BannerHead>
             <OrderIcon name="ban" />
             <h2>{t('order.cancelled')}</h2>
           </BannerHead>
+          {order.inbox.some((entry) => entry.textKey === AUTO_CANCEL_INBOX_KEY) ? (
+            // Plan 130: the app cancelled it because no WhatsApp message arrived.
+            <BannerLine data-testid="auto-cancelled">
+              {t('order.autoCancelled', { cook: info.cook })}
+            </BannerLine>
+          ) : null}
         </Banner>
       ) : null}
       {readyPickup ? (
@@ -437,12 +465,6 @@ export function OrderPageView(props: OrderPageViewProps) {
                 {t('order.cancel')}
               </OutlineButton>
             </TwoUp>
-            {cutoffAt ? (
-              <Hint>
-                {t('order.changeUntil', { when: formatCutoff(cutoffAt, lang) })}
-                <YourTime label={t('order.yourTime')} />
-              </Hint>
-            ) : null}
           </>
         ) : null}
         {order.locked && !final ? (

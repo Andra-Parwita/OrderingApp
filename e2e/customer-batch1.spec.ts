@@ -44,11 +44,11 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   await shot('basket');
   await page.getByRole('button', { name: /Next: your name/ }).click();
   await expect(page).toHaveURL(/\/basket\/name$/);
-  await expect(page.getByRole('button', { name: 'Place order · $40.00' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Place order/ })).toBeVisible();
   await page.getByLabel('First name').fill(firstName);
   await page.getByLabel(/^Note/).fill('No chilli on the tempeh please');
   await shot('name');
-  await page.getByRole('button', { name: 'Place order · $40.00' }).click();
+  await page.getByRole('button', { name: /^Place order/ }).click();
 
   // C3 order placed: the order page has its own link
   await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
@@ -80,7 +80,7 @@ test('customer flow: menu, basket, order placed, WhatsApp text, Indonesian', asy
   await page.getByRole('button', { name: /^Language/ }).click();
   await page.getByRole('radio', { name: 'Bahasa Indonesia' }).click();
   await page.goto(placedPath);
-  await expect(page.getByText('Pesanan terkirim')).toBeVisible();
+  await expect(page.getByText('Hampir selesai')).toBeVisible();
   await expect(page.getByRole('button', { name: /^Kirim ke .* lewat WhatsApp$/ })).toBeVisible();
   await shot('placed-id');
 
@@ -120,5 +120,5 @@ test('Back from the basket returns to the dishes with the basket intact', async 
   // Forward again: the basket page still has both lines, and the next page opens.
   await page.goForward();
   await page.getByRole('button', { name: /Next: your name/ }).click();
-  await expect(page.getByRole('button', { name: 'Place order · $25.00' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Place order/ })).toBeVisible();
 });

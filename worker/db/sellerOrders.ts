@@ -17,6 +17,16 @@ import type {
   UpdateOrderRequest,
 } from '../../shared/orderContract';
 import { parseOrderCode } from '../../shared/orderCode';
+import {
+  AUTO_CANCEL_ACTOR,
+  autoCancelAt,
+  AUTO_CANCEL_SINCE,
+  AUTO_CANCEL_HOURS,
+  AUTO_CANCEL_INBOX_KEY,
+  AUTO_CANCEL_REASON,
+  isAutoCancelCandidate,
+  RESTORED_DETAIL,
+} from '../../shared/autoCancel';
 import { isFinalStatus, nextStatuses } from '../../shared/status';
 import {
   statusOfTemplate,
@@ -24,7 +34,14 @@ import {
   type UpdateResult,
 } from '../../shared/updateContract';
 import type { SellerRepository } from '../repo/Repository';
-import { changeStatements, lineNotesChanged, LIVE_MENU, readLiveOrder, readOrders } from './orders';
+import {
+  changeStatements,
+  lineNotesChanged,
+  liveMenu,
+  LIVE_MENU,
+  readLiveOrder,
+  readOrders,
+} from './orders';
 import { fail, ok, warn, type Draft } from './sellerShared';
 import { type SellerContext } from './sellerContext';
 
@@ -51,6 +68,8 @@ export function ordersPart(
   | 'changeFulfilment'
   | 'editOrder'
   | 'setWaReceived'
+  | 'autoCancelUnconfirmed'
+  | 'restoreOrder'
   | 'nudge'
   | 'markAddressSeen'
   | 'markSeen'
@@ -64,6 +83,7 @@ export function ordersPart(
     loadState,
     readOrderWithState,
     closedError,
+    changesClosedError,
     draft,
     addAudit,
     addInbox,
@@ -125,7 +145,9 @@ export function ordersPart(
         ? { order: known, state: await loadState(known.id) }
         : await readOrderWithState('token', token);
       if (!order) return fail('not_found', 'Order not found');
-      const closed = closedError<SellerOrder>(s);
+      const late = changesClosedError<SellerOrder>(s);
+      if (late) return late;
+      const closed = closedError<SellerOrder>(s, true);
       if (closed) return closed;
       if (order.locked) return fail('order_locked', 'The seller has locked this order');
       if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
@@ -151,7 +173,9 @@ export function ordersPart(
         ? { order: known, state: await loadState(known.id) }
         : await readOrderWithState('token', token);
       if (!order) return fail('not_found', 'Order not found');
-      const closed = closedError<SellerOrder>(s);
+      const late = changesClosedError<SellerOrder>(s);
+      if (late) return late;
+      const closed = closedError<SellerOrder>(s, true);
       if (closed) return closed;
       if (order.locked) return fail('order_locked', 'The seller has locked this order');
       if (isFinalStatus(order.status)) return fail('invalid_status', 'This order is closed');
@@ -409,6 +433,74 @@ export function ordersPart(
         if (!isPortionRace(error) || !input.lines) throw error;
         return lostRace(await loadState(order.id), input.lines, order.lines);
       }
+    },
+
+    async autoCancelUnconfirmed() {
+      const now = Date.parse(nowIso());
+      // Plan 130: nothing is due before the first full day after the rule's start.
+      if (now < Date.parse(autoCancelAt(AUTO_CANCEL_SINCE))) return 0;
+      const before = new Date(now - AUTO_CANCEL_HOURS * 3_600_000).toISOString();
+      const rows = await db.all<{ code: string }>(
+        `SELECT code FROM orders WHERE seller_id = ? AND status = 'ordered' AND wa_received = 0
+             AND ${liveMenu('')} AND entered_by_role IS NULL AND sample = 0
+             AND created_at <= ?`,
+        sid,
+        before,
+      );
+      let done = 0;
+      for (const { code } of rows) {
+        const result = await changeByCode(code, (order) => {
+          // The kept change history is where a restore is remembered.
+          if (!isAutoCancelCandidate(order)) return fail('invalid_status', 'Not for auto-cancel');
+          const cancelled = addInbox(
+            withOrder(draft(order), { status: 'cancelled', changed: false }),
+            {
+              kind: 'status',
+              status: 'cancelled',
+            },
+          );
+          const explained = addInbox(cancelled, {
+            kind: 'message',
+            textKey: AUTO_CANCEL_INBOX_KEY,
+          });
+          return ok(
+            addAudit(explained, {
+              by: { role: 'seller', name: AUTO_CANCEL_ACTOR },
+              what: 'status',
+              detail: AUTO_CANCEL_REASON,
+            }),
+          );
+        });
+        if (result.ok) {
+          done += 1;
+          // A cancelled order has nothing more to push.
+          await db
+            .stmt(
+              'DELETE FROM push_subscriptions WHERE seller_id = ? AND order_id = ?',
+              sid,
+              result.value.id,
+            )
+            .run();
+        }
+      }
+      return done;
+    },
+
+    restoreOrder(code: string, actor: StaffActor) {
+      return changeByCode(code, (order) => {
+        if (order.status !== 'cancelled')
+          return fail('invalid_status', 'This order is not cancelled');
+        // The seller is in touch with the customer: WhatsApp counts as received, which also keeps the
+        // order out of the auto-cancel for good (the capped history alone could lose the mark).
+        const back = addInbox(
+          withOrder(draft(order), { status: 'ordered', changed: false, waReceived: true }),
+          {
+            kind: 'status',
+            status: 'ordered',
+          },
+        );
+        return ok(addAudit(back, { by: actor, what: 'status', detail: RESTORED_DETAIL }));
+      });
     },
 
     setWaReceived(code: string, received: boolean) {

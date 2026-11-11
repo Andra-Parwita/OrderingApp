@@ -28,6 +28,7 @@ import {
 import { parseDeliveryAddress, type DeliveryAddress } from './address';
 import { isEventDate, isEventTime, PRIVATE_MAX_DEPOSIT_CENTS } from './privateContract';
 import { parseCustomerCode } from './customerCode';
+import { isPlausibleFirstName } from './firstName';
 import { isDeliveryDate } from './deliveryDays';
 import { parseOrderCode } from './orderCode';
 import { parseOrderStats, type OrderStats } from './orderStats';
@@ -211,6 +212,8 @@ export function toCustomerOrder(order: SellerOrder, seller: SellerRef): Customer
     locked: order.locked,
     // The Paid pill on the customer's order page (stage 6); the seller sets it.
     paid: order.paid,
+    // Plan 129: the customer app reminds to send on WhatsApp until this or "confirmed".
+    waReceived: order.waReceived,
     inbox: order.inbox,
     ...(order.pickupPlaceId !== undefined ? { pickupPlaceId: order.pickupPlaceId } : {}),
     ...(order.collectedAt !== undefined ? { collectedAt: order.collectedAt } : {}),
@@ -350,6 +353,8 @@ function isClientOrderId(value: unknown): value is string {
 export function parseCreateOrderRequest(input: unknown): CreateOrderRequest | null {
   const core = parseCreateCore(input);
   if (!core || !isRecord(input)) return null;
+  // Plan 129: a customer's name must look real (a seller-entered order keeps the plain rule).
+  if (!isPlausibleFirstName(core.firstName)) return null;
   const returning = input['returning'];
   if (returning !== undefined && typeof returning !== 'boolean') return null;
   const clientOrderId = input['clientOrderId'];
@@ -630,6 +635,8 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
   // Optional so an older server's answer still parses: no `paid` means not paid.
   if (input['paid'] !== undefined && typeof input['paid'] !== 'boolean') return null;
   const paid = input['paid'] === true;
+  if (input['waReceived'] !== undefined && typeof input['waReceived'] !== 'boolean') return null;
+  const waReceived = input['waReceived'];
   if (pickupPlaceId !== undefined && (typeof pickupPlaceId !== 'string' || pickupPlaceId === '')) {
     return null;
   }
@@ -648,6 +655,7 @@ export function parseCustomerOrder(input: unknown): CustomerOrder | null {
     customerPrivate = { ...info, toPayCents: toPay };
   }
   const extra = {
+    ...(waReceived !== undefined ? { waReceived } : {}),
     ...(customerPrivate ? { private: customerPrivate } : {}),
     ...(addressState !== undefined ? { addressState } : {}),
     ...(addressChange !== undefined ? { addressChange } : {}),

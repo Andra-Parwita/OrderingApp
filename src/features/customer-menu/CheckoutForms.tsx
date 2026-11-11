@@ -2,15 +2,14 @@ import { useCallback, useId, type ChangeEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import type { Fulfilment, Language } from '../../../shared/domain';
-import { formatCookingDate, formatCutoff, formatWindow } from '../../../shared/dates';
-import { YourTime } from '../../components/YourTime';
+import { formatCookingDate, formatWindow } from '../../../shared/dates';
 import { FIRST_NAME_MAX, NOTE_MAX } from '../../../shared/limits';
 import type { MenuResponse } from '../../../shared/menuContract';
 import { formatMoney } from '../../../shared/money';
 import { pickText } from '../../../shared/text';
 import { CustomerPage } from '../../components/CustomerPage';
 import { RememberMeTick } from '../../components/remember-me';
-import { Body, Footer, FooterNote, Spinner } from './CheckoutViews';
+import { Body, Footer, Spinner } from './CheckoutViews';
 import { CUSTOMER_NS } from './i18n/register';
 import { MenuIcon } from './menuIcons';
 import { MainButton } from './menuParts';
@@ -331,6 +330,40 @@ type NameProps = Readonly<{
   onBack: () => void;
 }>;
 
+// Plan 129: the amber reminder above the button, and a button whose label never wraps: the long
+// label when the footer is wide enough, else the short one (rem, so it follows the text size).
+const SendLine = styled.p`
+  margin: 0 0 ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.size.radiusSheet}px;
+  background: ${({ theme }) => theme.c.warnTint};
+  color: ${({ theme }) => theme.c.text};
+  font-size: ${({ theme }) => theme.type.size.md};
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+`;
+const PlaceBox = styled.div`
+  container-type: inline-size;
+
+  button span {
+    white-space: nowrap;
+  }
+  .short {
+    display: inline;
+  }
+  .long {
+    display: none;
+  }
+  @container (min-width: 21rem) {
+    .long {
+      display: inline;
+    }
+    .short {
+      display: none;
+    }
+  }
+`;
+
 export function YourNameView({
   data,
   lang,
@@ -434,20 +467,28 @@ export function YourNameView({
         </Form>
       </Body>
       <Footer>
-        <FooterNote>
-          {t('checkout.changeUntil', { when: formatCutoff(week.cutoffAt, lang) })}
-          <YourTime label={t('home.yourTime')} />
-        </FooterNote>
-        <MainButton type="submit" form="your-name-form" disabled={placing || addressBlocked}>
-          {placing ? (
-            <>
-              <Spinner aria-hidden="true" />
-              {t(editing ? 'basket.updating' : 'basket.placing')}
-            </>
-          ) : (
-            t(editing ? 'basket.update' : 'basket.place', { total })
-          )}
-        </MainButton>
+        {editing ? null : (
+          <SendLine role="note" data-testid="send-next">
+            ⚠ {t('checkout.sendNext', { cook: data.seller.name || data.kitchen.name })}
+          </SendLine>
+        )}
+        <PlaceBox>
+          <MainButton type="submit" form="your-name-form" disabled={placing || addressBlocked}>
+            {placing ? (
+              <>
+                <Spinner aria-hidden="true" />
+                {t(editing ? 'basket.updating' : 'basket.placing')}
+              </>
+            ) : editing ? (
+              t('basket.update', { total })
+            ) : (
+              <>
+                <span className="long">{t('basket.placeSend')}</span>
+                <span className="short">{t('basket.placeSendShort')}</span>
+              </>
+            )}
+          </MainButton>
+        </PlaceBox>
       </Footer>
     </CustomerPage>
   );

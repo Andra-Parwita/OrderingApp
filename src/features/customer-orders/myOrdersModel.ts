@@ -2,6 +2,7 @@ import type { CustomerOrder, Fulfilment, Language, OrderStatus } from '../../../
 import { formatCookingDate, formatDay } from '../../../shared/dates';
 import type { MenuResponse } from '../../../shared/menuContract';
 import type { ExpiredOrder } from '../../../shared/orderContract';
+import { isUnconfirmed } from '../../../shared/status';
 import { pickText } from '../../../shared/text';
 import { hasUnseenUpdate, type SavedOrder } from '../../api/device/myOrders';
 import { isThisWeek, orderTotalCents } from './helpers';
@@ -35,6 +36,8 @@ export type CurrentRow = Readonly<{
   /** Paid or not, when it is known; undefined shows no pill. */
   paid: boolean | undefined;
   unseen: boolean;
+  /** Plan 129: not confirmed and "WhatsApp received" not ticked: the customer should send it. */
+  unsent: boolean;
 }>;
 
 /** An earlier order, or an archived one (only whose it was and when): one compact line. */
@@ -112,6 +115,7 @@ export function buildMyOrders({
         status: order.status,
         locked: order.locked,
         paid: paid?.[order.token],
+        unsent: isUnconfirmed(order),
         unseen: hasUnseenUpdate(
           order,
           saved.find((entry) => entry.token === order.token),

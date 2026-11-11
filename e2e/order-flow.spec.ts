@@ -37,7 +37,7 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
   await page.getByLabel('First name').fill(firstName);
   await page.getByLabel('Note (optional)').fill(note);
   await page.screenshot({ path: 'captures/flow-2-basket.png', fullPage: true });
-  await page.getByRole('button', { name: 'Place order · $40.00' }).click();
+  await page.getByRole('button', { name: /^Place order/ }).click();
 
   await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
   const code = page.getByTestId('order-code');

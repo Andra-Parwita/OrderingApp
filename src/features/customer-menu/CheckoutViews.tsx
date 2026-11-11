@@ -21,8 +21,8 @@ import type { BasketLine } from './selectors';
 // screen (BasketScreen) and the fixtures page both feed them; nothing here fetches or navigates.
 
 export const Body = styled.div`
-  /* Room for the pinned footer. */
-  padding-bottom: calc(10rem + var(--sab));
+  /* Room for the pinned footer (plan 129: it carries the WhatsApp line too). */
+  padding-bottom: calc(14rem + var(--sab));
 `;
 export const Footer = styled.div`
   position: fixed;

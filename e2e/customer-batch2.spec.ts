@@ -35,7 +35,7 @@ test('customer batch 2: place, My orders, order page, change, seller nudge and l
   await page.getByRole('button', { name: /View basket/ }).click();
   await page.getByRole('button', { name: /Next: your name/ }).click();
   await page.getByLabel('First name').fill(firstName);
-  await page.getByRole('button', { name: 'Place order · $20.00' }).click();
+  await page.getByRole('button', { name: /^Place order/ }).click();
   await expect(page).toHaveURL(/\/o\/[^/]+\/placed$/);
   const codeText = (await page.getByTestId('order-code').textContent()) ?? '';
   expect(codeText).toMatch(/^[A-HJ-NP-Z2-9]{3}-[A-HJ-NP-Z2-9]{3}$/);

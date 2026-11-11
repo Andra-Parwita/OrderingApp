@@ -314,6 +314,11 @@ const CurrentItem = memo(function CurrentItem({ row, lang, onOpen }: CurrentRowP
             <Chip tone={look.tone} icon={look.icon}>
               {t(`status.${row.status}`)}
             </Chip>
+            {row.unsent ? (
+              <Chip tone="warn" icon="warning">
+                {t('list.sendTag')}
+              </Chip>
+            ) : null}
             {row.locked ? (
               <Chip tone="muted" icon="lock">
                 {t('list.locked')}

@@ -322,6 +322,14 @@ export type SellerRepository = {
   setPaid(code: string, paid: boolean, actor: StaffActor): Promise<StoreResult<SellerOrder>>;
   setLocked(code: string, locked: boolean): Promise<StoreResult<SellerOrder>>;
   setWaReceived(code: string, received: boolean): Promise<StoreResult<SellerOrder>>;
+  /**
+   * Plan 130: cancels this kitchen's customer-placed orders that are still Ordered, without
+   * "WhatsApp received", 24 hours after they were placed (never seller-entered, private, restored
+   * or sample ones). Returns how many. The hourly job runs it for every kitchen.
+   */
+  autoCancelUnconfirmed(): Promise<number>;
+  /** Plan 130: puts an order the app cancelled back to Ordered; it is never auto-cancelled again. */
+  restoreOrder(code: string, actor: StaffActor): Promise<StoreResult<SellerOrder>>;
   /** Plan 083: owner or chef switches pickup <-> delivery (place or address), optionally telling the customer. */
   changeFulfilment(
     code: string,
@@ -657,6 +665,8 @@ export type Repository = {
   /** Undefined for an unknown slug / id. */
   sellerBySlug(slug: string): Promise<SellerRepository | undefined>;
   sellerById(id: string): Promise<SellerRepository | undefined>;
+  /** Plan 130: the hourly job: `autoCancelUnconfirmed` for every kitchen that has such orders. Returns how many orders. */
+  autoCancelUnconfirmed(): Promise<number>;
   /**
    * The caller has checked the slug (valid, unique). `sampleImages` (local dev only, D-054) starts
    * the kitchen with the five sample pictures; absent means none.

@@ -46,6 +46,7 @@
     "notPaid": "Belum dibayar",
     "archived": "Diarsipkan",
     "locked": "Terkunci",
+    "sendTag": "Kirim lewat WhatsApp",
     "newUpdate": "Ada kabar baru",
     "archivedLine": "Diarsipkan · {{date}}",
     "pickup": "Ambil sendiri",
@@ -75,7 +76,9 @@
     "whatsapp": "Kirim pesan ke {{cook}} lewat WhatsApp",
     "change": "Ubah pesanan",
     "cancel": "Batalkan pesanan",
-    "changeUntil": "Sampai {{when}}",
+    "unsentTitle": "Belum terkirim ke {{cook}}?",
+    "unsentBody": "Mereka baru bisa mengonfirmasi pesanan Anda setelah pesan WhatsApp Anda.",
+    "sendWhatsApp": "Kirim lewat WhatsApp",
     "closed": "Perubahan ditutup pada batas waktu.",
     "lockedBanner": "Penjual sudah mengunci pesanan ini. Kirim pesan lewat WhatsApp untuk mengubahnya.",
     "readyTitle": "Siap! Ambil di {{place}}",
@@ -86,6 +89,7 @@
     "delivery_arriving": "Segera tiba",
     "delivery_delivered": "Sudah diterima",
     "cancelled": "Pesanan ini dibatalkan.",
+    "autoCancelled": "Pesanan ini dibatalkan karena {{cook}} tidak menerima pesan WhatsApp Anda dalam 24 jam. Masih mau? Pesan lagi, atau kirim pesan ke {{cook}} lewat WhatsApp.",
     "updates": "Kabar dari penjual",
     "noUpdates": "Belum ada kabar.",
     "collect": "Pesanan sudah saya ambil",
@@ -113,6 +117,7 @@
     },
     "errors": {
       "week_closed": "Menu ini sudah ditutup, jadi pesanan tidak bisa diubah lagi.",
+      "changes_closed": "Perubahan sudah ditutup. Kirim pesan ke {{cook}} lewat WhatsApp.",
       "order_locked": "Penjual sudah mengunci pesanan ini. Chat penjual di WhatsApp untuk mengubahnya.",
       "ordering_closed": "Maaf, pemesanan sedang ditutup.",
       "cutoff_passed": "Maaf, batas waktu sudah lewat.",
@@ -145,6 +150,7 @@
     "cancelled": "Dibatalkan"
   },
   "inbox": {
+    "autoCancelled": "Dibatalkan: tidak dikonfirmasi dalam 24 jam.",
     "nudge": "Penjual menunggu nomor pesanan Anda lewat WhatsApp.",
     "nudgeReturning": "Pesanan Anda sudah masuk. Mengirimnya lewat WhatsApp bersifat opsional, tetapi membantu penjual mengonfirmasi lebih cepat.",
     "readyIn": "Siap dalam {{minutes}} menit",

@@ -17,6 +17,8 @@ import type {
   SellerOrder,
   StaffActor,
 } from '../../shared/domain';
+import { customerChangeDeadline } from '../../shared/dates';
+import { DEFAULT_ZONE } from '../../shared/zone';
 import { AUDIT_MAX, INBOX_MAX } from '../../shared/limits';
 import type { MenuResponse } from '../../shared/menuContract';
 import type {
@@ -210,14 +212,26 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     return { open: true };
   }
 
-  /** The error that stops a customer from placing or changing an order, if any. */
-  function closedError<T>(s: State): StoreResult<T> | null {
+  /**
+   * The error that stops a customer from placing or changing an order, if any. Plan 129: a change
+   * ignores the cut-off (`ignoreCutoff`); it has its own deadline, changesClosedError.
+   */
+  function closedError<T>(s: State, ignoreCutoff = false): StoreResult<T> | null {
     const state = ordering(s);
     if (state.reason === 'kitchen_closed')
       return fail('kitchen_closed', 'This kitchen is closed for now');
     if (state.reason === 'closed_by_seller') return fail('ordering_closed', 'Ordering is closed');
-    if (state.reason === 'cutoff_passed') return fail('cutoff_passed', 'Orders are closed');
+    if (state.reason === 'cutoff_passed' && !ignoreCutoff)
+      return fail('cutoff_passed', 'Orders are closed');
     return null;
+  }
+
+  /** Plan 129: a customer may not change or cancel after the evening before the cooking day. */
+  function changesClosedError<T>(s: State): StoreResult<T> | null {
+    const deadline = customerChangeDeadline(s.week.cookingDate, s.kitchen.timeZone ?? DEFAULT_ZONE);
+    return deps.now().getTime() >= Date.parse(deadline)
+      ? fail('changes_closed', 'Changes are closed for this order')
+      : null;
   }
 
   /** The customer view: the chef (D-012) and the manual flag are dropped here. */
@@ -687,6 +701,7 @@ export function createSellerContext(deps: Deps, seller: Seller) {
     readSets,
     ordering,
     closedError,
+    changesClosedError,
     view,
     publicMenu,
     snapshot,

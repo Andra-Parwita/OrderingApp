@@ -9,7 +9,9 @@ import {
 } from '../../../shared/address';
 import { formatCookingDate } from '../../../shared/dates';
 import { deliveryPlan } from '../../../shared/deliveryDays';
+import { isPlausibleFirstName } from '../../../shared/firstName';
 import type { Fulfilment } from '../../../shared/domain';
+import { whatsAppLinkFor } from './useWhatsAppReminders';
 import { savedAddress } from '../../api/device/address';
 import { savedFirstName } from '../../api/device/firstName';
 import { setKitchenBrand } from '../../theme/kitchenBrand';
@@ -43,6 +45,7 @@ import {
   selectMenu,
   selectMenuSlug,
   selectNotices,
+  selectOrder,
   selectPlace,
   selectUpdate,
 } from './selectors';
@@ -68,6 +71,7 @@ function otherErrorKey(
   offered: ReadonlyArray<Fulfilment>,
 ): string {
   if (code === 'order_locked') return 'basket.errors.order_locked';
+  if (code === 'changes_closed') return 'basket.errors.changes_closed';
   if (code === 'too_many_orders') return 'basket.errors.too_many_orders';
   if (code === 'fulfilment_unavailable') {
     // Say which one is missing when the menu on screen tells us.
@@ -136,7 +140,7 @@ function BasketContent({
   editToken,
   onUpdated,
 }: Props) {
-  const { t } = useTranslation(CUSTOMER_NS);
+  const { t, i18n } = useTranslation(CUSTOMER_NS);
   const lang = useLang();
   const dispatch = useDispatch();
   const menu = useSelector(selectMenu);
@@ -152,6 +156,8 @@ function BasketContent({
   const menuSlug = useSelector(selectMenuSlug);
   const editing = editToken !== undefined;
   const [submitted, setSubmitted] = useState(false);
+  // Plan 129: a tab reserved in the tap that places the order, for the WhatsApp message after it.
+  const whatsApp = useRef<{ pending: boolean; tab: Window | null }>({ pending: false, tab: null });
   // Plan 071: the address remembered on this phone (read once; the checkout may replace it).
   const [rememberedAddress] = useState(savedAddress);
 
@@ -213,9 +219,36 @@ function BasketContent({
   }, [dispatch, editing, menuSlug, wantedSlug, typedName]);
 
   const placedToken = place.status === 'placed' ? place.token : null;
+  const placedOrder = useSelector(selectOrder);
   useEffect(() => {
-    if (placedToken !== null) onPlaced(placedToken);
-  }, [placedToken, onPlaced]);
+    if (placedToken === null) return;
+    // Plan 129: the order is saved: send it on WhatsApp at once (the tab was opened by the tap).
+    const { pending, tab } = whatsApp.current;
+    whatsApp.current = { pending: false, tab: null };
+    if (pending && menu.status === 'ready' && placedOrder.status === 'ready') {
+      const order = placedOrder.order;
+      const url = whatsAppLinkFor(
+        order,
+        menu.data,
+        lang,
+        i18n.getFixedT(order.language, CUSTOMER_NS),
+      );
+      if (tab) {
+        tab.opener = null;
+        tab.location.href = url;
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    }
+    onPlaced(placedToken);
+  }, [placedToken, placedOrder, menu, lang, i18n, onPlaced]);
+  const placeFailed = place.status === 'failed';
+  useEffect(() => {
+    if (!placeFailed) return;
+    // Nothing is sent when the order did not go through: give the reserved tab back.
+    whatsApp.current.tab?.close();
+    whatsApp.current = { pending: false, tab: null };
+  }, [placeFailed]);
 
   const failure = editing ? update : place;
   const failedCode = failure.status === 'failed' ? failure.code : null;
@@ -273,7 +306,13 @@ function BasketContent({
     chosen ?? (editing ? editOrder?.pickupPlaceId : undefined) ?? points[0]?.id ?? undefined;
 
   const nameError =
-    submitted && !editing && firstName.trim() === '' ? t('basket.firstNameRequired') : undefined;
+    submitted && !editing
+      ? firstName.trim() === ''
+        ? t('basket.firstNameRequired')
+        : !isPlausibleFirstName(firstName)
+          ? t('basket.firstNameReal')
+          : undefined
+      : undefined;
 
   // Plan 126: the menu's delivery days (only when the seller set some); the default is pre-selected.
   const dayPlan =
@@ -303,7 +342,8 @@ function BasketContent({
       return;
     }
     setSubmitted(true);
-    if (firstName.trim() === '' || addressBlocked) return;
+    if (!isPlausibleFirstName(firstName) || addressBlocked) return;
+    whatsApp.current = { pending: true, tab: window.open('about:blank', '_blank') };
     dispatch(
       placeRequested({
         firstName,
@@ -410,15 +450,17 @@ function BasketContent({
   }
 
   const { ordering } = data;
-  const closed: ClosedReason | null = !ordering.open
-    ? ordering.reason === 'kitchen_closed' || ordering.reason === 'not_published'
-      ? 'closed_by_seller'
-      : (ordering.reason ?? 'closed_by_seller')
-    : failedCode === 'cutoff_passed'
-      ? 'cutoff_passed'
-      : failedCode === 'ordering_closed' || failedCode === 'kitchen_closed'
+  // Plan 129: changing an order after the cut-off is fine until the deadline (the server decides).
+  const closed: ClosedReason | null =
+    !ordering.open && !(editing && ordering.reason === 'cutoff_passed')
+      ? ordering.reason === 'kitchen_closed' || ordering.reason === 'not_published'
         ? 'closed_by_seller'
-        : null;
+        : (ordering.reason ?? 'closed_by_seller')
+      : failedCode === 'cutoff_passed'
+        ? 'cutoff_passed'
+        : failedCode === 'ordering_closed' || failedCode === 'kitchen_closed'
+          ? 'closed_by_seller'
+          : null;
   return (
     <BasketView
       data={data}

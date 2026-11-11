@@ -1,3 +1,4 @@
+import { AUTO_CANCEL_REASON, RESTORED_DETAIL } from '../../../shared/autoCancel';
 import { useCallback, useMemo } from 'react';
 import { orderPath } from '../../../shared/orderPath';
 import { currentSellerSlug } from '../../api/device/sellerContext';
@@ -21,6 +22,7 @@ import {
   seenRequested,
   statusChangeRequested,
   waReceivedRequested,
+  restoreRequested,
   type FailedChange,
 } from './sellerOrdersSlice';
 
@@ -35,6 +37,9 @@ export function auditText(entry: AuditEntry, t: TFn, lang: Language): string {
         ? t('audit.editedDiff', { diff: formatAuditDiff(entry.diff, lang) })
         : t('audit.edited');
     case 'status':
+      // Plan 130: the app's own cancel (with its reason) and a restore have their own words.
+      if (entry.detail === AUTO_CANCEL_REASON) return t('audit.autoCancelled');
+      if (entry.detail === RESTORED_DETAIL) return t('audit.restored');
       return t('audit.status', { status: t(`status.${entry.detail ?? ''}`) });
     case 'paid':
       return entry.detail === 'unpaid' ? t('audit.unpaid') : t('audit.paid');
@@ -81,6 +86,10 @@ export function useOrderActions(order: Order) {
   );
   const onWaReceived = useCallback(
     () => dispatch(waReceivedRequested({ code: order.code, received: true })),
+    [dispatch, order.code],
+  );
+  const onRestore = useCallback(
+    () => dispatch(restoreRequested({ code: order.code })),
     [dispatch, order.code],
   );
   const onNudge = useCallback(
@@ -134,6 +143,9 @@ export function useOrderActions(order: Order) {
       case 'wa':
         dispatch(waReceivedRequested({ code: failed.code, received: failed.received }));
         break;
+      case 'restore':
+        dispatch(restoreRequested({ code: failed.code }));
+        break;
       case 'nudge':
         dispatch(nudgeRequested({ code: failed.code }));
         break;
@@ -161,6 +173,7 @@ export function useOrderActions(order: Order) {
     lastEdit,
     setPaid,
     onWaReceived,
+    onRestore,
     onNudge,
     onSeen,
     onLock,
