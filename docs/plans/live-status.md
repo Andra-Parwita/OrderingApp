@@ -456,3 +456,4 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 1 · reminders (first page, Order placed, order page, My orders), hide change-or-cancel line, EN/ID | general-purpose · sonnet | 21:21 | 25 min | | | | | ⏳ |
 | 1b · safety: AUTO_CANCEL_SINCE, restore sets WA received; Can change row | general-purpose · sonnet | 22:38 | 10 min | 22:43 | | | 6 files | ✅ autoCancel mocks 6, unit 5, e2e 2 |
 | 2 · Android emulator Pixel_9: customer reminders, name check, confirm clears the card | general-purpose · haiku | 22:43 | 25 min | 22:56 | | | none (check only; scratch copy) | ✅ all steps; Haiku worked (first try on Haiku) |
+| deploy · backup, build, deploy v1.0.46.2 (4× Cloudflare 10021, then OK), health | owner + coordinator + fable | 23:15 | 20 min | 23:34 | | | — | ✅ Worker 20bfca7d |
