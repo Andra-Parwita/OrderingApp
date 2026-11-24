@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notice after Publish</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; } .lead { color: var(--mute); margin: 0 0 20px; max-width: 85ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 22px; align-items: start; }
+  figure { margin: 0; } figcaption { font-size: .86rem; color: var(--mute); margin-top: 8px; max-width: 60ch; } figcaption > b:first-child { color: var(--ink); display: block; }
+  .dev { --bg: #f6f2e8; --surf: #fbf8f1; --ink2: #1f2a22; --mute2: #5d6358; --line: #e4ded0; --green: #2f6b4f;
+    background: var(--bg); color: var(--ink2); font-size: 14px; border: 6px solid #111; overflow: hidden; position: relative; }
+  .phone { width: 100%; max-width: 360px; height: 620px; border-radius: 30px; }
+  .tablet { width: 100%; max-width: 760px; aspect-ratio: 1280 / 800; border-radius: 18px; }
+  .status { height: 22px; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 12px; color: #333; }
+  .head { padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 700; display: flex; gap: 8px; align-items: center; }
+  .live { color: var(--green); font-size: 12px; font-weight: 700; }
+  .card { margin: 12px 14px; background: var(--surf); border: 1px solid var(--line); border-radius: 12px; padding: 12px; color: var(--mute2); }
+  .card b { color: var(--ink2); }
+  .shade { position: absolute; inset: 0; background: rgba(20,22,18,.45); }
+  .ask { position: absolute; background: var(--surf); border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .phone .ask { left: 0; right: 0; bottom: 0; border-radius: 18px 18px 0 0; }
+  .tablet .ask { left: 50%; top: 50%; transform: translate(-50%, -50%); width: 380px; }
+  .ask p { margin: 0 0 16px; font-weight: 700; font-size: 16px; line-height: 1.35; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .b { text-align: center; border-radius: 10px; padding: 11px; font-weight: 700; border: 1px solid var(--line); background: var(--bg); }
+  .b.primary { background: var(--green); color: #fff; border-color: var(--green); }
+  .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 150px; background: #efe9dc; border-right: 1px solid var(--line); padding: 14px 10px; font-size: 12px; color: var(--mute2); line-height: 2; }
+  .main { margin-left: 171px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>133 · Ask to send the new-menu notice right after Publish</h1>
+  <p class="lead">Publishing never notified customers by itself: DellaVee's Sat 21 Nov menu was published but no notice went out. Now, right after Publish, one simple question. No names, no count. AUD, Adelaide.</p>
+  <div class="grid">
+    <figure><div class="dev phone">
+      <div class="status"><span>10:10 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="head">Orders <span class="live">● Live</span></div>
+      <div class="card"><b>Menu · Sat 21 Nov</b><br>Published just now</div>
+      <div class="shade"></div>
+      <div class="ask"><p>Send a notification to customers who already have the app?</p><div class="row2"><span class="b">Not now</span><span class="b primary">Send</span></div></div>
+    </div><figcaption><b>1 · Phone, right after Publish</b>From the menu card's Publish. <b>Send</b> sends the usual new-menu notice (same as 🔔 Notify customers → Send). <b>Not now</b> closes; the bell is still there for later.</figcaption></figure>
+
+    <figure style="grid-column: 1 / -1"><div class="dev tablet">
+      <div class="rail">DellaVee<br>Home<br>Menu<br>Orders<br>Kitchen<br>Settings</div>
+      <div class="main"><div class="head">Menu · Sat 21 Nov <span class="live">● Live</span></div>
+      <div class="card"><b>Published</b><br>Customers can order now.</div></div>
+      <div class="shade"></div>
+      <div class="ask"><p>Send a notification to customers who already have the app?</p><div class="row2"><span class="b">Not now</span><span class="b primary">Send</span></div></div>
+    </div><figcaption><b>2 · Tablet, right after the Publish step</b>The same question as a small centred box.</figcaption></figure>
+
+    <figure><div class="dev phone" style="height:auto; padding-bottom:12px">
+      <div class="status"><span>10:10 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="ask" style="position:static; box-shadow:none; border-radius:0"><p>Kirim notifikasi ke pelanggan yang sudah punya aplikasinya?</p><div class="row2"><span class="b">Nanti saja</span><span class="b primary">Kirim</span></div></div>
+    </div><figcaption><b>3 · Indonesian</b>The same question in Indonesian.</figcaption></figure>
+  </div>
+  <ul style="color:var(--mute); max-width:85ch">
+    <li>Always asked after Publish; no check whether any customer has the app (owner, 24 Nov).</li>
+  </ul>
+</div>
+</body>
+</html>
