@@ -1,6 +1,6 @@
 # 134 · Make and change menus from the seller phone
 
-**Target:** 1.0.48, together with plan 133 (owner "B", 24 Nov). **Status:** owner "A" (24 Nov); mock-up `uxDesign/seller/mockups/134-menu-from-phone.html`, approved (owner "B", 24 Nov: OK, ship with 133 as 1.0.48); built B1 (24 Nov) + B2 (25 Nov), layout fixes from the captures; Android emulator check before deploy.
+**Target:** 1.0.48, together with plan 133 (owner "B", 24 Nov). **Status:** ✅ live in 1.0.48 (25 Nov, Worker `e99199ee`). owner "A" (24 Nov); mock-up `uxDesign/seller/mockups/134-menu-from-phone.html`, approved (owner "B", 24 Nov: OK, ship with 133 as 1.0.48); built B1 (24 Nov) + B2 (25 Nov), layout fixes from the captures; Android emulator check before deploy.
 
 ## Why (owner, 24 Nov)
 "Rina actually wants to be able to add new items and create a menu from the phone (her Android), since her tablet is sometimes used by her daughter, and she can add or create a menu using her phone while she is on the lunch break of her real job."

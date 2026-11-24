@@ -485,3 +485,4 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | e2e fix · p127 text, seller-menu selector, order-flow iPhone, p126 dates check, p132/p130 re-run | general-purpose · sonnet | 06:48 | 30 min | 07:09 | 21 min | −9 min | 3 specs | ✅ p127 11/11 + 13/13, seller-menu, order-flow iPhone, p132 9/9, p130 ×2; p126 ×2 red = hard-coded 13/14 Nov dates (pre-existing) |
 | Handover + docs, deploy-ready summary | coordinator | 07:05 | 10 min | 07:10 | 5 min | | HANDOVER, live-status | ✅ |
 | 1.0.48 version bump + draft release notes (133, 134) | coordinator | 00:55 | 5 min | 00:56 | 1 min | 0 | release.ts, releaseNotes.ts | ✅ about tests 14 |
+| deploy · backup, build, deploy v1.0.48, health, tag | coordinator + owner | 07:20 | 15 min | 07:26 | 6 min | | — | ✅ Worker e99199ee, build 1.0.146 · 1b31502, tag v1.0.48 |
