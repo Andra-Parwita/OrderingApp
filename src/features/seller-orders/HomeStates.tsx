@@ -185,7 +185,14 @@ function Totals({
  * No menu is running and none is being made: Orders has nothing to show. A tablet is pointed to
  * Home, where menus are started (plan 039); a phone has no Home, so it keeps a way to Menu.
  */
-export function NoMenuRunning({ phone }: Readonly<{ phone: boolean }>) {
+export function NoMenuRunning({
+  phone,
+  showMake = true,
+}: Readonly<{
+  phone: boolean;
+  /** Plan 134: false on a phone whose Menu card already has "New menu" (one button for it, not two). */
+  showMake?: boolean;
+}>) {
   const { t } = useTranslation(SELLER_NS);
   const navigate = useNavigate();
   const readOnly = useReadOnlyOrders();
@@ -193,7 +200,7 @@ export function NoMenuRunning({ phone }: Readonly<{ phone: boolean }>) {
     <Section>
       <Muted>{t('home.noMenu')}</Muted>
       <Actions>
-        {readOnly ? null : (
+        {readOnly || !showMake ? null : (
           <Button
             variant="primary"
             onClick={() => void navigate(phone ? '/seller/menu' : '/seller')}
@@ -215,7 +222,15 @@ export function FinishedHome({
   showAll,
   onToggleAll,
   phone,
-}: Readonly<{ view: MenuView; showAll: boolean; onToggleAll: () => void; phone: boolean }>) {
+  showMake = true,
+}: Readonly<{
+  view: MenuView;
+  showAll: boolean;
+  onToggleAll: () => void;
+  phone: boolean;
+  /** Plan 134: false on a phone whose Menu card already has "New menu" (one button for it, not two). */
+  showMake?: boolean;
+}>) {
   const { t } = useTranslation(SELLER_NS);
   const lang = useLang();
   const navigate = useNavigate();
@@ -250,7 +265,7 @@ export function FinishedHome({
             <Muted>{t('home.closedNote')}</Muted>
           </div>
           <HeadActions>
-            {readOnly ? null : (
+            {readOnly || !showMake ? null : (
               <Button
                 variant="quiet"
                 onClick={() => void navigate(phone ? '/seller/menu' : '/seller')}

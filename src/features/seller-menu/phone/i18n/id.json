@@ -16,7 +16,12 @@
     "publish": "Terbitkan menu",
     "share": "Bagikan menu",
     "notice": "🔔 Kabari",
-    "finishOnTablet": "Selesaikan di tablet: {{missing}}",
+    "noMenu": "Belum ada menu yang dibuka",
+    "noMenuHint": "Buat menu berikutnya di sini atau di tablet.",
+    "newMenu": "Menu baru",
+    "continue": "Lanjutkan",
+    "stillNeeded": "Masih perlu: {{missing}}",
+    "startFailed": "Menu belum bisa dibuat. Coba lagi.",
     "missing": {
       "noDishes": "belum ada hidangan",
       "noPlace": "belum ada tempat ambil atau antar",
@@ -71,6 +76,7 @@
     "both": "Keduanya"
   },
   "menu": {
+    "edit": "Ubah menu",
     "back": "Pesanan",
     "backLabel": "Kembali ke Pesanan",
     "title": "Menu · {{date}}",
@@ -83,7 +89,7 @@
     "deliveryDays": "Hari antar: {{days}}"
   },
   "days": {
-    "off": "Antar mati untuk menu ini. Nyalakan di tablet.",
+    "off": "Antar mati untuk menu ini. Nyalakan di Ubah menu, bagian Detail.",
     "keep": "Pesanan yang sudah masuk tetap di harinya.",
     "discard": "Batalkan",
     "save": "Simpan hari antar",

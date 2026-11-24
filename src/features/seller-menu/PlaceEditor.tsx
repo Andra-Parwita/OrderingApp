@@ -12,6 +12,16 @@ const Two = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
+
+  /* A phone: the name and each direction on a line of their own. */
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+`;
+const Times = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 const Head = styled.div`
   display: flex;
@@ -42,23 +52,14 @@ export type PlaceDraft = {
   id_: string;
 };
 
-export function PlaceEditor({
+/** The place's fields (name, times, directions); the tablet shows them in a box, the phone in a layer. */
+export function PlaceFields({
   draft,
   onChange,
-  onCancel,
-  onSave,
-  onDelete,
-}: Readonly<{
-  draft: PlaceDraft;
-  onChange: (next: PlaceDraft) => void;
-  onCancel: () => void;
-  onSave: () => void;
-  onDelete?: () => void;
-}>) {
+}: Readonly<{ draft: PlaceDraft; onChange: (next: PlaceDraft) => void }>) {
   const { t } = useTranslation(MENU_NS);
-  const valid = draft.place.trim() !== '' && TIME.test(draft.start) && TIME.test(draft.end);
   return (
-    <Inline>
+    <>
       <Two>
         <TextField
           label={t('details.placeName')}
@@ -66,7 +67,7 @@ export function PlaceEditor({
           maxLength={80}
           onChange={(event) => onChange({ ...draft, place: event.target.value })}
         />
-        <Two>
+        <Times>
           <TextField
             label={t('details.from')}
             type="time"
@@ -79,7 +80,7 @@ export function PlaceEditor({
             value={draft.end}
             onChange={(event) => onChange({ ...draft, end: event.target.value })}
           />
-        </Two>
+        </Times>
       </Two>
       <Two>
         <TextField
@@ -95,6 +96,30 @@ export function PlaceEditor({
           onChange={(event) => onChange({ ...draft, id_: event.target.value })}
         />
       </Two>
+    </>
+  );
+}
+
+export const placeValid = (draft: PlaceDraft): boolean =>
+  draft.place.trim() !== '' && TIME.test(draft.start) && TIME.test(draft.end);
+
+export function PlaceEditor({
+  draft,
+  onChange,
+  onCancel,
+  onSave,
+  onDelete,
+}: Readonly<{
+  draft: PlaceDraft;
+  onChange: (next: PlaceDraft) => void;
+  onCancel: () => void;
+  onSave: () => void;
+  onDelete?: () => void;
+}>) {
+  const { t } = useTranslation(MENU_NS);
+  return (
+    <Inline>
+      <PlaceFields draft={draft} onChange={onChange} />
       <Head>
         {onDelete ? (
           <Button variant="destructive" onClick={onDelete}>
@@ -105,7 +130,7 @@ export function PlaceEditor({
         )}
         <Actions>
           <Button onClick={onCancel}>{t('cancel')}</Button>
-          <Button variant="primary" disabled={!valid} onClick={onSave}>
+          <Button variant="primary" disabled={!placeValid(draft)} onClick={onSave}>
             {t('details.savePlace')}
           </Button>
         </Actions>

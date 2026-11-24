@@ -68,8 +68,23 @@ const Grid = styled.div<{ $head?: boolean; $changed?: boolean }>`
   }
   /* A phone: the name on a line of its own, then price and limit, then chef and sold out. */
   @media (max-width: 40rem) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Two boxes side by side while they fit; one per line at a larger text size. */
+    grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+    align-items: end;
     padding: ${({ theme }) => theme.spacing.sm} 0;
+
+    /* The header row is gone, so each field names itself above its box. */
+    [data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 0.125rem;
+      color: ${({ theme }) => theme.c.muted};
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    [role='cell']:empty {
+      display: none;
+    }
 
     .name {
       grid-column: 1 / -1;
@@ -165,7 +180,7 @@ function PriceRow({
           {mark ? <ChangeMark kind={mark} /> : null}
         </ChoiceName>
         <span role="cell" />
-        <span role="cell">
+        <span role="cell" data-label={t('live.limit')}>
           <Input
             $invalid={!limitOk}
             aria-invalid={!limitOk}
@@ -189,7 +204,7 @@ function PriceRow({
         {mark ? <ChangeMark kind={mark} /> : null}
         {size ? <span className="sub">{size}</span> : null}
       </span>
-      <span role="cell">
+      <span role="cell" data-label={t('live.price')}>
         <Input
           $invalid={priceCents === null}
           aria-invalid={priceCents === null}
@@ -200,7 +215,7 @@ function PriceRow({
           onBlur={commitPrice}
         />
       </span>
-      <span role="cell">
+      <span role="cell" data-label={t('live.limit')}>
         <Input
           $invalid={!limitOk}
           aria-invalid={!limitOk}
@@ -212,7 +227,7 @@ function PriceRow({
           onBlur={commitLimit}
         />
       </span>
-      <span role="cell">
+      <span role="cell" data-label={t('prices.chef')}>
         <Select
           $invalid={false}
           aria-label={t('prices.chefFor', { name })}
@@ -240,7 +255,7 @@ function PriceRow({
         </Select>
         {chefFailed ? <ErrorText role="alert">{t('genericError')}</ErrorText> : null}
       </span>
-      <span role="cell">
+      <span role="cell" data-label={t('live.soldOut')}>
         <SwitchButton
           type="button"
           role="switch"

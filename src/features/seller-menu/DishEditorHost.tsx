@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
-import { useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { DishEditor, type DishTarget } from './DishEditor';
 import type { MenuData } from './menuSlice';
+import { usePhone } from './phone/usePhone';
+import { hasEditor, withEditor } from './phone/wizardNav';
 import type { MenuSlots } from './slots';
 
 // The dish editor is part of the URL (?dish=new | <dishId> | item:<menuItemId>), so a reload keeps
@@ -27,6 +29,11 @@ export function useDishEditor(): {
   value: string | null;
 } {
   const [params, setParams] = useSearchParams();
+  // Plan 134 (phone): the editor is one history entry that keeps the wizard's state (the screen it
+  // is over), and Cancel or Save pops it, so Android Back and the buttons agree.
+  const phone = usePhone();
+  const navigate = useNavigate();
+  const state: unknown = useLocation().state;
   const open = useCallback(
     (target: Parameters<typeof dishParam>[0]) =>
       setParams(
@@ -35,22 +42,24 @@ export function useDishEditor(): {
           next.set(PARAM, dishParam(target));
           return next;
         },
-        { replace: false },
+        phone ? { replace: false, state: withEditor(state) } : { replace: false },
       ),
-    [setParams],
+    [setParams, phone, state],
   );
-  const close = useCallback(
-    () =>
-      setParams(
-        (previous) => {
-          const next = new URLSearchParams(previous);
-          next.delete(PARAM);
-          return next;
-        },
-        { replace: true },
-      ),
-    [setParams],
-  );
+  const close = useCallback(() => {
+    if (phone && hasEditor(state)) {
+      void navigate(-1);
+      return;
+    }
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        next.delete(PARAM);
+        return next;
+      },
+      phone ? { replace: true, state } : { replace: true },
+    );
+  }, [setParams, phone, state, navigate]);
   return { open, close, value: params.get(PARAM) };
 }
 

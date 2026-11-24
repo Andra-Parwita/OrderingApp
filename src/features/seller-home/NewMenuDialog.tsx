@@ -17,7 +17,8 @@ import type { NewMenuInput, StartSource } from './types';
 
 const Row = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* two columns while they fit; one under larger text on a phone (plan 134) */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
   gap: ${({ theme }) => theme.spacing.md};
 `;
 const Group = styled.fieldset`
@@ -182,6 +183,7 @@ export function NewMenuDialog({
     <Dialog
       title={t('newMenu.title')}
       width="32.5rem"
+      fullOnPhone
       onClose={onClose}
       footer={
         <>

@@ -469,3 +469,19 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | emulator · Tablet_11 + Pixel_9 (both at once: Android not responding, parked) | general-purpose · haiku | 23:31 | 30 min | 23:39 | 8 min | | none | ❌ parked |
 | emulator retry · one at a time: Tablet_11 + Pixel_8a | general-purpose · sonnet | 23:40 | 30 min | 00:03 | 23 min | −7 min | none (scratch/emu-147) | ✅ all steps |
 | tidy · button height, "1 item", "Pack · Packed", portion text | general-purpose · sonnet | 23:59 | 10 min | 00:07 | 8 min | −2 min | 10 files | ✅ p132 9/9, unit 312 |
+
+## Plans 133 + 134 (release 1.0.48: notice after Publish; menus from the phone)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 133 · notice question after Publish + p133 spec | general-purpose · sonnet | 22:50 | 20 min | 23:10 | 20 min | 0 | 8 files + NoticeAsk + spec | ✅ unit 160, e2e 5/5 |
+| 134 B1 · phone entry points, wizard shell, Dishes step, new dish | general-purpose · sonnet | 23:16 | 30 min | 23:50 | 34 min | +4 min | 6 new + ~15 edited | ✅ unit 548, e2e 5/5 |
+| 134 B2 · Details, Check, Publish, Edit menu on the phone + B1 fixes | general-purpose · sonnet | 23:53 | 40 min | 00:52 | 59 min | +19 min | 6 new + ~25 edited | ✅ unit 791, e2e 15/15 (--workers=1) |
+| 134 fix · 6 layout issues from B2 captures (edit footer 150%, notify sheet Close, Check links, pill padding, place row gap, menu header) | general-purpose · sonnet | 00:55 | 25 min | 01:24 | 29 min | +4 min | 5 src + 2 specs | ✅ unit 455, e2e 15/15 (mobile, 1 worker); #4 no change needed, #6 pre-existing |
+| Android emulator · Pixel_8a phone full flow round 1 (DB copy scratch/emu-148) | coordinator | 01:22 | 10 min | 01:28 | 6 min | | — | ⚠ New menu → dish → Details → camera → Check → Publish ✅; found: Back on Save-changes ask leaves app, Back on notify sheet closes 2 layers, Notice missing until reload, price error off-screen, 3 tidy |
+| 134 fix 2 · emulator findings (Back history, Notice refresh, price error scroll, tidy) | general-purpose · sonnet | 01:30 | 35 min | 01:50 | 20 min | −15 min | 6 src + 3 tests | ✅ unit 754, e2e 15/15 mobile + 15/15 desktop |
+| Android emulator round 2 · Pixel_8a (Back on Save ask ×3, Save, card publish + wizard publish → question → Back, Notice without reload, Indonesian) | coordinator | 01:50 | 15 min | 01:55 | 5 min | | — | ✅ all |
+| Android emulator · Tablet_11 quick check + gate (typecheck, lint, format) | coordinator | 01:56 | 30 min | 02:03 | 7 min | −23 min | — | ✅ tablet steps unchanged, New dish Chef row, notice box Not now / Send, send recorded; typecheck, lint 0, format ✅ |
+| Gate · full vitest + directed e2e + docs | coordinator | 02:03 | 60 min | — | — | — | — | vitest 3,241 ✅, docs ✅; e2e grouped per project: p133+p134 30/30, auth 2, helper 1 ✅; 10 failures triaged (spec text/selector after 1.0.48, p126 dates, flakes, order-flow iPhone) |
+| e2e fix · p127 text, seller-menu selector, order-flow iPhone, p126 dates check, p132/p130 re-run | general-purpose · sonnet | 06:48 | 30 min | 07:09 | 21 min | −9 min | 3 specs | ✅ p127 11/11 + 13/13, seller-menu, order-flow iPhone, p132 9/9, p130 ×2; p126 ×2 red = hard-coded 13/14 Nov dates (pre-existing) |
+| Handover + docs, deploy-ready summary | coordinator | 07:05 | 10 min | 07:10 | 5 min | | HANDOVER, live-status | ✅ |
+| 1.0.48 version bump + draft release notes (133, 134) | coordinator | 00:55 | 5 min | 00:56 | 1 min | 0 | release.ts, releaseNotes.ts | ✅ about tests 14 |

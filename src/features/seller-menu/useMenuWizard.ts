@@ -2,6 +2,9 @@ import { useCallback, useRef, useState } from 'react';
 import { useLocation, useNavigate, type Location } from 'react-router';
 import { useMenuData, useOpWatch, useRunOp } from './menuShared';
 import type { MenuOp } from './menuSlice';
+import { firstStepState, wizardDepth } from './phone/wizardNav';
+import { releaseGuard } from './phone/leaveGuard';
+import { usePhone } from './phone/usePhone';
 import { STEPS, stepPath, type Step, type Tab } from './steps';
 
 // The menu wizard is a layer over the screen it was opened from (plan 037). It is opened by
@@ -58,9 +61,13 @@ export function useMenuWizard(): {
   const pending = useRef<Array<MenuOp>>([]);
   const starting = useRef(false);
 
+  const phone = usePhone();
   const go = useCallback(
-    (path: string) => void navigate(path, { state: { background: location } }),
-    [navigate, location],
+    (path: string) =>
+      void navigate(path, {
+        state: phone ? firstStepState(location) : { background: location },
+      }),
+    [navigate, location, phone],
   );
   const open = useCallback(
     (step: Step | number = 'dishes') => {
@@ -135,17 +142,26 @@ export function wizardBackground(state: unknown): Location | undefined {
     : undefined;
 }
 
-/** Closes the wizard: back to the screen it was opened over; opened directly, to the Menu screen. */
+/**
+ * Closes the wizard: back to the screen it was opened over; opened directly, to the Menu screen (on a
+ * phone, which has no Menu screen, to Orders). On a phone the wizard's history entries are popped, so
+ * Android Back does not step back into it.
+ */
 export function useCloseWizardNow(): () => void {
   const navigate = useNavigate();
   const state: unknown = useLocation().state;
   const background = wizardBackground(state);
+  const phone = usePhone();
+  const depth = wizardDepth(state);
   return useCallback(() => {
-    if (background) {
+    if (phone && background && depth > 0) {
+      // A leave guard (Back asks first) holds one more entry; it goes with the rest.
+      void navigate(-(depth + releaseGuard()));
+    } else if (background) {
       const behind: unknown = background.state;
       void navigate(background, { replace: true, state: behind });
-    } else void navigate('/seller/menu', { replace: true });
-  }, [navigate, background]);
+    } else void navigate(phone ? '/seller/orders' : '/seller/menu', { replace: true });
+  }, [navigate, background, phone, depth]);
 }
 
 // Plan 103 fix 8: the open session asks "Save N changes?" before the layer closes, also when the

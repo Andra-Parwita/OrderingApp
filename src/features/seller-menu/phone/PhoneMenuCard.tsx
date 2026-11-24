@@ -5,9 +5,11 @@ import {
   useEffect,
   useMemo,
   useState,
+  type ComponentProps,
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useInRouterContext, useLocation, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
 import { formatCutoff, formatDay } from '../../../../shared/dates';
 import type { Language } from '../../../../shared/domain';
@@ -15,15 +17,20 @@ import type { MenuView } from '../../../../shared/menusContract';
 import { currentSellerSlug } from '../../../api/device/sellerContext';
 import { publishMenu } from '../../../api/menus';
 import { Button, Icon } from '../../../ui';
+import { NoticeAsk } from '../NoticeAsk';
 import { NotifySheet } from '../NotifySheet';
 import { useMenuNotice } from '../NotifyBell';
+import type { MenuSlots } from '../slots';
+import { stepPath } from '../steps';
 import { ShareButtons, StatusPill } from './CardParts';
 import { cardStateOf, showsButtons, type CardState } from './cardState';
 import { PHONE_MENU_NS } from './i18n/register';
 import { MenuLayer } from './MenuLayer';
+import { PhoneNewMenu } from './PhoneNewMenu';
 import { ShareLayer } from './ShareLayer';
 import { LiveSheet, PublishSheet } from './Sheets';
 import { useLayerStack, type Layer } from './useLayerStack';
+import { firstStepState, onWizardClosed } from './wizardNav';
 
 // Plan 124: the Menu card in the phone's Orders list (owner only; the app gives it only to the owner).
 // It shows the menu's status and does the four things the kitchen tablet cannot do for a seller without
@@ -87,6 +94,10 @@ type Shared = Readonly<{
   buttons: boolean;
   onNotice: (() => void) | undefined;
   show: (what: Layer) => void;
+  /** Plan 134: "+ New menu" is offered (the app gave the New menu dialog). */
+  canStart: boolean;
+  /** Plan 134: starting a menu did not get through. */
+  startFailed: boolean;
 }>;
 const PhoneMenuContext = createContext<Shared | null>(null);
 
@@ -100,6 +111,7 @@ export function PhoneMenuProvider({
   reload,
   now,
   canEditDays = true,
+  newMenu,
   children,
 }: Readonly<{
   view: MenuView | null;
@@ -109,17 +121,26 @@ export function PhoneMenuProvider({
   now?: Date;
   /** Plan 127: the owner may change the delivery days from the menu view (the app mounts this only for the owner). */
   canEditDays?: boolean;
+  /** Plan 134: the New menu dialog (a slot of the app); without it the card offers no "+ New menu". */
+  newMenu?: MenuSlots['newMenu'];
   children: ReactNode;
 }>) {
   const { i18n } = useTranslation(PHONE_MENU_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const notice = useMenuNotice();
-  const layers = useLayerStack();
+  const layers = useLayerStack({ belowWizard: true });
   const { stack, back } = layers;
   const has = (layer: Layer) => stack.includes(layer);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<'generic' | 'conflict' | null>(null);
+  // Plan 133: the send was tried from the question just now (so an old failure is not shown there).
+  const [askTried, setAskTried] = useState(false);
+  // Plan 134: the New menu pieces load the menu bundle, so they mount on the first tap of "+ New menu".
+  const [newMenuUsed, setNewMenuUsed] = useState(false);
+  const [startFailed, setStartFailed] = useState(false);
   const clock = useMemo(() => now ?? new Date(), [now]);
+  // A publish or a Save in the wizard shows on the card (and in the menu layer) when it closes.
+  useEffect(() => onWizardClosed(reload), [reload]);
   const state = cardStateOf(view, clock);
 
   const close = back;
@@ -135,7 +156,10 @@ export function PhoneMenuProvider({
     reload();
     void notice.reload();
     layers.replaceTop('live');
-  }, [reload, notice, layers]);
+    // Plan 133: always ask, right after a publish; closing it leaves the "Menu is live" sheet.
+    setAskTried(false);
+    layers.push('ask');
+  }, [reload, notice, layers, setAskTried]);
 
   const buttons = showsButtons(state);
   const canNotice = state.kind === 'live' && notice.status?.canSend === true;
@@ -155,17 +179,36 @@ export function PhoneMenuProvider({
     if (!noticeOpen && noticeInStack) back();
   }, [noticeOpen, noticeInStack, back]);
   const onNotice = canNotice ? openNotice : undefined;
+  const { push } = layers;
+  const show = useCallback(
+    (what: Layer) => {
+      if (what === 'newMenu') setNewMenuUsed(true);
+      push(what);
+    },
+    [push],
+  );
+  const canStart = newMenu !== undefined;
+  // Plan 134: "Edit menu" opens the edit sheet over Orders (it needs the router; the card tests have none).
+  const Layer = useInRouterContext() && canStart ? MenuLayerWithEdit : MenuLayer;
   const shared = useMemo(
-    () => (view ? { view, state, lang, buttons, onNotice, show: layers.push } : null),
-    [view, state, lang, buttons, onNotice, layers.push],
+    () => (view ? { view, state, lang, buttons, onNotice, show, canStart, startFailed } : null),
+    [view, state, lang, buttons, onNotice, show, canStart, startFailed],
   );
   return (
     <PhoneMenuContext.Provider value={shared}>
       {children}
+      {newMenu && newMenuUsed ? (
+        <PhoneNewMenu
+          open={has('newMenu')}
+          render={newMenu}
+          onClose={close}
+          onFailed={setStartFailed}
+        />
+      ) : null}
       {view && state.kind !== 'none' ? (
         <>
           {has('menu') ? (
-            <MenuLayer
+            <Layer
               view={view}
               state={state}
               lang={lang}
@@ -187,11 +230,23 @@ export function PhoneMenuProvider({
               onClose={close}
             />
           ) : null}
-          {has('live') ? (
+          {has('live') && !has('ask') ? (
             <LiveSheet
               phones={notice.status?.canSend ? notice.status.phones : null}
               onShare={() => layers.replaceTop('share')}
               onNotice={openNotice}
+              onClose={close}
+            />
+          ) : null}
+          {has('ask') ? (
+            <NoticeAsk
+              layout="sheet"
+              saving={notice.saving}
+              failed={askTried && notice.failed}
+              onSend={() => {
+                setAskTried(true);
+                void notice.send(notice.needsAgain).then((sent) => sent && close());
+              }}
               onClose={close}
             />
           ) : null}
@@ -211,12 +266,49 @@ export function PhoneMenuProvider({
   );
 }
 
+/** The read-only menu with its Edit menu button (plan 134): the edit sheet opens over Orders. */
+function MenuLayerWithEdit(props: ComponentProps<typeof MenuLayer>) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (
+    <MenuLayer
+      {...props}
+      onEdit={() => void navigate(stepPath('edit', 'dishes'), { state: firstStepState(location) })}
+    />
+  );
+}
+
 /** The card: it goes inside the Orders list's scroller, so it scrolls away with the list. */
 export function PhoneMenuCard() {
   const { t } = useTranslation(PHONE_MENU_NS);
   const shared = useContext(PhoneMenuContext);
-  if (!shared || shared.state.kind === 'none') return null;
-  const { view, state, lang, buttons, onNotice, show } = shared;
+  if (!shared) return null;
+  const { view, state, lang, buttons, onNotice, show, canStart, startFailed } = shared;
+  // Plan 134: no menu open (or the last one finished): the card starts the next one.
+  const noMenu = state.kind === 'none' || (state.kind === 'closed' && state.finished);
+  const newMenu =
+    canStart && noMenu ? (
+      <>
+        <Button
+          variant={state.kind === 'none' ? 'primary' : 'secondary'}
+          fullWidth
+          onClick={() => show('newMenu')}
+        >
+          <Icon name="plus" />
+          {t('card.newMenu')}
+        </Button>
+        {startFailed ? <Missing role="alert">{t('card.startFailed')}</Missing> : null}
+      </>
+    ) : null;
+  if (state.kind === 'none') {
+    return newMenu ? (
+      <Card aria-label={t('card.noMenu')}>
+        <Title>{t('card.noMenu')}</Title>
+        <Sub>{t('card.noMenuHint')}</Sub>
+        {newMenu}
+      </Card>
+    ) : null;
+  }
   const { menu } = view;
   const cutoff = formatCutoff(menu.cutoffAt, lang);
   const dishes = view.dishes.filter((dish) => dish.groupId === undefined).length;
@@ -237,18 +329,38 @@ export function PhoneMenuCard() {
         ) : null}
         {state.kind === 'notReady' ? (
           <Missing>
-            {t('card.finishOnTablet', {
+            {t('card.stillNeeded', {
               missing: state.missing.map((id) => t(`card.missing.${id}`)).join(' · '),
             })}
           </Missing>
         ) : null}
       </Tap>
+      {state.kind === 'notReady' && canStart ? (
+        <ContinueButton step={state.missing.includes('noDishes') ? 'dishes' : 'details'} />
+      ) : null}
       {state.kind === 'ready' ? (
         <Button variant="primary" fullWidth onClick={() => show('publish')}>
           {t('card.publish')}
         </Button>
       ) : null}
+      {newMenu}
       {buttons ? <ShareButtons onShare={() => show('share')} onNotice={onNotice} /> : null}
     </Card>
+  );
+}
+
+/** Plan 134: Continue opens the wizard at the first step that needs work. */
+function ContinueButton({ step }: Readonly<{ step: 'dishes' | 'details' }>) {
+  const { t } = useTranslation(PHONE_MENU_NS);
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (
+    <Button
+      variant="primary"
+      fullWidth
+      onClick={() => void navigate(stepPath('make', step), { state: firstStepState(location) })}
+    >
+      {t('card.continue')}
+    </Button>
   );
 }

@@ -1,6 +1,6 @@
 # 133 · Ask to send the new-menu notice right after Publish
 
-**Target:** next release. **Status:** owner "B" (24 Nov); mock-up `uxDesign/seller/mockups/133-notice-after-publish.html`, approved with the rulings below (24 Nov); building.
+**Target:** 1.0.48, together with plan 134 (owner "B", 24 Nov). **Status:** owner "B" (24 Nov); mock-up `uxDesign/seller/mockups/133-notice-after-publish.html`, built + unit/e2e tested (24 Nov); ships with plan 134.
 
 ## Why (owner, 24 Nov)
 "I have the customer app and did not see any notification when Rina published." The backup of 24 Nov shows DellaVee's Sat 21 Nov menu was published (Wed 18 Nov 10:10 pm) but **no new-menu notice was sent** (`menu_notice_sends` has no row for it). Publishing never notifies by itself (plan 124: the seller taps 🔔 Notify customers → Send, "only if wanted"). 4 devices get DellaVee notices, 1 gets Onde Onde's (all iPhone home-screen apps).

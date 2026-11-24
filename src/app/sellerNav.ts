@@ -162,10 +162,13 @@ const TABLET_ONLY = [
 ];
 
 // Plan 051: Your dishes work on a phone: /seller/menu/dishes for owners, and a chef's /seller/menu
-// (which is her Your dishes). The wizard, sets, share and Settings stay tablet-only.
+// (which is her Your dishes). Plan 134: so does the owner's menu wizard (/seller/menu/make/:step) and edit sheet
+// (/seller/menu/edit/:step), layers over Orders. The Menu screen, sets, share and Settings stay tablet-only.
 export function isTabletOnly(pathname: string, role?: Role): boolean {
   const path = pathname.replace(/\/+$/, '');
   if (under(path, '/seller/menu/dishes')) return false;
+  // Plan 134: the menu wizard (make) and the live menu's edit sheet work on a phone for owners; the Menu screen itself stays tablet-only.
+  if (role !== 'chef' && /^\/seller\/menu\/(make|edit)\/[^/]+$/.test(path)) return false;
   if (role === 'chef' && path === '/seller/menu') return false;
   return TABLET_ONLY.some((path) => under(pathname, path));
 }

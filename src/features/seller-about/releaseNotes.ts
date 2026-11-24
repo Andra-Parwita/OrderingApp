@@ -12,6 +12,21 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // DRAFT for the owner to approve (25 Nov); plans 133, 134
+  {
+    version: '1.0.48',
+    date: '2026-11-25',
+    lines: {
+      en: [
+        'Make and edit a menu on your phone: tap + New menu on Orders, add new dishes, set the details, check and publish. On a live menu, tap Edit menu.',
+        'After you publish, the app asks whether to send a notification to customers who already have the app.',
+      ],
+      id: [
+        'Buat dan ubah menu dari ponsel: ketuk + Menu baru di Pesanan, tambah hidangan baru, isi rinciannya, periksa, lalu publikasikan. Pada menu yang sedang tayang, ketuk Ubah menu.',
+        'Setelah mempublikasikan, aplikasi bertanya apakah mau mengirim notifikasi ke pelanggan yang sudah punya aplikasinya.',
+      ],
+    },
+  },
   // DRAFT for the owner to approve (15 Nov); plans 131, 132
   {
     version: '1.0.47',

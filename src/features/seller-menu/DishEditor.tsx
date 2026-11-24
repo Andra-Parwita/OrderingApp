@@ -15,8 +15,10 @@ import { currentSellerSlug } from '../../api/device/sellerContext';
 import { DRAFT_NS, DraftNotice, draftKey, fingerprint, useDraft } from '../../components/draft';
 import { TranslateButton } from '../../components/translate';
 import { Button, SlideOverEditor, TextArea, TextField, WarningDialog } from '../../ui';
-import { FieldFrame, fieldControlStyle, useFieldIds } from '../../ui/Field';
+import { fieldControlStyle, useFieldIds } from '../../ui/Field';
 import { ChoicesField } from './ChoicesField';
+import { PhoneEditorFrame } from './phone/PhoneEditorFrame';
+import { usePhone } from './phone/usePhone';
 import { DishPictureField } from './DishPictureField';
 import { MENU_NS } from './i18n/register';
 import {
@@ -85,6 +87,12 @@ const Cell = styled.div`
   > :first-child {
     align-self: stretch;
   }
+  /* Phone: the "⇄ From English" link's text lines up with the field's left edge. */
+  @media (max-width: 37.4375rem) {
+    > button {
+      margin-left: calc(-1 * ${({ theme }) => theme.spacing.lg});
+    }
+  }
 `;
 const Cols = styled.div`
   display: grid;
@@ -125,10 +133,25 @@ const Check = styled.label`
     accent-color: ${({ theme }) => theme.c.fill};
   }
 `;
+const ChefWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+/** "Chef" on the left, "Edit chefs" on the right, on one row (the link's padding hangs outside). */
 const ChefHead = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: ${({ theme }) => theme.size.tap}px;
+
+  button {
+    margin-right: calc(-1 * ${({ theme }) => theme.spacing.sm});
+  }
+`;
+const ChefLabel = styled.label`
+  font-size: ${({ theme }) => theme.type.size.sm};
+  font-weight: ${({ theme }) => theme.type.weight.strong};
 `;
 
 /** The dish editor (560 px slide-over). Used from the wizard, the live menu and Your dishes. */
@@ -238,10 +261,23 @@ export function DishEditor({
     },
   });
 
+  // A refused Add / Save brings the first problem into view (on a phone it can be far below the fold).
+  const form = useRef<HTMLFormElement>(null);
+  const [refused, setRefused] = useState(0);
+  useEffect(() => {
+    if (refused === 0) return;
+    const first = form.current?.querySelector<HTMLElement>('[aria-invalid="true"], [role="alert"]');
+    first?.scrollIntoView?.({ block: 'center' });
+    first?.focus({ preventScroll: true });
+  }, [refused]);
+
   const save = () => {
     setSubmitted(true);
     setFailure(null);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      setRefused((n) => n + 1);
+      return;
+    }
     const draft = shown;
     if (isNew) {
       const request = createRequestOf(draft);
@@ -288,9 +324,12 @@ export function DishEditor({
     return t(e === 'tooLong' ? 'dish.err.tooLong' : `dish.err.${key}`, { max });
   };
 
+  // Plan 134: on the phone the editor is a full-screen layer with its own bar (and title).
+  const phone = usePhone();
+  const Frame = phone ? PhoneEditorFrame : SlideOverEditor;
   return (
     <>
-      <SlideOverEditor
+      <Frame
         title={title}
         dirty={dirty}
         saveLabel={isNew ? t('dish.add') : t('dish.save')}
@@ -304,12 +343,13 @@ export function DishEditor({
         onSave={save}
       >
         <Form
+          ref={form}
           onSubmit={(event) => {
             event.preventDefault();
             save();
           }}
         >
-          <Heading>{title}</Heading>
+          {phone ? null : <Heading>{title}</Heading>}
           <Muted>{isNew ? t('dish.subNew') : t('dish.subEdit')}</Muted>
           <DraftNotice draft={saved} />
           {oneLanguage ? (
@@ -428,9 +468,10 @@ export function DishEditor({
               label={t('dish.price')}
               value={draft.price}
               inputMode="decimal"
-              helper={hasChoices ? t('choices.priceHelper') : t('dish.priceHelper')}
               onChange={set('price')}
-              {...(submitted && errors.price ? { error: err('price') } : {})}
+              {...(submitted && errors.price
+                ? { error: err('price') }
+                : { helper: hasChoices ? t('choices.priceHelper') : t('dish.priceHelper') })}
             />
             {hasChoices ? null : (
               <TextField
@@ -532,7 +573,7 @@ export function DishEditor({
             </div>
           ) : null}
         </Form>
-      </SlideOverEditor>
+      </Frame>
       {editingChefs && renderChefs ? renderChefs({ onClose: closeChefs }) : null}
       {asking && libraryDishId ? (
         <WarningDialog
@@ -571,9 +612,9 @@ function ChefField({
 }>) {
   const { id } = useFieldIds(undefined, undefined);
   return (
-    <FieldFrame label={label} id={id} helperId={undefined} errorId={undefined} counter={undefined}>
+    <ChefWrap>
       <ChefHead>
-        <span />
+        <ChefLabel htmlFor={id}>{label}</ChefLabel>
         {onEdit ? (
           <LinkButton type="button" onClick={onEdit}>
             {editLabel}
@@ -588,6 +629,6 @@ function ChefField({
           </option>
         ))}
       </Select>
-    </FieldFrame>
+    </ChefWrap>
   );
 }

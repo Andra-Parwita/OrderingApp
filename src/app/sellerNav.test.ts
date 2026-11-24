@@ -144,18 +144,23 @@ describe('phone', () => {
     expect(isTabletOnly('/seller/hand-over/delivery')).toBe(false);
     expect(isTabletOnly('/seller/devices')).toBe(false);
   });
-  it('lets a phone open Your dishes, and the wizard stays tablet-only (plan 051)', () => {
+  it('lets a phone open Your dishes (plan 051) and an owner make a menu (plan 134)', () => {
     expect(isTabletOnly('/seller/menu/dishes')).toBe(false);
     expect(isTabletOnly('/seller/menu', 'chef')).toBe(false);
     expect(isTabletOnly('/seller/menu', 'seller')).toBe(true);
-    for (const path of [
-      '/seller/menu/make/dishes',
-      '/seller/menu/edit/details',
-      '/seller/menu/sets',
-    ]) {
-      expect(isTabletOnly(path)).toBe(true);
-      expect(isTabletOnly(path, 'chef')).toBe(true);
+    // The wizard (a layer over Orders) works on the phone for owners, not for a chef.
+    for (const step of ['dishes', 'details', 'check', 'publish']) {
+      expect(isTabletOnly(`/seller/menu/make/${step}`)).toBe(false);
+      expect(isTabletOnly(`/seller/menu/make/${step}`, 'seller')).toBe(false);
+      expect(isTabletOnly(`/seller/menu/make/${step}`, 'chef')).toBe(true);
     }
+    // The live menu's edit sheet too (owners); the sets page stays tablet-only.
+    for (const tab of ['dishes', 'details', 'prices']) {
+      expect(isTabletOnly(`/seller/menu/edit/${tab}`, 'seller')).toBe(false);
+      expect(isTabletOnly(`/seller/menu/edit/${tab}`, 'chef')).toBe(true);
+    }
+    expect(isTabletOnly('/seller/menu/sets')).toBe(true);
+    expect(isTabletOnly('/seller/menu/sets', 'chef')).toBe(true);
   });
 });
 

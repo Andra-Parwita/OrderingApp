@@ -70,6 +70,12 @@
     "check": "Periksa",
     "publish": "Publikasi & bagikan"
   },
+  "stepShort": {
+    "dishes": "Hidangan",
+    "details": "Rincian",
+    "check": "Periksa",
+    "publish": "Publikasi"
+  },
   "tab": {
     "dishes": "Hidangan",
     "details": "Rincian",
@@ -156,7 +162,11 @@
     "removeBody_other": "{{count}} porsi {{name}} sudah dipesan. Pesanan itu tetap memilikinya.",
     "keep": "Simpan hidangan",
     "removeAnyway": "Tetap keluarkan",
-    "addPicture": "Tambah foto untuk {{name}}"
+    "addPicture": "Tambah foto untuk {{name}}",
+    "onMenuChip": "Di menu ini {{count}}",
+    "addedPhone": "Hidangan ditambahkan.",
+    "addPicturePhone": "Tambah gambar",
+    "emptyMenuPhone": "Belum ada. Centang hidangan di halaman."
   },
   "dish": {
     "titleNew": "Hidangan baru",
@@ -395,8 +405,10 @@
     "pausedTitle": "Publikasikan, pemesanan dijeda",
     "pausedNote": "Pelanggan bisa melihat menu tetapi belum bisa memesan. Nyalakan \"Menerima pesanan\" di Pesanan saat Anda siap.",
     "ready": "Siap dipublikasikan",
-    "summary": "{{dishes}} hidangan untuk {{date}}. Pelanggan bisa memesan begitu menu tayang.",
+    "summary_other": "{{count}} hidangan untuk {{date}}. Pelanggan bisa memesan begitu menu tayang.",
     "worries_other": "{{count}} hal di Perlu dilihat. Anda tetap bisa mempublikasikan.",
+    "shareMenu": "Bagikan menu",
+    "toOrders": "Ke Pesanan",
     "button": "Publikasikan menu",
     "after": "Setelah itu Anda bisa membagikan postingan di WhatsApp.",
     "live": "Menu Anda tayang",
@@ -513,7 +525,9 @@
     "twice": "dua kali",
     "nTimes": "{{count}} kali",
     "today": "hari ini {{time}}",
-    "failed": "Gagal mengirim. Coba lagi."
+    "failed": "Gagal mengirim. Coba lagi.",
+    "ask": "Kirim notifikasi ke pelanggan yang sudah punya aplikasinya?",
+    "notNow": "Nanti saja"
   },
   "choices": {
     "title": "Pilihan (opsional)",

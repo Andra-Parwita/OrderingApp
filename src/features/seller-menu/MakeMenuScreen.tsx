@@ -17,6 +17,11 @@ import { DishesStep } from './DishesStep';
 import { MENU_NS } from './i18n/register';
 import { Head, Muted, Page, Title, useLang, useMenuData, useOpWatch, useRunOp } from './menuShared';
 import type { MenuData } from './menuSlice';
+import { useLeaveGuard } from './phone/leaveGuard';
+import { PhoneEditShell } from './phone/PhoneEditShell';
+import { PhoneWizardShell } from './phone/PhoneWizardShell';
+import { usePhone } from './phone/usePhone';
+import { announceWizardClosed, cameFrom, nextStepState } from './phone/wizardNav';
 import { PricesTable } from './PricesTable';
 import { PublishStep } from './PublishStep';
 import { MarksContext, SessionContext, useSessionData } from './sessionIntercept';
@@ -123,6 +128,10 @@ const FootRight = styled.div`
 `;
 const Section = styled.div`
   padding: ${({ theme }) => theme.size.pagePadTablet}px;
+
+  @media (max-width: 37.4375rem) {
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadPhone}px;
+  }
 `;
 
 /** How long "Saved ✓" shows in the sheet before it closes. */
@@ -221,6 +230,7 @@ function MakeMenuBody({
   const closeNow = useCloseWizardNow();
   const { run } = useRunOp();
   const editor = useDishEditor();
+  const phone = usePhone();
   const data = useSessionData(saved, active ? session : null);
   const controls = useSessionControls(session, saved);
   const { menu, dishes } = data.view;
@@ -293,8 +303,26 @@ function MakeMenuBody({
     return () => setCloseGuard(null);
   }, []);
 
+  // Plan 134 (phone): Android Back with changes waiting asks first (save, discard or keep editing).
+  // With the question already open, Back answers it "Keep editing"; the next Back asks again.
+  useLeaveGuard(phone && mode === 'edit' && controls.diff.total > 0, () => {
+    if (asking) {
+      if (!savingAsk) setAsking(null);
+    } else requestLeave(closeNow);
+  });
+  // The Orders screen under the phone wizard reloads its menu card when this closes.
+  useEffect(() => (phone ? announceWizardClosed : undefined), [phone]);
+
   const go = (to: Step | Tab) => {
-    const there = () => void navigate(stepPath(mode, to), { state });
+    // Phone: a step is a history entry (Android Back steps back); going back to the step we came
+    // from pops it instead of piling up another.
+    const there = () => {
+      if (phone && mode === 'make' && cameFrom(state) === to) void navigate(-1);
+      else if (phone && mode === 'make') {
+        void navigate(stepPath(mode, to), { state: nextStepState(state, step) });
+      } else if (phone) void navigate(stepPath(mode, to), { state, replace: true });
+      else void navigate(stepPath(mode, to), { state });
+    };
     // The wizard saves its changes on the way to another step; the sheet's tabs share one session.
     if (mode === 'make' && waiting() > 0) void saveThen(there);
     else leave(there);
@@ -302,7 +330,8 @@ function MakeMenuBody({
   const live = menu.state === 'live';
   const date = formatDay(menu.cookingDate, lang);
   const goOrders = () => {
-    const there = () => void navigate('/seller/orders');
+    // Phone: the wizard is a stack of history entries over Orders; Close pops them all.
+    const there = () => (phone ? closeNow() : void navigate('/seller/orders'));
     if (waiting() > 0) void saveThen(there);
     else leave(there);
   };
@@ -311,8 +340,11 @@ function MakeMenuBody({
     const item = active ? saved.view.dishes.find((dish) => dish.dishId === dishId) : undefined;
     editor.open(item ? { itemId: item.id } : { dishId });
   };
+  // Phone: the dish is made in the editor in either mode; its tick waits in the session (edit).
   const newDish = () =>
-    mode === 'edit' ? requestLeave(() => void navigate('/seller/menu/dishes')) : editor.open('new');
+    mode === 'edit' && !phone
+      ? requestLeave(() => void navigate('/seller/menu/dishes'))
+      : editor.open('new');
 
   const content =
     step === 'dishes' ? (
@@ -380,6 +412,42 @@ function MakeMenuBody({
     </>
   );
 
+  const sessionFooter = (
+    <SessionFooter
+      diff={controls.diff}
+      phase={controls.phase}
+      onSave={() => {
+        void saveThen(closeNow, CLOSE_AFTER_MS);
+      }}
+      onDiscard={() => {
+        flush();
+        controls.discard();
+      }}
+    />
+  );
+  if (mode === 'edit' && phone) {
+    return (
+      <MarksContext.Provider value={active ? controls.diff : null}>
+        <AutoSaveGate.Provider value={gate}>
+          <PhoneEditShell
+            title={t('session.title', { date })}
+            band={t('session.band')}
+            tabs={TABS.map((name) => ({
+              name,
+              label: t(`tab.${name}`),
+              current: name === step,
+            }))}
+            onTab={(name) => go(name as Tab)}
+            onClose={requestClose}
+            footer={sessionFooter}
+            floating={dialogs}
+          >
+            {content}
+          </PhoneEditShell>
+        </AutoSaveGate.Provider>
+      </MarksContext.Provider>
+    );
+  }
   if (mode === 'edit') {
     return (
       <MarksContext.Provider value={active ? controls.diff : null}>
@@ -403,19 +471,7 @@ function MakeMenuBody({
               </TabBar>
             }
             band={t('session.band')}
-            footer={
-              <SessionFooter
-                diff={controls.diff}
-                phase={controls.phase}
-                onSave={() => {
-                  void saveThen(closeNow, CLOSE_AFTER_MS);
-                }}
-                onDiscard={() => {
-                  flush();
-                  controls.discard();
-                }}
-              />
-            }
+            footer={sessionFooter}
           >
             <Body>{content}</Body>
           </EditSheet>
@@ -427,6 +483,56 @@ function MakeMenuBody({
 
   const next = index < STEPS.length - 1 ? STEPS[index + 1] : undefined;
   const back = index > 0 ? STEPS[index - 1] : undefined;
+  if (phone) {
+    return (
+      <AutoSaveGate.Provider value={gate}>
+        <PhoneWizardShell
+          label={t('make.layer')}
+          title={t('make.title', { date })}
+          // The phone has no floating pill: the changes waiting to be saved show in the top bar, and
+          // Next (or Close, which asks) saves them.
+          status={
+            controls.phase === 'failed'
+              ? t('session.failed')
+              : controls.phase === 'saving'
+                ? t('session.saving')
+                : controls.diff.total > 0 && active
+                  ? t('session.countShort', { count: controls.diff.total })
+                  : live
+                    ? t('make.live')
+                    : t('make.notPublished')
+          }
+          tone={
+            controls.phase === 'failed'
+              ? 'error'
+              : controls.diff.total > 0 && active
+                ? 'warn'
+                : live
+                  ? 'live'
+                  : 'muted'
+          }
+          steps={STEPS.map((name, position) => ({
+            name,
+            label: t(`stepShort.${name}`),
+            current: position === index,
+            done: position < Math.max(reached, index),
+            disabled: position > Math.max(reached, index),
+          }))}
+          onStep={go}
+          onClose={requestClose}
+          back={back ? { label: t('make.back'), onClick: () => go(back) } : undefined}
+          next={
+            next
+              ? { label: t('make.next', { name: t(`stepShort.${next}`) }), onClick: () => go(next) }
+              : undefined
+          }
+          floating={dialogs}
+        >
+          {content}
+        </PhoneWizardShell>
+      </AutoSaveGate.Provider>
+    );
+  }
   return (
     <AutoSaveGate.Provider value={gate}>
       <Page>

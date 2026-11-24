@@ -1,14 +1,16 @@
 import { useId, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { styled } from 'styled-components';
+import { css, styled } from 'styled-components';
 import { Icon } from '../../ui';
-import { useModalFocus } from '../../ui/patterns/modal';
+import { OVERLAY_Z, useModalFocus } from '../../ui/patterns/modal';
 import { HOME_NS, registerSellerHomeI18n } from './i18n/register';
 
 // A modal box on Home: dims what is behind, keeps Tab inside, closes on Esc, the X and a click on
 // the dim layer, and gives focus back to the button that opened it (useModalFocus).
 
-const Overlay = styled.div`
+const PHONE = '(max-width: 37.4375rem)';
+
+const Overlay = styled.div<{ $fullOnPhone: boolean }>`
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -17,8 +19,17 @@ const Overlay = styled.div`
   justify-content: center;
   padding: ${({ theme }) => theme.spacing.lg};
   background: ${({ theme }) => theme.colour.scrim};
+
+  ${({ $fullOnPhone }) =>
+    $fullOnPhone &&
+    css`
+      @media ${PHONE} {
+        z-index: ${OVERLAY_Z};
+        padding: 0;
+      }
+    `}
 `;
-const Box = styled.div<{ $width: string }>`
+const Box = styled.div<{ $width: string; $fullOnPhone: boolean }>`
   display: flex;
   flex-direction: column;
   width: min(${({ $width }) => $width}, 100%);
@@ -32,6 +43,18 @@ const Box = styled.div<{ $width: string }>`
   &:focus {
     outline: none;
   }
+  /* Plan 134: on the phone the dialog fills the screen, its buttons pinned at the bottom. */
+  ${({ $fullOnPhone }) =>
+    $fullOnPhone &&
+    css`
+      @media ${PHONE} {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border: 0;
+        border-radius: 0;
+      }
+    `}
 `;
 const Head = styled.div`
   display: flex;
@@ -63,18 +86,39 @@ const CloseButton = styled.button`
     color: ${({ theme }) => theme.c.text};
   }
 `;
-const Body = styled.div`
+const Body = styled.div<{ $fullOnPhone: boolean }>`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
+
+  ${({ $fullOnPhone }) =>
+    $fullOnPhone &&
+    css`
+      @media ${PHONE} {
+        flex: 1;
+        overflow-y: auto;
+      }
+    `}
 `;
-const Foot = styled.div`
+const Foot = styled.div<{ $fullOnPhone: boolean }>`
   display: flex;
   justify-content: flex-end;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+
+  ${({ $fullOnPhone }) =>
+    $fullOnPhone &&
+    css`
+      @media ${PHONE} {
+        padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadPhone}px;
+
+        > button {
+          flex: 1;
+        }
+      }
+    `}
 `;
 
 export type DialogProps = Readonly<{
@@ -83,10 +127,19 @@ export type DialogProps = Readonly<{
   width: string;
   onClose: () => void;
   footer: ReactNode;
+  /** Plan 134: below 600 px the dialog is the whole screen (New menu on the seller phone). */
+  fullOnPhone?: boolean;
   children: ReactNode;
 }>;
 
-export function Dialog({ title, width, onClose, footer, children }: DialogProps) {
+export function Dialog({
+  title,
+  width,
+  onClose,
+  footer,
+  fullOnPhone = false,
+  children,
+}: DialogProps) {
   registerSellerHomeI18n();
   const { t } = useTranslation(HOME_NS);
   const { box, onKeyDown } = useModalFocus<HTMLDivElement>(onClose);
@@ -96,7 +149,7 @@ export function Dialog({ title, width, onClose, footer, children }: DialogProps)
     if (event.target === event.currentTarget) onClose();
   };
   return (
-    <Overlay onMouseDown={onScrim}>
+    <Overlay $fullOnPhone={fullOnPhone} onMouseDown={onScrim}>
       <Box
         ref={box}
         role="dialog"
@@ -104,6 +157,7 @@ export function Dialog({ title, width, onClose, footer, children }: DialogProps)
         aria-labelledby={titleId}
         tabIndex={-1}
         $width={width}
+        $fullOnPhone={fullOnPhone}
         onKeyDown={onKeyDown}
       >
         <Head>
@@ -112,8 +166,8 @@ export function Dialog({ title, width, onClose, footer, children }: DialogProps)
             <Icon name="x" />
           </CloseButton>
         </Head>
-        <Body>{children}</Body>
-        <Foot>{footer}</Foot>
+        <Body $fullOnPhone={fullOnPhone}>{children}</Body>
+        <Foot $fullOnPhone={fullOnPhone}>{footer}</Foot>
       </Box>
     </Overlay>
   );

@@ -71,6 +71,12 @@
     "check": "Check",
     "publish": "Publish & share"
   },
+  "stepShort": {
+    "dishes": "Dishes",
+    "details": "Details",
+    "check": "Check",
+    "publish": "Publish"
+  },
   "tab": {
     "dishes": "Dishes",
     "details": "Details",
@@ -163,7 +169,11 @@
     "removeBody_other": "{{count}} portions of {{name}} are already ordered. Those orders keep it.",
     "keep": "Keep dish",
     "removeAnyway": "Remove anyway",
-    "addPicture": "Add a picture for {{name}}"
+    "addPicture": "Add a picture for {{name}}",
+    "onMenuChip": "On this menu {{count}}",
+    "addedPhone": "Dish added.",
+    "addPicturePhone": "Add a picture",
+    "emptyMenuPhone": "Nothing yet. Tick dishes on the page."
   },
   "dish": {
     "titleNew": "New dish",
@@ -406,9 +416,12 @@
     "pausedTitle": "Publish, ordering paused",
     "pausedNote": "Customers can see the menu but can't order yet. Switch \"Taking orders\" on in Orders when you're ready.",
     "ready": "Ready to publish",
-    "summary": "{{dishes}} dishes for {{date}}. Customers can order as soon as it is live.",
+    "summary_one": "{{count}} dish for {{date}}. Customers can order as soon as it is live.",
+    "summary_other": "{{count}} dishes for {{date}}. Customers can order as soon as it is live.",
     "worries_one": "{{count}} thing in Worth a look. You can still publish.",
     "worries_other": "{{count}} things in Worth a look. You can still publish.",
+    "shareMenu": "Share menu",
+    "toOrders": "Go to Orders",
     "button": "Publish menu",
     "after": "Then you can share the post on WhatsApp.",
     "live": "Your menu is live",
@@ -534,7 +547,9 @@
     "twice": "twice",
     "nTimes": "{{count}} times",
     "today": "today {{time}}",
-    "failed": "Could not send. Try again."
+    "failed": "Could not send. Try again.",
+    "ask": "Send a notification to customers who already have the app?",
+    "notNow": "Not now"
   },
   "choices": {
     "title": "Choices (optional)",

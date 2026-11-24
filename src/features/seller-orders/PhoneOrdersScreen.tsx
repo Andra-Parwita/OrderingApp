@@ -466,7 +466,8 @@ function PhoneOrdersContent({
   } else if (!view || kind === 'checking') {
     body = <HomeMessage text={t('home.loading')} />;
   } else if (kind === 'first_run' || kind === 'not_published') {
-    body = <NoMenuRunning phone={true} />;
+    // Plan 134: with the Menu card (owners) the card's New menu is the one way to start a menu.
+    body = <NoMenuRunning phone={true} showMake={!menuCard} />;
   } else if (kind === 'finished') {
     body = (
       <>
@@ -475,6 +476,7 @@ function PhoneOrdersContent({
           showAll={showAll}
           onToggleAll={() => setShowAll((on) => !on)}
           phone={true}
+          showMake={!menuCard}
         />
         {showAll ? board : null}
       </>

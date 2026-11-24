@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menus from the phone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; } h2 { font-size: 1.05rem; margin: 30px 0 10px; }
+  .lead { color: var(--mute); margin: 0 0 16px; max-width: 92ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 22px; align-items: start; }
+  figure { margin: 0; } figcaption { font-size: .86rem; color: var(--mute); margin-top: 8px; max-width: 62ch; }
+  figcaption b { color: var(--ink); } figcaption > b:first-child { display: block; }
+  ul { color: var(--mute); max-width: 92ch; }
+  .dev { --bg: #f6f2e8; --surf: #fbf8f1; --ink2: #1f2a22; --mute2: #5d6358; --line: #e4ded0; --green: #2f6b4f; --soft: #e6efe7; --amber: #7a4f0e; --amberbg: #f7ecd6;
+    background: var(--bg); color: var(--ink2); font-size: 13.5px; border: 6px solid #111; border-radius: 30px; overflow: hidden; position: relative;
+    width: 100%; max-width: 340px; height: 690px; display: flex; flex-direction: column; }
+  .status { height: 22px; flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 12px; color: #333; }
+  .bar { flex: none; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surf); }
+  .bar b { font-size: 15px; } .bar small { display: block; color: var(--mute2); font-size: 11.5px; font-weight: 400; } .x { color: var(--green); font-weight: 700; }
+  .steps { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px 14px; border-bottom: 1px solid var(--line); font-size: 11px; color: var(--mute2); text-align: center; }
+  .steps span { padding-top: 5px; border-top: 3px solid var(--line); } .steps .done { border-color: var(--green); color: var(--green); } .steps .cur { border-color: var(--green); color: var(--ink2); font-weight: 700; }
+  .body { flex: 1; overflow: hidden; padding: 10px 14px; }
+  .foot { flex: none; padding: 10px 14px 14px; border-top: 1px solid var(--line); background: var(--bg); display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: center; }
+  .b { box-sizing: border-box; text-align: center; border-radius: 10px; padding: 10px 12px; font-weight: 700; border: 1px solid var(--line); background: var(--surf); }
+  .b.primary { background: var(--green); color: #fff; border-color: var(--green); } .b.ghost { border: 0; background: none; color: var(--green); }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 12px; margin-bottom: 8px; }
+  .seg span { padding: 7px 4px; text-align: center; } .seg .on { background: var(--green); color: #fff; font-weight: 700; }
+  .search { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; color: var(--mute2); background: var(--surf); margin-bottom: 8px; }
+  .row { display: grid; grid-template-columns: 24px minmax(0,1fr) auto 22px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .row small { display: block; color: var(--mute2); font-size: 11.5px; }
+  .tick { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #8b8f84; box-sizing: border-box; display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; }
+  .tick.on { background: var(--green); border-color: var(--green); }
+  .pen { color: var(--mute2); text-align: center; }
+  .new { display: block; margin: 2px 0 10px; }
+  .chip { background: var(--soft); color: var(--green); border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 12.5px; }
+  .lbl { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--mute2); margin: 10px 0 4px; }
+  .field { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--surf); margin-bottom: 8px; }
+  .field small { display: block; color: var(--mute2); font-size: 11px; } .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hint { color: var(--mute2); font-size: 11.5px; margin: -4px 0 8px; }
+  .check { display: grid; grid-template-columns: 20px 1fr; gap: 8px; align-items: start; margin: 6px 0; }
+  .warn { background: var(--amberbg); color: var(--amber); border-radius: 10px; padding: 8px 10px; margin-bottom: 6px; font-size: 12.5px; display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .warn b { color: var(--green); }
+  .price { display: grid; grid-template-columns: minmax(0,1fr) 64px 56px; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .price .in { border: 1px solid var(--line); border-radius: 8px; padding: 5px 6px; text-align: right; background: var(--surf); }
+  .tabs { flex: none; display: flex; gap: 16px; padding: 0 14px; border-bottom: 1px solid var(--line); color: var(--mute2); font-size: 13px; }
+  .tabs span { padding: 8px 0; } .tabs .on { color: var(--ink2); font-weight: 700; border-bottom: 2px solid var(--green); }
+  .band { flex: none; background: var(--amberbg); color: var(--amber); font-size: 12px; padding: 6px 14px; }
+  .card { background: var(--surf); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .pill { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--soft); color: var(--green); }
+  .pill.grey { background: #ece7db; color: var(--mute2); }
+  .shade { position: absolute; inset: 0; background: rgba(20,22,18,.45); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surf); border-radius: 18px 18px 0 0; padding: 14px; }
+  .sw { width: 34px; height: 20px; border-radius: 10px; background: var(--green); position: relative; justify-self: end; } .sw::after { content: ''; position: absolute; right: 3px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
+  .new-mark { outline: 2px dashed #c08a2c; outline-offset: 3px; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>134 · Make and change menus from the seller phone</h1>
+  <p class="lead">DellaVee: Rina's tablet is sometimes used by her daughter, so she wants to make menus on her Android phone during lunch breaks. The phone gets the same four steps as the tablet (<b>Dishes, Details, Check, Publish</b>) and the live-menu edit (<b>Dishes, Details, Prices &amp; limits</b>), one column, buttons pinned at the bottom. <b>Adding a new dish</b> is one tap from the Dishes step. Same fields as the tablet; nothing new except the phone layout (dashed = new entry points). AUD, Adelaide; dishes from DellaVee's last menu.</p>
+
+  <h2>Start a menu</h2>
+  <div class="grid">
+    <figure><div class="dev">
+      <div class="status"><span>12:31 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span></span><b>Orders</b><span></span></div>
+      <div class="body">
+        <div class="card new-mark"><b>No menu open</b><br><span style="color:#5d6358">Make the next menu here or on the tablet.</span><div class="b primary" style="margin-top:10px">+ New menu</div></div>
+        <div style="color:#5d6358">No orders yet.</div>
+      </div>
+    </div><figcaption><b>1 · Orders, no menu open</b>The menu card offers <b>+ New menu</b> on the phone (today: only on the tablet). A draft that is not ready shows <b>Continue</b> instead of "Finish on the tablet", and opens the step that needs work.</figcaption></figure>
+
+    <figure><div class="dev">
+      <div class="status"><span>12:31 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>New menu</b><span></span></div>
+      <div class="body">
+        <div class="field"><small>Cooking day</small>Sat 5 Dec</div>
+        <div class="two"><div class="field"><small>Orders close</small>Thu 3 Dec</div><div class="field"><small>Time</small>8:30 pm</div></div>
+        <div class="lbl">START WITH</div>
+        <div class="check"><span class="tick"></span><span>Empty menu<br><small style="color:#5d6358">Pick dishes from your library</small></span></div>
+        <div class="check"><span class="tick on">✓</span><span>Dishes from Sat 21 Nov<br><small style="color:#5d6358">Prices and limits copied; change anything</small></span></div>
+        <div class="check"><span class="tick"></span><span>A saved set</span></div>
+      </div>
+      <div class="foot" style="grid-template-columns:1fr"><span class="b primary">Create menu</span></div>
+    </div><figcaption><b>2 · New menu</b>The existing New menu dialog, full screen on the phone (cooking day defaults to the coming Saturday; Orders close from Settings → Menu defaults). <b>Create menu</b> opens step 1.</figcaption></figure>
+  </div>
+
+  <h2>The four steps</h2>
+  <div class="grid">
+    <figure><div class="dev">
+      <div class="status"><span>12:33 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>Menu for Sat 5 Dec<small>Not published · saved</small></b><span></span></div>
+      <div class="steps"><span class="cur">1 Dishes</span><span>2 Details</span><span>3 Check</span><span>4 Publish</span></div>
+      <div class="body">
+        <span class="b primary new new-mark">+ New dish</span>
+        <div class="seg"><span class="on">Your dishes 24</span><span>Saved sets 2</span><span>Past menus 8</span></div>
+        <div class="search">🔍 Dish name</div>
+        <div class="row"><span class="tick on">✓</span><span>Nasi campur daun jeruk<small>$17.50 · Sat 21 Nov</small></span><span></span><span class="pen">✎</span></div>
+        <div class="row"><span class="tick on">✓</span><span>Ayam goreng cabe garam<small>$12.50 · Sat 21 Nov</small></span><span></span><span class="pen">✎</span></div>
+        <div class="row"><span class="tick on">✓</span><span>Soto betawi<small>$15.00 · Sat 21 Nov</small></span><span></span><span class="pen">✎</span></div>
+        <div class="row"><span class="tick on">✓</span><span>Lemper ayam · 4 pcs<small>$10.00 · Sat 21 Nov</small></span><span></span><span class="pen">✎</span></div>
+        <div class="row"><span class="tick"></span><span>Tempe Mendoan · 4 in Box<small>$10.00 · Sat 21 Nov</small></span><span></span><span class="pen">✎</span></div>
+        <div class="row"><span class="tick"></span><span>Bubur ayam<small>$10.00 · Sun 15 Nov</small></span><span></span><span class="pen">✎</span></div>
+      </div>
+      <div class="foot"><span class="chip">On this menu 4 ▴</span><span class="b primary">Next: Details</span></div>
+    </div><figcaption><b>3 · Step 1, Dishes</b>Tick dishes from Your dishes, a saved set or a past menu. <b>+ New dish</b> is first on the page. <b>On this menu 4</b> opens the list of chosen dishes (prices, remove ✕). At most 10 dishes, as on the tablet.</figcaption></figure>
+
+    <figure><div class="dev">
+      <div class="status"><span>12:34 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>New dish</b><span></span></div>
+      <div class="body">
+        <div class="two"><div class="field"><small>Name (English)</small>Fried tempeh</div><div class="field"><small>Name (Indonesian)</small>Tempe goreng</div></div>
+        <div class="two"><div class="field"><small>Size (English)</small>4 pieces</div><div class="field"><small>Size (Indonesian)</small>4 biji</div></div>
+        <div class="field"><small>Price (AUD)</small>10.00</div>
+        <div class="field"><small>Limit (optional)</small><span style="color:#5d6358">No limit</span></div>
+        <div class="field"><small>Description (optional)</small><span style="color:#5d6358">English · Indonesian</span></div>
+        <div class="check"><span class="tick on">✓</span><span>Add to this menu too <small style="color:#5d6358">(it's saved in Your dishes either way)</small></span></div>
+        <div class="hint">Picture: save the dish first, then you can add a picture (Take photo / Choose photo).</div>
+      </div>
+      <div class="foot" style="grid-template-columns:1fr"><span class="b primary">Add dish</span></div>
+    </div><figcaption><b>4 · New dish</b>The existing dish form (phone layout already exists): name, size, price, limit, description, chef, pre-order / on the day, choices. Only a name and a price are needed. <b>Add to this menu too</b> is ticked, so the dish lands on the menu at once. Then <b>Take photo</b> adds the picture.</figcaption></figure>
+
+    <figure><div class="dev">
+      <div class="status"><span>12:36 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>Menu for Sat 5 Dec<small>Not published · saved</small></b><span></span></div>
+      <div class="steps"><span class="done">✓ Dishes</span><span class="cur">2 Details</span><span>3 Check</span><span>4 Publish</span></div>
+      <div class="body">
+        <div class="lbl">HOW DO CUSTOMERS GET THEIR FOOD?</div>
+        <div class="seg"><span>Pickup</span><span>Delivery</span><span class="on">Both</span></div>
+        <div class="field"><small>Cooking day</small>Sat 5 Dec</div>
+        <div class="two"><div class="field"><small>Orders close</small>Thu 3 Dec</div><div class="field"><small>Time</small>8:30 pm</div></div>
+        <div class="check" style="grid-template-columns:1fr auto"><span>Keep the menu open 1 more day</span><span class="sw"></span></div>
+        <div class="lbl">PICKUP LOCATIONS · 1 CHOSEN</div>
+        <div class="check"><span class="tick on">✓</span><span>Goodwood Community Center<br><small style="color:#5d6358">10:00–13:00 · ✎</small></span></div>
+        <div class="lbl">DELIVERY</div>
+        <div class="field"><small>Note for customers · English</small>We deliver in the afternoon.</div>
+        <div class="hint">Delivery days, Indonesian note and Menu picture below ↓</div>
+      </div>
+      <div class="foot"><span class="b">Back</span><span class="b primary">Next: Check</span></div>
+    </div><figcaption><b>5 · Step 2, Details</b>The tablet's Details in one column: how, cooking day, orders close, keep open, pickup places (with "+ Add a place"), delivery note EN/ID, delivery days, menu picture (Take photo). Everything saves by itself, as on the tablet.</figcaption></figure>
+
+    <figure><div class="dev">
+      <div class="status"><span>12:38 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>Menu for Sat 5 Dec<small>Not published · saved</small></b><span></span></div>
+      <div class="steps"><span class="done">✓ Dishes</span><span class="done">✓ Details</span><span class="cur">3 Check</span><span>4 Publish</span></div>
+      <div class="body">
+        <div class="lbl">WORTH A LOOK</div>
+        <div class="warn"><span>No menu picture. Customers will see your kitchen banner instead.</span><b>Add picture</b></div>
+        <div class="lbl">DISHES ON THIS MENU 5 OF 10 · ADD OR REMOVE</div>
+        <div class="price" style="color:#5d6358;font-size:11px"><span>Dish</span><span style="text-align:right">Price</span><span style="text-align:right">Limit</span></div>
+        <div class="price"><span>Nasi campur daun jeruk</span><span class="in">17.50</span><span class="in">–</span></div>
+        <div class="price"><span>Ayam goreng cabe garam</span><span class="in">12.50</span><span class="in">–</span></div>
+        <div class="price"><span>Soto betawi</span><span class="in">15.00</span><span class="in">20</span></div>
+        <div class="price"><span>Lemper ayam · 4 pcs</span><span class="in">10.00</span><span class="in">–</span></div>
+        <div class="price"><span>Tempe goreng · 4 biji</span><span class="in">10.00</span><span class="in">–</span></div>
+        <div class="hint" style="margin-top:6px">Details: Sat 5 Dec · orders close Thu 3 Dec 8:30 pm · Both · Edit details</div>
+      </div>
+      <div class="foot"><span class="b">Back</span><span class="b primary">Next: Publish</span></div>
+    </div><figcaption><b>6 · Step 3, Check</b>"Worth a look" first (none of these stops publishing), then prices and limits per dish (chef, sold out and pre-order / on the day open from a dish row), then the details summary. The tablet's customer-phone preview is left out on the phone (the phone is already that size).</figcaption></figure>
+
+    <figure><div class="dev">
+      <div class="status"><span>12:39 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>Menu for Sat 5 Dec<small>Not published · saved</small></b><span></span></div>
+      <div class="steps"><span class="done">✓ Dishes</span><span class="done">✓ Details</span><span class="done">✓ Check</span><span class="cur">4 Publish</span></div>
+      <div class="body">
+        <div style="font-size:17px;font-weight:700;margin:8px 0 6px">Ready to publish</div>
+        <div style="color:#5d6358">5 dishes for Sat 5 Dec. Customers can order as soon as it is live.</div>
+        <div style="color:#7a4f0e;margin-top:6px">1 thing in Worth a look. You can still publish.</div>
+        <div class="b primary" style="margin-top:16px">Publish menu</div>
+        <div style="color:#5d6358;margin-top:8px">Then you can share the post on WhatsApp.</div>
+      </div>
+      <div class="foot" style="grid-template-columns:auto"><span class="b">Back</span></div>
+      <div class="shade"></div>
+      <div class="sheet"><div style="font-weight:700;font-size:15px;margin-bottom:12px">Send a notification to customers who already have the app?</div><div class="two"><span class="b ghost">Not now</span><span class="b primary">Send</span></div></div>
+    </div><figcaption><b>7 · Step 4, Publish</b>As on the tablet: Publish menu → "Publish and take orders now / paused" → live. Then the plan 133 question (notify customers), then <b>Share menu</b> (the phone's WhatsApp share, plan 124).</figcaption></figure>
+  </div>
+
+  <h2>Change a live menu</h2>
+  <div class="grid">
+    <figure><div class="dev">
+      <div class="status"><span>12:45 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>Menu for Sat 5 Dec</b><span class="pill">Live</span></div>
+      <div class="body">
+        <div class="row" style="grid-template-columns:minmax(0,1fr) auto"><span>Nasi campur daun jeruk<small>Sold 3</small></span><span>$17.50</span></div>
+        <div class="row" style="grid-template-columns:minmax(0,1fr) auto"><span>Ayam goreng cabe garam<small>Sold 1</small></span><span>$12.50</span></div>
+        <div class="row" style="grid-template-columns:minmax(0,1fr) auto"><span>Soto betawi<small>Sold 4 of 20</small></span><span>$15.00</span></div>
+        <div class="row" style="grid-template-columns:minmax(0,1fr) auto"><span>Lemper ayam · 4 pcs<small>Sold 2</small></span><span>$10.00</span></div>
+        <div class="row" style="grid-template-columns:minmax(0,1fr) auto"><span>Tempe goreng · 4 biji<small>Sold 0</small></span><span>$10.00</span></div>
+      </div>
+      <div class="foot" style="grid-template-columns:1fr"><span class="b primary new-mark">✎ Edit menu</span></div>
+    </div><figcaption><b>8 · The menu, from the card</b>Today this page only reads. It gets <b>Edit menu</b> at the bottom.</figcaption></figure>
+
+    <figure><div class="dev">
+      <div class="status"><span>12:46 pm</span><span>▂▄▆ ▮</span></div>
+      <div class="bar"><span class="x">✕</span><b>Editing menu · Sat 5 Dec</b><span></span></div>
+      <div class="band">Edit mode — customers see the current menu until you save.</div>
+      <div class="tabs"><span class="on">Dishes</span><span>Details</span><span>Prices &amp; limits</span></div>
+      <div class="body">
+        <span class="b new" style="background:#fbf8f1">+ New dish</span>
+        <div class="row"><span class="tick on">✓</span><span>Nasi campur daun jeruk<small>$17.50</small></span><span></span><span class="pen">✎</span></div>
+        <div class="row"><span class="tick on">✓</span><span>Soto betawi<small>$15.00</small></span><span></span><span class="pen">✎</span></div>
+        <div class="row"><span class="tick"></span><span>Matabak telur · 4 pcs<small>$10.00 · Sat 21 Nov</small></span><span></span><span class="pen">✎</span></div>
+      </div>
+      <div class="foot"><span style="color:#7a4f0e;font-weight:700;font-size:12.5px">1 change not saved</span><span class="two"><span class="b">Discard</span><span class="b primary">Save</span></span></div>
+    </div><figcaption><b>9 · Edit a live menu</b>The tablet's edit sheet, full screen: <b>Dishes</b> (add, remove, + New dish), <b>Details</b>, <b>Prices &amp; limits</b> (price, limit, sold out, chef, pre-order / on the day). Customers see the old menu until <b>Save</b>.</figcaption></figure>
+  </div>
+
+  <ul>
+    <li>Same rules as the tablet: no step blocks Next, everything autosaves, at most 10 dishes, "Worth a look" never blocks.</li>
+    <li>Android Back goes one step back (or closes a sheet), never loses work.</li>
+    <li>Still tablet-only: Settings, chefs, images, backup. Your dishes, sets and New menu already work on the phone.</li>
+    <li>EN and ID for every line; captures at 412 px and 125–150 % text; Android phone emulator.</li>
+  </ul>
+</div>
+</body>
+</html>

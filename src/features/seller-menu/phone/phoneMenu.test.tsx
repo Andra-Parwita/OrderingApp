@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MenuNoticeStatus } from '../../../../shared/menuNoticeContract';
 import type { MenuView } from '../../../../shared/menusContract';
@@ -141,13 +142,20 @@ function view(state: MenuView['menu']['state'], over: Partial<MenuView['menu']> 
   };
 }
 
-function show(menu: MenuView | null) {
+function show(menu: MenuView | null, wizard = false) {
   const reload = vi.fn();
   render(
     <AppThemeProvider>
-      <PhoneMenuProvider view={menu} reload={reload} now={NOW}>
-        <PhoneMenuCard />
-      </PhoneMenuProvider>
+      <MemoryRouter>
+        <PhoneMenuProvider
+          view={menu}
+          reload={reload}
+          now={NOW}
+          {...(wizard ? { newMenu: () => null } : {})}
+        >
+          <PhoneMenuCard />
+        </PhoneMenuProvider>
+      </MemoryRouter>
     </AppThemeProvider>,
   );
   return { reload };
@@ -181,10 +189,11 @@ describe('Menu card', () => {
     expect(screen.queryByRole('button', { name: /Share menu/ })).not.toBeInTheDocument();
   });
 
-  it('not ready: no Publish button; the card lists what is missing and says to finish on the tablet', () => {
-    show({ ...view('not_published'), dishes: [] });
+  it('not ready: no Publish button; the card lists what is missing and offers Continue', () => {
+    show({ ...view('not_published'), dishes: [] }, true);
     expect(screen.getByText('Not ready')).toBeVisible();
-    expect(screen.getByText('Finish on the tablet: no dishes')).toBeVisible();
+    expect(screen.getByText('Still needed: no dishes')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Publish menu' })).not.toBeInTheDocument();
   });
 
@@ -243,6 +252,12 @@ describe('Publish', () => {
     expect(within(sheet).getByText('Sat 31 Oct')).toBeVisible();
     expect(within(sheet).getByText('1 place · delivery')).toBeVisible();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Publish menu' }));
+    // Plan 133: the question comes first; Not now leaves the live sheet under it.
+    const ask = await screen.findByRole('dialog', {
+      name: 'Send a notification to customers who already have the app?',
+    });
+    fireEvent.click(within(ask).getByRole('button', { name: 'Not now' }));
+    expect(api.send).not.toHaveBeenCalled();
     const live = await screen.findByRole('dialog', { name: 'Menu is live ✓' });
     expect(api.publish).toHaveBeenCalled();
     expect(reload).toHaveBeenCalled();
@@ -251,6 +266,55 @@ describe('Publish', () => {
       await within(live).findByRole('button', { name: '🔔 Send new-menu notice · 14 phones' }),
     ).toBeVisible();
     expect(within(live).getByRole('button', { name: 'Done' })).toBeVisible();
+  });
+
+  it('plan 133: Send in the question sends the notice once, even for a menu sent before', async () => {
+    api.publish.mockResolvedValue({ ok: true, data: { menu: view('live') } });
+    api.status.mockResolvedValue({
+      ok: true,
+      data: notice({
+        sends: [
+          { sentAt: '2026-10-25T00:00:00Z', reached: 3 },
+          { sentAt: '2026-10-25T01:00:00Z', reached: 3 },
+        ],
+      }),
+    });
+    api.send.mockResolvedValue({ ok: true, data: notice() });
+    show(view('not_published'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish menu' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Publish menu' }),
+    );
+    const ask = await screen.findByRole('dialog', {
+      name: 'Send a notification to customers who already have the app?',
+    });
+    fireEvent.click(within(ask).getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(api.send).toHaveBeenCalledTimes(1));
+    // Two sends already: the question still sends (it has no "Send again?" step of its own).
+    expect(api.send.mock.calls[0]?.[0]).toBe(true);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', {
+          name: 'Send a notification to customers who already have the app?',
+        }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole('dialog', { name: 'Menu is live ✓' })).toBeVisible();
+  });
+
+  it('plan 133: a failed send shows the error and keeps the question', async () => {
+    api.publish.mockResolvedValue({ ok: true, data: { menu: view('live') } });
+    api.send.mockResolvedValue({ ok: false, error: 'x', status: 500, message: '' });
+    show(view('not_published'));
+    fireEvent.click(screen.getByRole('button', { name: 'Publish menu' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Publish menu' }),
+    );
+    const ask = await screen.findByRole('dialog', {
+      name: 'Send a notification to customers who already have the app?',
+    });
+    fireEvent.click(within(ask).getByRole('button', { name: 'Send' }));
+    expect(await within(ask).findByRole('alert')).toHaveTextContent('Could not send. Try again.');
   });
 
   it('says in plain words when publishing fails', async () => {
@@ -263,6 +327,7 @@ describe('Publish', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'The menu could not be published. Check the connection and try again.',
     );
+    expect(screen.queryByText(/Send a notification to customers/)).not.toBeInTheDocument();
   });
 });
 

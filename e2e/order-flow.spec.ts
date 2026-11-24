@@ -66,8 +66,8 @@ test('an order placed by a customer reaches the seller, who confirms it and mark
     await row.click();
     await expect(sellerPage).toHaveURL(/\/seller\/orders\/[A-Z0-9]+\?q=/);
     await expect(sellerPage.getByText(note)).toBeVisible();
-    await expect(sellerPage.getByText(/Tilapia pesmol · 1 portion/)).toBeVisible();
-    await expect(sellerPage.getByText(/Thin battered tempeh · 4 pieces/)).toBeVisible();
+    await expect(sellerPage.getByText(/Tilapia pesmol · 1\sportion/)).toBeVisible();
+    await expect(sellerPage.getByText(/Thin battered tempeh · 4\spieces/)).toBeVisible();
 
     await sellerPage.getByRole('button', { name: 'Confirm order', exact: true }).click();
     // A first-time phone asks whether to link a saved customer (plans 071, 106): close the window.

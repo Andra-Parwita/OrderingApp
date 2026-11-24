@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { formatCookingDate } from '../../../shared/dates';
@@ -6,6 +6,11 @@ import type { Language } from '../../../shared/domain';
 import { Button, Icon, WarningDialog } from '../../ui';
 import type { MenuSlots } from './slots';
 import { MENU_NS } from './i18n/register';
+import { NoticeAsk } from './NoticeAsk';
+import { useLeaveGuard } from './phone/leaveGuard';
+import { ShareLayer } from './phone/ShareLayer';
+import { usePhone } from './phone/usePhone';
+import { useMenuNotice } from './NotifyBell';
 import { Dialog } from './PublishDialog';
 import { ErrorText, Muted, useOpWatch, useRunOp } from './menuShared';
 import type { MenuData } from './menuSlice';
@@ -28,6 +33,17 @@ const Wrap = styled.div`
     gap: ${({ theme }) => theme.spacing.sm};
     margin: 0;
     font-size: 1.375rem;
+  }
+  @media (max-width: 37.4375rem) {
+    padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.size.pagePadPhone}px;
+
+    h2 {
+      font-size: 1.25rem;
+    }
+    /* The main button is the width of the page. */
+    > div > button {
+      width: 100%;
+    }
   }
 `;
 
@@ -78,6 +94,23 @@ const Choice = styled.label<{ $on: boolean }>`
   }
 `;
 
+/** Plan 133: the question after Publish; it has its own send state so it only loads when asked. */
+function AskAfterPublish({
+  layout,
+  onClose,
+}: Readonly<{ layout: 'sheet' | 'box'; onClose: () => void }>) {
+  const { saving, failed, send, needsAgain } = useMenuNotice();
+  return (
+    <NoticeAsk
+      layout={layout}
+      saving={saving}
+      failed={failed}
+      onSend={() => void send(needsAgain).then((sent) => sent && onClose())}
+      onClose={onClose}
+    />
+  );
+}
+
 export function PublishStep({
   data,
   lang,
@@ -95,20 +128,46 @@ export function PublishStep({
   const [failed, setFailed] = useState(false);
   const [paused, setPaused] = useState(false);
   const [choosing, setChoosing] = useState(false);
+  const [askNotice, setAskNotice] = useState(false);
+  // Plan 134 (phone): after the question the phone's Share menu opens; closing it goes to Orders.
+  const phone = usePhone();
+  const [sharing, setSharing] = useState(false);
   const name = useId();
   const { menu, dishes } = data.view;
+  // Android Back from the live page goes to Orders, not back to a step of a menu that is now live.
+  // While the notice question is up, Back only closes the question (it counts as "Not now").
+  useLeaveGuard(phone && menu.state === 'live', () =>
+    askNotice ? setAskNotice(false) : onGoToOrders(),
+  );
   useOpWatch(['publish'], {
     onDone: () => {
       setFailed(false);
       setAsking(false);
+      setAskNotice(true);
     },
     onFail: (result) => {
       if (result.warning?.code === 'no_dishes') setAsking(true);
       else setFailed(true);
     },
   });
+  // Plan 133: the question shows over whichever page is up (the menu turns live a moment later).
+  const withAsk = (page: ReactNode) => (
+    <>
+      {page}
+      {askNotice ? (
+        <AskAfterPublish
+          layout={phone ? 'sheet' : 'box'}
+          onClose={() => {
+            setAskNotice(false);
+            setSharing(true);
+          }}
+        />
+      ) : null}
+      {phone && sharing && !askNotice ? <ShareLayer onClose={onGoToOrders} /> : null}
+    </>
+  );
   if (menu.state === 'live') {
-    return (
+    return withAsk(
       <Wrap>
         <h2>
           <Icon name="check" />
@@ -116,17 +175,30 @@ export function PublishStep({
         </h2>
         <Muted>{t('publish.liveHelp', { date: formatCookingDate(menu.cookingDate, lang) })}</Muted>
         {menu.takingOrders ? null : <Notice role="status">{t('publish.pausedNotice')}</Notice>}
-        {renderShare({ onGoToOrders })}
-      </Wrap>
+        {phone ? (
+          <>
+            <div>
+              <Button variant="primary" onClick={() => setSharing(true)}>
+                {t('publish.shareMenu')}
+              </Button>
+            </div>
+            <div>
+              <Button onClick={onGoToOrders}>{t('publish.toOrders')}</Button>
+            </div>
+          </>
+        ) : (
+          renderShare({ onGoToOrders })
+        )}
+      </Wrap>,
     );
   }
   const count = worries(data.view, new Date()).length;
-  return (
+  return withAsk(
     <Wrap>
       <h2>{t('publish.ready')}</h2>
       <Muted>
         {t('publish.summary', {
-          dishes: dishes.length,
+          count: dishes.length,
           date: formatCookingDate(menu.cookingDate, lang),
         })}
       </Muted>
@@ -194,6 +266,6 @@ export function PublishStep({
           {t('publish.emptyBody')}
         </WarningDialog>
       ) : null}
-    </Wrap>
+    </Wrap>,
   );
 }

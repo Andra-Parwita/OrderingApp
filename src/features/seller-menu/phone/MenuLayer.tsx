@@ -14,7 +14,7 @@ import { LayerBar, LayerBody, LayerShell } from '../../../components/layer/Layer
 import { PHONE_MENU_NS } from './i18n/register';
 import { useDeliveryDaysDraft } from './useDeliveryDaysDraft';
 
-// Plan 124 (Q3 A): the read-only menu, opened from the Menu card. No editing; that stays on the tablet.
+// Plan 124 (Q3 A): the read-only menu, opened from the Menu card. Plan 134: its pinned Edit menu button (owners) opens the edit sheet.
 
 const DeliveryDays = styled.p`
   margin: ${({ theme }) => theme.spacing.md} 0 0;
@@ -65,7 +65,10 @@ const List = styled.ul`
   list-style: none;
 `;
 const Foot = styled.footer`
+  display: flex;
   flex: none;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadPhone}px;
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 `;
@@ -104,6 +107,7 @@ export function MenuLayer({
   onClose,
   onShare,
   onNotice,
+  onEdit,
 }: Readonly<{
   view: MenuView;
   state: CardState;
@@ -115,6 +119,8 @@ export function MenuLayer({
   onClose: () => void;
   onShare: (() => void) | undefined;
   onNotice: (() => void) | undefined;
+  /** Plan 134: opens the edit sheet (owners only). */
+  onEdit?: (() => void) | undefined;
 }>) {
   const { t } = useTranslation(PHONE_MENU_NS);
   const title = t('menu.title', { date: formatDay(view.menu.cookingDate, lang) });
@@ -162,9 +168,15 @@ export function MenuLayer({
       ) : (
         <>
           {editable && draft.saved ? <DeliveryDaysSaved /> : null}
-          {onShare ? (
+          {onShare || (editable && onEdit) ? (
             <Foot>
-              <ShareButtons onShare={onShare} onNotice={onNotice} />
+              {editable && onEdit ? (
+                <Button variant="secondary" fullWidth onClick={onEdit}>
+                  <Icon name="pencil" />
+                  {t('menu.edit')}
+                </Button>
+              ) : null}
+              {onShare ? <ShareButtons onShare={onShare} onNotice={onNotice} /> : null}
             </Foot>
           ) : null}
         </>

@@ -27,6 +27,8 @@ import {
 } from './menuShared';
 import type { MenuData } from './menuSlice';
 import { matchPastDishes } from './pastMenus';
+import { PhoneDishes, type OnMenuRow } from './phone/PhoneDishes';
+import { usePhone } from './phone/usePhone';
 import { useMarks, useSession } from './sessionIntercept';
 import { ChangeMark } from './SessionMarks';
 import { useSold } from './useSold';
@@ -120,6 +122,10 @@ export function DishesStep({
   const [naming, setNaming] = useState(false);
   const [setName, setSetName] = useState('');
   const [note, setNote] = useState<string | null>(null);
+  // Plan 134 (phone): the search, and the dish just made (it offers "Add a picture").
+  const phone = usePhone();
+  const [search, setSearch] = useState('');
+  const [madeId, setMadeId] = useState<string | null>(null);
   const [removing, setRemoving] = useState<{
     id: string;
     dishId: string;
@@ -179,6 +185,11 @@ export function DishesStep({
       setNote(result.code === 'limit_reached' ? t('dishes.setsFull') : t('genericError')),
   });
 
+  useOpWatch(['createDish'], {
+    onDone: (result) => setMadeId(result.dishId ?? null),
+  });
+  const made = madeId ? data.dishes.find((dish) => dish.id === madeId) : undefined;
+
   const toggle = (dish: Dish) => {
     saver.update((previous) => {
       const base = previous ?? serverIds;
@@ -205,6 +216,106 @@ export function DishesStep({
     { value: 'sets' as const, label: `${t('dishes.sets')} ${String(data.sets.length)}` },
     { value: 'past' as const, label: `${t('dishes.past')} ${String(data.past.length)}` },
   ];
+
+  const dialogs = (
+    <>
+      {naming ? (
+        <AskDialog
+          title={t('dishes.saveSet')}
+          confirmLabel={t('dishes.saveSetGo')}
+          cancelLabel={t('cancel')}
+          disabled={setName.trim() === ''}
+          onCancel={() => setNaming(false)}
+          onConfirm={() => {
+            setNaming(false);
+            run({ kind: 'createSet', name: setName.trim(), dishIds: onMenuIds });
+          }}
+        >
+          <TextField
+            label={t('dishes.setName')}
+            value={setName}
+            maxLength={40}
+            onChange={(event) => setSetName(event.target.value)}
+            data-autofocus
+          />
+          {data.sets.length >= 5 ? <ErrorText>{t('dishes.setsFull')}</ErrorText> : null}
+        </AskDialog>
+      ) : null}
+      {removing ? (
+        <WarningDialog
+          title={t('dishes.removeTitle', { name: removing.name })}
+          cancelLabel={t('dishes.keep')}
+          continueLabel={t('dishes.removeAnyway')}
+          onCancel={() => setRemoving(null)}
+          onContinue={() => {
+            const target = removing;
+            setRemoving(null);
+            dropItem(target.id, target.dishId);
+          }}
+        >
+          {t('dishes.removeBody', { count: removing.sold, name: removing.name })}
+        </WarningDialog>
+      ) : null}
+    </>
+  );
+  const markOf = (dish: { dishId: string | undefined; key: string }) =>
+    !marks
+      ? null
+      : dish.dishId && marks.added.includes(dish.dishId)
+        ? ('added' as const)
+        : marks.edited[dish.key]
+          ? ('edited' as const)
+          : null;
+
+  if (phone) {
+    const rows: ReadonlyArray<OnMenuRow> = onMenu.map((dish) => ({
+      ...dish,
+      mark: markOf(dish),
+    }));
+    return (
+      <>
+        <PhoneDishes
+          data={data}
+          lang={lang}
+          source={source}
+          onSource={setSource}
+          search={search}
+          onSearch={setSearch}
+          onMenu={rows}
+          onMenuIds={onMenuIds}
+          full={full}
+          busy={busy}
+          locked={pending !== null}
+          status={<AutoSaveStatus state={saver.state} onRetry={saver.retry} max={MAX_MENU_ITEMS} />}
+          note={
+            <>
+              {full ? <Muted>{t('dishes.full', { max: MAX_MENU_ITEMS })}</Muted> : null}
+              {note ? <Muted role="status">{note}</Muted> : null}
+              {saver.state.removedWithOrders > 0 ? (
+                <Muted role="status">
+                  {t('dishes.removedWithOrders', { count: saver.state.removedWithOrders })}
+                </Muted>
+              ) : null}
+            </>
+          }
+          added={
+            made && !made.pictureRef ? { dishId: made.id, name: pickText(made.name, lang) } : null
+          }
+          onToggle={toggle}
+          onRemove={removeItem}
+          onEdit={onEdit}
+          onNewDish={onNewDish}
+          onUseSet={(setId) => run({ kind: 'useSet', setId })}
+          onUsePast={(weekId) => run({ kind: 'usePast', weekId })}
+          onSaveSet={() => {
+            setSetName('');
+            setNaming(true);
+          }}
+        />
+        {dialogs}
+      </>
+    );
+  }
 
   return (
     <Layout>
@@ -297,13 +408,7 @@ export function DishesStep({
         <List>
           {onMenu.map((dish) => {
             const name = pickText(dish.name, lang);
-            const mark = !marks
-              ? null
-              : dish.dishId && marks.added.includes(dish.dishId)
-                ? 'added'
-                : marks.edited[dish.key]
-                  ? 'edited'
-                  : null;
+            const mark = markOf(dish);
             return (
               <OnMenu key={dish.key} $changed={mark !== null}>
                 <span>
@@ -346,43 +451,7 @@ export function DishesStep({
           </LinkButton>
         </Foot>
       </Right>
-      {naming ? (
-        <AskDialog
-          title={t('dishes.saveSet')}
-          confirmLabel={t('dishes.saveSetGo')}
-          cancelLabel={t('cancel')}
-          disabled={setName.trim() === ''}
-          onCancel={() => setNaming(false)}
-          onConfirm={() => {
-            setNaming(false);
-            run({ kind: 'createSet', name: setName.trim(), dishIds: onMenuIds });
-          }}
-        >
-          <TextField
-            label={t('dishes.setName')}
-            value={setName}
-            maxLength={40}
-            onChange={(event) => setSetName(event.target.value)}
-            data-autofocus
-          />
-          {data.sets.length >= 5 ? <ErrorText>{t('dishes.setsFull')}</ErrorText> : null}
-        </AskDialog>
-      ) : null}
-      {removing ? (
-        <WarningDialog
-          title={t('dishes.removeTitle', { name: removing.name })}
-          cancelLabel={t('dishes.keep')}
-          continueLabel={t('dishes.removeAnyway')}
-          onCancel={() => setRemoving(null)}
-          onContinue={() => {
-            const target = removing;
-            setRemoving(null);
-            dropItem(target.id, target.dishId);
-          }}
-        >
-          {t('dishes.removeBody', { count: removing.sold, name: removing.name })}
-        </WarningDialog>
-      ) : null}
+      {dialogs}
     </Layout>
   );
 }

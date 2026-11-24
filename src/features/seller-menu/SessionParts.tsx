@@ -28,6 +28,7 @@ const Spinner = styled.i`
 const Foot = styled.footer`
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
@@ -39,16 +40,22 @@ const Foot = styled.footer`
     white-space: nowrap;
   }
 `;
+/** Discard and Save stay together at the right; with no room beside the status, they drop to their own line. */
+const Actions = styled.div`
+  display: flex;
+  flex: none;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-left: auto;
+`;
 const Count = styled.p<{ $error?: boolean }>`
   display: flex;
-  flex: 1;
+  flex: 1 1 9rem;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   min-width: 0;
   margin: 0;
   color: ${({ $error, theme }) => ($error ? theme.c.danger : theme.c.text)};
   font-weight: 700;
-  white-space: nowrap;
 
   &::before {
     content: '';
@@ -123,24 +130,26 @@ export function SessionFooter({
             </>
           )}
         </Count>
-        <Button onClick={onDiscard} disabled={saving || saved || count === 0}>
-          {t('session.discard')}
-        </Button>
-        <Button
-          variant={failed ? 'destructive' : 'primary'}
-          onClick={onSave}
-          disabled={saving || saved || (count === 0 && !failed)}
-        >
-          {saving ? (
-            <SavingLabel />
-          ) : saved ? (
-            t('session.saved')
-          ) : failed ? (
-            t('session.retry')
-          ) : (
-            t('session.save')
-          )}
-        </Button>
+        <Actions>
+          <Button onClick={onDiscard} disabled={saving || saved || count === 0}>
+            {t('session.discard')}
+          </Button>
+          <Button
+            variant={failed ? 'destructive' : 'primary'}
+            onClick={onSave}
+            disabled={saving || saved || (count === 0 && !failed)}
+          >
+            {saving ? (
+              <SavingLabel />
+            ) : saved ? (
+              t('session.saved')
+            ) : failed ? (
+              t('session.retry')
+            ) : (
+              t('session.save')
+            )}
+          </Button>
+        </Actions>
       </Foot>
     </>
   );

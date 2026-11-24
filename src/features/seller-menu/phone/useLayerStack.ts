@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // pops it and a button closes it with `history.back()`: both paths go through the one popstate
 // listener, and no stale entry is left behind. Opening is always on a tap, so Chrome keeps the entry.
 
-export type Layer = 'menu' | 'share' | 'publish' | 'live' | 'notice';
+export type Layer = 'menu' | 'share' | 'publish' | 'live' | 'notice' | 'ask' | 'onMenu' | 'newMenu';
 
 type Marked = { phoneDepth?: number } | null;
 const depthNow = (): number => (window.history.state as Marked)?.phoneDepth ?? 0;
@@ -14,7 +14,10 @@ const marked = (depth: number) => ({
   phoneDepth: depth,
 });
 
-export function useLayerStack() {
+const WIZARD = /^\/seller\/menu\/(make|edit)\//;
+
+/** `belowWizard`: these layers belong to the Orders screen, which the menu wizard opens over. */
+export function useLayerStack({ belowWizard = false }: Readonly<{ belowWizard?: boolean }> = {}) {
   const [stack, setStack] = useState<ReadonlyArray<Layer>>([]);
   // The same stack, readable right away inside an event handler.
   const now = useRef<ReadonlyArray<Layer>>([]);
@@ -28,6 +31,8 @@ export function useLayerStack() {
     const stale = depthNow();
     if (stale > 0) window.history.go(-stale);
     const onPop = () => {
+      // Plan 134: the menu wizard and the edit sheet sit above the Orders layers; their entries are not these.
+      if (belowWizard && WIZARD.test(window.location.pathname)) return;
       const depth = depthNow();
       if (now.current.length > depth) apply(now.current.slice(0, depth));
     };
@@ -37,7 +42,7 @@ export function useLayerStack() {
       // Leaving the screen with layers open: do not leave their entries behind.
       if (now.current.length > 0) window.history.go(-now.current.length);
     };
-  }, [apply]);
+  }, [apply, belowWizard]);
 
   /** Opens a layer on top (a new history entry). */
   const push = useCallback(

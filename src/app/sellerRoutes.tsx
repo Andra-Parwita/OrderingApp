@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  type ComponentProps,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Navigate,
@@ -161,8 +168,14 @@ function SellerListRoute({
   );
 }
 
-/** Plan 124: the owner's Menu card on the phone's Orders list (not given on a tablet or to a chef or helper). */
-const PHONE_MENU_CARD = { Provider: PhoneMenuProvider, Card: PhoneMenuCard };
+/**
+ * Plan 124: the owner's Menu card on the phone's Orders list (not given on a tablet or to a chef or
+ * helper). Plan 134: it also starts a menu, with the app's New menu dialog.
+ */
+function PhoneMenuProviderWithNewMenu(props: ComponentProps<typeof PhoneMenuProvider>) {
+  return <PhoneMenuProvider {...props} newMenu={MENU_SLOTS.newMenu} />;
+}
+const PHONE_MENU_CARD = { Provider: PhoneMenuProviderWithNewMenu, Card: PhoneMenuCard };
 
 function DeliveriesRoute() {
   const navigate = useNavigate();
@@ -402,11 +415,22 @@ export const MENU_BACKGROUND: Location = {
   key: 'menu',
 };
 
+/** Plan 134: the same for a phone, which has no Menu screen: the wizard opens over Orders. */
+export const ORDERS_BACKGROUND: Location = {
+  pathname: '/seller/orders',
+  search: '',
+  hash: '',
+  state: null,
+  key: 'orders',
+};
+
 function WizardLayerContent({ mode, step }: Readonly<{ mode: 'make' | 'edit'; step: string }>) {
   const { t } = useTranslation('sellerMenu');
   const close = useCloseWizard();
-  // Plan 103 fix 8: a live menu's edit session is a sheet with its own header and footer.
-  if (mode === 'edit') return <MakeMenuRoute mode={mode} step={step} />;
+  const phone = !useMediaQuery(DESKTOP_QUERY);
+  // Plan 103 fix 8: a live menu's edit session is a sheet with its own header and footer. Plan 134:
+  // the phone's wizard is its own full-screen layer (Close, step bar and Back / Next included).
+  if (mode === 'edit' || phone) return <MakeMenuRoute mode={mode} step={step} />;
   return (
     <FullLayer label={t('make.layer')} closeLabel={t('close')} onClose={close}>
       <MakeMenuRoute mode={mode} step={step} />
@@ -417,7 +441,6 @@ function WizardLayerContent({ mode, step }: Readonly<{ mode: 'make' | 'edit'; st
 /** The wizard layer, on a tablet or computer: rendered inside the seller guard, over the background. */
 function WizardLayerHost() {
   const real = useContext(RealLocation);
-  const tablet = useMediaQuery(DESKTOP_QUERY);
   const navigationType = useNavigationType();
   if (!real || !isWizardPath(real.pathname)) return null;
   const match =
@@ -425,8 +448,7 @@ function WizardLayerHost() {
     matchPath('/seller/menu/edit/:step', real.pathname);
   if (!match) return null;
   const mode = real.pathname.startsWith('/seller/menu/make/') ? 'make' : 'edit';
-  // The wizard is for a tablet; the edit sheet is also a phone's full screen.
-  if (!tablet && mode === 'make') return null;
+  // Plan 134: the wizard is for the owner on a phone too (a chef has no menu to make there).
   return (
     // The layer reads the real address (and its state), not the background the shell is showing.
     <LocationContext.Provider value={{ location: real, navigationType }}>

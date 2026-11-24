@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { FinishedHome } from './HomeStates';
+import { PhoneMoreNote } from './contacts/PhoneMoreParts';
+import { FinishedHome, NoMenuRunning } from './HomeStates';
 import { createTestStore, makeMenuView, renderWithStore, seedMenu, setupI18n } from './testSupport';
 
 describe('FinishedHome with no live orders loaded', () => {
@@ -35,5 +36,42 @@ describe('FinishedHome with no live orders loaded', () => {
     );
     expect(screen.getAllByText('$1,120.00').length).toBeGreaterThan(0);
     expect(screen.queryByText(/not paid · 0 orders/)).not.toBeInTheDocument();
+  });
+});
+
+// Plan 134: on the phone the Menu card has "New menu", so the old "Make a menu" button is not shown
+// next to it (one button for the same thing); without the card it still points to the Menu.
+describe('Make a menu on the phone', () => {
+  beforeAll(setupI18n);
+  const finished = (showMake?: boolean) => {
+    const store = createTestStore({ saga: false });
+    seedMenu(store, makeMenuView('finished'), []);
+    renderWithStore(
+      <FinishedHome
+        view={makeMenuView('finished')}
+        showAll={false}
+        onToggleAll={() => undefined}
+        phone={true}
+        {...(showMake === undefined ? {} : { showMake })}
+      />,
+      store,
+    );
+  };
+
+  it('is hidden when the card offers New menu', () => {
+    finished(false);
+    expect(screen.queryByRole('button', { name: 'Make a menu' })).not.toBeInTheDocument();
+  });
+  it('stays when there is no card', () => {
+    finished();
+    expect(screen.getByRole('button', { name: 'Make a menu' })).toBeVisible();
+  });
+  it('is hidden in "no menu running" too, and the More note says menus work here', () => {
+    const store = createTestStore({ saga: false });
+    renderWithStore(<NoMenuRunning phone={true} showMake={false} />, store);
+    expect(screen.queryByRole('button', { name: 'Make a menu' })).not.toBeInTheDocument();
+    renderWithStore(<PhoneMoreNote />, store);
+    expect(screen.getByText(/making a menu \(from Orders\) work on this phone/)).toBeVisible();
+    expect(screen.queryByText(/Making menus/)).not.toBeInTheDocument();
   });
 });

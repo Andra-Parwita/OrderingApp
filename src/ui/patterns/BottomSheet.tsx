@@ -13,6 +13,8 @@ import { OVERLAY_Z, useModalFocus } from './modal';
 export type BottomSheetProps = Readonly<{
   title: string;
   onClose: () => void;
+  /** A sheet that is a question with its own buttons: no Close link (swipe, back and a tap outside still close it). */
+  hideClose?: boolean;
   /** Rows of 48 px: use `SheetRow` for each. */
   children: ReactNode;
 }>;
@@ -148,7 +150,7 @@ type Drag = {
  * (from the handle or header, or from the content when it is scrolled to the top); Close and the
  * backdrop tap stay, so the swipe is never the only way.
  */
-export function BottomSheet({ title, onClose, children }: BottomSheetProps) {
+export function BottomSheet({ title, onClose, hideClose = false, children }: BottomSheetProps) {
   const { t } = useTranslation();
   const titleId = useId();
   const { box, onKeyDown } = useModalFocus<HTMLDivElement>(onClose);
@@ -237,9 +239,11 @@ export function BottomSheet({ title, onClose, children }: BottomSheetProps) {
           <Handle aria-hidden="true" />
           <Head>
             <Title id={titleId}>{title}</Title>
-            <Button variant="quiet" onClick={onClose} data-autofocus>
-              {t('patterns.close')}
-            </Button>
+            {hideClose ? null : (
+              <Button variant="quiet" onClick={onClose} data-autofocus>
+                {t('patterns.close')}
+              </Button>
+            )}
           </Head>
         </div>
         {children}

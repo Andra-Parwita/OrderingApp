@@ -16,7 +16,12 @@
     "publish": "Publish menu",
     "share": "Share menu",
     "notice": "🔔 Notice",
-    "finishOnTablet": "Finish on the tablet: {{missing}}",
+    "noMenu": "No menu open",
+    "noMenuHint": "Make the next menu here or on the tablet.",
+    "newMenu": "New menu",
+    "continue": "Continue",
+    "stillNeeded": "Still needed: {{missing}}",
+    "startFailed": "The menu could not be started. Try again.",
     "missing": {
       "noDishes": "no dishes",
       "noPlace": "no pickup place or delivery",
@@ -71,6 +76,7 @@
     "both": "Both"
   },
   "menu": {
+    "edit": "Edit menu",
     "back": "Orders",
     "backLabel": "Back to Orders",
     "title": "Menu · {{date}}",
@@ -83,7 +89,7 @@
     "deliveryDays": "Delivery days: {{days}}"
   },
   "days": {
-    "off": "Delivery is off for this menu. Turn it on on the tablet.",
+    "off": "Delivery is off for this menu. Turn it on in Edit menu, under Details.",
     "keep": "Orders already placed keep their day.",
     "discard": "Discard",
     "save": "Save delivery days",

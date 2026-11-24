@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
-import type { MenuNoticeStatus } from '../../../shared/menuNoticeContract';
+import { MENU_NOTICE_FREE_SENDS, type MenuNoticeStatus } from '../../../shared/menuNoticeContract';
 import { fetchMenuNoticeStatus, sendMenuNotice } from '../../api/menuNotices';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Icon, IconButton, Tooltip } from '../../ui';
 import { MENU_NS } from './i18n/register';
 import { useLang } from './menuShared';
+import { onWizardClosed } from './phone/wizardNav';
 import { NotifySheet } from './NotifySheet';
 import { sentWhen } from './notifyText';
 
@@ -44,9 +45,11 @@ export function useMenuNotice() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+  // Plan 134: a menu published (or saved) in the phone wizard changes whether a notice can be sent.
+  useEffect(() => onWizardClosed(() => void load()), [load]);
 
   const send = useCallback(
-    async (again: boolean) => {
+    async (again: boolean): Promise<boolean> => {
       setSaving(true);
       setFailed(false);
       const result = await sendMenuNotice(again, currentSellerSlug());
@@ -54,13 +57,15 @@ export function useMenuNotice() {
       if (result.ok) {
         setStatus(result.data);
         setOpen(false);
+        return true;
       } else if (result.status === 409) {
         // Closed meanwhile, or sent from another device: show what is true now.
         setOpen(false);
         await load();
-      } else {
-        setFailed(true);
+        return true;
       }
+      setFailed(true);
+      return false;
     },
     [load],
   );
@@ -69,7 +74,10 @@ export function useMenuNotice() {
     setOpen(true);
   }, []);
   const close = useCallback(() => setOpen(false), []);
-  return { status, open, saving, failed, send, show, close, reload: load };
+  // Plan 133: the question after Publish sends without the "Send again?" step, so it says when the
+  // server wants `again` (this menu was already sent MENU_NOTICE_FREE_SENDS times).
+  const needsAgain = (status?.sends.length ?? 0) >= MENU_NOTICE_FREE_SENDS;
+  return { status, open, saving, failed, send, show, close, reload: load, needsAgain };
 }
 
 export function NotifyBell({ now }: Readonly<{ now?: Date }>) {

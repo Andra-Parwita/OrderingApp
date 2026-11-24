@@ -32,6 +32,8 @@ import { PlaceEditor, TIME, type PlaceDraft } from './PlaceEditor';
 import { DeliveryDaysField, type DaysChange } from './DeliveryDaysField';
 import { buildDelivery, deliveryForMovedDay, lastOpenDay } from './deliveryDaysModel';
 import { KeepOpenRow } from './KeepOpenRow';
+import { PhonePlaceLayer } from './phone/PhonePlaceLayer';
+import { usePhone } from './phone/usePhone';
 
 // Step 2 and the Details tab: when, delivery, pickup places and the menu picture. Everything is
 // saved as it changes, so there is no Save button (and no Back that loses input).
@@ -47,6 +49,18 @@ const HowRow = styled.div`
   h2 {
     margin: 0;
     font-size: 1.0625rem;
+  }
+  @media (max-width: 37.4375rem) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: ${({ theme }) => theme.spacing.sm};
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadPhone}px;
+
+    /* The three choices share the width equally. */
+    [role='radiogroup'] {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 `;
 // Two columns (When + delivery | Pickup places) and the picture as a full-width row under them; one
@@ -105,6 +119,9 @@ const Col = styled.section`
     margin: 0;
     font-size: 1.0625rem;
   }
+  @media (max-width: 37.4375rem) {
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadPhone}px;
+  }
 `;
 /** The menu picture: a full-width row under the columns, its content kept to a sensible width. */
 const PictureCol = styled(Col)`
@@ -125,6 +142,11 @@ const Two = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
+
+  /* A phone: the date and the time side by side while they fit, one per line at a larger text size. */
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: repeat(auto-fit, minmax(min(10.5rem, 100%), 1fr));
+  }
 `;
 const Divider = styled.hr`
   width: 100%;
@@ -155,6 +177,22 @@ const PlaceRow = styled.div`
   }
   > span:nth-child(3) {
     white-space: nowrap;
+  }
+  /* A phone: the time moves under the name, so the name keeps the width. */
+  @media (max-width: 37.4375rem) {
+    grid-template-columns: 2rem minmax(0, 1fr) 2.75rem;
+    row-gap: ${({ theme }) => theme.spacing.xs};
+
+    > span:nth-child(3) {
+      grid-column: 2;
+      grid-row: 2;
+      color: ${({ theme }) => theme.c.muted};
+      font-size: 0.875rem;
+    }
+    > button {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+    }
   }
 `;
 const Tick = styled.input`
@@ -201,6 +239,12 @@ const Actions = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (max-width: 37.4375rem) {
+    > button {
+      flex: 1 1 8rem;
+    }
+  }
 `;
 const Hidden = styled.input`
   display: none;
@@ -255,6 +299,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
   const { t } = useTranslation(MENU_NS);
   const theme = useTheme();
   const { run, busy } = useRunOp();
+  const phone = usePhone();
   const { menu } = data.view;
   const cutoff = splitInstant(menu.cutoffAt, deviceZone());
   // Plan 061: the free text survives a reload until it is saved (the note on blur, a place on its Save).
@@ -284,6 +329,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
   const [pictureError, setPictureError] = useState<string | null>(null);
   const [placeError, setPlaceError] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const days = daysBetween(cutoff.date, menu.cookingDate);
   // Plan 126: the delivery days and the finish time live in deliveryDaysModel.ts.
   const keepOpen = menu.finishExtraDay === true;
@@ -407,6 +453,25 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
     }
   };
 
+  const placeOf = (id: string | null) => data.places.find((place) => place.id === id) ?? null;
+  const deleteDialog = deleting ? (
+    <WarningDialog
+      title={t('details.deleteTitle', { name: deleting.place })}
+      cancelLabel={t('details.keepPlace')}
+      continueLabel={t('details.deleteAnyway')}
+      onCancel={() => setDeleting(null)}
+      onContinue={() => {
+        const place = deleting;
+        setDeleting(null);
+        run({ kind: 'deletePlace', id: place.id });
+      }}
+    >
+      {uses.some((use) => use.placeId === deleting.id)
+        ? t('details.deleteUsed')
+        : t('details.deleteBody')}
+    </WarningDialog>
+  ) : null;
+
   return (
     <>
       <HowRow>
@@ -511,7 +576,9 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
                     />
                     <span>
                       <strong>{place.place}</strong>
-                      <Muted as="span">{pickText(place.directions, lang)}</Muted>
+                      {pickText(place.directions, lang) ? (
+                        <Muted as="span">{pickText(place.directions, lang)}</Muted>
+                      ) : null}
                     </span>
                     <span>{formatWindow(stored.start, stored.end, lang, menu.cookingDate)}</span>
                     <Pencil
@@ -547,7 +614,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
                       </Override>
                     ) : null}
                   </PlaceRow>
-                  {editing?.id === place.id ? (
+                  {!phone && editing?.id === place.id ? (
                     <PlaceEditor
                       draft={editing}
                       onChange={setEditing}
@@ -559,8 +626,8 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
                 </div>
               );
             })}
-            {editing ? <DraftNotice draft={placeDraft} /> : null}
-            {editing && editing.id === null ? (
+            {editing && !phone ? <DraftNotice draft={placeDraft} /> : null}
+            {!phone && editing && editing.id === null ? (
               <PlaceEditor
                 draft={editing}
                 onChange={setEditing}
@@ -582,6 +649,17 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
             </Head>
             {placeError ? <ErrorText role="alert">{placeError}</ErrorText> : null}
             <Muted>{t('details.placesFoot')}</Muted>
+            {phone && editing ? (
+              <PhonePlaceLayer
+                draft={editing}
+                onChange={setEditing}
+                onCancel={() => setEditing(null)}
+                onSave={() => savePlace(editing)}
+                onDelete={editing.id === null ? undefined : () => setDeleting(placeOf(editing.id))}
+                notice={<DraftNotice draft={placeDraft} />}
+                overlay={deleteDialog}
+              />
+            ) : null}
           </Col>
         )}
         {how === 'pickup' ? null : (
@@ -623,10 +701,32 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
             aria-label={t('details.picture.add')}
             onChange={(event) => void onPicture(event)}
           />
+          {phone ? (
+            <Hidden
+              ref={camera}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              aria-label={t('dish.picture.take')}
+              onChange={(event) => void onPicture(event)}
+            />
+          ) : null}
           <Actions>
-            <Button disabled={busy} onClick={() => file.current?.click()}>
-              {menu.pictureRef ? t('details.picture.replace') : t('details.picture.add')}
-            </Button>
+            {phone ? (
+              <>
+                <Button disabled={busy} onClick={() => camera.current?.click()}>
+                  <Icon name="camera" />
+                  {t('dish.picture.take')}
+                </Button>
+                <Button disabled={busy} onClick={() => file.current?.click()}>
+                  {t('dish.picture.choose')}
+                </Button>
+              </>
+            ) : (
+              <Button disabled={busy} onClick={() => file.current?.click()}>
+                {menu.pictureRef ? t('details.picture.replace') : t('details.picture.add')}
+              </Button>
+            )}
             {menu.pictureRef ? (
               <Button
                 variant="quiet"
@@ -683,23 +783,7 @@ export function DetailsStep({ data, lang }: Readonly<{ data: MenuData; lang: Lan
             {t('details.how.removeBody')}
           </WarningDialog>
         ) : null}
-        {deleting ? (
-          <WarningDialog
-            title={t('details.deleteTitle', { name: deleting.place })}
-            cancelLabel={t('details.keepPlace')}
-            continueLabel={t('details.deleteAnyway')}
-            onCancel={() => setDeleting(null)}
-            onContinue={() => {
-              const place = deleting;
-              setDeleting(null);
-              run({ kind: 'deletePlace', id: place.id });
-            }}
-          >
-            {uses.some((use) => use.placeId === deleting.id)
-              ? t('details.deleteUsed')
-              : t('details.deleteBody')}
-          </WarningDialog>
-        ) : null}
+        {phone && editing ? null : deleteDialog}
       </Columns>
     </>
   );

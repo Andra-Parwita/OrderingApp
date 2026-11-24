@@ -8,6 +8,7 @@ import { Icon } from '../../ui';
 import { MENU_NS } from './i18n/register';
 import { GroupLabel, LinkButton, Muted } from './menuShared';
 import type { MenuData } from './menuSlice';
+import { usePhone } from './phone/usePhone';
 import { PhonePreview } from './PhonePreview';
 import type { MenuSlots } from './slots';
 import { PricesTable } from './PricesTable';
@@ -36,6 +37,25 @@ const Left = styled.div`
     margin: 0;
     font-size: 1.125rem;
   }
+  @media (max-width: 37.4375rem) {
+    gap: ${({ theme }) => theme.spacing.xl};
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.size.pagePadPhone}px;
+
+    h2 {
+      font-size: 1rem;
+    }
+  }
+`;
+/** The heading and the prices: a little closer than the blocks of the page on a phone. */
+const DishesBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.lg};
+  min-width: 0;
+
+  @media (max-width: 37.4375rem) {
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `;
 const Right = styled.aside`
   min-width: 0;
@@ -47,6 +67,10 @@ const Head = styled.div`
   align-items: baseline;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: 37.4375rem) {
+    flex-wrap: wrap;
+  }
 `;
 const Summary = styled.dl`
   display: flex;
@@ -63,6 +87,40 @@ const Summary = styled.dl`
     margin: 0 0 0 ${({ theme }) => theme.spacing.xs};
     font-weight: 600;
   }
+  /* A phone: one line per fact, the label on the left and the value beside it. */
+  @media (max-width: 37.4375rem) {
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing.xs};
+    margin-top: ${({ theme }) => theme.spacing.sm};
+
+    > div {
+      display: grid;
+      grid-template-columns: 7rem minmax(0, 1fr);
+      gap: ${({ theme }) => theme.spacing.sm};
+    }
+    dd {
+      margin: 0;
+    }
+  }
+`;
+const Time = styled.span`
+  white-space: nowrap;
+`;
+const Comma = styled.span``;
+const Place = styled.span`
+  @media (max-width: 37.4375rem) {
+    display: block;
+
+    ${Comma} {
+      display: none;
+    }
+  }
+`;
+/** A phone: no side padding, so the link's text lines up with the text beside and above it. */
+const FixLink = styled(LinkButton)`
+  @media (max-width: 37.4375rem) {
+    padding-inline: 0;
+  }
 `;
 const Worry = styled.li`
   display: flex;
@@ -73,13 +131,31 @@ const Worry = styled.li`
   border-radius: ${({ theme }) => theme.size.radiusControl}px;
   background: ${({ theme }) => theme.c.warnTint};
 
-  span {
+  > span {
     display: inline-flex;
     align-items: center;
     gap: ${({ theme }) => theme.spacing.sm};
   }
   svg {
+    flex: none;
     color: ${({ theme }) => theme.c.warn};
+  }
+  /* A phone: the icon, then the text and the link in one column under each other. */
+  @media (max-width: 37.4375rem) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+
+    > span {
+      display: contents;
+    }
+    svg {
+      margin-top: 0.125rem;
+    }
+    ${FixLink} {
+      grid-column: 2;
+      justify-self: start;
+    }
   }
 `;
 const Worries = styled.ul`
@@ -103,86 +179,111 @@ export function CheckStep({
   renderPreview: MenuSlots['preview'];
 }>) {
   const { t } = useTranslation(MENU_NS);
+  const phone = usePhone();
   const { view } = data;
   const { menu } = view;
   const found = useMemo(() => worries(view, new Date()), [view]);
-  const places = view.pickupPoints
-    .map((place) => `${place.place} ${formatWindow(place.window.start, place.window.end, lang)}`)
-    .join(', ');
   const pickup = view.pickupPoints.length > 0;
+  // Each "place time" stays together: a time never splits, and on a phone each place has its own line.
+  const places = view.pickupPoints.map((place, index) => (
+    <Place key={place.place + String(index)}>
+      {place.place} <Time>{formatWindow(place.window.start, place.window.end, lang)}</Time>
+      {index < view.pickupPoints.length - 1 ? <Comma>, </Comma> : null}
+    </Place>
+  ));
   const how = menu.delivery.available
     ? t(pickup ? 'check.pickupOrDelivery' : 'check.deliveryOnly')
     : t(pickup ? 'check.pickupOnly' : 'check.noWay');
+  const dishesBlock = (
+    <DishesBlock>
+      <Head>
+        <h2>
+          {t('check.dishesOn')}{' '}
+          <Muted as="span">
+            {t('live.nOf', {
+              n: view.dishes.filter((dish) => dish.groupId === undefined).length,
+              max: MAX_MENU_ITEMS,
+            })}
+          </Muted>
+        </h2>
+        <FixLink onClick={() => onGo('dishes')}>{t('check.addOrRemove')}</FixLink>
+      </Head>
+      <PricesTable data={data} lang={lang} />
+    </DishesBlock>
+  );
+  const detailsBlock = (
+    <div>
+      <Head>
+        <h2>{t('check.details')}</h2>
+        <FixLink onClick={() => onGo('details')}>{t('check.editDetails')}</FixLink>
+      </Head>
+      <Summary>
+        <div>
+          <dt>{t('check.cookingDay')}</dt>
+          <dd>{formatCookingDate(menu.cookingDate, lang)}</dd>
+        </div>
+        <div>
+          <dt>{t('check.ordersClose')}</dt>
+          <dd>{formatCutoff(menu.cutoffAt, lang)}</dd>
+        </div>
+        <div>
+          <dt>{t('check.how')}</dt>
+          <dd>{how}</dd>
+        </div>
+        {pickup ? (
+          <div>
+            <dt>{t('check.pickup')}</dt>
+            <dd>{places}</dd>
+          </div>
+        ) : null}
+      </Summary>
+    </div>
+  );
+  const worthBlock = (
+    <div>
+      <h2>{t('check.worth')}</h2>
+      {found.length === 0 ? (
+        <Muted role="status">{t('check.allGood')}</Muted>
+      ) : (
+        <Worries>
+          {found.map((worry) => {
+            const fix = worry.fix;
+            return (
+              <Worry key={worry.id}>
+                <span>
+                  <Icon name="warning" />
+                  <span>{t(`worry.${worry.id}`, { count: worry.count ?? 0 })}</span>
+                </span>
+                {fix === 'prices' ? null : (
+                  <FixLink onClick={() => onGo(fix)}>{t(`worry.fix.${worry.id}`)}</FixLink>
+                )}
+              </Worry>
+            );
+          })}
+        </Worries>
+      )}
+      <GroupLabel as="p" style={{ marginTop: '0.5rem' }}>
+        {t('check.neverBlock')}
+      </GroupLabel>
+    </div>
+  );
+  // Plan 134 (phone): one column, "Worth a look" first; the customer-phone preview is left out (the
+  // phone is already that size).
+  if (phone) {
+    return (
+      <Left>
+        {worthBlock}
+        {dishesBlock}
+        {detailsBlock}
+      </Left>
+    );
+  }
   return (
     <Layout>
       <Left>
-        <Head>
-          <h2>
-            {t('check.dishesOn')}{' '}
-            <Muted as="span">
-              {t('live.nOf', {
-                n: view.dishes.filter((dish) => dish.groupId === undefined).length,
-                max: MAX_MENU_ITEMS,
-              })}
-            </Muted>
-          </h2>
-          <LinkButton onClick={() => onGo('dishes')}>{t('check.addOrRemove')}</LinkButton>
-        </Head>
-        <PricesTable data={data} lang={lang} />
-        <div>
-          <Head>
-            <h2>{t('check.details')}</h2>
-            <LinkButton onClick={() => onGo('details')}>{t('check.editDetails')}</LinkButton>
-          </Head>
-          <Summary>
-            <div>
-              <dt>{t('check.cookingDay')}</dt>
-              <dd>{formatCookingDate(menu.cookingDate, lang)}</dd>
-            </div>
-            <div>
-              <dt>{t('check.ordersClose')}</dt>
-              <dd>{formatCutoff(menu.cutoffAt, lang)}</dd>
-            </div>
-            <div>
-              <dt>{t('check.how')}</dt>
-              <dd>{how}</dd>
-            </div>
-            {places ? (
-              <div>
-                <dt>{t('check.pickup')}</dt>
-                <dd>{places}</dd>
-              </div>
-            ) : null}
-          </Summary>
-        </div>
-        <div>
-          <h2>{t('check.worth')}</h2>
-          {found.length === 0 ? (
-            <Muted role="status">{t('check.allGood')}</Muted>
-          ) : (
-            <Worries>
-              {found.map((worry) => {
-                const fix = worry.fix;
-                return (
-                  <Worry key={worry.id}>
-                    <span>
-                      <Icon name="warning" />
-                      {t(`worry.${worry.id}`, { count: worry.count ?? 0 })}
-                    </span>
-                    {fix === 'prices' ? null : (
-                      <LinkButton onClick={() => onGo(fix)}>
-                        {t(`worry.fix.${worry.id}`)}
-                      </LinkButton>
-                    )}
-                  </Worry>
-                );
-              })}
-            </Worries>
-          )}
-          <GroupLabel as="p" style={{ marginTop: '0.5rem' }}>
-            {t('check.neverBlock')}
-          </GroupLabel>
-        </div>
+        {dishesBlock}
+        {detailsBlock}
+        {worthBlock}
       </Left>
       <Right>
         <PhonePreview view={view} render={renderPreview} />

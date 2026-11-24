@@ -36,7 +36,7 @@ test('add a dish, edit its price, change it on the menu, then remove it', async 
     path: `captures/seller-menu-dishes-${testInfo.project.name}.png`,
     fullPage: true,
   });
-  await page.getByRole('button', { name: 'New dish' }).click();
+  await page.getByRole('button', { name: 'New dish', exact: true }).click();
   const editor = page.getByRole('dialog', { name: 'New dish' });
   await editor.getByLabel('Name (English)').fill(name);
   await editor.getByLabel('Price (AUD)').fill('10,50');

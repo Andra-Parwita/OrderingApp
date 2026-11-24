@@ -67,6 +67,10 @@ async function phone(browser: Browser, cfg: (typeof CONFIGS)[number]): Promise<P
   });
   const page = await context.newPage();
   await page.addInitScript((slug) => localStorage.setItem('devSeller', slug), SELLER);
+  // The "put it on your home screen" card (plan 054) is not what this spec is about; at 360x780 and 125% text it pushes the Menu card under the dev bar.
+  await page.addInitScript(() =>
+    localStorage.setItem('homeScreenCardUntil', String(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+  );
   await page.addInitScript((font) => {
     document.addEventListener('DOMContentLoaded', () => {
       document.documentElement.style.fontSize = `${String(font)}%`;
@@ -149,7 +153,7 @@ test.describe('phone menu view', () => {
       await putDelivery(request, false, []);
       const off = await phone(browser, cfg);
       await expect(
-        off.getByText('Delivery is off for this menu. Turn it on on the tablet.'),
+        off.getByText('Delivery is off for this menu. Turn it on in Edit menu, under Details.'),
       ).toBeVisible();
       await off.screenshot({ path: `${SHOTS}/${cfg.name}-delivery-off.png` });
       await off.context().close();

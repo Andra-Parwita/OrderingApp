@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import i18n from 'i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { MenuNoticeStatus } from '../../../shared/menuNoticeContract';
@@ -6,6 +6,7 @@ import { initI18n } from '../../i18n/init';
 import { AppThemeProvider } from '../../theme/AppThemeProvider';
 import { registerSellerMenuI18n } from './i18n/register';
 import { NotifyBell } from './NotifyBell';
+import { announceWizardClosed } from './phone/wizardNav';
 
 const api = vi.hoisted(() => ({ status: vi.fn(), send: vi.fn() }));
 vi.mock('../../api/menuNotices', () => ({
@@ -58,6 +59,17 @@ describe('NotifyBell', () => {
     show();
     await waitFor(() => expect(api.status).toHaveBeenCalled());
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('asks again when the phone wizard closes (a menu published there can be sent)', async () => {
+    api.status.mockReturnValueOnce(ok(status({ canSend: false })));
+    show();
+    await waitFor(() => expect(api.status).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    api.status.mockReturnValue(ok(status()));
+    act(() => announceWizardClosed());
+    expect(await screen.findByRole('button', BELL)).toBeVisible();
+    expect(api.status).toHaveBeenCalledTimes(2);
   });
 
   it('shows nothing when the status call is refused (not the owner)', async () => {

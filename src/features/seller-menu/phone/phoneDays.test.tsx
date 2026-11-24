@@ -207,7 +207,9 @@ describe('phone menu: delivery days', () => {
   it('delivery off: says so and shows no days', () => {
     const { layer } = open(view({ available: false }));
     expect(
-      within(layer).getByText('Delivery is off for this menu. Turn it on on the tablet.'),
+      within(layer).getByText(
+        'Delivery is off for this menu. Turn it on in Edit menu, under Details.',
+      ),
     ).toBeVisible();
     expect(within(layer).queryByRole('group', { name: 'Delivery days' })).toBeNull();
     expect(within(layer).queryByRole('switch')).toBeNull();
