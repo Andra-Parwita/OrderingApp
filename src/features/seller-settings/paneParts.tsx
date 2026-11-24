@@ -49,3 +49,25 @@ export const ButtonRow = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
 `;
+/** A labelled on/off switch with a helper line (plan 131). */
+export const SwitchRow = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.md};
+  min-height: ${({ theme }) => theme.size.tap}px;
+  font-weight: ${({ theme }) => theme.type.weight.strong};
+
+  input {
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0.125rem 0 0;
+    accent-color: ${({ theme }) => theme.c.fill};
+  }
+  small {
+    display: block;
+    color: ${({ theme }) => theme.c.muted};
+    font-size: ${({ theme }) => theme.type.size.sm};
+    font-weight: 400;
+  }
+`;

@@ -203,6 +203,42 @@ describe('menus and dishes', () => {
       });
     });
 
+    it('plan 131: a new menu keeps open 1 more day unless the kitchen turned the default off', async () => {
+      await call('POST', '/api/seller/menus/current/finish');
+      const on = await call('POST', '/api/seller/menus', { body: {} });
+      expect(on.body.menu.menu.finishExtraDay).toBe(true);
+      await call('PUT', '/api/seller/menus/current', { body: { dishIds: ['nasi-campur'] } });
+      await call('POST', '/api/seller/menus/current/publish');
+      expect((await call('POST', '/api/seller/menus/current/finish')).status).toBe(200);
+      const off = await call('PUT', '/api/seller/preferences', {
+        body: {
+          menuDefaults: {
+            cutoffDaysBefore: 1,
+            cutoffTime: '21:00',
+            delivery: { available: false, note: { en: '', id: '' } },
+            keepOpenExtraDay: false,
+          },
+        },
+      });
+      expect(off.body.preferences.menuDefaults.keepOpenExtraDay).toBe(false);
+      const made = await call('POST', '/api/seller/menus', { body: { cookingDate: '2026-10-24' } });
+      expect(made.body.menu.menu.finishExtraDay).toBeUndefined();
+      expect(
+        (
+          await call('PUT', '/api/seller/preferences', {
+            body: {
+              menuDefaults: {
+                cutoffDaysBefore: 1,
+                cutoffTime: '21:00',
+                delivery: { available: false, note: { en: '', id: '' } },
+                keepOpenExtraDay: 'yes',
+              },
+            },
+          })
+        ).status,
+      ).toBe(400);
+    });
+
     it('publishes only with dishes, and is instant to edit while live; a finished menu refuses edits', async () => {
       await call('POST', '/api/seller/menus/current/finish');
       await call('POST', '/api/seller/menus', { body: {} });
@@ -391,6 +427,7 @@ describe('menus and dishes', () => {
         cutoffDaysBefore: 1,
         cutoffTime: '21:00',
         delivery: { available: false, note: { en: '', id: '' } },
+        keepOpenExtraDay: true,
       });
       const set = await call('PUT', '/api/seller/preferences', { body: { theme: 'jawa' } });
       expect(set.body.preferences.theme).toBe('jawa');

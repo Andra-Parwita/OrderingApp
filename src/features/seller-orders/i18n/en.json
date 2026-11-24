@@ -615,5 +615,12 @@
     "tag": "Repeat?",
     "note": "Possible repeat of {{code}} (same dishes, {{seconds}} s apart)",
     "noteMin": "Possible repeat of {{code}} (same dishes, {{minutes}} min apart)"
+  },
+  "pack": {
+    "button": "Pack · {{ticked}} of {{total}}",
+    "buttonPacked": "Pack · Packed",
+    "packed": "Packed",
+    "progress": "{{ticked}} of {{total}} packed",
+    "ticked": "Ticked"
   }
 }

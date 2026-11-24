@@ -37,7 +37,13 @@ import { parseDeliveryExtras } from './deliveryDays';
 export { THEMES, DEFAULT_THEME, type ThemeName };
 
 /** A new menu's cut-off and delivery. Days before the cooking day, at a local time. */
-export type MenuDefaults = { cutoffDaysBefore: number; cutoffTime: string; delivery: Delivery };
+export type MenuDefaults = {
+  cutoffDaysBefore: number;
+  cutoffTime: string;
+  delivery: Delivery;
+  /** Plan 131: a new menu starts with "Keep the menu open 1 more day" on. Absent = on (the default). */
+  keepOpenExtraDay?: boolean;
+};
 export const DEFAULT_MENU_DEFAULTS: MenuDefaults = {
   cutoffDaysBefore: 1,
   cutoffTime: '21:00',
@@ -69,7 +75,14 @@ export function parseMenuDefaults(input: unknown): MenuDefaults | null {
   if (!isRecord(delivery) || typeof delivery['available'] !== 'boolean') return null;
   const note = parseTrimmedText(delivery['note'], 200);
   if (!note) return null;
-  return { cutoffDaysBefore, cutoffTime, delivery: { available: delivery['available'], note } };
+  const keep = input['keepOpenExtraDay'];
+  if (keep !== undefined && typeof keep !== 'boolean') return null;
+  return {
+    cutoffDaysBefore,
+    cutoffTime,
+    delivery: { available: delivery['available'], note },
+    ...(keep !== undefined ? { keepOpenExtraDay: keep } : {}),
+  };
 }
 
 export function parsePreferences(input: unknown): Preferences | null {

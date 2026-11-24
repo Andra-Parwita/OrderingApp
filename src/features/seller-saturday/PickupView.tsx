@@ -17,6 +17,7 @@ import {
   Mono,
   Muted,
   OrderRowRoot,
+  PaidAmount,
   PackedTag,
   StatusMark,
   totalCents,
@@ -114,17 +115,6 @@ const List = styled.ul`
 const Name = styled.b<{ $struck: boolean }>`
   margin-left: ${({ theme }) => theme.spacing.sm};
   text-decoration: ${({ $struck }) => ($struck ? 'line-through' : 'none')};
-`;
-const Right = styled.span`
-  grid-column: 2;
-  grid-row: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  font-weight: 600;
-`;
-const Unpaid = styled.span`
-  color: ${({ theme }) => theme.c.warn};
 `;
 const Sub = styled.span`
   grid-column: 1 / -1;
@@ -288,13 +278,7 @@ function PickupRow({ order, lang }: Readonly<{ order: SellerOrder; lang: Languag
           {order.firstName}
         </Name>
       </span>
-      <Right>
-        {order.paid ? (
-          <span>{t('common.paid')}</span>
-        ) : (
-          <Unpaid>{t('common.notPaid', { amount: money(totalCents(order), lang) })}</Unpaid>
-        )}
-      </Right>
+      <PaidAmount amount={money(totalCents(order), lang)} paid={order.paid} />
       <Sub>
         <span>{itemsShort(order.lines, lang)}</span>
         <StatusMark status={order.status} />

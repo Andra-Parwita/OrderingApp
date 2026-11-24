@@ -1,7 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import { useLocation } from 'react-router';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as kitchen from '../../api/kitchen';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { CookScreen } from './CookScreen';
 import { selectCookGroups } from './cookSelectors';
 import { ordersLoaded } from '../../api/kitchenOrders';
@@ -198,55 +197,23 @@ describe('Kitchen · Pack', () => {
     );
   });
 
-  it('ticks an item and saves the whole ticked set', async () => {
-    const pack = vi.spyOn(kitchen, 'packOrder').mockImplementation((code) => {
-      const order = sampleOrders().find((candidate) => candidate.code === code);
-      if (!order) throw new Error(code);
-      return Promise.resolve({
-        ok: true,
-        data: { order: { ...order, lines: order.lines } },
-      } as never);
-    });
+  it('shows the total with Paid / Not paid and place and time on one line per bag', () => {
     openPack();
-    fireEvent.click(screen.getAllByRole('checkbox')[0] as HTMLElement);
-    await waitFor(() => pack.mock.calls.length === 1);
-    expect(pack.mock.calls[0]?.[1]).toEqual({ ticked: [expect.any(String)] });
-    pack.mockRestore();
+    const rows = within(screen.getByRole('list', { name: 'Bags' })).getAllByRole('listitem');
+    const rina = rows.find((row) => within(row).queryByText('Rina')) as HTMLElement;
+    expect(within(rina).getByText('$35.00')).toBeInTheDocument();
+    expect(within(rina).getByText('Paid')).toBeInTheDocument();
+    expect(within(rina).getByText('0/2')).toBeInTheDocument();
+    const tom = rows.find((row) => within(row).queryByText('Tom')) as HTMLElement;
+    expect(within(tom).getByText('Not paid')).toBeInTheDocument();
+    expect(within(tom).getByText('Delivery')).toBeInTheDocument();
   });
 
-  it('asks before packing a bag with unticked items, then sends force', async () => {
-    const pack = vi.spyOn(kitchen, 'packOrder');
-    pack.mockResolvedValueOnce({
-      ok: false,
-      error: 'conflict',
-      status: 409,
-      message: 'Items not ticked',
-      warning: { code: 'items_unticked', unticked: ['lemper', 'nasi'] },
-    } as never);
-    pack.mockImplementationOnce(async (code) => {
-      const order = sampleOrders().find((candidate) => candidate.code === code);
-      return Promise.resolve({ ok: true, data: { order: { ...order, packed: true } } } as never);
-    });
+  it('pins the total and the count in the open bag header', () => {
     openPack();
-    fireEvent.click(screen.getByRole('button', { name: 'Packed · next bag' }));
-    const dialog = await screen.findByRole('alertdialog');
-    expect(within(dialog).getByText('2 items not ticked')).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Mark packed anyway' }));
-    await waitFor(() => pack.mock.calls.length === 2);
-    expect(pack.mock.calls[1]?.[1]).toEqual({ packed: true, force: true });
-    pack.mockRestore();
-  });
-
-  it('says packing does not change the status once everything is ticked', () => {
-    const store = createTestStore();
-    const orders = sampleOrders().map((order) => ({
-      ...order,
-      lines: order.lines.map((line) => ({ ...line, ticked: true })),
-    }));
-    seed(store, orders);
-    renderWithStore(<CookScreen />, store);
-    fireEvent.click(screen.getByRole('tab', { name: /Pack/ }));
-    expect(screen.getByText(/Packing doesn't change the order status/)).toBeInTheDocument();
+    const bag = screen.getByRole('region', { name: /Rina/ });
+    expect(within(bag).getByText('$35.00')).toBeInTheDocument();
+    expect(within(bag).getByText('0 of 2 items in the bag')).toBeInTheDocument();
   });
 });
 

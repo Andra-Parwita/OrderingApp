@@ -397,6 +397,7 @@ Format for each entry:
 **Revisit when:** the design drop says otherwise.
 
 ## D-066 · Kitchen has Cook and Pack tabs; Pack ticks each customer's bag (2026-10-09; owner)
+**Amended by [D-121](#d-121--packing-at-the-event-a-pack-sheet-saved-by-a-button-totals-with-paid-everywhere-2026-11-15-owner-amends-d-066)** (15 Nov 2026): ticks are saved by a button (Ready / Save), not on every tap; Pack also opens from any order.
 **Ruling:** the owner's design note, kept verbatim in [uxDesign/kitchen-cook-and-pack.md](../../uxDesign/kitchen-cook-and-pack.md).
 **Decision:** the Kitchen area (today's cook list) gets two tabs: **Cook** (by dish) and **Pack** (by order). Pack lists bags (name, code, place, time, progress or "Packed"), sortable by pickup time, place or code; the open bag shows its items as tick rows and the customer's note; "Packed · next bag" marks it done and opens the next, warning (never blocking, D-062) if items are unticked; "Skip for now"; header "N of M bags packed" with Print labels. Packing is new: today there is no packed state. Planned in plan 001.
 **Trade-off:** a new saved state per order (packed, and which items are ticked).
@@ -767,3 +768,9 @@ Format for each entry:
 **Decision:** `/<slug>/my-orders` lists only that kitchen's orders everywhere. The kitchen-less `/my-orders` (old links, the welcome page) goes to the last kitchen's My orders; with no known kitchen it keeps the all-kitchens list as a fallback. No combined view is offered.
 **Trade-off:** a customer of two kitchens sees each kitchen's orders on its own page; orders are found through that kitchen's link.
 **Revisit when:** customers ask for one combined list.
+
+## D-121 · Packing at the event: a Pack sheet saved by a button, totals with Paid everywhere (2026-11-15; owner; amends D-066)
+**Ruling:** after the DellaVee event (sellers pack on site; "buyer will pay when they pickup"): total + Paid / Not paid on every order row and pinned on top of an open order, buttons pinned at the bottom ("A"); "I don't suggest tick or untick is live for packing, so treat it like a modal … they need to tick Ready or Save … especially on phone"; buttons Ready for pickup / Save / Ready & next order ("A"); delivery orders only become Packed, no message ("A"). Mock-up `uxDesign/seller/mockups/132-event-packing.html`, plan 132.
+**Decision:** an order (phone or tablet) opens a **Pack sheet**; ticks stay local until **Ready for pickup** (ticks + packed + Ready, usual message), **Save** (ticks only) or **Ready & next order**; unticked items warn, never block (D-062). Kitchen → Pack uses the same buttons (Ready & next bag / Ready for pickup / Save) instead of live ticks and "Packed · next bag" / "Skip for now". A delivery order's button reads **Packed**: no status change, no message; Out for delivery stays its own tap. Only owners and chefs pack (pack route), helpers read.
+**Trade-off:** ticks are no longer saved on every tap, so a half-packed bag left without Save loses its ticks (the sheet asks before closing).
+**Revisit when:** sellers want two people packing the same bag at once, or delivery packing should notify customers.

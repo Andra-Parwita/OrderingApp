@@ -18,6 +18,8 @@ import { StatusMark } from './StatusMark';
 import { OrderDayTag } from '../../components/dayChips/OrderDayTag';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
 import { openOrderLink } from './whatsappLink';
+import { PaidTag } from '../../components/pack';
+import { packedText } from './packedText';
 
 // One order in the phone list (handoff, Home, phone): name, code, total, items, status, Changed,
 // pickup or delivery, Paid, and a round WhatsApp button. The row opens the order; the button opens
@@ -36,10 +38,12 @@ const Row = styled.div<{ $fresh: boolean }>`
     transition: none;
   }
 `;
+// Plan 132: the text on the left, the total with Paid / Not paid in its own column on the right.
 const Open = styled.button`
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.125rem ${({ theme }) => theme.spacing.md};
   min-width: 0;
   min-height: ${({ theme }) => theme.size.rowOrder + 8}px;
   padding: ${({ theme }) => theme.spacing.sm} 0 ${({ theme }) => theme.spacing.sm}
@@ -52,6 +56,7 @@ const Open = styled.button`
   cursor: pointer;
 `;
 const Top = styled.span`
+  grid-column: 1;
   display: flex;
   align-items: baseline;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -70,11 +75,17 @@ const Code = styled.span`
   color: ${({ theme }) => theme.c.muted};
 `;
 const Total = styled.span`
-  margin-inline-start: auto;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 `;
 const Items = styled.span`
+  grid-column: 1;
   overflow: hidden;
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.875rem;
@@ -82,6 +93,7 @@ const Items = styled.span`
   white-space: nowrap;
 `;
 const Marks = styled.span`
+  grid-column: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -135,6 +147,7 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
   const lang = useLang();
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
   const now = useMinuteNow(isAutoCancelCandidate(order));
+  const progress = packedText(order, t);
   const send = useCallback(
     () =>
       openOrderLink(
@@ -153,8 +166,11 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
           {isNew ? <NewTag /> : null}
           <RepeatTag code={order.code} />
           <Code>{formatOrderCode(order.code)}</Code>
-          <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
         </Top>
+        <Total>
+          {formatMoney(orderTotalCents(order), lang)}
+          <PaidTag paid={order.paid} />
+        </Total>
         <Items>{itemsSummary(order, lang)}</Items>
         <Marks>
           <StatusMark status={order.status} />
@@ -174,13 +190,8 @@ export const PhoneOrderRow = memo(function PhoneOrderRow({
             <Icon name={order.fulfilment === 'delivery' ? 'truck' : 'bag'} />
             {t(`fulfilment.${order.fulfilment}`)}
             <OrderDayTag order={order} lang={lang} />
+            {progress ? <span>· {progress}</span> : null}
           </Mark>
-          {order.paid ? (
-            <Mark $tone="conf">
-              <Icon name="check" />
-              {t('live.paid')}
-            </Mark>
-          ) : null}
         </Marks>
       </Open>
       <Send type="button" aria-label={t('phone.sendOn', { name: order.firstName })} onClick={send}>

@@ -159,6 +159,8 @@
     "deliveryOff": "Tanpa antar",
     "noteEn": "Catatan antar (Inggris)",
     "noteId": "Catatan antar (Indonesia)",
+    "keepOpen": "Biarkan menu baru buka 1 hari lagi",
+    "keepOpenHelper": "Menu baru selesai tengah malam sehari setelah hari terakhirnya, bukan pada malam itu.",
     "invalid": "Periksa jumlah hari (0 sampai 14), jam, dan catatannya.",
     "loadFailed": "Bawaan menu tidak bisa dimuat."
   },

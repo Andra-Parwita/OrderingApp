@@ -46,6 +46,7 @@ export type SettingsRow = {
   default_delivery_note_en: string;
   default_delivery_note_id: string;
   chefs_see_income: number;
+  keep_open_default: number;
 };
 export type MenuRow = {
   id: string;
@@ -253,6 +254,7 @@ export function preferencesOf(row: SettingsRow): Preferences {
     menuDefaults: {
       cutoffDaysBefore: row.default_cutoff_days,
       cutoffTime: row.default_cutoff_time,
+      keepOpenExtraDay: row.keep_open_default !== 0,
       delivery: {
         available: row.default_delivery === 1,
         note: text(row.default_delivery_note_en, row.default_delivery_note_id),

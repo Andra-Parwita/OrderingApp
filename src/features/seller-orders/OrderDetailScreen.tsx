@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { styled } from 'styled-components';
 import type { Order } from '../../../shared/domain';
-import { formatOrderCode } from '../../../shared/orderCode';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { Button, Icon, WarningDialog, type IconName } from '../../ui';
 import { ContactFields, getContact, getContactDigits, saveContact } from './contacts';
 import { FeedbackHost } from './FeedbackHost';
 import { SELLER_NS } from './i18n/register';
 import { OrderPanelBody } from './OrderPanelBody';
+import { OrderPinnedHead } from './OrderPinnedHead';
+import { PackButton, useMayPack } from './PackButton';
 import { PaidSheet } from './PaidSheet';
 import { ScreenErrorBoundary } from './ScreenErrorBoundary';
 import { selectList, selectOrderByCode } from './sellerOrdersSelectors';
@@ -47,10 +48,18 @@ const Bar = styled.div`
   padding: 0 ${({ theme }) => theme.size.pagePadPhone}px;
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 `;
-const Code = styled.span`
-  font-family: ${({ theme }) => theme.font.mono};
-  font-weight: 600;
-  color: ${({ theme }) => theme.c.muted};
+// Plan 132: the bar and the order's pinned top stay while the rest scrolls.
+const Top = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: ${({ theme }) => theme.c.bg};
+`;
+const Pinned = styled.div`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.size.pagePadPhone}px
+    ${({ theme }) => theme.spacing.md};
+  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
+  background: ${({ theme }) => theme.c.surf2};
 `;
 const Scroll = styled.div`
   flex: 1;
@@ -67,7 +76,7 @@ const Foot = styled.div`
   border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   background: ${({ theme }) => theme.c.bg};
 
-  & > button:first-child {
+  & > button:first-of-type {
     min-height: ${({ theme }) => theme.size.mainAction + 4}px;
     font-size: 1rem;
   }
@@ -227,6 +236,9 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
   // Collected is the quiet button below (D-069 Q4), so it is never the main step here.
   const main = a.readOnly ? undefined : a.forward.find((status) => status !== 'collected');
   const canCollect = order.fulfilment === 'pickup' && !a.final;
+  // Plan 132: Pack is the main button while an order is being packed (Confirm stays the main one).
+  const mayPack = useMayPack(order);
+  const packFirst = mayPack && !confirming;
   const send = useCallback(
     () =>
       openOrderLink(
@@ -293,13 +305,19 @@ function PhoneActions({ order }: Readonly<{ order: Order }>) {
         </WarningDialog>
       ) : null}
       <Foot>
+        <PackButton order={order} primary={packFirst} />
         {a.readOnly ? null : confirming ? (
           <Button variant="primary" fullWidth disabled={a.saving} onClick={confirmAndSend}>
             <Icon name="chat" />
             {t('phone.confirmSend')}
           </Button>
         ) : main ? (
-          <Button variant="primary" fullWidth disabled={a.saving} onClick={() => a.onStep(main)}>
+          <Button
+            variant={packFirst ? 'secondary' : 'primary'}
+            fullWidth
+            disabled={a.saving}
+            onClick={() => a.onStep(main)}
+          >
             <Icon name="check" />
             {t(`detail.action.${main}`)}
           </Button>
@@ -354,16 +372,22 @@ function DetailContent({ code, onBack }: OrderDetailScreenProps) {
   return (
     <Page>
       <FeedbackHost />
-      <Bar>
-        <Button variant="quiet" onClick={onBack}>
-          {t('detail.back')}
-        </Button>
-        {order ? <Code>{formatOrderCode(order.code)}</Code> : null}
-      </Bar>
+      <Top>
+        <Bar>
+          <Button variant="quiet" onClick={onBack}>
+            {t('detail.back')}
+          </Button>
+        </Bar>
+        {order ? (
+          <Pinned>
+            <OrderPinnedHead order={order} />
+          </Pinned>
+        ) : null}
+      </Top>
       <Scroll>
         {order ? (
           <>
-            <OrderPanelBody order={order} />
+            <OrderPanelBody order={order} withHeader={false} />
             <ContactSection key={order.code} order={order} />
           </>
         ) : null}

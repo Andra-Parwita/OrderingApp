@@ -12,6 +12,21 @@ export type ReleaseNote = Readonly<{
 export const RELEASES_SHOWN = 5;
 
 export const RELEASES: ReadonlyArray<ReleaseNote> = [
+  // DRAFT for the owner to approve (15 Nov); plans 131, 132
+  {
+    version: '1.0.47',
+    date: '2026-11-15',
+    lines: {
+      en: [
+        'Packing at the event: tap Pack on any order, tick what goes in the bag, then Ready for pickup, Save or Ready & next order. Every order shows its total with Paid or Not paid, and the buttons stay at the bottom.',
+        'New menus stay open one more day by default; change it in Settings → Menu defaults.',
+      ],
+      id: [
+        'Mengemas di acara: ketuk Kemas pada pesanan mana pun, centang isi kantong, lalu Siap diambil, Simpan, atau Siap & pesanan berikut. Setiap pesanan menampilkan totalnya dengan Lunas atau Belum dibayar, dan tombolnya tetap di bawah.',
+        'Menu baru otomatis tetap buka satu hari lagi; ubah di Pengaturan → Bawaan menu.',
+      ],
+    },
+  },
   // DRAFT for the owner to approve (8 Nov); plan 126
   {
     version: '1.0.46',

@@ -30,11 +30,11 @@ const Head = styled.header`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl} 0;
 
   @media (max-width: 40rem) {
-    flex-wrap: wrap;
     padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg} 0;
   }
 `;
@@ -56,10 +56,12 @@ const Sub = styled.p`
 `;
 const Side = styled.div`
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
   align-items: center;
   flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.lg};
+  justify-content: flex-end;
+  min-width: 0;
+  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
   color: ${({ theme }) => theme.c.muted};
 `;
 const Tabs = styled.div`

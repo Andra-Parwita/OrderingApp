@@ -157,6 +157,24 @@ describe('SettingsPanes', () => {
     expect(body).toMatchObject({ menuDefaults: { cutoffDaysBefore: 2, cutoffTime: '21:00' } });
   });
 
+  it('plan 131: the Keep new menus open 1 more day switch is on and saves off', async () => {
+    let body: unknown = null;
+    server.use(
+      http.get('*/api/seller/preferences', () => HttpResponse.json({ preferences })),
+      http.put('*/api/seller/preferences', async ({ request }) => {
+        body = await request.json();
+        return HttpResponse.json({ preferences });
+      }),
+    );
+    renderPane('defaults');
+    const keep = await screen.findByRole('switch', { name: /Keep new menus open 1 more day/ });
+    expect(keep).toBeChecked();
+    fireEvent.click(keep);
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(body).not.toBeNull());
+    expect(body).toMatchObject({ menuDefaults: { keepOpenExtraDay: false } });
+  });
+
   it('picks the kitchen colour theme', async () => {
     let body: unknown = null;
     server.use(

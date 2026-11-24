@@ -2,7 +2,7 @@
 
 **Rewrite this file at the end of every session, before the commit** (owner, 2026-10-11). The next session, on the owner's PC or the builder's, starts here. Older hand-overs (1.0.39 → 1.0.44.3 detail) are in git history.
 
-**Last session:** 25 → 26 Oct, the owner's PC (Adelaide), Claude as coordinator. 1.0.44 and hotfixes 1.0.44.1–.3 shipped (25 Oct). **1.0.45 = plan 124 (seller phone menu card) deployed 26 Oct, owner live check ✅. Hotfix 1.0.45.1 = plan 125 (version + Check for update + sign-out fixes) deployed 27 Oct 00:35 by Claude (owner's one-time OK for this hotfix only).**
+**Last session:** 15 Nov (evening, after the DellaVee event), the owner's PC (Adelaide), Claude as coordinator, owner on Remote Control. **1.0.47 = plans 131 + 132 (packing at the event) built and checked, ready to deploy; not committed** (owner: "don't stop till ready to deploy").
 **Live:** **1.0.46.2** (11 Nov 23:34 Adelaide; Worker `20bfca7d-e918-46e6-b174-d6c5d405dae1`; commit `ba45941`, build `1.0.141 · ba45941`; no migration; health ok). Before: **1.0.46.1** (10 Nov 23:47; Worker `1eed7a08-4d74-4ee0-8ca1-15c19a41931c`; commit `d42aeb9`, build `1.0.139 · d42aeb9`; no migration; health ok; owner live check ✅). Before: **1.0.46** (8 Nov; Worker `050816b7-1d2f-4a3f-88ad-bf8c0c303901`; commit `7a4a88d`, build `1.0.137 · 7a4a88d`; migrations 0035–0037 applied; health ok; owner quick check ✅, Rina tests on the evening of 8 Nov). Before: **1.0.45.1** (27 Oct 00:35; Worker `7f46d6fc-6877-48a5-bd11-ddf3ce44db76`; commit `e68760e`, build `1.0.134 · e68760e`; health ok, live sign-in shows the new wording, no console errors). Before: 1.0.45 (`e711941c-15be-4e78-ba20-8c1430562942`), 1.0.44.3 (`15ad732a-132e-4503-b70d-5214d820b3d1`), 1.0.44.2 (`70e17010…`), 1.0.44.1 (`8e7bca61…`), 1.0.44 (`5c5ee9c4…`). Backups: `backups/shaggybobo-2026-11-11.sql` (before 1.0.46.2; 104 orders; only ECN-VZ7 "Bshsh" unconfirmed), `backups/shaggybobo-2026-11-10.sql` (before 1.0.46.1; 101 orders; Rina = 1 account in DellaVee + Onde Onde, 2 passkey devices), `backups/shaggybobo-2026-11-08.sql` (before 1.0.46; 97 orders, no open menus), `backups/shaggybobo-2026-10-27.sql` (before 1.0.45.1; 90 orders, DellaVee: Rina = 1 owner, 2 devices, both passkey), `…-26.sql` (before 1.0.45), `…-25.sql`, `…-25-b.sql`.
 **Branch:** `main`; tags `v1.0.45`, `v1.0.45.1`, `v1.0.46`, `v1.0.46.1`, `v1.0.46.2`.
 
@@ -27,6 +27,26 @@ Why: DellaVee's seller makes the menu on a shared family tablet with no WhatsApp
 - Version `RELEASE_VERSION = '1.0.45'`; release note EN/ID (owner "A") in `releaseNotes.ts`.
 - **Checks:** two Android emulator rounds (`scratch/emu-124/`, `scratch/emu-124b/`): round 2 all 9 ✅ incl. Back in Chrome and the installed app. Gate: lint 0, format ✅, unit 3,049 ✅ (30 EADDRINUSE flakes pass with `--no-file-parallelism`), e2e 10 ✅ (order-flow, batch2-flow, banners, customer-live, multi-seller, helper-flow), docs built.
 - **Deploy impact: low.** Client only: no migration, no Worker or API change, no secret. Old seller apps keep working; the new card shows after the app updates.
+
+## 1.0.47 = plans 131 + 132, packing at the event (ready to deploy, 15 Nov)
+Plans + rulings: `docs/plans/131-keep-open-default.md`, `docs/plans/132-event-packing-phone.md`, decision **D-121** (amends D-066); mock-up `uxDesign/seller/mockups/132-event-packing.html` (owner "A", v2). Why: at the 15 Nov event DellaVee packed on site and buyers paid at pickup; the total was below the fold on the phone and ticks existed only in Kitchen → Pack (owner's photos).
+- **Pack sheet** (`src/components/pack/`, shared by Orders and Kitchen): opens from **Pack · N of M** on any order (phone page + tablet panel; Kitchen → Pack on the phone opens it too). Ticks are local until **Ready for pickup** (ticks + packed + Ready, usual message), **Save** (ticks only) or **Ready & next order**; unticked → "N items not ticked. Ready anyway?"; Back/✕ with changes → "Close without saving?". **Delivery orders: button "Packed"**, no status change, no message (owner "A"). Only owners/chefs pack (pack route), helpers read.
+- **Kitchen → Pack (tablet):** live tick saving removed; buttons pinned at the bottom: Ready & next bag / Ready for pickup / Save + print-label icon; rows with total + Paid / Not paid and "time · place" on one line; header wraps (the cut-off "Print labels" seen on Rina's tablet).
+- **Totals everywhere:** Orders rows (tablet + phone), Kitchen bag rows, Pickup & delivery (`/seller/hand-over`), Deliveries: total with **Paid / Not paid** in its own aligned column; order detail: code, name, **Total**, Paid pinned on top (tablet panel pins only that line; status, place · time and "N of M packed" scroll), buttons pinned at the bottom.
+- **Plan 131:** migration **0038** `kitchen_settings.keep_open_default` (default 1); Settings → Menu defaults switch "Keep new menus open 1 more day" (on); a new menu (also "start from a past menu") starts with keep-open on; existing menus unchanged.
+- Version **1.0.47** (`RELEASE_HOTFIX = null`), "What's new" lines are a **DRAFT** in `src/features/seller-about/releaseNotes.ts` (owner to approve or change).
+- **Checks:** typecheck, lint 0, format ✅; unit **3,207/3,207** ✅; docs built; e2e: **p132-event-packing** (flow + captures at 412×915 ±125/150 %, 1280×800 ±125/150 %, 1126×800, 800×1280; `scratch/cap-132/`, looked at) ✅, batch2-flow, label-print, p071, p081, p105, p111, p126 ×2, p127, seller-saturday, seller-batch1/2, seller-about, p130 (one flake, passes alone), order-flow + batch2 (iPhone), helper-flow, seller-settings-batch2 ✅. Android emulator (`scratch/emu-147/`, DB copy + 0038): **Tablet_11 all 8 steps ✅, phone (Pixel_8a) all steps ✅ incl. Indonesian**; four small tidy-ups found there fixed afterwards (equal footer button heights, "1 item", "Pack · Packed", portion text kept together). Pixel_9 showed only a black lock screen (3 boots), so the phone pass used Pixel_8a; running both AVDs at once made Android "not responding" — run one at a time.
+- **Deploy impact: medium.** One **add-only migration (0038), apply before the Worker**; Worker + client together (the client sends `keepOpenExtraDay`; the old Worker would ignore it). Kitchen → Pack no longer saves each tick: tell Rina to press **Save** or **Ready** (the app asks before closing with unsaved ticks).
+- **Deploy steps:**
+  0. Owner reviews the draft "What's new" lines; commit on `main` (owner OK), push.
+  1. Backup: `pnpm exec wrangler d1 export shaggybobo-order --remote --output backups/shaggybobo-2026-11-15.sql`
+  2. `pnpm build` (shows 1.0.47, no "draft")
+  3. Migration first: `pnpm exec wrangler d1 migrations apply shaggybobo-order --remote` (0038)
+  4. `pnpm run deploy -- --tag v1.0.47 --message "1.0.47: pack sheet, totals with Paid everywhere, keep new menus open 1 more day"`
+  5. Health: `curl https://order.shaggybobo.app/api/health`
+  6. Live check on the DellaVee tablet + phone: Orders rows show totals; an order → Pack → tick → Save → reopen; Settings → Menu defaults switch on.
+  7. Tag `v1.0.47` on `main` + push (ask first).
+  If Cloudflare `10021` appears again: wait and retry, don't change the D1 config.
 
 ## Hotfix 1.0.46.2 = plans 129 + 130 (live 11 Nov, Worker `20bfca7d`)
 Plan + rulings: `docs/plans/129-send-on-whatsapp.md`; mock-up `uxDesign/customer/mockups/129-send-on-whatsapp.html`. Customers ordered but never sent WhatsApp, so the seller (no phone numbers) could not confirm; order ECN-VZ7 had the name "Bshsh".
@@ -96,6 +116,8 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 8. Tag `v1.0.45` on `main` + push (ask first).
 
 ## Open findings
+- Pickup & delivery (tablet, Pickup view): the place name ("Glenelg") sits ~45 px further in than its time line (older than 1.0.47). Fix later.
+- Emulator seeds: order codes must use the order-code alphabet (no 0, 1, I, O; `shared/orderCode.ts`), else the API answers 404. Pixel_9 AVD shows a black lock screen; use Pixel_8a until it is fixed.
 - **"Orders" title clipped to "Orde"** in English on the phone when the camera, New order and bell buttons show (seen on the emulator; older than plan 124). Also "● Li…" pill clipped right after publishing. Fix later.
 - ID text "…ponsel ini ini" on the phone More (contacts block): `seller-orders` id.json `"phone": "ponsel ini"` is put into a sentence that already ends in "ini". Older than 1.0.45.1; fix later.
 - Admin "Pause the kitchen" signs everyone out; worth a stronger warning one day.
@@ -105,7 +127,7 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 - Scratch copies `scratch/emu-124/state`, `scratch/emu-124b/state` can be deleted.
 
 ## Later (owner rulings recorded)
-- **1.0.47 candidates:** iOS-style large titles on pages without a banner (mock-up first); plan 116 "Send a problem report" (device log + "What happened?" to the admin); the 6 chef permissions, one at a time.
+- **Next release candidates:** iOS-style large titles on pages without a banner (mock-up first); plan 116 "Send a problem report" (device log + "What happened?" to the admin); the 6 chef permissions, one at a time.
 - Maybe: the tablet Share screen remembers the language like the phone does.
 - **Change role** (owner ↔ chef ↔ helper) in seller Settings → Team and/or the admin page (owner 26 Oct: "leave change role later in future plan"; today: remove, then re-invite with the new role). Mock-up first.
 - **From plan 126 (owner 8 Nov):** an admin setting per kitchen for the delivery-day range (how many days before/after); a choice of automatic finish time beyond "keep open 1 more day".
@@ -121,9 +143,9 @@ Why: Rina could not see the refresh bar (the app only checked on open), and late
 - Passkeys don't work on the LAN-IP dev URL; use `https://localhost:5173`. Wrangler auth error 10000 → `wrangler login` (or set a `CLOUDFLARE_API_TOKEN`).
 
 ## Next session
-1. **Rina:** confirm real orders as they come in (from 13 Nov 00:00 unconfirmed customer orders are auto-cancelled 24 h after they were placed; ECN-VZ7 "Bshsh" will be); add her backup password; the 15 Nov event.
+1. **Deploy 1.0.47** with the steps above (owner), then tell Rina: Pack on any order, Save or Ready saves the ticks, totals show Paid / Not paid.
 2. **Kitchen setting for the customer change/cancel time** (owner: "tomorrow we can add simple setting"; now fixed 6 pm the day before, `CUSTOMER_CHANGE_HOUR`), mock-up first.
 3. Then pick from "Later", one question at a time.
 
 ## Ready prompt for the next session
-> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.46.2 (tag v1.0.46.2, Worker 20bfca7d). Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.
+> Read docs/HANDOVER.md, CLAUDE.md and docs/guide/agent-working-conventions.md. Live is 1.0.46.2 (tag v1.0.46.2, Worker 20bfca7d); 1.0.47 (plans 131 + 132, migration 0038) is built and checked, waiting for the owner's commit and deploy. Start with "Next session" in the hand-over, one question at a time. Ask the owner before any git write.

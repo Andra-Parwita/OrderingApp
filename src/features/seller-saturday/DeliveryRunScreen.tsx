@@ -32,6 +32,7 @@ import {
   Muted,
   Notice,
   OrderRowRoot,
+  PaidAmount,
   PackedTag,
   StatusMark,
   totalCents,
@@ -107,11 +108,6 @@ const Minutes = styled.label`
     color: ${({ theme }) => theme.c.text};
     font: inherit;
   }
-`;
-const Right = styled.span`
-  grid-column: 2;
-  grid-row: 1;
-  font-weight: 600;
 `;
 const Sub = styled.span`
   grid-column: 1 / -1;
@@ -283,11 +279,6 @@ function DeliveryRow({ order, step, lang, busy, address, onOpen, onStep }: RowPr
     : address
       ? { directions: textDirectionsUrl(address, apple), map: textMapUrl(address, apple) }
       : null;
-  const right = isPrivate
-    ? money(totalCents(order), lang)
-    : order.paid
-      ? t('common.paid')
-      : t('common.notPaid', { amount: money(totalCents(order), lang) });
   return (
     <OrderRowRoot
       $dim={closed}
@@ -316,7 +307,7 @@ function DeliveryRow({ order, step, lang, busy, address, onOpen, onStep }: RowPr
           <Name>{order.firstName}</Name>
         </span>
       )}
-      <Right>{right}</Right>
+      <PaidAmount amount={money(totalCents(order), lang)} paid={order.paid} />
       <Sub>
         <span>{itemsShort(order.lines, lang)}</span>
         <StatusMark status={order.status} />

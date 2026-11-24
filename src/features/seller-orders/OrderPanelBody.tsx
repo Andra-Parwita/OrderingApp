@@ -8,9 +8,7 @@ import { autoCancelEntry } from '../../../shared/autoCancel';
 import { DEFAULT_ZONE } from '../../../shared/zone';
 import { useMinuteNow } from './useMinuteNow';
 import { customerChangeDeadline, formatDay, formatDayTime } from '../../../shared/dates';
-import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
-import { pickText } from '../../../shared/text';
 import { ChangeFulfilment } from '../../components/change-fulfilment';
 import { Button, Icon, Menu, WarningDialog, type IconName, type MenuItem } from '../../ui';
 import { ConfirmedNote } from './ConfirmedMark';
@@ -19,9 +17,12 @@ import { SELLER_NS } from './i18n/register';
 import { EditedNote } from './EditedNote';
 import { RepeatNote } from './RepeatNote';
 import { EditOrderButton } from './EditOrderButton';
+import { OrderItemsList } from './OrderItemsList';
+import { OrderPinnedHead } from './OrderPinnedHead';
+import { PackButton, useMayPack } from './PackButton';
 import { PaidSheet } from './PaidSheet';
 import { StatusMark } from './StatusMark';
-import { actorLabel, orderTotalCents } from './orderText';
+import { actorLabel } from './orderText';
 import { selectCookingDate, selectCurrent } from './sellerOrdersSelectors';
 import { refreshRequested } from './sellerOrdersSlice';
 import { auditText, useOrderActions } from './useOrderActions';
@@ -45,10 +46,12 @@ const HeadBar = styled.header`
     ${({ theme }) => theme.spacing.md};
   border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
   background: ${({ theme }) => theme.c.surf2};
-
-  h2 {
-    font-size: 1.125rem;
-  }
+`;
+// The tablet panel body pads its top by a full page pad; the scrolling status lines sit closer to the bar.
+const RestHead = styled.div`
+  margin-top: calc(
+    ${({ theme }) => theme.spacing.sm} - ${({ theme }) => theme.size.pagePadTablet}px
+  );
 `;
 const HeadTop = styled.div`
   display: flex;
@@ -143,27 +146,6 @@ const ItemsHead = styled.div`
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
 `;
-const ItemRow = styled.div<{ $total?: boolean }>`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.sm} 0;
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  font-size: ${({ $total }) => ($total ? '1rem' : '0.9375rem')};
-  font-weight: ${({ $total }) => ($total ? 700 : 400)};
-  font-variant-numeric: tabular-nums;
-
-  small {
-    color: ${({ theme }) => theme.c.muted};
-    font-size: 0.8125rem;
-  }
-`;
-const LineNote = styled.span`
-  display: block;
-  color: ${({ theme }) => theme.c.warn};
-  font-size: 0.8125rem;
-  overflow-wrap: anywhere;
-`;
 const NoteText = styled.p`
   margin: 0;
   white-space: pre-wrap;
@@ -254,7 +236,7 @@ export function OrderPanelHeader({
 }: Readonly<{ order: Order; onClose: () => void }>) {
   return (
     <HeadBar>
-      <OrderHeadContent order={order} onClose={onClose} />
+      <OrderPinnedHead order={order} onClose={onClose} part="top" />
     </HeadBar>
   );
 }
@@ -263,7 +245,14 @@ export function OrderPanelBody({
   order,
   onClose,
   withHeader = true,
-}: Readonly<{ order: Order; onClose?: () => void; withHeader?: boolean }>) {
+  restHead = false,
+}: Readonly<{
+  order: Order;
+  onClose?: () => void;
+  withHeader?: boolean;
+  /** Tablet panel: the status, place and packed lines scroll here, under the pinned top. */
+  restHead?: boolean;
+}>) {
   const { t } = useTranslation(SELLER_NS);
   const current = useSelector(selectCurrent);
   const cookingDate = useSelector(selectCookingDate);
@@ -301,6 +290,11 @@ export function OrderPanelBody({
         </Head>
       ) : (
         <div>
+          {restHead ? (
+            <RestHead>
+              <OrderPinnedHead order={order} part="rest" />
+            </RestHead>
+          ) : null}
           <ConfirmedNote order={order} />
         </div>
       )}
@@ -362,24 +356,7 @@ export function OrderPanelBody({
         <Group>{t('panel.items')}</Group>
         {a.readOnly || order.private ? null : <EditOrderButton order={order} />}
       </ItemsHead>
-      <div>
-        {order.lines.map((line) => (
-          <ItemRow key={line.itemId}>
-            <span>
-              {pickText(line.name, lang)}
-              {pickText(line.size, lang) ? <small> · {pickText(line.size, lang)}</small> : null}
-              {line.note ? <LineNote>{line.note}</LineNote> : null}
-            </span>
-            <small>×{line.qty}</small>
-            <span>{formatMoney(line.priceCents * line.qty, lang)}</span>
-          </ItemRow>
-        ))}
-        <ItemRow $total>
-          <span>{t('detail.total')}</span>
-          <span />
-          <span>{formatMoney(orderTotalCents(order), lang)}</span>
-        </ItemRow>
-      </div>
+      <OrderItemsList order={order} />
 
       {order.note ? (
         <>
@@ -481,15 +458,23 @@ export function OrderPanelBody({
 // buttons, the rest in a ⋯ menu.
 const Foot = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 const Main = styled(Button)`
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: max-content;
+  padding-inline: 0.5rem;
   min-height: ${({ theme }) => theme.size.mainAction}px;
   font-size: 0.9375rem;
   white-space: nowrap;
+`;
+// The icon buttons wrap as one block, so the main button gets its own row when they do not all fit.
+const Icons = styled.div`
+  display: flex;
+  flex: none;
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 const IconAction = styled(Button)`
   flex: none;
@@ -515,6 +500,9 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
   const next = a.readOnly ? undefined : a.forward.find((status) => status !== 'collected');
   const canCollect = order.fulfilment === 'pickup' && !a.final;
   const main = next ?? (canCollect ? 'collected' : undefined);
+  // Plan 132: Pack is the main button of the row while an order is being packed (Confirm stays first).
+  const mayPack = useMayPack(order);
+  const packFirst = mayPack && next !== 'confirmed';
   const items: Array<MenuItem> = [
     ...(canCollect && next
       ? [{ label: t('detail.action.collected'), onSelect: a.onCollected, disabled: a.saving }]
@@ -545,9 +533,10 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
   ];
   return (
     <Foot>
+      <PackButton order={order} primary={packFirst} />
       {main ? (
         <Main
-          variant="primary"
+          variant={packFirst ? 'secondary' : 'primary'}
           disabled={a.saving}
           onClick={() => (main === 'collected' ? a.onCollected() : a.onStep(main))}
         >
@@ -556,7 +545,7 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
         </Main>
       ) : null}
       {a.readOnly ? null : (
-        <>
+        <Icons>
           <IconAction
             aria-label={t('detail.sendLink')}
             title={t('detail.sendLink')}
@@ -573,7 +562,7 @@ export function OrderPanelActions({ order }: Readonly<{ order: Order }>) {
             <Icon name="coin" />
           </IconAction>
           <Menu label={t('live.more')} items={items} side="up" />
-        </>
+        </Icons>
       )}
       {askPaid !== null ? (
         <PaidSheet order={order} paid={askPaid} onClose={() => setAskPaid(null)} />

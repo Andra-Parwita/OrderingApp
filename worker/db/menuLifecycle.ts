@@ -74,6 +74,8 @@ export function lifecyclePart(
           delivery: defaults.delivery,
           wizardStep: 0,
           takingOrders: true,
+          // Plan 131: the kitchen's default for "Keep the menu open 1 more day".
+          ...(defaults.keepOpenExtraDay !== false ? { finishExtraDay: true } : {}),
           ...(pastPicture !== null ? { pictureRef: pastPicture } : {}),
           // The new menu starts with the places the last one used, at their usual times.
           placeUses: (uses as Array<{ place_id: string }>).map((use) => ({

@@ -64,7 +64,7 @@ describe('seller screens', () => {
       const tom = screen.getByRole('button', { name: /M3H-9TD/ });
       expect(within(tom).getByText('entered by Chef Wati')).toBeInTheDocument();
       expect(
-        within(screen.getByRole('button', { name: /R8P-4WB/ })).getByText('✓ Paid'),
+        within(screen.getByRole('button', { name: /R8P-4WB/ })).getByText('Paid'),
       ).toBeInTheDocument();
     });
 

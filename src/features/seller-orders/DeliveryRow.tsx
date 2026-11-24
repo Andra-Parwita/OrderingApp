@@ -2,14 +2,16 @@ import { useTranslation } from 'react-i18next';
 import { styled } from 'styled-components';
 import { addressLine, checkOnMapUrl, directionsUrl } from '../../../shared/address';
 import type { SellerOrder } from '../../../shared/domain';
+import { formatMoney } from '../../../shared/money';
 import { formatOrderCode } from '../../../shared/orderCode';
 import { isIphone } from '../../components/isIphone';
+import { PaidTag } from '../../components/pack';
 import { PrivateTag } from '../../components/PrivateTag';
 import { QuietMapLinks } from '../../components/QuietMapLinks';
 import { Button, Menu } from '../../ui';
 import { ContactLinks, useAddressActions } from './DeliveryAddressBlock';
 import { SELLER_NS } from './i18n/register';
-import { itemsSummary, useLang } from './orderText';
+import { itemsSummary, orderTotalCents, useLang } from './orderText';
 
 // Plan 104: one delivery as a row across the width. Line 1: who, code, items, actions. Line 2: the
 // whole address and the note for the driver (never cut). Line 3 only when something needs it.
@@ -57,7 +59,7 @@ const Items = styled.span`
     flex: 1 1 8rem;
   }
 `;
-const Acts = styled.span`
+const Acts = styled.div`
   display: flex;
   flex: 1 1 100%;
   flex-wrap: wrap;
@@ -114,6 +116,28 @@ const Line3 = styled.div`
 const Done = styled.span`
   color: ${({ theme }) => theme.c.muted};
   white-space: nowrap;
+  @media (min-width: 37.5rem) {
+    min-width: 7rem;
+    text-align: center;
+  }
+`;
+// The total with Paid / Not paid under it: one right-aligned column, the same width in every row.
+const Pay = styled.div`
+  display: flex;
+  flex: 0 0 6.5rem;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  @media (min-width: 37.5rem) {
+    margin-left: 0;
+  }
+`;
+const DoneButton = styled(Button)`
+  @media (min-width: 37.5rem) {
+    min-width: 7rem;
+  }
 `;
 
 export function DeliveryRow({
@@ -147,10 +171,14 @@ export function DeliveryRow({
               map={{ href: checkOnMapUrl(found, apple), label: t('address.viewOnMap') }}
             />
           ) : null}
+          <Pay>
+            <strong>{formatMoney(orderTotalCents(order), lang)}</strong>
+            <PaidTag paid={order.paid} />
+          </Pay>
           {delivered ? (
             <Done>{t('address.deliveredDone')}</Done>
           ) : (
-            <Button onClick={() => onDone(order)}>{t('address.delivered')} ✓</Button>
+            <DoneButton onClick={() => onDone(order)}>{t('address.delivered')} ✓</DoneButton>
           )}
           {canDelete ? (
             <Menu

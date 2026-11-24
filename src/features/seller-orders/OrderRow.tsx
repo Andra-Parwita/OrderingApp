@@ -12,6 +12,8 @@ import { ConfirmedPill } from './ConfirmedMark';
 import { SELLER_NS } from './i18n/register';
 import { KIND_MARK, customerKind } from './customerKind';
 import { toneOf } from './orderStatus';
+import { PaidTag } from '../../components/pack';
+import { packedText } from './packedText';
 import { actorLabel, itemsSummary, orderTotalCents, useLang } from './orderText';
 
 const Code = styled.span`
@@ -24,6 +26,13 @@ const Mark = styled.span`
   font-weight: ${({ theme }) => theme.type.weight.regular};
   color: ${({ theme }) => theme.colour.textMuted};
   white-space: nowrap;
+`;
+const Amount = styled.span`
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 5rem;
+  line-height: 1.3;
 `;
 const Total = styled.span`
   font-weight: ${({ theme }) => theme.type.weight.strong};
@@ -38,6 +47,7 @@ export const OrderRow = memo(function OrderRow({ order, onOpen }: OrderRowProps)
   const open = useCallback(() => onOpen(order.code), [onOpen, order.code]);
 
   const kind = customerKind(order);
+  const progress = packedText(order, t);
   const slug = currentSellerSlug();
   useAddressBook(slug);
   const tablet = useMediaQuery('(min-width: 600px)');
@@ -47,12 +57,12 @@ export const OrderRow = memo(function OrderRow({ order, onOpen }: OrderRowProps)
       <Code>{formatOrderCode(order.code)}</Code>
       {order.firstName}
       <ConfirmedPill order={order} />
-      {order.paid ? <Mark>{t('orders.paid')}</Mark> : null}
     </>
   );
   const secondary = (
     <>
       {itemsSummary(order, lang)} · {t(`fulfilment.${order.fulfilment}`)}
+      {progress ? <> · {progress}</> : null}
       {order.changed || order.addressChanged === 'new' ? (
         <Mark>
           {order.addressChanged === 'new' ? t('orders.addressChanged') : t('orders.changed')}
@@ -76,7 +86,10 @@ export const OrderRow = memo(function OrderRow({ order, onOpen }: OrderRowProps)
   const trailing = (
     <>
       <Pill tone={toneOf(order.status)}>{t(`status.${order.status}`)}</Pill>
-      <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
+      <Amount>
+        <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
+        <PaidTag paid={order.paid} />
+      </Amount>
     </>
   );
   return <ListRow primary={primary} secondary={secondary} trailing={trailing} onClick={open} />;

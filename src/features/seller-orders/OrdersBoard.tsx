@@ -186,7 +186,7 @@ export function OrdersBoard({
 
   let panel = null;
   if (selectedCode) {
-    if (selected) panel = <OrderPanelBody order={selected} withHeader={false} />;
+    if (selected) panel = <OrderPanelBody order={selected} withHeader={false} restHead />;
     else
       panel = (
         <Message role="status">

@@ -159,6 +159,8 @@
     "deliveryOff": "No delivery",
     "noteEn": "Delivery note (English)",
     "noteId": "Delivery note (Indonesian)",
+    "keepOpen": "Keep new menus open 1 more day",
+    "keepOpenHelper": "A new menu finishes at midnight the day after its last day, not on the night itself.",
     "invalid": "Check the days (0 to 14), the time and the notes.",
     "loadFailed": "Could not load the menu defaults."
   },

@@ -4,7 +4,7 @@
     "loadError": "Could not load the orders.",
     "retry": "Try again",
     "paid": "Paid",
-    "notPaid": "Not paid · {{amount}}",
+    "notPaid": "Not paid",
     "packed": "Packed",
     "actionFailed": "That did not work. Please try again."
   },

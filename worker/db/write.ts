@@ -57,8 +57,8 @@ export function settingsStatement(
   const d = prefs.menuDefaults;
   return db.stmt(
     `INSERT INTO kitchen_settings (seller_id, whatsapp_number, post_greeting_en, post_greeting_id, post_closing_en, post_closing_id,
-       languages, first_language, theme, default_cutoff_days, default_cutoff_time, default_delivery, default_delivery_note_en, default_delivery_note_id, chefs_see_income)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       languages, first_language, theme, default_cutoff_days, default_cutoff_time, default_delivery, default_delivery_note_en, default_delivery_note_id, chefs_see_income, keep_open_default)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     sellerId,
     s.whatsappNumber ?? null,
     s.postGreeting.en,
@@ -74,6 +74,7 @@ export function settingsStatement(
     d.delivery.note.en,
     d.delivery.note.id,
     prefs.chefsSeeIncome ?? true,
+    d.keepOpenExtraDay !== false,
   );
 }
 

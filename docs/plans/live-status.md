@@ -457,3 +457,15 @@ ETA given at 19:06: **ready to deploy ~21:00–22:00**.
 | 1b · safety: AUTO_CANCEL_SINCE, restore sets WA received; Can change row | general-purpose · sonnet | 22:38 | 10 min | 22:43 | | | 6 files | ✅ autoCancel mocks 6, unit 5, e2e 2 |
 | 2 · Android emulator Pixel_9: customer reminders, name check, confirm clears the card | general-purpose · haiku | 22:43 | 25 min | 22:56 | | | none (check only; scratch copy) | ✅ all steps; Haiku worked (first try on Haiku) |
 | deploy · backup, build, deploy v1.0.46.2 (4× Cloudflare 10021, then OK), health | owner + coordinator + fable | 23:15 | 20 min | 23:34 | | | — | ✅ Worker 20bfca7d |
+
+## Plans 131 + 132 (keep menus open by default; packing at the event)
+| stage | agent · tier | started | est. | ended | took | ± est. | diff | state |
+|---|---|---|---|---|---|---|---|---|
+| 1A · orders: pinned header/footer, Pack sheet, row totals | general-purpose · sonnet | 20:55 | 25 min | 21:04 | 9 min | −16 min | 9 edited + 13 new (src/components/pack/) | ✅ typecheck |
+| 1B · plan 131 (migration 0038) + Pickup & delivery total column | general-purpose · sonnet | 20:55 | 20 min | 20:59 | 4 min | −16 min | 18 files +159 −40 | ✅ typecheck |
+| 1C · Kitchen → Pack buttons, totals, header fix (after 1A) | general-purpose · sonnet | 21:05 | 20 min | 21:17 | 12 min | −8 min | PackTab split (550→236 + 2 new), PackHead/PackAsk | ✅ typecheck |
+| fixes · lint/tests, phone sheet layering, layout ×3, version 1.0.47 | general-purpose · sonnet ×6 | 21:25 | — | 23:20 | | | see HANDOVER | ✅ |
+| gate · typecheck, lint, format, unit 3,207, e2e p132 + 17 specs, docs | coordinator | 21:18 | 40 min | 23:30 | | | — | ✅ (p130 flake passes alone) |
+| emulator · Tablet_11 + Pixel_9 (both at once: Android not responding, parked) | general-purpose · haiku | 23:31 | 30 min | 23:39 | 8 min | | none | ❌ parked |
+| emulator retry · one at a time: Tablet_11 + Pixel_8a | general-purpose · sonnet | 23:40 | 30 min | 00:03 | 23 min | −7 min | none (scratch/emu-147) | ✅ all steps |
+| tidy · button height, "1 item", "Pack · Packed", portion text | general-purpose · sonnet | 23:59 | 10 min | 00:07 | 8 min | −2 min | 10 files | ✅ p132 9/9, unit 312 |

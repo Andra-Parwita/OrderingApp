@@ -17,6 +17,8 @@ import { formatTime } from '../../../shared/dates';
 import { autoCancelAt, isAutoCancelCandidate, isAutoCancelSoon } from '../../../shared/autoCancel';
 import { useMinuteNow } from './useMinuteNow';
 import { itemsSummary, orderTotalCents, useLang } from './orderText';
+import { PaidTag } from '../../components/pack';
+import { packedText } from './packedText';
 
 // One order in the live list (handoff, Home): code, first name, Changed flag, small icons, total,
 // items, pickup or delivery, status, Paid. The whole row is one button. Plan 108: on a wide list
@@ -35,7 +37,7 @@ const tracks = (wide: boolean, daySlot: boolean): string => {
   const tag = daySlot ? '[how-end tag-start] max-content [tag-end' : '[how-end';
   return wide
     ? `[line-start] minmax(0, 20rem) [line-end items-start] minmax(0, 1fr) [items-end note-start] minmax(0, 1fr) [note-end how-start] max-content ${tag} status-start] max-content [status-end total-start] max-content [total-end]`
-    : `[line-start how-start] max-content ${tag} items-start] minmax(0, 1fr) [items-end status-start total-start] max-content [status-end total-end]`;
+    : `[line-start how-start] max-content ${tag} items-start] minmax(0, 1fr) [items-end status-start] max-content [status-end total-start] max-content [total-end]`;
 };
 
 /** The list's rows. `$wide`: no order is open beside the list. */
@@ -87,7 +89,7 @@ const wideRow = (wide: boolean): string =>
   wide ? `@media (min-width: ${WIDE}) { grid-row: 1; }` : '';
 
 const Line = styled.div<{ $wide: boolean }>`
-  grid-column: line-start / items-end;
+  grid-column: line-start / status-end;
   grid-row: 1;
   display: flex;
   align-items: center;
@@ -162,13 +164,20 @@ const Items = styled.span<{ $wide: boolean }>`
 
   ${({ $wide }) => wideRow($wide)}
 `;
-const Total = styled.span`
+// Plan 132: the total with Paid / Not paid under it, in its own column on every row.
+const Total = styled.span<{ $wide: boolean }>`
   grid-column: total-start / total-end;
-  grid-row: 1;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-self: end;
   font-size: 0.9375rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  justify-self: end;
+  line-height: 1.3;
+
+  ${({ $wide }) => ($wide ? `@media (min-width: ${WIDE}) { grid-row: 1; }` : '')}
 `;
 const How = styled.span<{ $wide: boolean }>`
   grid-column: how-start / how-end;
@@ -203,20 +212,6 @@ const StatusCell = styled.span<{ $wide: boolean }>`
   white-space: nowrap;
   ${({ $wide }) => wideRow($wide)}
 `;
-const Paid = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  color: ${({ theme }) => theme.c.conf};
-  font-weight: 600;
-  white-space: nowrap;
-
-  svg {
-    width: 0.9375rem;
-    height: 0.9375rem;
-  }
-`;
-
 function SmallIcon({ icon, label }: Readonly<{ icon: IconName; label: string }>) {
   return (
     <Small role="img" aria-label={label} title={label}>
@@ -251,6 +246,7 @@ export const LiveOrderRow = memo(function LiveOrderRow({
   const kind = customerKind(order);
   const now = useMinuteNow(isAutoCancelCandidate(order));
   const wide = !panelOpen;
+  const progress = packedText(order, t);
   const hasTag = order.fulfilment === 'delivery' && order.handoverDate !== undefined;
   return (
     <Row
@@ -288,12 +284,16 @@ export const LiveOrderRow = memo(function LiveOrderRow({
         {order.enteredBy ? <SmallIcon icon="person" label={t('live.staff')} /> : null}
         {order.locked ? <SmallIcon icon="lock" label={t('live.locked')} /> : null}
       </Line>
-      <Total>{formatMoney(orderTotalCents(order), lang)}</Total>
+      <Total $wide={wide}>
+        {formatMoney(orderTotalCents(order), lang)}
+        <PaidTag paid={order.paid} />
+      </Total>
       <Items $wide={wide}>{itemsSummary(order, lang)}</Items>
       {wide && order.note ? <NoteCell title={order.note}>{order.note}</NoteCell> : null}
       <How $wide={wide}>
         <Icon name={order.fulfilment === 'delivery' ? 'truck' : 'bag'} />
         {t(`fulfilment.${order.fulfilment}`)}
+        {progress ? <span>· {progress}</span> : null}
       </How>
       {daySlot && hasTag ? (
         <TagCell $wide={wide}>
@@ -302,12 +302,6 @@ export const LiveOrderRow = memo(function LiveOrderRow({
       ) : null}
       <StatusCell $wide={wide}>
         <StatusMark status={order.status} />
-        {order.paid ? (
-          <Paid>
-            <Icon name="check" />
-            {t('live.paid')}
-          </Paid>
-        ) : null}
       </StatusCell>
     </Row>
   );

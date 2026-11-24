@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Packing at the event</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<style>
+  :root { --page: #f4f1ea; --ink: #23211c; --mute: #6b665a; }
+  @media (prefers-color-scheme: dark) { :root { --page: #141512; --ink: #efece4; --mute: #a9a497; } }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; } h2 { font-size: 1.05rem; margin: 34px 0 10px; }
+  .lead { color: var(--mute); margin: 0 0 20px; max-width: 90ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 22px; align-items: start; }
+  figure { margin: 0; } figcaption { font-size: .86rem; color: var(--mute); margin-top: 8px; max-width: 70ch; } figcaption b { color: var(--ink); } figcaption > b:first-child { display: block; }
+  ul { color: var(--mute); max-width: 90ch; }
+
+  .dev { --bg: #f6f2e8; --surf: #fbf8f1; --ink2: #1f2a22; --mute2: #5d6358; --line: #e4ded0; --green: #2f6b4f; --soft: #e6efe7; --amber: #7a4f0e; --amberbg: #f7ecd6;
+    background: var(--bg); color: var(--ink2); font-size: 14px; border: 6px solid #111; overflow: hidden; position: relative; }
+  .phone { width: 100%; max-width: 360px; height: 700px; border-radius: 30px; display: flex; flex-direction: column; }
+  .tablet { width: 100%; max-width: 1280px; aspect-ratio: 1280 / 800; border-radius: 18px; display: grid; grid-template-columns: 170px 1fr; font-size: 13px; }
+  .scrollwrap { overflow-x: auto; }
+  .tablet { min-width: 1000px; }
+  .status { height: 22px; flex: none; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; font-size: 12px; color: #333; }
+  .num { font-variant-numeric: tabular-nums; }
+  code { font-family: ui-monospace, Consolas, monospace; color: var(--mute2); letter-spacing: .04em; }
+
+  /* pinned header */
+  .pin { flex: none; background: var(--surf); border-bottom: 1px solid var(--line); padding: 10px 14px 10px; box-shadow: 0 2px 6px rgba(0,0,0,.05); }
+  .pin .top { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: baseline; gap: 10px; }
+  .pin .who { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pin .who b { font-size: 19px; margin-left: 6px; }
+  .pin .tot { font-size: 22px; font-weight: 700; }
+  .pin .sub { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; margin-top: 3px; color: var(--mute2); font-size: 13px; align-items: center; }
+  .pin .prog { margin-top: 8px; display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; font-size: 13px; font-weight: 600; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; } .bar i { display: block; height: 100%; background: var(--green); }
+  .tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+  .tag.amber { background: var(--amberbg); color: var(--amber); } .tag.green { background: var(--soft); color: var(--green); }
+
+  .scroll { flex: 1; overflow: hidden; padding: 0 14px; }
+  .lbl { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--mute2); margin: 12px 0 2px; }
+  .item { display: grid; grid-template-columns: 30px 30px minmax(0,1fr) auto; gap: 8px; align-items: start; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .box { width: 22px; height: 22px; border: 2px solid #8b8f84; border-radius: 6px; box-sizing: border-box; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 700; margin-top: -1px; }
+  .on .box { background: var(--green); border-color: var(--green); }
+  .on .nm { color: var(--mute2); }
+  .q { font-weight: 700; } .pr { text-align: right; }
+  .edited { font-size: 13px; color: var(--mute2); padding: 10px 0 0; }
+  .acts { flex: none; padding: 10px 14px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border-top: 1px solid var(--line); background: var(--bg); }
+  .b { box-sizing: border-box; text-align: center; border-radius: 10px; padding: 10px; font-weight: 700; border: 1px solid var(--line); background: var(--surf); }
+  .b.primary { background: var(--green); color: #fff; border-color: var(--green); grid-column: 1 / -1; }
+  .b.plain { border: 0; background: none; grid-column: 1 / -1; padding: 4px; color: var(--green); }
+  .toast { position: absolute; left: 12px; right: 12px; bottom: 132px; background: #1f2a22; color: #fff; border-radius: 12px; padding: 11px 14px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; font-size: 13px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  .toast b.u { color: #b8e0c6; font-size: 14px; }
+
+  /* tablet */
+  .rail { background: #efe9dc; border-right: 1px solid var(--line); padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  .rail .k { font-weight: 700; padding: 6px 8px 10px; }
+  .rail span { padding: 7px 8px; border-radius: 8px; color: var(--mute2); }
+  .rail span.cur { background: var(--soft); color: var(--green); font-weight: 700; }
+  .main { display: flex; flex-direction: column; min-width: 0; }
+  .thead { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px 18px 6px; }
+  .thead h3 { margin: 0; font-size: 20px; } .thead .r { display: flex; gap: 8px; align-items: center; color: var(--mute2); }
+  .ttabs { display: flex; gap: 18px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--mute2); }
+  .ttabs span { padding: 8px 0; } .ttabs .cur { color: var(--ink2); font-weight: 700; border-bottom: 2px solid var(--green); }
+  .split { flex: 1; display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); min-height: 0; }
+  .list { border-right: 1px solid var(--line); overflow: hidden; }
+  .bag { display: grid; grid-template-columns: 24px minmax(0,1fr) 78px 66px; gap: 4px 10px; align-items: center; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+  .bag.sel { background: var(--soft); }
+  .bag .n { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bag .n b { margin-right: 6px; }
+  .bag .w { grid-column: 2; color: var(--mute2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bag .amt { grid-row: 1 / span 2; grid-column: 3; text-align: right; } .bag .amt b { display: block; } .bag .amt small { font-size: 11px; font-weight: 700; }
+  .bag .st { grid-row: 1 / span 2; grid-column: 4; text-align: right; color: var(--mute2); font-weight: 600; }
+  .dot { grid-row: 1 / span 2; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #9a9d93; box-sizing: border-box; display: grid; place-items: center; color: #fff; font-size: 11px; }
+  .dot.on { background: var(--green); border-color: var(--green); }
+  .unp { color: var(--amber); } .pd { color: var(--green); }
+  .panel { display: flex; flex-direction: column; min-width: 0; }
+  .panel .pin { box-shadow: none; padding: 14px 20px 12px; }
+  .panel .scroll { padding: 0 20px; }
+  .panel .acts { grid-template-columns: repeat(3, auto) 1fr; padding: 10px 20px; }
+  .panel .acts .b.primary { grid-column: auto; }
+  .ord { display: grid; grid-template-columns: minmax(0,1fr) 84px 80px; gap: 2px 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); align-items: center; }
+  .ord .w { color: var(--mute2); font-size: 12px; grid-column: 1; }
+  .ord .amt { grid-row: 1 / span 2; grid-column: 2; text-align: right; } .ord .amt b { display: block; } .ord .amt small { font-size: 11px; font-weight: 700; }
+  .ord .s { grid-row: 1 / span 2; grid-column: 3; font-size: 12px; color: var(--mute2); }
+  .ord.sel { background: var(--soft); }
+
+  .sheethead { flex: none; display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 10px 14px; font-weight: 700; background: var(--surf); border-bottom: 1px solid var(--line); }
+  .sheethead span:last-child { color: var(--mute2); font-size: 18px; }
+  .dim { position: absolute; inset: 0; background: rgba(20,22,18,.45); display: grid; place-items: center; }
+  .modal { width: 560px; height: 86%; background: var(--bg); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .acts3 { grid-template-columns: 1fr 1fr; }
+  .ask { position: absolute; left: 22px; right: 22px; top: 38%; background: var(--surf); border-radius: 14px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .ask p { margin: 0 0 4px; font-weight: 700; } .ask small { color: var(--mute2); display: block; margin-bottom: 12px; }
+  .ask .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shade { position: absolute; inset: 0; background: rgba(20,22,18,.45); }
+  .chk { color: var(--green); font-weight: 700; }
+  /* settings */
+  .card { --surf: #fbf8f1; --line: #e4ded0; --green: #2f6b4f; --mute2: #5d6358; color: #1f2a22; background: var(--surf); border: 1px solid var(--line); border-radius: 12px; padding: 4px 16px; max-width: 560px; }
+  .srow { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: center; }
+  .srow:last-child { border-bottom: 0; } .srow small { display: block; color: var(--mute2); font-size: 12px; margin-top: 2px; }
+  .sw { width: 40px; height: 24px; border-radius: 12px; background: var(--green); position: relative; } .sw::after { content: ''; position: absolute; right: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+  .new { outline: 2px dashed #c08a2c; outline-offset: 4px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>132 · Packing at the event, total price everywhere (and 131 · keep menus open 1 more day)</h1>
+  <p class="lead">DellaVee packs at Goodwood Community Center on Sun 15 Nov; buyers pay when they pick up. The <b>total with Paid / Not paid</b> shows on every order row and stays <b>pinned on top</b> of an open order; packing happens in a <b>pack sheet</b>: tick the items, then <b>Ready for pickup</b>, <b>Save</b> or <b>Ready &amp; next order</b>; nothing is saved until a button. Buttons are pinned at the bottom. Items from the photos; bag amounts are samples. AUD, Adelaide.</p>
+
+  <h2>Phone · order detail and the pack sheet</h2>
+  <div class="grid">
+    <figure><div class="dev phone">
+      <div class="status"><span>10:52 am</span><span>▂▄▆ ▮</span></div>
+      <div class="pin">
+        <div class="top"><span class="who"><code>LGJ-83Q</code><b>Grace</b></span><span class="tot num">$127.50</span></div>
+        <div class="sub"><span>✓ Confirmed · Pickup · 11:00</span><span class="tag amber">Not paid</span></div>
+        <div class="prog"><span>3 of 7 packed</span><span class="bar"><i style="width:43%"></i></span></div>
+      </div>
+      <div class="scroll">
+        <div class="edited">✎ Edited by DellaVee · Fri 13 Nov 10:14 am · +1 Sambal Goreng krecek</div>
+        <div class="lbl">ITEMS</div>
+        <div class="item"><span class="chk">✓</span><span class="q">4×</span><span class="nm">Empek² · 1 box</span><span class="pr num">$40.00</span></div>
+        <div class="item"><span class="chk">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Rendang Daging</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="chk">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Ayam Bakar</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="chk"></span><span class="q">1×</span><span class="nm">Tahu bakso</span><span class="pr num">$10.00</span></div>
+        <div class="item"><span class="chk"></span><span class="q">1×</span><span class="nm">Nasi Gudeg Jogja</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="chk"></span><span class="q">2×</span><span class="nm">Cendol</span><span class="pr num">$12.00</span></div>
+        <div class="item"><span class="chk"></span><span class="q">1×</span><span class="nm">Sambal Goreng krecek</span><span class="pr num">$10.00</span></div>
+      </div>
+      <div class="acts">
+        <span class="b primary">▣ Pack · 3 of 7</span><span class="b">✓ Ready for pickup</span><span class="b">$ Mark paid</span><span class="b">Send link</span><span class="b">Mark collected</span>
+      </div>
+    </div><figcaption><b>1 · Order detail (found by name or code)</b>Total and <b>Not paid</b> pinned on top, buttons pinned at the bottom; only the items scroll. The item list only reads (✓ = packed earlier). <b>Pack</b> opens the pack sheet. For a customer who just arrived: Orders → search "Grace" → this page → Pack.</figcaption></figure>
+
+    <figure><div class="dev phone">
+      <div class="status"><span>10:54 am</span><span>▂▄▆ ▮</span></div>
+      <div class="sheethead"><span>Pack</span><span>✕</span></div>
+      <div class="pin">
+        <div class="top"><span class="who"><code>LGJ-83Q</code><b>Grace</b></span><span class="tot num">$127.50</span></div>
+        <div class="sub"><span>Pickup · 11:00</span><span class="tag amber">Not paid</span></div>
+        <div class="prog"><span>5 of 7 ticked</span><span class="bar"><i style="width:71%"></i></span></div>
+      </div>
+      <div class="scroll">
+        <div class="lbl">TICK WHAT GOES IN THE BAG</div>
+        <div class="item on"><span class="box">✓</span><span class="q">4×</span><span class="nm">Empek² · 1 box</span><span class="pr num">$40.00</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Rendang Daging</span><span class="pr num">$18.50</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Ayam Bakar</span><span class="pr num">$18.50</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Tahu bakso</span><span class="pr num">$10.00</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Gudeg Jogja</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="box"></span><span class="q">2×</span><span class="nm">Cendol</span><span class="pr num">$12.00</span></div>
+        <div class="item"><span class="box"></span><span class="q">1×</span><span class="nm">Sambal Goreng krecek</span><span class="pr num">$10.00</span></div>
+      </div>
+      <div class="acts acts3">
+        <span class="b primary">✓ Ready for pickup</span><span class="b">Save</span><span class="b">Ready &amp; next order</span>
+      </div>
+    </div><figcaption><b>2 · Pack sheet</b>Ticks change only on this sheet; <b>nothing is saved until a button</b>. <b>Ready for pickup</b> saves the ticks, marks the order Packed + Ready and sends Grace the usual message. <b>Save</b> keeps the ticks for later and closes (order unchanged). <b>Ready &amp; next order</b> does the same as Ready and opens the next unpacked order by pickup time. ✕ closes without saving (asks first if something was ticked).</figcaption></figure>
+
+    <figure><div class="dev phone">
+      <div class="status"><span>10:55 am</span><span>▂▄▆ ▮</span></div>
+      <div class="sheethead"><span>Pack</span><span>✕</span></div>
+      <div class="pin">
+        <div class="top"><span class="who"><code>LGJ-83Q</code><b>Grace</b></span><span class="tot num">$127.50</span></div>
+        <div class="sub"><span>Pickup · 11:00</span><span class="tag amber">Not paid</span></div>
+        <div class="prog"><span>5 of 7 ticked</span><span class="bar"><i style="width:71%"></i></span></div>
+      </div>
+      <div class="scroll">
+        <div class="lbl">TICK WHAT GOES IN THE BAG</div>
+        <div class="item on"><span class="box">✓</span><span class="q">4×</span><span class="nm">Empek² · 1 box</span><span class="pr num">$40.00</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Rendang Daging</span><span class="pr num">$18.50</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Ayam Bakar</span><span class="pr num">$18.50</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Tahu bakso</span><span class="pr num">$10.00</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Gudeg Jogja</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="box"></span><span class="q">2×</span><span class="nm">Cendol</span><span class="pr num">$12.00</span></div>
+        <div class="item"><span class="box"></span><span class="q">1×</span><span class="nm">Sambal Goreng krecek</span><span class="pr num">$10.00</span></div>
+      </div>
+      <div class="acts acts3">
+        <span class="b primary">✓ Ready for pickup</span><span class="b">Save</span><span class="b">Ready &amp; next order</span>
+      </div>
+      <div class="shade"></div>
+      <div class="ask"><p>2 items not ticked. Ready anyway?</p><small>Cendol, Sambal Goreng krecek</small><div class="row2"><span class="b">Back to packing</span><span class="b primary" style="grid-column:auto">Ready anyway</span></div></div>
+    </div><figcaption><b>3 · Ready with unticked items</b>A warning, never a block: it names what is missing. "Back to packing" returns to the sheet.</figcaption></figure>
+  </div>
+
+  <h2>Tablet · Orders with the detail panel (1280 × 800)</h2>
+  <div class="scrollwrap"><figure><div class="dev tablet">
+    <div class="rail"><span class="k">DellaVee</span><span>Home</span><span>Menu</span><span class="cur">Orders</span><span>Private</span><span>Kitchen</span><span>Pickup &amp; delivery</span><span>Dishes</span><span>Settings</span></div>
+    <div class="main">
+      <div class="thead"><h3>Orders · Sun 15 Nov</h3><span class="r">13 orders</span></div>
+      <div class="ttabs"><span class="cur">Active 13</span><span>Collected</span><span>Cancelled</span></div>
+      <div class="split">
+        <div class="list">
+          <div class="ord sel"><span><b>Grace</b> <code>LGJ-83Q</code></span><span class="amt num"><b>$127.50</b><small class="unp">Not paid</small></span><span class="s">✓ Confirmed</span><span class="w">Pickup · 11:00 · 3 of 7 packed</span></div>
+          <div class="ord"><span><b>Ardelia</b> <code>DRP-FUA</code></span><span class="amt num"><b>$71.00</b><small class="unp">Not paid</small></span><span class="s">✓ Confirmed</span><span class="w">Pickup · 11:00 · 0 of 4 packed</span></div>
+          <div class="ord"><span><b>Olivia</b> <code>8JV-HCH</code></span><span class="amt num"><b>$45.50</b><small class="pd">Paid</small></span><span class="s">Ready</span><span class="w">Pickup · 11:00 · Packed</span></div>
+          <div class="ord"><span><b>Lenny</b> <code>AN8-CB7</code></span><span class="amt num"><b>$15.00</b><small class="unp">Not paid</small></span><span class="s">✓ Confirmed</span><span class="w">Pickup · 11:00 · 0 of 6 packed</span></div>
+          <div class="ord"><span><b>Effi</b> <code>HRV-EDY</code></span><span class="amt num"><b>$30.00</b><small class="pd">Paid</small></span><span class="s">✓ Confirmed</span><span class="w">Delivery · Sun 15 Nov</span></div>
+        </div>
+        <div class="panel">
+          <div class="pin">
+        <div class="top"><span class="who"><code>LGJ-83Q</code><b>Grace</b></span><span class="tot num">$127.50</span></div>
+        <div class="sub"><span>✓ Confirmed · Pickup · Goodwood Community Center · 11:00</span><span class="tag amber">Not paid</span></div>
+        <div class="prog"><span>3 of 7 packed</span><span class="bar"><i style="width:43%"></i></span></div>
+      </div>
+          <div class="scroll">
+            <div class="item"><span class="chk">✓</span><span class="q">4×</span><span class="nm">Empek² · 1 box</span><span class="pr num">$40.00</span></div>
+        <div class="item"><span class="chk">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Rendang Daging</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="chk">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Ayam Bakar</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="chk"></span><span class="q">1×</span><span class="nm">Tahu bakso</span><span class="pr num">$10.00</span></div>
+        <div class="item"><span class="chk"></span><span class="q">1×</span><span class="nm">Nasi Gudeg Jogja</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="chk"></span><span class="q">2×</span><span class="nm">Cendol</span><span class="pr num">$12.00</span></div>
+        <div class="item"><span class="chk"></span><span class="q">1×</span><span class="nm">Sambal Goreng krecek</span><span class="pr num">$10.00</span></div>
+          </div>
+          <div class="acts" style="grid-template-columns: auto auto auto auto 1fr"><span class="b primary" style="grid-column:auto">▣ Pack · 3 of 7</span><span class="b">✓ Ready for pickup</span><span class="b">$ Mark paid</span><span class="b">Send link</span><span></span></div>
+        </div>
+      </div>
+    </div>
+  </div><figcaption><b>4 · Orders list + panel</b>Each row: name and code, <b>total with Paid / Not paid</b> in its own column (all rows line up), status, and "N of M packed". The panel: total pinned on top, <b>buttons pinned at the bottom</b> (never scrolled away), items in between.</figcaption></figure></div>
+
+  <h2>Tablet · the pack sheet</h2>
+  <div class="scrollwrap"><figure><div class="dev tablet" style="display:block">
+    <div class="dim"><div class="modal">
+      <div class="sheethead"><span>Pack</span><span>✕</span></div>
+      <div class="pin">
+        <div class="top"><span class="who"><code>LGJ-83Q</code><b>Grace</b></span><span class="tot num">$127.50</span></div>
+        <div class="sub"><span>Pickup · Goodwood Community Center · 11:00</span><span class="tag amber">Not paid</span></div>
+        <div class="prog"><span>5 of 7 ticked</span><span class="bar"><i style="width:71%"></i></span></div>
+      </div>
+      <div class="scroll">
+        <div class="lbl">TICK WHAT GOES IN THE BAG</div>
+        <div class="item on"><span class="box">✓</span><span class="q">4×</span><span class="nm">Empek² · 1 box</span><span class="pr num">$40.00</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Rendang Daging</span><span class="pr num">$18.50</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Padang (Set 1) · Ayam Bakar</span><span class="pr num">$18.50</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Tahu bakso</span><span class="pr num">$10.00</span></div>
+        <div class="item on"><span class="box">✓</span><span class="q">1×</span><span class="nm">Nasi Gudeg Jogja</span><span class="pr num">$18.50</span></div>
+        <div class="item"><span class="box"></span><span class="q">2×</span><span class="nm">Cendol</span><span class="pr num">$12.00</span></div>
+        <div class="item"><span class="box"></span><span class="q">1×</span><span class="nm">Sambal Goreng krecek</span><span class="pr num">$10.00</span></div>
+      </div>
+      <div class="acts" style="grid-template-columns: 1fr auto auto"><span class="b primary" style="grid-column:auto">✓ Ready for pickup</span><span class="b">Ready &amp; next order</span><span class="b">Save</span></div>
+    </div></div>
+  </div><figcaption><b>5 · Pack sheet on the tablet</b>The same sheet over the Orders page, with the same buttons pinned at the bottom.</figcaption></figure></div>
+
+  <h2>Tablet · Kitchen → Pack</h2>
+  <div class="scrollwrap"><figure><div class="dev tablet">
+    <div class="rail"><span class="k">DellaVee</span><span>Home</span><span>Menu</span><span>Orders</span><span>Private</span><span class="cur">Kitchen</span><span>Pickup &amp; delivery</span><span>Dishes</span><span>Settings</span></div>
+    <div class="main">
+      <div class="thead"><h3>Kitchen · Sun 15 Nov</h3><span class="r">7 of 13 bags packed <span class="b">☰ Print</span><span class="b">🖶 Print labels</span></span></div>
+      <div class="ttabs"><span>Cook · by dish</span><span class="cur">Pack · by order</span></div>
+      <div class="split">
+        <div class="list">
+          <div class="bag"><span class="dot on">✓</span><span class="n"><b>Stefani</b><code>5G6-KYX</code></span><span class="amt num"><b>$52.00</b><small class="pd">Paid</small></span><span class="st">Packed</span><span class="w">11:00 · Goodwood Community Center 34 Rosa st, goodwood SA</span></div>
+          <div class="bag"><span class="dot on">✓</span><span class="n"><b>Olivia</b><code>8JV-HCH</code></span><span class="amt num"><b>$45.50</b><small class="pd">Paid</small></span><span class="st">Packed</span><span class="w">11:00 · Goodwood Community Center 34 Rosa st, goodwood SA</span></div>
+          <div class="bag"><span class="dot"></span><span class="n"><b>Lenny</b><code>AN8-CB7</code></span><span class="amt num"><b>$15.00</b><small class="unp">Not paid</small></span><span class="st num">0/6</span><span class="w">11:00 · Goodwood Community Center 34 Rosa st, goodwood SA</span></div>
+          <div class="bag"><span class="dot on">✓</span><span class="n"><b>Farikha Elfia</b><code>B8R-8NP</code></span><span class="amt num"><b>$64.00</b><small class="unp">Not paid</small></span><span class="st">Packed</span><span class="w">11:00 · Goodwood Community Center 34 Rosa st, goodwood SA</span></div>
+          <div class="bag"><span class="dot"></span><span class="n"><b>Iffah</b><code>BBQ-93B</code></span><span class="amt num"><b>$88.50</b><small class="unp">Not paid</small></span><span class="st num">0/7</span><span class="w">11:00 · Goodwood Community Center 34 Rosa st, goodwood SA</span></div>
+          <div class="bag"><span class="dot on">✓</span><span class="n"><b>Sandra</b><code>CMD-UUH</code></span><span class="amt num"><b>$37.00</b><small class="pd">Paid</small></span><span class="st">Packed</span><span class="w">11:00 · Goodwood Community Center 34 Rosa st, goodwood SA</span></div>
+          <div class="bag sel"><span class="dot"></span><span class="n"><b>Ardelia</b><code>DRP-FUA</code></span><span class="amt num"><b>$71.00</b><small class="unp">Not paid</small></span><span class="st num">0/4</span><span class="w">11:00 · Goodwood Community Center 34 Rosa st, goodwood SA</span></div>
+        </div>
+        <div class="panel">
+          <div class="pin">
+            <div class="top"><span class="who"><code>DRP-FUA</code><b>Ardelia</b></span><span class="tot num">$71.00</span></div>
+            <div class="sub"><span>Pickup · Goodwood Community Center 34 Rosa st, goodwood SA · 11:00</span><span class="tag amber">Not paid</span></div>
+            <div class="prog"><span>0 of 4 items in the bag</span><span class="bar"><i style="width:0"></i></span></div>
+          </div>
+          <div class="scroll">
+            <div class="item"><span class="box"></span><span class="q">2×</span><span class="nm">Nasi Padang (Set 1) · Rendang Daging</span><span class="pr num">$37.00</span></div>
+            <div class="item"><span class="box"></span><span class="q">2×</span><span class="nm">Bubur ayam</span><span class="pr num">$20.00</span></div>
+            <div class="item"><span class="box"></span><span class="q">1×</span><span class="nm">Tahu Isi sayuran · 4 in Box</span><span class="pr num">$8.00</span></div>
+            <div class="item"><span class="box"></span><span class="q">1×</span><span class="nm">Telur Tahu bumbu gudeg · Egg only</span><span class="pr num">$6.00</span></div>
+          </div>
+          <div class="acts" style="grid-template-columns: auto auto auto 1fr"><span class="b primary" style="grid-column:auto">✓ Ready &amp; next bag</span><span class="b">Ready for pickup</span><span class="b">Save</span><span></span></div>
+        </div>
+      </div>
+    </div>
+  </div><figcaption><b>6 · Kitchen → Pack</b>Bag rows get the <b>total + Paid / Not paid</b> column; time and place go on <b>one line</b> (cut with … when long), so the rows are shorter and more bags fit. The open bag gets the pinned header with the total and <b>the same buttons as the pack sheet, pinned at the bottom</b> (today: "Packed · next bag" and "Skip for now"); ticks are saved only by a button here too. The header buttons and "0 of 4 items in the bag" are no longer cut off at the right edge.</figcaption></figure></div>
+
+  <h2>Pickup &amp; delivery · and Settings</h2>
+  <div class="grid">
+    <figure><div class="dev phone" style="height:auto; padding-bottom:10px">
+      <div class="status"><span>11:05 am</span><span>▂▄▆ ▮</span></div>
+      <div style="padding:10px 14px; font-weight:700; border-bottom:1px solid var(--line)">Pickup &amp; delivery · Sun 15 Nov</div>
+      <div class="ord" style="grid-template-columns: minmax(0,1fr) 92px"><span><b>Grace</b> <code>LGJ-83Q</code></span><span class="amt num" style="grid-column:2"><b>$127.50</b><small class="unp">Not paid</small></span><span class="w">Ready · 11:00</span></div>
+      <div class="ord" style="grid-template-columns: minmax(0,1fr) 92px"><span><b>Olivia</b> <code>8JV-HCH</code></span><span class="amt num" style="grid-column:2"><b>$45.50</b><small class="pd">Paid</small></span><span class="w">Ready · 11:00</span></div>
+      <div class="ord" style="grid-template-columns: minmax(0,1fr) 92px"><span><b>Lenny</b> <code>AN8-CB7</code></span><span class="amt num" style="grid-column:2"><b>$15.00</b><small class="unp">Not paid</small></span><span class="w">Confirmed · 11:00</span></div>
+    </div><figcaption><b>7 · Pickup &amp; delivery rows</b>Today this shows "Not paid · $127.50" or just "Paid". Now every row shows the <b>total in the same column</b>, with Paid / Not paid under it, like the other lists.</figcaption></figure>
+
+    <figure><div class="card">
+      <div style="font-weight:700; padding:12px 0 2px">Menu defaults</div>
+      <div style="color:#5d6358; font-size:13px; padding-bottom:6px">A new menu starts with these. You can change them on each menu.</div>
+      <div class="srow"><span>Cut-off<small>1 day before the cooking day · 9:00 pm</small></span><span>›</span></div>
+      <div class="srow"><span>Delivery<small>Offer delivery</small></span><span>›</span></div>
+      <div class="srow new"><span>Keep new menus open 1 more day<small>A new menu finishes at midnight the day after its last day, not on the night itself.</small></span><span class="sw"></span></div>
+    </div><figcaption><b>8 · Plan 131 · Settings → Menu defaults</b>New switch (dashed), <b>on</b> for every kitchen. A new menu starts with "Keep the menu open 1 more day" on; menus already made don't change. ID: "Biarkan menu baru buka 1 hari lagi".</figcaption></figure>
+  </div>
+
+  <ul>
+    <li>Saved ticks are shared by the order detail (phone + tablet) and Kitchen → Pack; a helper who may pack can pack.</li>
+    <li>EN and ID for every new line.</li>
+  </ul>
+</div>
+</body>
+</html>

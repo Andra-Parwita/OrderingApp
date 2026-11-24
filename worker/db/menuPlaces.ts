@@ -188,7 +188,7 @@ export function placesPart(
       await db
         .stmt(
           `UPDATE kitchen_settings SET theme = ?, default_cutoff_days = ?, default_cutoff_time = ?, default_delivery = ?,
-             default_delivery_note_en = ?, default_delivery_note_id = ?, chefs_see_income = ? WHERE seller_id = ?`,
+             default_delivery_note_en = ?, default_delivery_note_id = ?, chefs_see_income = ?, keep_open_default = ? WHERE seller_id = ?`,
           next.theme,
           next.menuDefaults.cutoffDaysBefore,
           next.menuDefaults.cutoffTime,
@@ -196,6 +196,7 @@ export function placesPart(
           next.menuDefaults.delivery.note.en,
           next.menuDefaults.delivery.note.id,
           next.chefsSeeIncome,
+          next.menuDefaults.keepOpenExtraDay !== false,
           sid,
         )
         .run();

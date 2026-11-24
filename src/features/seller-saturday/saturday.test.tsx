@@ -70,6 +70,8 @@ describe('Pickup & delivery · Pickup', () => {
     const row = await screen.findByRole('listitem', { name: `Order ${rina.label}, Rina` });
     expect(row).toHaveTextContent('Ready');
     expect(row).toHaveTextContent('Not paid');
+    // Plan 132: the total is always there, with Paid / Not paid under it.
+    expect(row).toHaveTextContent(/\d/);
     expect(within(row).queryByRole('button')).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /^Message / }).length).toBeGreaterThan(0);
     expect(screen.getByText(/1 collected by customers/)).toBeVisible();

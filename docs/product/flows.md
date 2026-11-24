@@ -56,7 +56,7 @@ flowchart TD
 
 ## Seller: from dishes to a finished menu
 
-The seller works in the app at `/seller`. A menu is made in a four-step wizard (**Dishes, Details, Check, Publish**), shown as a layer over the current screen. A live menu keeps three tabs (Dishes, Details, Prices) and has no Publish step. On the cooking day the seller packs, hands over and sells; **Finish** archives the orders and closes the menu, after which a new one can be made.
+The seller works in the app at `/seller`. A menu is made in a four-step wizard (**Dishes, Details, Check, Publish**), shown as a layer over the current screen. A live menu keeps three tabs (Dishes, Details, Prices) and has no Publish step. On the cooking day the seller packs (Kitchen → Pack, or **Pack** on any order: a sheet with item ticks saved by **Ready for pickup**, **Save** or **Ready & next order**; delivery bags only become Packed; D-121), hands over and sells (every order row shows the total with Paid / Not paid); **Finish** archives the orders and closes the menu, after which a new one can be made.
 
 ```mermaid
 flowchart TD

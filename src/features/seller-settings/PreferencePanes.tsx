@@ -23,7 +23,7 @@ import {
 import { setTextSize, useTextSize, type TextSize } from '../../theme/textSize';
 import { makeColors } from '../../theme/designTokens';
 import { SETTINGS_NS } from './i18n/register';
-import { ErrorLine, GroupTitle, Muted, PaneForm, PaneGroup, Two } from './paneParts';
+import { ErrorLine, GroupTitle, Muted, PaneForm, PaneGroup, SwitchRow, Two } from './paneParts';
 
 type Loaded = Readonly<{ preferences: Preferences | null; failed: boolean; retry: () => void }>;
 
@@ -94,18 +94,20 @@ function DefaultsForm({ defaults, onSaved, onToast }: DefaultsFormProps) {
       available: defaults.delivery.available,
       noteEn: defaults.delivery.note.en,
       noteId: defaults.delivery.note.id,
+      keepOpen: defaults.keepOpenExtraDay !== false,
     }),
     [defaults],
   );
   const [typed, setTyped, typedDraft] = useDraft(draftKey(currentSellerSlug(), 'defaults'), start, {
     baseline: fingerprint(start),
   });
-  const { days, time, available, noteEn, noteId } = typed;
+  const { days, time, available, noteEn, noteId, keepOpen } = typed;
   const setDays = (value: string) => setTyped((p) => ({ ...p, days: value }));
   const setTime = (value: string) => setTyped((p) => ({ ...p, time: value }));
   const setAvailable = (value: boolean) => setTyped((p) => ({ ...p, available: value }));
   const setNoteEn = (value: string) => setTyped((p) => ({ ...p, noteEn: value }));
   const setNoteId = (value: string) => setTyped((p) => ({ ...p, noteId: value }));
+  const setKeepOpen = (value: boolean) => setTyped((p) => ({ ...p, keepOpen: value }));
   const [state, setState] = useState<'idle' | 'saving' | 'invalid' | 'failed'>('idle');
 
   const options: ReadonlyArray<SegmentedOption<'on' | 'off'>> = [
@@ -124,6 +126,7 @@ function DefaultsForm({ defaults, onSaved, onToast }: DefaultsFormProps) {
       cutoffDaysBefore: n,
       cutoffTime: time,
       delivery: { available, note: { en: noteEn.trim(), id: noteId.trim() } },
+      keepOpenExtraDay: keepOpen,
     };
     const result = await updatePreferences({ menuDefaults: next }, undefined, currentSellerSlug());
     if (result.ok) {
@@ -183,6 +186,20 @@ function DefaultsForm({ defaults, onSaved, onToast }: DefaultsFormProps) {
             onChange={(event: ChangeEvent<HTMLInputElement>) => setNoteId(event.target.value)}
           />
         </Two>
+      </PaneGroup>
+      <PaneGroup>
+        <SwitchRow>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={keepOpen}
+            onChange={(event) => setKeepOpen(event.target.checked)}
+          />
+          <span>
+            {t('defaults.keepOpen')}
+            <small>{t('defaults.keepOpenHelper')}</small>
+          </span>
+        </SwitchRow>
       </PaneGroup>
       {state === 'invalid' ? <ErrorLine role="alert">{t('defaults.invalid')}</ErrorLine> : null}
       {state === 'failed' ? <ErrorLine role="alert">{t('saveFailed')}</ErrorLine> : null}

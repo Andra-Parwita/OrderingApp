@@ -223,7 +223,7 @@ export function StatusMark({ status }: Readonly<{ status: OrderStatus }>) {
 
 export const OrderRowRoot = styled.li<{ $dim: boolean }>`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 6.5rem;
   gap: 0.125rem ${({ theme }) => theme.spacing.md};
   margin: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.md} 0;
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
@@ -244,3 +244,30 @@ export const PackedTag = styled.span`
 `;
 
 export const Strong = styled.b``;
+
+const AmountBox = styled.span`
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+`;
+const PaidWord = styled.small<{ $paid: boolean }>`
+  color: ${({ theme, $paid }) => ($paid ? theme.c.conf : theme.c.warn)};
+  font-size: 0.75rem;
+  font-weight: 600;
+`;
+
+/** Plan 132: the total, always in the right-hand column, with Paid (green) or Not paid (amber) under it. */
+export function PaidAmount({ amount, paid }: Readonly<{ amount: string; paid: boolean }>) {
+  const { t } = useTranslation(SATURDAY_NS);
+  return (
+    <AmountBox>
+      <b>{amount}</b>
+      <PaidWord $paid={paid}>{paid ? t('common.paid') : t('common.notPaid')}</PaidWord>
+    </AmountBox>
+  );
+}

@@ -1,4 +1,5 @@
 import i18n from 'i18next';
+import { registerPackI18n } from '../../../components/pack';
 import en from './en.json';
 import id from './id.json';
 
@@ -8,4 +9,5 @@ export const COOK_NS = 'sellerCook';
 export function registerCookI18n(): void {
   i18n.addResourceBundle('en', COOK_NS, en, true, true);
   i18n.addResourceBundle('id', COOK_NS, id, true, true);
+  registerPackI18n();
 }

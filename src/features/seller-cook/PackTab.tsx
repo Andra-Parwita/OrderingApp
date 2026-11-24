@@ -1,37 +1,34 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useInRouterContext, useNavigate } from 'react-router';
 import { styled } from 'styled-components';
-import type { Language, Order } from '../../../shared/domain';
-import { pickText } from '../../../shared/text';
+import type { Language } from '../../../shared/domain';
 import { currentSellerSlug } from '../../api/device/sellerContext';
 import { packOrder } from '../../api/kitchen';
-import { AutoSaveStatus } from '../../components/autoSave/AutoSaveStatus';
-import { isKeptCode, useAutoSave, type SaveResult } from '../../components/autoSave/autoSave';
-import { draftKey } from '../../components/draft';
-import { PrivateTag } from '../../components/PrivateTag';
-import { Button, Icon, Segmented, WarningDialog, type SegmentedOption } from '../../ui';
-import { COOK_NS } from './i18n/register';
+import { orderPatched } from '../../api/kitchenOrders';
 import {
-  nextUnpacked,
-  sortBags,
-  toggledIds,
-  withTicks,
-  type Bag,
-  type PackSort,
-} from './packModel';
+  PackCloseAsk,
+  PackReadyAsk,
+  PackSheet,
+  tickedIdsOf,
+  usePackActions,
+} from '../../components/pack';
+import { Segmented, type SegmentedOption } from '../../ui';
 import { ChefFilterControl, useChefFilter } from './ChefFilterControl';
 import { isOwnItem } from './cookModel';
+import { usePhone } from './CookPhone';
 import { selectBags, selectCookMenu } from './cookSelectors';
-import { orderPatched } from '../../api/kitchenOrders';
 import type { CookRootState } from './cookSlice';
+import { COOK_NS } from './i18n/register';
+import { PackBagList } from './PackBagList';
+import { PackDetail, type PackBusy } from './PackDetail';
+import { nextUnpacked, sortBags, type Bag, type PackSort } from './packModel';
 
 const SORTS: ReadonlyArray<PackSort> = ['time', 'place', 'code'];
 
 const Layout = styled.div`
   display: grid;
-  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  grid-template-columns: minmax(23rem, 38%) minmax(0, 1fr);
   flex: 1;
   min-height: 0;
 
@@ -40,6 +37,7 @@ const Layout = styled.div`
   }
 `;
 const ListPane = styled.div`
+  min-width: 0;
   border-right: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
 
   @media (max-width: 52rem) {
@@ -56,226 +54,37 @@ const SortBar = styled.div`
   color: ${({ theme }) => theme.c.muted};
   font-size: 0.875rem;
 `;
-const BagList = styled.ul`
-  margin: 0;
-  padding: 0;
-  list-style: none;
-`;
-const BagButton = styled.button<{ $open: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  width: 100%;
-  min-height: ${({ theme }) => theme.size.rowOrder}px;
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
-  border: 0;
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  background: ${({ theme, $open }) => ($open ? theme.c.tint : 'transparent')};
-  color: ${({ theme }) => theme.c.text};
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-`;
-const Dot = styled.span<{ $on: boolean }>`
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: ${({ theme }) => theme.border.hairline} solid
-    ${({ theme, $on }) => ($on ? theme.c.fill : theme.c.ctrl)};
-  border-radius: 50%;
-  background: ${({ theme, $on }) => ($on ? theme.c.fill : 'transparent')};
-  color: ${({ theme }) => theme.c.on};
-
-  svg {
-    width: 1rem;
-    height: 1rem;
-  }
-`;
-const BagText = styled.span`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-`;
-const BagName = styled.span`
-  display: flex;
-  align-items: baseline;
-  gap: ${({ theme }) => theme.spacing.sm};
-  font-weight: 600;
-`;
-const Mono = styled.span`
-  font-family: ${({ theme }) => theme.font.mono};
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  color: ${({ theme }) => theme.c.muted};
-`;
-const Sub = styled.span`
-  color: ${({ theme }) => theme.c.muted};
-  font-size: 0.875rem;
-`;
-const Progress = styled.span<{ $done: boolean }>`
-  flex: none;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  color: ${({ theme, $done }) => ($done ? theme.c.atext : theme.c.text)};
-`;
-const Detail = styled.section`
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-`;
-const DetailHead = styled.header`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl} 0;
-`;
-const BigName = styled.h2`
-  display: flex;
-  align-items: baseline;
-  gap: ${({ theme }) => theme.spacing.md};
-  margin: 0;
-  font-size: 1.75rem;
-`;
-const BigCode = styled(Mono)`
-  font-size: 1.25rem;
-`;
-const Where = styled.p`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin: 0;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.xl}
-    ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.c.muted};
-`;
-const Note = styled.p`
-  margin: 0 ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  border-radius: ${({ theme }) => theme.size.radiusControl}px;
-  background: ${({ theme }) => theme.c.warnTint};
-  color: ${({ theme }) => theme.c.text};
-`;
-const LineNote = styled.span`
-  display: block;
-  color: ${({ theme }) => theme.c.warn};
-  font-size: 0.875rem;
-`;
-const Items = styled.ul`
-  margin: 0 ${({ theme }) => theme.spacing.xl};
-  padding: 0;
-  list-style: none;
-`;
-const ItemButton = styled.button<{ $on: boolean; $other: boolean }>`
-  opacity: ${({ $other }) => ($other ? 0.5 : 1)};
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-  width: 100%;
-  min-height: ${({ theme }) => theme.size.rowOrder}px;
-  padding: ${({ theme }) => theme.spacing.sm} 0;
-  border: 0;
-  border-bottom: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-  background: transparent;
-  color: ${({ theme, $on }) => ($on ? theme.c.muted : theme.c.text)};
-  font: inherit;
-  font-size: 1.125rem;
-  text-align: left;
-  text-decoration: ${({ $on }) => ($on ? 'line-through' : 'none')};
-  cursor: ${({ $other }) => ($other ? 'default' : 'pointer')};
-`;
-const Box = styled.span<{ $on: boolean }>`
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: ${({ theme }) => theme.border.focus} solid
-    ${({ theme, $on }) => ($on ? theme.c.fill : theme.c.ctrl)};
-  border-radius: 0.375rem;
-  background: ${({ theme, $on }) => ($on ? theme.c.fill : 'transparent')};
-  color: ${({ theme }) => theme.c.on};
-`;
-const Qty = styled.span`
-  min-width: 2.5rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-`;
-const Footer = styled.footer`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
-  margin-top: auto;
-  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
-  border-top: ${({ theme }) => theme.border.hairline} solid ${({ theme }) => theme.c.line};
-`;
-const Hint = styled.p`
-  flex: 1;
-  min-width: 12rem;
-  margin: 0;
-  color: ${({ theme }) => theme.c.muted};
-`;
-const Actions = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (max-width: 40rem) {
-    width: 100%;
-
-    > button {
-      flex: 1 1 auto;
-    }
-  }
-`;
 const Centered = styled.p`
   margin: 0;
   padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
   color: ${({ theme }) => theme.c.muted};
 `;
 
-/** Plan 084: the Labels page shows the preview, the paper and Print for this one order. */
-function PrintLabelButton({ code }: Readonly<{ code: string }>) {
-  const { t } = useTranslation(COOK_NS);
-  const navigate = useNavigate();
-  const go = useCallback(
-    () => void navigate(`/seller/labels?order=${encodeURIComponent(code)}`),
-    [navigate, code],
-  );
-  return (
-    <Button onClick={go}>
-      <Icon name="print" />
-      {t('pack.printLabel')}
-    </Button>
-  );
-}
+/** The ticks of one bag as the seller has them on the page, not saved yet. */
+type Draft = { code: string; ids: ReadonlySet<string> };
 
-/** A bag's ticks as the seller left them, with the bag as the server held it (to put back). */
-type PackPending = Record<string, { base: Order; ticked: Array<string> }>;
-
-/** Kitchen · Pack (D-066): one bag at a time. Ticks and "Packed" are saved on the server. */
+/**
+ * Kitchen · Pack (D-066, plan 132): one bag at a time. A tick changes the page only; Save sends the
+ * ticks, Ready sends them with Packed and the order's Ready step (the pack sheet's actions).
+ */
 export function PackTab() {
   const { t, i18n } = useTranslation(COOK_NS);
   const lang: Language = i18n.resolvedLanguage === 'id' ? 'id' : 'en';
   const dispatch = useDispatch();
+  const actions = usePackActions();
+  const phone = usePhone();
   const chef = useChefFilter();
   const menu = useSelector((state: CookRootState) => selectCookMenu(state));
   const bags = useSelector((state: CookRootState) => selectBags(state, chef.filter));
   const [sort, setSort] = useState<PackSort>('time');
   const [openCode, setOpenCode] = useState<string | null>(null);
+  // Phone: a tapped bag opens in the full-screen pack sheet (the one Orders uses).
+  const [sheetCode, setSheetCode] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [switchTo, setSwitchTo] = useState<string | null>(null);
+  const [askReady, setAskReady] = useState<{ next: boolean } | null>(null);
+  const [busy, setBusy] = useState<PackBusy>(null);
   const [failed, setFailed] = useState(false);
-  const inRouter = useInRouterContext();
-  const [warn, setWarn] = useState<{ code: string; count: number } | null>(null);
 
   const sorted = useMemo(() => sortBags(bags, sort), [bags, sort]);
   const open: Bag | undefined =
@@ -288,103 +97,116 @@ export function PackTab() {
     label: t(`pack.sort.${value}`),
   }));
 
-  const save = useCallback(
-    async (order: Order, body: { ticked?: Array<string>; packed?: boolean; force?: boolean }) => {
-      const result = await packOrder(order.code, body, undefined, currentSellerSlug());
+  const savedIds = useMemo(() => (open ? tickedIdsOf(open.order) : []), [open]);
+  const ticks: ReadonlySet<string> = useMemo(
+    () => (draft && open && draft.code === open.order.code ? draft.ids : new Set(savedIds)),
+    [draft, open, savedIds],
+  );
+  const dirty =
+    draft !== null &&
+    draft.code === open?.order.code &&
+    (ticks.size !== savedIds.length || savedIds.some((id) => !ticks.has(id)));
+
+  const openBag = useCallback((code: string) => {
+    setOpenCode(code);
+    setDraft(null);
+    setSwitchTo(null);
+    setFailed(false);
+  }, []);
+
+  const select = useCallback(
+    (code: string) => {
+      if (!open || code === open.order.code) return;
+      if (dirty) setSwitchTo(code);
+      else openBag(code);
+    },
+    [dirty, open, openBag],
+  );
+
+  const toggle = useCallback(
+    (itemId: string) => {
+      if (!open) return;
+      const next = new Set(ticks);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      setDraft({ code: open.order.code, ids: next });
+    },
+    [open, ticks],
+  );
+
+  const save = useCallback(async () => {
+    if (!open) return;
+    setBusy('save');
+    setFailed(false);
+    const result = await actions.save(open.order, [...ticks]);
+    setBusy(null);
+    if (result.ok) setDraft(null);
+    else setFailed(true);
+  }, [actions, open, ticks]);
+
+  const ready = useCallback(
+    async (next: boolean, force: boolean) => {
+      if (!open) return;
+      setAskReady(null);
+      setBusy(next ? 'next' : 'ready');
+      setFailed(false);
+      const result = await actions.ready(open.order, [...ticks], force);
+      setBusy(null);
       if (result.ok) {
-        setFailed(false);
-        dispatch(orderPatched(result.data.order));
-        return result.data.order;
-      }
-      return result;
-    },
-    [dispatch],
-  );
-
-  // Plan 073: a tick shows at once; the final set of ticks of each bag is saved ~1 s after the last
-  // tick (one request per bag that changed), when the seller leaves, and before "Packed". A refusal
-  // puts the bag back as the server holds it.
-  const wanted = useRef<Record<string, Array<string>>>({});
-  const sendTicks = useCallback(
-    async (pending: PackPending): Promise<SaveResult> => {
-      const entries = Object.entries(pending);
-      for (const [index, [code, { ticked }]] of entries.entries()) {
-        const result = await packOrder(code, { ticked }, undefined, currentSellerSlug());
-        if (!result.ok) {
-          const refused = !isKeptCode(result.error);
-          if (refused) {
-            for (const [, rest] of entries.slice(index)) dispatch(orderPatched(rest.base));
-          }
-          return { ok: false, refused, code: result.error };
-        }
-        // Shown only when no newer tick is waiting (that one is sent next and would be overwritten).
-        const latest = wanted.current[code];
-        if (
-          latest &&
-          latest.length === ticked.length &&
-          latest.every((id) => ticked.includes(id))
-        ) {
-          dispatch(orderPatched(result.data.order));
-        }
-      }
-      return { ok: true };
-    },
-    [dispatch],
-  );
-  const saver = useAutoSave<PackPending>(draftKey(currentSellerSlug(), 'cook-pack'), sendTicks);
-  const { update, flushNow, whenIdle } = saver;
-
-  const tick = useCallback(
-    (order: Order, itemId: string) => {
-      const ids = toggledIds(order, itemId);
-      dispatch(orderPatched(withTicks(order, ids)));
-      wanted.current[order.code] = ids;
-      update((previous) => ({
-        ...previous,
-        [order.code]: { base: previous?.[order.code]?.base ?? order, ticked: ids },
-      }));
-    },
-    [dispatch, update],
-  );
-
-  const goNext = useCallback(
-    (fromCode: string) => {
-      const next = nextUnpacked(sorted, fromCode);
-      if (next) setOpenCode(next.order.code);
-    },
-    [sorted],
-  );
-
-  const markPacked = useCallback(
-    async (bag: Bag, force: boolean) => {
-      // The ticks first (the server must hold them before it checks the bag is full).
-      flushNow();
-      await whenIdle();
-      const result = await save(bag.order, { packed: true, ...(force ? { force } : {}) });
-      if (!('ok' in result)) {
-        setWarn(null);
-        goNext(bag.order.code);
-        return;
-      }
-      if (result.status === 409 && result.warning?.code === 'items_unticked') {
-        setWarn({
-          code: bag.order.code,
-          count: result.warning.unticked?.length ?? bag.total - bag.ticked,
-        });
+        setDraft(null);
+        const following = next ? nextUnpacked(sorted, open.order.code) : null;
+        if (following) setOpenCode(following.order.code);
+      } else if (result.reason === 'unticked') {
+        setAskReady({ next });
       } else {
         setFailed(true);
       }
     },
-    [flushNow, goNext, save, whenIdle],
+    [actions, open, sorted, ticks],
+  );
+  // Unticked items warn, never block (D-062): the question names what is missing.
+  const unticked = open ? open.order.lines.filter((line) => !ticks.has(line.itemId)) : [];
+  const requestReady = useCallback(
+    (next: boolean) => {
+      if (unticked.length > 0) setAskReady({ next });
+      else void ready(next, false);
+    },
+    [ready, unticked.length],
   );
 
-  const unpack = useCallback(
-    async (bag: Bag) => {
-      const result = await save(bag.order, { packed: false });
-      if ('ok' in result) setFailed(true);
-    },
-    [save],
-  );
+  const unpack = useCallback(async () => {
+    if (!open) return;
+    setFailed(false);
+    const result = await packOrder(
+      open.order.code,
+      { packed: false },
+      undefined,
+      currentSellerSlug(),
+    );
+    if (result.ok) dispatch(orderPatched(result.data.order));
+    else setFailed(true);
+  }, [dispatch, open]);
+
+  const sheetBag = phone ? sorted.find((bag) => bag.order.code === sheetCode) : undefined;
+  const sheetWhere = sheetBag
+    ? sheetBag.place
+      ? [t('pack.pickup'), sheetBag.place, ...(sheetBag.time ? [sheetBag.time] : [])].join(' · ')
+      : [t('pack.delivery'), ...(sheetBag.private && sheetBag.time ? [sheetBag.time] : [])].join(
+          ' · ',
+        )
+    : '';
+  const sheet = sheetBag ? (
+    <PackSheet
+      key={sheetBag.order.code}
+      order={sheetBag.order}
+      where={sheetWhere}
+      onClose={() => setSheetCode(null)}
+      onNext={() => {
+        const following = nextUnpacked(sorted, sheetBag.order.code);
+        setSheetCode(following ? following.order.code : null);
+      }}
+    />
+  ) : null;
 
   if (sorted.length === 0 || !open) {
     return (
@@ -396,11 +218,6 @@ export function PackTab() {
       </>
     );
   }
-
-  const untickedCount = open.total - open.ticked;
-  const where = open.place
-    ? `${open.place}${open.time ? ` · ${t('pack.pickupAt', { time: open.time })}` : ''}`
-    : `${t('pack.delivery')}${open.private && open.time ? ` · ${open.time}` : ''}`;
 
   return (
     <Layout>
@@ -416,134 +233,43 @@ export function PackTab() {
           />
           <ChefFilterControl {...chef} />
         </SortBar>
-        <BagList aria-label={t('pack.list')}>
-          {sorted.map((bag) => (
-            <li key={bag.order.id}>
-              <BagButton
-                type="button"
-                $open={bag.order.code === open.order.code}
-                aria-current={bag.order.code === open.order.code ? 'true' : undefined}
-                onClick={() => setOpenCode(bag.order.code)}
-              >
-                <Dot $on={bag.packed}>{bag.packed ? <Icon name="check" /> : null}</Dot>
-                <BagText>
-                  <BagName>
-                    {bag.order.firstName} <Mono>{bag.code}</Mono>
-                    {bag.private ? <PrivateTag label={t('privateTag')} /> : null}
-                  </BagName>
-                  <Sub>
-                    {bag.place
-                      ? `${bag.place}${bag.time ? ` · ${bag.time}` : ''}`
-                      : `${t('pack.delivery')}${bag.private && bag.time ? ` · ${bag.time}` : ''}`}
-                  </Sub>
-                </BagText>
-                <Progress $done={bag.packed}>
-                  {bag.packed ? t('pack.packed') : `${bag.ticked}/${bag.total}`}
-                </Progress>
-              </BagButton>
-            </li>
-          ))}
-        </BagList>
+        <PackBagList
+          bags={sorted}
+          openCode={phone ? (sheetCode ?? '') : open.order.code}
+          lang={lang}
+          onOpen={phone ? setSheetCode : select}
+        />
       </ListPane>
+      {sheet}
 
-      <Detail aria-label={`${open.order.firstName} ${open.code}`}>
-        <DetailHead>
-          <BigName>
-            <BigCode>{open.code}</BigCode>
-            {open.order.firstName}
-          </BigName>
-          <Sub>{t('pack.inBag', { ticked: open.ticked, total: open.total })}</Sub>
-        </DetailHead>
-        {open.private ? (
-          <Where>
-            <PrivateTag label={t('privateTag')} />
-            <Link to={`/seller/private/${open.order.code}`}>{t('pack.openPrivate')}</Link>
-          </Where>
-        ) : null}
-        <Where>
-          <Icon name="bag" />
-          {where}
-        </Where>
-        {open.order.note ? (
-          <Note>
-            <b>{t('pack.note')}:</b> {open.order.note}
-          </Note>
-        ) : null}
-        <Items>
-          {open.order.lines.map((line) => {
-            const on = line.ticked === true;
-            const other = !isOwnItem(menu, chef.filter, line);
-            return (
-              <li key={line.itemId}>
-                <ItemButton
-                  type="button"
-                  role="checkbox"
-                  aria-checked={on}
-                  aria-label={
-                    other ? `${pickText(line.name, lang)} · ${t('pack.otherChef')}` : undefined
-                  }
-                  disabled={other}
-                  $on={on}
-                  $other={other}
-                  onClick={() => tick(open.order, line.itemId)}
-                >
-                  <Box $on={on}>{on ? <Icon name="check" /> : null}</Box>
-                  <Qty>{line.qty}×</Qty>
-                  <span>
-                    {pickText(line.name, lang)} <Sub>· {pickText(line.size, lang)}</Sub>
-                    {line.note ? <LineNote>{line.note}</LineNote> : null}
-                  </span>
-                </ItemButton>
-              </li>
-            );
-          })}
-        </Items>
-        <AutoSaveStatus state={saver.state} onRetry={saver.retry} ns={COOK_NS} />
-        <Footer>
-          <Hint role="status">
-            {failed
-              ? t('pack.saveError')
-              : open.packed
-                ? t('pack.isPacked')
-                : untickedCount === 0
-                  ? t('pack.allIn')
-                  : t('pack.notTicked', { count: untickedCount })}
-          </Hint>
-          <Actions>
-            {inRouter ? <PrintLabelButton code={open.order.code} /> : null}
-            {open.packed ? (
-              <Button variant="quiet" onClick={() => void unpack(open)}>
-                {t('pack.unpack')}
-              </Button>
-            ) : (
-              <>
-                <Button variant="quiet" onClick={() => goNext(open.order.code)}>
-                  {t('pack.skip')}
-                </Button>
-                <Button variant="primary" onClick={() => void markPacked(open, false)}>
-                  <Icon name="check" />
-                  {t('pack.packedNext')}
-                </Button>
-              </>
-            )}
-          </Actions>
-        </Footer>
-      </Detail>
+      {phone ? null : (
+        <PackDetail
+          bag={open}
+          ticks={ticks}
+          lang={lang}
+          phone={phone}
+          busy={busy}
+          failed={failed}
+          isOther={(line) => !isOwnItem(menu, chef.filter, line)}
+          onToggle={toggle}
+          onSave={() => void save()}
+          onReady={requestReady}
+          onUnpack={() => void unpack()}
+        />
+      )}
 
-      {warn ? (
-        <WarningDialog
-          title={t('pack.warnTitle', { count: warn.count })}
-          cancelLabel={t('pack.warnCancel')}
-          continueLabel={t('pack.warnContinue')}
-          onCancel={() => setWarn(null)}
-          onContinue={() => {
-            const bag = sorted.find((candidate) => candidate.order.code === warn.code);
-            if (bag) void markPacked(bag, true);
-            else setWarn(null);
-          }}
-        >
-          {t('pack.warnBody', { count: warn.count })}
-        </WarningDialog>
+      {switchTo ? (
+        <PackCloseAsk fixed onKeep={() => setSwitchTo(null)} onClose={() => openBag(switchTo)} />
+      ) : null}
+      {askReady ? (
+        <PackReadyAsk
+          fixed
+          lines={unticked}
+          delivery={open.order.fulfilment !== 'pickup'}
+          lang={lang}
+          onBack={() => setAskReady(null)}
+          onGo={() => void ready(askReady.next, true)}
+        />
       ) : null}
     </Layout>
   );

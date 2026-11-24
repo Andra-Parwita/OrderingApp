@@ -4,7 +4,7 @@
     "loadError": "Pesanan tidak bisa dimuat.",
     "retry": "Coba lagi",
     "paid": "Lunas",
-    "notPaid": "Belum bayar · {{amount}}",
+    "notPaid": "Belum bayar",
     "packed": "Dikemas",
     "actionFailed": "Gagal. Silakan coba lagi."
   },
